@@ -23,7 +23,8 @@ class MappedChargeStatusTest {
         assertThat(mappedChargeStatus.getChargeStatus(), is(ChargeStatus.CAPTURED));
     }
 
-    @Test()
+
+    @Test
     void shouldThrowExceptionForGetRefundStatus() {
 
         Assertions.assertThrows(IllegalStateException.class, () -> {

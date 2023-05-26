@@ -17,7 +17,7 @@ class IgnoredStatusTest {
         assertThat(ignoredStatus.getType(), is(InterpretedStatus.Type.IGNORED));
     }
 
-    @Test()
+    @Test
     void shouldThrowExceptionForGetChargeStatus() {
 
         Assertions.assertThrows(IllegalStateException.class, () -> {
@@ -25,7 +25,7 @@ class IgnoredStatusTest {
         });
     }
 
-    @Test()
+    @Test
     void shouldThrowExceptionForGetRefundStatus() {
 
         Assertions.assertThrows(IllegalStateException.class, () -> {

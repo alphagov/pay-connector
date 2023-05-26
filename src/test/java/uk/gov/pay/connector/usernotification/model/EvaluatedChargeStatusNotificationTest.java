@@ -2,7 +2,7 @@ package uk.gov.pay.connector.usernotification.model;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.time.ZonedDateTime;
@@ -10,13 +10,14 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.util.Collections.singletonList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
-public class EvaluatedChargeStatusNotificationTest {
+
+class EvaluatedChargeStatusNotificationTest {
 
     @Test
-    public void shouldCreateEvaluatedChargeStatusNotification() {
+    void shouldCreateEvaluatedChargeStatusNotification() {
         String transactionId = "transaction-id";
         String reference = "reference";
         String status = "status";

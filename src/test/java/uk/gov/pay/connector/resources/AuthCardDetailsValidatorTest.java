@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.resources;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.model.domain.AddressFixture;
@@ -15,27 +15,27 @@ import java.util.Set;
 
 import static junit.framework.TestCase.assertEquals;
 
-public class AuthCardDetailsValidatorTest {
+class AuthCardDetailsValidatorTest {
 
     private String sneakyCardNumber = "this12card3number4is5hidden6;7 89-0(1+2.";
     private String over255LongString = "ThisLineIs_TooLong_cbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsaacbstrdnsa1234567899";
     private static Validator validator;
 
-    @BeforeClass
-    public static void setUpValidator() {
+    @BeforeAll
+    static void setUpValidator() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
 
     @Test
-    public void validationSucceedForWellFormattedAuthorisationCardDetails() {
+    void validationSucceedForWellFormattedAuthorisationCardDetails() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
         assertEquals(0, violations.size());
     }
 
     @Test
-    public void validationSucceedForCVCwith4Digits() {
+    void validationSucceedForCVCwith4Digits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCvc("1234")
                 .build();
@@ -45,7 +45,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedFor14digitsCardNumber() {
+    void validationSucceedFor14digitsCardNumber() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("12345678901234")
                 .build();
@@ -55,7 +55,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForMissingCVC() {
+    void validationFailsForMissingCVC() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCvc(null)
                 .build();
@@ -66,7 +66,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForMissingCardNumber() {
+    void validationFailsForMissingCardNumber() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo(null)
                 .build();
@@ -77,7 +77,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForMissingCardBrand() {
+    void validationFailsForMissingCardBrand() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardBrand(null)
                 .build();
@@ -88,7 +88,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForEmptyFields() {
+    void validationFailsForEmptyFields() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("")
                 .withCvc("")
@@ -101,7 +101,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsFor11digitsCardNumber() {
+    void validationFailsFor11digitsCardNumber() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("12345678901")
                 .build();
@@ -112,7 +112,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsFor12digitsCardNumber() {
+    void validationSucceedsFor12digitsCardNumber() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("123456789012")
                 .build();
@@ -122,7 +122,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsFor19digitsCardNumber() {
+    void validationSucceedsFor19digitsCardNumber() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("1234567890123456789")
                 .build();
@@ -132,7 +132,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsFor20digitsCardNumber() {
+    void validationFailsFor20digitsCardNumber() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("12345678901234567890")
                 .build();
@@ -143,7 +143,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForCardNumberWithNonDigits() {
+    void validationFailsForCardNumberWithNonDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardNo("123456789012345A")
                 .build();
@@ -154,7 +154,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForCVCwithNonDigits() {
+    void validationFailsForCVCwithNonDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCvc("45A")
                 .build();
@@ -165,7 +165,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForCVCwithMoreThan4Digits() {
+    void validationFailsForCVCwithMoreThan4Digits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCvc("12345")
                 .build();
@@ -176,7 +176,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForCVCwithLessThan3Digits() {
+    void validationFailsForCVCwithLessThan3Digits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCvc("12")
                 .build();
@@ -187,7 +187,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForMissingCityAddress() {
+    void validationFailsForMissingCityAddress() {
         Address address = AddressFixture.anAddress()
                 .withCity(null)
                 .build();
@@ -202,7 +202,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForMissingLine1Address() {
+    void validationFailsForMissingLine1Address() {
         Address address = AddressFixture.anAddress()
                 .withLine1(null)
                 .build();
@@ -232,7 +232,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsForMissingPostcodeAddress() {
+    void validationFailsForMissingPostcodeAddress() {
         Address address = AddressFixture.anAddress()
                 .withPostcode(null)
                 .build();
@@ -247,7 +247,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardHolderContainsMoreThanElevenDigits() {
+    void validationFailsIfCardHolderContainsMoreThanElevenDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder(sneakyCardNumber)
                 .build();
@@ -258,7 +258,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCardHolderContainsExactlyElevenDigits() {
+    void validationSucceedsIfCardHolderContainsExactlyElevenDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("1 Mr John 123456789 Smith 0")
                 .build();
@@ -268,7 +268,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardBrandContainsMoreThanElevenDigits() {
+    void validationFailsIfCardBrandContainsMoreThanElevenDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardBrand(sneakyCardNumber)
                 .build();
@@ -279,7 +279,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCardBrandContainsExactlyElevenDigits() {
+    void validationSucceedsIfCardBrandContainsExactlyElevenDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardBrand("12345678901")
                 .build();
@@ -289,7 +289,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfAddressLine1ContainsMoreThanElevenDigits() {
+    void validationFailsIfAddressLine1ContainsMoreThanElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withLine1(sneakyCardNumber)
                 .build();
@@ -304,7 +304,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedIfAddressLine1ContainsExactlyElevenDigits() {
+    void validationSucceedIfAddressLine1ContainsExactlyElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withLine1("01234/5678 90th Street")
                 .build();
@@ -318,7 +318,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfAddressLine2ContainsMoreThanElevenDigits() {
+    void validationFailsIfAddressLine2ContainsMoreThanElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withLine2(sneakyCardNumber)
                 .build();
@@ -333,7 +333,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedIfAddressLine2ContainsExactlyElevenDigits() {
+    void validationSucceedIfAddressLine2ContainsExactlyElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withLine2("01234/5678 90th Street")
                 .build();
@@ -347,7 +347,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedIfAddressLine2IsNull() {
+    void validationSucceedIfAddressLine2IsNull() {
         Address address = AddressFixture.anAddress()
                 .withLine2(null)
                 .build();
@@ -361,7 +361,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedIfAddressIsNull() {
+    void validationSucceedIfAddressIsNull() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withAddress(null)
                 .build();
@@ -371,7 +371,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfPostCodeContainsMoreThanElevenDigits() {
+    void validationFailsIfPostCodeContainsMoreThanElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withPostcode(sneakyCardNumber)
                 .build();
@@ -386,7 +386,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfPostCodeContainsExactlyElevenDigits() {
+    void validationSucceedsIfPostCodeContainsExactlyElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withPostcode("12N3446789M01")
                 .build();
@@ -400,7 +400,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCityContainsMoreThanElevenDigits() {
+    void validationFailsIfCityContainsMoreThanElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withCity(sneakyCardNumber)
                 .build();
@@ -415,7 +415,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCityContainsExactlyElevenDigits() {
+    void validationSucceedsIfCityContainsExactlyElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withCity("12N3446789M01")
                 .build();
@@ -429,7 +429,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCountyMoreThanElevenDigits() {
+    void validationFailsIfCountyMoreThanElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withCounty(sneakyCardNumber)
                 .build();
@@ -444,7 +444,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCountyContainsExactlyElevenDigits() {
+    void validationSucceedsIfCountyContainsExactlyElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withCounty("12N3446789M01")
                 .build();
@@ -458,7 +458,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCountyIsNull() {
+    void validationSucceedsIfCountyIsNull() {
         Address address = AddressFixture.anAddress()
                 .withCounty(null)
                 .build();
@@ -472,7 +472,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCountryMoreThanElevenDigits() {
+    void validationFailsIfCountryMoreThanElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withCountry(sneakyCardNumber)
                 .build();
@@ -487,7 +487,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCountryContainsExactlyElevenDigits() {
+    void validationSucceedsIfCountryContainsExactlyElevenDigits() {
         Address address = AddressFixture.anAddress()
                 .withCountry("12N3446789M01")
                 .build();
@@ -501,7 +501,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardHolderIsThreeDigits() {
+    void validationFailsIfCardHolderIsThreeDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("555")
                 .build();
@@ -512,7 +512,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardHolderIsFourDigits() {
+    void validationFailsIfCardHolderIsFourDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("5678")
                 .build();
@@ -523,7 +523,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardHolderIsThreeDigitsSurroundedByWhitespace() {
+    void validationFailsIfCardHolderIsThreeDigitsSurroundedByWhitespace() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder(" \t 321 ")
                 .build();
@@ -534,7 +534,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardHolderIsFourDigitsSurroundedByWhitespace() {
+    void validationFailsIfCardHolderIsFourDigitsSurroundedByWhitespace() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder(" 1234 \t")
                 .build();
@@ -545,7 +545,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCardHolderContainsThreeDigitsSurroundedByNonWhitespace() {
+    void validationSucceedsIfCardHolderContainsThreeDigitsSurroundedByNonWhitespace() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("Ms 333")
                 .build();
@@ -555,7 +555,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCardHolderContainsFourDigitsSurroundedByNonWhitespace() {
+    void validationSucceedsIfCardHolderContainsFourDigitsSurroundedByNonWhitespace() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("1234 Jr.")
                 .build();
@@ -565,7 +565,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCardHolderContainsTwoDigits() {
+    void validationSucceedsIfCardHolderContainsTwoDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("22")
                 .build();
@@ -575,7 +575,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationSucceedsIfCardHolderContainsFiveDigits() {
+    void validationSucceedsIfCardHolderContainsFiveDigits() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("12345")
                 .build();
@@ -585,7 +585,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfCardHolderIsTooLong() {
+    void validationFailsIfCardHolderIsTooLong() {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withCardHolder(over255LongString).build();
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
         assertEquals(1, violations.size());
@@ -593,7 +593,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfAddressLineOneIsTooLong() {
+    void validationFailsIfAddressLineOneIsTooLong() {
         Address address = AddressFixture.anAddress().withLine1(over255LongString).build();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
@@ -602,7 +602,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfAddressLineTwoIsTooLong() {
+    void validationFailsIfAddressLineTwoIsTooLong() {
         Address address = AddressFixture.anAddress().withLine2(over255LongString).build();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
@@ -611,7 +611,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfAddressCountyIsTooLong() {
+    void validationFailsIfAddressCountyIsTooLong() {
         Address address = AddressFixture.anAddress().withCounty(over255LongString).build();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
@@ -620,7 +620,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfAddressCountryIsTooLong() {
+    void validationFailsIfAddressCountryIsTooLong() {
         Address address = AddressFixture.anAddress().withCountry(over255LongString).build();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);
@@ -629,7 +629,7 @@ public class AuthCardDetailsValidatorTest {
     }
 
     @Test
-    public void validationFailsIfAddressCityIsTooLong() {
+    void validationFailsIfAddressCityIsTooLong() {
         Address address = AddressFixture.anAddress().withCity(over255LongString).build();
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().withAddress(address).build();
         Set<ConstraintViolation<AuthCardDetails>> violations = validator.validate(authCardDetails);

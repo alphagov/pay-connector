@@ -1,43 +1,36 @@
 package uk.gov.pay.connector.usernotification.service;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.HashUtil;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 
-@RunWith(MockitoJUnitRunner.class)
-public class GatewayAccountNotificationCredentialsServiceTest {
+@ExtendWith(MockitoExtension.class)
+class GatewayAccountNotificationCredentialsServiceTest {
 
     private GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Mock
     GatewayAccountDao gatewayDao;
@@ -48,13 +41,13 @@ public class GatewayAccountNotificationCredentialsServiceTest {
     @Mock
     GatewayAccountEntity gatewayAccount;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         gatewayAccountNotificationCredentialsService = new GatewayAccountNotificationCredentialsService(gatewayDao, hashUtil);
     }
 
     @Test
-    public void shouldCreateNotificationCredentialsIfNotPresentAndEncryptPassword() throws CredentialsException {
+    void shouldCreateNotificationCredentialsIfNotPresentAndEncryptPassword() throws CredentialsException {
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobssecret");
 
         when(gatewayAccount.getNotificationCredentials()).thenReturn(null);
@@ -76,7 +69,7 @@ public class GatewayAccountNotificationCredentialsServiceTest {
     }
 
     @Test
-    public void shouldUpdateExistingNotificationCredentialIfPresent() throws CredentialsException {
+    void shouldUpdateExistingNotificationCredentialIfPresent() throws CredentialsException {
         NotificationCredentials notificationCredentials = mock(NotificationCredentials.class);
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobssecret");
 
@@ -93,14 +86,18 @@ public class GatewayAccountNotificationCredentialsServiceTest {
     }
 
     @Test
-    public void shouldValidateThatPasswordisAtLeast10Characters() throws CredentialsException {
-        expectedException.expect(CredentialsException.class);
-        expectedException.expectMessage("Invalid password length");
-
+    void shouldValidateThatPasswordisAtLeast10Characters() {
         Map<String, String> credentials = ImmutableMap.of("username", "bob", "password", "bobsecret");
+        Exception exception = assertThrows(CredentialsException.class, () -> {
+            gatewayAccountNotificationCredentialsService.setCredentialsForAccount(credentials, gatewayAccount);
+        });
 
-        gatewayAccountNotificationCredentialsService.setCredentialsForAccount(credentials, gatewayAccount);
+        String expectedMessage = "Invalid password length";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
 
         verifyNoInteractions(hashUtil);
     }
+
 }
