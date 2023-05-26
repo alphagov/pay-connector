@@ -26,6 +26,7 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
@@ -84,6 +85,7 @@ public class ContractTest {
     private static WorldpayMockClient worldpayMockClient;
     private static CardidStub mockCardidService;
     private static ObjectMapper objectMapper = new ObjectMapper();
+    private static LedgerStub ledgerStub;
 
     @BeforeClass
     public static void setUp() {
@@ -91,6 +93,7 @@ public class ContractTest {
         dbHelper = app.getDatabaseTestHelper();
         worldpayMockClient = new WorldpayMockClient(wireMockRule);
         mockCardidService = new CardidStub(wireMockRule);
+        ledgerStub = new LedgerStub(wireMockRule);
     }
 
     @Before
@@ -720,6 +723,7 @@ public class ContractTest {
 
     @State("a gateway account with id 3456 and an active agreement exists")
     public void aGatewayAccountWithId3456AndAnActiveAgreementExists() {
+        ledgerStub.acceptPostEvent();
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId("3456")
                 .withPaymentGateway("sandbox")
