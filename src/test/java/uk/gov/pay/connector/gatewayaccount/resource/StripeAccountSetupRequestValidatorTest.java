@@ -18,7 +18,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasProperty;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class StripeAccountSetupRequestValidatorTest {
@@ -111,7 +111,7 @@ class StripeAccountSetupRequestValidatorTest {
         return objectMapper.valueToTree(Collections.singletonList(params));
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void multipleUpdatesAreValid() {
         JsonNode jsonNode = objectMapper.valueToTree(Arrays.asList(
                 Map.of(

@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.common.model.api;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExternalRefundStatusMapTest {
 
@@ -20,18 +20,16 @@ class ExternalRefundStatusMapTest {
         assertThat(ExternalRefundStatus.EXTERNAL_ERROR.getStatus(), is("error"));
     }
 
-    @Test()
+    @Test
     void shouldThrowExceptionForUnrecognisedStatusLabelValue() {
-
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             ExternalRefundStatus.fromPublicStatusLabel("whatever");
         });
     }
 
-    @Test()
+    @Test
     void shouldThrowExceptionForEmptyStatusLabelValue() {
-
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             ExternalRefundStatus.fromPublicStatusLabel("");
         });
     }

@@ -18,8 +18,8 @@ import java.util.Optional;
 
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.AMOUNT_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.DELAYED_CAPTURE_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;

@@ -9,14 +9,14 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Charge;
 import com.stripe.model.Transfer;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.events.EventService;
@@ -50,6 +50,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -63,8 +64,8 @@ import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
-@RunWith(MockitoJUnitRunner.class)
-public class PayoutReconcileProcessTest {
+@ExtendWith(MockitoExtension.class)
+class PayoutReconcileProcessTest {
 
     @Mock
     private PayoutReconcileQueue payoutReconcileQueue;
@@ -102,8 +103,8 @@ public class PayoutReconcileProcessTest {
     private final String failedPaymentWithFeeExternalId = "failed-payment-with-fee-id";
     private final String disputeExternalId = "dispute-id";
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                 .withType(GatewayAccountType.TEST)
                 .build();
@@ -119,7 +120,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldEmitEventsForMessageAndMarkAsProcessed() throws Exception {
+    void shouldEmitEventsForMessageAndMarkAsProcessed() throws Exception {
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId, payoutId, payoutCreatedDate.toInstant());
         var refundEvent = new RefundIncludedInPayout(refundExternalId, payoutId, payoutCreatedDate.toInstant());
         var feeCollectionEvent = new PaymentIncludedInPayout(failedPaymentWithFeeExternalId, payoutId, payoutCreatedDate.toInstant());
@@ -142,7 +143,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldEmitAdditionalPayoutPaidEventIfPayoutStatusIsPaid() throws Exception {
+    void shouldEmitAdditionalPayoutPaidEventIfPayoutStatusIsPaid() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         ArgumentCaptor<Class<? extends PayoutEvent>> captor = ArgumentCaptor.forClass(Class.class);
         setupMockBalanceTransactions("paid");
@@ -160,7 +161,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldEmitAdditionalPayoutFailedEventIfPayoutStatusIsFailed() throws Exception {
+    void shouldEmitAdditionalPayoutFailedEventIfPayoutStatusIsFailed() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         ArgumentCaptor<Class<? extends PayoutEvent>> captor = ArgumentCaptor.forClass(Class.class);
         ArgumentCaptor<StripePayout> captorForStripePayout = ArgumentCaptor.forClass(StripePayout.class);
@@ -185,7 +186,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldNotEmitEventsIfConnectorConfigurationDisabled() throws Exception {
+    void shouldNotEmitEventsIfConnectorConfigurationDisabled() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(false);
 
@@ -196,7 +197,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldNotMarkMessageAsSuccessfullyProcessedIfNoPaymentsOrRefundsFound() throws Exception {
+    void shouldNotMarkMessageAsSuccessfullyProcessedIfNoPaymentsOrRefundsFound() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         when(stripeSDKClient.getBalanceTransactionsForPayout(payoutId, stripeAccountId, false))
                 .thenReturn(List.of());
@@ -207,7 +208,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldNotMarkMessageAsSuccessfullyProcessedIfEventEmissionFails() throws Exception {
+    void shouldNotMarkMessageAsSuccessfullyProcessedIfEventEmissionFails() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         when(connectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
 
@@ -221,7 +222,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldNotMarkMessageAsSuccessfullyProcessedIfStripeTransferTransactionIdMetadataMissing() throws Exception {
+    void shouldNotMarkMessageAsSuccessfullyProcessedIfStripeTransferTransactionIdMetadataMissing() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         BalanceTransaction refundBalanceTransaction = mock(BalanceTransaction.class);
         Transfer refundTransferSource = mock(Transfer.class);
@@ -239,7 +240,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldNotMarkMessageAsSuccessfullyProcessedIfTransferMetadataReasonNotRecognised() throws Exception {
+    void shouldNotMarkMessageAsSuccessfullyProcessedIfTransferMetadataReasonNotRecognised() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         BalanceTransaction balanceTransaction = mock(BalanceTransaction.class);
         Transfer transfer = mock(Transfer.class);
@@ -262,7 +263,7 @@ public class PayoutReconcileProcessTest {
     }
 
     @Test
-    public void shouldReconcileTransferMissingReasonMetadataAsRefund() throws Exception {
+    void shouldReconcileTransferMissingReasonMetadataAsRefund() throws Exception {
         PayoutReconcileMessage payoutReconcileMessage = setupQueueMessage();
         BalanceTransaction refundBalanceTransaction = mock(BalanceTransaction.class);
         Transfer refundTransferSource = mock(Transfer.class);
@@ -293,47 +294,47 @@ public class PayoutReconcileProcessTest {
         BalanceTransaction paymentBalanceTransaction = mock(BalanceTransaction.class);
         Charge paymentSource = mock(Charge.class);
         Transfer paymentTransferSource = mock(Transfer.class);
-        when(paymentBalanceTransaction.getType()).thenReturn("payment");
-        when(paymentBalanceTransaction.getSourceObject()).thenReturn(paymentSource);
-        when(paymentSource.getSourceTransferObject()).thenReturn(paymentTransferSource);
-        when(paymentTransferSource.getMetadata()).thenReturn(Map.of(GOVUK_PAY_TRANSACTION_EXTERNAL_ID, paymentExternalId));
+        lenient().when(paymentBalanceTransaction.getType()).thenReturn("payment");
+        lenient().when(paymentBalanceTransaction.getSourceObject()).thenReturn(paymentSource);
+        lenient().when(paymentSource.getSourceTransferObject()).thenReturn(paymentTransferSource);
+        lenient().when(paymentTransferSource.getMetadata()).thenReturn(Map.of(GOVUK_PAY_TRANSACTION_EXTERNAL_ID, paymentExternalId));
 
         BalanceTransaction refundBalanceTransaction = mock(BalanceTransaction.class);
         Transfer refundTransferSource = mock(Transfer.class);
-        when(refundBalanceTransaction.getType()).thenReturn("transfer");
-        when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
-        when(refundTransferSource.getMetadata()).thenReturn(Map.of(
+        lenient().when(refundBalanceTransaction.getType()).thenReturn("transfer");
+        lenient().when(refundBalanceTransaction.getSourceObject()).thenReturn(refundTransferSource);
+        lenient().when(refundTransferSource.getMetadata()).thenReturn(Map.of(
                 GOVUK_PAY_TRANSACTION_EXTERNAL_ID, refundExternalId,
                 REASON_KEY, TRANSFER_REFUND_AMOUNT.toString()
         ));
 
         BalanceTransaction feeBalanceTransaction = mock(BalanceTransaction.class);
         Transfer feeTransferSource = mock(Transfer.class);
-        when(feeBalanceTransaction.getType()).thenReturn("transfer");
-        when(feeBalanceTransaction.getSourceObject()).thenReturn(feeTransferSource);
-        when(feeTransferSource.getMetadata()).thenReturn(Map.of(
+        lenient().when(feeBalanceTransaction.getType()).thenReturn("transfer");
+        lenient().when(feeBalanceTransaction.getSourceObject()).thenReturn(feeTransferSource);
+        lenient().when(feeTransferSource.getMetadata()).thenReturn(Map.of(
                 GOVUK_PAY_TRANSACTION_EXTERNAL_ID, failedPaymentWithFeeExternalId,
                 REASON_KEY, TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT.toString()
         ));
 
         BalanceTransaction disputeBalanceTransaction = mock(BalanceTransaction.class);
         Transfer disputeTransferSource = mock(Transfer.class);
-        when(disputeBalanceTransaction.getType()).thenReturn("transfer");
-        when(disputeBalanceTransaction.getSourceObject()).thenReturn(disputeTransferSource);
-        when(disputeTransferSource.getMetadata()).thenReturn(Map.of(
+        lenient().when(disputeBalanceTransaction.getType()).thenReturn("transfer");
+        lenient().when(disputeBalanceTransaction.getSourceObject()).thenReturn(disputeTransferSource);
+        lenient().when(disputeTransferSource.getMetadata()).thenReturn(Map.of(
                 GOVUK_PAY_TRANSACTION_EXTERNAL_ID, disputeExternalId,
                 REASON_KEY, TRANSFER_DISPUTE_AMOUNT.toString()
         ));
 
         BalanceTransaction payoutBalanceTransaction = mock(BalanceTransaction.class);
         com.stripe.model.Payout payoutSource = mock(com.stripe.model.Payout.class);
-        when(payoutSource.getId()).thenReturn("po_123");
-        when(payoutSource.getAmount()).thenReturn(1213L);
-        when(payoutSource.getArrivalDate()).thenReturn(1589395533L);
-        when(payoutSource.getCreated()).thenReturn(1589395500L);
-        when(payoutSource.getStatus()).thenReturn(payoutStatus);
-        when(payoutSource.getType()).thenReturn("card");
-        when(payoutSource.getStatementDescriptor()).thenReturn("statement_desc");
+        lenient().when(payoutSource.getId()).thenReturn("po_123");
+        lenient().when(payoutSource.getAmount()).thenReturn(1213L);
+        lenient().when(payoutSource.getArrivalDate()).thenReturn(1589395533L);
+        lenient().when(payoutSource.getCreated()).thenReturn(1589395500L);
+        lenient().when(payoutSource.getStatus()).thenReturn(payoutStatus);
+        lenient().when(payoutSource.getType()).thenReturn("card");
+        lenient().when(payoutSource.getStatementDescriptor()).thenReturn("statement_desc");
 
         if ("failed".equals(payoutStatus)) {
             when(payoutSource.getFailureCode()).thenReturn("account_closed");
@@ -341,8 +342,8 @@ public class PayoutReconcileProcessTest {
             when(payoutSource.getFailureBalanceTransaction()).thenReturn("ba_1GkZtqDv3CZEaFO2CQhLrluk");
         }
 
-        when(payoutBalanceTransaction.getType()).thenReturn("payout");
-        when(payoutBalanceTransaction.getSourceObject()).thenReturn(payoutSource);
+        lenient().when(payoutBalanceTransaction.getType()).thenReturn("payout");
+        lenient().when(payoutBalanceTransaction.getSourceObject()).thenReturn(payoutSource);
 
         List<BalanceTransaction> balanceTransactions = List.of(
                 paymentBalanceTransaction,

@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -18,9 +17,10 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -81,10 +81,10 @@ class ChargeEntityTest {
         assertThat(chargeCreated.getStatus(), is(ENTERING_CARD_DETAILS.toString()));
     }
 
-    @Test()
+    @Test
     void shouldRejectAnInvalidStatusTransition() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
-        Assertions.assertThrows( InvalidStateTransitionException.class, () -> {
+        assertThrows( InvalidStateTransitionException.class, () -> {
             chargeCreated.setStatus(CAPTURED);
         });
     }

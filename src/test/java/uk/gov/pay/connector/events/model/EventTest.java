@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.model;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class EventTest {
 

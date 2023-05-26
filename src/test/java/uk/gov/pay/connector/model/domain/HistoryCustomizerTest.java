@@ -1,30 +1,29 @@
 package uk.gov.pay.connector.model.domain;
 
-import junit.framework.TestCase;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.history.HistoryPolicy;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 
 import java.util.Vector;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class HistoryCustomizerTest extends TestCase {
+@ExtendWith(MockitoExtension.class)
+class HistoryCustomizerTest {
 
     @Mock
     private ClassDescriptor mockClassDescriptor;
 
     @Test
-    public void shouldRegisterAHistoryPolicyToTheClassDescriptor() {
+    void shouldRegisterAHistoryPolicyToTheClassDescriptor() {
         Vector databaseTables = new Vector();
         databaseTables.add("table_name");
 

@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.worldpay;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,8 +57,9 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -741,7 +741,7 @@ class WorldpayAuthoriseHandlerTest {
                 .withAgreementEntity(agreementEntity)
                 .build();
 
-        IllegalArgumentException thrown = Assertions.assertThrows(IllegalArgumentException.class, () ->
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
                 worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity))
         );
         assertThat(thrown.getMessage(), is("Expected request to have payment instrument but it does not"));

@@ -22,7 +22,7 @@ class JsonObjectMapperTest {
         assertEquals(1, fromJson.getId());
     }
 
-    @Test()
+    @Test
     void shouldThrowException() {
         String jsonString = "{\"id\":\"abc\"}";
         assertThrows(WebApplicationException.class, () -> jsonObjectMapper.getObject(jsonString, LocalTestObject.class));

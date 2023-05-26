@@ -6,7 +6,7 @@ import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCapture
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.EPDQ_CAPTURE_REQUEST;
 
 class EpdqPayloadDefinitionForCaptureOrderTest {
