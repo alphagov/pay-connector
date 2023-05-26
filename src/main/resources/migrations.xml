@@ -1991,8 +1991,8 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="add cancelled date column to payment instrument table" author="">
-        <addColumn tableName="payment_instruments">
+    <changeSet id="add cancelled date column to agreements table" author="">
+        <addColumn tableName="agreements">
             <column name="cancelled_date" type="timestamp without timezone">
                 <constraints nullable="true"/>
             </column>
