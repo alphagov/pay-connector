@@ -192,8 +192,11 @@ public class AgreementsApiResourceIT {
                 .post(format(CANCEL_AGREEMENT_URL, accountId, agreementId))
                 .then()
                 .statusCode(NO_CONTENT_204);
-        var agreementMap = databaseTestHelper.getPaymentInstrument(paymentInstrumentParams.getPaymentInstrumentId());
-        assertThat(agreementMap.get("status"), is("CANCELLED"));
+
+        var paymentInstrumentMap = databaseTestHelper.getPaymentInstrument(paymentInstrumentParams.getPaymentInstrumentId());
+        assertThat(paymentInstrumentMap.get("status"), is("CANCELLED"));
+        var agreementMap = databaseTestHelper.getAgreementByExternalId(agreementId);
+        assertThat(agreementMap.get("cancelled_date"), is(notNullValue()));
     }
 
     private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider, boolean recurringEnabled) {
