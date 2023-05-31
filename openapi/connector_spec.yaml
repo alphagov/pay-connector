@@ -314,7 +314,7 @@ paths:
       responses:
         default:
           content:
-            application/json: {}
+            '*/*': {}
           description: default response
   /v1/api/accounts/{accountId}/charges:
     post:
