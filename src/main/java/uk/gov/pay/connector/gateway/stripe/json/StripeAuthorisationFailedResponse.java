@@ -44,7 +44,9 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
            (https://stripe.com/docs/api/errors#errors-card_error)
          */
         if (errorResponse != null && errorResponse.getError() != null
-                && "card_error".equals(errorResponse.getError().getType())) {
+                && ("card_error".equals(errorResponse.getError().getType())
+                || ("invalid_request_error".equals(errorResponse.getError().getType())
+                && "card_decline_rate_limit_exceeded".equals(errorResponse.getError().getCode())))) {
             return REJECTED;
         }
         return ERROR;

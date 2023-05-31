@@ -215,9 +215,11 @@ class StripeCaptureHandlerTest {
 
     @Test
     void shouldNotCaptureIfPaymentProviderReturns4xxHttpStatusCode() throws Exception {
-        GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_UNAUTHORIZED);
+        String errorMessage = load(STRIPE_ERROR_RESPONSE).replace("{{code}}", "resource_missing");
+        GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", errorMessage, SC_UNAUTHORIZED);
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenThrow(exception);
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
+
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
         assertThat(response.state(), is(nullValue()));
@@ -243,7 +245,8 @@ class StripeCaptureHandlerTest {
         when(gatewayCaptureResponse.getEntity()).thenReturn(load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE));
         when(gatewayClient.postRequestFor(any(StripeCaptureRequest.class))).thenReturn(gatewayCaptureResponse);
 
-        GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), SC_UNAUTHORIZED);
+        String errorMessage = load(STRIPE_ERROR_RESPONSE).replace("{{code}}", "resource_missing");
+        GatewayErrorException exception = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", errorMessage, SC_UNAUTHORIZED);
         when(gatewayClient.postRequestFor(any(StripeTransferOutRequest.class))).thenThrow(exception);
 
         CaptureResponse response = stripeCaptureHandler.capture(captureGatewayRequest);
