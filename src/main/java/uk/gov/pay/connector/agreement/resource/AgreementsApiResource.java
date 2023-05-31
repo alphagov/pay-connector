@@ -61,7 +61,6 @@ public class AgreementsApiResource {
 
     @POST
     @Path("/v1/api/accounts/{accountId}/agreements/{agreementId}/cancel")
-    @Produces("application/json")
     @Consumes("application/json")
     public Response cancelAgreement(
             @Parameter(example = "1", description = "Gateway account ID")
