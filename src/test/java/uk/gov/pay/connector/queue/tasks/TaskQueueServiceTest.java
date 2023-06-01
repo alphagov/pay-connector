@@ -48,9 +48,6 @@ class TaskQueueServiceTest {
 
     @Mock
     private TaskQueue mockTaskQueue;
-
-    @Mock
-    private StripeGatewayConfig mockStripeGatewayConfig;
     
     private TaskQueueService taskQueueService;
 
@@ -66,7 +63,7 @@ class TaskQueueServiceTest {
 
     @BeforeEach
     void setUp() {
-        taskQueueService = new TaskQueueService(mockTaskQueue, mockStripeGatewayConfig, objectMapper);
+        taskQueueService = new TaskQueueService(mockTaskQueue, objectMapper);
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueService.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockAppender);
