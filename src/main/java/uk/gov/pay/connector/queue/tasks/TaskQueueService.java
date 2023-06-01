@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
-import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -22,22 +21,21 @@ import javax.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
 
 public class TaskQueueService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final TaskQueue taskQueue;
-    private final StripeGatewayConfig stripeGatewayConfig;
     private final ObjectMapper objectMapper;
 
 
     @Inject
     public TaskQueueService(TaskQueue taskQueue,
-                            StripeGatewayConfig stripeGatewayConfig,
                             ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
-        this.stripeGatewayConfig = stripeGatewayConfig;
         this.objectMapper = objectMapper;
     }
 
@@ -64,6 +62,7 @@ public class TaskQueueService {
 
     public void addAuthoriseWithUserNotPresentTask(ChargeEntity chargeEntity) {
         try {
+            MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
             var data = new PaymentTaskData(chargeEntity.getExternalId());
             add(new Task(objectMapper.writeValueAsString(data), TaskType.AUTHORISE_WITH_USER_NOT_PRESENT));
         } catch (Exception e) {
@@ -74,10 +73,16 @@ public class TaskQueueService {
             );
             Sentry.captureException(e);
         }
+        finally {
+            MDC.remove(PAYMENT_EXTERNAL_ID);
+        }
     }
 
     public void addDeleteStoredPaymentDetailsTask(AgreementEntity agreementEntity, PaymentInstrumentEntity paymentInstrumentEntity) {
         try {
+            MDC.put(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId());
+            MDC.put(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId());
+
             var data = new DeleteStoredPaymentDetailsTaskData(agreementEntity.getExternalId(), paymentInstrumentEntity.getExternalId());
             add(new Task(objectMapper.writeValueAsString(data), TaskType.DELETE_STORED_PAYMENT_DETAILS));
         } catch (Exception e) {
@@ -87,8 +92,12 @@ public class TaskQueueService {
                     kv("error", e.getMessage()))
             );
             Sentry.captureException(e);
+        } finally {
+            MDC.remove(AGREEMENT_EXTERNAL_ID);
+            MDC.remove(PAYMENT_INSTRUMENT_EXTERNAL_ID);
         }
     }
+
     private void addCollectStripeFeeForFailedPaymentTask(ChargeEntity chargeEntity) {
         try {
             MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());

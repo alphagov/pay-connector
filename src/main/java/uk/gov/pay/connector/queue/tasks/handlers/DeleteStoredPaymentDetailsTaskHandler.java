@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.queue.tasks.handlers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.service.AgreementService;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -14,13 +12,14 @@ import javax.inject.Inject;
 
 public class DeleteStoredPaymentDetailsTaskHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DeleteStoredPaymentDetailsTaskHandler.class);
     private AgreementService agreementService;
     private PaymentInstrumentService paymentInstrumentService;
     private PaymentProviders providers;
 
     @Inject
-    public DeleteStoredPaymentDetailsTaskHandler(AgreementService agreementService, PaymentInstrumentService paymentInstrumentService, PaymentProviders providers) {
+    public DeleteStoredPaymentDetailsTaskHandler(AgreementService agreementService,
+                                                 PaymentInstrumentService paymentInstrumentService,
+                                                 PaymentProviders providers) {
         this.agreementService = agreementService;
         this.paymentInstrumentService = paymentInstrumentService;
         this.providers = providers;

@@ -18,6 +18,7 @@ import java.time.Clock;
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
 
 public class LinkPaymentInstrumentToAgreementService {
@@ -53,6 +54,7 @@ public class LinkPaymentInstrumentToAgreementService {
                         PaymentInstrumentConfirmed.from(agreementEntity, clock.instant())
                 ));
                 LOGGER.info("Agreement successfully set up with payment instrument",
+                        kv(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId()),
                         kv(PAYMENT_INSTRUMENT_EXTERNAL_ID, paymentInstrumentEntity.getExternalId()));
             }, () -> LOGGER.error("Expected charge {} to have an agreement but it does not have one", chargeEntity.getExternalId()));
         }, () -> LOGGER.error("Expected charge {} to have a payment instrument but it does not have one", chargeEntity.getExternalId()));
