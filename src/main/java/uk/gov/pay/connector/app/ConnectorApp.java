@@ -16,6 +16,11 @@ import io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.Counter;
+import io.prometheus.client.dropwizard.DropwizardExports;
+import io.prometheus.client.exporter.MetricsServlet;
+import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundExceptionMapper;
 import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.agreement.resource.AgreementsApiResource;
@@ -220,23 +225,11 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
     }
 
     private void initialiseMetrics(ConnectorConfiguration configuration, Environment environment) {
-        DatabaseMetricsService metricsService = new DatabaseMetricsService(configuration.getDataSourceFactory(), environment.metrics(), "connector");
-
-        environment
-                .lifecycle()
-                .scheduledExecutorService("metricscollector")
-                .threads(1)
-                .build()
-                .scheduleAtFixedRate(metricsService::updateMetricData, 0, GRAPHITE_SENDING_PERIOD_SECONDS / 2, TimeUnit.SECONDS);
-
-        GraphiteSender graphiteUDP = new GraphiteUDP(configuration.getGraphiteHost(), Integer.parseInt(configuration.getGraphitePort()));
-        GraphiteReporter.forRegistry(environment.metrics())
-                .prefixedWith(SERVICE_METRICS_NODE)
-                .convertRatesTo(TimeUnit.MINUTES)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .build(graphiteUDP)
-                .start(GRAPHITE_SENDING_PERIOD_SECONDS, TimeUnit.SECONDS);
-
+        CollectorRegistry collectorRegistry = new CollectorRegistry();
+        collectorRegistry.register(new DropwizardExports(environment.metrics()));
+        environment.admin()
+                .addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry))
+                .addMapping("/prometheusMetrics");
     }
 
     public static void main(String[] args) throws Exception {

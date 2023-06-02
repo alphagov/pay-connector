@@ -3,6 +3,7 @@ package uk.gov.pay.connector.queue.statetransition;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.Counter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +90,12 @@ public class StateTransitionService {
                 chargeEventEntity.getUpdated().toInstant());
     }
 
+    private static final Counter stateTransition = Counter.build().name("state_transition").help("State transition").register();
+
     private void incrementPerGatewayAccountStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
+        logger.error("INCREMENT STATE TRANSITION IN incrementPerGatewayAccountStateTransitionCounter");
+        stateTransition.inc();
+        
         metricRegistry.counter(String.format(
                 "state-transition.%s.%s.to.%s",
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
@@ -106,6 +112,9 @@ public class StateTransitionService {
     }
 
     private void incrementPerGatewayStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
+        logger.error("INCREMENT STATE TRANSITION IN incrementPerGatewayStateTransitionCounter");
+        stateTransition.inc();
+        
         metricRegistry.counter(String.format(
                 "state-transition.%s.%s.to.%s",
                 chargeEventEntity.getChargeEntity().getGatewayAccount().getType(),
