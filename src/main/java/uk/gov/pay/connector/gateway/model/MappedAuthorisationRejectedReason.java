@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.model;
 public enum MappedAuthorisationRejectedReason {
 
     AUTHENTICATION_REQUESTED(true),
+    CARD_BLOCKED_OR_INVALID_OR_NONEXISTENT(true),
     DO_NOT_HONOUR(true),
     EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT(true),
     GENERIC_DECLINE(true),
@@ -11,6 +12,9 @@ public enum MappedAuthorisationRejectedReason {
     INVALID_AMOUNT(true),
     INVALID_MERCHANT(true),
     ISSUER_TEMPORARILY_UNAVAILABLE(true),
+    MASTERCARD_FRAUD_SECURITY_REASONS_OR_VISA_STIP_CANNOT_APPROVE(true),
+    MASTERCARD_POLICY_REASONS_OR_VISA_NEGATIVE_CAM_DCVV_ICVV_OR_CVV_RESULTS(true),
+    MASTERCARD_LIFECYCLE_REASONS_OR_VISA_ALREADY_REVERSED(true),
     REENTER_TRANSACTION(true),
     REFER_TO_CARD_ISSUER(true),
     SUSPECTED_FRAUD(true),
@@ -30,6 +34,7 @@ public enum MappedAuthorisationRejectedReason {
     LOST_CARD(false),
     NO_SUCH_ISSUER(false),
     PICKUP_CARD(false),
+    RESTRICTED_CARD(false),
     REVOCATION_OF_ALL_AUTHORISATION(false),
     REVOCATION_OF_AUTHORISATION(false),
     STOLEN_CARD(false),
