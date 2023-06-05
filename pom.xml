@@ -18,7 +18,7 @@
         <guice.version>5.1.0</guice.version>
         <jackson.version>2.15.2</jackson.version>
         <pay-java-commons.version>1.0.20230601160155</pay-java-commons.version>
-        <surefire.version>3.0.0</surefire.version>
+        <surefire.version>3.1.0</surefire.version>
         <jooq.version>3.18.4</jooq.version>
         <postgresql.version>42.6.0</postgresql.version>
         <commons-lang3.version>3.12.0</commons-lang3.version>
