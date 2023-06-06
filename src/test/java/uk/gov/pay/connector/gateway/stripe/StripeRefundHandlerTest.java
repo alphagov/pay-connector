@@ -179,7 +179,8 @@ class StripeRefundHandlerTest {
     }
 
     private void mockRefund4xxResponse() throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        GatewayErrorException gatewayClientException = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), 402);
+        String errorMessage = load(STRIPE_ERROR_RESPONSE).replace("{{code}}", "resource_missing");
+        GatewayErrorException gatewayClientException = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", errorMessage, 402);
         when(gatewayClient.postRequestFor(any(StripeRefundRequest.class))).thenThrow(gatewayClientException);
     }
 
@@ -195,7 +196,8 @@ class StripeRefundHandlerTest {
     }
 
     private void mockTransfer4xxResponse() throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        GatewayErrorException gatewayClientException = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", load(STRIPE_ERROR_RESPONSE), 402);
+        String errorMessage = load(STRIPE_ERROR_RESPONSE).replace("{{code}}", "resource_missing");
+        GatewayErrorException gatewayClientException = new GatewayErrorException("Unexpected HTTP status code 402 from gateway", errorMessage, 402);
         when(gatewayClient.postRequestFor(any(StripeTransferInRequest.class))).thenThrow(gatewayClientException);
     }
 

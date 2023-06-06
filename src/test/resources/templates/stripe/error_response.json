@@ -1,7 +1,7 @@
 {
   "error": {
     "charge": "ch_aaaaaaaaaaaaaaaaaaaaaaaa",
-    "code": "resource_missing",
+    "code": "{{code}}",
     "decline_code": "generic_decline",
     "doc_url": "https://stripe.com/docs/error-codes/card-declined",
     "message": "No such charge: ch_123456 or something similar",

@@ -275,6 +275,7 @@ class StripePaymentProviderTest {
             assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
 
             BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+
             assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
             assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
             assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
@@ -282,6 +283,45 @@ class StripePaymentProviderTest {
             assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
         }
 
+        @Test
+        void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeInvalidRequestErrorAndErrorCodeCardDecline() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse("invalid_request_error", "card_decline_rate_limit_exceeded"), 400));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+
+            ChargeEntity charge = buildTestCharge();
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+            assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
+
+            BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+
+            assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+            assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("type: invalid_request_error"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("code: card_decline_rate_limit_exceeded"));
+        }
+
+        @Test
+        void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeInvalidRequestAndErrorCodeIsNotCardDecline() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                    .thenThrow(new GatewayErrorException("server error", errorResponse("invalid_request_error"), 400));
+            when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
+
+            ChargeEntity charge = buildTestCharge();
+            GatewayResponse<BaseAuthoriseResponse> authoriseResponse = provider.authorise(buildTestAuthorisationRequest(charge), charge);
+            assertThat(authoriseResponse.getBaseResponse().isPresent(), is(true));
+
+            BaseAuthoriseResponse baseAuthoriseResponse = authoriseResponse.getBaseResponse().get();
+
+            assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
+            assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("type: invalid_request_error"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+            assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
+        }
         @Test
         void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
             when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
@@ -650,7 +690,10 @@ class StripePaymentProviderTest {
                 ? "invalid_request_error"
                 : errorType[0];
 
-        return load(STRIPE_ERROR_RESPONSE).replace("{{type}}", type);
+        String code = (errorType == null || errorType.length <=1)
+                ? "resource_missing"
+                : errorType[1];
+        return load(STRIPE_ERROR_RESPONSE).replace("{{type}}", type).replace("{{code}}", code);
     }
 
     private ChargeEntity buildTestCharge() {
