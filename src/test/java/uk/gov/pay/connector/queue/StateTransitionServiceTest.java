@@ -70,6 +70,7 @@ class StateTransitionServiceTest {
     @BeforeEach
     void setUp() {
         when(environment.metrics()).thenReturn(metricRegistry);
+        when(metricRegistry.counter(anyString())).thenReturn(counter);
         stateTransitionService = new StateTransitionService(mockStateTransitionQueue, mockEventService, environment);
     }
 
