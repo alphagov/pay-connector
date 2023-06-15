@@ -51,7 +51,7 @@ jobs:
           fi
       - name: Run unit and integration tests
         run: mvn verify
-      - name: Check for generated pacts
+      - name: Check for generated pact files
         run: |
           if [ ! -d target/pacts ]; then
             echo "The pact files were not generated, this means that no pact results will be published and this build will fail to deploy"
