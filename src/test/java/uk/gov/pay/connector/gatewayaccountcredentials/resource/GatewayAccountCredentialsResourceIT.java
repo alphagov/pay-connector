@@ -298,6 +298,68 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
+    public void patchGatewayAccountNestedCredentialsValidRequest_responseShouldBe200() {
+        Map<String, String> newRecurringCustomerInitiatedCredentials = Map.of("username", "new-username",
+                "password", "new-password",
+                "merchant_id", "new-recurring-customer-initiated-merchant-id");
+        Map<String, String> newRecurringMerchantInitiatedCredentials = Map.of("username", "new-username",
+                "password", "new-password",
+                "merchant_id", "new-recurring-merchant-initiated-merchant-id");
+        Map<String, String> newOneOffCustomerInitiatedCredentials = Map.of("username", "new-username",
+                "password", "new-password",
+                "merchant_id", "new-one-off-customer-initiated-merchant-id");
+        givenSetup()
+                .body(toJson(List.of(
+                        Map.of("op", "replace",
+                                "path", "credentials/worldpay/recurring_customer_initiated",
+                                "value", newRecurringCustomerInitiatedCredentials),
+                        Map.of("op", "replace",
+                                "path", "credentials/worldpay/recurring_merchant_initiated",
+                                "value", newRecurringMerchantInitiatedCredentials),
+                        Map.of("op", "replace",
+                                "path", "last_updated_by_user_external_id",
+                                "value", "a-new-user-external-id"),
+                        Map.of("op", "replace",
+                                "path", "state",
+                                "value", "VERIFIED_WITH_LIVE_PAYMENT")
+                )))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("credentials"))
+                .body("credentials.recurring_customer_initiated.username", is("new-username"))
+                .body("credentials.recurring_customer_initiated", not(hasKey("password")))
+                .body("credentials.recurring_customer_initiated.merchant_id", is("new-recurring-customer-initiated-merchant-id"))
+                .body("credentials.recurring_merchant_initiated.username", is("new-username"))
+                .body("credentials.recurring_merchant_initiated", not(hasKey("password")))
+                .body("credentials.recurring_merchant_initiated.merchant_id", is("new-recurring-merchant-initiated-merchant-id"))
+                .body("credentials", not(hasKey("one_off_customer_initiated")))
+                .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
+                .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
+                .body("created_date", is("2021-01-01T00:00:00.000Z"))
+                .body("active_start_date", is("2021-02-01T00:00:00.000Z"))
+                .body("active_end_date", is("2021-03-01T00:00:00.000Z"))
+                .body("external_id", is(credentialsExternalId))
+                .body("payment_provider", is("worldpay"));
+
+        givenSetup()
+                .body(toJson(List.of(
+                        Map.of("op", "replace",
+                                "path", "credentials/worldpay/one_off_customer_initiated",
+                                "value", newOneOffCustomerInitiatedCredentials)
+                )))
+                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("credentials"))
+                .body("credentials.recurring_customer_initiated.merchant_id", is("new-recurring-customer-initiated-merchant-id"))
+                .body("credentials.recurring_merchant_initiated.merchant_id", is("new-recurring-merchant-initiated-merchant-id"))
+                .body("credentials.one_off_customer_initiated.merchant_id", is("new-one-off-customer-initiated-merchant-id"))
+                .body("credentials.one_off_customer_initiated.username", is("new-username"))
+                .body("credentials.one_off_customer_initiated", not(hasKey("password")));
+    }
+
+    @Test
     public void patchGatewayAccountCredentialsInvalidRequestBody_shouldReturn400() {
         Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
 

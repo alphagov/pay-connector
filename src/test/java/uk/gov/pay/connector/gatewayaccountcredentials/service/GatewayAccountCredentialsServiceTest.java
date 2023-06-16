@@ -248,6 +248,53 @@ public class GatewayAccountCredentialsServiceTest {
         }
 
         @Test
+        void shouldUpdateNestedGatewayAccountCrentials() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+
+            JsonNode nestedRecurringCustomerInitiated = objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_customer_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_id", "new-recurring-cit-merchant-id",
+                                    "username", "new-username",
+                                    "password", "new-password"
+                            )));
+
+            JsonNode nestedRecurringMerchantInitiated = objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_merchant_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_id", "new-recurring-mit-merchant-id",
+                                    "username", "new-username",
+                                    "password", "new-password"
+                            )));
+
+            JsonNode nestedOneOffCustomerInitiated = objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/one_off_customer_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_id", "one-off-cit-merchant-id",
+                                    "username", "new-username",
+                                    "password", "new-password"
+                            )));
+
+            List<JsonPatchRequest> patchRequests = Stream.of(nestedRecurringCustomerInitiated, nestedRecurringMerchantInitiated, nestedOneOffCustomerInitiated).map(JsonPatchRequest::from).collect(Collectors.toList());
+
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
+
+            verify(mockGatewayAccountCredentialsDao, times(2)).merge(credentialsEntity);
+            assertThat((Map<String, Object>)credentialsEntity.getCredentials().get("recurring_customer_initiated"), hasEntry("merchant_id", "new-recurring-cit-merchant-id"));
+            assertThat((Map<String, Object>)credentialsEntity.getCredentials().get("recurring_merchant_initiated"), hasEntry("merchant_id", "new-recurring-mit-merchant-id"));
+            assertThat((Map<String, Object>)credentialsEntity.getCredentials().get("one_off_customer_initiated"), hasEntry("merchant_id", "one-off-cit-merchant-id"));
+        }
+
+        @Test
         void shouldChangeStateToActive_whenCredentialsInCreatedStateUpdated_andOnlyOneCredential() {
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()

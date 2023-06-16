@@ -34,6 +34,9 @@ public class GatewayAccountCredentialsRequestValidator {
     private static final Pattern WORLDPAY_MERCHANT_ID_PATTERN = Pattern.compile("[0-9a-f]{15}");
 
     public static final String FIELD_CREDENTIALS = "credentials";
+    public static final String FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED = "credentials/worldpay/recurring_customer_initiated";
+    public static final String FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED = "credentials/worldpay/recurring_merchant_initiated";
+    public static final String FIELD_CREDENTIALS_WORLDPAY_ONE_OFF_CUSTOMER_INITIATED = "credentials/worldpay/one_off_customer_initiated";
     public static final String FIELD_LAST_UPDATED_BY_USER = "last_updated_by_user_external_id";
     public static final String FIELD_STATE = "state";
     public static final String FIELD_GATEWAY_MERCHANT_ID = "gateway_merchant_id";
@@ -85,7 +88,10 @@ public class GatewayAccountCredentialsRequestValidator {
                 new PatchPathOperation(FIELD_CREDENTIALS, JsonPatchOp.REPLACE), operation -> validateReplaceCredentialsOperation(operation, paymentProvider),
                 new PatchPathOperation(FIELD_LAST_UPDATED_BY_USER, JsonPatchOp.REPLACE), JsonPatchRequestValidator::throwIfValueNotString,
                 new PatchPathOperation(FIELD_STATE, JsonPatchOp.REPLACE), this::validateReplaceStateOperation,
-                new PatchPathOperation(GATEWAY_MERCHANT_ID_PATH, JsonPatchOp.REPLACE), request -> validateGatewayMerchantId(request, paymentProvider, credentials)
+                new PatchPathOperation(GATEWAY_MERCHANT_ID_PATH, JsonPatchOp.REPLACE), request -> validateGatewayMerchantId(request, paymentProvider, credentials),
+                new PatchPathOperation(FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED, JsonPatchOp.REPLACE), operation -> validateReplaceCredentialsOperation(operation, paymentProvider),
+                new PatchPathOperation(FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED, JsonPatchOp.REPLACE), operation -> validateReplaceCredentialsOperation(operation, paymentProvider),
+                new PatchPathOperation(FIELD_CREDENTIALS_WORLDPAY_ONE_OFF_CUSTOMER_INITIATED, JsonPatchOp.REPLACE), operation -> validateReplaceCredentialsOperation(operation, paymentProvider)
         );
         var patchRequestValidator = new JsonPatchRequestValidator(operationValidators);
         patchRequestValidator.validate(patchRequest);

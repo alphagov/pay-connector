@@ -7,6 +7,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -44,6 +45,9 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_LAST_UPDATED_BY_USER;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_STATE;
@@ -139,6 +143,15 @@ public class GatewayAccountCredentialsService {
             case FIELD_CREDENTIALS:
                 updateCredentials(patchRequest, gatewayAccountCredentialsEntity);
                 break;
+            case FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED:
+                updateNestedCredentials(GatewayAccount.RECURRING_CUSTOMER_INITIATED, patchRequest, gatewayAccountCredentialsEntity);
+                break;
+            case FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED:
+                updateNestedCredentials(GatewayAccount.RECURRING_MERCHANT_INITIATED, patchRequest, gatewayAccountCredentialsEntity);
+                break;
+            case FIELD_CREDENTIALS_WORLDPAY_ONE_OFF_CUSTOMER_INITIATED:
+                updateNestedCredentials(GatewayAccount.ONE_OFF_CUSTOMER_INITIATED, patchRequest, gatewayAccountCredentialsEntity);
+                break;
             case FIELD_LAST_UPDATED_BY_USER:
                 gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(patchRequest.valueAsString());
                 break;
@@ -154,6 +167,16 @@ public class GatewayAccountCredentialsService {
             default:
                 throw new BadRequestException("Unexpected path for patch operation: " + patchRequest.getPath());
         }
+    }
+
+    private void updateNestedCredentials(String nestedKey, JsonPatchRequest patchRequest, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+        HashMap<String, Object> nestedMap = new HashMap<>();
+        HashMap<String, Object> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
+        patchRequest.valueAsObject().forEach(nestedMap::put);
+        updatableMap.put(nestedKey, nestedMap);
+        gatewayAccountCredentialsEntity.setCredentials(updatableMap);
+
+        updateStateForCredentials(gatewayAccountCredentialsEntity);
     }
 
     private void updateCredentials(JsonPatchRequest patchRequest, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
