@@ -47,6 +47,7 @@ public final class GatewayAccountEntityFixture {
     private boolean providerSwitchEnabled = false;
     private boolean blockPrepaidCards;
     private boolean disabled = false;
+    private boolean recurringEnabled = false;
 
     private GatewayAccountEntityFixture() {
     }
@@ -107,6 +108,11 @@ public final class GatewayAccountEntityFixture {
 
     public GatewayAccountEntityFixture withAllowMoto(boolean allowMoto) {
         this.allowMoto = allowMoto;
+        return this;
+    }
+
+    public GatewayAccountEntityFixture withRecurringEnabled(boolean recurringEnabled) {
+        this.recurringEnabled = recurringEnabled;
         return this;
     }
 
@@ -174,7 +180,7 @@ public final class GatewayAccountEntityFixture {
         this.gatewayAccountCredentialsEntities = credentials;
         return this;
     }
-    
+
     public GatewayAccountEntityFixture withActiveStripeGatewayAccountCredentials() {
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withState(GatewayAccountCredentialState.ACTIVE)
@@ -194,7 +200,7 @@ public final class GatewayAccountEntityFixture {
         this.blockPrepaidCards = blockPrepaidCards;
         return this;
     }
-    
+
     public GatewayAccountEntityFixture withDisabled(boolean disabled) {
         this.disabled = disabled;
         return this;
@@ -226,6 +232,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setBlockPrepaidCards(blockPrepaidCards);
         gatewayAccountEntity.setDisabled(disabled);
         gatewayAccountEntity.setAllowMoto(allowMoto);
+        gatewayAccountEntity.setRecurringEnabled(recurringEnabled);
 
         if (credentials != null && !credentials.isEmpty() && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {

@@ -223,8 +223,15 @@ public class GatewayAccountCredentialsService {
         }
 
         if (paymentGatewayName == WORLDPAY && LIVE.name().equalsIgnoreCase(gatewayAccountEntity.getType())) {
-            return gatewayAccountEntity.isAllowMoto() ||
-                    gatewayAccountEntity.getWorldpay3dsFlexCredentials().isPresent();
+            if (gatewayAccountEntity.isAllowMoto()) {
+                return true;
+            } else if (gatewayAccountEntity.isRecurringEnabled()) {
+                return gatewayAccountEntity.getWorldpay3dsFlexCredentials().isPresent() &&
+                        credentialsEntity.getCredentials().get(GatewayAccount.RECURRING_CUSTOMER_INITIATED) != null &&
+                        credentialsEntity.getCredentials().get(GatewayAccount.RECURRING_MERCHANT_INITIATED) != null;
+            } else {
+                return gatewayAccountEntity.getWorldpay3dsFlexCredentials().isPresent();
+            }
         }
 
         return true;
