@@ -91,6 +91,7 @@ public class AgreementService {
         var agreement = agreementDao
                 .findByExternalId(agreementExternalId, gatewayAccountId)
                 .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + agreementExternalId + "] not found."));
+
         agreement.getPaymentInstrument()
                 .filter(paymentInstrument -> paymentInstrument.getStatus() == PaymentInstrumentStatus.ACTIVE)
                 .ifPresentOrElse(paymentInstrument -> {

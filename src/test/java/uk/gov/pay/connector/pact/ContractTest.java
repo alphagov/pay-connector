@@ -770,4 +770,29 @@ public class ContractTest {
                 .build();
         dbHelper.addAgreement(agreementParams);
     }
+
+    @State("a gateway account and an agreement with cancelled status exists")
+    public void aGatewayAccountWithACancelledStatusAgreementExists(Map<String, String> params) {
+        ledgerStub.acceptPostEvent();
+        var agreementExternalId = Optional.ofNullable(params.get("agreement_external_id")).orElse("abcdefghijklmnopqrstuvwxyz");
+        var gatewayAccountId = Optional.ofNullable(params.get("gateway_account_id")).orElse("3456");
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(gatewayAccountId)
+                .withPaymentGateway("sandbox")
+                .withCredentials(Map.of())
+                .withServiceName("rcp service")
+                .withRecurringEnabled(true)
+                .build());
+        var addPaymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.CANCELLED)
+                .build();
+        dbHelper.addPaymentInstrument(addPaymentInstrumentParams);
+        var agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(gatewayAccountId)
+                .withExternalAgreementId(agreementExternalId)
+                .withPaymentInstrumentId(addPaymentInstrumentParams.getPaymentInstrumentId())
+                .build();
+        dbHelper.addAgreement(agreementParams);
+    }
 }
