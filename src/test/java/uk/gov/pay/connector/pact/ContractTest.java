@@ -748,6 +748,7 @@ public class ContractTest {
 
     @State("a gateway account and an active agreement exists")
     public void aGatewayAccountWithAnActiveAgreementExists(Map<String, String> params) {
+        ledgerStub.acceptPostEvent();
         var agreementExternalId = Optional.ofNullable(params.get("agreement_external_id")).orElse("abcdefghijklmnopqrstuvwxyz");
         var gatewayAccountId = Optional.ofNullable(params.get("gateway_account_id")).orElse("3456");
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
