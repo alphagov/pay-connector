@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
@@ -44,6 +47,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_LAST_UPDATED_BY_USER;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_STATE;
@@ -63,9 +68,11 @@ public class GatewayAccountCredentialsService {
 
     private final Set<GatewayAccountCredentialState> USABLE_STATES = EnumSet.of(ENTERED, VERIFIED_WITH_LIVE_PAYMENT, ACTIVE);
 
+    private final ObjectMapper objectMapper;
     @Inject
-    public GatewayAccountCredentialsService(GatewayAccountCredentialsDao gatewayAccountCredentialsDao) {
+    public GatewayAccountCredentialsService(GatewayAccountCredentialsDao gatewayAccountCredentialsDao, ObjectMapper objectMapper) {
         this.gatewayAccountCredentialsDao = gatewayAccountCredentialsDao;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -138,6 +145,18 @@ public class GatewayAccountCredentialsService {
         switch (patchRequest.getPath()) {
             case FIELD_CREDENTIALS:
                 updateCredentials(patchRequest, gatewayAccountCredentialsEntity);
+                break;
+            case FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED:
+                WorldpayMerchantCodeCredentials merchantCodeCredentialsRecurringCit = objectMapper.convertValue(patchRequest.valueAsObject(), WorldpayMerchantCodeCredentials.class);
+                WorldpayCredentials worldpayCredentialsRecurringCit = objectMapper.convertValue(gatewayAccountCredentialsEntity.getCredentials(), WorldpayCredentials.class);
+                worldpayCredentialsRecurringCit.setRecurringCustomerInitiatedCredentials(merchantCodeCredentialsRecurringCit);
+                gatewayAccountCredentialsEntity.setCredentials(objectMapper.convertValue(worldpayCredentialsRecurringCit, Map.class));
+                break;
+            case FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED:
+                WorldpayMerchantCodeCredentials merchantCodeCredentialsRecurringMit = objectMapper.convertValue(patchRequest.valueAsObject(), WorldpayMerchantCodeCredentials.class);
+                WorldpayCredentials worldpayCredentialsRecurringMit = objectMapper.convertValue(gatewayAccountCredentialsEntity.getCredentials(), WorldpayCredentials.class);
+                worldpayCredentialsRecurringMit.setRecurringMerchantInitiatedCredentials(merchantCodeCredentialsRecurringMit);
+                gatewayAccountCredentialsEntity.setCredentials(objectMapper.convertValue(worldpayCredentialsRecurringMit, Map.class));
                 break;
             case FIELD_LAST_UPDATED_BY_USER:
                 gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(patchRequest.valueAsString());

@@ -9,7 +9,7 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.worldpay.exception.UnexpectedValidateCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
 
 import javax.inject.Named;
 import java.net.URI;
@@ -41,10 +41,10 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
         this.gatewayClient = gatewayClient;
     }
 
-    public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, WorldpayCredentials worldpayCredentials) {
+    public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, WorldpayValidatableCredentials worldpayValidatableCredentials) {
         GatewayOrder order = aWorldpayInquiryRequestBuilder()
                 .withTransactionId("an-order-id-that-will-not-exist")
-                .withMerchantCode(worldpayCredentials.getMerchantId())
+                .withMerchantCode(worldpayValidatableCredentials.getMerchantId())
                 .build();
 
         try {
@@ -54,7 +54,7 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
                     gatewayAccountEntity.getType(),
                     order,
                     Collections.emptyList(),
-                    getWorldpayCredentialsCheckAuthHeader(worldpayCredentials)
+                    getWorldpayCredentialsCheckAuthHeader(worldpayValidatableCredentials)
             );
 
             // There is no Worldpay endpoint to explicitly check credentials, so we make a query for a non-existent 

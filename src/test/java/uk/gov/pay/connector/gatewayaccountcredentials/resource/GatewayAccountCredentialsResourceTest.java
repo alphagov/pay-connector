@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,7 @@ import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCredentialsValidationService;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
@@ -51,7 +52,7 @@ public class GatewayAccountCredentialsResourceTest {
     public static ResourceExtension resources = ResourceExtension.builder()
             .addResource(new GatewayAccountCredentialsResource(
                     gatewayAccountService,
-                    new GatewayAccountCredentialsService(credentialDao),
+                    new GatewayAccountCredentialsService(credentialDao, new ObjectMapper()),
                     worldpay3dsFlexCredentialsService,
                     worldpay3dsFlexCredentialsValidationService,
                     worldpayCredentialsValidationService,
@@ -290,20 +291,20 @@ public class GatewayAccountCredentialsResourceTest {
 
     @Test
     void checkWorldpayCredentials_returnsValid() {
-        WorldpayCredentials worldpayCredentials = new WorldpayCredentials(
+        WorldpayValidatableCredentials worldpayValidatableCredentials = new WorldpayValidatableCredentials(
                 validCheckWorldpayCredentialsPayload.get("merchant_id"),
                 validCheckWorldpayCredentialsPayload.get("username"),
                 validCheckWorldpayCredentialsPayload.get("password"));
 
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
-        when(worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials)).thenReturn(true);
+        when(worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials)).thenReturn(true);
 
         Response response = resources
                 .target(format("/v1/api/accounts/%s/worldpay/check-credentials", accountId))
                 .request()
                 .post(Entity.json(validCheckWorldpayCredentialsPayload));
 
-        verify(worldpayCredentialsValidationService).validateCredentials(gatewayAccountEntity, worldpayCredentials);
+        verify(worldpayCredentialsValidationService).validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials);
 
         assertThat(response.getStatus(), is(200));
         Map<String, Object> responseBody = response.readEntity(new GenericType<HashMap>() {
@@ -313,20 +314,20 @@ public class GatewayAccountCredentialsResourceTest {
 
     @Test
     void checkWorldpayCredentials_returnsInvalid() {
-        WorldpayCredentials worldpayCredentials = new WorldpayCredentials(
+        WorldpayValidatableCredentials worldpayValidatableCredentials = new WorldpayValidatableCredentials(
                 validCheckWorldpayCredentialsPayload.get("merchant_id"),
                 validCheckWorldpayCredentialsPayload.get("username"),
                 validCheckWorldpayCredentialsPayload.get("password"));
 
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
-        when(worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials)).thenReturn(false);
+        when(worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials)).thenReturn(false);
 
         Response response = resources
                 .target(format("/v1/api/accounts/%s/worldpay/check-credentials", accountId))
                 .request()
                 .post(Entity.json(validCheckWorldpayCredentialsPayload));
 
-        verify(worldpayCredentialsValidationService).validateCredentials(gatewayAccountEntity, worldpayCredentials);
+        verify(worldpayCredentialsValidationService).validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials);
 
         assertThat(response.getStatus(), is(200));
         Map<String, Object> responseBody = response.readEntity(new GenericType<HashMap>() {

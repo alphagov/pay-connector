@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.worldpay.exception.UnexpectedValidateCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
 
 import java.net.URI;
 import java.util.Map;
@@ -33,7 +33,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_INQU
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
-class WorldpayCredentialsValidationServiceTest {
+class WorldpayValidatableCredentialsValidationServiceTest {
 
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
     private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
@@ -51,7 +51,7 @@ class WorldpayCredentialsValidationServiceTest {
             .withType(TEST)
             .build();
 
-    private final WorldpayCredentials worldpayCredentials = new WorldpayCredentials("A_MERCHANT_ID", "user123", "test");
+    private final WorldpayValidatableCredentials worldpayValidatableCredentials = new WorldpayValidatableCredentials("A_MERCHANT_ID", "user123", "test");
 
     @BeforeEach
     void setUp() {
@@ -67,7 +67,7 @@ class WorldpayCredentialsValidationServiceTest {
         when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenReturn(response);
 
-        boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials);
+        boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials);
         assertThat(valid, is(true));
     }
 
@@ -78,7 +78,7 @@ class WorldpayCredentialsValidationServiceTest {
         when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenReturn(response);
 
-        boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials);
+        boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials);
         assertThat(valid, is(false));
     }
 
@@ -87,7 +87,7 @@ class WorldpayCredentialsValidationServiceTest {
         when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Error", "Error", 401));
 
-        boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials);
+        boolean valid = worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials);
         assertThat(valid, is(false));
     }
 
@@ -98,7 +98,7 @@ class WorldpayCredentialsValidationServiceTest {
         when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenReturn(response);
 
-        assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials));
+        assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials));
     }
 
     @Test
@@ -106,7 +106,7 @@ class WorldpayCredentialsValidationServiceTest {
         when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenThrow(new GatewayException.GatewayErrorException("Error", "Error", 403));
 
-        assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials));
+        assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials));
     }
 
     @Test
@@ -114,6 +114,6 @@ class WorldpayCredentialsValidationServiceTest {
         when(gatewayClient.postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), eq(emptyList()), anyMap()))
                 .thenThrow(GatewayException.GenericGatewayException.class);
 
-        assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials));
+        assertThrows(UnexpectedValidateCredentialsResponse.class, () -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials));
     }
 }
