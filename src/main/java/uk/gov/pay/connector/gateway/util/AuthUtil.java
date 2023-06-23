@@ -3,12 +3,11 @@ package uk.gov.pay.connector.gateway.util;
 import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentException;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -86,8 +85,8 @@ public class AuthUtil {
         return ImmutableMap.of(AUTHORIZATION, value);
     }
     
-    public static Map<String, String> getWorldpayCredentialsCheckAuthHeader(WorldpayCredentials worldpayCredentials) {
-        String value = encode(worldpayCredentials.getUsername(), worldpayCredentials.getPassword());
+    public static Map<String, String> getWorldpayCredentialsCheckAuthHeader(WorldpayValidatableCredentials worldpayValidatableCredentials) {
+        String value = encode(worldpayValidatableCredentials.getUsername(), worldpayValidatableCredentials.getPassword());
         return ImmutableMap.of(AUTHORIZATION, value);
     }
 }

@@ -18,7 +18,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -137,9 +137,9 @@ public class GatewayAccountCredentialsResource {
             }
     )
     public ValidationResult validateWorldpayCredentials(@PathParam("accountId") Long gatewayAccountId,
-                                                        @Valid WorldpayCredentials worldpayCredentials) {
+                                                        @Valid WorldpayValidatableCredentials worldpayValidatableCredentials) {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccountEntity -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayCredentials))
+                .map(gatewayAccountEntity -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials))
                 .map(ValidationResult::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }

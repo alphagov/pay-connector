@@ -4,11 +4,10 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class WorldpayCredentials {
+public class WorldpayValidatableCredentials {
     
     @NotEmpty(message = "Field [merchant_id] is required")
     private String merchantId;
@@ -19,11 +18,11 @@ public class WorldpayCredentials {
     @NotEmpty(message = "Field [password] is required")
     private String password;
     
-    public WorldpayCredentials() {
+    public WorldpayValidatableCredentials() {
         // Blank constructor needed for deserialization
     }
 
-    public WorldpayCredentials(String merchantId, String username, String password) {
+    public WorldpayValidatableCredentials(String merchantId, String username, String password) {
         this.merchantId = merchantId;
         this.username = username;
         this.password = password;
@@ -45,7 +44,7 @@ public class WorldpayCredentials {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        WorldpayCredentials that = (WorldpayCredentials) o;
+        WorldpayValidatableCredentials that = (WorldpayValidatableCredentials) o;
         return Objects.equals(merchantId, that.merchantId) &&
                 Objects.equals(username, that.username) &&
                 Objects.equals(password, that.password);
