@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCre
 import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class WorldpayCredentials {
+public class WorldpayCredentials extends GatewayCredentials {
 
     @JsonProperty(GatewayAccount.CREDENTIALS_MERCHANT_ID)
     private String legacyOneOffCustomerInitiatedMerchantId;

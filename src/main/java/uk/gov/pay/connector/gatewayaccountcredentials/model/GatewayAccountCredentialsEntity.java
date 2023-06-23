@@ -2,13 +2,18 @@ package uk.gov.pay.connector.gatewayaccountcredentials.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringObjectMapConverter;
 import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
@@ -26,8 +31,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
+
+import static java.util.Map.entry;
 
 @Entity
 @Table(name = "gateway_account_credentials")
@@ -82,6 +91,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     @Column(name = "external_id")
     @Schema(example = "731193f990064e698ca1b89775b70bcc")
     private String externalId;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public GatewayAccountCredentialsEntity() {
     }
@@ -144,6 +154,20 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     @Schema(example = "1")
     public Long getGatewayAccountId() {
         return gatewayAccountEntity.getId();
+    }
+
+    @Transient
+    Map<PaymentGatewayName, Class<? extends GatewayCredentials>> gatewayCredentialsMap = Map.ofEntries(
+            entry(PaymentGatewayName.WORLDPAY, WorldpayCredentials.class)
+    );
+
+    // This would replace `getCredentials()` when we want to reason about all of the code using this
+    public GatewayCredentials getCredentialsAsInterface() {
+        return objectMapper.convertValue(this.getCredentials(), gatewayCredentialsMap.get(PaymentGatewayName.valueFrom(paymentProvider)));
+    }
+
+    public void setCredentialsAsInterface(GatewayCredentials credentials) {
+        this.credentials = objectMapper.convertValue(credentials, new TypeReference<Map<String, Object>>() {});
     }
 
     public void setId(Long id) {

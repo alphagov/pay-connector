@@ -148,15 +148,15 @@ public class GatewayAccountCredentialsService {
                 break;
             case FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED:
                 WorldpayMerchantCodeCredentials merchantCodeCredentialsRecurringCit = objectMapper.convertValue(patchRequest.valueAsObject(), WorldpayMerchantCodeCredentials.class);
-                WorldpayCredentials worldpayCredentialsRecurringCit = objectMapper.convertValue(gatewayAccountCredentialsEntity.getCredentials(), WorldpayCredentials.class);
-                worldpayCredentialsRecurringCit.setRecurringCustomerInitiatedCredentials(merchantCodeCredentialsRecurringCit);
-                gatewayAccountCredentialsEntity.setCredentials(objectMapper.convertValue(worldpayCredentialsRecurringCit, Map.class));
+                WorldpayCredentials currentCredentialsCit = (WorldpayCredentials) gatewayAccountCredentialsEntity.getCredentialsAsInterface();
+                currentCredentialsCit.setRecurringCustomerInitiatedCredentials(merchantCodeCredentialsRecurringCit);
+                gatewayAccountCredentialsEntity.setCredentialsAsInterface(currentCredentialsCit);
                 break;
             case FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED:
                 WorldpayMerchantCodeCredentials merchantCodeCredentialsRecurringMit = objectMapper.convertValue(patchRequest.valueAsObject(), WorldpayMerchantCodeCredentials.class);
-                WorldpayCredentials worldpayCredentialsRecurringMit = objectMapper.convertValue(gatewayAccountCredentialsEntity.getCredentials(), WorldpayCredentials.class);
-                worldpayCredentialsRecurringMit.setRecurringMerchantInitiatedCredentials(merchantCodeCredentialsRecurringMit);
-                gatewayAccountCredentialsEntity.setCredentials(objectMapper.convertValue(worldpayCredentialsRecurringMit, Map.class));
+                WorldpayCredentials currentCredentialsMit = (WorldpayCredentials) gatewayAccountCredentialsEntity.getCredentialsAsInterface();
+                currentCredentialsMit.setRecurringMerchantInitiatedCredentials(merchantCodeCredentialsRecurringMit);
+                gatewayAccountCredentialsEntity.setCredentialsAsInterface(currentCredentialsMit);
                 break;
             case FIELD_LAST_UPDATED_BY_USER:
                 gatewayAccountCredentialsEntity.setLastUpdatedByUserExternalId(patchRequest.valueAsString());
