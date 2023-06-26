@@ -1030,7 +1030,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorldpayCredentials'
+              $ref: '#/components/schemas/WorldpayValidatableCredentials'
       responses:
         "200":
           content:
@@ -5311,7 +5311,7 @@ components:
         organisational_unit_id:
           type: string
           example: org_unit_id
-    WorldpayCredentials:
+    WorldpayValidatableCredentials:
       type: object
       properties:
         merchant_id:
