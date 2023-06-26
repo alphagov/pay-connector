@@ -280,6 +280,7 @@ public class ContractTest {
                 .withServiceName("a cool service")
                 .withRecurringEnabled(true)
                 .build());
+        ledgerStub.acceptPostEvent();
     }
 
     @State("the gateway account is disabled")
