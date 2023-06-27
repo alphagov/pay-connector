@@ -1,0 +1,44 @@
+{
+  "consumer": {
+    "name": "connector"
+  },
+  "provider": {
+    "name": "ledger"
+  },
+  "interactions": [
+    {
+      "description": "a post an agreement created event",
+      "request": {
+        "method": "POST",
+        "path": "/v1/event",
+        "body": [
+          {
+            "resource_external_id": "ureehr17f66a9ds1bg3heqkkhk",
+            "event_details": {
+              "gateway_account_id": "3456",
+              "reference": "agreement created post event",
+              "description": "a valid description",
+              "user_identifier": "a-valid-user-identifier"
+            },
+            "timestamp": "2023-06-27T11:23:30.000000Z",
+            "service_id": "a-valid-service-id",
+            "live": false,
+            "resource_type": "agreement",
+            "event_type": "AGREEMENT_CREATED"
+          }
+        ]
+      },
+      "response": {
+        "status": 202
+      }
+    }
+  ],
+  "metadata": {
+    "pact-specification": {
+      "version": "3.0.0"
+    },
+    "pact-jvm": {
+      "version": "3.5.16"
+    }
+  }
+}
