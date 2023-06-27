@@ -7,6 +7,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.service.payments.commons.testing.pact.consumers.PactProviderRule;
 import uk.gov.service.payments.commons.testing.pact.consumers.Pacts;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -16,6 +20,8 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 
 import javax.ws.rs.client.Client;
+import javax.ws.rs.core.Response;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +29,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LedgerServiceConsumerTest {
@@ -94,5 +104,28 @@ public class LedgerServiceConsumerTest {
         assertThat(transactions.get(1).getAmount(), is(110L));
         assertThat(transactions.get(1).getGatewayAccountId(), is("3"));
         assertThat(transactions.get(1).getState().getStatus(), is("error"));
+    }
+
+    @Test
+    @PactVerification("ledger")
+    @Pacts(pacts = {"connector-ledger-post-event-successful"})
+    public void postAgreementCreatedEvent() {
+        AgreementEntity agreementEntity = anAgreementEntity(Instant.parse("2023-06-27T11:23:30.000000Z"))
+                .withReference("agreement created post event")
+                .withDescription("a valid description")
+                .withUserIdentifier("a-valid-user-identifier")
+                .withServiceId("a-valid-service-id")
+                .withLive(false)
+                .build();
+        agreementEntity.setExternalId("ureehr17f66a9ds1bg3heqkkhk");
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(STRIPE.getName())
+                .withId(3456L)
+                .build();
+        agreementEntity.setGatewayAccount(gatewayAccountEntity);
+        Event event = AgreementCreated.from(agreementEntity);
+        Response response = ledgerService.postEvent(event);
+
+        assertThat(response.getStatus(), is(202));
     }
 }
