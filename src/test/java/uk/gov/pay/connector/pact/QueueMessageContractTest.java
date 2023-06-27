@@ -36,6 +36,7 @@ import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
+import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
@@ -57,6 +58,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.time.Instant;
@@ -464,5 +466,20 @@ public class QueueMessageContractTest {
         DisputeEvidenceSubmitted disputeEvidenceSubmitted = new DisputeEvidenceSubmitted("resource-external-id",
                 "external-id", "service-id", true, eventDetails, Instant.ofEpochSecond(1642579160L));
         return disputeEvidenceSubmitted.toJsonString();
+    }
+
+    @PactVerifyProvider("a payment details taken from payment instrument message")
+    public String verifyPaymentDetailsTakenFromPaymentInstrumentEvent() throws JsonProcessingException {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withExternalId("payment-details-externalId")
+                .withStatus(ChargeStatus.CREATED)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .build();
+        ChargeEventEntity eventEntity = aValidChargeEventEntity()
+                .withCharge(chargeEntity)
+                .withGatewayEventDate(ZonedDateTime.now())
+                .build();
+        PaymentDetailsTakenFromPaymentInstrument event = PaymentDetailsTakenFromPaymentInstrument.from(eventEntity);
+        return event.toJsonString();
     }
 }
