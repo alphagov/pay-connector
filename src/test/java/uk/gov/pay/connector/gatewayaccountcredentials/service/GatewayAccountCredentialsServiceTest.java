@@ -16,11 +16,11 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
-import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsExistForProviderException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -33,13 +33,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,7 +75,7 @@ public class GatewayAccountCredentialsServiceTest {
 
     @BeforeEach
     void setup() {
-        gatewayAccountCredentialsService = new GatewayAccountCredentialsService(mockGatewayAccountCredentialsDao);
+        gatewayAccountCredentialsService = new GatewayAccountCredentialsService(mockGatewayAccountCredentialsDao, objectMapper);
     }
 
     @Nested
@@ -237,7 +238,7 @@ public class GatewayAccountCredentialsServiceTest {
 
             List<JsonPatchRequest> patchRequests = Stream.of(replaceCredentialsNode, replaceLastUserNode, replaceStateNode)
                     .map(JsonPatchRequest::from)
-                    .collect(Collectors.toList());
+                    .collect(toUnmodifiableList());
 
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
 
@@ -245,6 +246,134 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(credentialsEntity.getCredentials(), hasEntry("merchant_id", "new-merchant-id"));
             assertThat(credentialsEntity.getLastUpdatedByUserExternalId(), is("new-user-external-id"));
             assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
+        }
+
+        @Test
+        void shouldUpdateGatewayAccountCredentialsForWorldpayRecurringMerchantDetails() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonNode replaceRecurringCit = objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_customer_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code-cit",
+                                    "username", "new-username-cit",
+                                    "password", "new-password-cit"
+                            )));
+
+            JsonNode replaceRecurringMit = objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_merchant_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code-mit",
+                                    "username", "new-username-mit",
+                                    "password", "new-password-mit"
+                            )));
+
+            List<JsonPatchRequest> patchRequests = Stream.of(replaceRecurringCit, replaceRecurringMit)
+                    .map(JsonPatchRequest::from)
+                    .collect(toUnmodifiableList());
+
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
+
+            Map<String, Object> recurringCustomerInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("recurring_customer_initiated");
+            assertThat(recurringCustomerInitiated, hasEntry("merchant_code", "new-merchant-code-cit"));
+            assertThat(recurringCustomerInitiated, hasEntry("username", "new-username-cit"));
+            assertThat(recurringCustomerInitiated, hasEntry("password", "new-password-cit"));
+
+            Map<String, Object> recurringMerchantInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("recurring_merchant_initiated");
+            assertThat(recurringMerchantInitiated, hasEntry("merchant_code", "new-merchant-code-mit"));
+            assertThat(recurringMerchantInitiated, hasEntry("username", "new-username-mit"));
+            assertThat(recurringMerchantInitiated, hasEntry("password", "new-password-mit"));
+        }
+
+        @Test
+        void shouldUpdateSomeNestedWorldpayCredentialsButLeaveTheOthersUntouched() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of(
+                            GatewayAccount.CREDENTIALS_MERCHANT_ID, "existing-merchant-code",
+                            GatewayAccount.CREDENTIALS_USERNAME, "existing-username",
+                            GatewayAccount.CREDENTIALS_PASSWORD, "existing-password",
+                            "recurring_customer_initiated", Map.of(
+                                    "merchant_code", "existing-merchant-code-cit",
+                                    "username", "existing-username-cit",
+                                    "password", "existing-password-cit"
+                            )
+                        )
+                    )
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonNode replaceRecurringCIT = objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_merchant_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code-mit"
+                            )));
+
+            List<JsonPatchRequest> patchRequests = Stream.of(replaceRecurringCIT)
+                    .map(JsonPatchRequest::from)
+                    .collect(toUnmodifiableList());
+
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
+
+            assertThat((Map<String, Object>) credentialsEntity.getCredentials().get("recurring_merchant_initiated"),
+                    hasEntry("merchant_code", "new-merchant-code-mit"));
+
+            Map<String, Object> recurringCustomerInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("recurring_customer_initiated");
+            assertThat(recurringCustomerInitiated, hasEntry("merchant_code", "existing-merchant-code-cit"));
+            assertThat(recurringCustomerInitiated, hasEntry("username", "existing-username-cit"));
+            assertThat(recurringCustomerInitiated, hasEntry("password", "existing-password-cit"));
+
+            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_MERCHANT_ID), is("existing-merchant-code"));
+            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_USERNAME), is("existing-username"));
+            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_PASSWORD), is("existing-password"));
+        }
+
+        @Test
+        void shouldReplaceLegacyWorldpayOneOffCredentials() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of(
+                            GatewayAccount.CREDENTIALS_MERCHANT_ID, "old-merchant-code",
+                            GatewayAccount.CREDENTIALS_USERNAME, "old-username",
+                            GatewayAccount.CREDENTIALS_PASSWORD, "old-password"))
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonNode replace = objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/one_off_customer_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code",
+                                    "username", "new-username",
+                                    "password", "new-password"
+                            )));
+
+            List<JsonPatchRequest> patchRequests = Stream.of(replace)
+                    .map(JsonPatchRequest::from)
+                    .collect(toUnmodifiableList());
+
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
+
+            Map<String, Object> oneOffCustomerInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("one_off_customer_initiated");
+            assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
+            assertThat(oneOffCustomerInitiated, hasEntry("username", "new-username"));
+            assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
+
+            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_MERCHANT_ID), is(nullValue()));
+            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_USERNAME), is(nullValue()));
+            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_PASSWORD), is(nullValue()));
         }
 
         @Test

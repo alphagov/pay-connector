@@ -8,7 +8,7 @@ import java.util.Objects;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class WorldpayValidatableCredentials {
-    
+
     @NotEmpty(message = "Field [merchant_id] is required")
     private String merchantId;
 
@@ -17,7 +17,7 @@ public class WorldpayValidatableCredentials {
 
     @NotEmpty(message = "Field [password] is required")
     private String password;
-    
+
     public WorldpayValidatableCredentials() {
         // Blank constructor needed for deserialization
     }
