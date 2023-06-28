@@ -474,6 +474,8 @@ public class QueueMessageContractTest {
     public String verifyPaymentDetailsTakenFromPaymentInstrumentEvent() throws JsonProcessingException {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId("payment-details-externalId")
+                .withServiceId("a-service-id")
+                .withGatewayTransactionId("a-provider-transaction-id")
                 .withStatus(ChargeStatus.CREATED)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .withCardDetails(defaultCardDetails())
