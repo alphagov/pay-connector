@@ -68,6 +68,8 @@ import java.util.Map;
 import static java.time.ZonedDateTime.parse;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
 import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
@@ -474,6 +476,8 @@ public class QueueMessageContractTest {
                 .withExternalId("payment-details-externalId")
                 .withStatus(ChargeStatus.CREATED)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withCardDetails(defaultCardDetails())
+                .withGatewayAccountEntity(defaultGatewayAccountEntity())
                 .build();
         ChargeEventEntity eventEntity = aValidChargeEventEntity()
                 .withCharge(chargeEntity)
