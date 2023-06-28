@@ -796,4 +796,23 @@ public class ContractTest {
                 .build();
         dbHelper.addAgreement(agreementParams);
     }
+
+    @State("a gateway account and a new agreement exists")
+    public void aGatewayAccountAndANewAgreementExists(Map<String, String> params) {
+        ledgerStub.acceptPostEvent();
+
+        var agreementExternalId = Optional.ofNullable(params.get("agreement_external_id")).orElse("abcdefghijklmnopqrstuvwxyz");
+        var gatewayAccountId = Optional.ofNullable(params.get("gateway_account_id")).orElse("3456");
+        dbHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(gatewayAccountId)
+                .withPaymentGateway("sandbox")
+                .withCredentials(Map.of())
+                .withServiceName("rcp service")
+                .withRecurringEnabled(true)
+                .build());
+        dbHelper.addAgreement(anAddAgreementParams()
+                .withGatewayAccountId(gatewayAccountId)
+                .withExternalAgreementId(agreementExternalId)
+                .build());
+    }
 }
