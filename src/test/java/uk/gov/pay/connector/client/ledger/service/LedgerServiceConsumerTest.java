@@ -8,16 +8,17 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.RestClientFactory;
+import uk.gov.pay.connector.app.config.RestClientConfig;
+import uk.gov.pay.connector.client.ledger.exception.LedgerException;
+import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.service.payments.commons.testing.pact.consumers.PactProviderRule;
 import uk.gov.service.payments.commons.testing.pact.consumers.Pacts;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.RestClientFactory;
-import uk.gov.pay.connector.app.config.RestClientConfig;
-import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
-import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Response;
@@ -25,13 +26,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -127,5 +128,28 @@ public class LedgerServiceConsumerTest {
         Response response = ledgerService.postEvent(event);
 
         assertThat(response.getStatus(), is(202));
+    }
+
+    @Test
+    @PactVerification("ledger")
+    @Pacts(pacts = {"connector-ledger-post-event-failed"})
+    public void postAgreementCreatedFailedEvent() {
+        AgreementEntity agreementEntity = anAgreementEntity(Instant.parse("2023-06-27T11:23:30.000000Z"))
+                .withReference("agreement created post event")
+//                .withDescription("")
+                .withUserIdentifier("a-valid-user-identifier")
+                .withServiceId("a-valid-service-id")
+                .withLive(false)
+                .build();
+        agreementEntity.setExternalId("ureehr17f66a9ds1bg3heqkkhk");
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                .withGatewayName(STRIPE.getName())
+                .withId(3456L)
+                .build();
+        agreementEntity.setGatewayAccount(gatewayAccountEntity);
+        Event event = AgreementCreated.from(agreementEntity);
+        LedgerException exception = assertThrows(LedgerException.class, () -> ledgerService.postEvent(event));
+        assertThat(exception.getMessage(), containsString("status=400"));
+        assertThat(exception.getMessage(), containsString("reason=Bad Request"));
     }
 }
