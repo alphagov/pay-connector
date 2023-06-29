@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,7 @@ public class GatewayAccountCredentialsResourceTest {
     public static ResourceExtension resources = ResourceExtension.builder()
             .addResource(new GatewayAccountCredentialsResource(
                     gatewayAccountService,
-                    new GatewayAccountCredentialsService(credentialDao),
+                    new GatewayAccountCredentialsService(credentialDao, new ObjectMapper()),
                     worldpay3dsFlexCredentialsService,
                     worldpay3dsFlexCredentialsValidationService,
                     worldpayCredentialsValidationService,
