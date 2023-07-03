@@ -11,12 +11,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -26,7 +24,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.noContentResponse;
@@ -39,12 +36,10 @@ public class SecurityTokensResource {
 
     private final Logger logger = LoggerFactory.getLogger(SecurityTokensResource.class);
     private final TokenDao tokenDao;
-    private ChargeDao chargeDao;
 
     @Inject
-    public SecurityTokensResource(TokenDao tokenDao, ChargeDao chargeDao) {
+    public SecurityTokensResource(TokenDao tokenDao) {
         this.tokenDao = tokenDao;
-        this.chargeDao = chargeDao;
     }
 
     @GET
@@ -64,27 +59,6 @@ public class SecurityTokensResource {
         return tokenDao.findByTokenId(chargeTokenId)
                 .filter(tokenEntity -> tokenEntity.getChargeEntity().getAuthorisationMode() != MOTO_API)
                 .map(tokenEntity -> new TokenResponse(tokenEntity.isUsed(), tokenEntity.getChargeEntity()))
-                .map(ResponseUtil::successResponseWithEntity)
-                .orElseGet(() -> notFoundResponse("Token invalid!"));
-    }
-
-    @GET
-    @Path("/v1/frontend/tokens/{chargeTokenId}/charge")
-    @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
-    @Operation(
-            summary = "Retrieve charge for secure token",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChargeEntity.class))),
-                    @ApiResponse(responseCode = "404", description = "Not found")
-            }
-    )
-    public Response getChargeForToken(@Parameter(example = "a69a2cf3-d5d1-408f-b196-4b716767b507")
-                                      @PathParam("chargeTokenId") String chargeTokenId) {
-        logger.debug("get charge for token {}", chargeTokenId);
-        Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId(chargeTokenId);
-        return chargeOpt
-                .filter(chargeEntity -> chargeEntity.getAuthorisationMode() != MOTO_API)
                 .map(ResponseUtil::successResponseWithEntity)
                 .orElseGet(() -> notFoundResponse("Token invalid!"));
     }

@@ -21,7 +21,6 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -58,48 +57,6 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldGetChargeForToken() {
-        TestToken token = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestToken()
-                .withCharge(defaultTestCharge)
-                .withUsed(false)
-                .insert();
-
-        givenSetup()
-                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken() + "/charge")
-                .then()
-                .statusCode(200)
-                .contentType(JSON)
-                .body("externalId", is(defaultTestCharge.getExternalChargeId()))
-                .body("status", is(CREATED.getValue()))
-                .body("gatewayAccount.service_name", is(defaultTestAccount.getServiceName()));
-    }
-
-    @Test
-    public void shouldReturn404ForGetChargeForTokenAndMotoAPIPayment() {
-        DatabaseFixtures.TestCharge charge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestCharge()
-                .withAuthorisationMode(MOTO_API)
-                .withTestAccount(defaultTestAccount)
-                .insert();
-        TestToken token = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestToken()
-                .withCharge(charge)
-                .withUsed(false)
-                .insert();
-
-        givenSetup()
-                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken() + "/charge")
-                .then()
-                .statusCode(404)
-                .body("message", contains("Token invalid!"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
-    @Test
     public void shouldReturn404ForGetTokenAndMotoAPIPayment() {
         DatabaseFixtures.TestCharge charge = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -116,16 +73,6 @@ public class SecurityTokensResourceIT {
 
         givenSetup()
                 .get("/v1/frontend/tokens/" + token.getSecureRedirectToken())
-                .then()
-                .statusCode(404)
-                .body("message", contains("Token invalid!"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
-    @Test
-    public void shouldReturn404ForChargeWhenTokenNotFound() {
-        givenSetup()
-                .get("/v1/frontend/tokens/non-existent-secure-redirect-token/charge")
                 .then()
                 .statusCode(404)
                 .body("message", contains("Token invalid!"))
@@ -198,7 +145,7 @@ public class SecurityTokensResourceIT {
                 .body(emptyOrNullString());
 
         givenSetup()
-                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken() + "/charge")
+                .get("/v1/frontend/tokens/" + token.getSecureRedirectToken())
                 .then()
                 .statusCode(404)
                 .body("message", contains("Token invalid!"))
