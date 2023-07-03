@@ -2037,28 +2037,6 @@ paths:
       summary: Retrieve secure token
       tags:
       - Secure token
-  /v1/frontend/tokens/{chargeTokenId}/charge:
-    get:
-      operationId: getChargeForToken
-      parameters:
-      - example: a69a2cf3-d5d1-408f-b196-4b716767b507
-        in: path
-        name: chargeTokenId
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChargeEntity_FrontendView'
-          description: OK
-        "404":
-          description: Not found
-      summary: Retrieve charge for secure token
-      tags:
-      - Secure token
   /v1/frontend/tokens/{chargeTokenId}/used:
     post:
       operationId: markTokenUsed
