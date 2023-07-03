@@ -17,6 +17,7 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -90,6 +91,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Mock
     private TaskQueueService mockTaskQueueService;
     @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
+    @Mock
     private IdempotencyDao mockIdempotencyDao;
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
@@ -122,7 +125,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         chargeService = new ChargeService(null, mockedChargeDao, mockedChargeEventDao, null,
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao,
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
                 mockExternalTransactionStateFactory, objectMapper);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
 

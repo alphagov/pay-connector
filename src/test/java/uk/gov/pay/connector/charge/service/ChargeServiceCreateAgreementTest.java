@@ -139,6 +139,9 @@ class ChargeServiceCreateAgreementTest {
 
     @Mock
     private TaskQueueService mockTaskQueueService;
+    
+    @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
 
     @Mock
     private AgreementEntity mockAgreementEntity;
@@ -189,7 +192,7 @@ class ChargeServiceCreateAgreementTest {
         chargeService = new ChargeService(mockTokenDao, mockChargeDao, mockChargeEventDao, mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao,
                 mockConfig, mockProviders, mockStateTransitionService, mockLedgerService, mockedRefundService, mockEventService,
                 mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao,
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
                 mockExternalTransactionStateFactory, objectMapper);
     }
 

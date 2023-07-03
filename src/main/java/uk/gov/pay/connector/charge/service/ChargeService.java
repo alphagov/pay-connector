@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedException;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
@@ -32,6 +33,7 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.FrontendChargeResponse;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -119,6 +121,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
+import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -131,6 +134,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
@@ -162,6 +166,8 @@ public class ChargeService {
     private final IdempotencyDao idempotencyDao;
     private final ExternalTransactionStateFactory externalTransactionStateFactory;
     private final ObjectMapper objectMapper;
+    
+    private final Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
 
     @Inject
     public ChargeService(TokenDao tokenDao,
@@ -180,6 +186,7 @@ public class ChargeService {
                          GatewayAccountCredentialsService gatewayAccountCredentialsService,
                          AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter,
                          TaskQueueService taskQueueService,
+                         Worldpay3dsFlexJwtService worldpay3dsFlexJwtService,
                          IdempotencyDao idempotencyDao,
                          ExternalTransactionStateFactory externalTransactionStateFactory,
                          ObjectMapper objectMapper) {
@@ -204,6 +211,7 @@ public class ChargeService {
         this.idempotencyDao = idempotencyDao;
         this.externalTransactionStateFactory = externalTransactionStateFactory;
         this.objectMapper = objectMapper;
+        this.worldpay3dsFlexJwtService = worldpay3dsFlexJwtService;
     }
 
     @Transactional
@@ -491,7 +499,7 @@ public class ChargeService {
     private ChargeResponse.ChargeResponseBuilder populateResponseBuilderWith(
             AbstractChargeResponseBuilder<ChargeResponse.ChargeResponseBuilder, ChargeResponse> responseBuilder,
             ChargeEntity chargeEntity) {
-
+        
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
             persistedCard = chargeEntity.getCardDetails().toCard();
@@ -1149,6 +1157,73 @@ public class ChargeService {
                 ),
                 eventTimestamp
         );
+    }
+
+    public FrontendChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
+        String chargeId = charge.getExternalId();
+
+        FrontendChargeResponse.FrontendChargeResponseBuilder responseBuilder = aFrontendChargeResponse()
+                .withStatus(charge, externalTransactionStateFactory)
+                .withChargeId(chargeId)
+                .withAmount(charge.getAmount())
+                .withDescription(charge.getDescription())
+                .withProviderName(charge.getPaymentProvider())
+                .withGatewayTransactionId(charge.getGatewayTransactionId())
+                .withCreatedDate(charge.getCreatedDate())
+                .withReturnUrl(charge.getReturnUrl())
+                .withEmail(charge.getEmail())
+                .withFee(charge.getFeeAmount().orElse(null))
+                .withNetAmount(charge.getNetAmount().orElse(null))
+                .withGatewayAccount(charge.getGatewayAccount())
+                .withLanguage(charge.getLanguage())
+                .withDelayedCapture(charge.isDelayedCapture())
+                .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
+                .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
+                .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
+                .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
+                .withWalletType(charge.getWalletType())
+                .withMoto(charge.isMoto())
+                .withAuthorisationMode(charge.getAuthorisationMode());
+
+        if (charge.getCardDetails() != null) {
+            var persistedCard = charge.getCardDetails().toCard();
+            persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
+            responseBuilder.withCardDetails(persistedCard);
+        }
+
+        charge.getAgreement().ifPresent(agreementEntity -> responseBuilder.withAgreementId(agreementEntity.getExternalId()));
+        charge.getAgreement().map(AgreementResponse::from).ifPresent(responseBuilder::withAgreement);
+
+        if (charge.get3dsRequiredDetails() != null) {
+            var auth3dsData = new ChargeResponse.Auth3dsData();
+            auth3dsData.setPaRequest(charge.get3dsRequiredDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(charge.get3dsRequiredDetails().getIssuerUrl());
+            auth3dsData.setHtmlOut(charge.get3dsRequiredDetails().getHtmlOut());
+            auth3dsData.setMd(charge.get3dsRequiredDetails().getMd());
+
+            if (WORLDPAY.getName().equals(charge.getPaymentProvider())) {
+                worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(
+                        auth3dsData::setWorldpayChallengeJwt);
+            }
+
+            responseBuilder.withAuth3dsData(auth3dsData);
+        }
+
+        charge.getCorporateSurcharge().ifPresent(surcharge -> {
+            if (surcharge > 0) {
+                responseBuilder
+                        .withCorporateCardSurcharge(surcharge)
+                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
+            }
+        });
+
+        return responseBuilder.build();
+    }
+
+    private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
+        return uriInfo.getBaseUriBuilder()
+                .path(path)
+                .build(chargeId);
     }
 
 }

@@ -175,6 +175,9 @@ class ChargeServiceTest {
     private TaskQueueService mockTaskQueueService;
 
     @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
+
+    @Mock
     private IdempotencyDao mockIdempotencyDao;
 
     @Mock
@@ -221,7 +224,7 @@ class ChargeServiceTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
     }
 
     @Test

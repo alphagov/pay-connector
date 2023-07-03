@@ -84,6 +84,8 @@ class ChargeServicePostAuthorisationTest {
     @Mock private StateTransitionService mockStateTransitionService;
     @Mock private EventService mockEventService;
     @Mock private TaskQueueService mockTaskQueueService;
+    @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
     @Mock private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
     @Mock private PaymentProviders mockProviders;
     @Mock private ConnectorConfiguration mockConnectorConfig;
@@ -132,7 +134,7 @@ class ChargeServicePostAuthorisationTest {
                 mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao, mockConnectorConfig, mockProviders,
                 mockStateTransitionService, mockLedgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
     }
 
     @Test

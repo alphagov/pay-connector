@@ -23,11 +23,9 @@ import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import static uk.gov.pay.connector.tasks.EventEmitterParamUtil.getOptionalLongParam;
 import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 

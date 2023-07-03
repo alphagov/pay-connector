@@ -2030,7 +2030,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse_FrontendView'
+                $ref: '#/components/schemas/TokenResponse'
           description: OK
         "404":
           description: Not found
@@ -2345,29 +2345,6 @@ components:
         postcode:
           type: string
           example: AB1 2CD
-    AddressEntity_FrontendView:
-      type: object
-      properties:
-        city:
-          type: string
-          example: London
-        country:
-          type: string
-          example: GB
-        county:
-          type: string
-          example: London
-        line1:
-          type: string
-          example: address line 1
-        line2:
-          type: string
-          example: address line 2
-        postcode:
-          type: string
-          example: AB1 2CD
-        stateOrProvince:
-          type: string
     Address_FrontendView:
       type: object
       properties:
@@ -2532,25 +2509,6 @@ components:
           description: "When the charge is in status 'AUTHORISATION 3DS REQUIRED'\
             \ state and the 3DS data on the charge contains challenge data, Json Web\
             \ Token is calculated and returned to the frontend."
-    Auth3dsRequiredEntity_FrontendView:
-      type: object
-      properties:
-        htmlOut:
-          type: string
-        issuerUrl:
-          type: string
-        md:
-          type: string
-        paRequest:
-          type: string
-        threeDsVersion:
-          type: string
-        worldpayChallengeAcsUrl:
-          type: string
-        worldpayChallengePayload:
-          type: string
-        worldpayChallengeTransactionId:
-          type: string
     Auth3dsResult:
       type: object
       properties:
@@ -2677,49 +2635,9 @@ components:
       - cvc
       - expiry_date
       - one_time_token
-    CardBrandLabelEntity_FrontendView:
-      type: object
-      properties:
-        brand:
-          type: string
-          example: visa
-        id:
-          type: string
-          format: uuid
-          example: ac8a3abd-bcfd-4fa6-8905-321ce913e7f5
-        label:
-          type: string
-          example: Visa
-        version:
-          type: integer
-          format: int64
-    CardDetailsEntity_FrontendView:
-      type: object
-      properties:
-        billing_address:
-          $ref: '#/components/schemas/AddressEntity_FrontendView'
-        cardBrand:
-          type: string
-          example: visa
-        cardTypeDetails:
-          $ref: '#/components/schemas/CardBrandLabelEntity_FrontendView'
-        card_type:
-          type: string
-          enum:
-          - CREDIT
-          - DEBIT
-          example: credit
-        cardholder_name:
-          type: string
-          example: Joe B
-        expiry_date:
-          $ref: '#/components/schemas/CardExpiryDate_FrontendView'
-        first_digits_card_number:
-          $ref: '#/components/schemas/FirstDigitsCardNumber_FrontendView'
-        last_digits_card_number:
-          $ref: '#/components/schemas/LastDigitsCardNumber_FrontendView'
     CardExpiryDate:
       type: object
+      description: The expiry date of the card the user paid with.
       example: 01/99
       properties:
         fourDigitYear:
@@ -2730,6 +2648,7 @@ components:
           type: string
     CardExpiryDate_FrontendView:
       type: object
+      description: The expiry date of the card the user paid with.
       example: 01/99
       properties:
         fourDigitYear:
@@ -2867,283 +2786,6 @@ components:
       - amount
       - description
       - reference
-    ChargeEntity_FrontendView:
-      type: object
-      description: The charge associated with the token
-      properties:
-        amount:
-          type: integer
-          format: int64
-          example: 100
-        authorisationMode:
-          type: string
-          enum:
-          - web
-          - moto_api
-          - agreement
-          - external
-        canRetry:
-          type: boolean
-        captureSubmitTime:
-          type: string
-          format: date-time
-        capturedTime:
-          type: string
-          format: date-time
-        cardDetails:
-          $ref: '#/components/schemas/CardDetailsEntity_FrontendView'
-        chargeStatus:
-          type: string
-          enum:
-          - UNDEFINED
-          - CREATED
-          - PAYMENT NOTIFICATION CREATED
-          - ENTERING CARD DETAILS
-          - AUTHORISATION ABORTED
-          - AUTHORISATION READY
-          - AUTHORISATION 3DS REQUIRED
-          - AUTHORISATION 3DS READY
-          - AUTHORISATION SUBMITTED
-          - AUTHORISATION SUCCESS
-          - AUTHORISATION REJECTED
-          - AUTHORISATION CANCELLED
-          - AUTHORISATION ERROR
-          - AUTHORISATION TIMEOUT
-          - AUTHORISATION UNEXPECTED ERROR
-          - AWAITING CAPTURE REQUEST
-          - CAPTURE APPROVED
-          - CAPTURE APPROVED RETRY
-          - CAPTURE READY
-          - CAPTURED
-          - CAPTURE SUBMITTED
-          - CAPTURE ERROR
-          - CAPTURE QUEUED
-          - AUTHORISATION USER NOT PRESENT QUEUED
-          - EXPIRE CANCEL READY
-          - EXPIRE CANCEL FAILED
-          - EXPIRE CANCEL SUBMITTED
-          - EXPIRED
-          - SYSTEM CANCEL READY
-          - SYSTEM CANCEL ERROR
-          - SYSTEM CANCEL SUBMITTED
-          - SYSTEM CANCELLED
-          - USER CANCEL READY
-          - USER CANCEL SUBMITTED
-          - USER CANCELLED
-          - USER CANCEL ERROR
-          - AUTHORISATION ERROR CANCELLED
-          - AUTHORISATION ERROR REJECTED
-          - AUTHORISATION ERROR CHARGE MISSING
-        corporateSurcharge:
-          type: integer
-          format: int64
-        createdDate:
-          type: string
-          format: date-time
-        delayedCapture:
-          type: boolean
-        description:
-          type: string
-          example: payment description
-        email:
-          type: string
-          example: joe.blogs@example.org
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChargeEventEntity_FrontendView'
-        exemption3ds:
-          type: string
-          enum:
-          - EXEMPTION_NOT_REQUESTED
-          - EXEMPTION_HONOURED
-          - EXEMPTION_REJECTED
-          - EXEMPTION_OUT_OF_SCOPE
-        externalId:
-          type: string
-          example: 5t2rupktnsk0a3mu800st7irts
-        externalMetadata:
-          $ref: '#/components/schemas/ExternalMetadata_FrontendView'
-        feeAmount:
-          type: integer
-          format: int64
-        fees:
-          type: array
-          items:
-            $ref: '#/components/schemas/FeeEntity_FrontendView'
-        gatewayAccount:
-          $ref: '#/components/schemas/GatewayAccountEntity_FrontendView'
-        gatewayAccountCredentialsEntity:
-          $ref: '#/components/schemas/GatewayAccountCredentialsEntity_FrontendView'
-        gatewayTransactionId:
-          type: string
-          example: bba59957-5155-4f59-8c69-a839f71772d3
-        get3dsRequiredDetails:
-          $ref: '#/components/schemas/Auth3dsRequiredEntity_FrontendView'
-        language:
-          type: string
-          enum:
-          - en
-          - cy
-          example: en
-        moto:
-          type: boolean
-        netAmount:
-          type: integer
-          format: int64
-        parityCheckDate:
-          type: string
-          format: date-time
-        parityCheckStatus:
-          type: string
-          enum:
-          - SKIPPED
-          - EXISTS_IN_LEDGER
-          - MISSING_IN_LEDGER
-          - DATA_MISMATCH
-        paymentGatewayName:
-          type: string
-          enum:
-          - SANDBOX
-          - SMARTPAY
-          - WORLDPAY
-          - EPDQ
-          - STRIPE
-        paymentInstrument:
-          $ref: '#/components/schemas/PaymentInstrumentEntity_FrontendView'
-        paymentProvider:
-          type: string
-          example: stripe
-        providerSessionId:
-          type: string
-        reference:
-          $ref: '#/components/schemas/ServicePaymentReference_FrontendView'
-        returnUrl:
-          type: string
-          example: https://service-name.gov.uk/transactions/12345
-        savePaymentInstrumentToAgreement:
-          type: boolean
-        serviceId:
-          type: string
-          example: 46eb1b601348499196c99de90482ee68
-        source:
-          type: string
-          enum:
-          - CARD_API
-          - CARD_PAYMENT_LINK
-          - CARD_AGENT_INITIATED_MOTO
-          - CARD_EXTERNAL_TELEPHONE
-          example: CARD_API
-        status:
-          type: string
-          example: AUTHORISATION SUCCESS
-        statusIgnoringValidTransitions:
-          type: string
-          enum:
-          - UNDEFINED
-          - CREATED
-          - PAYMENT NOTIFICATION CREATED
-          - ENTERING CARD DETAILS
-          - AUTHORISATION ABORTED
-          - AUTHORISATION READY
-          - AUTHORISATION 3DS REQUIRED
-          - AUTHORISATION 3DS READY
-          - AUTHORISATION SUBMITTED
-          - AUTHORISATION SUCCESS
-          - AUTHORISATION REJECTED
-          - AUTHORISATION CANCELLED
-          - AUTHORISATION ERROR
-          - AUTHORISATION TIMEOUT
-          - AUTHORISATION UNEXPECTED ERROR
-          - AWAITING CAPTURE REQUEST
-          - CAPTURE APPROVED
-          - CAPTURE APPROVED RETRY
-          - CAPTURE READY
-          - CAPTURED
-          - CAPTURE SUBMITTED
-          - CAPTURE ERROR
-          - CAPTURE QUEUED
-          - AUTHORISATION USER NOT PRESENT QUEUED
-          - EXPIRE CANCEL READY
-          - EXPIRE CANCEL FAILED
-          - EXPIRE CANCEL SUBMITTED
-          - EXPIRED
-          - SYSTEM CANCEL READY
-          - SYSTEM CANCEL ERROR
-          - SYSTEM CANCEL SUBMITTED
-          - SYSTEM CANCELLED
-          - USER CANCEL READY
-          - USER CANCEL SUBMITTED
-          - USER CANCELLED
-          - USER CANCEL ERROR
-          - AUTHORISATION ERROR CANCELLED
-          - AUTHORISATION ERROR REJECTED
-          - AUTHORISATION ERROR CHARGE MISSING
-          writeOnly: true
-        version:
-          type: integer
-          format: int64
-        walletType:
-          type: string
-          enum:
-          - APPLE_PAY
-          - GOOGLE_PAY
-    ChargeEventEntity_FrontendView:
-      type: object
-      properties:
-        gatewayEventDate:
-          type: string
-          format: date-time
-          example: 2022-05-27T09:17:19.162Z
-        status:
-          type: string
-          enum:
-          - UNDEFINED
-          - CREATED
-          - PAYMENT NOTIFICATION CREATED
-          - ENTERING CARD DETAILS
-          - AUTHORISATION ABORTED
-          - AUTHORISATION READY
-          - AUTHORISATION 3DS REQUIRED
-          - AUTHORISATION 3DS READY
-          - AUTHORISATION SUBMITTED
-          - AUTHORISATION SUCCESS
-          - AUTHORISATION REJECTED
-          - AUTHORISATION CANCELLED
-          - AUTHORISATION ERROR
-          - AUTHORISATION TIMEOUT
-          - AUTHORISATION UNEXPECTED ERROR
-          - AWAITING CAPTURE REQUEST
-          - CAPTURE APPROVED
-          - CAPTURE APPROVED RETRY
-          - CAPTURE READY
-          - CAPTURED
-          - CAPTURE SUBMITTED
-          - CAPTURE ERROR
-          - CAPTURE QUEUED
-          - AUTHORISATION USER NOT PRESENT QUEUED
-          - EXPIRE CANCEL READY
-          - EXPIRE CANCEL FAILED
-          - EXPIRE CANCEL SUBMITTED
-          - EXPIRED
-          - SYSTEM CANCEL READY
-          - SYSTEM CANCEL ERROR
-          - SYSTEM CANCEL SUBMITTED
-          - SYSTEM CANCELLED
-          - USER CANCEL READY
-          - USER CANCEL SUBMITTED
-          - USER CANCELLED
-          - USER CANCEL ERROR
-          - AUTHORISATION ERROR CANCELLED
-          - AUTHORISATION ERROR REJECTED
-          - AUTHORISATION ERROR CHARGE MISSING
-          example: CAPTURED
-        updated:
-          type: string
-          format: date-time
-        version:
-          type: integer
-          format: int64
     ChargeEventsResponse:
       type: object
       properties:
@@ -3336,17 +2978,6 @@ components:
           example: APPLE_PAY
     EmailNotificationEntity:
       type: object
-      description: The settings for the different emails (payments/refunds) that are
-        sent out
-      example:
-        REFUND_ISSUED:
-          version: 1
-          enabled: true
-          template_body: null
-        PAYMENT_CONFIRMED:
-          version: 1
-          enabled: true
-          template_body: null
       properties:
         enabled:
           type: boolean
@@ -3453,7 +3084,7 @@ components:
             type: object
     ExternalMetadata_FrontendView:
       type: object
-      example: {}
+      example: "{\"property1\": \"value1\", \"property2\": \"value2\"}\""
       properties:
         metadata:
           type: object
@@ -3505,28 +3136,203 @@ components:
         status:
           type: string
           example: success
-    FeeEntity_FrontendView:
-      type: object
-      properties:
-        amountCollected:
-          type: integer
-          format: int64
-        createdDate:
-          type: string
-          format: date-time
-        feeType:
-          type: string
-          enum:
-          - radar
-          - three_ds
-          - transaction
     FirstDigitsCardNumber:
       type: object
       description: The first 6 digits of the card the user paid with.
       example: 424242
     FirstDigitsCardNumber_FrontendView:
       type: object
+      description: The first 6 digits of the card the user paid with.
       example: 424242
+    FrontendChargeResponse:
+      type: object
+      description: The charge associated with the token
+      properties:
+        agreement:
+          $ref: '#/components/schemas/AgreementResponse'
+        agreement_id:
+          type: string
+          description: 'Application for Recurring card payments. Agreement ID that
+            the payment is associated with '
+          example: md1mjge8gb6p4qndfs8mf8gto5
+        amount:
+          type: integer
+          format: int64
+          description: Amount of this charge
+          example: 100
+        auth_3ds_data:
+          $ref: '#/components/schemas/Auth3dsData'
+        auth_code:
+          type: string
+          description: Only applicable for telephone payments reported. Authorisation
+            ID received from payment provider when the payment was authorised
+          example: "91011"
+        authorisation_mode:
+          type: string
+          default: web
+          description: How the payment will be authorised. Payments created in `web`
+            mode require the paying user to visit the `next_url` to complete the payment.
+          enum:
+          - web
+          - moto_api
+          - agreement
+          - external
+          example: web
+        authorisation_summary:
+          $ref: '#/components/schemas/AuthorisationSummary'
+        authorised_date:
+          type: string
+          format: date-time
+          description: 'Only applicable for telephone payments reported. Date and
+            time Payment service provider authorised the payment. '
+          example: 2022-06-28T16:05:33Z
+        card_brand:
+          type: string
+          example: Visa
+        card_details:
+          $ref: '#/components/schemas/PersistedCard'
+        charge_id:
+          type: string
+          description: Unique identifier for the charge
+          example: b02b63b370fd35418ad66b0101
+        corporate_card_surcharge:
+          type: integer
+          format: int64
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-06-28T09:24:45.715Z
+        delayed_capture:
+          type: boolean
+          description: "Set to true, if payment is to be captured separately"
+        description:
+          type: string
+          description: The payment description
+          example: payment description
+        email:
+          type: string
+          example: Joe.Bogs@example.org
+        fee:
+          type: integer
+          format: int64
+          description: "processing fee taken by the GOV.UK Pay platform, in pence.\
+            \ Only available depending on payment service provider"
+          example: 10
+        gateway_account:
+          $ref: '#/components/schemas/GatewayAccountEntity'
+        gateway_transaction_id:
+          type: string
+          description: The reference number the payment gateway associated with the
+            payment.
+          example: 5422624d-12b1-4821-8b26-d0383ecf1602
+        language:
+          type: string
+          description: The language of the user’s payment page.
+          enum:
+          - en
+          - cy
+          example: en
+        links:
+          type: array
+          description: Array of relevant resource references related to this charge
+          example:
+          - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
+            method: GET
+            rel: self
+          - href: https://frontend.example.com/charges/1?chargeTokenId=82347
+            method: GET
+            rel: next_url
+          - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
+            method: GET
+            rel: refunds
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              description: Array of relevant resource references related to this charge
+              example:
+              - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
+                method: GET
+                rel: self
+              - href: https://frontend.example.com/charges/1?chargeTokenId=82347
+                method: GET
+                rel: next_url
+              - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
+                method: GET
+                rel: refunds
+            description: Array of relevant resource references related to this charge
+            example:
+            - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
+              method: GET
+              rel: self
+            - href: https://frontend.example.com/charges/1?chargeTokenId=82347
+              method: GET
+              rel: next_url
+            - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
+              method: GET
+              rel: refunds
+        metadata:
+          $ref: '#/components/schemas/ExternalMetadata'
+        moto:
+          type: boolean
+          description: Mail Order / Telephone Order (MOTO) payment flag
+        net_amount:
+          type: integer
+          format: int64
+          description: "amount including all surcharges and less all fees, in pence.\
+            \ Available depending on payment service provider"
+          example: 90
+        payment_outcome:
+          $ref: '#/components/schemas/PaymentOutcome'
+        payment_provider:
+          type: string
+          description: The payment provider used for this transaction
+          example: sandbox
+        processor_id:
+          type: string
+          description: Only applicable for telephone payments reported. unique supplier
+            internal reference number associated with the payment
+          example: "12345"
+        provider_id:
+          type: string
+          description: Only applicable for telephone payments reported. Gateway transaction
+            ID
+          example: "45678"
+        reference:
+          $ref: '#/components/schemas/ServicePaymentReference'
+        refund_summary:
+          $ref: '#/components/schemas/RefundSummary'
+        return_url:
+          type: string
+          description: service return url
+          example: https://service-name.gov.uk/transactions/12345
+        save_payment_instrument_to_agreement:
+          type: boolean
+        settlement_summary:
+          $ref: '#/components/schemas/SettlementSummary'
+        state:
+          $ref: '#/components/schemas/ExternalTransactionState'
+        status:
+          type: string
+        telephone_number:
+          type: string
+          description: Only applicable for telephone payments reported. User's telephone
+            number
+          example: +44000000000
+        total_amount:
+          type: integer
+          format: int64
+          description: "Amount your user paid in pence, including corporate card fees.\
+            \ total_amount only appears if corporate card surcharge is applied to\
+            \ the payment."
+        wallet_type:
+          type: string
+          description: Indicates if the payment was completed using wallet payment
+            (GOOGLE_PAY or APPLE_PAY)
+          enum:
+          - APPLE_PAY
+          - GOOGLE_PAY
+          example: APPLE_PAY
     FrontendChargeResponse_FrontendView:
       type: object
       properties:
@@ -3815,56 +3621,6 @@ components:
           type: integer
           format: int64
     GatewayAccountCredentialsEntity_ApiView:
-      type: object
-      properties:
-        active_end_date:
-          type: string
-          format: date-time
-        active_start_date:
-          type: string
-          format: date-time
-          example: 2022-05-27T09:17:19.162Z
-        created_date:
-          type: string
-          format: date-time
-          example: 2022-05-27T09:17:19.162Z
-        credentials:
-          type: object
-          additionalProperties:
-            type: object
-            example:
-              stripe_account_id: an-id
-          example:
-            stripe_account_id: an-id
-        external_id:
-          type: string
-          example: 731193f990064e698ca1b89775b70bcc
-        gateway_account_credential_id:
-          type: integer
-          format: int64
-          example: 11
-        gateway_account_id:
-          type: integer
-          format: int64
-          example: 1
-        last_updated_by_user_external_id:
-          type: string
-        payment_provider:
-          type: string
-          example: stripe
-        state:
-          type: string
-          enum:
-          - CREATED
-          - ENTERED
-          - VERIFIED_WITH_LIVE_PAYMENT
-          - ACTIVE
-          - RETIRED
-          example: ACTIVE
-        version:
-          type: integer
-          format: int64
-    GatewayAccountCredentialsEntity_FrontendView:
       type: object
       properties:
         active_end_date:
@@ -4672,6 +4428,7 @@ components:
       example: 4242
     LastDigitsCardNumber_FrontendView:
       type: object
+      description: The last 4 digits of the card the user paid with.
       example: 4242
     NewChargeStatusRequest_FrontendView:
       type: object
@@ -4698,32 +4455,6 @@ components:
         version:
           type: integer
           format: int64
-    PaymentInstrumentEntity_FrontendView:
-      type: object
-      properties:
-        agreementExternalId:
-          type: string
-        cardDetails:
-          $ref: '#/components/schemas/CardDetailsEntity_FrontendView'
-        createdDate:
-          type: string
-          format: date-time
-        externalId:
-          type: string
-        recurringAuthToken:
-          type: object
-          additionalProperties:
-            type: string
-        startDate:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum:
-          - CREATED
-          - ACTIVE
-          - INACTIVE
-          - CANCELLED
     PaymentOutcome:
       type: object
       description: Only applicable for telephone payments reported. Outcome after
@@ -4917,6 +4648,7 @@ components:
       example: payment reference
     ServicePaymentReference_FrontendView:
       type: object
+      description: Service reference for the payment
       example: payment reference
     SettlementSummary:
       type: object
@@ -5155,11 +4887,11 @@ components:
           type: string
           description: 3DS version used to authorise payment
           example: 2.1.0
-    TokenResponse_FrontendView:
+    TokenResponse:
       type: object
       properties:
         charge:
-          $ref: '#/components/schemas/ChargeEntity_FrontendView'
+          $ref: '#/components/schemas/FrontendChargeResponse'
         used:
           type: boolean
           description: true or false depending on whether the token has been marked

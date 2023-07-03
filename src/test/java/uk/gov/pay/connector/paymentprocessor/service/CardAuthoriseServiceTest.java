@@ -36,6 +36,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.LinkPaymentInstrumentToAgreementService;
+import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
@@ -185,6 +186,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     private ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
 
     @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
+
+    @Mock
     private PaymentInstrumentEntityToAuthCardDetailsConverter mockPaymentInstrumentEntityToAuthCardDetailsConverter;
 
     @Mock
@@ -226,7 +230,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
 
         LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService = mock(LinkPaymentInstrumentToAgreementService.class);
         CaptureQueue captureQueue = mock(CaptureQueue.class);
