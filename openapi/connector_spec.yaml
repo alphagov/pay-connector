@@ -1653,7 +1653,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FrontendChargeResponse_FrontendView'
+                $ref: '#/components/schemas/FrontendChargeResponse'
           description: OK
         "404":
           description: Not found - charge not found
@@ -1684,7 +1684,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FrontendChargeResponse_FrontendView'
+                $ref: '#/components/schemas/FrontendChargeResponse'
           description: OK
         "400":
           description: Bad request
@@ -2345,27 +2345,6 @@ components:
         postcode:
           type: string
           example: AB1 2CD
-    Address_FrontendView:
-      type: object
-      properties:
-        city:
-          type: string
-          example: London
-        country:
-          type: string
-          example: GB
-        county:
-          type: string
-          example: county
-        line1:
-          type: string
-          example: Address line 1
-        line2:
-          type: string
-          example: Address line 2
-        postcode:
-          type: string
-          example: AB1 2CD
     AgreementCancelRequest:
       type: object
       properties:
@@ -2389,30 +2368,6 @@ components:
       - description
       - reference
     AgreementResponse:
-      type: object
-      properties:
-        agreement_id:
-          type: string
-          example: iaouobo39hiv0m2560q45j3p04
-        created_date:
-          type: string
-          format: date-time
-          example: 2022-06-27T13:07:57.58Z
-        description:
-          type: string
-          example: Description for the paying user describing the purpose of the agreement
-        live:
-          type: boolean
-        reference:
-          type: string
-          example: Service agreement reference
-        service_id:
-          type: string
-          example: Service external ID
-        user_identifier:
-          type: string
-          example: reference for the paying user
-    AgreementResponse_FrontendView:
       type: object
       properties:
         agreement_id:
@@ -2460,31 +2415,6 @@ components:
           type: string
           example: ECv1
     Auth3dsData:
-      type: object
-      properties:
-        htmlOut:
-          type: string
-          description: "Applicable for ePDQ 3DS payments. If the transaction goes\
-            \ via the challenge flow, the response contains the additional field HTML_ANSWER\
-            \ (from ePDQ) which is a BASE-64 encoded code block"
-        issuerUrl:
-          type: string
-          description: 'Issuer 3DS url to direct users to complete 3DS authentication '
-          example: https://3ds-secure-redirect-url.example.org
-        md:
-          type: string
-          description: payment session identifier returned by the card issuer
-          example: NnheOml4nhgrnx...pP6oBb3KQqKXiYGL3X8=
-        paRequest:
-          type: string
-          description: Holds 3D secure request data for the issuer.
-          example: eNpVUttygjAQ/R...jI+ts3+f4Afk4a3Y
-        worldpayChallengeJwt:
-          type: string
-          description: "When the charge is in status 'AUTHORISATION 3DS REQUIRED'\
-            \ state and the 3DS data on the charge contains challenge data, Json Web\
-            \ Token is calculated and returned to the frontend."
-    Auth3dsData_FrontendView:
       type: object
       properties:
         htmlOut:
@@ -2594,12 +2524,6 @@ components:
       properties:
         three_d_secure:
           $ref: '#/components/schemas/ThreeDSecure'
-    AuthorisationSummary_FrontendView:
-      type: object
-      description: Object containing information about the authentication of the payment
-      properties:
-        three_d_secure:
-          $ref: '#/components/schemas/ThreeDSecure_FrontendView'
     AuthoriseRequest:
       type: object
       properties:
@@ -2646,40 +2570,9 @@ components:
           type: string
         twoDigitYear:
           type: string
-    CardExpiryDate_FrontendView:
-      type: object
-      description: The expiry date of the card the user paid with.
-      example: 01/99
-      properties:
-        fourDigitYear:
-          type: string
-        twoDigitMonth:
-          type: string
-        twoDigitYear:
-          type: string
     CardTypeEntity:
       type: object
-      properties:
-        brand:
-          type: string
-          example: visa
-        id:
-          type: string
-          format: uuid
-          example: ac8a3abd-bcfd-4fa6-8905-321ce913e7f5
-        label:
-          type: string
-          example: Visa
-        requires3ds:
-          type: boolean
-        type:
-          type: string
-          enum:
-          - CREDIT
-          - DEBIT
-          example: DEBIT
-    CardTypeEntity_FrontendView:
-      type: object
+      description: The supported card types for the account
       properties:
         brand:
           type: string
@@ -3020,6 +2913,17 @@ components:
           example: live
     EmailNotificationEntity:
       type: object
+      description: The settings for the different emails (payments/refunds) that are
+        sent out
+      example:
+        REFUND_ISSUED:
+          version: 1
+          enabled: true
+          template_body: null
+        PAYMENT_CONFIRMED:
+          version: 1
+          enabled: true
+          template_body: null
       properties:
         enabled:
           type: boolean
@@ -3032,19 +2936,6 @@ components:
           type: integer
           format: int64
     EmailNotificationEntity_ApiView:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-          description: Indicates whether emails are enabled for notifications type
-          example: true
-        template_body:
-          type: string
-          description: Custom paragraph for the email template
-        version:
-          type: integer
-          format: int64
-    EmailNotificationEntity_FrontendView:
       type: object
       properties:
         enabled:
@@ -3125,14 +3016,6 @@ components:
           type: object
           additionalProperties:
             type: object
-    ExternalMetadata_FrontendView:
-      type: object
-      example: "{\"property1\": \"value1\", \"property2\": \"value2\"}\""
-      properties:
-        metadata:
-          type: object
-          additionalProperties:
-            type: object
     ExternalTransactionState:
       type: object
       description: A structure representing the current state of the payment in its
@@ -3156,34 +3039,7 @@ components:
         status:
           type: string
           example: success
-    ExternalTransactionState_FrontendView:
-      type: object
-      description: A structure representing the current state of the payment in its
-        lifecycle
-      properties:
-        can_retry:
-          type: boolean
-          description: "If a failed payment, whether it may be possible to retry it"
-          example: true
-        code:
-          type: string
-          description: Error code for failed payments
-          example: P0010
-        finished:
-          type: boolean
-          example: true
-        message:
-          type: string
-          description: Message describing error code if payment failed
-          example: Payment method rejected
-        status:
-          type: string
-          example: success
     FirstDigitsCardNumber:
-      type: object
-      description: The first 6 digits of the card the user paid with.
-      example: 424242
-    FirstDigitsCardNumber_FrontendView:
       type: object
       description: The first 6 digits of the card the user paid with.
       example: 424242
@@ -3262,7 +3118,7 @@ components:
             \ Only available depending on payment service provider"
           example: 10
         gateway_account:
-          $ref: '#/components/schemas/GatewayAccountEntity'
+          $ref: '#/components/schemas/FrontendGatewayAccountResponse'
         gateway_transaction_id:
           type: string
           description: The reference number the payment gateway associated with the
@@ -3376,194 +3232,101 @@ components:
           - APPLE_PAY
           - GOOGLE_PAY
           example: APPLE_PAY
-    FrontendChargeResponse_FrontendView:
+    FrontendGatewayAccountResponse:
       type: object
+      description: Representation of a gateway account for use by the card frontend
+        application
       properties:
-        agreement:
-          $ref: '#/components/schemas/AgreementResponse_FrontendView'
-        agreement_id:
-          type: string
-          description: 'Application for Recurring card payments. Agreement ID that
-            the payment is associated with '
-          example: md1mjge8gb6p4qndfs8mf8gto5
-        amount:
-          type: integer
-          format: int64
-          description: Amount of this charge
-          example: 100
-        auth_3ds_data:
-          $ref: '#/components/schemas/Auth3dsData_FrontendView'
-        auth_code:
-          type: string
-          description: Only applicable for telephone payments reported. Authorisation
-            ID received from payment provider when the payment was authorised
-          example: "91011"
-        authorisation_mode:
-          type: string
-          default: web
-          description: How the payment will be authorised. Payments created in `web`
-            mode require the paying user to visit the `next_url` to complete the payment.
-          enum:
-          - web
-          - moto_api
-          - agreement
-          - external
-          example: web
-        authorisation_summary:
-          $ref: '#/components/schemas/AuthorisationSummary_FrontendView'
-        authorised_date:
-          type: string
-          format: date-time
-          description: 'Only applicable for telephone payments reported. Date and
-            time Payment service provider authorised the payment. '
-          example: 2022-06-28T16:05:33Z
-        card_brand:
-          type: string
-          example: Visa
-        card_details:
-          $ref: '#/components/schemas/PersistedCard_FrontendView'
-        charge_id:
-          type: string
-          description: Unique identifier for the charge
-          example: b02b63b370fd35418ad66b0101
-        corporate_card_surcharge:
-          type: integer
-          format: int64
-        created_date:
-          type: string
-          format: date-time
-          example: 2022-06-28T09:24:45.715Z
-        delayed_capture:
+        allow_apple_pay:
           type: boolean
-          description: "Set to true, if payment is to be captured separately"
-        description:
+          default: false
+          description: Set to true to enable Apple Pay
+          example: true
+        allow_google_pay:
+          type: boolean
+          default: false
+          description: Set to true to enable Google Pay
+          example: true
+        analytics_id:
           type: string
-          description: The payment description
-          example: payment description
-        email:
-          type: string
-          example: Joe.Bogs@example.org
-        fee:
-          type: integer
-          format: int64
-          description: "processing fee taken by the GOV.UK Pay platform, in pence.\
-            \ Only available depending on payment service provider"
-          example: 10
-        gateway_account:
-          $ref: '#/components/schemas/GatewayAccountEntity_FrontendView'
-        gateway_transaction_id:
-          type: string
-          description: The reference number the payment gateway associated with the
-            payment.
-          example: 5422624d-12b1-4821-8b26-d0383ecf1602
-        language:
-          type: string
-          description: The language of the user’s payment page.
-          enum:
-          - en
-          - cy
-          example: en
-        links:
+          description: An identifier used to identify the service in Google Analytics.
+            The default value is null
+        block_prepaid_cards:
+          type: boolean
+          default: false
+          description: Whether pre-paid cards are allowed as a payment method for
+            this gateway account
+          example: true
+        card_types:
           type: array
-          description: Array of relevant resource references related to this charge
-          example:
-          - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
-            method: GET
-            rel: self
-          - href: https://frontend.example.com/charges/1?chargeTokenId=82347
-            method: GET
-            rel: next_url
-          - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
-            method: GET
-            rel: refunds
+          description: The supported card types for the account
           items:
-            type: object
-            additionalProperties:
-              type: object
-              description: Array of relevant resource references related to this charge
-              example:
-              - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
-                method: GET
-                rel: self
-              - href: https://frontend.example.com/charges/1?chargeTokenId=82347
-                method: GET
-                rel: next_url
-              - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
-                method: GET
-                rel: refunds
-            description: Array of relevant resource references related to this charge
-            example:
-            - href: https://connector.example.com/v1/api/charges/b02b63b370fd35418ad66b0101
-              method: GET
-              rel: self
-            - href: https://frontend.example.com/charges/1?chargeTokenId=82347
-              method: GET
-              rel: next_url
-            - href: https://connector.example.com//v1/api/accounts/1/charges/b02b63b370fd35418ad66b0101/refunds
-              method: GET
-              rel: refunds
-        metadata:
-          $ref: '#/components/schemas/ExternalMetadata_FrontendView'
-        moto:
-          type: boolean
-          description: Mail Order / Telephone Order (MOTO) payment flag
-        net_amount:
+            $ref: '#/components/schemas/CardTypeEntity'
+        corporate_credit_card_surcharge_amount:
           type: integer
           format: int64
-          description: "amount including all surcharges and less all fees, in pence.\
-            \ Available depending on payment service provider"
-          example: 90
-        payment_outcome:
-          $ref: '#/components/schemas/PaymentOutcome_FrontendView'
+        corporate_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        corporate_prepaid_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+        email_collection_mode:
+          type: string
+          description: "Whether email address is required from paying users. Can be\
+            \ MANDATORY, OPTIONAL or OFF"
+          enum:
+          - MANDATORY
+          - OPTIONAL
+          - "OFF"
+        external_id:
+          type: string
+          description: External ID for the gateway account
+          example: fbf905a3f7ea416c8c252410eb45ddbd
+        gateway_account_id:
+          type: integer
+          format: int64
+          description: The account ID
+          example: 1
+        gateway_merchant_id:
+          type: string
+          description: Google Pay merchant ID for Worldpay accounts
+          example: abc123
+        integration_version_3ds:
+          type: integer
+          format: int32
+          description: 3DS version used for payments for the gateway account
+          example: 2
+        moto_mask_card_number_input:
+          type: boolean
+          default: false
+          description: Indicates whether the card number is masked when being input
+            for MOTO payments. The default value is false.
+        moto_mask_card_security_code_input:
+          type: boolean
+          default: false
+          description: Indicates whether the card security code is masked when being
+            input for MOTO payments.
         payment_provider:
           type: string
-          description: The payment provider used for this transaction
+          description: The payment provider for which this account is created
           example: sandbox
-        processor_id:
-          type: string
-          description: Only applicable for telephone payments reported. unique supplier
-            internal reference number associated with the payment
-          example: "12345"
-        provider_id:
-          type: string
-          description: Only applicable for telephone payments reported. Gateway transaction
-            ID
-          example: "45678"
-        reference:
-          $ref: '#/components/schemas/ServicePaymentReference_FrontendView'
-        refund_summary:
-          $ref: '#/components/schemas/RefundSummary_FrontendView'
-        return_url:
-          type: string
-          description: service return url
-          example: https://service-name.gov.uk/transactions/12345
-        save_payment_instrument_to_agreement:
+        requires3ds:
           type: boolean
-        settlement_summary:
-          $ref: '#/components/schemas/SettlementSummary_FrontendView'
-        state:
-          $ref: '#/components/schemas/ExternalTransactionState_FrontendView'
-        status:
+          description: Flag to indicate whether 3DS is enabled
+          example: true
+        service_id:
           type: string
-        telephone_number:
+          description: Service external ID
+          example: cd1b871207a94a7fa157dee678146acd
+        service_name:
           type: string
-          description: Only applicable for telephone payments reported. User's telephone
-            number
-          example: +44000000000
-        total_amount:
-          type: integer
-          format: int64
-          description: "Amount your user paid in pence, including corporate card fees.\
-            \ total_amount only appears if corporate card surcharge is applied to\
-            \ the payment."
-        wallet_type:
+          description: The service name for the account
+          example: service name
+        type:
           type: string
-          description: Indicates if the payment was completed using wallet payment
-            (GOOGLE_PAY or APPLE_PAY)
-          enum:
-          - APPLE_PAY
-          - GOOGLE_PAY
-          example: APPLE_PAY
+          description: Account type for the payment provider (test/live)
+          example: test
     GatewayAccountCredentials:
       type: object
       properties:
@@ -3747,10 +3510,6 @@ components:
           type: string
         block_prepaid_cards:
           type: boolean
-        card_types:
-          type: array
-          items:
-            $ref: '#/components/schemas/CardTypeEntity'
         corporateCreditCardSurchargeAmount:
           type: integer
           format: int64
@@ -3793,8 +3552,6 @@ components:
         gateway_account_id:
           type: integer
           format: int64
-        gateway_merchant_id:
-          type: string
         integration_version_3ds:
           type: integer
           format: int32
@@ -3936,105 +3693,6 @@ components:
           format: int64
         worldpay_3ds_flex:
           $ref: '#/components/schemas/Worldpay3dsFlexCredentials_ApiView'
-    GatewayAccountEntity_FrontendView:
-      type: object
-      properties:
-        allow_apple_pay:
-          type: boolean
-        allow_authorisation_api:
-          type: boolean
-        allow_google_pay:
-          type: boolean
-        allow_moto:
-          type: boolean
-        allow_telephone_payment_notifications:
-          type: boolean
-        allow_zero_amount:
-          type: boolean
-        analytics_id:
-          type: string
-        block_prepaid_cards:
-          type: boolean
-        card_types:
-          type: array
-          items:
-            $ref: '#/components/schemas/CardTypeEntity_FrontendView'
-        corporateCreditCardSurchargeAmount:
-          type: integer
-          format: int64
-          writeOnly: true
-        corporateDebitCardSurchargeAmount:
-          type: integer
-          format: int64
-          writeOnly: true
-        corporate_credit_card_surcharge_amount:
-          type: integer
-          format: int64
-        corporate_debit_card_surcharge_amount:
-          type: integer
-          format: int64
-        corporate_prepaid_debit_card_surcharge_amount:
-          type: integer
-          format: int64
-        disabled:
-          type: boolean
-        disabled_reason:
-          type: string
-        email_collection_mode:
-          type: string
-          enum:
-          - MANDATORY
-          - OPTIONAL
-          - "OFF"
-        email_notifications:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/EmailNotificationEntity_FrontendView'
-        external_id:
-          type: string
-        gateway_account_id:
-          type: integer
-          format: int64
-        gateway_merchant_id:
-          type: string
-        integration_version_3ds:
-          type: integer
-          format: int32
-        live:
-          type: boolean
-        moto_mask_card_number_input:
-          type: boolean
-        moto_mask_card_security_code_input:
-          type: boolean
-        notifySettings:
-          type: object
-          additionalProperties:
-            type: string
-        payment_provider:
-          type: string
-        provider_switch_enabled:
-          type: boolean
-        recurring_enabled:
-          type: boolean
-        requires3ds:
-          type: boolean
-        send_payer_email_to_gateway:
-          type: boolean
-        send_payer_ip_address_to_gateway:
-          type: boolean
-        send_reference_to_gateway:
-          type: boolean
-        service_id:
-          type: string
-        service_name:
-          type: string
-        type:
-          type: string
-        version:
-          type: integer
-          format: int64
-        worldpay_3ds_flex:
-          $ref: '#/components/schemas/Worldpay3dsFlexCredentials_FrontendView'
     GatewayAccountRequest:
       type: object
       discriminator:
@@ -4427,11 +4085,7 @@ components:
       type: object
       description: The last 4 digits of the card the user paid with.
       example: 4242
-    LastDigitsCardNumber_FrontendView:
-      type: object
-      description: The last 4 digits of the card the user paid with.
-      example: 4242
-    NewChargeStatusRequest_FrontendView:
+    NewChargeStatusRequest:
       type: object
       properties:
         new_status:
@@ -4470,20 +4124,6 @@ components:
           example: failed
         supplemental:
           $ref: '#/components/schemas/Supplemental'
-    PaymentOutcome_FrontendView:
-      type: object
-      description: Only applicable for telephone payments reported. Outcome after
-        the payment has been authorised with payment provider
-      properties:
-        code:
-          type: string
-          description: Error code
-          example: P0010
-        status:
-          type: string
-          example: failed
-        supplemental:
-          $ref: '#/components/schemas/Supplemental_FrontendView'
     PersistedCard:
       type: object
       properties:
@@ -4508,30 +4148,6 @@ components:
           $ref: '#/components/schemas/FirstDigitsCardNumber'
         last_digits_card_number:
           $ref: '#/components/schemas/LastDigitsCardNumber'
-    PersistedCard_FrontendView:
-      type: object
-      properties:
-        billing_address:
-          $ref: '#/components/schemas/Address_FrontendView'
-        card_brand:
-          type: string
-          example: Visa
-        card_type:
-          type: string
-          enum:
-          - CREDIT
-          - DEBIT
-          example: debit
-        cardholder_name:
-          type: string
-          description: The cardholder name the user entered when they paid.
-          example: Joe B
-        expiry_date:
-          $ref: '#/components/schemas/CardExpiryDate_FrontendView'
-        first_digits_card_number:
-          $ref: '#/components/schemas/FirstDigitsCardNumber_FrontendView'
-        last_digits_card_number:
-          $ref: '#/components/schemas/LastDigitsCardNumber_FrontendView'
     PrefilledAddress:
       type: object
       description: A structure representing the billing address of a card
@@ -4620,56 +4236,11 @@ components:
           type: string
           description: User external ID issuing refund
           example: sk03k2pojvsojd1po2joij92pspodrkwpenl
-    RefundSummary_FrontendView:
-      type: object
-      description: Provides refund amount available and the amount that has already
-        been submitted for refund
-      properties:
-        amount_available:
-          type: integer
-          format: int64
-          description: Amount available for refund in pence
-          example: 100
-        amount_submitted:
-          type: integer
-          format: int64
-          description: Amount submitted for refunds on this Payment in pence
-          example: 0
-        status:
-          type: string
-          description: Availability status of the refund
-          example: available
-        user_external_id:
-          type: string
-          description: User external ID issuing refund
-          example: sk03k2pojvsojd1po2joij92pspodrkwpenl
     ServicePaymentReference:
       type: object
       description: Service reference for the payment
       example: payment reference
-    ServicePaymentReference_FrontendView:
-      type: object
-      description: Service reference for the payment
-      example: payment reference
     SettlementSummary:
-      type: object
-      description: "Provides a settlement summary of the charge containing date and\
-        \ time of capture, if present"
-      properties:
-        capture_submit_time:
-          type: string
-          description: Date and time capture request has been submitted. May be null
-            if capture request was not immediately acknowledged by payment gateway.
-          example: 2022-06-28T09:26:45.715Z
-        capturedTime:
-          type: string
-          format: date-time
-          writeOnly: true
-        captured_date:
-          type: string
-          description: Date of the capture event
-          example: 2022-06-28
-    SettlementSummary_FrontendView:
       type: object
       description: "Provides a settlement summary of the charge containing date and\
         \ time of capture, if present"
@@ -4770,15 +4341,6 @@ components:
         error_message:
           type: string
           example: The payment card does not exist
-    Supplemental_FrontendView:
-      type: object
-      properties:
-        error_code:
-          type: string
-          example: E1234
-        error_message:
-          type: string
-          example: The payment card does not exist
     TelephoneChargeCreateRequest:
       type: object
       properties:
@@ -4863,19 +4425,6 @@ components:
       - provider_id
       - reference
     ThreeDSecure:
-      type: object
-      description: Object containing information about the 3D Secure authentication
-        of the payment
-      properties:
-        required:
-          type: boolean
-          description: Flag indicating whether the payment required 3D Secure authentication.
-          example: true
-        version:
-          type: string
-          description: 3DS version used to authorise payment
-          example: 2.1.0
-    ThreeDSecure_FrontendView:
       type: object
       description: Object containing information about the 3D Secure authentication
         of the payment
@@ -4999,18 +4548,6 @@ components:
           maxLength: 24
           minLength: 24
     Worldpay3dsFlexCredentials_ApiView:
-      type: object
-      properties:
-        exemption_engine_enabled:
-          type: boolean
-          example: true
-        issuer:
-          type: string
-          example: issuer
-        organisational_unit_id:
-          type: string
-          example: org_unit_id
-    Worldpay3dsFlexCredentials_FrontendView:
       type: object
       properties:
         exemption_engine_enabled:

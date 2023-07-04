@@ -6,12 +6,13 @@ import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
+import uk.gov.pay.connector.gatewayaccount.model.FrontendGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 public class FrontendChargeResponse extends ChargeResponse {
     public static class FrontendChargeResponseBuilder extends AbstractChargeResponseBuilder<FrontendChargeResponseBuilder, FrontendChargeResponse> {
         private String status;
-        private GatewayAccountEntity gatewayAccount;
+        private FrontendGatewayAccountResponse gatewayAccount;
         private AgreementResponse agreement;
         private boolean savePaymentInstrumentToAgreement;
 
@@ -23,7 +24,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         }
 
         public FrontendChargeResponseBuilder withGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
-            this.gatewayAccount = gatewayAccountEntity;
+            this.gatewayAccount = new FrontendGatewayAccountResponse(gatewayAccountEntity);
             return this;
         }
 
@@ -56,7 +57,7 @@ public class FrontendChargeResponse extends ChargeResponse {
     private String status;
 
     @JsonProperty(value = "gateway_account")
-    private GatewayAccountEntity gatewayAccount;
+    private FrontendGatewayAccountResponse gatewayAccount;
 
     @JsonProperty("save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
