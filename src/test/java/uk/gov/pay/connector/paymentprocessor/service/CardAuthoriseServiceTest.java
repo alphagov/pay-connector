@@ -230,7 +230,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
 
         LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService = mock(LinkPaymentInstrumentToAgreementService.class);
         CaptureQueue captureQueue = mock(CaptureQueue.class);

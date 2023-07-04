@@ -726,19 +726,4 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         databaseTestHelper.addToken(chargeId, "tokenId");
     }
 
-    private void createAgreement(String externalChargeId, long chargeId) {
-        databaseTestHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withGatewayAccountId(accountId)
-                .withAmount(AMOUNT)
-                .withStatus(CAPTURED)
-                .withReturnUrl(RETURN_URL)
-                .build());
-        databaseTestHelper.updateChargeCardDetails(chargeId, "unknown-brand", "1234", "123456", "Mr. McPayment",
-                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
-        databaseTestHelper.updateCorporateSurcharge(chargeId, 150L);
-        databaseTestHelper.addToken(chargeId, "tokenId");
-    }
-
 }

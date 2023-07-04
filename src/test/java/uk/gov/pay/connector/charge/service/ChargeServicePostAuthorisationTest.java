@@ -134,7 +134,7 @@ class ChargeServicePostAuthorisationTest {
                 mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao, mockConnectorConfig, mockProviders,
                 mockStateTransitionService, mockLedgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
     }
 
     @Test

@@ -17,6 +17,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
+import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
@@ -53,6 +54,7 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.client.cardid.service.CardidService;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidForceStateTransitionException;
@@ -95,6 +97,7 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
+import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.inject.Inject;
@@ -120,6 +123,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -137,6 +141,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class ChargeService {
 
@@ -169,6 +174,9 @@ public class ChargeService {
     
     private final Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
 
+    private final Boolean rejectPaymentLinkPaymentsWithCardNumberInReference;
+    private final CardidService cardidService;
+
     @Inject
     public ChargeService(TokenDao tokenDao,
                          ChargeDao chargeDao,
@@ -189,7 +197,8 @@ public class ChargeService {
                          Worldpay3dsFlexJwtService worldpay3dsFlexJwtService,
                          IdempotencyDao idempotencyDao,
                          ExternalTransactionStateFactory externalTransactionStateFactory,
-                         ObjectMapper objectMapper) {
+                         ObjectMapper objectMapper,
+                         CardidService cardidService) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -212,6 +221,8 @@ public class ChargeService {
         this.externalTransactionStateFactory = externalTransactionStateFactory;
         this.objectMapper = objectMapper;
         this.worldpay3dsFlexJwtService = worldpay3dsFlexJwtService;
+        this.rejectPaymentLinkPaymentsWithCardNumberInReference = config.getRejectPaymentLinkPaymentsWithCardNumberInReference();
+        this.cardidService = cardidService;
     }
 
     @Transactional
@@ -302,6 +313,8 @@ public class ChargeService {
                 checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
             }
 
+            checkCardNumberInReferenceForPaymentLinkPayments(chargeRequest.getSource(), chargeRequest.getReference());
+
             checkAgreementOptions(chargeRequest, gatewayAccount);
 
             chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
@@ -369,6 +382,24 @@ public class ChargeService {
 
             return chargeEntity;
         });
+    }
+
+    private void checkCardNumberInReferenceForPaymentLinkPayments(Source source, String reference) {
+        if (rejectPaymentLinkPaymentsWithCardNumberInReference != null && rejectPaymentLinkPaymentsWithCardNumberInReference
+                && source == CARD_PAYMENT_LINK) {
+
+            String referenceWithOutSpaceAndHyphen = reference.replaceAll("[ -]", "");
+
+            if (referenceWithOutSpaceAndHyphen.length() >= 12 && referenceWithOutSpaceAndHyphen.length() <= 19
+                    && LUHN_CHECK_DIGIT.isValid(referenceWithOutSpaceAndHyphen)) {
+
+                cardidService.getCardInformation(referenceWithOutSpaceAndHyphen)
+                        .ifPresent(cardInformation -> {
+                            LOGGER.info("Card number entered in a payment link reference");
+                            throw new CardNumberInPaymentLinkReferenceException();
+                        });
+            }
+        }
     }
 
     private GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity(ChargeCreateRequest chargeRequest,
@@ -766,11 +797,11 @@ public class ChargeService {
     private void inactivateAgreement(ChargeEntity charge, String rejectedReason) {
         charge.getAgreement().ifPresent(agreementEntity -> {
             AgreementInactivated inactivatedEvent = AgreementInactivated
-                .from(agreementEntity, rejectedReason, Instant.now());
+                    .from(agreementEntity, rejectedReason, Instant.now());
             ledgerService.postEvent(inactivatedEvent);
         });
         charge.getPaymentInstrument().ifPresent(paymentInstrumentEntity ->
-            paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.INACTIVE)
+                paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.INACTIVE)
         );
     }
 

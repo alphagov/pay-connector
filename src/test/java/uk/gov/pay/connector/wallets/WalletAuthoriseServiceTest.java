@@ -202,7 +202,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
                 mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
-                mockExternalTransactionStateFactory, objectMapper));
+                mockExternalTransactionStateFactory, objectMapper, null));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,

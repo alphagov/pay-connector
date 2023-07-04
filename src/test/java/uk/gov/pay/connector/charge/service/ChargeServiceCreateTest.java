@@ -7,8 +7,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -21,6 +24,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
@@ -39,6 +43,8 @@ import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.client.cardid.model.CardInformation;
+import uk.gov.pay.connector.client.cardid.service.CardidService;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
@@ -100,16 +106,19 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity.PaymentInstrumentEntityBuilder.aPaymentInstrumentEntity;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceCreateTest {
@@ -192,6 +201,8 @@ class ChargeServiceCreateTest {
     
     @Mock
     private IdempotencyDao mockIdempotencyDao;
+    @Mock
+    private CardidService mockCardidService;
 
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
@@ -268,7 +279,7 @@ class ChargeServiceCreateTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper, mockCardidService);
     }
 
     @Test
@@ -793,6 +804,145 @@ class ChargeServiceCreateTest {
             EXTERNAL_CHARGE_ID[0] = chargeEntityBeingPersisted.getExternalId();
             return null;
         }).when(mockedChargeDao).persist(any(ChargeEntity.class));
+    }
+
+    @Nested
+    class TestCardNumberInReference {
+
+        private static final String VALID_CARD_NUMBER = "4242424242424242";
+
+        @Test
+        void shouldCreateChargeForCardNumberInReferenceIfFlagIsDisabled() {
+            setupMocksToCreateACharge();
+            when(mockedConfig.getRejectPaymentLinkPaymentsWithCardNumberInReference()).thenReturn(false);
+
+            chargeService = getNewChargeService();
+
+            final ChargeCreateRequest request = requestBuilder
+                    .withSource(CARD_API)
+                    .withReference(VALID_CARD_NUMBER)
+                    .build();
+            chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+            verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+            assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
+        }
+
+        @Test
+        void shouldCreateChargeWhenReferenceIsACardNumber_ForAPIPaymentsAndWhenFlagIsEnabled() {
+            setupMocksToCreateACharge();
+
+            when(mockedConfig.getRejectPaymentLinkPaymentsWithCardNumberInReference()).thenReturn(true);
+
+            final ChargeCreateRequest request = requestBuilder
+                    .withSource(CARD_API)
+                    .withReference(VALID_CARD_NUMBER)
+                    .build();
+
+            chargeService = getNewChargeService();
+            chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+            verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+            assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
+        }
+
+        @Test
+        void shouldCreateChargeWhenReferenceIsACardNumber_ForPaymentPaymentLinkPaymentsAndWhenFlagIsDisabled() {
+            setupMocksToCreateACharge();
+
+            when(mockedConfig.getRejectPaymentLinkPaymentsWithCardNumberInReference()).thenReturn(true);
+
+            final ChargeCreateRequest request = requestBuilder
+                    .withSource(CARD_PAYMENT_LINK)
+                    .withReference(VALID_CARD_NUMBER)
+                    .build();
+
+            chargeService = getNewChargeService();
+            chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+            verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+            assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_PAYMENT_LINK));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"35680319460", "35680220691985608460"})
+        void shouldCreateChargeWhenReferenceLengthIsOutsideMinAndMaxLengthAndPassLuhnCheck_ForPaymentLinkPayments(String cardNumber) {
+            setupMocksToCreateACharge();
+
+            when(mockedConfig.getRejectPaymentLinkPaymentsWithCardNumberInReference()).thenReturn(true);
+
+            final ChargeCreateRequest request = requestBuilder
+                    .withSource(CARD_PAYMENT_LINK)
+                    .withReference(cardNumber)
+                    .build();
+
+            chargeService = getNewChargeService();
+            chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+            verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+            assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_PAYMENT_LINK));
+        }
+
+        @Test
+        void shouldCreateChargeWhenReferencePassesLuhnCheckButIsNotACardNumber_ForPaymentLinkPayment() {
+            setupMocksToCreateACharge();
+
+            when(mockCardidService.getCardInformation("4242425554678549")).thenReturn(Optional.empty());
+            when(mockedConfig.getRejectPaymentLinkPaymentsWithCardNumberInReference()).thenReturn(true);
+
+            final ChargeCreateRequest request = requestBuilder
+                    .withSource(CARD_PAYMENT_LINK)
+                    .withReference("4242425554678549")
+                    .build();
+
+            chargeService = getNewChargeService();
+            chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+            verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
+            assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_PAYMENT_LINK));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"42 42 4242 4242 4242", "4242-4242-42-42-4242",
+                "430350381314", "4492616950176228242",
+                VALID_CARD_NUMBER})
+        void shouldNotCreateChargeWhenReferenceIsACardNumber_ForPaymentLinkPaymentsAndWhenFlagIsEnabled(String validCardNumber) {
+            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+            CardInformation cardInformation = aCardInformation().build();
+
+            when(mockCardidService.getCardInformation(validCardNumber.replaceAll("[ -]", ""))).thenReturn(Optional.of(cardInformation));
+            when(mockedConfig.getRejectPaymentLinkPaymentsWithCardNumberInReference()).thenReturn(true);
+
+            final ChargeCreateRequest request = requestBuilder
+                    .withSource(CARD_PAYMENT_LINK)
+                    .withReference(validCardNumber)
+                    .build();
+
+            chargeService = getNewChargeService();
+
+            var exception = assertThrows(CardNumberInPaymentLinkReferenceException.class,
+                    () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
+
+            verifyNoInteractions(mockedChargeDao);
+            assertThat(exception.getMessage(), equalTo("Card number entered in a payment link reference"));
+        }
+
+        private ChargeService getNewChargeService() {
+            return new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
+                    mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
+                    mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
+                    mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
+                    mockTaskQueueService, null, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper, mockCardidService);
+        }
+
+        private void setupMocksToCreateACharge() {
+            doAnswer(invocation -> fromUri(SERVICE_HOST)).when(mockedUriInfo).getBaseUriBuilder();
+            when(mockedLinksConfig.getFrontendUrl()).thenReturn("http://frontend.test");
+            when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+            when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+            when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        }
     }
 
 }

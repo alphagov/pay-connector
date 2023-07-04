@@ -193,7 +193,7 @@ class ChargeServiceCreateAgreementTest {
                 mockConfig, mockProviders, mockStateTransitionService, mockLedgerService, mockedRefundService, mockEventService,
                 mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
                 mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
-                mockExternalTransactionStateFactory, objectMapper);
+                mockExternalTransactionStateFactory, objectMapper, null);
     }
 
     @Test
