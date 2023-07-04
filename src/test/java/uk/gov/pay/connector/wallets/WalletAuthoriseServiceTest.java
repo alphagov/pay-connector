@@ -25,6 +25,7 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
@@ -78,7 +79,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -147,6 +147,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     private TaskQueueService mockTaskQueueService;
 
     @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
+
+    @Mock
     private AuthCardDetails mockAuthCardDetails;
 
     @Mock
@@ -198,7 +201,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockIdempotencyDao,
+                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
                 mockExternalTransactionStateFactory, objectMapper));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,

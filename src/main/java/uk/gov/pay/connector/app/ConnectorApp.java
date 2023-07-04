@@ -78,6 +78,7 @@ import uk.gov.pay.connector.queue.managed.TaskQueueMessageReceiver;
 import uk.gov.pay.connector.refund.resource.RefundsResource;
 import uk.gov.pay.connector.report.resource.ParityCheckerResource;
 import uk.gov.pay.connector.report.resource.PerformanceReportResource;
+import uk.gov.pay.connector.token.exception.TokenNotFoundExceptionMapper;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
 import uk.gov.pay.connector.util.DependentResourceWaitCommand;
@@ -168,6 +169,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new RecurringCardPaymentsNotAllowedExceptionMapper());
         environment.jersey().register(new MissingCredentialsForRecurringPaymentExceptionMapper());
         environment.jersey().register(new IdempotencyKeyUsedExceptionMapper());
+        environment.jersey().register(new TokenNotFoundExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

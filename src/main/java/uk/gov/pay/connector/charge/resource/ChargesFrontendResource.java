@@ -99,7 +99,7 @@ public class ChargesFrontendResource {
                               @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
 
         return chargeDao.findByExternalId(chargeId)
-                .map(charge -> Response.ok(buildChargeResponse(uriInfo, charge)).build())
+                .map(charge -> Response.ok(chargeService.buildChargeResponse(uriInfo, charge)).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -170,7 +170,7 @@ public class ChargesFrontendResource {
         }
 
         return chargeService.updateCharge(chargeId, chargePatchRequest)
-                .map(chargeEntity -> Response.ok(buildChargeResponse(uriInfo, chargeEntity)).build())
+                .map(chargeEntity -> Response.ok(chargeService.buildChargeResponse(uriInfo, chargeEntity)).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -227,72 +227,5 @@ public class ChargesFrontendResource {
 
     private Optional<AgreementResponse> findAgreement(String agreementExternalId, long gatewayAccountId) {
         return agreementService.findByExternalId(agreementExternalId, gatewayAccountId);
-    }
-
-    private ChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
-        String chargeId = charge.getExternalId();
-
-        FrontendChargeResponse.FrontendChargeResponseBuilder responseBuilder = aFrontendChargeResponse()
-                .withStatus(charge, externalTransactionStateFactory)
-                .withChargeId(chargeId)
-                .withAmount(charge.getAmount())
-                .withDescription(charge.getDescription())
-                .withProviderName(charge.getPaymentProvider())
-                .withGatewayTransactionId(charge.getGatewayTransactionId())
-                .withCreatedDate(charge.getCreatedDate())
-                .withReturnUrl(charge.getReturnUrl())
-                .withEmail(charge.getEmail())
-                .withFee(charge.getFeeAmount().orElse(null))
-                .withNetAmount(charge.getNetAmount().orElse(null))
-                .withGatewayAccount(charge.getGatewayAccount())
-                .withLanguage(charge.getLanguage())
-                .withDelayedCapture(charge.isDelayedCapture())
-                .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
-                .withLink("self", GET, locationUriFor("/v1/frontend/charges/{chargeId}", uriInfo, chargeId))
-                .withLink("cardAuth", POST, locationUriFor("/v1/frontend/charges/{chargeId}/cards", uriInfo, chargeId))
-                .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
-                .withWalletType(charge.getWalletType())
-                .withMoto(charge.isMoto())
-                .withAuthorisationMode(charge.getAuthorisationMode());
-
-        if (charge.getCardDetails() != null) {
-            var persistedCard = charge.getCardDetails().toCard();
-            persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
-            responseBuilder.withCardDetails(persistedCard);
-        }
-
-        charge.getAgreement().ifPresent(agreementEntity -> responseBuilder.withAgreementId(agreementEntity.getExternalId()));
-        charge.getAgreement().map(AgreementResponse::from).ifPresent(responseBuilder::withAgreement);
-
-        if (charge.get3dsRequiredDetails() != null) {
-            var auth3dsData = new ChargeResponse.Auth3dsData();
-            auth3dsData.setPaRequest(charge.get3dsRequiredDetails().getPaRequest());
-            auth3dsData.setIssuerUrl(charge.get3dsRequiredDetails().getIssuerUrl());
-            auth3dsData.setHtmlOut(charge.get3dsRequiredDetails().getHtmlOut());
-            auth3dsData.setMd(charge.get3dsRequiredDetails().getMd());
-
-            if (WORLDPAY.getName().equals(charge.getPaymentProvider())) {
-                worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(
-                        auth3dsData::setWorldpayChallengeJwt);
-            }
-
-            responseBuilder.withAuth3dsData(auth3dsData);
-        }
-
-        charge.getCorporateSurcharge().ifPresent(surcharge -> {
-            if (surcharge > 0) {
-                responseBuilder
-                        .withCorporateCardSurcharge(surcharge)
-                        .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
-            }
-        });
-
-        return responseBuilder.build();
-    }
-
-    private URI locationUriFor(String path, UriInfo uriInfo, String chargeId) {
-        return uriInfo.getBaseUriBuilder()
-                .path(path)
-                .build(chargeId);
     }
 }

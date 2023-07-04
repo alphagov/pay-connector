@@ -22,6 +22,7 @@ import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
@@ -95,6 +96,9 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private TaskQueueService mockTaskQueueService;
 
     @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
+    
+    @Mock
     ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
 
     @Mock
@@ -127,7 +131,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 null, mock(AgreementDao.class), null, mock(ConnectorConfiguration.class), null,
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class),
                 mock(EventService.class), mock(PaymentInstrumentService.class), mock(GatewayAccountCredentialsService.class),
-                mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService, mock(IdempotencyDao.class),
+                mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService, mockWorldpay3dsFlexJwtService, mock(IdempotencyDao.class),
                 mock(ExternalTransactionStateFactory.class), objectMapper);
 
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);

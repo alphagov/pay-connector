@@ -154,6 +154,10 @@ class ChargeServiceFindTest {
 
     @Mock
     private TaskQueueService mockTaskQueueService;
+
+    @Mock
+    private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
+    
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
@@ -205,7 +209,7 @@ class ChargeServiceFindTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService,
-                mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
+                mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper);
     }
     @Test
     void shouldNotFindCharge() {

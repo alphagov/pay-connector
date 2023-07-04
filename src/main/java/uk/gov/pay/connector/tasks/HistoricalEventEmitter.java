@@ -30,7 +30,6 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -59,7 +58,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
-import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class HistoricalEventEmitter {
     public static final List<ChargeStatus> TERMINAL_AUTHENTICATION_STATES = List.of(

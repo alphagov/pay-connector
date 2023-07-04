@@ -94,9 +94,9 @@ public class SecurityTokensResourceIT {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("used", is(false))
-                .body("charge.externalId", is(defaultTestCharge.getExternalChargeId()))
+                .body("charge.charge_id", is(defaultTestCharge.getExternalChargeId()))
                 .body("charge.status", is(defaultTestCharge.getChargeStatus().toString()))
-                .body("charge.gatewayAccount.service_name", is(defaultTestAccount.getServiceName()));
+                .body("charge.gateway_account.service_name", is(defaultTestAccount.getServiceName()));
     }
 
     @Test
@@ -114,9 +114,9 @@ public class SecurityTokensResourceIT {
                 .statusCode(200)
                 .contentType(JSON)
                 .body("used", is(true))
-                .body("charge.externalId", is(defaultTestCharge.getExternalChargeId()))
+                .body("charge.charge_id", is(defaultTestCharge.getExternalChargeId()))
                 .body("charge.status", is(defaultTestCharge.getChargeStatus().toString()))
-                .body("charge.gatewayAccount.service_name", is(defaultTestAccount.getServiceName()));
+                .body("charge.gateway_account.service_name", is(defaultTestAccount.getServiceName()));
     }
 
     @Test
