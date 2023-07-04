@@ -262,13 +262,16 @@ public class ContractTest {
     }
 
     @State("a gateway account with external id exists")
-    public void createGatewayAccount(Map<String, String> params) {
+    public void createGatewayAccount(Map<String, String> params) throws JsonProcessingException {
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(params.get("gateway_account_id"))
                 .withPaymentGateway("sandbox")
                 .withCredentials(Map.of())
                 .withServiceName("a cool service")
                 .build());
+
+        CardInformation cardInformation = aCardInformation().build();
+        mockCardidService.returnCardInformation("4242424242424242", cardInformation);
     }
 
     @State("a gateway account with external id and recurring payment enabled exists")
