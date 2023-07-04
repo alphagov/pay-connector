@@ -132,7 +132,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 mock(StateTransitionService.class), mock(LedgerService.class), mock(RefundService.class),
                 mock(EventService.class), mock(PaymentInstrumentService.class), mock(GatewayAccountCredentialsService.class),
                 mock(AuthCardDetailsToCardDetailsEntityConverter.class), mockTaskQueueService, mockWorldpay3dsFlexJwtService, mock(IdempotencyDao.class),
-                mock(ExternalTransactionStateFactory.class), objectMapper);
+                mock(ExternalTransactionStateFactory.class), objectMapper, null);
 
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
         when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);

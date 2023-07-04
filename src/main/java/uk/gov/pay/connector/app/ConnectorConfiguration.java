@@ -189,6 +189,9 @@ public class ConnectorConfiguration extends Configuration {
         return stripeConfig;
     }
 
+    @JsonProperty("rejectPaymentLinkPaymentsWithCardNumberInReference")
+    public Boolean rejectPaymentLinkPaymentsWithCardNumberInReference;
+
     public GatewayConfig getGatewayConfigFor(PaymentGatewayName gateway) {
         switch (gateway) {
             case WORLDPAY:
@@ -288,5 +291,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public TaskQueueConfig getTaskQueueConfig() {
         return taskQueueConfig;
+    }
+
+    public Boolean getRejectPaymentLinkPaymentsWithCardNumberInReference() {
+        return rejectPaymentLinkPaymentsWithCardNumberInReference;
     }
 }

@@ -24,6 +24,7 @@ import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOpt
 import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdExceptionMapper;
+import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledExceptionMapper;
 import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedExceptionMapper;
@@ -170,6 +171,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new MissingCredentialsForRecurringPaymentExceptionMapper());
         environment.jersey().register(new IdempotencyKeyUsedExceptionMapper());
         environment.jersey().register(new TokenNotFoundExceptionMapper());
+        environment.jersey().register(new CardNumberInPaymentLinkReferenceExceptionMapper());
 
         environment.jersey().register(injector.getInstance(GatewayAccountResource.class));
         environment.jersey().register(injector.getInstance(StripeAccountSetupResource.class));

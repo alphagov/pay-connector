@@ -5,6 +5,7 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -49,10 +51,14 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
+import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
+import static uk.gov.service.payments.commons.model.Source.CARD_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(
@@ -71,6 +77,7 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     private static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
     private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
     private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
+    private static final String VALID_CARD_NUMBER = "4242424242424242";
 
     public ChargesApiResourceCreateIT() {
         super(PROVIDER_NAME);
@@ -246,6 +253,26 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
     }
 
     @Test
+    public void shouldCreateCharge_whenReferenceIsACardNumberForAPIPayment() throws JsonProcessingException {
+        var cardInformation = aCardInformation().build();
+        cardidStub.returnCardInformation(VALID_CARD_NUMBER, cardInformation);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_SOURCE_KEY, CARD_API
+        ));
+
+        connectorRestApiClient
+                .postCreateCharge(postBody)
+                .statusCode(Status.CREATED.getStatusCode())
+                .body(JSON_REFERENCE_KEY, is(VALID_CARD_NUMBER))
+                .contentType(JSON);
+    }
+
+    @Test
     public void shouldReturn404WhenCreatingChargeAccountIdIsNonNumeric() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -261,6 +288,28 @@ public class ChargesApiResourceCreateIT extends ChargingITestBase {
                 .statusCode(NOT_FOUND.getStatusCode())
                 .body("code", is(404))
                 .body("message", is("HTTP 404 Not Found"));
+    }
+
+    @Test
+    public void shouldReturn400WhenReferenceIsACardNumberForPaymentLinkPayment() throws JsonProcessingException {
+        var cardInformation = aCardInformation().build();
+        cardidStub.returnCardInformation(VALID_CARD_NUMBER, cardInformation);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_SOURCE_KEY, CARD_PAYMENT_LINK
+        ));
+
+        connectorRestApiClient
+                .withAccountId(accountId)
+                .postCreateCharge(postBody)
+                .contentType(JSON)
+                .statusCode(BAD_REQUEST.getStatusCode())
+                .body("error_identifier", is(CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED.toString()))
+                .body("message[0]", is("Card number entered in a payment link reference"));
     }
 
     @Test
