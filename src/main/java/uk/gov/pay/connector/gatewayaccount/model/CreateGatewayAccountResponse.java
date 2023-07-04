@@ -10,7 +10,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-public class GatewayAccountResponse {
+public class CreateGatewayAccountResponse {
 
     @JsonProperty("type")
     @Schema(example = "live")
@@ -53,7 +53,7 @@ public class GatewayAccountResponse {
     @JsonIgnore
     private final URI location;
 
-    public GatewayAccountResponse(GatewayAccountResponseBuilder gatewayAccountResponseBuilder) {
+    public CreateGatewayAccountResponse(GatewayAccountResponseBuilder gatewayAccountResponseBuilder) {
         this.gatewayAccountId = gatewayAccountResponseBuilder.gatewayAccountId;
         this.externalId = gatewayAccountResponseBuilder.externalId;
         this.providerAccountType = gatewayAccountResponseBuilder.providerAccountType;
@@ -114,8 +114,8 @@ public class GatewayAccountResponse {
         private URI location;
         private List<Map<String, Object>> links;
 
-        public GatewayAccountResponse build() {
-            return new GatewayAccountResponse(this);
+        public CreateGatewayAccountResponse build() {
+            return new CreateGatewayAccountResponse(this);
         }
 
         public GatewayAccountResponseBuilder gatewayAccountId(String gatewayAccountId) {

@@ -148,7 +148,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountResponse'
+                $ref: '#/components/schemas/CreateGatewayAccountResponse'
           description: Created
         "422":
           content:
@@ -2976,6 +2976,48 @@ components:
           - APPLE_PAY
           - GOOGLE_PAY
           example: APPLE_PAY
+    CreateGatewayAccountResponse:
+      type: object
+      properties:
+        analytics_id:
+          type: string
+          example: ananytics-id
+        description:
+          type: string
+          example: account for some gov org
+        external_id:
+          type: string
+          example: ab2c296ed98647e9a25f045f5e6e87a2
+        gateway_account_id:
+          type: string
+          example: "2"
+        links:
+          type: array
+          example:
+          - href: https://connector.url/v1/api/accounts/2
+            method: GET
+            rel: self
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              example:
+              - href: https://connector.url/v1/api/accounts/2
+                method: GET
+                rel: self
+            example:
+            - href: https://connector.url/v1/api/accounts/2
+              method: GET
+              rel: self
+        requires_3ds:
+          type: boolean
+          example: true
+        service_name:
+          type: string
+          example: service name
+        type:
+          type: string
+          example: live
     EmailNotificationEntity:
       type: object
       properties:
@@ -4222,48 +4264,6 @@ components:
           example: test
         worldpay_3ds_flex:
           $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
-    GatewayAccountResponse:
-      type: object
-      properties:
-        analytics_id:
-          type: string
-          example: ananytics-id
-        description:
-          type: string
-          example: account for some gov org
-        external_id:
-          type: string
-          example: ab2c296ed98647e9a25f045f5e6e87a2
-        gateway_account_id:
-          type: string
-          example: "2"
-        links:
-          type: array
-          example:
-          - href: https://connector.url/v1/api/accounts/2
-            method: GET
-            rel: self
-          items:
-            type: object
-            additionalProperties:
-              type: object
-              example:
-              - href: https://connector.url/v1/api/accounts/2
-                method: GET
-                rel: self
-            example:
-            - href: https://connector.url/v1/api/accounts/2
-              method: GET
-              rel: self
-        requires_3ds:
-          type: boolean
-          example: true
-        service_name:
-          type: string
-          example: service name
-        type:
-          type: string
-          example: live
     GatewayAccountSwitchPaymentProviderRequest:
       type: object
       properties:

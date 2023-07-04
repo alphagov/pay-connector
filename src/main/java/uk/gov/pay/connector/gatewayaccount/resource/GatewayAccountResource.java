@@ -22,7 +22,7 @@ import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRe
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -268,7 +268,7 @@ public class GatewayAccountResource {
             tags = {"Gateway accounts"},
             responses = {
                     @ApiResponse(responseCode = "201", description = "Created",
-                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountResponse.class))),
+                            content = @Content(schema = @Schema(name = "accounts", implementation = CreateGatewayAccountResponse.class))),
                     @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             }
@@ -280,9 +280,9 @@ public class GatewayAccountResource {
                 gatewayAccountRequest.getPaymentProvider(),
                 gatewayAccountRequest.getProviderAccountType());
 
-        GatewayAccountResponse gatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
+        CreateGatewayAccountResponse createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
 
-        return Response.created(gatewayAccountResponse.getLocation()).entity(gatewayAccountResponse).build();
+        return Response.created(createGatewayAccountResponse.getLocation()).entity(createGatewayAccountResponse).build();
     }
 
     @PATCH
