@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.service;
 
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -36,13 +36,13 @@ public class GatewayAccountObjectConverter {
         return gatewayAccountEntity;
     }
 
-    public static GatewayAccountResponse createResponseFrom(GatewayAccountEntity entity, UriInfo uriInfo) {
+    public static CreateGatewayAccountResponse createResponseFrom(GatewayAccountEntity entity, UriInfo uriInfo) {
         
         URI uri = uriInfo.
                 getBaseUriBuilder().
                 path("/v1/api/accounts/{accountId}").build(entity.getId());
 
-        return new GatewayAccountResponse.GatewayAccountResponseBuilder()
+        return new CreateGatewayAccountResponse.GatewayAccountResponseBuilder()
                 .gatewayAccountId(entity.getId().toString())
                 .externalId(entity.getExternalId())
                 .serviceName(entity.getServiceName())
