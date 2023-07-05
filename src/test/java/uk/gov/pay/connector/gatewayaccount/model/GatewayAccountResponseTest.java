@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 
-class GatewayAccountResourceDTOTest {
+class GatewayAccountResponseTest {
 
     @Test
     void fromEntity() {
@@ -60,11 +60,12 @@ class GatewayAccountResourceDTOTest {
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
         entity.setEmailNotifications(emailNotifications);
         
-        GatewayAccountResourceDTO dto = new GatewayAccountResourceDTO(entity);
+        GatewayAccountResponse dto = new GatewayAccountResponse(entity);
         assertThat(dto.getAccountId(), is(entity.getId()));
         assertThat(dto.getExternalId(), is(entity.getExternalId()));
         assertThat(dto.getPaymentProvider(), is(entity.getGatewayName()));
         assertThat(dto.getType(), is(entity.getType()));
+        assertThat(dto.isLive(), is(entity.isLive()));
         assertThat(dto.getDescription(), is(entity.getDescription()));
         assertThat(dto.getServiceName(), is(entity.getServiceName()));
         assertThat(dto.getAnalyticsId(), is(entity.getAnalyticsId()));
