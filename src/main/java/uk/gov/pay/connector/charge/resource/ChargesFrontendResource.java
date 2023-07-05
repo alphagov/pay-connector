@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.charge.resource;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.google.common.collect.ImmutableSet;
 import io.dropwizard.jersey.PATCH;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,7 +28,6 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -86,7 +84,6 @@ public class ChargesFrontendResource {
     @GET
     @Path("/v1/frontend/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     @Operation(
             summary = "Find a charge",
             responses = {
@@ -134,7 +131,6 @@ public class ChargesFrontendResource {
     @PATCH
     @Path("/v1/frontend/charges/{chargeId}")
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     @Operation(
             summary = "Update charge (email field only)",
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
@@ -177,7 +173,6 @@ public class ChargesFrontendResource {
     @PUT
     @Path("/v1/frontend/charges/{chargeId}/status")
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.FrontendView.class)
     @Operation(
             summary = "Update status of a charge",
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +

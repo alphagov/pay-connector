@@ -186,19 +186,19 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     }
 
     @JsonProperty("gateway_account_id")
-    @JsonView({Views.ApiView.class, Views.FrontendView.class})
+    @JsonView({Views.ApiView.class})
     public Long getId() {
         return this.id;
     }
 
     @JsonProperty("external_id")
-    @JsonView({Views.ApiView.class, Views.FrontendView.class})
+    @JsonView({Views.ApiView.class})
     public String getExternalId() {
         return externalId;
     }
 
     @JsonProperty("payment_provider")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public String getGatewayName() {
         return getCurrentOrActiveGatewayAccountCredential()
                 .map(GatewayAccountCredentialsEntity::getPaymentProvider)
@@ -268,8 +268,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                                 getId(), paymentProvider))));
     }
 
-    @JsonProperty("gateway_merchant_id")
-    @JsonView(Views.FrontendView.class)
+    @JsonIgnore
     public String getGatewayMerchantId() {
         return getCurrentOrActiveGatewayAccountCredential()
                 .map(credentialsEntity -> {
@@ -293,32 +292,31 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return description;
     }
 
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     @JsonProperty("analytics_id")
     public String getAnalyticsId() {
         return analyticsId;
     }
 
     @JsonProperty("type")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public String getType() {
         return type.toString();
     }
 
     @JsonProperty("service_name")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public String getServiceName() {
         return serviceName;
     }
 
     @JsonProperty("service_id")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public String getServiceId() {
         return serviceId;
     }
 
-    @JsonView(Views.FrontendView.class)
-    @JsonProperty("card_types")
+    @JsonIgnore
     public List<CardTypeEntity> getCardTypes() {
         return cardTypes;
     }
@@ -354,115 +352,115 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     }
 
     @JsonProperty("allow_google_pay")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isAllowGooglePay() {
         return allowGooglePay && isNotBlank(getGatewayMerchantId());
     }
 
     @JsonProperty("allow_apple_pay")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isAllowApplePay() {
         return allowApplePay;
     }
 
     @JsonProperty("allow_zero_amount")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isAllowZeroAmount() {
         return allowZeroAmount;
     }
 
     @JsonProperty("block_prepaid_cards")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isBlockPrepaidCards() {
         return blockPrepaidCards;
     }
 
     @JsonProperty("allow_moto")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isAllowMoto() {
         return allowMoto;
     }
 
     @JsonProperty("moto_mask_card_number_input")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isMotoMaskCardNumberInput() {
         return motoMaskCardNumberInput;
     }
 
     @JsonProperty("moto_mask_card_security_code_input")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isMotoMaskCardSecurityCodeInput() {
         return motoMaskCardSecurityCodeInput;
     }
 
     @JsonProperty("corporate_credit_card_surcharge_amount")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public long getCorporateNonPrepaidCreditCardSurchargeAmount() {
         return corporateCreditCardSurchargeAmount;
     }
 
     @JsonProperty("corporate_debit_card_surcharge_amount")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public long getCorporateNonPrepaidDebitCardSurchargeAmount() {
         return corporateDebitCardSurchargeAmount;
     }
 
     @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public long getCorporatePrepaidDebitCardSurchargeAmount() {
         return corporatePrepaidDebitCardSurchargeAmount;
     }
 
     @JsonProperty("integration_version_3ds")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public int getIntegrationVersion3ds() {
         return integrationVersion3ds;
     }
 
     @JsonProperty("allow_telephone_payment_notifications")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isAllowTelephonePaymentNotifications() {
         return allowTelephonePaymentNotifications;
     }
 
     @JsonProperty("send_payer_ip_address_to_gateway")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isSendPayerIpAddressToGateway() {
         return sendPayerIpAddressToGateway;
     }
 
     @JsonProperty("send_payer_email_to_gateway")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isSendPayerEmailToGateway() {
         return sendPayerEmailToGateway;
     }
 
     @JsonProperty("send_reference_to_gateway")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isSendReferenceToGateway() {
         return sendReferenceToGateway;
     }
 
     @JsonProperty("allow_authorisation_api")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isAllowAuthorisationApi() {
         return allowAuthorisationApi;
     }
 
     @JsonProperty("recurring_enabled")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isRecurringEnabled() {
         return recurringEnabled;
     }
 
     @JsonProperty("disabled")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isDisabled() {
         return disabled;
     }
 
     @JsonProperty("disabled_reason")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public String getDisabledReason() {
         return disabledReason;
     }
@@ -605,7 +603,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     }
 
     @JsonProperty("provider_switch_enabled")
-    @JsonView(value = {Views.ApiView.class, Views.FrontendView.class})
+    @JsonView(value = {Views.ApiView.class})
     public boolean isProviderSwitchEnabled() {
         return providerSwitchEnabled;
     }
@@ -632,9 +630,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public class Views {
         public class ApiView {
-        }
-
-        public class FrontendView {
         }
     }
 

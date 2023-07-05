@@ -55,6 +55,10 @@ public class GatewayAccountResourceDTO {
     @Schema(example = "250", description = "A corporate debit card surcharge amount in pence", defaultValue = "0")
     private long corporateDebitCardSurchargeAmount;
 
+    @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
+    @Schema(example = "0", description = "A corporate prepaid debit card surcharge amount in pence")
+    private long corporatePrepaidDebitCardSurchargeAmount;
+
     @JsonProperty("_links")
     @Schema(example = "{" +
             "        {" +
@@ -76,10 +80,6 @@ public class GatewayAccountResourceDTO {
     @JsonProperty("block_prepaid_cards")
     @Schema(example = "true", description = "Whether pre-paid cards are allowed as a payment method for this gateway account", defaultValue = "false")
     private boolean blockPrepaidCards;
-
-    @JsonProperty("corporate_prepaid_debit_card_surcharge_amount")
-    @Schema(example = "0", description = "A corporate prepaid debit card surcharge amount in pence")
-    private long corporatePrepaidDebitCardSurchargeAmount;
 
     @JsonProperty("email_notifications")
     @Schema(description = "The settings for the different emails (payments/refunds) that are sent out", example = "{" +
