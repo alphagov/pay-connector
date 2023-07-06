@@ -25,6 +25,7 @@ public class EventQueue {
     }
 
     public void emitEvent(Event event) throws QueueException {
+        // send to Nats queue payment.event
         if (eventQueueEnabled) {
             try {
                 sqsQueueService.sendMessage(eventQueueUrl, event.toJsonString());

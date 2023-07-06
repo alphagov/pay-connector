@@ -65,6 +65,8 @@ class PaymentCreatedTest {
     @Test
     void serializesPayloadForCreatedWithoutCardDetails() throws JsonProcessingException {
         var paymentCreatedEvent = preparePaymentCreatedEvent();
+        
+        System.out.println(paymentCreatedEvent);
 
         assertBasePaymentCreatedDetails(paymentCreatedEvent);
         assertDoesNotContainCardDetails(paymentCreatedEvent);
