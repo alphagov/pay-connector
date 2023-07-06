@@ -161,6 +161,9 @@ paths:
       - Gateway accounts
   /v1/api/accounts/{accountId}:
     get:
+      description: "Get gateway account by internal ID. Returns notifications credentials,\
+        \ gateway account credentials (without password). Doesn't include card_types\
+        \ or gateway_merchant_id"
       operationId: getGatewayAccount
       parameters:
       - description: Gateway account ID
@@ -176,7 +179,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountResponse'
+                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
           description: OK
         "404":
           description: Not found

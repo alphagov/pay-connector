@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
+import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.core.Is;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,8 +11,10 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
@@ -26,8 +29,13 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -147,17 +155,45 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
     @Test
     public void shouldReturnAccountInformationForGetAccountById() {
+        long accountId = RandomUtils.nextInt();
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withGatewayAccountId(accountId)
+                .withState(ACTIVE)
+                .withCredentials(Map.of(
+                        "username", "a-username",
+                        "password", "a-password",
+                        "merchant_id", "a-merchant-id"))
+                .build();
+        
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
+                .withAccountId(accountId)
                 .withAllowTelephonePaymentNotifications(true)
+                .withAllowMoto(true)
+                .withCorporateCreditCardSurchargeAmount(250)
+                .withCorporateDebitCardSurchargeAmount(50)
+                .withAllowAuthApi(true)
+                .withRecurringEnabled(true)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withDefaultCredentials()
+                .withGatewayAccountCredentials(List.of(credentialsParams))
                 .insert();
+        
+        databaseTestHelper.allowApplePay(accountId);
+        databaseTestHelper.allowZeroAmount(accountId);
+        databaseTestHelper.blockPrepaidCards(accountId);
+        databaseTestHelper.enableProviderSwitch(accountId);
+        databaseTestHelper.setDisabled(accountId);
+        databaseTestHelper.setDisabledReason(accountId, "Disabled because reasons");
 
+        int accountIdAsInt = Math.toIntExact(accountId);
         givenSetup()
-                .get(ACCOUNTS_API_URL + defaultTestAccount.getAccountId())
+                .get(ACCOUNTS_API_URL + accountId)
                 .then()
                 .statusCode(200)
-                .body("payment_provider", is("sandbox"))
+                .body("payment_provider", is("worldpay"))
                 .body("gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
                 .body("external_id", is(defaultTestAccount.getExternalId()))
                 .body("type", is(TEST.toString()))
@@ -169,21 +205,29 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("email_notifications.REFUND_ISSUED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
                 .body("email_notifications.REFUND_ISSUED.enabled", is(true))
                 .body("service_name", is("service_name"))
-                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_credit_card_surcharge_amount", is(250))
+                .body("corporate_debit_card_surcharge_amount", is(50))
                 .body("allow_google_pay", is(false))
-                .body("allow_apple_pay", is(false))
+                .body("allow_apple_pay", is(true))
                 .body("send_payer_ip_address_to_gateway", is(false))
                 .body("send_payer_email_to_gateway", is(false))
-                .body("allow_zero_amount", is(false))
+                .body("allow_zero_amount", is(true))
                 .body("integration_version_3ds", is(2))
                 .body("allow_telephone_payment_notifications", is(true))
-                .body("provider_switch_enabled", is(false))
+                .body("provider_switch_enabled", is(true))
                 .body("service_id", is("valid-external-service-id"))
                 .body("send_reference_to_gateway", is(false))
-                .body("allow_authorisation_api", is(false))
-                .body("recurring_enabled", is(false))
-                .body("disabled", is(false))
-                .body("disabled_reason", is(nullValue()));
+                .body("allow_authorisation_api", is(true))
+                .body("recurring_enabled", is(true))
+                .body("block_prepaid_cards", is(true))
+                .body("disabled", is(true))
+                .body("disabled_reason", is("Disabled because reasons"))
+                .body("gateway_account_credentials.size()", is(1))
+                .body("gateway_account_credentials[0].credentials.merchant_id", is("a-merchant-id"))
+                .body("gateway_account_credentials[0].payment_provider", is("worldpay"))
+                .body("gateway_account_credentials[0].state", is("ACTIVE"))
+                .body("gateway_account_credentials[0].password", is(nullValue()))
+                .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt));
     }
 
     @Test
