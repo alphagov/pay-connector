@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
@@ -19,11 +18,12 @@ import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
@@ -109,7 +109,7 @@ public class GatewayAccountResource {
             tags = {"Gateway accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = GatewayAccountResourceDTO.class))),
+                            content = @Content(schema = @Schema(implementation = GatewayAccountResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
@@ -117,7 +117,7 @@ public class GatewayAccountResource {
         logger.debug("Getting gateway account for account id {}", accountId);
         return gatewayAccountService
                 .getGatewayAccount(accountId)
-                .map(GatewayAccountResourceDTO::new)
+                .map(GatewayAccountResponse::new)
                 .map(gatewayAccountDTO -> Response.ok().entity(gatewayAccountDTO).build())
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
     }
@@ -152,19 +152,15 @@ public class GatewayAccountResource {
             tags = {"Gateway accounts - frontend"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountEntity.class))),
+                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountWithCredentialsResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getFrontendGatewayAccountByExternalId(@PathParam("externalId") String externalId) {
+    public GatewayAccountWithCredentialsResponse getFrontendGatewayAccountByExternalId(@PathParam("externalId") String externalId) {
         return gatewayAccountService
                 .getGatewayAccountByExternal(externalId)
-                .map(gatewayAccount ->
-                {
-                    gatewayAccount.getGatewayAccountCredentials().forEach(credential -> credential.getCredentials().remove("password"));
-                    return Response.ok(gatewayAccount).build();
-                })
-                .orElseGet(() -> notFoundResponse(format("Account with external id %s not found.", externalId)));
+                .map(GatewayAccountWithCredentialsResponse::new)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(format("Account with external id %s not found.", externalId)));
     }
 
     @GET
@@ -187,7 +183,7 @@ public class GatewayAccountResource {
     private Response getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
         logger.info(format("Searching gateway accounts by parameters %s", gatewayAccountSearchParams.toString()));
 
-        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
+        List<GatewayAccountResponse> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
         gatewayAccounts.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
 
         return Response
@@ -204,34 +200,28 @@ public class GatewayAccountResource {
     @GET
     @Path("/v1/frontend/accounts/{accountId}")
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.ApiView.class)
     @Operation(
             summary = "Find gateway account by gateway account ID",
             description = "Get gateway account by external ID. Returns notifications credentials, gateway account credentials (without password). Doesn't include card_types or gateway_merchant_id",
             tags = {"Gateway accounts - frontend"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = GatewayAccountEntity.class))),
+                            content = @Content(schema = @Schema(implementation = GatewayAccountWithCredentialsResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getGatewayAccountWithCredentials(@Parameter(example = "1", description = "Gateway account ID")
+    public GatewayAccountWithCredentialsResponse getGatewayAccountWithCredentials(@Parameter(example = "1", description = "Gateway account ID")
                                                      @PathParam("accountId") Long gatewayAccountId) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccount ->
-                {
-                    gatewayAccount.getGatewayAccountCredentials().forEach(credential -> credential.getCredentials().remove("password"));
-                    return Response.ok(gatewayAccount).build();
-                })
-                .orElseGet(() -> notFoundResponse(format("Account with id '%s' not found", gatewayAccountId)));
+                .map(GatewayAccountWithCredentialsResponse::new)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @GET
     @Path("/v1/frontend/accounts/{accountId}/card-types")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    @JsonView(GatewayAccountEntity.Views.ApiView.class)
     @Operation(
             summary = "Get card types for gateway account",
             tags = {"Gateway accounts - frontend"},

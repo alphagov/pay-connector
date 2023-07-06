@@ -15,7 +15,7 @@ import java.util.Optional;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 @JsonInclude(NON_NULL)
-public class GatewayAccountResourceDTO {
+public class GatewayAccountResponse {
 
     @JsonProperty("gateway_account_id")
     @Schema(example = "1", description = "The account ID")
@@ -31,6 +31,9 @@ public class GatewayAccountResourceDTO {
 
     @Schema(example = "test", description = "Account type for the payment provider (test/live)")
     private GatewayAccountType type;
+    
+    @Schema(example = "true", description = "Whether the account is live")
+    private boolean live;
 
     @Schema(example = "Account for service xxx", description = "An internal description to identify the gateway account. The default value is null.", defaultValue = "null")
     private String description;
@@ -166,14 +169,15 @@ public class GatewayAccountResourceDTO {
     @Schema(example = "No longer required", description = "The reason the account is disabled, if applicable")
     private String disabledReason;
 
-    public GatewayAccountResourceDTO() {
+    public GatewayAccountResponse() {
     }
 
-    public GatewayAccountResourceDTO(GatewayAccountEntity gatewayAccountEntity) {
+    public GatewayAccountResponse(GatewayAccountEntity gatewayAccountEntity) {
         this.accountId = gatewayAccountEntity.getId();
         this.externalId = gatewayAccountEntity.getExternalId();
         this.paymentProvider = gatewayAccountEntity.getGatewayName();
         this.type = GatewayAccountType.fromString(gatewayAccountEntity.getType());
+        this.live = gatewayAccountEntity.isLive();
         this.description = gatewayAccountEntity.getDescription();
         this.serviceName = gatewayAccountEntity.getServiceName();
         this.analyticsId = gatewayAccountEntity.getAnalyticsId();
@@ -218,6 +222,10 @@ public class GatewayAccountResourceDTO {
 
     public String getType() {
         return type.toString();
+    }
+
+    public boolean isLive() {
+        return live;
     }
 
     public String getDescription() {

@@ -16,7 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountE
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -102,7 +102,7 @@ public class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.search(gatewayAccountSearchParams))
                 .thenReturn(Arrays.asList(getMockGatewayAccountEntity1, getMockGatewayAccountEntity2));
 
-        List<GatewayAccountResourceDTO> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
+        List<GatewayAccountResponse> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
 
         assertThat(gatewayAccounts, hasSize(2));
         assertThat(gatewayAccounts.get(0).getServiceName(), is("service one"));

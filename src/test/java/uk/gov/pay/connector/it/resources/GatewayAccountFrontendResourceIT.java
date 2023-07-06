@@ -320,7 +320,7 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .get(ACCOUNTS_FRONTEND_URL + nonExistingGatewayAccount)
                 .then()
                 .statusCode(404)
-                .body("message", contains("Account with id '12345' not found"))
+                .body("message", contains("Gateway Account with id [12345] not found."))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
     }

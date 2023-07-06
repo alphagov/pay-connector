@@ -11,14 +11,14 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 public class GatewayAccountsListDTO {
 
     @JsonProperty("accounts")
-    private final List<GatewayAccountResourceDTO> gatewayAccountsListDTOList;
+    private final List<GatewayAccountResponse> gatewayAccountsListDTOList;
 
-    private GatewayAccountsListDTO(List<GatewayAccountResourceDTO> gatewayAccountsListDTOList) {
+    private GatewayAccountsListDTO(List<GatewayAccountResponse> gatewayAccountsListDTOList) {
         this.gatewayAccountsListDTOList = gatewayAccountsListDTOList;
     }
 
 
-    public static GatewayAccountsListDTO of(List<GatewayAccountResourceDTO> gatewayAccountsListDTOList) {
+    public static GatewayAccountsListDTO of(List<GatewayAccountResponse> gatewayAccountsListDTOList) {
         return new GatewayAccountsListDTO(gatewayAccountsListDTOList);
     }
 }

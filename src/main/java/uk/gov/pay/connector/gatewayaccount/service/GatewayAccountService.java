@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResourceDTO;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -77,9 +77,9 @@ public class GatewayAccountService {
         return gatewayAccountDao.findById(gatewayAccountId);
     }
 
-    public List<GatewayAccountResourceDTO> searchGatewayAccounts(GatewayAccountSearchParams params) {
+    public List<GatewayAccountResponse> searchGatewayAccounts(GatewayAccountSearchParams params) {
         return gatewayAccountDao.search(params).stream()
-                .map(GatewayAccountResourceDTO::new)
+                .map(GatewayAccountResponse::new)
                 .collect(Collectors.toList());
     }
 

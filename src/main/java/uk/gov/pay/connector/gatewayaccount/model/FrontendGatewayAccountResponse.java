@@ -6,8 +6,6 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 
 import java.util.List;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-
 @Schema(description = "Representation of a gateway account for use by the card frontend application")
 public class FrontendGatewayAccountResponse {
 
