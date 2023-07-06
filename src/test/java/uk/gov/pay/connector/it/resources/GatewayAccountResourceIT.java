@@ -231,6 +231,16 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void shouldNotReturn3dsFlexCredentials_whenGatewayAccountHasNoCreds() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("worldpay_3ds_flex", nullValue());
+    }
+
+    @Test
     public void shouldReturnEmptyCollectionOfAccountsWhenNoneFound() {
         givenSetup()
                 .get("/v1/api/accounts")
@@ -281,6 +291,31 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("accounts[0].external_id", is(notNullValue()))
                 .body("accounts[1].gateway_account_id", is(Integer.valueOf(gatewayAccountId2)))
                 .body("accounts[1].external_id", is(notNullValue()));
+    }
+
+    @Test
+    public void shouldFilterGetGatewayAccountForExistingAccountByServiceId() {
+        String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
+        String gatewayAccountId2 = createAGatewayAccountFor("sandbox");
+        String serviceId = "someexternalserviceid";
+        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
+        
+        databaseTestHelper.updateServiceIdFor(Long.parseLong(gatewayAccountId1), serviceId);
+        databaseTestHelper.updateServiceIdFor(Long.parseLong(gatewayAccountId2), "notsearchedforserviceid");
+
+        givenSetup().accept(JSON)
+                .get("/v1/api/accounts?serviceIds=somemissingserviceid,anotherserviceid," + serviceId)
+                .then()
+                .statusCode(200)
+                .body("accounts", hasSize(1))
+                .body("accounts[0].gateway_account_id", is(Integer.parseInt(gatewayAccountId1)))
+                .body("accounts[0].service_id", is(serviceId));
+
+        givenSetup().accept(JSON)
+                .get("/v1/api/accounts?serviceIds=nonexistingserviceid")
+                .then()
+                .statusCode(200)
+                .body("accounts", hasSize(0));
     }
 
     @Test
@@ -566,17 +601,34 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .statusCode(OK.getStatusCode());
 
         givenSetup()
-                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(OK.getStatusCode())
                 .body("worldpay_3ds_flex.exemption_engine_enabled", is(true));
     }
 
     @Test
+    public void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
+        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        databaseTestHelper.insertWorldpay3dsFlexCredential(Long.valueOf(gatewayAccountId), "macKey", "issuer", "org_unit_id", 2L);
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId)
+                .then()
+                .statusCode(200)
+                .body("$", hasKey("worldpay_3ds_flex"))
+                .body("worldpay_3ds_flex.issuer", is("issuer"))
+                .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
+                .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
+                .body("worldpay_3ds_flex", not(hasKey("version")))
+                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
+                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
+    }
+
+    @Test
     public void shouldNotReturn3dsFlexCredentials_whenGatewayIsNotAWorldpayAccount() {
         String gatewayAccountId = createAGatewayAccountFor("stripe", "a-description", "analytics-id");
         givenSetup()
-                .get("/v1/frontend/accounts/" + gatewayAccountId)
+                .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()
                 .statusCode(200)
                 .body("worldpay_3ds_flex", nullValue());

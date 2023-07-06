@@ -135,47 +135,10 @@ public class GatewayAccountResource {
                             ))
             }
     )
-    public Response getApiGatewayAccounts(
+    public Response searchGatewayAccounts(
             @Valid @BeanParam
             @Parameter(in = QUERY, schema = @Schema(implementation = GatewayAccountSearchParams.class))
             GatewayAccountSearchParams gatewayAccountSearchParams,
-            @Context UriInfo uriInfo) {
-        return getGatewayAccounts(gatewayAccountSearchParams, uriInfo);
-    }
-
-    @GET
-    @Path("/v1/frontend/accounts/external-id/{externalId}")
-    @Produces(APPLICATION_JSON)
-    @Operation(
-            summary = "Find gateway account by gateway account external ID",
-            description = "Get gateway account by external ID. Also returns notifications credentials, gateway account credentials (without password)",
-            tags = {"Gateway accounts - frontend"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountWithCredentialsResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "Not found")
-            }
-    )
-    public GatewayAccountWithCredentialsResponse getFrontendGatewayAccountByExternalId(@PathParam("externalId") String externalId) {
-        return gatewayAccountService
-                .getGatewayAccountByExternal(externalId)
-                .map(GatewayAccountWithCredentialsResponse::new)
-                .orElseThrow(() -> new GatewayAccountNotFoundException(format("Account with external id %s not found.", externalId)));
-    }
-
-    @GET
-    @Path("/v1/frontend/accounts")
-    @Produces(APPLICATION_JSON)
-    @Operation(
-            summary = "Search gateway accounts",
-            tags = {"Gateway accounts - frontend"},
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountsListDTO.class)))
-            }
-    )
-    public Response getFrontendGatewayAccounts(
-            @Valid @BeanParam GatewayAccountSearchParams gatewayAccountSearchParams,
             @Context UriInfo uriInfo) {
         return getGatewayAccounts(gatewayAccountSearchParams, uriInfo);
     }
@@ -198,24 +161,23 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path("/v1/frontend/accounts/{accountId}")
+    @Path("/v1/frontend/accounts/external-id/{externalId}")
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Find gateway account by gateway account ID",
-            description = "Get gateway account by external ID. Returns notifications credentials, gateway account credentials (without password). Doesn't include card_types or gateway_merchant_id",
+            summary = "Find gateway account by gateway account external ID",
+            description = "Get gateway account by external ID. Also returns notifications credentials, gateway account credentials (without password)",
             tags = {"Gateway accounts - frontend"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = GatewayAccountWithCredentialsResponse.class))),
+                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountWithCredentialsResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public GatewayAccountWithCredentialsResponse getGatewayAccountWithCredentials(@Parameter(example = "1", description = "Gateway account ID")
-                                                     @PathParam("accountId") Long gatewayAccountId) {
-
-        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
+    public GatewayAccountWithCredentialsResponse getFrontendGatewayAccountByExternalId(@PathParam("externalId") String externalId) {
+        return gatewayAccountService
+                .getGatewayAccountByExternal(externalId)
                 .map(GatewayAccountWithCredentialsResponse::new)
-                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(format("Account with external id %s not found.", externalId)));
     }
 
     @GET
