@@ -166,7 +166,7 @@ public class GatewayAccountResource {
     @Operation(
             summary = "Find gateway account by gateway account external ID",
             description = "Get gateway account by external ID. Also returns notifications credentials, gateway account credentials (without password)",
-            tags = {"Gateway accounts - frontend"},
+            tags = {"Gateway accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountWithCredentialsResponse.class))),
@@ -186,7 +186,7 @@ public class GatewayAccountResource {
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Get card types for gateway account",
-            tags = {"Gateway accounts - frontend"},
+            tags = {"Gateway accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(schema = @Schema(example = "{" +
@@ -276,7 +276,7 @@ public class GatewayAccountResource {
     @Transactional
     @Operation(
             summary = "Update service name of a gateway account",
-            tags = {"Gateway accounts - frontend"},
+            tags = {"Gateway accounts"},
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
                     "  \"service_name\": \"a new service name\"" +
                     "}", requiredProperties = {"service_name"}))),
@@ -316,7 +316,7 @@ public class GatewayAccountResource {
     @Transactional
     @Operation(
             summary = "Set requires3ds flag on a gateway account",
-            tags = {"Gateway accounts - frontend"},
+            tags = {"Gateway accounts"},
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
                     "  \"toggle_3ds\": \"true\"" +
                     "}"))),
@@ -356,7 +356,7 @@ public class GatewayAccountResource {
     @Transactional
     @Operation(
             summary = "Update accepted card types for a gateway account",
-            tags = {"Gateway accounts - frontend"},
+            tags = {"Gateway accounts"},
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
                     "    \"card_types\": [" +
                     "        \"ab8a3abd-bcfd-4fa6-8905-321ce913e7f5\"," +

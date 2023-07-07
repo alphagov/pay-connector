@@ -1372,7 +1372,7 @@ paths:
           description: Not found
       summary: Find gateway account by gateway account external ID
       tags:
-      - Gateway accounts - frontend
+      - Gateway accounts
   /v1/frontend/accounts/{accountId}/3ds-toggle:
     patch:
       operationId: updateGatewayAccount3dsToggle
@@ -1407,7 +1407,7 @@ paths:
           description: Conflict - 3ds cannot be disabled for account
       summary: Set requires3ds flag on a gateway account
       tags:
-      - Gateway accounts - frontend
+      - Gateway accounts
   /v1/frontend/accounts/{accountId}/card-types:
     get:
       operationId: getGatewayAccountAcceptedCardTypes
@@ -1438,7 +1438,7 @@ paths:
           description: Not found
       summary: Get card types for gateway account
       tags:
-      - Gateway accounts - frontend
+      - Gateway accounts
     post:
       operationId: updateGatewayAccountAcceptedCardTypes
       parameters:
@@ -1477,7 +1477,7 @@ paths:
             one card type requires 3DS to be enabled. '
       summary: Update accepted card types for a gateway account
       tags:
-      - Gateway accounts - frontend
+      - Gateway accounts
   /v1/frontend/accounts/{accountId}/servicename:
     patch:
       operationId: updateGatewayAccountServiceName
@@ -1512,7 +1512,7 @@ paths:
           description: Not found
       summary: Update service name of a gateway account
       tags:
-      - Gateway accounts - frontend
+      - Gateway accounts
   /v1/frontend/charges/{chargeId}:
     get:
       operationId: getCharge_1
