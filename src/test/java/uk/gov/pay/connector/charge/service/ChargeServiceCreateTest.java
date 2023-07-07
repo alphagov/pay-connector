@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
@@ -11,11 +13,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
@@ -71,6 +75,7 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -86,6 +91,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.time.ZonedDateTime.now;
 import static javax.ws.rs.HttpMethod.GET;
@@ -93,6 +99,7 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -105,6 +112,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -198,7 +206,7 @@ class ChargeServiceCreateTest {
 
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
-    
+
     @Mock
     private IdempotencyDao mockIdempotencyDao;
     @Mock
@@ -846,14 +854,15 @@ class ChargeServiceCreateTest {
             assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_API));
         }
 
-        @Test
-        void shouldCreateChargeWhenReferenceIsACardNumber_ForPaymentPaymentLinkPaymentsAndWhenFlagIsDisabled() {
+        @ParameterizedTest
+        @ValueSource(strings = {"CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO"})
+        void shouldCreateChargeWhenReferenceIsACardNumber_ForPaymentPaymentLinkPaymentsAndWhenFlagIsDisabled(String source) {
             setupMocksToCreateACharge();
 
             when(mockedConfig.getRejectPaymentLinkPaymentsWithCardNumberInReference()).thenReturn(true);
 
             final ChargeCreateRequest request = requestBuilder
-                    .withSource(CARD_PAYMENT_LINK)
+                    .withSource(Source.from(source).get())
                     .withReference(VALID_CARD_NUMBER)
                     .build();
 
@@ -861,7 +870,7 @@ class ChargeServiceCreateTest {
             chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
             verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
-            assertThat(chargeEntityArgumentCaptor.getValue().getSource(), equalTo(CARD_PAYMENT_LINK));
+            assertThat(chargeEntityArgumentCaptor.getValue().getSource().name(), equalTo(source));
         }
 
         @ParameterizedTest
@@ -907,6 +916,10 @@ class ChargeServiceCreateTest {
                 "430350381314", "4492616950176228242",
                 VALID_CARD_NUMBER})
         void shouldNotCreateChargeWhenReferenceIsACardNumber_ForPaymentLinkPaymentsAndWhenFlagIsEnabled(String validCardNumber) {
+            Logger root = (Logger) LoggerFactory.getLogger(ChargeService.class);
+            root.setLevel(Level.INFO);
+            root.addAppender(mockAppender);
+
             when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
             CardInformation cardInformation = aCardInformation().build();
 
@@ -925,6 +938,11 @@ class ChargeServiceCreateTest {
 
             verifyNoInteractions(mockedChargeDao);
             assertThat(exception.getMessage(), equalTo("Card number entered in a payment link reference"));
+
+            verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+            List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+            assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
+                    hasItems("Card number entered in a payment link reference"));
         }
 
         private ChargeService getNewChargeService() {

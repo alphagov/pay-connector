@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
@@ -141,6 +142,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class ChargeService {
@@ -171,7 +173,7 @@ public class ChargeService {
     private final IdempotencyDao idempotencyDao;
     private final ExternalTransactionStateFactory externalTransactionStateFactory;
     private final ObjectMapper objectMapper;
-    
+
     private final Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
 
     private final Boolean rejectPaymentLinkPaymentsWithCardNumberInReference;
@@ -386,7 +388,7 @@ public class ChargeService {
 
     private void checkCardNumberInReferenceForPaymentLinkPayments(Source source, String reference) {
         if (rejectPaymentLinkPaymentsWithCardNumberInReference != null && rejectPaymentLinkPaymentsWithCardNumberInReference
-                && source == CARD_PAYMENT_LINK) {
+                && (source == CARD_PAYMENT_LINK || source == CARD_AGENT_INITIATED_MOTO)) {
 
             String referenceWithOutSpaceAndHyphen = reference.replaceAll("[ -]", "");
 
@@ -395,7 +397,12 @@ public class ChargeService {
 
                 cardidService.getCardInformation(referenceWithOutSpaceAndHyphen)
                         .ifPresent(cardInformation -> {
-                            LOGGER.info("Card number entered in a payment link reference");
+                            // Used by Splunk alert
+                            LOGGER.info(
+                                    "Card number entered in a payment link reference",
+                                    kv("first_6_digits_reference", referenceWithOutSpaceAndHyphen.substring(0, 6)),
+                                    kv("last_4_digits_reference", referenceWithOutSpaceAndHyphen.substring(referenceWithOutSpaceAndHyphen.length() - 4))
+                            );
                             throw new CardNumberInPaymentLinkReferenceException();
                         });
             }
@@ -530,7 +537,7 @@ public class ChargeService {
     private ChargeResponse.ChargeResponseBuilder populateResponseBuilderWith(
             AbstractChargeResponseBuilder<ChargeResponse.ChargeResponseBuilder, ChargeResponse> responseBuilder,
             ChargeEntity chargeEntity) {
-        
+
         PersistedCard persistedCard = null;
         if (chargeEntity.getCardDetails() != null) {
             persistedCard = chargeEntity.getCardDetails().toCard();
