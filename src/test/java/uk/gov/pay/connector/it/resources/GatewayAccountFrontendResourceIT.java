@@ -49,120 +49,6 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
     private final Gson gson = new Gson();
 
     @Test
-    public void shouldGetGatewayAccountForExistingAccount() {
-        String accountId = createAGatewayAccountFor("worldpay");
-        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        long accountIdAsLong = Long.parseLong(accountId);
-        databaseTestHelper.updateCredentialsFor(accountIdAsLong, gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.updateServiceNameFor(accountIdAsLong, gatewayAccountPayload.getServiceName());
-        databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(accountIdAsLong, 250);
-        databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(accountIdAsLong, 50);
-        databaseTestHelper.allowApplePay(accountIdAsLong);
-        databaseTestHelper.allowZeroAmount(accountIdAsLong);
-        databaseTestHelper.blockPrepaidCards(Long.valueOf(accountId));
-        databaseTestHelper.allowMoto(accountIdAsLong);
-        databaseTestHelper.allowTelephonePaymentNotifications(accountIdAsLong);
-        databaseTestHelper.enableProviderSwitch(accountIdAsLong);
-        databaseTestHelper.allowAuthorisationApi(accountIdAsLong);
-        databaseTestHelper.enableRecurring(accountIdAsLong);
-        databaseTestHelper.setDisabled(accountIdAsLong);
-        databaseTestHelper.setDisabledReason(accountIdAsLong, "Disabled because reasons");
-
-        givenSetup().accept(JSON)
-                .get(ACCOUNTS_FRONTEND_URL + accountId)
-                .then()
-                .statusCode(200)
-                .body("payment_provider", is("worldpay"))
-                .body("gateway_account_id", is(Integer.parseInt(accountId)))
-                .body("gateway_account_id", is(notNullValue()))
-                .body("gateway_account_credentials.size()", is(1))
-                .body("gateway_account_credentials[0].credentials.merchant_id", is(gatewayAccountPayload.getMerchantId()))
-                .body("gateway_account_credentials[0].payment_provider", is("worldpay"))
-                .body("gateway_account_credentials[0].state", is("CREATED"))
-                .body("gateway_account_credentials[0].password", is(nullValue()))
-                .body("gateway_account_credentials[0].gateway_account_id", is(Integer.parseInt(accountId)))
-                .body("email_collection_mode", is("MANDATORY"))
-                .body("email_notifications.PAYMENT_CONFIRMED.template_body", is(nullValue()))
-                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
-                .body("email_notifications.REFUND_ISSUED.template_body", is(nullValue()))
-                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
-                .body("description", is(nullValue()))
-                .body("analytics_id", is(nullValue()))
-                .body("service_name", is(gatewayAccountPayload.getServiceName()))
-                .body("corporate_credit_card_surcharge_amount", is(250))
-                .body("corporate_debit_card_surcharge_amount", is(50))
-                .body("allow_apple_pay", is(true))
-                .body("allow_google_pay", is(false))
-                .body("allow_zero_amount", is(true))
-                .body("integration_version_3ds", is(1))
-                .body("block_prepaid_cards", is(true))
-                .body("allow_moto", is(true))
-                .body("allow_telephone_payment_notifications", is(true))
-                .body("provider_switch_enabled", is(true))
-                .body("allow_authorisation_api", is(true))
-                .body("recurring_enabled", is(true))
-                .body("disabled", is(true))
-                .body("disabled_reason", is("Disabled because reasons"));
-    }
-
-    @Test
-    public void shouldGetGatewayAccountWithDescriptionAndAnalyticsId() {
-        String accountId = createAGatewayAccountFor("worldpay", "a-description", "an-analytics-id");
-        givenSetup().accept(JSON)
-                .get(ACCOUNTS_FRONTEND_URL + accountId)
-                .then()
-                .statusCode(200)
-                .body("payment_provider", is("worldpay"))
-                .body("gateway_account_id", is(Integer.parseInt(accountId)))
-                .body("analytics_id", is("an-analytics-id"))
-                .body("description", is("a-description"));
-    }
-
-    @Test
-    public void shouldGetNotificationCredentialsWhenTheyExistForGatewayAccount() {
-        String accountId = createAGatewayAccountFor("worldpay");
-        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault();
-        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.addNotificationCredentialsFor(Long.parseLong(accountId), "bob", "bobssecret");
-
-        givenSetup().accept(JSON)
-                .get(ACCOUNTS_FRONTEND_URL + accountId)
-                .then()
-                .statusCode(200)
-                .body("payment_provider", is("worldpay"))
-                .body("gateway_account_id", is(Integer.parseInt(accountId)))
-                .body("notificationCredentials.userName", is("bob"))
-                .body("notificationCredentials.password", is(nullValue()));
-    }
-
-    @Test
-    public void shouldNotReturn3dsFlexCredentials_whenGatewayAccountHasNoCreds() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        givenSetup()
-                .get("/v1/frontend/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(200)
-                .body("worldpay_3ds_flex", nullValue());
-    }
-
-    @Test
-    public void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
-        String gatewayAccountId = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        databaseTestHelper.insertWorldpay3dsFlexCredential(Long.valueOf(gatewayAccountId), "macKey", "issuer", "org_unit_id", 2L);
-        givenSetup()
-                .get("/v1/frontend/accounts/" + gatewayAccountId)
-                .then()
-                .statusCode(200)
-                .body("$", hasKey("worldpay_3ds_flex"))
-                .body("worldpay_3ds_flex.issuer", is("issuer"))
-                .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
-                .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
-                .body("worldpay_3ds_flex", not(hasKey("version")))
-                .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
-                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
-    }
-
-    @Test
     public void shouldGetGatewayAccountByExternalId() {
         GatewayAccountPayload gatewayAccountOptions = GatewayAccountPayload.createDefault();
         DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
@@ -225,63 +111,6 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
                 .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
     }
 
-    @Test
-    public void shouldFilterGetGatewayAccountForExistingAccount() {
-        String accountId = createAGatewayAccountFor("worldpay");
-        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.updateServiceNameFor(Long.parseLong(accountId), gatewayAccountPayload.getServiceName());
-        databaseTestHelper.updateCorporateCreditCardSurchargeAmountFor(Long.parseLong(accountId), 250);
-        databaseTestHelper.updateCorporateDebitCardSurchargeAmountFor(Long.parseLong(accountId), 50);
-
-        givenSetup().accept(JSON)
-                .get("/v1/frontend/accounts?accountIds=" + accountId)
-                .then()
-                .statusCode(200)
-                .body("accounts", hasSize(1))
-                .body("accounts[0].payment_provider", is("worldpay"))
-                .body("accounts[0].gateway_account_id", is(Integer.parseInt(accountId)))
-                .body("accounts[0].external_id", is(notNullValue()))
-                .body("accounts[0].description", is(nullValue()))
-                .body("accounts[0].analytics_id", is(nullValue()))
-                .body("accounts[0].service_name", is(gatewayAccountPayload.getServiceName()))
-                .body("accounts[0].corporate_credit_card_surcharge_amount", is(250))
-                .body("accounts[0].corporate_debit_card_surcharge_amount", is(50))
-                .body("accounts[0].allow_apple_pay", is(false))
-                .body("accounts[0].allow_google_pay", is(false));
-    }
-
-    @Test
-    public void shouldFilterGetGatewayAccountForExistingAccountByServiceId() {
-        String accountId = createAGatewayAccountFor("worldpay");
-        String secondAccountId = createAGatewayAccountFor("worldpay");
-        String serviceId = "someexternalserviceid";
-        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        databaseTestHelper.updateCredentialsFor(Long.parseLong(accountId), gson.toJson(gatewayAccountPayload.getCredentials()));
-        databaseTestHelper.updateServiceNameFor(Long.parseLong(accountId), gatewayAccountPayload.getServiceName());
-        databaseTestHelper.updateServiceIdFor(Long.parseLong(accountId), serviceId);
-        databaseTestHelper.updateServiceIdFor(Long.parseLong(secondAccountId), "notsearchedforserviceid");
-
-        givenSetup().accept(JSON)
-                .get("/v1/frontend/accounts?serviceIds=somemissingserviceid,anotherserviceid," + serviceId)
-                .then()
-                .statusCode(200)
-                .body("accounts", hasSize(1))
-                .body("accounts[0].payment_provider", is("worldpay"))
-                .body("accounts[0].gateway_account_id", is(Integer.parseInt(accountId)))
-                .body("accounts[0].service_id", is(serviceId))
-                .body("accounts[0].external_id", is(notNullValue()))
-                .body("accounts[0].description", is(nullValue()))
-                .body("accounts[0].analytics_id", is(nullValue()))
-                .body("accounts[0].service_name", is(gatewayAccountPayload.getServiceName()));
-        
-        givenSetup().accept(JSON)
-                .get("/v1/frontend/accounts?serviceIds=nonexistingserviceid")
-                .then()
-                .statusCode(200)
-                .body("accounts", hasSize(0));
-    }
-
     private void validateNon3dsCardType(ValidatableResponse response, String brand, String label, String... type) {
         response
                 .body(format("card_types.find { it.brand == '%s' }.id", brand), is(notNullValue()))
@@ -311,18 +140,6 @@ public class GatewayAccountFrontendResourceIT extends GatewayAccountResourceTest
         validateNon3dsCardType(response, "discover", "Discover", "CREDIT");
         validateNon3dsCardType(response, "jcb", "Jcb", "CREDIT");
         validateNon3dsCardType(response, "unionpay", "Union Pay", "CREDIT");
-    }
-
-    @Test
-    public void shouldReturn404IfGatewayAccountDoesNotExist() {
-        String nonExistingGatewayAccount = "12345";
-        givenSetup().accept(JSON)
-                .get(ACCOUNTS_FRONTEND_URL + nonExistingGatewayAccount)
-                .then()
-                .statusCode(404)
-                .body("message", contains("Gateway Account with id [12345] not found."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-
     }
 
     @Test

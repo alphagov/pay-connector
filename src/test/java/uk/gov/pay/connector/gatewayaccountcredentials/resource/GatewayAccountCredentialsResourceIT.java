@@ -236,7 +236,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .statusCode(OK.getStatusCode());
 
         givenSetup()
-                .get("/v1/frontend/accounts/" + accountId)
+                .get("/v1/api/accounts/" + accountId)
                 .then()
                 .statusCode(OK.getStatusCode())
                 .body("gateway_account_credentials.size()", is(2))

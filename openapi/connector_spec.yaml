@@ -37,7 +37,7 @@ paths:
       - Other
   /v1/api/accounts:
     get:
-      operationId: getApiGatewayAccounts
+      operationId: searchGatewayAccounts
       parameters:
       - in: query
         name: accountIds
@@ -1350,106 +1350,6 @@ paths:
       summary: Retrieve performance summary
       tags:
       - Performance reports
-  /v1/frontend/accounts:
-    get:
-      operationId: getFrontendGatewayAccounts
-      parameters:
-      - in: query
-        name: accountIds
-        schema:
-          type: string
-          description: Comma separate list of gateway account IDs
-          example: "1,2"
-          pattern: "^[\\d,]+$"
-      - in: query
-        name: serviceIds
-        schema:
-          type: string
-          description: Comma separated list of service external IDs
-          example: "46eb1b601348499196c99de90482ee68,service-external-id-2"
-          pattern: "^(?:[A-z0-9]+,?)+$"
-      - in: query
-        name: moto_enabled
-        schema:
-          type: string
-          description: The accounts will be filtered by whether or not MOTO payment
-            are enabled for the account if this parameter is provided. "true" or "false"
-          example: "true"
-          pattern: true|false
-      - in: query
-        name: apple_pay_enabled
-        schema:
-          type: string
-          description: The accounts will be filtered by whether or not Apple pay is
-            enabled for the account if this parameter is provided. "true" or "false".
-          example: "true"
-          pattern: true|false
-      - in: query
-        name: google_pay_enabled
-        schema:
-          type: string
-          description: The accounts will be filtered by whether or not Google pay
-            is enabled for the account if this parameter is provided. "true" or "false".
-          example: "true"
-          pattern: true|false
-      - in: query
-        name: requires_3ds
-        schema:
-          type: string
-          description: The accounts will be filtered by whether or not 3DS is required
-            for the account if this parameter is provided. "true" or "false".
-          example: "true"
-          pattern: true|false
-      - in: query
-        name: type
-        schema:
-          type: string
-          description: The accounts will be filtered by type if this parameter is
-            provided. "test" or "live".
-          example: live
-          pattern: live|test
-      - in: query
-        name: payment_provider
-        schema:
-          type: string
-          description: "The accounts will be filtered by payment provider if this\
-            \ parameter is provided. One of \"sandbox\" or \"worldpay\", \"smartpay\"\
-            , \"epdq\" or \"stripe\""
-          example: live
-          pattern: sandbox|worldpay|smartpay|epdq|stripe
-      - in: query
-        name: payment_provider_account_id
-        schema:
-          type: string
-          description: Accounts will be filtered by payment provider account ID
-          example: payment-provider-account-id
-      - in: query
-        name: provider_switch_enabled
-        schema:
-          type: string
-          description: The accounts will be filtered by whether or not payment provider
-            switch is enabled for the account if this parameter is provided. "true"
-            or "false".
-          example: "true"
-          pattern: true|false
-      - in: query
-        name: recurring_enabled
-        schema:
-          type: string
-          description: The accounts will be filtered by whether or not recurring payments
-            are enabled for the account when this parameter is provided.
-          example: "true"
-          pattern: true|false
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GatewayAccountsListDTO'
-          description: OK
-      summary: Search gateway accounts
-      tags:
-      - Gateway accounts - frontend
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\
@@ -1471,33 +1371,6 @@ paths:
         "404":
           description: Not found
       summary: Find gateway account by gateway account external ID
-      tags:
-      - Gateway accounts - frontend
-  /v1/frontend/accounts/{accountId}:
-    get:
-      description: "Get gateway account by external ID. Returns notifications credentials,\
-        \ gateway account credentials (without password). Doesn't include card_types\
-        \ or gateway_merchant_id"
-      operationId: getGatewayAccountWithCredentials
-      parameters:
-      - description: Gateway account ID
-        example: 1
-        in: path
-        name: accountId
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
-          description: OK
-        "404":
-          description: Not found
-      summary: Find gateway account by gateway account ID
       tags:
       - Gateway accounts - frontend
   /v1/frontend/accounts/{accountId}/3ds-toggle:
