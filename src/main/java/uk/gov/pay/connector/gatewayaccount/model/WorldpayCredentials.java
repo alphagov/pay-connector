@@ -91,6 +91,14 @@ public class WorldpayCredentials implements GatewayCredentials {
     }
 
     @Override
+    public boolean hasCredentials() {
+        return legacyOneOffCustomerInitiatedMerchantCode != null 
+                || oneOffCustomerInitiatedCredentials != null
+                || recurringCustomerInitiatedCredentials != null
+                || recurringMerchantInitiatedCredentials != null;
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (this == other) {
             return true;

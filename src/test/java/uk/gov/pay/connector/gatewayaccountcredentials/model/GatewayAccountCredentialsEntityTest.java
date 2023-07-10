@@ -52,6 +52,7 @@ class GatewayAccountCredentialsEntityTest {
         GatewayCredentials credentials = credentialsEntity.getCredentialsObject();
         assertThat(credentials, isA(WorldpayCredentials.class));
         var worldpayCredentials = (WorldpayCredentials) credentials;
+        assertThat(worldpayCredentials.hasCredentials(), is(true));
         assertThat(worldpayCredentials.getOneOffCustomerInitiatedCredentials(), not(nullValue()));
         assertThat(worldpayCredentials.getOneOffCustomerInitiatedCredentials().getMerchantCode(), is("a-merchant-code"));
     }
@@ -79,6 +80,7 @@ class GatewayAccountCredentialsEntityTest {
         GatewayCredentials credentials = credentialsEntity.getCredentialsObject();
         assertThat(credentials, isA(StripeCredentials.class));
         StripeCredentials stripeCredentials = (StripeCredentials) credentials;
+        assertThat(stripeCredentials.hasCredentials(), is(true));
         assertThat(stripeCredentials.getStripeAccountId(), is(stripeAccountId));
     }
 
@@ -104,6 +106,7 @@ class GatewayAccountCredentialsEntityTest {
         GatewayCredentials credentials = credentialsEntity.getCredentialsObject();
         assertThat(credentials, isA(EpdqCredentials.class));
         EpdqCredentials epdqCredentials = (EpdqCredentials) credentials;
+        assertThat(epdqCredentials.hasCredentials(), is(true));
         assertThat(epdqCredentials.getMerchantId(), is("a-merchant-id"));
     }
 
@@ -115,6 +118,7 @@ class GatewayAccountCredentialsEntityTest {
                 .build();
         GatewayCredentials credentials = credentialsEntity.getCredentialsObject();
         assertThat(credentials, isA(SandboxCredentials.class));
+        assertThat(credentials.hasCredentials(), is(true));
     }
 
     @Test

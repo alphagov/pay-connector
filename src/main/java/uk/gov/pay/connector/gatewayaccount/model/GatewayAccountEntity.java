@@ -251,16 +251,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                                 getId(), paymentProvider))));
     }
     
-    public String getGatewayMerchantId() {
+    public String getGooglePayMerchantId() {
         return getCurrentOrActiveGatewayAccountCredential()
-                .map(credentialsEntity -> {
-                    if (credentialsEntity.getCredentials() != null &&
-                            credentialsEntity.getCredentials().containsKey("gateway_merchant_id") &&
-                            credentialsEntity.getCredentials().get("gateway_merchant_id") != null) {
-                        return credentialsEntity.getCredentials().get("gateway_merchant_id").toString();
-                    }
-                    return null;
-                }).orElse(null);
+                .map(credentialsEntity -> credentialsEntity.getCredentialsObject().getGooglePayMerchantId())
+                .orElse(null);
     }
     
     public List<GatewayAccountCredentialsEntity> getGatewayAccountCredentials() {
@@ -316,7 +310,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     }
     
     public boolean isAllowGooglePay() {
-        return allowGooglePay && isNotBlank(getGatewayMerchantId());
+        return allowGooglePay && isNotBlank(getGooglePayMerchantId());
     }
     
     public boolean isAllowApplePay() {

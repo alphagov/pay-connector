@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.service.payments.commons.api.exception.ValidationException;
 import uk.gov.service.payments.commons.api.validation.JsonPatchRequestValidator;
 import uk.gov.service.payments.commons.api.validation.PatchPathOperation;
@@ -64,7 +65,7 @@ public class GatewayAccountCredentialsRequestValidator {
         }
     }
 
-    public void validatePatch(JsonNode patchRequest, String paymentProvider, Map<String, Object> credentials) {
+    public void validatePatch(JsonNode patchRequest, String paymentProvider, GatewayCredentials credentials) {
         var paymentGatewayName = PaymentGatewayName.valueFrom(paymentProvider);
 
         Map<PatchPathOperation, Consumer<JsonPatchRequest>> operationValidators = Map.of(
@@ -140,11 +141,11 @@ public class GatewayAccountCredentialsRequestValidator {
     }
 
     private void validateGatewayMerchantId(JsonPatchRequest request, String paymentProvider,
-                                           Map<String, Object> credentials) {
+                                           GatewayCredentials gatewayCredentials) {
         if (!WORLDPAY.getName().equals(paymentProvider)) {
             throw new ValidationException(List.of("Gateway '" + paymentProvider + "' does not support digital wallets."));
         }
-        if (credentials.isEmpty()) {
+        if (!gatewayCredentials.hasCredentials()) {
             throw new ValidationException(List.of("Account credentials are required to set a Gateway Merchant ID."));
         }
 

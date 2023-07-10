@@ -205,7 +205,9 @@ public class GatewayAccountCredentialsResource {
                         .filter(c -> c.getId().equals(credentialsId))
                         .findFirst()
                         .map(gatewayAccountCredentialsEntity -> {
-                            gatewayAccountCredentialsRequestValidator.validatePatch(payload, gatewayAccountCredentialsEntity.getPaymentProvider(), gatewayAccountCredentialsEntity.getCredentials());
+                            gatewayAccountCredentialsRequestValidator.validatePatch(payload,
+                                    gatewayAccountCredentialsEntity.getPaymentProvider(),
+                                    gatewayAccountCredentialsEntity.getCredentialsObject());
                             List<JsonPatchRequest> updateRequests = StreamSupport.stream(payload.spliterator(), false)
                                     .map(JsonPatchRequest::from)
                                     .collect(Collectors.toList());

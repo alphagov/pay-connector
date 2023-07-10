@@ -223,7 +223,7 @@ class GatewayAccountEntityTest {
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
-        assertThat(gatewayAccountEntity.getGatewayMerchantId(), is("some-id"));
+        assertThat(gatewayAccountEntity.getGooglePayMerchantId(), is("some-id"));
     }
 
     @Test
@@ -233,7 +233,7 @@ class GatewayAccountEntityTest {
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
-        assertThat(gatewayAccountEntity.getGatewayMerchantId(), is(nullValue()));
+        assertThat(gatewayAccountEntity.getGooglePayMerchantId(), is(nullValue()));
     }
 
     @Test

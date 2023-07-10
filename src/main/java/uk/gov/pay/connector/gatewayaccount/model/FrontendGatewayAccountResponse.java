@@ -90,7 +90,7 @@ public class FrontendGatewayAccountResponse {
         this.id = gatewayAccountEntity.getId();
         this.externalId = gatewayAccountEntity.getExternalId();
         this.paymentProvider = gatewayAccountEntity.getGatewayName();
-        this.gatewayMerchantId = gatewayAccountEntity.getGatewayMerchantId();
+        this.gatewayMerchantId = gatewayAccountEntity.getGooglePayMerchantId();
         this.type = gatewayAccountEntity.getType();
         this.serviceName = gatewayAccountEntity.getServiceName();
         this.serviceId = gatewayAccountEntity.getServiceId();

@@ -6,4 +6,13 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public interface GatewayCredentials {
+    
+    // Only applies to Worldpay, but we include it as a root field in some API responses returning the gateway account.
+    // Having this as an interface method makes this easier to retrieve for this purpose.
+    @JsonIgnore
+    default String getGooglePayMerchantId() {
+        return null;
+    }
+    
+    boolean hasCredentials();
 }

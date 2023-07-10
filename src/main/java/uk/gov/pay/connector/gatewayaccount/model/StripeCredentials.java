@@ -24,5 +24,10 @@ public class StripeCredentials implements GatewayCredentials {
     public Map<String, String> toMap() {
         return Map.of(STRIPE_ACCOUNT_ID_KEY, stripeAccountId);
     }
+
+    @Override
+    public boolean hasCredentials() {
+        return stripeAccountId != null;
+    }
     
 }
