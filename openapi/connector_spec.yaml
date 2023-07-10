@@ -3239,57 +3239,6 @@ components:
           - ACTIVE
           - RETIRED
           example: ACTIVE
-    GatewayAccountCredentialsEntity:
-      type: object
-      description: Array of the credentials configured for this account
-      properties:
-        active_end_date:
-          type: string
-          format: date-time
-        active_start_date:
-          type: string
-          format: date-time
-          example: 2022-05-27T09:17:19.162Z
-        created_date:
-          type: string
-          format: date-time
-          example: 2022-05-27T09:17:19.162Z
-        credentials:
-          type: object
-          additionalProperties:
-            type: object
-            example:
-              stripe_account_id: an-id
-          example:
-            stripe_account_id: an-id
-        external_id:
-          type: string
-          example: 731193f990064e698ca1b89775b70bcc
-        gateway_account_credential_id:
-          type: integer
-          format: int64
-          example: 11
-        gateway_account_id:
-          type: integer
-          format: int64
-          example: 1
-        last_updated_by_user_external_id:
-          type: string
-        payment_provider:
-          type: string
-          example: stripe
-        state:
-          type: string
-          enum:
-          - CREATED
-          - ENTERED
-          - VERIFIED_WITH_LIVE_PAYMENT
-          - ACTIVE
-          - RETIRED
-          example: ACTIVE
-        version:
-          type: integer
-          format: int64
     GatewayAccountCredentialsRequest:
       type: object
       properties:
@@ -3675,7 +3624,7 @@ components:
           type: array
           description: Array of the credentials configured for this account
           items:
-            $ref: '#/components/schemas/GatewayAccountCredentialsEntity'
+            $ref: '#/components/schemas/GatewayAccountCredentials'
         gateway_account_id:
           type: integer
           format: int64
