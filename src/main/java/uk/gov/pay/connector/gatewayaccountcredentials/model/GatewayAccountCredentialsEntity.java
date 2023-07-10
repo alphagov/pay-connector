@@ -1,17 +1,10 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringObjectMapConverter;
-import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
-import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
 import javax.persistence.Column;
@@ -33,7 +26,6 @@ import java.util.Map;
 @Table(name = "gateway_account_credentials")
 @SequenceGenerator(name = "gateway_account_credentials_id_seq",
         sequenceName = "gateway_account_credentials_id_seq", allocationSize = 1)
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @Customizer(HistoryCustomizer.class)
 public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
@@ -42,19 +34,14 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     private Long id;
 
     @Column(name = "payment_provider")
-    @Schema(example = "stripe")
     private String paymentProvider;
 
     @Column(name = "credentials", columnDefinition = "json")
     @Convert(converter = JsonToStringObjectMapConverter.class)
-    @Schema(example = "{" +
-            "                \"stripe_account_id\": \"an-id\"" +
-            "            }")
     private Map<String, Object> credentials;
 
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
-    @Schema(example = "ACTIVE")
     private GatewayAccountCredentialState state;
 
     @Column(name = "last_updated_by_user_external_id")
@@ -62,12 +49,10 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     @Column(name = "created_date")
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
-    @Schema(example = "2022-05-27T09:17:19.162Z")
     private Instant createdDate;
 
     @Column(name = "active_start_date")
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
-    @Schema(example = "2022-05-27T09:17:19.162Z")
     private Instant activeStartDate;
 
     @Column(name = "active_end_date")
@@ -76,11 +61,9 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", nullable = false)
-    @JsonIgnore
     private GatewayAccountEntity gatewayAccountEntity;
 
     @Column(name = "external_id")
-    @Schema(example = "731193f990064e698ca1b89775b70bcc")
     private String externalId;
 
     public GatewayAccountCredentialsEntity() {
@@ -94,9 +77,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         this.state = state;
         this.createdDate = Instant.now();
     }
-
-    @JsonProperty("gateway_account_credential_id")
-    @Schema(example = "11")
+    
     public Long getId() {
         return id;
     }
@@ -116,18 +97,15 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     public String getLastUpdatedByUserExternalId() {
         return lastUpdatedByUserExternalId;
     }
-
-    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    
     public Instant getCreatedDate() {
         return createdDate;
     }
-
-    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    
     public Instant getActiveStartDate() {
         return activeStartDate;
     }
-
-    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    
     public Instant getActiveEndDate() {
         return activeEndDate;
     }
@@ -139,9 +117,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     public String getExternalId() {
         return externalId;
     }
-
-    @JsonProperty("gateway_account_id")
-    @Schema(example = "1")
+    
     public Long getGatewayAccountId() {
         return gatewayAccountEntity.getId();
     }
