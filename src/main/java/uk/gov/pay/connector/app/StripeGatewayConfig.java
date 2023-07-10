@@ -42,9 +42,6 @@ public class StripeGatewayConfig extends Configuration {
     @NotNull
     private List<String> allowedCidrs;
 
-    @NotNull
-    private List<String> credentials;
-
     @Valid
     private int radarFeeInPence;
 
@@ -83,10 +80,6 @@ public class StripeGatewayConfig extends Configuration {
 
     public List<String> getAllowedCidrs() {
         return allowedCidrs;
-    }
-
-    public List<String> getCredentials() {
-        return credentials;
     }
 
     public Double getFeePercentage() {

@@ -41,7 +41,6 @@ worldpay:
     live: ${WORLDPAY_3DS_FLEX_DDC_LIVE_URL}
   secureNotificationEnabled: ${SECURE_WORLDPAY_NOTIFICATION_ENABLED:-false}
   notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-.worldpay.com}
-  credentials: ['username','password','merchant_id']
   applePay:
     primaryPrivateKey: ${APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY:-privateKeyWhichShouldBeBase64Encoded}
     primaryPublicCertificate: ${APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE:-publicCertificateWhichShouldBeBase64Encoded}
@@ -77,7 +76,6 @@ epdq:
   urls:
     test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
     live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
-  credentials: ['username','password','merchant_id','sha_in_passphrase','sha_out_passphrase']
 
   # ePDQ can take a long time to respond to requests, often 3s or more and sometimes a lot longer, so we have quite
   # generous timeouts for all operations.
@@ -106,7 +104,6 @@ stripe:
   feePercentage: ${STRIPE_TRANSACTION_FEE_PERCENTAGE}
   collectFee: ${COLLECT_FEE_FEATURE_FLAG:-false}
   notification3dsWaitDelay: ${NOTIFICATION_3DS_WAIT_DELAY:-3000}
-  credentials: ['stripe_account_id']
   radarFeeInPence: ${STRIPE_TRANSACTION_RADAR_FEE_IN_PENCE}
   threeDsFeeInPence: ${STRIPE_TRANSACTION_THREE_DS_FEE_IN_PENCE}
   rechargeServicesForLivePaymentDisputesFromDate: ${RECHARGE_SERVICES_FOR_LIVE_PAYMENTS_DISPUTES_FROM_DATE:-1659916800} # 8 August 2022 00:00:00
