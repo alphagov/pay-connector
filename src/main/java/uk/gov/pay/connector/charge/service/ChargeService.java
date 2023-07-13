@@ -3,7 +3,6 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
@@ -434,7 +433,6 @@ public class ChargeService {
             });
             if (chargeRequestMap.equals(previousChargeRequestMap)) {
                 LOGGER.info("Idempotency-Key was already used to create a request with matching values {}", idempotencyKey);
-                // TODO implement PP-10833, query Ledger if Charge has been expunged
                 ChargeEntity existingCharge = findChargeByExternalId(idempotencyEntity.getResourceExternalId());
                 return populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, existingCharge).build();
             }
@@ -781,6 +779,10 @@ public class ChargeService {
                         });
 
                 charge.setCanRetry(canRetry);
+
+                if (canRetry != null && !canRetry) {
+                    inactivateAgreement(charge, rejectedReason);
+                }
             }
             charge.setCardDetails(detailsEntity);
 
@@ -792,10 +794,6 @@ public class ChargeService {
 
             LOGGER.info("Stored confirmation details for charge - charge_external_id={}",
                     chargeExternalId);
-
-            if (canRetry != null && !canRetry) {
-                inactivateAgreement(charge, rejectedReason);
-            }
 
             return charge;
         }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
