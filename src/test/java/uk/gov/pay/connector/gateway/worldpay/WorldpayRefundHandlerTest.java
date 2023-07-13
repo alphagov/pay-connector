@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -120,7 +121,7 @@ class WorldpayRefundHandlerTest {
                         CREDENTIALS_USERNAME, "worldpay-password",
                         CREDENTIALS_PASSWORD, "password",
                         RECURRING_MERCHANT_INITIATED, Map.of(
-                                CREDENTIALS_MERCHANT_ID, "ECURRING-MERCHANTCODE",
+                                CREDENTIALS_MERCHANT_CODE, "ECURRING-MERCHANTCODE",
                                 CREDENTIALS_USERNAME, "recurring-worldpay-password",
                                 CREDENTIALS_PASSWORD, "recurring-password"
                         )

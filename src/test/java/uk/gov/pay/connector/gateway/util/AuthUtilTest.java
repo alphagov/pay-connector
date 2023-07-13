@@ -13,6 +13,7 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -20,9 +21,18 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING
 
 @ExtendWith(MockitoExtension.class)
 class AuthUtilTest {
-    private String merchantCode = "MERCHANTCODE";
-    private String username = "worldpay-username";
-    private String password = "password"; //pragma: allowlist secret
+    private final String merchantCode = "MERCHANTCODE";
+    private final String username = "worldpay-username";
+    private final String password = "password"; //pragma: allowlist secret
+    private final Map<String, Object> worldpayRecurringCredentials = Map.of(
+            CREDENTIALS_MERCHANT_ID, merchantCode,
+            CREDENTIALS_USERNAME, username,
+            CREDENTIALS_PASSWORD, password,
+            RECURRING_MERCHANT_INITIATED, Map.of(
+                    CREDENTIALS_MERCHANT_CODE, "RC-" + merchantCode,
+                    CREDENTIALS_USERNAME, "RC-" + username,
+                    CREDENTIALS_PASSWORD, "RC-" + password
+            ));
 
     @Test
     void shouldThrowException_whenAuthModeAgreement_andNoCredentials() {
@@ -38,51 +48,25 @@ class AuthUtilTest {
 
     @Test
     void shouldRetrieveTheRightCredentialsForRecurringPayments() {
-        Map<String, Object> credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, merchantCode,
-                CREDENTIALS_USERNAME, username,
-                CREDENTIALS_PASSWORD, password,
-                RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
-                        CREDENTIALS_USERNAME, "RC-" + username,
-                        CREDENTIALS_PASSWORD, "RC-" + password
-                ));
         String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String("RC-" + username + ":" + "RC-" + password).getBytes());
-        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsAsAuthHeader(credentials, AuthorisationMode.AGREEMENT);
+        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsAsAuthHeader(worldpayRecurringCredentials, AuthorisationMode.AGREEMENT);
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
     @Test
     void shouldRetrieveTheRightCredentialsForNonRecurringPayments() {
-        Map<String, Object> credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, merchantCode,
-                CREDENTIALS_USERNAME, username,
-                CREDENTIALS_PASSWORD, password,
-                RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
-                        CREDENTIALS_USERNAME, "RC-" + username,
-                        CREDENTIALS_PASSWORD, "RC-" + password
-                ));
         String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
-        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsAsAuthHeader(credentials, AuthorisationMode.WEB);
+        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsAsAuthHeader(worldpayRecurringCredentials, AuthorisationMode.WEB);
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
     @Test
     void shouldRetrieveTheRightCredentialsForManagingTokens() {
-        Map<String, Object> credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, merchantCode,
-                CREDENTIALS_USERNAME, username,
-                CREDENTIALS_PASSWORD, password,
-                RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
-                        CREDENTIALS_USERNAME, "RC-" + username,
-                        CREDENTIALS_PASSWORD, "RC-" + password
-                ));
         String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
-        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsForManagingTokensAsAuthHeader(credentials);
+        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsForManagingTokensAsAuthHeader(worldpayRecurringCredentials);
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
+
     @Test
     void shouldThrowException_whenAuthModeAgreement_andNoCredentialsForMerchantId() {
         MissingCredentialsForRecurringPaymentException thrown = assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
@@ -97,46 +81,19 @@ class AuthUtilTest {
 
     @Test
     void shouldRetrieveTheRightMerchantIdForRecurringPayments() {
-        Map<String, Object> credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, merchantCode,
-                CREDENTIALS_USERNAME, username,
-                CREDENTIALS_PASSWORD, password,
-                RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
-                        CREDENTIALS_USERNAME, "RC-" + username,
-                        CREDENTIALS_PASSWORD, "RC-" + password
-                ));
-        String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.AGREEMENT);
+        String merchantId = AuthUtil.getWorldpayMerchantCode(worldpayRecurringCredentials, AuthorisationMode.AGREEMENT);
         assertThat(merchantId, is("RC-" + merchantCode));
     }
 
     @Test
     void shouldRetrieveTheRightMerchantIdForNonRecurringPayments() {
-        Map<String, Object> credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, merchantCode,
-                CREDENTIALS_USERNAME, username,
-                CREDENTIALS_PASSWORD, password,
-                RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
-                        CREDENTIALS_USERNAME, "RC-" + username,
-                        CREDENTIALS_PASSWORD, "RC-" + password
-                ));
-        String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.WEB);
+        String merchantId = AuthUtil.getWorldpayMerchantCode(worldpayRecurringCredentials, AuthorisationMode.WEB);
         assertThat(merchantId, is(merchantCode));
     }
 
     @Test
     void shouldRetrieveTheRightMerchantIdForManagingTokens() {
-        Map<String, Object> credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, merchantCode,
-                CREDENTIALS_USERNAME, username,
-                CREDENTIALS_PASSWORD, password,
-                RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_ID, "RC-" + merchantCode,
-                        CREDENTIALS_USERNAME, "RC-" + username,
-                        CREDENTIALS_PASSWORD, "RC-" + password
-                ));
-        String merchantId = AuthUtil.getWorldpayMerchantCodeForManagingTokens(credentials);
+        String merchantId = AuthUtil.getWorldpayMerchantCodeForManagingTokens(worldpayRecurringCredentials);
         assertThat(merchantId, is(merchantCode));
     }
 

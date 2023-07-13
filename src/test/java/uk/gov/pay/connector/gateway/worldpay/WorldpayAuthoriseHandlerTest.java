@@ -75,6 +75,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -123,7 +124,7 @@ class WorldpayAuthoriseHandlerTest {
                         CREDENTIALS_USERNAME, "worldpay-password",
                         CREDENTIALS_PASSWORD, "password",
                         RECURRING_MERCHANT_INITIATED, Map.of(
-                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
                                 CREDENTIALS_USERNAME, "rc-worldpay-password",
                                 CREDENTIALS_PASSWORD, "rc-password")))
                 .withGatewayAccountEntity(gatewayAccountEntity)
@@ -139,7 +140,7 @@ class WorldpayAuthoriseHandlerTest {
                                 CREDENTIALS_USERNAME, "worldpay-password",
                                 CREDENTIALS_PASSWORD, "password",
                                         RECURRING_MERCHANT_INITIATED, Map.of(
-                                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
+                                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
                                                 CREDENTIALS_USERNAME, "rc-worldpay-password",
                                                 CREDENTIALS_PASSWORD, "rc-password"
                         )))

@@ -39,6 +39,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -70,7 +71,7 @@ class WorldpayCaptureHandlerTest {
             CREDENTIALS_USERNAME, "worldpay-password",
             CREDENTIALS_PASSWORD, "password",
             RECURRING_MERCHANT_INITIATED, Map.of(
-                    CREDENTIALS_MERCHANT_ID, "ECURRING-MERCHANTCODE",
+                    CREDENTIALS_MERCHANT_CODE, "ECURRING-MERCHANTCODE",
                     CREDENTIALS_USERNAME, "recurring-worldpay-password",
                     CREDENTIALS_PASSWORD, "recurring-password"
             )

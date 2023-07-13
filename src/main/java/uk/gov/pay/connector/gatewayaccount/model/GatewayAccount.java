@@ -6,6 +6,7 @@ import java.util.Objects;
 
 public class GatewayAccount {
     public static final String CREDENTIALS_MERCHANT_ID = "merchant_id";
+    public static final String CREDENTIALS_MERCHANT_CODE = "merchant_code";
     public static final String CREDENTIALS_USERNAME = "username";
     public static final String CREDENTIALS_PASSWORD = "password";
     public static final String CREDENTIALS_SHA_IN_PASSPHRASE = "sha_in_passphrase";
