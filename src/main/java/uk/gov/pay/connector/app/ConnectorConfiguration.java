@@ -16,7 +16,9 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.net.URI;
 import java.time.Duration;
+import java.util.Optional;
 
 public class ConnectorConfiguration extends Configuration {
 
@@ -140,6 +142,9 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     @JsonProperty("cardidBaseURL")
     private String cardidBaseUrl;
+    
+    @JsonProperty("ecsContainerMetadataUriV4")
+    private URI ecsContainerMetadataUriV4;
 
     @NotNull
     private Long ledgerPostEventTimeoutInMillis;
@@ -295,5 +300,9 @@ public class ConnectorConfiguration extends Configuration {
 
     public Boolean getRejectPaymentLinkPaymentsWithCardNumberInReference() {
         return rejectPaymentLinkPaymentsWithCardNumberInReference;
+    }
+
+    public Optional<URI> getEcsContainerMetadataUriV4() {
+        return Optional.ofNullable(ecsContainerMetadataUriV4);
     }
 }

@@ -281,3 +281,5 @@ authorisationConfig:
   synchronousAuthTimeoutInMilliseconds: ${SYNCHRONOUS_AUTH_TIMEOUT_IN_MILLISECONDS::-10000}
 
 rejectPaymentLinkPaymentsWithCardNumberInReference: ${REJECT_PAYMENT_LINK_PAYMENT_WITH_CARD_NUMBER_IN_REFERENCE_ENABLED:-false}
+
+ecsContainerMetadataUriV4: ${ECS_CONTAINER_METADATA_URI_V4:-}

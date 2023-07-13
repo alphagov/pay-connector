@@ -16,6 +16,11 @@ import io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
+import io.prometheus.client.exporter.MetricsServlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundExceptionMapper;
 import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.agreement.resource.AgreementsApiResource;
@@ -87,16 +92,20 @@ import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 import uk.gov.service.payments.commons.utils.healthchecks.DatabaseHealthCheck;
 import uk.gov.service.payments.commons.utils.metrics.DatabaseMetricsService;
+import uk.gov.service.payments.commons.utils.prometheus.PrometheusDefaultLabelSampleBuilder;
 import uk.gov.service.payments.logging.GovUkPayDropwizardRequestJsonLogLayoutFactory;
 import uk.gov.service.payments.logging.LoggingFilter;
 import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
 
+import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.EnumSet.of;
 import static javax.servlet.DispatcherType.REQUEST;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ConnectorApp.class);
 
     public static final boolean NON_STRICT_VARIABLE_SUBSTITUTOR = false;
 
@@ -233,6 +242,21 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .build()
                 .scheduleAtFixedRate(metricsService::updateMetricData, 0, GRAPHITE_SENDING_PERIOD_SECONDS / 2, TimeUnit.SECONDS);
 
+        initialiseGraphiteMetrics(configuration, environment);
+        configuration.getEcsContainerMetadataUriV4().ifPresent(uri -> initialisePrometheusMetrics(environment, uri));
+    }
+
+    private void initialisePrometheusMetrics(Environment environment, URI ecsContainerMetadataUri) {
+        logger.info("Initialising prometheus metrics.");
+        CollectorRegistry collectorRegistry = new CollectorRegistry();
+        collectorRegistry.register(new DropwizardExports(environment.metrics(), new PrometheusDefaultLabelSampleBuilder(ecsContainerMetadataUri)));
+        environment.admin().addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry)).addMapping("/metrics");
+    }
+
+    /**
+     * Graphtie metric config to be deleted when we've completely moved to Prometheus
+     */
+    private void initialiseGraphiteMetrics(ConnectorConfiguration configuration, Environment environment) {
         GraphiteSender graphiteUDP = new GraphiteUDP(configuration.getGraphiteHost(), Integer.parseInt(configuration.getGraphitePort()));
         GraphiteReporter.forRegistry(environment.metrics())
                 .prefixedWith(SERVICE_METRICS_NODE)
@@ -240,7 +264,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build(graphiteUDP)
                 .start(GRAPHITE_SENDING_PERIOD_SECONDS, TimeUnit.SECONDS);
-
     }
 
     public static void main(String[] args) throws Exception {
