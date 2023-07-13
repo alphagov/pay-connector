@@ -29,9 +29,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
-
-import static java.util.Map.entry;
 
 @Entity
 @Table(name = "gateway_account_credentials")
@@ -41,13 +38,6 @@ import static java.util.Map.entry;
 public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    
-    private static final Map<PaymentGatewayName, Class<? extends GatewayCredentials>> GATEWAY_CREDENTIALS_TYPE_MAP = Map.ofEntries(
-            entry(PaymentGatewayName.WORLDPAY, WorldpayCredentials.class),
-            entry(PaymentGatewayName.STRIPE, StripeCredentials.class),
-            entry(PaymentGatewayName.EPDQ, EpdqCredentials.class),
-            entry(PaymentGatewayName.SANDBOX, SandboxCredentials.class)
-    );
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_account_credentials_id_seq")
@@ -112,9 +102,18 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     // This will replace `getCredentials()` when all usages have been updated
     public GatewayCredentials getCredentialsObject() {
-        return Optional.ofNullable(GATEWAY_CREDENTIALS_TYPE_MAP.get(PaymentGatewayName.valueFrom(paymentProvider)))
-                .map(type -> objectMapper.convertValue(this.getCredentials(), type))
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported payment provider: " + paymentProvider));
+        switch (PaymentGatewayName.valueFrom(paymentProvider)) {
+            case WORLDPAY:
+                return objectMapper.convertValue(this.getCredentials(), WorldpayCredentials.class);
+            case STRIPE:
+                return objectMapper.convertValue(this.getCredentials(), StripeCredentials.class);
+            case EPDQ:
+                return objectMapper.convertValue(this.getCredentials(), EpdqCredentials.class);
+            case SANDBOX:
+                return objectMapper.convertValue(this.getCredentials(), SandboxCredentials.class);
+            default:
+                throw new IllegalArgumentException("Unsupported payment provider: " + paymentProvider);
+        }
     }
 
     public GatewayAccountCredentialState getState() {

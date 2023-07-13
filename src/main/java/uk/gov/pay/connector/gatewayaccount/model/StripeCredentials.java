@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -14,8 +13,8 @@ public class StripeCredentials implements GatewayCredentials {
     @JsonProperty(STRIPE_ACCOUNT_ID_KEY)
     private String stripeAccountId;
 
-    public StripeCredentials(@JsonProperty(STRIPE_ACCOUNT_ID_KEY) String stripeAccountId) {
-        this.stripeAccountId = stripeAccountId;
+    public StripeCredentials() {
+        // for Jackson
     }
 
     public String getStripeAccountId() {
@@ -23,7 +22,7 @@ public class StripeCredentials implements GatewayCredentials {
     }
 
     public Map<String, String> toMap() {
-        return ImmutableMap.of(STRIPE_ACCOUNT_ID_KEY, stripeAccountId);
+        return Map.of(STRIPE_ACCOUNT_ID_KEY, stripeAccountId);
     }
     
 }
