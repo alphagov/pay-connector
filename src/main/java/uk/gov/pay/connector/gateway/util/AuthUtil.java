@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -53,7 +54,7 @@ public class AuthUtil {
             }
             Map<String, Object> recurringCreds = (Map<String, Object>) gatewayCredentials.get(RECURRING_MERCHANT_INITIATED);
 
-            return recurringCreds.get(CREDENTIALS_MERCHANT_ID).toString();
+            return recurringCreds.get(CREDENTIALS_MERCHANT_CODE).toString();
         }
         return gatewayCredentials.get(CREDENTIALS_MERCHANT_ID).toString();
     }

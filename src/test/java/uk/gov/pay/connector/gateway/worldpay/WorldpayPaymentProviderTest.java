@@ -88,6 +88,7 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -616,7 +617,7 @@ public class WorldpayPaymentProviderTest {
                 CREDENTIALS_USERNAME, "worldpay-password",
                 CREDENTIALS_PASSWORD, "password",
                 RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_ID, "RECURRING_MERCHANTCODE",
+                        CREDENTIALS_MERCHANT_CODE, "RECURRING_MERCHANTCODE",
                         CREDENTIALS_USERNAME, "recurring-worldpay-password",
                         CREDENTIALS_PASSWORD, "recurring-password"));
         String providerSessionId = "provider-session-id";

@@ -82,6 +82,11 @@ import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgre
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -119,20 +124,20 @@ class WorldpayPaymentProviderTest {
     void checkThatWorldpayIsUp() throws IOException {
         try {
             var validRecurringMerchantInitiatedCredentials = Map.of(
-                    "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
-                    "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
-                    "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
+                    CREDENTIALS_MERCHANT_CODE, envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
+                    CREDENTIALS_USERNAME, envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
+                    CREDENTIALS_PASSWORD, envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
             
             validCredentials = Map.of(
-                    "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
-                    "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
-                    "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"),
-                    "recurring_merchant_initiated", validRecurringMerchantInitiatedCredentials);
+                    CREDENTIALS_MERCHANT_ID, envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
+                    CREDENTIALS_USERNAME, envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
+                    CREDENTIALS_PASSWORD, envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"),
+                    RECURRING_MERCHANT_INITIATED, validRecurringMerchantInitiatedCredentials);
 
             validCredentialsFor3ds = Map.of(
-                    "merchant_id", envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
-                    "username", envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
-                    "password", envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
+                    CREDENTIALS_MERCHANT_ID, envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
+                    CREDENTIALS_USERNAME, envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
+                    CREDENTIALS_PASSWORD, envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
         } catch (IllegalStateException ex) {
             assumeTrue(false, "Ignoring test since credentials not configured");
         }
