@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -250,6 +252,49 @@ class ChargeServicePostAuthorisationTest {
         AgreementInactivated.AgreementInactivatedEventDetails eventDetails = (AgreementInactivated.AgreementInactivatedEventDetails)event.getEventDetails();
         assertThat(eventDetails.getReason(), is(CLOSED_ACCOUNT.toString()));
         assertThat(eventDetails.getPaymentInstrumentExternalId(), is(paymentInstrument.getExternalId()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"web", "moto_api"})
+    void updateChargePostAuthorisationShouldNotInactivateAgreement_WhenAuthorisationModeIsNotAgreement(String authMode) {
+        var cardDetails = defaultCardDetails();
+        var paymentInstrument = aPaymentInstrumentEntity(Instant.now())
+                .withStatus(PaymentInstrumentStatus.ACTIVE)
+                .withCardDetails(cardDetails)
+                .build();
+        var agreementEntity = anAgreementEntity(Instant.now())
+                .withReference("This is the reference")
+                .withDescription("This is a description")
+                .withUserIdentifier("This is the user identifier")
+                .withPaymentInstrument(paymentInstrument)
+                .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
+                .withServiceId("This is the service id")
+                .build();
+        var chargeEntity = chargeEntityFixture
+                .withAuthorisationMode(AuthorisationMode.of(authMode))
+                .withCardDetails(cardDetails)
+                .withAgreementEntity(agreementEntity)
+                .withPaymentInstrument(paymentInstrument)
+                .build();
+        when(mockChargeDao.findByExternalId(EXTERNAL_ID)).thenReturn(Optional.of(chargeEntity));
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetails);
+        when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
+
+        chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, false, CLOSED_ACCOUNT.name());
+
+        assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
+        assertThat(chargeEntity.getEmail(), is(EMAIL));
+        assertThat(chargeEntity.getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
+        assertThat(chargeEntity.getWalletType(), is(nullValue()));
+        assertThat(chargeEntity.getCardDetails(), is(cardDetails));
+        assertThat(chargeEntity.getCanRetry(), is(nullValue()));
+
+        assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.ACTIVE));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(EXTERNAL_ID, AUTHORISATION_READY, AUTHORISATION_SUCCESS, mockChargeEventEntity);
+        verifyNoInteractions(mockLedgerService);
     }
 
     @Test
