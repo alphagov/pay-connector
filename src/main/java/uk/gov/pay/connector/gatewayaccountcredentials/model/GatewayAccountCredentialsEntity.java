@@ -1,9 +1,17 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.model;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.SandboxCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringObjectMapConverter;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
 
@@ -29,6 +37,8 @@ import java.util.Map;
 @Customizer(HistoryCustomizer.class)
 public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_account_credentials_id_seq")
     private Long id;
@@ -65,7 +75,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     @Column(name = "external_id")
     private String externalId;
-
+    
     public GatewayAccountCredentialsEntity() {
     }
 
@@ -88,6 +98,22 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     public Map<String, Object> getCredentials() {
         return credentials;
+    }
+
+    // This will replace `getCredentials()` when all usages have been updated
+    public GatewayCredentials getCredentialsObject() {
+        switch (PaymentGatewayName.valueFrom(paymentProvider)) {
+            case WORLDPAY:
+                return objectMapper.convertValue(this.getCredentials(), WorldpayCredentials.class);
+            case STRIPE:
+                return objectMapper.convertValue(this.getCredentials(), StripeCredentials.class);
+            case EPDQ:
+                return objectMapper.convertValue(this.getCredentials(), EpdqCredentials.class);
+            case SANDBOX:
+                return objectMapper.convertValue(this.getCredentials(), SandboxCredentials.class);
+            default:
+                throw new IllegalArgumentException("Unsupported payment provider: " + paymentProvider);
+        }
     }
 
     public GatewayAccountCredentialState getState() {
@@ -140,6 +166,10 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     public void setCredentials(Map<String, Object> credentials) {
         this.credentials = credentials;
+    }
+
+    public void setCredentials(GatewayCredentials credentials) {
+        this.credentials = objectMapper.convertValue(credentials, new TypeReference<Map<String, Object>>() {});
     }
 
     public void setState(GatewayAccountCredentialState state) {

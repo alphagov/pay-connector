@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator;
 
 import java.util.Objects;
 
-public class WorldpayCredentials {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class WorldpayCredentials implements GatewayCredentials {
 
     @JsonProperty(GatewayAccount.CREDENTIALS_MERCHANT_ID)
     private String legacyOneOffCustomerInitiatedMerchantCode;

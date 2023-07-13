@@ -72,6 +72,7 @@ public class GatewayAccountCredentialsService {
     private final Set<GatewayAccountCredentialState> USABLE_STATES = EnumSet.of(ENTERED, VERIFIED_WITH_LIVE_PAYMENT, ACTIVE);
 
     private final ObjectMapper objectMapper;
+
     @Inject
     public GatewayAccountCredentialsService(GatewayAccountCredentialsDao gatewayAccountCredentialsDao, ObjectMapper objectMapper) {
         this.gatewayAccountCredentialsDao = gatewayAccountCredentialsDao;
@@ -185,7 +186,7 @@ public class GatewayAccountCredentialsService {
     private void updateWorldpayCredentials(JsonPatchRequest patchRequest, WorldpayUpdatableCredentials updatableCredentials,
                                            GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         var worldpayMerchantCodeCredentials = objectMapper.convertValue(patchRequest.valueAsObject(), WorldpayMerchantCodeCredentials.class);
-        var worldpayCredentials = objectMapper.convertValue(gatewayAccountCredentialsEntity.getCredentials(), WorldpayCredentials.class);
+        var worldpayCredentials = (WorldpayCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
         switch (updatableCredentials) {
             case ONE_OFF_CIT:
                 worldpayCredentials.setOneOffCustomerInitiatedCredentials(worldpayMerchantCodeCredentials);
@@ -200,7 +201,7 @@ public class GatewayAccountCredentialsService {
                 worldpayCredentials.setRecurringMerchantInitiatedCredentials(worldpayMerchantCodeCredentials);
                 break;
         }
-        gatewayAccountCredentialsEntity.setCredentials(objectMapper.convertValue(worldpayCredentials, Map.class));
+        gatewayAccountCredentialsEntity.setCredentials(worldpayCredentials);
     }
 
     @Transactional
