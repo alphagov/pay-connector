@@ -4072,7 +4072,6 @@ components:
       properties:
         stripe_account_id:
           type: string
-          writeOnly: true
     StripeGatewayAccountRequest:
       type: object
       allOf:

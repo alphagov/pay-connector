@@ -114,7 +114,7 @@ public class GatewayAccountCredentials {
     public Instant getActiveEndDate() {
         return activeEndDate;
     }
-
+    
     public Long getGatewayAccountId() {
         return gatewayAccountId;
     }

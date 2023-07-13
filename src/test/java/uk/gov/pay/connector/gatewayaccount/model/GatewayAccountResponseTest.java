@@ -12,6 +12,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 
 class GatewayAccountResponseTest {
@@ -51,7 +52,7 @@ class GatewayAccountResponseTest {
         entity.setGatewayAccountCredentials(List.of(
                 GatewayAccountCredentialsEntityFixture.
                         aGatewayAccountCredentialsEntity()
-                        .withPaymentProvider("testGatewayName")
+                        .withPaymentProvider(SANDBOX.getName())
                         .withState(GatewayAccountCredentialState.ACTIVE)
                         .build()
         ));
