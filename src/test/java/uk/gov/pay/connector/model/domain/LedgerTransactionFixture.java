@@ -77,6 +77,7 @@ public class LedgerTransactionFixture {
     private String serviceId;
     private boolean disputed;
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
+    private String agreementId;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -238,6 +239,7 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setAuthorisationSummary(authorisationSummary);
         ledgerTransaction.setDisputed(disputed);
         ledgerTransaction.setAuthorisationMode(authorisationMode);
+        ledgerTransaction.setAgreementId(agreementId);
 
         return ledgerTransaction;
     }
@@ -404,6 +406,11 @@ public class LedgerTransactionFixture {
 
     public LedgerTransactionFixture withAuthorisationMode(AuthorisationMode authorisationMode) {
         this.authorisationMode = authorisationMode;
+        return this;
+    }
+    
+    public LedgerTransactionFixture withAgreementId(String agreementId) {
+        this.agreementId = agreementId;
         return this;
     }
 }

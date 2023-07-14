@@ -68,6 +68,11 @@ public class CaptureGatewayRequest implements GatewayRequest {
         return charge.getAuthorisationMode();
     }
 
+    @Override
+    public boolean isForRecurringPayment() {
+        return charge.getAgreement().isPresent();
+    }
+
     public static CaptureGatewayRequest valueOf(ChargeEntity charge) {
         return new CaptureGatewayRequest(charge);
     }

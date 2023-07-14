@@ -61,6 +61,11 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
         return charge.getAuthorisationMode();
     }
 
+    @Override
+    public boolean isForRecurringPayment() {
+        return charge.getAgreement().isPresent();
+    }
+
     public static Auth3dsResponseGatewayRequest valueOf(ChargeEntity charge, Auth3dsResult auth3DsResult) {
         return new Auth3dsResponseGatewayRequest(charge, auth3DsResult);
     }

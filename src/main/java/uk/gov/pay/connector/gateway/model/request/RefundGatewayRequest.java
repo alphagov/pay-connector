@@ -18,11 +18,12 @@ public class RefundGatewayRequest implements GatewayRequest {
     private final String chargeExternalId;
     private final GatewayAccountCredentialsEntity credentialsEntity;
     private final AuthorisationMode authorisationMode;
+    private boolean isForRecurringPayment;
 
     private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount,
                                  String amount, String refundExternalId, String chargeExternalId,
                                  GatewayAccountCredentialsEntity credentialsEntity,
-                                 AuthorisationMode authorisationMode) {
+                                 AuthorisationMode authorisationMode, boolean isForRecurringPayment) {
         this.transactionId = transactionId;
         this.gatewayAccountEntity = gatewayAccount;
         this.amount = amount;
@@ -30,6 +31,7 @@ public class RefundGatewayRequest implements GatewayRequest {
         this.chargeExternalId = chargeExternalId;
         this.credentialsEntity = credentialsEntity;
         this.authorisationMode = authorisationMode;
+        this.isForRecurringPayment = isForRecurringPayment;
     }
 
     public String getAmount() {
@@ -67,7 +69,12 @@ public class RefundGatewayRequest implements GatewayRequest {
     public String getRefundExternalId() {
         return refundExternalId;
     }
-    
+
+    @Override
+    public boolean isForRecurringPayment() {
+        return isForRecurringPayment;
+    }
+
     /**
      * <p>
      * For Worldpay ->
@@ -87,7 +94,8 @@ public class RefundGatewayRequest implements GatewayRequest {
                 refundEntity.getExternalId(),
                 charge.getExternalId(),
                 gatewayAccountCredentialsEntity,
-                charge.getAuthorisationMode()
+                charge.getAuthorisationMode(),
+                charge.getAgreementId().isPresent()
         );
     }
     

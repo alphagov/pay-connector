@@ -14,4 +14,6 @@ public interface GatewayRequest {
     Map<String, Object> getGatewayCredentials();
 
     AuthorisationMode getAuthorisationMode();
+    
+    boolean isForRecurringPayment();
 }

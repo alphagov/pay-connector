@@ -134,4 +134,8 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         return agreement;
     }
 
+    @Override
+    public boolean isForRecurringPayment() {
+        return agreement.isPresent();
+    }
 }

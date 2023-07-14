@@ -6,11 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.SupportedLanguageJsonDeserializer;
-import uk.gov.pay.connector.charge.model.ChargeResponse;
 
 import java.util.Map;
 
@@ -54,9 +54,9 @@ public class LedgerTransaction {
     private AuthorisationSummary authorisationSummary;
     private boolean disputed;
     private AuthorisationMode authorisationMode;
+    private String agreementId;
 
     public LedgerTransaction() {
-
     }
 
     public Long getAmount() {
@@ -324,5 +324,13 @@ public class LedgerTransaction {
     public LedgerTransaction setAuthorisationMode(AuthorisationMode authorisationMode) {
         this.authorisationMode = authorisationMode;
         return this;
+    }
+
+    public String getAgreementId() {
+        return agreementId;
+    }
+
+    public void setAgreementId(String agreementId) {
+        this.agreementId = agreementId;
     }
 }
