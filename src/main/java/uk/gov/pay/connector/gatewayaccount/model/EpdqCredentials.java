@@ -64,4 +64,9 @@ public class EpdqCredentials implements GatewayCredentials {
     public void setShaOutPassphrase(String shaOutPassphrase) {
         this.shaOutPassphrase = shaOutPassphrase;
     }
+
+    @Override
+    public boolean hasCredentials() {
+        return merchantId != null;
+    }
 }

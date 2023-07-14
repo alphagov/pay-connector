@@ -50,7 +50,6 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAcc
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_CREDENTIALS_WORLDPAY_RECURRING_MERCHANT_INITIATED;
-import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_LAST_UPDATED_BY_USER;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_STATE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.GATEWAY_MERCHANT_ID_PATH;
@@ -65,7 +64,9 @@ public class GatewayAccountCredentialsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GatewayAccountCredentialsService.class);
 
-    private enum WorldpayUpdatableCredentials { ONE_OFF_CIT, RECURRING_CIT, RECURRING_MIT };
+    private enum WorldpayUpdatableCredentials {ONE_OFF_CIT, RECURRING_CIT, RECURRING_MIT}
+
+    ;
 
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
@@ -166,9 +167,9 @@ public class GatewayAccountCredentialsService {
                         GatewayAccountCredentialState.valueOf(patchRequest.valueAsString()));
                 break;
             case GATEWAY_MERCHANT_ID_PATH:
-                HashMap<String, Object> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
-                updatableMap.put(FIELD_GATEWAY_MERCHANT_ID, patchRequest.valueAsString());
-                gatewayAccountCredentialsEntity.setCredentials(updatableMap);
+                var credentials = (WorldpayCredentials)gatewayAccountCredentialsEntity.getCredentialsObject();
+                credentials.setGooglePayMerchantId(patchRequest.valueAsString());
+                gatewayAccountCredentialsEntity.setCredentials(credentials);
                 break;
             default:
                 throw new BadRequestException("Unexpected path for patch operation: " + patchRequest.getPath());
