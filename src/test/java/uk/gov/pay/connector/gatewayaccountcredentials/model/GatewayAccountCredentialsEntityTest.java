@@ -36,7 +36,7 @@ class GatewayAccountCredentialsEntityTest {
         GatewayCredentials credentials = credentialsEntity.getCredentialsObject();
         assertThat(credentials, not(nullValue()));
         assertThat(credentials, isA(WorldpayCredentials.class));
-        assertThat(((WorldpayCredentials) credentials).getOneOffCustomerInitiatedCredentials(), is(nullValue()));
+        assertThat(((WorldpayCredentials) credentials).getOneOffCustomerInitiatedCredentials().isEmpty(), is(true));
     }
 
     @Test
@@ -54,7 +54,8 @@ class GatewayAccountCredentialsEntityTest {
         var worldpayCredentials = (WorldpayCredentials) credentials;
         assertThat(worldpayCredentials.hasCredentials(), is(true));
         assertThat(worldpayCredentials.getOneOffCustomerInitiatedCredentials(), not(nullValue()));
-        assertThat(worldpayCredentials.getOneOffCustomerInitiatedCredentials().getMerchantCode(), is("a-merchant-code"));
+        assertThat(worldpayCredentials.getOneOffCustomerInitiatedCredentials().isPresent(), is(true));
+        assertThat(worldpayCredentials.getOneOffCustomerInitiatedCredentials().get().getMerchantCode(), is("a-merchant-code"));
     }
 
     @Test

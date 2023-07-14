@@ -253,7 +253,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     
     public String getGooglePayMerchantId() {
         return getCurrentOrActiveGatewayAccountCredential()
-                .map(credentialsEntity -> credentialsEntity.getCredentialsObject().getGooglePayMerchantId())
+                .map(GatewayAccountCredentialsEntity::getCredentialsObject)
+                .flatMap(GatewayCredentials::getGooglePayMerchantId)
                 .orElse(null);
     }
     
