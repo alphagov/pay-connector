@@ -13,6 +13,11 @@ public interface GatewayCredentials {
     default Optional<String> getGooglePayMerchantId() {
         return Optional.empty();
     }
-    
+
     boolean hasCredentials();
+
+    public class Views {
+        public static class Api {
+        }
+    }
 }

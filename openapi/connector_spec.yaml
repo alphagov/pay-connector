@@ -2827,6 +2827,13 @@ components:
           writeOnly: true
       required:
       - signature
+    EpdqCredentials:
+      type: object
+      properties:
+        merchant_id:
+          type: string
+        username:
+          type: string
     ErrorResponse:
       type: object
       properties:
@@ -3205,13 +3212,7 @@ components:
           format: date-time
           example: 2022-06-30T15:44:19.323Z
         credentials:
-          type: object
-          additionalProperties:
-            type: object
-            example:
-              stripe_account_id: accnt_id
-          example:
-            stripe_account_id: accnt_id
+          $ref: '#/components/schemas/GatewayCredentials'
         external_id:
           type: string
           example: 787460d16d4a4d14b4c94787b8f427db
@@ -3717,6 +3718,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GatewayAccountResponse'
+    GatewayCredentials:
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/WorldpayCredentials'
+      - $ref: '#/components/schemas/StripeCredentials'
+      - $ref: '#/components/schemas/EpdqCredentials'
     GatewayStatusComparison:
       type: object
       properties:
@@ -4315,6 +4322,28 @@ components:
           example: 57992a087a0c4849895ab8a2
           maxLength: 24
           minLength: 24
+    WorldpayCredentials:
+      type: object
+      properties:
+        gateway_merchant_id:
+          type: string
+        merchant_id:
+          type: string
+        one_off_customer_initiated:
+          $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
+        recurring_customer_initiated:
+          $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
+        recurring_merchant_initiated:
+          $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
+        username:
+          type: string
+    WorldpayMerchantCodeCredentials:
+      type: object
+      properties:
+        merchant_code:
+          type: string
+        username:
+          type: string
     WorldpayValidatableCredentials:
       type: object
       properties:

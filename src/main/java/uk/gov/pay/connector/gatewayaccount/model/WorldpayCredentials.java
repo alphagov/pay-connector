@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator;
 
 import java.util.Objects;
@@ -14,24 +16,31 @@ import java.util.Optional;
 public class WorldpayCredentials implements GatewayCredentials {
 
     @JsonProperty(GatewayAccount.CREDENTIALS_MERCHANT_ID)
+    @JsonView({Views.Api.class})
     private String legacyOneOffCustomerInitiatedMerchantCode;
 
     @JsonProperty(GatewayAccount.CREDENTIALS_USERNAME)
+    @JsonView({Views.Api.class})
     private String legacyOneOffCustomerInitiatedUsername;
 
     @JsonProperty(GatewayAccount.CREDENTIALS_PASSWORD)
+    @Schema(hidden = true)
     private String legacyOneOffCustomerInitiatedPassword;
 
     @JsonProperty(GatewayAccount.ONE_OFF_CUSTOMER_INITIATED)
+    @JsonView({Views.Api.class})
     private WorldpayMerchantCodeCredentials oneOffCustomerInitiatedCredentials;
 
     @JsonProperty(GatewayAccount.RECURRING_CUSTOMER_INITIATED)
+    @JsonView({Views.Api.class})
     private WorldpayMerchantCodeCredentials recurringCustomerInitiatedCredentials;
 
     @JsonProperty(GatewayAccount.RECURRING_MERCHANT_INITIATED)
+    @JsonView({Views.Api.class})
     private WorldpayMerchantCodeCredentials recurringMerchantInitiatedCredentials;
 
     @JsonProperty(GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID)
+    @JsonView({Views.Api.class})
     private String googlePayMerchantId;
 
     public WorldpayCredentials() {

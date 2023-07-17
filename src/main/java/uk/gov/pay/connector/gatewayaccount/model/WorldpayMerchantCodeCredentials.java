@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
@@ -10,8 +12,11 @@ import java.util.Objects;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class WorldpayMerchantCodeCredentials {
 
+    @JsonView({GatewayCredentials.Views.Api.class})
     private String merchantCode;
+    @JsonView({GatewayCredentials.Views.Api.class})
     private String username;
+    @Schema(hidden = true)
     private String password;
 
     public WorldpayMerchantCodeCredentials() {

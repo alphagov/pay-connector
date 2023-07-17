@@ -97,11 +97,13 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         return paymentProvider;
     }
 
+    /**
+     * @deprecated Use {@link GatewayAccountCredentialsEntity#getCredentialsObject()} instead
+     */
     public Map<String, Object> getCredentials() {
         return credentials;
     }
-
-    // This will replace `getCredentials()` when all usages have been updated
+    
     public GatewayCredentials getCredentialsObject() {
         Map<String, Object> credentialsMap = Optional.ofNullable(credentials).orElse(Map.of());
         switch (PaymentGatewayName.valueFrom(paymentProvider)) {
@@ -166,6 +168,9 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
         this.activeEndDate = activeEndDate;
     }
 
+    /**
+     * @deprecated Use {@link GatewayAccountCredentialsEntity#setCredentials(GatewayCredentials)} ()} instead
+     */
     public void setCredentials(Map<String, Object> credentials) {
         this.credentials = credentials;
     }

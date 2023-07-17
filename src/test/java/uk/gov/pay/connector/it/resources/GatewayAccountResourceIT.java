@@ -23,18 +23,29 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_STRIPE_ACCOUNT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -154,18 +165,31 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
-    public void shouldReturnAccountInformationForGetAccountById() {
+    public void shouldReturnAccountInformationForGetAccountById_withWorldpayCredentials() {
         long accountId = RandomUtils.nextInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
                 .withGatewayAccountId(accountId)
                 .withState(ACTIVE)
                 .withCredentials(Map.of(
-                        "username", "a-username",
-                        "password", "a-password",
-                        "merchant_id", "a-merchant-id"))
+                        CREDENTIALS_MERCHANT_ID, "legacy-merchant-code",
+                        CREDENTIALS_USERNAME, "legacy-username",
+                        CREDENTIALS_PASSWORD, "legacy-password",
+                        FIELD_GATEWAY_MERCHANT_ID, "google-pay-merchant-id",
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "one-off-merchant-code",
+                                CREDENTIALS_USERNAME, "one-off-username",
+                                CREDENTIALS_PASSWORD, "one-off-password"),
+                        RECURRING_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "cit-merchant-code",
+                                CREDENTIALS_USERNAME, "cit-username",
+                                CREDENTIALS_PASSWORD, "cit-password"),
+                        RECURRING_MERCHANT_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "mit-merchant-code",
+                                CREDENTIALS_USERNAME, "mit-username",
+                                CREDENTIALS_PASSWORD, "mit-password")))
                 .build();
-        
+
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -180,7 +204,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .withDefaultCredentials()
                 .withGatewayAccountCredentials(List.of(credentialsParams))
                 .insert();
-        
+
         databaseTestHelper.allowApplePay(accountId);
         databaseTestHelper.allowZeroAmount(accountId);
         databaseTestHelper.blockPrepaidCards(accountId);
@@ -223,11 +247,95 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("disabled", is(true))
                 .body("disabled_reason", is("Disabled because reasons"))
                 .body("gateway_account_credentials.size()", is(1))
-                .body("gateway_account_credentials[0].credentials.merchant_id", is("a-merchant-id"))
                 .body("gateway_account_credentials[0].payment_provider", is("worldpay"))
                 .body("gateway_account_credentials[0].state", is("ACTIVE"))
-                .body("gateway_account_credentials[0].password", is(nullValue()))
-                .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt));
+                .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt))
+                .body("gateway_account_credentials[0].credentials", hasEntry("gateway_merchant_id", "google-pay-merchant-id"))
+                .body("gateway_account_credentials[0].credentials", hasEntry("merchant_id", "legacy-merchant-code"))
+                .body("gateway_account_credentials[0].credentials", hasEntry("username", "legacy-username"))
+                .body("gateway_account_credentials[0].credentials", not(hasKey("password")))
+                .body("gateway_account_credentials[0].credentials", hasKey("one_off_customer_initiated"))
+                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("merchant_code", "one-off-merchant-code"))
+                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("username", "one-off-username"))
+                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", not(hasKey("password")))
+                .body("gateway_account_credentials[0].credentials", hasKey("recurring_customer_initiated"))
+                .body("gateway_account_credentials[0].credentials.recurring_customer_initiated", hasEntry("merchant_code", "cit-merchant-code"))
+                .body("gateway_account_credentials[0].credentials.recurring_customer_initiated", hasEntry("username", "cit-username"))
+                .body("gateway_account_credentials[0].credentials.recurring_customer_initiated", not(hasKey("password")))
+                .body("gateway_account_credentials[0].credentials", hasKey("recurring_merchant_initiated"))
+                .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", hasEntry("merchant_code", "mit-merchant-code"))
+                .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", hasEntry("username", "mit-username"))
+                .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", not(hasKey("password")));
+    }
+
+    @Test
+    public void shouldReturnAccountInformationForGetAccountById_withStripeCredentials() {
+        long accountId = RandomUtils.nextInt();
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(STRIPE.getName())
+                .withGatewayAccountId(accountId)
+                .withState(ACTIVE)
+                .withCredentials(Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "a-stripe-account-id"))
+                .build();
+
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(accountId)
+                .withPaymentProvider(STRIPE.getName())
+                .withGatewayAccountCredentials(List.of(credentialsParams))
+                .insert();
+
+        int accountIdAsInt = Math.toIntExact(accountId);
+        givenSetup()
+                .get(ACCOUNTS_API_URL + accountId)
+                .then()
+                .statusCode(200)
+                .body("payment_provider", is("stripe"))
+                .body("gateway_account_credentials.size()", is(1))
+                .body("gateway_account_credentials[0].payment_provider", is("stripe"))
+                .body("gateway_account_credentials[0].state", is("ACTIVE"))
+                .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt))
+                .body("gateway_account_credentials[0].credentials", hasEntry("stripe_account_id", "a-stripe-account-id"));
+    }
+
+    @Test
+    public void shouldReturnAccountInformationForGetAccountById_withEpdqCredentials() {
+        long accountId = RandomUtils.nextInt();
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(EPDQ.getName())
+                .withGatewayAccountId(accountId)
+                .withState(ACTIVE)
+                .withCredentials(Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id",
+                        CREDENTIALS_USERNAME, "username",
+                        CREDENTIALS_PASSWORD, "password",
+                        CREDENTIALS_SHA_IN_PASSPHRASE, "a-sha-in-passphrase",
+                        CREDENTIALS_SHA_OUT_PASSPHRASE, "a-sha-out-passphrase"))
+                .build();
+
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(accountId)
+                .withPaymentProvider(EPDQ.getName())
+                .withGatewayAccountCredentials(List.of(credentialsParams))
+                .insert();
+
+        int accountIdAsInt = Math.toIntExact(accountId);
+        givenSetup()
+                .get(ACCOUNTS_API_URL + accountId)
+                .then()
+                .statusCode(200)
+                .body("payment_provider", is("epdq"))
+                .body("gateway_account_credentials.size()", is(1))
+                .body("gateway_account_credentials[0].payment_provider", is("epdq"))
+                .body("gateway_account_credentials[0].state", is("ACTIVE"))
+                .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt))
+                .body("gateway_account_credentials[0].credentials", hasEntry("merchant_id", "merchant-id"))
+                .body("gateway_account_credentials[0].credentials", hasEntry("username", "username"))
+                .body("gateway_account_credentials[0].credentials", not(hasKey("password")))
+                .body("gateway_account_credentials[0].credentials", not(hasKey("sha_in_passphrase")))
+                .body("gateway_account_credentials[0].credentials", not(hasKey("sha_out_passphrase")));
     }
 
     @Test
@@ -299,7 +407,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         String gatewayAccountId2 = createAGatewayAccountFor("sandbox");
         String serviceId = "someexternalserviceid";
         GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
-        
+
         databaseTestHelper.updateServiceIdFor(Long.parseLong(gatewayAccountId1), serviceId);
         databaseTestHelper.updateServiceIdFor(Long.parseLong(gatewayAccountId2), "notsearchedforserviceid");
 
