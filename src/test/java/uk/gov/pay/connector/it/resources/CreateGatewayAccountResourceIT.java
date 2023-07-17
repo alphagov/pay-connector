@@ -86,12 +86,12 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
 
     @Test
     public void createStripeGatewayAccountWithCredentials() {
-        String StripeAccountId = "abc";
+        String stripeAccountId = "abc";
         Map<String, Object> payload = ImmutableMap.of(
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
-                "credentials", ImmutableMap.of("stripe_account_id", StripeAccountId));
+                "credentials", ImmutableMap.of("stripe_account_id", stripeAccountId));
         String gatewayAccountId = givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
@@ -116,8 +116,8 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
         assertThat(gatewayAccountCredentialsList.size(), is(1));
         GatewayCredentials credentialsObject = gatewayAccountCredentialsList.get(0).getCredentialsObject();
         assertThat(credentialsObject, isA(StripeCredentials.class));
-        assertThat(((StripeCredentials)credentialsObject).getStripeAccountId(), is(StripeAccountId));
-        assertThat(gatewayAccountCredentialsList.get(0).getCredentials().get("stripe_account_id"), is(StripeAccountId));
+        assertThat(((StripeCredentials)credentialsObject).getStripeAccountId(), is(stripeAccountId));
+        assertThat(gatewayAccountCredentialsList.get(0).getCredentials().get("stripe_account_id"), is(stripeAccountId));
         assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
         assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("stripe"));
         assertThat(gatewayAccountCredentialsList.get(0).getActiveStartDate(), is(notNullValue()));

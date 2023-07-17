@@ -52,6 +52,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -618,7 +619,7 @@ class WorldpayPaymentProviderTest {
                 headers.capture());
 
         assertThat(headers.getValue().size(), is(1));
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(ONE_OFF_USERNAME + ":" + ONE_OFF_PASSWORD).getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((ONE_OFF_USERNAME + ":" + ONE_OFF_PASSWORD).getBytes(StandardCharsets.UTF_8));
         assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
     }
 
@@ -660,7 +661,7 @@ class WorldpayPaymentProviderTest {
 
         assertThat(headers.getValue().size(), is(1));
 
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(MIT_USERNAME + ":" + MIT_PASSWORD).getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((MIT_USERNAME + ":" + MIT_PASSWORD).getBytes(StandardCharsets.UTF_8));
         assertThat(headers.getValue().get(AUTHORIZATION), is(expectedHeader));
     }
 
@@ -681,7 +682,7 @@ class WorldpayPaymentProviderTest {
                 headers.capture());
 
         assertThat(headers.getValue().size(), is(1));
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(CIT_USERNAME + ":" + CIT_PASSWORD).getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((CIT_USERNAME + ":" + CIT_PASSWORD).getBytes(StandardCharsets.UTF_8));
         assertThat(headers.getValue().get(AUTHORIZATION), is(expectedHeader));
     }
 

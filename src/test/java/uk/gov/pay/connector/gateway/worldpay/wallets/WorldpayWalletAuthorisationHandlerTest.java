@@ -23,6 +23,7 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
@@ -57,7 +58,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL;
 
 @ExtendWith(MockitoExtension.class)
- class WorldpayWalletAuthorisationHandlerTest {
+class WorldpayWalletAuthorisationHandlerTest {
 
     @Mock
     private GatewayClient mockGatewayClient;
@@ -82,7 +83,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
     private static final String password = "password";
 
     @BeforeEach
-     void setUp() throws Exception {
+    void setUp() throws Exception {
         worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL));
         chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withDescription("This is the description")
@@ -113,7 +114,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
     }
 
     @Test
-     void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
+    void shouldSendApplePayRequestWhenApplePayDetailsArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(false));
         } catch (GatewayErrorException e) {
@@ -121,13 +122,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendApplePayRequestWithPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
+    void shouldSendApplePayRequestWithPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(true));
@@ -136,13 +137,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
+    void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(false);
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(true));
@@ -151,13 +152,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
+    void shouldSendApplePayRequestWithoutPayerEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getApplePayAuthorisationRequest(false));
@@ -166,13 +167,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
+    void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(false));
         } catch (GatewayErrorException e) {
@@ -180,13 +181,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePayRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
+    void shouldSendGooglePayRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(true));
@@ -195,13 +196,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
+    void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(false);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(true));
@@ -210,13 +211,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
+    void shouldSendGooglePayRequestWithoutEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePayAuthorisationRequest(false));
@@ -225,13 +226,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePay3dsRequestWithDDCResultWhenWorldpay3dsFlexResultIsAvailable() throws Exception {
+    void shouldSendGooglePay3dsRequestWithDDCResultWhenWorldpay3dsFlexResultIsAvailable() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, true, false, true));
         } catch (GatewayErrorException e) {
@@ -239,13 +240,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithoutIpAddressArePresent() throws Exception {
+    void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithoutIpAddressArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, false, false));
         } catch (GatewayErrorException e) {
@@ -253,39 +254,39 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithIpAddressArePresent() throws Exception {
+    void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithIpAddressArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, true, false, false));
         } catch (GatewayErrorException e) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithout3dsEnabledArePresent() throws Exception {
+    void shouldSendGooglePay3dsRequestWhenGooglePayDetailsWithout3dsEnabledArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(false, true, false, false));
         } catch (GatewayErrorException e) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
+    void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, true, false));
@@ -294,13 +295,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_EMAIL),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
+    void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayDisabledAndPayerEmailPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(false);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, true, false));
@@ -309,13 +310,13 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
     @Test
-     void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
+    void shouldSendGooglePay3dsRequestWithEmailWhenSendingPayerEmailToGatewayEnabledAndPayerEmailNotPresent() throws Exception {
         gatewayAccountEntity.setSendPayerEmailToGateway(true);
         try {
             worldpayWalletAuthorisationHandler.authorise(getGooglePay3dsAuthorisationRequest(true, false, false, false));
@@ -324,7 +325,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
@@ -339,8 +340,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
                                                                                   boolean withDDCResult)
             throws IOException {
         String fixturePath = withDDCResult ? "googlepay/example-3ds-auth-request-with-ddc.json" :
-                             withPayerEmail ? "googlepay/example-3ds-auth-request.json" :
-                             "googlepay/example-3ds-auth-request-without-email.json";
+                withPayerEmail ? "googlepay/example-3ds-auth-request.json" :
+                        "googlepay/example-3ds-auth-request-without-email.json";
         GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture(fixturePath), GooglePayAuthRequest.class);
         chargeEntity.getGatewayAccount().setRequires3ds(isRequires3ds);
         chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(withIpAddress);

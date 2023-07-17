@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentia
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
@@ -45,14 +46,8 @@ public class AuthUtil {
     public static String getWorldpayMerchantCode(GatewayCredentials credentials, AuthorisationMode authorisationMode, boolean isRecurring) {
         WorldpayCredentials worldpayCredentials = castGatewayCredentialsToWorldpayCredentials(credentials);
         if (isRecurring) {
-            if (authorisationMode == AuthorisationMode.AGREEMENT) {
-                return worldpayCredentials.getRecurringMerchantInitiatedCredentials()
-                        .map(WorldpayMerchantCodeCredentials::getMerchantCode)
-                        .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
-            }
-            return worldpayCredentials.getRecurringCustomerInitiatedCredentials()
-                    .map(WorldpayMerchantCodeCredentials::getMerchantCode)
-                    .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
+            WorldpayMerchantCodeCredentials credentialsForAuthType = getWorldpayRecurringCredentialsForAuthType(worldpayCredentials, authorisationMode);
+            return credentialsForAuthType.getMerchantCode();
         }
 
         return worldpayCredentials.getOneOffCustomerInitiatedCredentials()
@@ -65,14 +60,8 @@ public class AuthUtil {
         WorldpayCredentials worldpayCredentials = castGatewayCredentialsToWorldpayCredentials(credentials);
 
         if (isRecurring) {
-            if (authorisationMode == AuthorisationMode.AGREEMENT) {
-                return worldpayCredentials.getRecurringMerchantInitiatedCredentials()
-                        .map(AuthUtil::getWorldpayAuthHeader)
-                        .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
-            }
-            return worldpayCredentials.getRecurringCustomerInitiatedCredentials()
-                    .map(AuthUtil::getWorldpayAuthHeader)
-                    .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
+            WorldpayMerchantCodeCredentials credentialsForAuthType = getWorldpayRecurringCredentialsForAuthType(worldpayCredentials, authorisationMode);
+            return getWorldpayAuthHeader(credentialsForAuthType);
         }
 
         return worldpayCredentials.getOneOffCustomerInitiatedCredentials()
@@ -83,12 +72,21 @@ public class AuthUtil {
                     return getAuthHeader(username, password);
                 });
     }
+    
+    private static WorldpayMerchantCodeCredentials getWorldpayRecurringCredentialsForAuthType(WorldpayCredentials worldpayCredentials, AuthorisationMode authorisationMode) {
+        if (authorisationMode == AuthorisationMode.AGREEMENT) {
+            return worldpayCredentials.getRecurringMerchantInitiatedCredentials()
+                    .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
+        }
+        return worldpayCredentials.getRecurringCustomerInitiatedCredentials()
+                .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
+    }
 
     private static Map<String, String> getWorldpayAuthHeader(WorldpayMerchantCodeCredentials creds) {
         return getAuthHeader(creds.getUsername(), creds.getPassword());
     }
 
-    public static Map<String, String> getGatewayAccountCredentialsForManagingTokensAsAuthHeader(GatewayCredentials credentials) {
+    public static Map<String, String> getWorldpayAuthHeaderForManagingRecurringAuthTokens(GatewayCredentials credentials) {
         WorldpayCredentials worldpayCredentials = castGatewayCredentialsToWorldpayCredentials(credentials);
         WorldpayMerchantCodeCredentials recurringCustomerInitiatedCredentials = worldpayCredentials.getRecurringCustomerInitiatedCredentials()
                 .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
@@ -115,7 +113,7 @@ public class AuthUtil {
     }
 
     private static Map<String, String> getAuthHeader(String username, String password) {
-        String value = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
+        String value = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
         return Map.of(AUTHORIZATION, value);
     }
 

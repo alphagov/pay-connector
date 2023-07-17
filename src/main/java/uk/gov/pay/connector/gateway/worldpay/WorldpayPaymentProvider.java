@@ -61,7 +61,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsForManagingTokensAsAuthHeader;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeaderForManagingRecurringAuthTokens;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
@@ -360,7 +360,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 WORLDPAY,
                 request.getGatewayAccountType(),
                 buildDeleteTokenOrder(request),
-                getGatewayAccountCredentialsForManagingTokensAsAuthHeader(request.getGatewayCredentials()));
+                getWorldpayAuthHeaderForManagingRecurringAuthTokens(request.getGatewayCredentials()));
     }
     
     @Override

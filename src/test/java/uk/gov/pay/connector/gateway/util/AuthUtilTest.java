@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentException;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
@@ -62,7 +63,7 @@ class AuthUtilTest {
         credentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, true);
 
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
@@ -72,7 +73,7 @@ class AuthUtilTest {
         credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.AGREEMENT, true);
 
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
@@ -81,9 +82,9 @@ class AuthUtilTest {
         WorldpayCredentials credentials = new WorldpayCredentials();
         credentials.setLegacyOneOffCustomerInitiatedUsername(username);
         credentials.setLegacyOneOffCustomerInitiatedPassword(password);
-        
+
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, false);
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
@@ -93,7 +94,7 @@ class AuthUtilTest {
         credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
 
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, false);
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
@@ -101,8 +102,8 @@ class AuthUtilTest {
     void shouldGetAuthHeaderForManagingTokens() {
         WorldpayCredentials worldpayCredentials = new WorldpayCredentials();
         worldpayCredentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes());
-        Map<String, String> encodedHeader = AuthUtil.getGatewayAccountCredentialsForManagingTokensAsAuthHeader(worldpayCredentials);
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
+        Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeaderForManagingRecurringAuthTokens(worldpayCredentials);
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
