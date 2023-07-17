@@ -4,15 +4,14 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-
-import java.util.Map;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
 public class StripePaymentIntentCancelRequest extends StripePostRequest {
     private final String stripePaymentIntentId;
 
     private StripePaymentIntentCancelRequest(GatewayAccountEntity gatewayAccount, String stripePaymentIntentId,
                                              String idempotencyKey, StripeGatewayConfig stripeGatewayConfig,
-                                             Map<String, Object> credentials) {
+                                             GatewayCredentials credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripePaymentIntentId = stripePaymentIntentId;
     }

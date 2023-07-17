@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 
@@ -15,18 +16,18 @@ import java.util.Map;
 public class StripePaymentMethodRequest extends StripePostRequest {
     private final AuthCardDetails authCardDetails;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
-    
+
     public StripePaymentMethodRequest(
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             AuthCardDetails authCardDetails,
-            Map<String, Object> credentials) {
+            GatewayCredentials credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.authCardDetails = authCardDetails;
         this.northAmericanRegionMapper = new NorthAmericanRegionMapper();
     }
-    
+
     public static StripePaymentMethodRequest of(CardAuthorisationGatewayRequest request, StripeGatewayConfig config) {
         return new StripePaymentMethodRequest(
                 request.getGatewayAccount(),
@@ -59,7 +60,7 @@ public class StripePaymentMethodRequest extends StripePostRequest {
             localParams.put("billing_details[address[country]]", address.getCountry());
             localParams.put("billing_details[address[postal_code]]", address.getPostcode());
         });
-        
+
         return Map.copyOf(localParams);
     }
 

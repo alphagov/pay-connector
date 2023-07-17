@@ -13,7 +13,9 @@ import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.ws.rs.client.ClientBuilder;
 import java.net.URI;
@@ -26,7 +28,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -71,12 +73,13 @@ public class GooglePayForWorldpayTest {
         GatewayClient authoriseClient = getGatewayClient();
 
         GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, APPLICATION_XML_TYPE);
+        WorldpayCredentials credentials = (WorldpayCredentials)gatewayAccount.getGatewayAccountCredentialsEntity(WORLDPAY.getName()).getCredentialsObject();
         GatewayClient.Response response = authoriseClient.postRequestFor(
                 URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"),
                 WORLDPAY,
                 "test",
                 gatewayOrder,
-                getGatewayAccountCredentialsAsAuthHeader(gatewayAccount.getCredentials(WORLDPAY.getName())));
+                getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, false));
         assertThat(response.getStatus(), is(HttpStatus.SC_OK));
         String entity = response.getEntity();
         System.out.println(entity);

@@ -277,6 +277,7 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withTransactionId("payId")
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider(EPDQ.getName())
                         .withCredentials(credentials)
                         .build())
                 .build();
@@ -305,6 +306,7 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .withExternalId("mq4ht90j2oir6am585afk58kml")
                 .withGatewayAccountEntity(accountEntity)
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider(EPDQ.getName())
                         .withCredentials(credentials)
                         .build())
                 .build();
@@ -353,6 +355,7 @@ public abstract class BaseEpdqPaymentProviderIT {
                 .withPaymentProvider(EPDQ.getName())
                 .withTransactionId("payId")
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider(EPDQ.getName())
                         .withCredentials(credentials)
                         .build())
                 .build();

@@ -3,10 +3,10 @@ package uk.gov.pay.connector.gateway.stripe.request;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class StripePaymentIntentCaptureRequest extends StripeCaptureRequest {
     private final String stripeIdentifier;
@@ -16,7 +16,7 @@ public class StripePaymentIntentCaptureRequest extends StripeCaptureRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             String stripeIdentifier,
-            Map<String, Object> credentials) {
+            GatewayCredentials credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeIdentifier = stripeIdentifier;
     }

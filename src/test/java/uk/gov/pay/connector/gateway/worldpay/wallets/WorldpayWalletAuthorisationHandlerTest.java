@@ -14,7 +14,6 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -25,12 +24,15 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
+import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -76,6 +78,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.test");
     private static final String GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS = "uniqueSessionId";
+    private static final String username = "worldpay-username";
+    private static final String password = "password";
 
     @BeforeEach
      void setUp() throws Exception {
@@ -86,8 +90,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
                         .withPaymentProvider("worldpay")
                         .withCredentials(Map.of(
                                 CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                                CREDENTIALS_USERNAME, "worldpay-password",
-                                CREDENTIALS_PASSWORD, "password"
+                                CREDENTIALS_USERNAME, username,
+                                CREDENTIALS_PASSWORD, password
                         ))
                         .build())
                 .build();
@@ -117,7 +121,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -131,7 +136,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -145,7 +151,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -159,7 +166,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -172,7 +180,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -186,7 +195,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -200,7 +210,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -214,7 +225,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -227,7 +239,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -240,8 +253,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(),
-                    is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -253,7 +266,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -265,7 +279,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -279,8 +294,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_EMAIL),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(),
-                    is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -294,8 +309,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(),
-                    is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 
@@ -309,8 +324,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
             assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
                     gatewayOrderArgumentCaptor.getValue().getPayload());
             assertThat(headers.getValue().size(), is(1));
-            assertThat(headers.getValue(),
-                    is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountCredentials)));
+            String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String( username + ":" + password).getBytes());
+            assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
         }
     }
 

@@ -5,11 +5,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import java.util.Map;
 import java.util.Optional;
 
 public class RecurringPaymentAuthorisationGatewayRequest implements GatewayRequest{
@@ -18,12 +18,12 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
     private String amount;
     private String gatewayTransactionId;
     private String description;
-    private Map<String, Object> credentials;
+    private GatewayCredentials credentials;
     private GatewayAccountEntity gatewayAccountEntity;
     private String govUkPayPaymentId;
 
     private RecurringPaymentAuthorisationGatewayRequest(GatewayAccountEntity gatewayAccountEntity,
-                                                        Map<String, Object> credentials,
+                                                        GatewayCredentials credentials,
                                                         String agreementId,
                                                         String amount,
                                                         String gatewayTransactionId,
@@ -42,7 +42,9 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
 
     public static RecurringPaymentAuthorisationGatewayRequest valueOf(ChargeEntity charge) {
         return new RecurringPaymentAuthorisationGatewayRequest(charge.getGatewayAccount(),
-                Optional.ofNullable(charge.getGatewayAccountCredentialsEntity()).map(GatewayAccountCredentialsEntity::getCredentials).orElse(null),
+                Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
+                        .map(GatewayAccountCredentialsEntity::getCredentialsObject)
+                        .orElse(null),
                 charge.getAgreement().map(AgreementEntity::getExternalId).orElse(null),
                 String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)),
                 charge.getGatewayTransactionId(),
@@ -86,7 +88,7 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
     }
 
     @Override
-    public Map<String, Object> getGatewayCredentials() {
+    public GatewayCredentials getGatewayCredentials() {
         return credentials;
     }
 

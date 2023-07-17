@@ -18,7 +18,7 @@ import java.util.Map;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
 
 public class WorldpayCaptureHandler implements CaptureHandler {
@@ -41,7 +41,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
                     buildCaptureOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
+                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, WorldpayCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
@@ -51,7 +51,7 @@ public class WorldpayCaptureHandler implements CaptureHandler {
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         return aWorldpayCaptureOrderRequestBuilder()
                 .withDate(LocalDate.now(ZoneOffset.UTC))
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
                 .withAmount(request.getAmountAsString())
                 .withTransactionId(request.getGatewayTransactionId())
                 .build();

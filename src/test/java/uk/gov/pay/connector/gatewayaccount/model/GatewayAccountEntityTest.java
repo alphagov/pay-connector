@@ -121,63 +121,9 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void getGatewayNameshouldThrowWebApplicationExceptionWhenGatewayAccountCredentialsIsEmpty() {
+    void getGatewayNameShouldThrowWebApplicationExceptionWhenGatewayAccountCredentialsIsEmpty() {
         gatewayAccountEntity.setGatewayAccountCredentials(new ArrayList<>());
         assertThrows(WebApplicationException.class, () -> gatewayAccountEntity.getGatewayName());
-    }
-
-    @Test
-    void getCredentialsByProviderShouldReturnCorrectCredential() {
-        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
-                .withCredentials(Map.of("stripe-accnt-id", "some-id"))
-                .withPaymentProvider("stripe").build();
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .withCredentials(Map.of("username", "some-user-name"))
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity, credentialsEntityWorldpay));
-
-        Map<String, Object> actualCreds = gatewayAccountEntity.getCredentials("worldpay");
-        assertThat(actualCreds, hasEntry("username", "some-user-name"));
-    }
-
-    @Test
-    void getCredentialsByProviderShouldReturnLatestActiveCredentialIfMultipleExists() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpayLatest = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .withCredentials(Map.of("username", "latest-creds-user-name"))
-                .withActiveStartDate(Instant.now())
-                .build();
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .withCredentials(Map.of("username", "old-creds-user-name"))
-                .withActiveStartDate(Instant.now().minus(10, DAYS))
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay, credentialsEntityWorldpayLatest));
-
-        Map<String, Object> actualCreds = gatewayAccountEntity.getCredentials("worldpay");
-        assertThat(actualCreds, hasEntry("username", "latest-creds-user-name"));
-    }
-
-    @Test
-    void getCredentialsByProviderShouldThrowErrorIfNoCredentialsAreAvailable() {
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of());
-        assertThrows(WebApplicationException.class, () -> {
-            gatewayAccountEntity.getCredentials("worldpay");
-        });
-    }
-
-    @Test
-    void getCredentialsByProviderShouldThrowErrorIfNoCredentialsForPaymentProviderIsAvailable() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("worldpay")
-                .withCredentials(Map.of("username", "some-user-name"))
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
-
-        assertThrows(WebApplicationException.class, () -> {
-            gatewayAccountEntity.getCredentials("sandbox");
-        }, "No credentials exists for payment provider");
     }
 
     @Test
@@ -263,6 +209,24 @@ class GatewayAccountEntityTest {
         GatewayAccountCredentialsEntity actualCreds = gatewayAccountEntity.getGatewayAccountCredentialsEntity("worldpay");
         assertThat(actualCreds.getPaymentProvider(), is("worldpay"));
         assertThat(actualCreds.getCredentials(), hasEntry("username", "some-user-name"));
+    }
+
+    @Test
+    void getGatewayAccountCredentialsEntityByProviderShouldReturnLatestActiveCredentialIfMultipleExists() {
+        GatewayAccountCredentialsEntity credentialsEntityWorldpayLatest = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withCredentials(Map.of("username", "latest-creds-user-name"))
+                .withActiveStartDate(Instant.now())
+                .build();
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("worldpay")
+                .withCredentials(Map.of("username", "old-creds-user-name"))
+                .withActiveStartDate(Instant.now().minus(10, DAYS))
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay, credentialsEntityWorldpayLatest));
+
+        GatewayAccountCredentialsEntity actualCreds = gatewayAccountEntity.getGatewayAccountCredentialsEntity("worldpay");
+        assertThat(actualCreds.getCredentials(), hasEntry("username", "latest-creds-user-name"));
     }
 
     @Test

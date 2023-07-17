@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
 
 public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHandler, WorldpayGatewayResponseGenerator {
@@ -35,14 +35,14 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) throws GatewayException {
-        
+
         GatewayClient.Response response = authoriseClient.postRequestFor(
                 gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 WORLDPAY,
                 request.getGatewayAccount().getType(),
                 buildWalletAuthoriseOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
-        
+                getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+
         return getWorldpayGatewayResponse(response);
     }
 
@@ -69,7 +69,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getUserAgentHeader())
                 .withUserAgentHeader(request.getWalletAuthorisationData().getPaymentInfo().getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .build();

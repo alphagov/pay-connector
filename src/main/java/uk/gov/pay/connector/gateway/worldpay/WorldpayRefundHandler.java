@@ -16,7 +16,7 @@ import java.util.Map;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 
 public class WorldpayRefundHandler implements RefundHandler {
@@ -39,7 +39,7 @@ public class WorldpayRefundHandler implements RefundHandler {
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
                     buildRefundOrder(request), 
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode()));
+                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, WorldpayRefundResponse.class), PENDING);
         } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
@@ -49,7 +49,7 @@ public class WorldpayRefundHandler implements RefundHandler {
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         return aWorldpayRefundOrderRequestBuilder()
                 .withReference(request.getRefundExternalId())
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode()))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
                 .withAmount(request.getAmount())
                 .withTransactionId(request.getTransactionId())
                 .build();

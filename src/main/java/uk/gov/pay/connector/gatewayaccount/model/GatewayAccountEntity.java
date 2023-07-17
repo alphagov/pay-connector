@@ -219,23 +219,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                     .or(() -> getGatewayAccountCredentials().stream().findFirst());
         }
     }
-
-    public Map<String, Object> getCredentials(String paymentProvider) {
-        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntities = getGatewayAccountCredentials();
-
-        return gatewayAccountCredentialsEntities.stream()
-                .filter(entity -> entity.getPaymentProvider().equals(paymentProvider))
-                .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate))
-                .map(GatewayAccountCredentialsEntity::getCredentials)
-                .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(
-                        format("Credentials not found for gateway account [%s] and payment_provider [%s] ",
-                                getId(), paymentProvider))));
-    }
     
     public GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity(String paymentProvider) {
         return gatewayAccountCredentials.stream()
                 .filter(entity -> entity.getPaymentProvider().equals(paymentProvider))
-                .findFirst()
+                .max(comparing(GatewayAccountCredentialsEntity::getActiveStartDate))
                 .orElseThrow(() -> new WebApplicationException(serviceErrorResponse(
                         format("Credentials not found for gateway account [%s] and payment_provider [%s] ",
                                 getId(), paymentProvider))));

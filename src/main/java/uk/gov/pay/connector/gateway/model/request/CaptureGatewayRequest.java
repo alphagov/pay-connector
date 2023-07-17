@@ -6,11 +6,11 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 public class CaptureGatewayRequest implements GatewayRequest {
 
@@ -59,8 +59,8 @@ public class CaptureGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public Map<String, Object> getGatewayCredentials() {
-        return charge.getGatewayAccountCredentialsEntity().getCredentials();
+    public GatewayCredentials getGatewayCredentials() {
+        return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
     }
 
     @Override

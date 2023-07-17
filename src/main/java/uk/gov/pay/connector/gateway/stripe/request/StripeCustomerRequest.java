@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class StripeCustomerRequest extends StripePostRequest {
             StripeGatewayConfig stripeGatewayConfig,
             AuthCardDetails authCardDetails,
             AgreementEntity agreement,
-            Map<String, Object> credentials) {
+            GatewayCredentials credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         name = authCardDetails.getCardHolder();
         description = agreement.getDescription();

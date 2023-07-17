@@ -4,6 +4,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import java.util.HashMap;
@@ -24,7 +25,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             String govukPayTransactionExternalId,
-            Map<String, Object> credentials,
+            GatewayCredentials credentials,
             String transferGroup,
             StripeTransferMetadataReason reason) {
         super(amount, gatewayAccount, stripeChargeId, idempotencyKey, stripeGatewayConfig,
@@ -61,11 +62,11 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 chargeExternalId,
                 stripeGatewayConfig,
                 chargeExternalId,
-                gatewayAccountCredentials.getCredentials(),
+                gatewayAccountCredentials.getCredentialsObject(),
                 chargeExternalId,
                 StripeTransferMetadataReason.TRANSFER_FEE_AMOUNT_FOR_FAILED_PAYMENT);
     }
-    
+
     public static StripeTransferInRequest createDisputeTransferRequest(
             String amount,
             GatewayAccountEntity gatewayAccount,
@@ -81,7 +82,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 disputeExternalId,
                 stripeGatewayConfig,
                 disputeExternalId,
-                gatewayAccountCredentials.getCredentials(),
+                gatewayAccountCredentials.getCredentialsObject(),
                 chargeExternalId,
                 StripeTransferMetadataReason.TRANSFER_DISPUTE_AMOUNT);
     }

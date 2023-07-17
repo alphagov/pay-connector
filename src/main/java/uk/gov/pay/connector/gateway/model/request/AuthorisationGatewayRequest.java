@@ -6,11 +6,11 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
-import java.util.Map;
 import java.util.Optional;
 
 public abstract class AuthorisationGatewayRequest implements GatewayRequest {
@@ -22,7 +22,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final String description;
     private final ServicePaymentReference reference;
     private final String govUkPayPaymentId;
-    private final Map<String, Object> credentials;
+    private final GatewayCredentials credentials;
     private final GatewayAccountEntity gatewayAccount;
     private final AuthorisationMode authorisationMode;
     private final boolean savePaymentInstrumentToAgreement;
@@ -39,7 +39,9 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.description = charge.getDescription();
         this.reference = charge.getReference();
         this.govUkPayPaymentId = charge.getExternalId();
-        this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity()).map(GatewayAccountCredentialsEntity::getCredentials).orElse(null);
+        this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
+                .map(GatewayAccountCredentialsEntity::getCredentialsObject)
+                .orElse(null);
         this.gatewayAccount = charge.getGatewayAccount();
         this.authorisationMode = charge.getAuthorisationMode();
         this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
@@ -54,7 +56,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        String description,
                                        ServicePaymentReference reference,
                                        String govUkPayPaymentId,
-                                       Map<String, Object> credentials,
+                                       GatewayCredentials credentials,
                                        GatewayAccountEntity gatewayAccount,
                                        AuthorisationMode authorisationMode,
                                        boolean savePaymentInstrumentToAgreement,
@@ -107,7 +109,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public Map<String, Object> getGatewayCredentials() {
+    public GatewayCredentials getGatewayCredentials() {
         return credentials;
     }
 

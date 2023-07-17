@@ -10,6 +10,8 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 
 import java.net.URI;
 import java.util.Collections;
@@ -30,15 +32,19 @@ public abstract class StripePostRequest implements GatewayClientPostRequest {
     protected StripeGatewayConfig stripeGatewayConfig;
     protected String stripeConnectAccountId;
     protected String gatewayAccountType;
-    protected Map<String, Object> credentials;
+    protected StripeCredentials credentials;
 
     protected StripePostRequest(GatewayAccountEntity gatewayAccount, String idempotencyKey,
-                                StripeGatewayConfig stripeGatewayConfig, Map<String, Object>  credentials) {
+                                StripeGatewayConfig stripeGatewayConfig, GatewayCredentials credentials) {
         if (gatewayAccount == null) {
             throw new IllegalArgumentException("Cannot create StripeRequest without a gateway account");
         }
 
-        String stripeAccountId = credentials.get("stripe_account_id").toString();
+        if (!(credentials instanceof StripeCredentials)) {
+            throw new IllegalArgumentException("Expected provided GatewayCredentials to be of type StripeCredentials");
+        }
+        var stripeCredentials = (StripeCredentials) credentials;
+        String stripeAccountId = stripeCredentials.getStripeAccountId();
         if (stripeAccountId == null) {
             throw new IllegalArgumentException("Cannot create StripeRequest without a stripe account id in credentials");
         }
@@ -48,7 +54,7 @@ public abstract class StripePostRequest implements GatewayClientPostRequest {
         this.idempotencyKey = idempotencyKey;
         this.stripeGatewayConfig = stripeGatewayConfig;
         this.stripeConnectAccountId = stripeAccountId;
-        this.credentials = credentials;
+        this.credentials = stripeCredentials;
     }
 
     @Override

@@ -43,6 +43,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.EpdqExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
@@ -63,11 +64,7 @@ import static uk.gov.pay.connector.gateway.GatewayOperation.REFUND;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getEpdqAuthHeader;
 
 public class EpdqPaymentProvider implements PaymentProvider {
 
@@ -120,7 +117,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 EPDQ,
                 request.getGatewayAccount().getType(),
                 buildAuthoriseOrder(request, frontendUrl), 
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                getEpdqAuthHeader(request.getGatewayCredentials()));
         return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
     }
 
@@ -154,7 +151,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 EPDQ,
                 request.getGatewayAccount().getType(),
                 buildCancelOrder(request),
-                getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                getEpdqAuthHeader(request.getGatewayCredentials()));
         return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
     }
 
@@ -170,7 +167,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                 EPDQ,
                 chargeQueryGatewayRequest.getGatewayAccount().getType(),
                 buildQueryOrderRequestFor(chargeQueryGatewayRequest),
-                getGatewayAccountCredentialsAsAuthHeader(chargeQueryGatewayRequest.getGatewayCredentials()));
+                getEpdqAuthHeader(chargeQueryGatewayRequest.getGatewayCredentials()));
         GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
 
         return epdqGatewayResponse.getBaseResponse()
@@ -205,7 +202,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
                     EPDQ,
                     request.getGatewayAccount().getType(),
                     buildQueryOrderRequestFor(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                    getEpdqAuthHeader(request.getGatewayCredentials()));
             GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
             BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
                     .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
@@ -289,22 +286,24 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     private GatewayOrder buildQueryOrderRequestFor(Auth3dsResponseGatewayRequest request) {
+        var epdqCredentials = (EpdqCredentials)request.getGatewayCredentials();
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         epdqPayloadDefinitionForQueryOrder.setOrderId(request.getChargeExternalId());
-        epdqPayloadDefinitionForQueryOrder.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD).toString());
-        epdqPayloadDefinitionForQueryOrder.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME).toString());
-        epdqPayloadDefinitionForQueryOrder.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString());
-        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(request.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
+        epdqPayloadDefinitionForQueryOrder.setPassword(epdqCredentials.getPassword());
+        epdqPayloadDefinitionForQueryOrder.setUserId(epdqCredentials.getUsername());
+        epdqPayloadDefinitionForQueryOrder.setPspId(epdqCredentials.getMerchantId());
+        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(epdqCredentials.getShaInPassphrase());
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
     private GatewayOrder buildQueryOrderRequestFor(ChargeQueryGatewayRequest chargeQueryGatewayRequest) {
+        var epdqCredentials = (EpdqCredentials)chargeQueryGatewayRequest.getGatewayCredentials();
         var epdqPayloadDefinitionForQueryOrder = new EpdqPayloadDefinitionForQueryOrder();
         epdqPayloadDefinitionForQueryOrder.setOrderId(chargeQueryGatewayRequest.getChargeExternalId());
-        epdqPayloadDefinitionForQueryOrder.setPassword(chargeQueryGatewayRequest.getGatewayCredentials().get(CREDENTIALS_PASSWORD).toString());
-        epdqPayloadDefinitionForQueryOrder.setUserId(chargeQueryGatewayRequest.getGatewayCredentials().get(CREDENTIALS_USERNAME).toString());
-        epdqPayloadDefinitionForQueryOrder.setPspId(chargeQueryGatewayRequest.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString());
-        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(chargeQueryGatewayRequest.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
+        epdqPayloadDefinitionForQueryOrder.setPassword(epdqCredentials.getPassword());
+        epdqPayloadDefinitionForQueryOrder.setUserId(epdqCredentials.getUsername());
+        epdqPayloadDefinitionForQueryOrder.setPspId(epdqCredentials.getMerchantId());
+        epdqPayloadDefinitionForQueryOrder.setShaInPassphrase(epdqCredentials.getShaInPassphrase());
         return epdqPayloadDefinitionForQueryOrder.createGatewayOrder();
     }
 
@@ -321,26 +320,28 @@ public class EpdqPaymentProvider implements PaymentProvider {
             epdqPayloadDefinition = new EpdqPayloadDefinitionForNewOrder();
         }
 
+        var credentials = (EpdqCredentials)request.getGatewayCredentials();
         epdqPayloadDefinition.setOrderId(request.getGovUkPayPaymentId());
-        epdqPayloadDefinition.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD).toString());
-        epdqPayloadDefinition.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME).toString());
-        epdqPayloadDefinition.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString());
+        epdqPayloadDefinition.setPassword(credentials.getPassword());
+        epdqPayloadDefinition.setUserId(credentials.getUsername());
+        epdqPayloadDefinition.setPspId(credentials.getMerchantId());
         epdqPayloadDefinition.setAmount(request.getAmount());
         epdqPayloadDefinition.setAuthCardDetails(request.getAuthCardDetails());
-        epdqPayloadDefinition.setShaInPassphrase(request.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
+        epdqPayloadDefinition.setShaInPassphrase(credentials.getShaInPassphrase());
         return epdqPayloadDefinition.createGatewayOrder();
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
+        EpdqCredentials credentials = (EpdqCredentials) request.getGatewayCredentials();
         var epdqPayloadDefinitionForCancelOrder = new EpdqPayloadDefinitionForCancelOrder();
         Optional.ofNullable(request.getTransactionId())
                 .ifPresentOrElse(
                         epdqPayloadDefinitionForCancelOrder::setPayId,
                         () -> epdqPayloadDefinitionForCancelOrder.setOrderId(request.getExternalChargeId()));
-        epdqPayloadDefinitionForCancelOrder.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME).toString());
-        epdqPayloadDefinitionForCancelOrder.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD).toString());
-        epdqPayloadDefinitionForCancelOrder.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString());
-        epdqPayloadDefinitionForCancelOrder.setShaInPassphrase(request.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
+        epdqPayloadDefinitionForCancelOrder.setUserId(credentials.getUsername());
+        epdqPayloadDefinitionForCancelOrder.setPassword(credentials.getPassword());
+        epdqPayloadDefinitionForCancelOrder.setPspId(credentials.getMerchantId());
+        epdqPayloadDefinitionForCancelOrder.setShaInPassphrase(credentials.getShaInPassphrase());
         return epdqPayloadDefinitionForCancelOrder.createGatewayOrder();
     }
 }

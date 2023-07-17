@@ -51,6 +51,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -298,7 +299,7 @@ public class GatewayAccountCredentialsServiceTest {
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
                     .withCredentials(Map.of(
-                            GatewayAccount.CREDENTIALS_MERCHANT_ID, "existing-merchant-code",
+                            CREDENTIALS_MERCHANT_ID, "existing-merchant-code",
                             GatewayAccount.CREDENTIALS_USERNAME, "existing-username",
                             GatewayAccount.CREDENTIALS_PASSWORD, "existing-password",
                             "recurring_customer_initiated", Map.of(
@@ -333,7 +334,7 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(recurringCustomerInitiated, hasEntry("username", "existing-username-cit"));
             assertThat(recurringCustomerInitiated, hasEntry("password", "existing-password-cit"));
 
-            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_MERCHANT_ID), is("existing-merchant-code"));
+            assertThat(credentialsEntity.getCredentials().get(CREDENTIALS_MERCHANT_ID), is("existing-merchant-code"));
             assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_USERNAME), is("existing-username"));
             assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_PASSWORD), is("existing-password"));
         }
@@ -344,7 +345,7 @@ public class GatewayAccountCredentialsServiceTest {
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
                     .withCredentials(Map.of(
-                            GatewayAccount.CREDENTIALS_MERCHANT_ID, "old-merchant-code",
+                            CREDENTIALS_MERCHANT_ID, "old-merchant-code",
                             GatewayAccount.CREDENTIALS_USERNAME, "old-username",
                             GatewayAccount.CREDENTIALS_PASSWORD, "old-password"))
                     .withState(CREATED)
@@ -371,7 +372,7 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(oneOffCustomerInitiated, hasEntry("username", "new-username"));
             assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
 
-            assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_MERCHANT_ID), is(nullValue()));
+            assertThat(credentialsEntity.getCredentials().get(CREDENTIALS_MERCHANT_ID), is(nullValue()));
             assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_USERNAME), is(nullValue()));
             assertThat(credentialsEntity.getCredentials().get(GatewayAccount.CREDENTIALS_PASSWORD), is(nullValue()));
         }
@@ -592,7 +593,7 @@ public class GatewayAccountCredentialsServiceTest {
                     .build();
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
-                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withCredentials(Map.of(CREDENTIALS_MERCHANT_ID, "some-merchant-code"))
                     .withState(CREATED)
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
@@ -610,7 +611,7 @@ public class GatewayAccountCredentialsServiceTest {
                     .build();
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
-                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withCredentials(Map.of(CREDENTIALS_MERCHANT_ID, "some-merchant-code"))
                     .withState(CREATED)
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
@@ -628,7 +629,7 @@ public class GatewayAccountCredentialsServiceTest {
                     .build();
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
-                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withCredentials(Map.of(CREDENTIALS_MERCHANT_ID, "some-merchant-code"))
                     .withState(CREATED)
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
@@ -663,7 +664,7 @@ public class GatewayAccountCredentialsServiceTest {
             GatewayAccountCredentialsEntity credentialToUpdate = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
                     .withPaymentProvider(WORLDPAY.getName())
-                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withCredentials(Map.of(CREDENTIALS_MERCHANT_ID, "some-merchant-code"))
                     .withState(CREATED)
                     .build();
             GatewayAccountCredentialsEntity activeCredentials = aGatewayAccountCredentialsEntity()
@@ -688,14 +689,14 @@ public class GatewayAccountCredentialsServiceTest {
                     .withGatewayAccountEntity(gatewayAccountEntity)
                     .withPaymentProvider(WORLDPAY.getName())
                     .withCreatedDate(Instant.now().minus(10, MINUTES))
-                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withCredentials(Map.of(CREDENTIALS_MERCHANT_ID, "some-merchant-code"))
                     .withState(ACTIVE)
                     .build();
             GatewayAccountCredentialsEntity latestCredentials = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
                     .withPaymentProvider(WORLDPAY.getName())
                     .withCreatedDate(Instant.now())
-                    .withCredentials(Map.of("username", "some-user-name"))
+                    .withCredentials(Map.of(CREDENTIALS_MERCHANT_ID, "some-merchant-code"))
                     .withState(CREATED)
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(activeCredentials, latestCredentials));

@@ -65,6 +65,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_STRIPE_ACCOUNT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
@@ -154,10 +155,14 @@ public class ChargingITestBase {
                     CREDENTIALS_MERCHANT_ID, "merchant-id",
                     CREDENTIALS_USERNAME, "test-user",
                     CREDENTIALS_PASSWORD, "test-password",
+                    RECURRING_CUSTOMER_INITIATED, Map.of(
+                            CREDENTIALS_MERCHANT_CODE, "cit-merchant-id",
+                            CREDENTIALS_USERNAME, "cit-user",
+                            CREDENTIALS_PASSWORD, "cit-password"),
                     RECURRING_MERCHANT_INITIATED, Map.of(
-                            CREDENTIALS_MERCHANT_CODE, "rec-merchant-id",
-                            CREDENTIALS_USERNAME, "rec-user",
-                            CREDENTIALS_PASSWORD, "rec-password")
+                            CREDENTIALS_MERCHANT_CODE, "mit-merchant-id",
+                            CREDENTIALS_USERNAME, "mit-user",
+                            CREDENTIALS_PASSWORD, "mit-password")
             );
         } else {
             credentials = Map.of(
