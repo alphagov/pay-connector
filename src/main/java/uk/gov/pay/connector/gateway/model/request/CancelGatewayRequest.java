@@ -50,4 +50,9 @@ public class CancelGatewayRequest implements GatewayRequest {
     public boolean isLiveAccount() {
         return charge.getGatewayAccount().isLive();
     }
+
+    @Override
+    public boolean isForRecurringPayment() {
+        return charge.getAgreement().isPresent();
+    }
 }

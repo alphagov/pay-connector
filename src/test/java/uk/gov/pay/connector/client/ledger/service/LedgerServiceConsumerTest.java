@@ -54,6 +54,18 @@ public class LedgerServiceConsumerTest {
 
     @Test
     @PactVerification("ledger")
+    @Pacts(pacts = {"connector-ledger-get-recurring-payment-transaction"})
+    public void getTransaction_shouldSerialiseLedgerRecurringPaymentTransactionCorrectly() {
+        String externalId = "e8eq11mi2ndmauvb51qsg8hccn";
+        Optional<LedgerTransaction> mayBeTransaction = ledgerService.getTransaction(externalId);
+
+        assertThat(mayBeTransaction.isPresent(), is(true));
+        LedgerTransaction transaction = mayBeTransaction.get();
+        assertThat(transaction.getAgreementId(), is("r4ou8b7fb52is55fp4iiav5bon"));
+    }
+
+    @Test
+    @PactVerification("ledger")
     @Pacts(pacts = {"connector-ledger-get-payment-transaction"})
     public void getTransaction_shouldSerialiseLedgerPaymentTransactionCorrectly() {
         String externalId = "e8eq11mi2ndmauvb51qsg8hccn";

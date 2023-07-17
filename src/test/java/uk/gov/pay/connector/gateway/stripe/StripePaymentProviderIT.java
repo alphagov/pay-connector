@@ -55,7 +55,8 @@ public class StripePaymentProviderIT {
         String chargeExternalId = "a-charge-external-id";
         stripeMockClient.mockSearchPaymentIntentsByMetadata(chargeExternalId);
 
-        ChargeQueryGatewayRequest request = new ChargeQueryGatewayRequest(gatewayAccountEntity, gatewayAccountCredentialsEntity, chargeExternalId, chargeExternalId, AuthorisationMode.WEB);
+        ChargeQueryGatewayRequest request = new ChargeQueryGatewayRequest(gatewayAccountEntity, 
+                gatewayAccountCredentialsEntity, chargeExternalId, chargeExternalId, AuthorisationMode.WEB, false);
         ChargeQueryResponse chargeQueryResponse = stripePaymentProvider.queryPaymentStatus(request);
         
         assertThat(chargeQueryResponse.foundCharge(), is(true));

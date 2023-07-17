@@ -15,14 +15,16 @@ public class ChargeQueryGatewayRequest implements GatewayRequest {
     private final String chargeExternalId;
     private final String transactionId;
     private final AuthorisationMode authorisationMode;
+    private boolean isForRecurringPayment;
 
     public ChargeQueryGatewayRequest(GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
-                                     String chargeExternalId, String transactionId, AuthorisationMode authorisationMode) {
+                                     String chargeExternalId, String transactionId, AuthorisationMode authorisationMode, boolean isForRecurringPayment) {
         this.gatewayAccountEntity = gatewayAccountEntity;
         this.gatewayAccountCredentialsEntity = gatewayAccountCredentialsEntity;
         this.chargeExternalId = chargeExternalId;
         this.transactionId = transactionId;
         this.authorisationMode = authorisationMode;
+        this.isForRecurringPayment = isForRecurringPayment;
     }
 
     @Override
@@ -51,14 +53,20 @@ public class ChargeQueryGatewayRequest implements GatewayRequest {
     public Map<String, Object> getGatewayCredentials() {
         return gatewayAccountCredentialsEntity.getCredentials();
     }
-    
+
+    @Override
+    public boolean isForRecurringPayment() {
+        return isForRecurringPayment;
+    }
+
     public static ChargeQueryGatewayRequest valueOf(Charge charge, GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         return new ChargeQueryGatewayRequest(
                 gatewayAccountEntity,
                 gatewayAccountCredentialsEntity,
                 charge.getExternalId(),
                 charge.getGatewayTransactionId(),
-                charge.getAuthorisationMode()
+                charge.getAuthorisationMode(),
+                charge.getAgreementId().isPresent()
         );
     }
 }

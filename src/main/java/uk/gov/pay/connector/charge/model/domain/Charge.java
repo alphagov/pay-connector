@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.model.domain;
 
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
@@ -28,11 +29,13 @@ public class Charge {
     private boolean live;
     private Boolean disputed;
     private AuthorisationMode authorisationMode;
+    private String agreementId;
 
     public Charge(String externalId, Long amount, String status, String externalStatus, String gatewayTransactionId,
                   String credentialExternalId, Long corporateSurcharge, String refundAvailabilityStatus, String reference,
                   String description, Instant createdDate, String email, Long gatewayAccountId, String paymentGatewayName,
-                  boolean historic, String serviceId, boolean live, Boolean disputed, AuthorisationMode authorisationMode) {
+                  boolean historic, String serviceId, boolean live, Boolean disputed, AuthorisationMode authorisationMode,
+                  String agreementId) {
         this.externalId = externalId;
         this.amount = amount;
         this.status = status;
@@ -52,6 +55,7 @@ public class Charge {
         this.live = live;
         this.disputed = disputed;
         this.authorisationMode = authorisationMode;
+        this.agreementId = agreementId;
     }
 
     public static Charge from(ChargeEntity chargeEntity) {
@@ -81,7 +85,8 @@ public class Charge {
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(), 
                 null,
-                chargeEntity.getAuthorisationMode());
+                chargeEntity.getAuthorisationMode(),
+                chargeEntity.getAgreement().map(AgreementEntity::getExternalId).orElse(null));
     }
 
     public static Charge from(LedgerTransaction transaction) {
@@ -115,7 +120,8 @@ public class Charge {
                 transaction.getServiceId(),
                 transaction.getLive(),
                 transaction.isDisputed(),
-                transaction.getAuthorisationMode()
+                transaction.getAuthorisationMode(),
+                transaction.getAgreementId()
         );
     }
 
@@ -205,6 +211,14 @@ public class Charge {
 
     public void setAuthorisationMode(AuthorisationMode authorisationMode) {
         this.authorisationMode = authorisationMode;
+    }
+
+    public Optional<String> getAgreementId() {
+        return Optional.ofNullable(agreementId);
+    }
+
+    public void setAgreementId(String agreementId) {
+        this.agreementId = agreementId;
     }
 
     @Override

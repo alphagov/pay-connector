@@ -94,4 +94,9 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
     public AuthorisationMode getAuthorisationMode() {
         return AuthorisationMode.AGREEMENT;
     }
+
+    @Override
+    public boolean isForRecurringPayment() {
+        return true;
+    }
 }
