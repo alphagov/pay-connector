@@ -60,6 +60,23 @@ public class IdempotencyDaoIT extends DaoITestBase {
     }
 
     @Test
+    public void shouldReturnTrueIfIdempotencyExistsForResourceExternalId() {
+        Map<String, Object> requestBody = Map.of("foo", "bar");
+        databaseTestHelper.insertIdempotency(key, gatewayAccount.getId(), resourceExternalId, requestBody);
+
+        boolean idempotencyExists = dao.idempotencyExistsByResourceExternalId(resourceExternalId);
+        assertThat(idempotencyExists, is(true));
+    }
+
+    @Test
+    public void shouldReturnFalseIfIdempotencyDoesNotExistForResourceExternalId() {
+        String resourceExternalIdNotExisting = "resource-external-id-not-existing";
+
+        boolean idempotencyExists = dao.idempotencyExistsByResourceExternalId(resourceExternalIdNotExisting);
+        assertThat(idempotencyExists, is(false));
+    }
+
+    @Test
     public void shouldDeleteOnlyIdempotencyEntitiesMoreThan24HoursOld() {
         Map<String, Object> requestBody = Map.of("foo", "bar");
         String expiringKey = "expiring-idempotency-key";

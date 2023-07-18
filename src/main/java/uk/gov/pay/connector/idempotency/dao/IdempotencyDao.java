@@ -34,4 +34,16 @@ public class IdempotencyDao extends JpaDao<IdempotencyEntity> {
                 .setParameter("expiryDate", expiryDate)
                 .executeUpdate();
     }
+
+    public boolean idempotencyExistsByResourceExternalId(String resourceExternalId) {
+        String query = "SELECT COUNT(ie) FROM IdempotencyEntity ie WHERE ie.resourceExternalId = :resourceExternalId";
+
+        long count = (long) entityManager
+                .get()
+                .createQuery(query)
+                .setParameter("resourceExternalId",resourceExternalId )
+                .getSingleResult();
+
+        return count > 0;
+    }
 }
