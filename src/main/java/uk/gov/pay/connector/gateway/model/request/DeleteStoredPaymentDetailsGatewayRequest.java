@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.model.request;
 
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 
 import java.util.Map;
@@ -10,13 +11,13 @@ public class DeleteStoredPaymentDetailsGatewayRequest {
     private Map<String, String> recurringAuthToken;
     private String gatewayAccountType;
     private boolean live;
-    private Map<String, Object> gatewayCredentials;
+    private GatewayCredentials gatewayCredentials;
 
     private DeleteStoredPaymentDetailsGatewayRequest(String agreementExternalId,
                                                      Map<String, String> recurringAuthToken,
                                                      String gatewayAccountType,
                                                      boolean live,
-                                                     Map<String, Object> gatewayCredentials) {
+                                                     GatewayCredentials gatewayCredentials) {
         this.agreementExternalId = agreementExternalId;
         this.recurringAuthToken = recurringAuthToken;
         this.gatewayAccountType = gatewayAccountType;
@@ -32,7 +33,7 @@ public class DeleteStoredPaymentDetailsGatewayRequest {
                 recurringAuthToken,
                 agreement.getGatewayAccount().getType(),
                 agreement.isLive(),
-                agreement.getGatewayAccount().getCredentials(agreement.getGatewayAccount().getGatewayName())
+                agreement.getGatewayAccount().getGatewayAccountCredentialsEntity(agreement.getGatewayAccount().getGatewayName()).getCredentialsObject()
         );
     }
 
@@ -52,7 +53,7 @@ public class DeleteStoredPaymentDetailsGatewayRequest {
         return live;
     }
 
-    public Map<String, Object> getGatewayCredentials() {
+    public GatewayCredentials getGatewayCredentials() {
         return gatewayCredentials;
     }
 }

@@ -135,6 +135,7 @@ class EpdqCaptureHandlerTest {
                 .withGatewayAccountEntity(accountEntity)
                 .withTransactionId("payId")
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
+                        .withPaymentProvider(EPDQ.getName())
                         .withCredentials(Map.of(
                                 CREDENTIALS_MERCHANT_ID, "merchant-id",
                                 CREDENTIALS_USERNAME, "username",

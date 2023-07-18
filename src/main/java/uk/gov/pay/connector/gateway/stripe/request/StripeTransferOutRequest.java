@@ -4,6 +4,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
                                      String idempotencyKey,
                                      StripeGatewayConfig stripeGatewayConfig,
                                      String govukPayTransactionExternalId,
-                                     Map<String, Object> credentials) {
+                                     GatewayCredentials credentials) {
         super(amount, gatewayAccount, sourceTransactionId, idempotencyKey, stripeGatewayConfig,
                 govukPayTransactionExternalId, credentials, StripeTransferMetadataReason.TRANSFER_PAYMENT_AMOUNT);
     }

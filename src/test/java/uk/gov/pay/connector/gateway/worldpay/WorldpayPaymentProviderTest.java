@@ -36,7 +36,6 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
@@ -53,6 +52,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +65,7 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -92,6 +93,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -120,10 +122,19 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
-public class WorldpayPaymentProviderTest {
+class WorldpayPaymentProviderTest {
 
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
     private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
+    public static final String ONE_OFF_MERCHANT_CODE = "MERCHANTCODE";
+    public static final String ONE_OFF_USERNAME = "username";
+    public static final String ONE_OFF_PASSWORD = "password";
+    public static final String CIT_MERCHANT_CODE = "cit-merchant-code";
+    public static final String CIT_USERNAME = "cit-username";
+    public static final String CIT_PASSWORD = "cit-password";
+    public static final String MIT_MERCHANT_CODE = "mit-merchant-code";
+    public static final String MIT_USERNAME = "mit-username";
+    public static final String MIT_PASSWORD = "mit-password";
 
     @Mock
     private GatewayClient authoriseClient;
@@ -163,7 +174,7 @@ public class WorldpayPaymentProviderTest {
                 authoriseClient,
                 cancelClient,
                 inquiryClient,
-                deleteTokenClient, 
+                deleteTokenClient,
                 worldpayWalletAuthorisationHandler,
                 worldpayAuthoriseHandler,
                 worldpayCaptureHandler,
@@ -173,14 +184,14 @@ public class WorldpayPaymentProviderTest {
                 chargeDao,
                 eventService);
 
-        gatewayAccountEntity = aServiceAccount();
+        gatewayAccountEntity = aGatewayAccount();
         chargeEntityFixture = aValidChargeEntity()
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
                         .withPaymentProvider("worldpay")
                         .withCredentials(Map.of(
-                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                                CREDENTIALS_USERNAME, "worldpay-password",
-                                CREDENTIALS_PASSWORD, "password"
+                                CREDENTIALS_MERCHANT_ID, ONE_OFF_MERCHANT_CODE,
+                                CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
+                                CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD
                         ))
                         .build())
                 .withGatewayAccountEntity(gatewayAccountEntity);
@@ -522,30 +533,31 @@ public class WorldpayPaymentProviderTest {
 
     @Test
     void should_include_paymentTokenID_and_agreementId_in_delete_token_order() throws Exception {
-        PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument();
+        String token = "TESTTOKEN123456";
+        PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument(token);
         AgreementEntity agreement = setUpAgreement(paymentInstrument);
         DeleteStoredPaymentDetailsGatewayRequest request = DeleteStoredPaymentDetailsGatewayRequest.from(agreement, paymentInstrument);
 
         worldpayPaymentProvider.deleteStoredPaymentDetails(request);
-        
+
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        
+
         verify(deleteTokenClient).postRequestFor(
                 eq(WORLDPAY_URL),
-                eq(WORLDPAY), 
+                eq(WORLDPAY),
                 eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
-        
+
         String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_DELETE_TOKEN_REQUEST)
-                .replace("{{merchantCode}}", "MERCHANTCODE")
-                .replace("{{agreementId}}", "test-agreement-123")
-                .replace("{{paymentTokenId}}", "TESTTOKEN123456");
-        
+                .replace("{{merchantCode}}", CIT_MERCHANT_CODE)
+                .replace("{{agreementId}}", agreement.getExternalId())
+                .replace("{{paymentTokenId}}", token);
+
         assertXMLEqual(expectedRequestBody,
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
-    
+
     @Test
     void should_include_provider_session_id_when_available_for_charge() throws Exception {
         String providerSessionId = "provider-session-id";
@@ -584,9 +596,9 @@ public class WorldpayPaymentProviderTest {
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
                         .withPaymentProvider("worldpay")
                         .withCredentials(Map.of(
-                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                                CREDENTIALS_USERNAME, "worldpay-password",
-                                CREDENTIALS_PASSWORD, "password"
+                                CREDENTIALS_MERCHANT_ID, ONE_OFF_MERCHANT_CODE,
+                                CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
+                                CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD
                         ))
                         .build())
                 .build();
@@ -607,25 +619,25 @@ public class WorldpayPaymentProviderTest {
                 headers.capture());
 
         assertThat(headers.getValue().size(), is(1));
-        assertThat(headers.getValue(), is(AuthUtil.getGatewayAccountCredentialsAsAuthHeader(gatewayAccountEntity.getGatewayAccountCredentials().get(0).getCredentials())));
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((ONE_OFF_USERNAME + ":" + ONE_OFF_PASSWORD).getBytes(StandardCharsets.UTF_8));
+        assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
     }
 
     @Test
     void assert_authorization_header_is_passed_to_gateway_client_when_using_recurring_payment() throws Exception {
-        var credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                CREDENTIALS_USERNAME, "worldpay-password",
-                CREDENTIALS_PASSWORD, "password",
+        Map<String, Object> credentials = Map.of(
                 RECURRING_MERCHANT_INITIATED, Map.of(
-                        CREDENTIALS_MERCHANT_CODE, "RECURRING_MERCHANTCODE",
-                        CREDENTIALS_USERNAME, "recurring-worldpay-password",
-                        CREDENTIALS_PASSWORD, "recurring-password"));
+                        CREDENTIALS_MERCHANT_CODE, MIT_MERCHANT_CODE,
+                        CREDENTIALS_USERNAME, MIT_USERNAME,
+                        CREDENTIALS_PASSWORD, MIT_PASSWORD));
         String providerSessionId = "provider-session-id";
+        AgreementEntity agreementEntity = anAgreementEntity().build();
         ChargeEntity mockChargeEntity = chargeEntityFixture
                 .withExternalId("uniqueSessionId")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withProviderSessionId(providerSessionId)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withAgreementEntity(agreementEntity)
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
                         .withPaymentProvider("worldpay")
                         .withCredentials(credentials)
@@ -649,20 +661,20 @@ public class WorldpayPaymentProviderTest {
 
         assertThat(headers.getValue().size(), is(1));
 
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String("recurring-worldpay-password" + ":" + "recurring-password").getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((MIT_USERNAME + ":" + MIT_PASSWORD).getBytes(StandardCharsets.UTF_8));
         assertThat(headers.getValue().get(AUTHORIZATION), is(expectedHeader));
     }
 
     @Test
     void assert_authorization_header_is_passed_to_gateway_client_when_deleting_token() throws Exception {
-        PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument();
+        PaymentInstrumentEntity paymentInstrument = setUpPaymentInstrument("TESTTOKEN123456");
         AgreementEntity agreement = setUpAgreement(paymentInstrument);
         DeleteStoredPaymentDetailsGatewayRequest request = DeleteStoredPaymentDetailsGatewayRequest.from(agreement, paymentInstrument);
 
         worldpayPaymentProvider.deleteStoredPaymentDetails(request);
-        
+
         ArgumentCaptor<Map<String, String>> headers = ArgumentCaptor.forClass(Map.class);
-        
+
         verify(deleteTokenClient).postRequestFor(
                 eq(WORLDPAY_URL),
                 eq(WORLDPAY), eq("test"),
@@ -670,25 +682,23 @@ public class WorldpayPaymentProviderTest {
                 headers.capture());
 
         assertThat(headers.getValue().size(), is(1));
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String("worldpay-password" + ":" + "password").getBytes());
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((CIT_USERNAME + ":" + CIT_PASSWORD).getBytes(StandardCharsets.UTF_8));
         assertThat(headers.getValue().get(AUTHORIZATION), is(expectedHeader));
     }
-    
+
     @Test
     void should_throw_exception_when_using_recurring_payment_and_no_creds() throws Exception {
-        Map<String, Object> credentials = Map.of(
-                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                CREDENTIALS_USERNAME, "worldpay-password",
-                CREDENTIALS_PASSWORD, "password");
         String providerSessionId = "provider-session-id";
+        AgreementEntity agreementEntity = anAgreementEntity().build();
         ChargeEntity mockChargeEntity = chargeEntityFixture
                 .withExternalId("uniqueSessionId")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withProviderSessionId(providerSessionId)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withAgreementEntity(agreementEntity)
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
                         .withPaymentProvider("worldpay")
-                        .withCredentials(credentials)
+                        .withCredentials(Map.of())
                         .build())
                 .build();
 
@@ -778,14 +788,14 @@ public class WorldpayPaymentProviderTest {
         assertThat(result.getProviderSessionIdentifier().isPresent(), is(true));
         assertThat(result.getProviderSessionIdentifier().get(), is(ProviderSessionIdentifier.of("new-machine-cookie-value")));
     }
-    
+
     private Auth3dsResponseGatewayRequest get3dsResponseGatewayRequest(ChargeEntity chargeEntity) {
         Auth3dsResult auth3dsResult = new Auth3dsResult();
         auth3dsResult.setPaResponse("I am an opaque 3D Secure PA response from the card issuer");
         return new Auth3dsResponseGatewayRequest(chargeEntity, auth3dsResult);
     }
 
-    private GatewayAccountEntity aServiceAccount() {
+    private GatewayAccountEntity aGatewayAccount() {
         var gatewayAccountEntity = aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName("worldpay")
@@ -795,9 +805,14 @@ public class WorldpayPaymentProviderTest {
 
         var creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"))
+                        CREDENTIALS_MERCHANT_ID, ONE_OFF_MERCHANT_CODE,
+                        CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
+                        CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD,
+                        RECURRING_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, CIT_MERCHANT_CODE,
+                                CREDENTIALS_USERNAME, CIT_USERNAME,
+                                CREDENTIALS_PASSWORD, CIT_PASSWORD
+                        )))
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)
@@ -807,15 +822,15 @@ public class WorldpayPaymentProviderTest {
 
         return gatewayAccountEntity;
     }
-    
-    private PaymentInstrumentEntity setUpPaymentInstrument() {
+
+    private PaymentInstrumentEntity setUpPaymentInstrument(String token) {
         Map<String, String> recurringAuthToken = new HashMap<>();
-        recurringAuthToken.put(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "TESTTOKEN123456");
+        recurringAuthToken.put(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, token);
         return aPaymentInstrumentEntity()
                 .withRecurringAuthToken(recurringAuthToken)
                 .build();
     }
-    
+
     private AgreementEntity setUpAgreement(PaymentInstrumentEntity paymentInstrument) {
         return anAgreementEntity()
                 .withExternalId("test-agreement-123")

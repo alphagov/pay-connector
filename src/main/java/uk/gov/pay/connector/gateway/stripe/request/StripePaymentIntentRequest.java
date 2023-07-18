@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class StripePaymentIntentRequest extends StripePostRequest {
             String chargeExternalId,
             String description,
             boolean moto,
-            Map<String, Object> credentials,
+            GatewayCredentials credentials,
             String customerId,
             boolean offSession) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);

@@ -3,10 +3,9 @@ package uk.gov.pay.connector.gateway;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
-
-import java.util.Map;
 
 public class ChargeQueryGatewayRequest implements GatewayRequest {
     
@@ -50,8 +49,8 @@ public class ChargeQueryGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public Map<String, Object> getGatewayCredentials() {
-        return gatewayAccountCredentialsEntity.getCredentials();
+    public GatewayCredentials getGatewayCredentials() {
+        return gatewayAccountCredentialsEntity.getCredentialsObject();
     }
 
     @Override

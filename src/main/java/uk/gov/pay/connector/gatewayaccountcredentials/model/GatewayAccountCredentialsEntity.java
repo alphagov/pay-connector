@@ -29,6 +29,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 @Entity
 @Table(name = "gateway_account_credentials")
@@ -102,15 +103,16 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
     // This will replace `getCredentials()` when all usages have been updated
     public GatewayCredentials getCredentialsObject() {
+        Map<String, Object> credentialsMap = Optional.ofNullable(credentials).orElse(Map.of());
         switch (PaymentGatewayName.valueFrom(paymentProvider)) {
             case WORLDPAY:
-                return objectMapper.convertValue(this.getCredentials(), WorldpayCredentials.class);
+                return objectMapper.convertValue(credentialsMap, WorldpayCredentials.class);
             case STRIPE:
-                return objectMapper.convertValue(this.getCredentials(), StripeCredentials.class);
+                return objectMapper.convertValue(credentialsMap, StripeCredentials.class);
             case EPDQ:
-                return objectMapper.convertValue(this.getCredentials(), EpdqCredentials.class);
+                return objectMapper.convertValue(credentialsMap, EpdqCredentials.class);
             case SANDBOX:
-                return objectMapper.convertValue(this.getCredentials(), SandboxCredentials.class);
+                return objectMapper.convertValue(credentialsMap, SandboxCredentials.class);
             default:
                 throw new IllegalArgumentException("Unsupported payment provider: " + paymentProvider);
         }

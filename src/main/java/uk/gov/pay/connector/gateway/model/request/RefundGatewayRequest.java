@@ -3,11 +3,10 @@ package uk.gov.pay.connector.gateway.model.request;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
-
-import java.util.Map;
 
 public class RefundGatewayRequest implements GatewayRequest {
 
@@ -57,8 +56,8 @@ public class RefundGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public Map<String, Object> getGatewayCredentials() {
-        return credentialsEntity.getCredentials();
+    public GatewayCredentials getGatewayCredentials() {
+        return credentialsEntity.getCredentialsObject();
     }
 
     @Override

@@ -47,8 +47,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
  class WorldpayOrderRequestBuilderTest {
 
@@ -91,7 +91,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
                 .withSchemeTransactionIdentifier("test-transaction-id-999999")
                 .withAgreementId("test-agreement-123456")
                 .withTransactionId("test-transaction-id-123")
-                .withMerchantCode("MERCHANTCODE")
+                .withMerchantCode("MIT-MERCHANTCODE")
                 .withDescription("This is the description")
                 .withAmount("500")
                 .build();
@@ -106,7 +106,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
                 .withPaymentTokenId("test-payment-token-123456")
                 .withAgreementId("test-agreement-123456")
                 .withTransactionId("test-transaction-id-123")
-                .withMerchantCode("MERCHANTCODE")
+                .withMerchantCode("MIT-MERCHANTCODE")
                 .withDescription("This is the description")
                 .withAmount("500")
                 .build();

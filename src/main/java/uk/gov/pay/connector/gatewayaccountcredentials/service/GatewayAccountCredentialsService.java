@@ -235,8 +235,7 @@ public class GatewayAccountCredentialsService {
         PaymentGatewayName paymentGatewayName = PaymentGatewayName.valueFrom(credentialsEntity.getPaymentProvider());
         GatewayAccountEntity gatewayAccountEntity = credentialsEntity.getGatewayAccountEntity();
 
-        if (credentialsEntity.getCredentials() == null ||
-                credentialsEntity.getCredentials().isEmpty()) {
+        if (!credentialsEntity.getCredentialsObject().hasCredentials()) {
             return false;
         }
 

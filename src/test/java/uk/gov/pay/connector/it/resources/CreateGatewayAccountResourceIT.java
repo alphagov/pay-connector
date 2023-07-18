@@ -10,6 +10,8 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
@@ -22,6 +24,7 @@ import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
@@ -83,11 +86,12 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
 
     @Test
     public void createStripeGatewayAccountWithCredentials() {
+        String stripeAccountId = "abc";
         Map<String, Object> payload = ImmutableMap.of(
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
-                "credentials", ImmutableMap.of("stripe_account_id", "abc"));
+                "credentials", ImmutableMap.of("stripe_account_id", stripeAccountId));
         String gatewayAccountId = givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
@@ -107,11 +111,13 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
                 .getString("gateway_account_id");
         Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
         assertThat(gatewayAccount.isPresent(), is(true));
-        assertThat(gatewayAccount.get().getCredentials("stripe").get("stripe_account_id"), is("abc"));
 
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
         assertThat(gatewayAccountCredentialsList.size(), is(1));
-        assertThat(gatewayAccountCredentialsList.get(0).getCredentials().get("stripe_account_id"), is("abc"));
+        GatewayCredentials credentialsObject = gatewayAccountCredentialsList.get(0).getCredentialsObject();
+        assertThat(credentialsObject, isA(StripeCredentials.class));
+        assertThat(((StripeCredentials)credentialsObject).getStripeAccountId(), is(stripeAccountId));
+        assertThat(gatewayAccountCredentialsList.get(0).getCredentials().get("stripe_account_id"), is(stripeAccountId));
         assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
         assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("stripe"));
         assertThat(gatewayAccountCredentialsList.get(0).getActiveStartDate(), is(notNullValue()));

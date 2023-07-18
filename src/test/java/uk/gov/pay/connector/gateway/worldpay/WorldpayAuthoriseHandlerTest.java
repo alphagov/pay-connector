@@ -79,6 +79,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
@@ -123,28 +124,21 @@ class WorldpayAuthoriseHandlerTest {
                         CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
                         CREDENTIALS_USERNAME, "worldpay-password",
                         CREDENTIALS_PASSWORD, "password",
+                        RECURRING_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "CIT-MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "cit-username",
+                                CREDENTIALS_PASSWORD, "cit-password"),
                         RECURRING_MERCHANT_INITIATED, Map.of(
-                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
-                                CREDENTIALS_USERNAME, "rc-worldpay-password",
-                                CREDENTIALS_PASSWORD, "rc-password")))
+                                CREDENTIALS_MERCHANT_CODE, "MIT-MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "mit-username",
+                                CREDENTIALS_PASSWORD, "mit-password")))
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
         chargeEntityFixture = aValidChargeEntity()
-                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                        .withPaymentProvider("worldpay")
-                        .withCredentials(Map.of(
-                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                                CREDENTIALS_USERNAME, "worldpay-password",
-                                CREDENTIALS_PASSWORD, "password",
-                                        RECURRING_MERCHANT_INITIATED, Map.of(
-                                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
-                                                CREDENTIALS_USERNAME, "rc-worldpay-password",
-                                                CREDENTIALS_PASSWORD, "rc-password"
-                        )))
-                        .build())
+                .withGatewayAccountCredentialsEntity(creds)
                 .withGatewayAccountEntity(gatewayAccountEntity);
     }
 

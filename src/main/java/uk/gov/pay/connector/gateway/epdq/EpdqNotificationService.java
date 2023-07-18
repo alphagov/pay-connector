@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
+import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -38,7 +39,6 @@ import static uk.gov.pay.connector.charge.service.StatusFlow.SYSTEM_CANCELLATION
 import static uk.gov.pay.connector.charge.service.StatusFlow.USER_CANCELLATION_FLOW;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqNotification.SHASIGN_KEY;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
@@ -207,7 +207,7 @@ public class EpdqNotificationService {
     }
 
     private String getShaOutPassphrase(GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
-        return gatewayAccountCredentialsEntity.getCredentials().get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString();
+        return ((EpdqCredentials)gatewayAccountCredentialsEntity.getCredentialsObject()).getShaOutPassphrase();
     }
 
     private static Optional<ChargeStatus> newChargeStateForChargeNotification(String notificationStatus, Charge charge) {

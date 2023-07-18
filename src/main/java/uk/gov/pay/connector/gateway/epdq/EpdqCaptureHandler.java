@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCaptureResponse;
 import uk.gov.pay.connector.gateway.epdq.payload.EpdqPayloadDefinitionForCaptureOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
+import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 
 import java.net.URI;
 import java.util.Map;
@@ -16,11 +17,7 @@ import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider.ROUTE_FOR_MAINTENANCE_ORDER;
-import static uk.gov.pay.connector.gateway.util.AuthUtil.getGatewayAccountCredentialsAsAuthHeader;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getEpdqAuthHeader;
 
 public class EpdqCaptureHandler implements CaptureHandler {
 
@@ -41,7 +38,7 @@ public class EpdqCaptureHandler implements CaptureHandler {
                     EPDQ,
                     request.getGatewayAccount().getType(), 
                     buildCaptureOrder(request),
-                    getGatewayAccountCredentialsAsAuthHeader(request.getGatewayCredentials()));
+                    getEpdqAuthHeader(request.getGatewayCredentials()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, EpdqCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
@@ -49,12 +46,13 @@ public class EpdqCaptureHandler implements CaptureHandler {
     }
 
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
+        EpdqCredentials credentials = (EpdqCredentials) request.getGatewayCredentials();
         var epdqPayloadDefinitionForCaptureOrder = new EpdqPayloadDefinitionForCaptureOrder();
-        epdqPayloadDefinitionForCaptureOrder.setUserId(request.getGatewayCredentials().get(CREDENTIALS_USERNAME).toString());
-        epdqPayloadDefinitionForCaptureOrder.setPassword(request.getGatewayCredentials().get(CREDENTIALS_PASSWORD).toString());
-        epdqPayloadDefinitionForCaptureOrder.setPspId(request.getGatewayCredentials().get(CREDENTIALS_MERCHANT_ID).toString());
+        epdqPayloadDefinitionForCaptureOrder.setUserId(credentials.getUsername());
+        epdqPayloadDefinitionForCaptureOrder.setPassword(credentials.getPassword());
+        epdqPayloadDefinitionForCaptureOrder.setPspId(credentials.getMerchantId());
         epdqPayloadDefinitionForCaptureOrder.setPayId(request.getGatewayTransactionId());
-        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(request.getGatewayCredentials().get(CREDENTIALS_SHA_IN_PASSPHRASE).toString());
+        epdqPayloadDefinitionForCaptureOrder.setShaInPassphrase(credentials.getShaInPassphrase());
         return epdqPayloadDefinitionForCaptureOrder.createGatewayOrder();
     }
 }

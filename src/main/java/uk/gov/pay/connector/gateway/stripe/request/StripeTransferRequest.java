@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.stripe.request;
 
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +21,7 @@ public abstract class StripeTransferRequest extends StripePostRequest {
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             String govukPayTransactionExternalId,
-            Map<String, Object> credentials,
+            GatewayCredentials credentials,
             StripeTransferMetadataReason reason) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.stripeChargeId = stripeChargeId;

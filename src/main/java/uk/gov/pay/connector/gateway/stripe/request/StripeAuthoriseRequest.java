@@ -5,6 +5,8 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 
 import java.util.Map;
 
@@ -25,7 +27,7 @@ public class StripeAuthoriseRequest extends StripePostRequest {
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
-            Map<String, Object> credentials) {
+            GatewayCredentials credentials) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.amount = amount;
         this.description = description;
@@ -44,7 +46,7 @@ public class StripeAuthoriseRequest extends StripePostRequest {
                 authorisationRequest.getGatewayAccount(),
                 authorisationRequest.getGovUkPayPaymentId(),
                 stripeGatewayConfig,
-                authorisationRequest.getGatewayCredentials()
+                (StripeCredentials) authorisationRequest.getGatewayCredentials()
         );
     }
 
