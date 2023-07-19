@@ -26,10 +26,9 @@ public class GatewayAccountCredentials {
     @Schema(example = "stripe")
     private String paymentProvider;
 
-    @Schema(example = "{" +
-            "  \"stripe_account_id\": \"accnt_id\"" +
-            "  }")
-    private Map<String, Object> credentials;
+    @Schema(oneOf = {WorldpayCredentials.class, StripeCredentials.class, EpdqCredentials.class})
+    @JsonSerialize(using = GatewayCredentialsApiSerializer.class)
+    private GatewayCredentials credentials;
 
     @Schema(example = "ACTIVE")
     private GatewayAccountCredentialState state;
@@ -62,8 +61,7 @@ public class GatewayAccountCredentials {
         this.activeStartDate = entity.getActiveStartDate();
         this.activeEndDate = entity.getActiveEndDate();
         this.gatewayAccountId = entity.getGatewayAccountEntity().getId();
-
-        this.credentials = removePasswords(entity.getCredentials());
+        this.credentials = entity.getCredentialsObject();
     }
 
     private static Map<String, Object> removePasswords(Map<String, Object> credentials) {
@@ -71,7 +69,7 @@ public class GatewayAccountCredentials {
         clonedCredentials.remove("password");
         credentials.forEach((key, value) -> {
             if (value instanceof Map<?, ?>) {
-                var clonedNestedMap = new HashMap<>((Map<?,?>)value);
+                var clonedNestedMap = new HashMap<>((Map<?, ?>) value);
                 clonedNestedMap.remove("password");
                 clonedCredentials.put(key, clonedNestedMap);
             }
@@ -91,7 +89,7 @@ public class GatewayAccountCredentials {
         return paymentProvider;
     }
 
-    public Map<String, Object> getCredentials() {
+    public GatewayCredentials getCredentials() {
         return credentials;
     }
 
@@ -114,7 +112,7 @@ public class GatewayAccountCredentials {
     public Instant getActiveEndDate() {
         return activeEndDate;
     }
-    
+
     public Long getGatewayAccountId() {
         return gatewayAccountId;
     }

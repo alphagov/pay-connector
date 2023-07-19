@@ -35,7 +35,6 @@ public class GatewayAccountWithCredentialsResponse extends GatewayAccountRespons
                 .stream()
                 .map(GatewayAccountCredentials::new)
                 .collect(Collectors.toList());
-        gatewayAccountCredentials.forEach(credential -> credential.getCredentials().remove("password"));
     }
 
     public Map<String, String> getNotifySettings() {
