@@ -14,6 +14,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -35,6 +36,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeCredentials.STRIPE_ACCOUNT_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 
 class GatewayAccountCredentialsEntityTest {
 
@@ -161,21 +163,27 @@ class GatewayAccountCredentialsEntityTest {
         worldpayCredentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials("one-off-merchant-code", "one-off-username", "one-off-password"));
         worldpayCredentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials("cit-merchant-code", "cit-username", "cit-password"));
         worldpayCredentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials("mit-merchant-code", "mit-username", "mit-password"));
+        worldpayCredentials.setGooglePayMerchantId("google-pay-merchant-id");
         
         credentialsEntity.setCredentials(worldpayCredentials);
-        
+
+        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(7));
         assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_MERCHANT_ID, "legacy-merchant-code"));
         assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_USERNAME, "legacy-username"));
         assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_PASSWORD, "legacy-password"));
+        assertThat(credentialsEntity.getCredentials(), hasEntry(FIELD_GATEWAY_MERCHANT_ID, "google-pay-merchant-id"));
         assertThat(credentialsEntity.getCredentials(), hasKey(ONE_OFF_CUSTOMER_INITIATED));
+        assertThat(((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED)).entrySet(), hasSize(3));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_MERCHANT_CODE, "one-off-merchant-code"));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_USERNAME, "one-off-username"));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_PASSWORD, "one-off-password"));
         assertThat(credentialsEntity.getCredentials(), hasKey(RECURRING_CUSTOMER_INITIATED));
+        assertThat(((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED)).entrySet(), hasSize(3));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_MERCHANT_CODE, "cit-merchant-code"));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_USERNAME, "cit-username"));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_PASSWORD, "cit-password"));
         assertThat(credentialsEntity.getCredentials(), hasKey(RECURRING_MERCHANT_INITIATED));
+        assertThat(((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED)).entrySet(), hasSize(3));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED), hasEntry(CREDENTIALS_MERCHANT_CODE, "mit-merchant-code"));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED), hasEntry(CREDENTIALS_USERNAME, "mit-username"));
         assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED), hasEntry(CREDENTIALS_PASSWORD, "mit-password"));
@@ -196,6 +204,7 @@ class GatewayAccountCredentialsEntityTest {
 
         credentialsEntity.setCredentials(epdqCredentials);
 
+        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(5));
         assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_MERCHANT_ID, "a-merchant-id"));
         assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_USERNAME, "a-username"));
         assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_PASSWORD, "a-password"));
@@ -214,7 +223,7 @@ class GatewayAccountCredentialsEntityTest {
         stripeCredentials.setStripeAccountId(stripeAccountId);
         
         credentialsEntity.setCredentials(stripeCredentials);
-        
+        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(1));
         assertThat(credentialsEntity.getCredentials(), hasEntry(STRIPE_ACCOUNT_ID_KEY, stripeAccountId));
     }
 }
