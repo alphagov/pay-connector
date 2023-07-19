@@ -135,19 +135,21 @@ class GatewayAccountCredentialsEntityTest {
     }
 
     @Test
+    void getCredentialsObject_shouldReturnSandboxCredentialsForSmartpay() {
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(SMARTPAY.getName())
+                .build();
+        GatewayCredentials credentials = credentialsEntity.getCredentialsObject();
+        assertThat(credentials, isA(SandboxCredentials.class));
+        assertThat(credentials.hasCredentials(), is(true));
+    }
+
+    @Test
     void getCredentialsObject_shouldThrowForUnrecognisedProvider() {
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("foo")
                 .build();
         assertThrows(PaymentGatewayName.Unsupported.class, credentialsEntity::getCredentialsObject);
-    }
-
-    @Test
-    void getCredentialsObject_shouldThrowForUnsupportedProvider() {
-        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider(SMARTPAY.getName())
-                .build();
-        assertThrows(IllegalArgumentException.class, credentialsEntity::getCredentialsObject);
     }
 
     @Test
