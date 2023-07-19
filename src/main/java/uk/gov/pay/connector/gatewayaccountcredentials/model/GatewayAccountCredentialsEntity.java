@@ -113,10 +113,10 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
                 return objectMapper.convertValue(credentialsMap, StripeCredentials.class);
             case EPDQ:
                 return objectMapper.convertValue(credentialsMap, EpdqCredentials.class);
+            case SMARTPAY:
             case SANDBOX:
-                return objectMapper.convertValue(credentialsMap, SandboxCredentials.class);
             default:
-                throw new IllegalArgumentException("Unsupported payment provider: " + paymentProvider);
+                return objectMapper.convertValue(credentialsMap, SandboxCredentials.class);
         }
     }
 
