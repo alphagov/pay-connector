@@ -80,6 +80,7 @@ class AuthUtilTest {
     @Test
     void shouldGetAuthHeaderForOneOffPayment_whenOnlyLegacyCredentialsSet() {
         WorldpayCredentials credentials = new WorldpayCredentials();
+        credentials.setLegacyOneOffCustomerInitiatedMerchantCode(merchantCode);
         credentials.setLegacyOneOffCustomerInitiatedUsername(username);
         credentials.setLegacyOneOffCustomerInitiatedPassword(password);
 
