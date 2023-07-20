@@ -47,27 +47,12 @@ public class WorldpayCredentials implements GatewayCredentials {
         // Janet Jackson
     }
 
-    @JsonIgnore
-    public Optional<String> getLegacyOneOffCustomerInitiatedMerchantCode() {
-        return Optional.ofNullable(legacyOneOffCustomerInitiatedMerchantCode);
-    }
-
     public void setLegacyOneOffCustomerInitiatedMerchantCode(String legacyOneOffCustomerInitiatedMerchantCode) {
         this.legacyOneOffCustomerInitiatedMerchantCode = legacyOneOffCustomerInitiatedMerchantCode;
     }
 
-    @JsonIgnore
-    public Optional<String> getLegacyOneOffCustomerInitiatedUsername() {
-        return Optional.ofNullable(legacyOneOffCustomerInitiatedUsername);
-    }
-
     public void setLegacyOneOffCustomerInitiatedUsername(String legacyOneOffCustomerInitiatedUsername) {
         this.legacyOneOffCustomerInitiatedUsername = legacyOneOffCustomerInitiatedUsername;
-    }
-
-    @JsonIgnore
-    public Optional<String> getLegacyOneOffCustomerInitiatedPassword() {
-        return Optional.ofNullable(legacyOneOffCustomerInitiatedPassword);
     }
 
     public void setLegacyOneOffCustomerInitiatedPassword(String legacyOneOffCustomerInitiatedPassword) {
@@ -76,6 +61,14 @@ public class WorldpayCredentials implements GatewayCredentials {
 
     @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getOneOffCustomerInitiatedCredentials() {
+        if (oneOffCustomerInitiatedCredentials == null && legacyOneOffCustomerInitiatedMerchantCode != null) {
+            return Optional.of(new WorldpayMerchantCodeCredentials(
+                    legacyOneOffCustomerInitiatedMerchantCode,
+                    legacyOneOffCustomerInitiatedUsername,
+                    legacyOneOffCustomerInitiatedPassword
+            ));
+        }
+
         return Optional.ofNullable(oneOffCustomerInitiatedCredentials);
     }
 
@@ -113,7 +106,7 @@ public class WorldpayCredentials implements GatewayCredentials {
 
     @Override
     public boolean hasCredentials() {
-        return legacyOneOffCustomerInitiatedMerchantCode != null 
+        return legacyOneOffCustomerInitiatedMerchantCode != null
                 || oneOffCustomerInitiatedCredentials != null
                 || (recurringCustomerInitiatedCredentials != null && recurringMerchantInitiatedCredentials != null);
     }

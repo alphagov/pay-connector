@@ -45,41 +45,28 @@ public class AuthUtil {
 
     public static String getWorldpayMerchantCode(GatewayCredentials credentials, AuthorisationMode authorisationMode, boolean isRecurring) {
         WorldpayCredentials worldpayCredentials = castGatewayCredentialsToWorldpayCredentials(credentials);
-        if (isRecurring) {
-            WorldpayMerchantCodeCredentials credentialsForAuthType = getWorldpayRecurringCredentialsForAuthType(worldpayCredentials, authorisationMode);
-            return credentialsForAuthType.getMerchantCode();
-        }
-
-        return worldpayCredentials.getOneOffCustomerInitiatedCredentials()
-                .map(WorldpayMerchantCodeCredentials::getMerchantCode)
-                .orElseGet(() -> worldpayCredentials.getLegacyOneOffCustomerInitiatedMerchantCode()
-                        .orElseThrow(NoCredentialsInUsableStateException::new));
+        WorldpayMerchantCodeCredentials merchantCodeCredentials = getWorldpayMerchantCodeCredentials(worldpayCredentials, authorisationMode, isRecurring);
+        return merchantCodeCredentials.getMerchantCode();
     }
 
     public static Map<String, String> getWorldpayAuthHeader(GatewayCredentials credentials, AuthorisationMode authorisationMode, boolean isRecurring) {
         WorldpayCredentials worldpayCredentials = castGatewayCredentialsToWorldpayCredentials(credentials);
+        WorldpayMerchantCodeCredentials merchantCodeCredentials = getWorldpayMerchantCodeCredentials(worldpayCredentials, authorisationMode, isRecurring);
+        return getWorldpayAuthHeader(merchantCodeCredentials);
+    }
 
+    private static WorldpayMerchantCodeCredentials getWorldpayMerchantCodeCredentials(WorldpayCredentials worldpayCredentials, AuthorisationMode authorisationMode, boolean isRecurring) {
         if (isRecurring) {
-            WorldpayMerchantCodeCredentials credentialsForAuthType = getWorldpayRecurringCredentialsForAuthType(worldpayCredentials, authorisationMode);
-            return getWorldpayAuthHeader(credentialsForAuthType);
+            if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                return worldpayCredentials.getRecurringMerchantInitiatedCredentials()
+                        .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
+            }
+            return worldpayCredentials.getRecurringCustomerInitiatedCredentials()
+                    .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
         }
 
         return worldpayCredentials.getOneOffCustomerInitiatedCredentials()
-                .map(AuthUtil::getWorldpayAuthHeader)
-                .orElseGet(() -> {
-                    String username = worldpayCredentials.getLegacyOneOffCustomerInitiatedUsername().orElseThrow(NoCredentialsInUsableStateException::new);
-                    String password = worldpayCredentials.getLegacyOneOffCustomerInitiatedPassword().orElseThrow(NoCredentialsInUsableStateException::new);
-                    return getAuthHeader(username, password);
-                });
-    }
-    
-    private static WorldpayMerchantCodeCredentials getWorldpayRecurringCredentialsForAuthType(WorldpayCredentials worldpayCredentials, AuthorisationMode authorisationMode) {
-        if (authorisationMode == AuthorisationMode.AGREEMENT) {
-            return worldpayCredentials.getRecurringMerchantInitiatedCredentials()
-                    .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
-        }
-        return worldpayCredentials.getRecurringCustomerInitiatedCredentials()
-                .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
+                .orElseThrow(NoCredentialsInUsableStateException::new);
     }
 
     private static Map<String, String> getWorldpayAuthHeader(WorldpayMerchantCodeCredentials creds) {
