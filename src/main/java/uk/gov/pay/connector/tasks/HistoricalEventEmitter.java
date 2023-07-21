@@ -20,6 +20,7 @@ import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.BackfillerGatewayTransactionIdSet;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
@@ -116,6 +117,25 @@ public class HistoricalEventEmitter {
         processPaymentDetailEnteredEvent(chargeEventEntities, forceEmission);
         processUserEmailCollectedEvent(charge, chargeEventEntities, forceEmission);
         processGatewayTransactionIdSetEvent(charge, chargeEventEntities, forceEmission);
+        process3DSVersionEvent(charge,chargeEventEntities, forceEmission);
+    }
+
+    private void process3DSVersionEvent(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
+        if (charge.get3dsRequiredDetails() != null && isNotBlank(charge.get3dsRequiredDetails().getThreeDsVersion())) {
+                var chargeEvent = chargeEventEntities
+                        .stream()
+                        .filter(event -> TERMINAL_AUTHENTICATION_STATES.contains(event.getStatus()))
+                        .findFirst();
+
+                chargeEvent.ifPresent(event -> {
+                    var threeDsInfoEvent = Gateway3dsInfoObtained.from(charge, event.getUpdated().toInstant());
+                    boolean hasBeenEmittedBefore = emittedEventDao.hasBeenEmittedBefore(threeDsInfoEvent);
+                    if (forceEmission || !hasBeenEmittedBefore) {
+                        eventService.emitAndRecordEvent(threeDsInfoEvent, getDoNotRetryEmitUntilDate());
+                        logger.info("Gateway 3DS Info Obtained event re-emitted for [chargeExternalId={}]", charge.getExternalId());
+                    }
+                });
+        }
     }
 
     private void processFeeIncurredEvent(ChargeEntity charge, boolean forceEmission) {
