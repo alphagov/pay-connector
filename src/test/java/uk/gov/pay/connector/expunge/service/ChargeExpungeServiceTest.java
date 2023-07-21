@@ -18,6 +18,7 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import java.time.Duration;
@@ -32,13 +33,16 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.RADAR;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeExpungeServiceTest {
@@ -49,6 +53,8 @@ class ChargeExpungeServiceTest {
     private ChargeDao mockChargeDao;
     @Mock
     private ChargeService mockChargeService;
+    @Mock
+    private  IdempotencyDao mockIdempotencyDao;
     @Mock
     private ConnectorConfiguration mockConnectorConfiguration;
     @Mock
@@ -72,7 +78,7 @@ class ChargeExpungeServiceTest {
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
 
         chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration, parityCheckService,
-                mockChargeService);
+                mockChargeService, mockIdempotencyDao);
     }
 
     @Test
@@ -239,6 +245,66 @@ class ChargeExpungeServiceTest {
         verify(mockChargeDao, never()).expungeCharge(any(), any());
     }
 
+    @Test
+    void expunge_shouldNotExpungeChargeIfAuthorisationModeIsAgreementModeAndIdempotencyRecordExists() {
+        String resourceId = "test-resource-id";
+
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_SUBMITTED)
+                .withAuthorisationMode(AGREEMENT)
+                .withExternalId(resourceId)
+                .build();
+
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+        when(mockIdempotencyDao.idempotencyExistsByResourceExternalId(resourceId)).thenReturn(true);
+
+        chargeExpungeService.expunge(1);
+        verify(mockChargeDao, never()).expungeCharge(any(), any());
+        verify(mockIdempotencyDao).idempotencyExistsByResourceExternalId(resourceId);
+    }
+
+    @Test
+    void expunge_shouldExpungeChargeIfAuthorisationModeIsAgreementAndIdempotencyRecordDoesNotExist() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_SUBMITTED)
+                .withAuthorisationMode(AGREEMENT)
+                .build();
+
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
+        verify(mockChargeService, never()).updateChargeParityStatus(any(),any());
+    }
+
+
+    @Test
+    void expunge_shouldExpungeChargeIfAuthorisationModeIsNotAgreement() {
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(AUTHORISATION_SUBMITTED)
+                .withAuthorisationMode(WEB)
+                .build();
+
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+        when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
+        verify(mockChargeService, never()).updateChargeParityStatus(any(), any());
+
+    }
 
     @ParameterizedTest
     @ValueSource( strings = {"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED"})

@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
@@ -43,6 +44,7 @@ public class ChargeExpungeService {
     private final ExpungeConfig expungeConfig;
     private final ParityCheckService parityCheckService;
     private final ChargeService chargeService;
+    private final IdempotencyDao idempotencyDao;
     private final List<PaymentGatewayName> expungeExemptedGateways = List.of(
             PaymentGatewayName.EPDQ,
             PaymentGatewayName.WORLDPAY,
@@ -62,11 +64,12 @@ public class ChargeExpungeService {
     @Inject
     public ChargeExpungeService(ChargeDao chargeDao, ConnectorConfiguration connectorConfiguration,
                                 ParityCheckService parityCheckService,
-                                ChargeService chargeService) {
+                                ChargeService chargeService, IdempotencyDao idempotencyDao) {
         this.chargeDao = chargeDao;
         expungeConfig = connectorConfiguration.getExpungeConfig();
         this.parityCheckService = parityCheckService;
         this.chargeService = chargeService;
+        this.idempotencyDao = idempotencyDao;
     }
 
     private boolean inTerminalState(ChargeEntity chargeEntity) {
@@ -126,6 +129,10 @@ public class ChargeExpungeService {
             logger.info("Charge not expunged because it is a Stripe payment that requires fees to be collected, but " +
                             "fees have not yet been processed.",
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
+        } else if (chargeEntity.getAuthorisationMode() == AuthorisationMode.AGREEMENT &&
+                idempotencyDao.idempotencyExistsByResourceExternalId(chargeEntity.getExternalId())) {
+                logger.info("Charge not expunged from connector because Idempotency record exists for charge",
+                        kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else if (parityCheckService.parityCheckChargeForExpunger(chargeEntity)) {
             expungeCharge(chargeEntity);
             logger.info("Charge expunged from connector {}", kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
