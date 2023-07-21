@@ -41,6 +41,18 @@ public class WorldpayMerchantCodeCredentials {
         return password;
     }
 
+    public void setMerchantCode(String merchantCode) {
+        this.merchantCode = merchantCode;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {

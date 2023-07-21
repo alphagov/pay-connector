@@ -269,6 +269,55 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void shouldReturnAccountInformationForGetAccountById_forLegacyCredentials() {
+        long accountId = RandomUtils.nextInt();
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withPaymentProvider(WORLDPAY.getName())
+                .withGatewayAccountId(accountId)
+                .withState(ACTIVE)
+                .withCredentials(Map.of(
+                        CREDENTIALS_MERCHANT_ID, "legacy-merchant-code",
+                        CREDENTIALS_USERNAME, "legacy-username",
+                        CREDENTIALS_PASSWORD, "legacy-password"))
+                .build();
+
+        this.defaultTestAccount = DatabaseFixtures
+                .withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(accountId)
+                .withAllowTelephonePaymentNotifications(true)
+                .withAllowMoto(true)
+                .withCorporateCreditCardSurchargeAmount(250)
+                .withCorporateDebitCardSurchargeAmount(50)
+                .withAllowAuthApi(true)
+                .withRecurringEnabled(true)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withDefaultCredentials()
+                .withGatewayAccountCredentials(List.of(credentialsParams))
+                .insert();
+
+        databaseTestHelper.allowApplePay(accountId);
+        databaseTestHelper.allowZeroAmount(accountId);
+        databaseTestHelper.blockPrepaidCards(accountId);
+        databaseTestHelper.enableProviderSwitch(accountId);
+        databaseTestHelper.setDisabled(accountId);
+        databaseTestHelper.setDisabledReason(accountId, "Disabled because reasons");
+
+        int accountIdAsInt = Math.toIntExact(accountId);
+        givenSetup()
+                .get(ACCOUNTS_API_URL + accountId)
+                .then()
+                .statusCode(200)
+                .body("gateway_account_credentials[0].credentials", hasEntry("merchant_id", "legacy-merchant-code"))
+                .body("gateway_account_credentials[0].credentials", hasEntry("username", "legacy-username"))
+                .body("gateway_account_credentials[0].credentials", not(hasKey("password")))
+                .body("gateway_account_credentials[0].credentials", hasKey("one_off_customer_initiated"))
+                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("merchant_code", "legacy-merchant-code"))
+                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("username", "legacy-username"))
+                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", not(hasKey("password")));
+    }
+
+    @Test
     public void shouldReturnAccountInformationForGetAccountById_withStripeCredentials() {
         long accountId = RandomUtils.nextInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()

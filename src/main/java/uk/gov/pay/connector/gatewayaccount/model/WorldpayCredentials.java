@@ -49,26 +49,36 @@ public class WorldpayCredentials implements GatewayCredentials {
 
     public void setLegacyOneOffCustomerInitiatedMerchantCode(String legacyOneOffCustomerInitiatedMerchantCode) {
         this.legacyOneOffCustomerInitiatedMerchantCode = legacyOneOffCustomerInitiatedMerchantCode;
+        if (oneOffCustomerInitiatedCredentials == null) {
+            oneOffCustomerInitiatedCredentials = new WorldpayMerchantCodeCredentials();
+        }
+        if (oneOffCustomerInitiatedCredentials.getMerchantCode() == null) {
+            oneOffCustomerInitiatedCredentials.setMerchantCode(legacyOneOffCustomerInitiatedMerchantCode);
+        }
     }
 
     public void setLegacyOneOffCustomerInitiatedUsername(String legacyOneOffCustomerInitiatedUsername) {
         this.legacyOneOffCustomerInitiatedUsername = legacyOneOffCustomerInitiatedUsername;
+        if (oneOffCustomerInitiatedCredentials == null) {
+            oneOffCustomerInitiatedCredentials = new WorldpayMerchantCodeCredentials();
+        }
+        if (oneOffCustomerInitiatedCredentials.getUsername() == null) {
+            oneOffCustomerInitiatedCredentials.setUsername(legacyOneOffCustomerInitiatedUsername);
+        }
     }
 
     public void setLegacyOneOffCustomerInitiatedPassword(String legacyOneOffCustomerInitiatedPassword) {
         this.legacyOneOffCustomerInitiatedPassword = legacyOneOffCustomerInitiatedPassword;
+        if (oneOffCustomerInitiatedCredentials == null) {
+            oneOffCustomerInitiatedCredentials = new WorldpayMerchantCodeCredentials();
+        }
+        if (oneOffCustomerInitiatedCredentials.getPassword() == null) {
+            oneOffCustomerInitiatedCredentials.setPassword(legacyOneOffCustomerInitiatedPassword);
+        }
     }
 
     @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getOneOffCustomerInitiatedCredentials() {
-        if (oneOffCustomerInitiatedCredentials == null && legacyOneOffCustomerInitiatedMerchantCode != null) {
-            return Optional.of(new WorldpayMerchantCodeCredentials(
-                    legacyOneOffCustomerInitiatedMerchantCode,
-                    legacyOneOffCustomerInitiatedUsername,
-                    legacyOneOffCustomerInitiatedPassword
-            ));
-        }
-
         return Optional.ofNullable(oneOffCustomerInitiatedCredentials);
     }
 
