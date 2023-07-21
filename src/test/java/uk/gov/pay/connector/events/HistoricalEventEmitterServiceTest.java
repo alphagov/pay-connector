@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailColl
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -46,6 +48,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -695,6 +698,30 @@ class HistoricalEventEmitterServiceTest {
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(RefundSucceeded.class));
 
         verify(emittedEventDao, atMostOnce()).recordEmission(any(Event.class), isNotNull());
+    }
+
+    @Test
+    void shouldEmitGateway3dsInfoObtainedEvent_whenThreeDsVersionIsMissingFromLedger() throws QueueException {
+        var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1.1");
+        chargeEntity.set3dsRequiredDetails(auth3dsRequiredEntity);
+
+        ChargeEventEntity successEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(AUTHORISATION_SUCCESS)
+                .build();
+
+        chargeEntity.getEvents().clear();
+        chargeEntity.getEvents().add(successEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        when(emittedEventDao.hasBeenEmittedBefore(any())).thenReturn(false);
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        verify(eventService, times(1)).emitAndRecordEvent(any(Gateway3dsInfoObtained.class), isNotNull());
     }
 
     private RefundHistory getRefundHistoryEntity(ChargeEntity chargeEntity, RefundStatus refundStatus) {
