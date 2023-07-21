@@ -58,8 +58,7 @@ public class WorldpayCredentials implements GatewayCredentials {
     public void setLegacyOneOffCustomerInitiatedPassword(String legacyOneOffCustomerInitiatedPassword) {
         this.legacyOneOffCustomerInitiatedPassword = legacyOneOffCustomerInitiatedPassword;
     }
-
-    @JsonIgnore
+    
     public Optional<WorldpayMerchantCodeCredentials> getOneOffCustomerInitiatedCredentials() {
         if (oneOffCustomerInitiatedCredentials == null && legacyOneOffCustomerInitiatedMerchantCode != null) {
             return Optional.of(new WorldpayMerchantCodeCredentials(
@@ -75,8 +74,7 @@ public class WorldpayCredentials implements GatewayCredentials {
     public void setOneOffCustomerInitiatedCredentials(WorldpayMerchantCodeCredentials oneOffCustomerInitiatedCredentials) {
         this.oneOffCustomerInitiatedCredentials = oneOffCustomerInitiatedCredentials;
     }
-
-    @JsonIgnore
+    
     public Optional<WorldpayMerchantCodeCredentials> getRecurringCustomerInitiatedCredentials() {
         return Optional.ofNullable(recurringCustomerInitiatedCredentials);
     }
@@ -84,8 +82,7 @@ public class WorldpayCredentials implements GatewayCredentials {
     public void setRecurringCustomerInitiatedCredentials(WorldpayMerchantCodeCredentials recurringCustomerInitiatedCredentials) {
         this.recurringCustomerInitiatedCredentials = recurringCustomerInitiatedCredentials;
     }
-
-    @JsonIgnore
+    
     public Optional<WorldpayMerchantCodeCredentials> getRecurringMerchantInitiatedCredentials() {
         return Optional.ofNullable(recurringMerchantInitiatedCredentials);
     }
@@ -95,7 +92,6 @@ public class WorldpayCredentials implements GatewayCredentials {
     }
 
     @Override
-    @JsonIgnore
     public Optional<String> getGooglePayMerchantId() {
         return Optional.ofNullable(googlePayMerchantId);
     }
