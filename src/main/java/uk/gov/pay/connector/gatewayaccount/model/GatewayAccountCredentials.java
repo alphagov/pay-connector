@@ -10,8 +10,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class GatewayAccountCredentials {

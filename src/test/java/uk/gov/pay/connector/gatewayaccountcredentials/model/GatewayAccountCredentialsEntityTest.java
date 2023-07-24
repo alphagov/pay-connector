@@ -192,6 +192,18 @@ class GatewayAccountCredentialsEntityTest {
     }
 
     @Test
+    void setCredentials_shouldSerializeWorldpayCredentialsToMapForWritingToDatabase_shouldNotIncludeNullValues() {
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+
+        var worldpayCredentials = (WorldpayCredentials)credentialsEntity.getCredentialsObject();
+        credentialsEntity.setCredentials(worldpayCredentials);
+
+        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(0));
+    }
+
+    @Test
     void setCredentials_shouldSerializeEpdqCredentialsToMapForWritingToDatabase() {
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider(EPDQ.getName())
