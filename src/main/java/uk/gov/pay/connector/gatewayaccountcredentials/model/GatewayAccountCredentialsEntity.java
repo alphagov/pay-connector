@@ -33,6 +33,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+
 @Entity
 @Table(name = "gateway_account_credentials")
 @SequenceGenerator(name = "gateway_account_credentials_id_seq",
@@ -40,7 +42,10 @@ import java.util.Optional;
 @Customizer(HistoryCustomizer.class)
 public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
 
-    private static final ObjectMapper objectMapper = JsonMapper.builder().addModule(new Jdk8Module()).build();
+    private static final ObjectMapper objectMapper = JsonMapper.builder()
+            .addModule(new Jdk8Module())
+            .serializationInclusion(NON_NULL)
+            .build();
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_account_credentials_id_seq")
