@@ -17,7 +17,7 @@
         <eclipselink.version>2.7.11</eclipselink.version>
         <guice.version>5.1.0</guice.version>
         <jackson.version>2.15.2</jackson.version>
-        <pay-java-commons.version>1.0.20230705145238</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20230720152355</pay-java-commons.version>
         <surefire.version>3.1.2</surefire.version>
         <jooq.version>3.18.4</jooq.version>
         <postgresql.version>42.6.0</postgresql.version>
@@ -27,6 +27,7 @@
         <mockito.version>4.8.0</mockito.version>
         <junit.jupiter.version>5.9.3</junit.jupiter.version>
         <swaggger-version>2.2.9</swaggger-version>
+        <prometheus.version>0.16.0</prometheus.version>
         <PACT_BROKER_URL/>
         <PACT_BROKER_USERNAME/>
         <PACT_BROKER_PASSWORD/>
@@ -34,6 +35,21 @@
         <PACT_CONSUMER_TAG/>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_servlet</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_dropwizard</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
         <dependency>
             <groupId>uk.gov.service.payments</groupId>
             <artifactId>logging</artifactId>
@@ -43,12 +59,6 @@
             <groupId>uk.gov.service.payments</groupId>
             <artifactId>utils</artifactId>
             <version>${pay-java-commons.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.amazonaws</groupId>
-                    <artifactId>aws-xray-recorder-sdk-aws-sdk-instrumentor</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>uk.gov.service.payments</groupId>
