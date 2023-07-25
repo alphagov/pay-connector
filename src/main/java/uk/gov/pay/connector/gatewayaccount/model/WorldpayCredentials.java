@@ -26,21 +26,13 @@ public class WorldpayCredentials implements GatewayCredentials {
     @JsonProperty(GatewayAccount.CREDENTIALS_PASSWORD)
     @Schema(hidden = true)
     private String legacyOneOffCustomerInitiatedPassword;
-
-    @JsonProperty(GatewayAccount.ONE_OFF_CUSTOMER_INITIATED)
-    @JsonView({Views.Api.class})
+    
     private WorldpayMerchantCodeCredentials oneOffCustomerInitiatedCredentials;
-
-    @JsonProperty(GatewayAccount.RECURRING_CUSTOMER_INITIATED)
-    @JsonView({Views.Api.class})
+    
     private WorldpayMerchantCodeCredentials recurringCustomerInitiatedCredentials;
-
-    @JsonProperty(GatewayAccount.RECURRING_MERCHANT_INITIATED)
-    @JsonView({Views.Api.class})
+    
     private WorldpayMerchantCodeCredentials recurringMerchantInitiatedCredentials;
-
-    @JsonProperty(GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID)
-    @JsonView({Views.Api.class})
+    
     private String googlePayMerchantId;
 
     public WorldpayCredentials() {
@@ -59,6 +51,7 @@ public class WorldpayCredentials implements GatewayCredentials {
         this.legacyOneOffCustomerInitiatedPassword = legacyOneOffCustomerInitiatedPassword;
     }
     
+    @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getOneOffCustomerInitiatedCredentials() {
         if (oneOffCustomerInitiatedCredentials == null && legacyOneOffCustomerInitiatedMerchantCode != null) {
             return Optional.of(new WorldpayMerchantCodeCredentials(
@@ -71,31 +64,62 @@ public class WorldpayCredentials implements GatewayCredentials {
         return Optional.ofNullable(oneOffCustomerInitiatedCredentials);
     }
 
+    @JsonProperty(GatewayAccount.ONE_OFF_CUSTOMER_INITIATED)
+    @JsonView({Views.Api.class})
+    private WorldpayMerchantCodeCredentials getOneOffCustomerInitiatedCredentialsForSerialization() {
+        return getOneOffCustomerInitiatedCredentials().orElse(null);
+    }
+
+    @JsonProperty(GatewayAccount.ONE_OFF_CUSTOMER_INITIATED)
     public void setOneOffCustomerInitiatedCredentials(WorldpayMerchantCodeCredentials oneOffCustomerInitiatedCredentials) {
         this.oneOffCustomerInitiatedCredentials = oneOffCustomerInitiatedCredentials;
     }
     
+    @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getRecurringCustomerInitiatedCredentials() {
         return Optional.ofNullable(recurringCustomerInitiatedCredentials);
     }
 
+    @JsonProperty(GatewayAccount.RECURRING_CUSTOMER_INITIATED)
+    @JsonView({Views.Api.class})
+    private WorldpayMerchantCodeCredentials getRecurringCustomerInitiatedCredentialsForSerialization() {
+        return getRecurringCustomerInitiatedCredentials().orElse(null);
+    }
+
+    @JsonProperty(GatewayAccount.RECURRING_CUSTOMER_INITIATED)
     public void setRecurringCustomerInitiatedCredentials(WorldpayMerchantCodeCredentials recurringCustomerInitiatedCredentials) {
         this.recurringCustomerInitiatedCredentials = recurringCustomerInitiatedCredentials;
     }
     
+    @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getRecurringMerchantInitiatedCredentials() {
         return Optional.ofNullable(recurringMerchantInitiatedCredentials);
     }
 
+    @JsonProperty(GatewayAccount.RECURRING_MERCHANT_INITIATED)
+    @JsonView({Views.Api.class})
+    private WorldpayMerchantCodeCredentials getRecurringMerchantInitiatedCredentialsForSerialization() {
+        return getRecurringMerchantInitiatedCredentials().orElse(null);
+    }
+
+    @JsonProperty(GatewayAccount.RECURRING_MERCHANT_INITIATED)
     public void setRecurringMerchantInitiatedCredentials(WorldpayMerchantCodeCredentials recurringMerchantInitiatedCredentials) {
         this.recurringMerchantInitiatedCredentials = recurringMerchantInitiatedCredentials;
     }
 
     @Override
+    @JsonIgnore
     public Optional<String> getGooglePayMerchantId() {
         return Optional.ofNullable(googlePayMerchantId);
     }
 
+    @JsonProperty(GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID)
+    @JsonView({Views.Api.class})
+    private String getGooglePayMerchantIdForSerialization() {
+        return getGooglePayMerchantId().orElse(null);
+    }
+
+    @JsonProperty(GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID)
     public void setGooglePayMerchantId(String googlePayMerchantId) {
         this.googlePayMerchantId = googlePayMerchantId;
     }

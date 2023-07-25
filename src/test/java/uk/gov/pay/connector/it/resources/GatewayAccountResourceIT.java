@@ -53,7 +53,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
 
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
@@ -298,7 +298,9 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
                 .body("gateway_account_credentials[0].credentials", hasKey("one_off_customer_initiated"))
                 .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("merchant_code", "legacy-merchant-code"))
                 .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("username", "legacy-username"))
-                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", not(hasKey("password")));
+                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", not(hasKey("password")))
+                .body("gateway_account_credentials[0].credentials", not(hasKey("recurring_customer_initiated")))
+                .body("gateway_account_credentials[0].credentials", not(hasKey("recurring_merchant_initiated")));
     }
 
     @Test

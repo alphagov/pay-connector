@@ -6,13 +6,12 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import java.io.IOException;
 
 public class GatewayCredentialsApiSerializer extends JsonSerializer<GatewayCredentials> {
-    private final ObjectMapper objectMapper = JsonMapper.builder().disable(MapperFeature.DEFAULT_VIEW_INCLUSION).addModule(new Jdk8Module()).build();
-    
+    private final ObjectMapper objectMapper = JsonMapper.builder().disable(MapperFeature.DEFAULT_VIEW_INCLUSION).build();
+
     @Override
     public void serialize(GatewayCredentials credentials, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         objectMapper.writerWithView(GatewayCredentials.Views.Api.class)
