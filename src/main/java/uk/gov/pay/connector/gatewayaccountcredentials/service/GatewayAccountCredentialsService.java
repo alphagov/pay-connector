@@ -64,9 +64,7 @@ public class GatewayAccountCredentialsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GatewayAccountCredentialsService.class);
 
-    private enum WorldpayUpdatableCredentials {ONE_OFF_CIT, RECURRING_CIT, RECURRING_MIT}
-
-    ;
+    private enum WorldpayUpdatableCredentials {ONE_OFF_CIT, RECURRING_CIT, RECURRING_MIT};
 
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
@@ -153,6 +151,7 @@ public class GatewayAccountCredentialsService {
                 break;
             case FIELD_CREDENTIALS_WORLDPAY_ONE_OFF_CUSTOMER_INITIATED:
                 updateWorldpayCredentials(patchRequest, WorldpayUpdatableCredentials.ONE_OFF_CIT, gatewayAccountCredentialsEntity);
+                break;
             case FIELD_CREDENTIALS_WORLDPAY_RECURRING_CUSTOMER_INITIATED:
                 updateWorldpayCredentials(patchRequest, WorldpayUpdatableCredentials.RECURRING_CIT, gatewayAccountCredentialsEntity);
                 break;
