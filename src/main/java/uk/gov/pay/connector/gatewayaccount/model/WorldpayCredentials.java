@@ -19,23 +19,23 @@ import java.util.Optional;
 public class WorldpayCredentials implements GatewayCredentials {
 
     @JsonProperty(GatewayAccount.CREDENTIALS_MERCHANT_ID)
-    @JsonView({Views.Api.class})
+    @Schema(hidden = true)
     private String legacyOneOffCustomerInitiatedMerchantCode;
 
     @JsonProperty(GatewayAccount.CREDENTIALS_USERNAME)
-    @JsonView({Views.Api.class})
+    @Schema(hidden = true)
     private String legacyOneOffCustomerInitiatedUsername;
 
     @JsonProperty(GatewayAccount.CREDENTIALS_PASSWORD)
     @Schema(hidden = true)
     private String legacyOneOffCustomerInitiatedPassword;
-    
+
     private WorldpayMerchantCodeCredentials oneOffCustomerInitiatedCredentials;
-    
+
     private WorldpayMerchantCodeCredentials recurringCustomerInitiatedCredentials;
-    
+
     private WorldpayMerchantCodeCredentials recurringMerchantInitiatedCredentials;
-    
+
     private String googlePayMerchantId;
 
     public WorldpayCredentials() {
@@ -53,7 +53,7 @@ public class WorldpayCredentials implements GatewayCredentials {
     public void setLegacyOneOffCustomerInitiatedPassword(String legacyOneOffCustomerInitiatedPassword) {
         this.legacyOneOffCustomerInitiatedPassword = legacyOneOffCustomerInitiatedPassword;
     }
-    
+
     @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getOneOffCustomerInitiatedCredentials() {
         if (oneOffCustomerInitiatedCredentials == null && legacyOneOffCustomerInitiatedMerchantCode != null) {
@@ -77,7 +77,7 @@ public class WorldpayCredentials implements GatewayCredentials {
     public void setOneOffCustomerInitiatedCredentials(WorldpayMerchantCodeCredentials oneOffCustomerInitiatedCredentials) {
         this.oneOffCustomerInitiatedCredentials = oneOffCustomerInitiatedCredentials;
     }
-    
+
     @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getRecurringCustomerInitiatedCredentials() {
         return Optional.ofNullable(recurringCustomerInitiatedCredentials);
@@ -93,7 +93,7 @@ public class WorldpayCredentials implements GatewayCredentials {
     public void setRecurringCustomerInitiatedCredentials(WorldpayMerchantCodeCredentials recurringCustomerInitiatedCredentials) {
         this.recurringCustomerInitiatedCredentials = recurringCustomerInitiatedCredentials;
     }
-    
+
     @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getRecurringMerchantInitiatedCredentials() {
         return Optional.ofNullable(recurringMerchantInitiatedCredentials);

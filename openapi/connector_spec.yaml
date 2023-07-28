@@ -4327,16 +4327,12 @@ components:
       properties:
         gateway_merchant_id:
           type: string
-        merchant_id:
-          type: string
         one_off_customer_initiated:
           $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
         recurring_customer_initiated:
           $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
         recurring_merchant_initiated:
           $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
-        username:
-          type: string
     WorldpayMerchantCodeCredentials:
       type: object
       properties:

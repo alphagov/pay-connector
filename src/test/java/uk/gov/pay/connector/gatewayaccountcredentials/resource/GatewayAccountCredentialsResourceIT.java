@@ -187,18 +187,15 @@ public class GatewayAccountCredentialsResourceIT {
                 .then()
                 .statusCode(200)
                 .body("$", hasKey("credentials"))
-                .body("credentials", hasKey("username"))
-                .body("credentials", hasKey("merchant_id"))
-                .body("credentials", not(hasKey("password")))
+                .body("credentials", hasKey("one_off_customer_initiated"))
+                .body("credentials.one_off_customer_initiated", hasKey("username"))
+                .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
                 .body("credentials", hasKey("gateway_merchant_id"))
                 .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
         Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
 
         Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
-        assertThat(updatedCredentials, hasEntry("username", "a-username"));
-        assertThat(updatedCredentials, hasEntry("password", "a-password"));
-        assertThat(updatedCredentials, hasEntry("merchant_id", "a-merchant-id"));
         assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
     }
 
@@ -229,9 +226,9 @@ public class GatewayAccountCredentialsResourceIT {
                 .then()
                 .statusCode(200)
                 .body("$", hasKey("credentials"))
-                .body("credentials", hasKey("username"))
-                .body("credentials", hasKey("merchant_id"))
-                .body("credentials", not(hasKey("password")))
+                .body("credentials", hasKey("one_off_customer_initiated"))
+                .body("credentials.one_off_customer_initiated", hasKey("username"))
+                .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
                 .body("credentials", hasKey("gateway_merchant_id"))
                 .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
