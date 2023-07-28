@@ -162,6 +162,7 @@ public class LedgerServiceConsumerTest {
         Event eventMissingAgreementId = AgreementCreated.from(agreementEntity);
 
         LedgerException ledgerException = assertThrows(LedgerException.class, () -> ledgerService.postEvent(eventMissingAgreementId));
+        assertThat(ledgerException.getStatus(), is(422));
     }
     
 }

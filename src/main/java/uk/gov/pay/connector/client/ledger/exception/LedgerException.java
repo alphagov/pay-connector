@@ -21,4 +21,8 @@ public class LedgerException extends RuntimeException {
                 ", message=" + getMessage() +
                 '}';
     }
+    
+    public Integer getStatus() {
+        return status;
+    }
 }
