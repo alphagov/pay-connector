@@ -202,6 +202,7 @@ public class GatewayAccountCredentialsService {
                 break;
         }
         gatewayAccountCredentialsEntity.setCredentials(worldpayCredentials);
+        updateStateForCredentials(gatewayAccountCredentialsEntity);
     }
 
     @Transactional
