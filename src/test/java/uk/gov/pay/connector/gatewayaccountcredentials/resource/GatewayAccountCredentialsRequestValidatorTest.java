@@ -44,15 +44,6 @@ class GatewayAccountCredentialsRequestValidatorTest {
     private final GatewayAccountCredentialsRequestValidator validator = new GatewayAccountCredentialsRequestValidator();
 
     @Test
-    void shouldNotThrowWithValidWorldpayCreateRequest() {
-        var request = new GatewayAccountCredentialsRequest("worldpay", Map.of(
-                "merchant_id", "some-merchant-id",
-                "username", "username",
-                "password", "password"));
-        assertDoesNotThrow(() -> validator.validateCreate(request));
-    }
-
-    @Test
     void shouldNotThrowWithValidStripeCreateRequest() {
         var request = new GatewayAccountCredentialsRequest("stripe", Map.of(
                 "stripe_account_id", "acct_something"));
@@ -74,13 +65,13 @@ class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    void shouldThrowWhenWorldpayCreateRequestHasMerchantIdMissing() {
+    void shouldThrowWhenWorldpayCreateRequestHasCredentialsField() {
         var request = new GatewayAccountCredentialsRequest("worldpay", Map.of(
                 "username", "username",
                 "password", "password"
         ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
-        assertThat(thrown.getErrors().get(0), is("Field(s) missing: [merchant_id]"));
+        assertThat(thrown.getErrors().get(0), is("Field [credentials] is not supported for payment provider Worldpay"));
     }
 
     @Test
@@ -94,7 +85,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
     }
 
     @Test
-    void shouldThrowWhenFieldsAreMissingFromLegacyWorldpayCredentialsPatchRequest() {
+    void shouldThrowWhenRequestWithLegacyReplaceCredentialsPathForWorldpay() {
         Map<String, Object> credentials = Map.of(
                 "merchant_id", "some-merchant-id"
         );
@@ -102,8 +93,8 @@ class GatewayAccountCredentialsRequestValidatorTest {
                 Collections.singletonList(Map.of("path", "credentials",
                         "op", "replace",
                         "value", credentials)));
-        var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Value for path [credentials] is missing field(s): [username, password]"));
+        var thrown = assertThrows(UnsupportedOperationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
+        assertThat(thrown.getMessage(), is("Path [credentials] is not supported for updating Worldpay credentials"));
     }
 
     @ParameterizedTest
@@ -160,12 +151,6 @@ class GatewayAccountCredentialsRequestValidatorTest {
 
     @Test
     void shouldNotThrowWhenValidWorldpayPatchRequest() {
-        Map<String, Object> legacyWorldpayCredentials = Map.of(
-                "merchant_id", "some-merchant-id",
-                "username", "username",
-                "password", "password"
-        );
-
         Map<String, Object> worldpayCredentials = Map.of(
                 "merchant_code", "some-merchant-code",
                 "username", "username",
@@ -174,9 +159,6 @@ class GatewayAccountCredentialsRequestValidatorTest {
 
         JsonNode request = objectMapper.valueToTree(
                 List.of(
-                        Map.of("path", "credentials",
-                                "op", "replace",
-                                "value", legacyWorldpayCredentials),
                         Map.of("path", "credentials/worldpay/one_off_customer_initiated",
                                 "op", "replace",
                                 "value", worldpayCredentials),
