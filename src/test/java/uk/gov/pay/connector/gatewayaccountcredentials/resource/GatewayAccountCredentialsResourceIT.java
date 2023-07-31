@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import com.google.gson.Gson;
 import io.restassured.specification.RequestSpecification;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,11 +62,19 @@ public class GatewayAccountCredentialsResourceIT {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
 
-        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST);
+        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST, Map.of(
+                "merchant_id", "a-merchant-id",
+                "username", "a-username",
+                "password", "a-password"));
         accountId = testAccount.getAccountId();
 
         credentialsId = testAccount.getCredentials().get(0).getId();
         credentialsExternalId = testAccount.getCredentials().get(0).getExternalId();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        databaseTestHelper.truncateAllData();
     }
 
     protected RequestSpecification givenSetup() {
@@ -102,9 +111,12 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Test
     public void patchGatewayAccountCredentialsValidRequest_responseShouldBe200() {
-        Map<String, String> newCredentials = Map.of("username", "new-username",
-                "password", "new-password",
-                "merchant_id", "new-merchant-id");
+        DatabaseFixtures.TestAccount stripeTestAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST,
+                Map.of("stripe_account_id", "some-account-id"));
+        long stripeCredentialsId = stripeTestAccount.getCredentials().get(0).getId();
+        String stripeCredentialsExternalId = stripeTestAccount.getCredentials().get(0).getExternalId();
+
+        Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
         givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
@@ -117,30 +129,21 @@ public class GatewayAccountCredentialsResourceIT {
                                 "path", "state",
                                 "value", "VERIFIED_WITH_LIVE_PAYMENT")
                 )))
-                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                .patch(format(PATCH_CREDENTIALS_URL, stripeTestAccount.getAccountId(), stripeCredentialsId))
                 .then()
                 .statusCode(200)
                 .body("$", hasKey("credentials"))
-                .body("credentials", hasKey("username"))
-                .body("credentials", hasKey("merchant_id"))
-                .body("credentials", not(hasKey("password")))
-                .body("credentials.username", is("new-username"))
-                .body("credentials.merchant_id", is("new-merchant-id"))
+                .body("credentials.stripe_account_id", is("new-account-id"))
                 .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
                 .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
                 .body("created_date", is("2021-01-01T00:00:00.000Z"))
                 .body("active_start_date", is("2021-02-01T00:00:00.000Z"))
                 .body("active_end_date", is("2021-03-01T00:00:00.000Z"))
-                .body("external_id", is(credentialsExternalId))
-                .body("payment_provider", is("worldpay"));
+                .body("external_id", is(stripeCredentialsExternalId))
+                .body("payment_provider", is("stripe"));
 
-        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(stripeCredentialsId);
         assertThat(updatedGatewayAccountCredentials, hasEntry("last_updated_by_user_external_id", "a-new-user-external-id"));
-
-        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
-        assertThat(updatedCredentials, hasEntry("username", "new-username"));
-        assertThat(updatedCredentials, hasEntry("password", "new-password"));
-        assertThat(updatedCredentials, hasEntry("merchant_id", "new-merchant-id"));
     }
 
     @Test
@@ -201,7 +204,7 @@ public class GatewayAccountCredentialsResourceIT {
 
     @Test
     public void patchGatewayAccountCredentialsForGatewayMerchantIdShouldReturn400ForUnsupportedGateway() {
-        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST);
+        DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST, Map.of());
         AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
 
         givenSetup()
@@ -233,10 +236,10 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
         Map<String, Object> newCredentials = Map.of("op", "replace",
-                "path", "credentials",
+                "path", "credentials/worldpay/one_off_customer_initiated",
                 "value", Map.of("username", "new-username",
                         "password", "new-password",
-                        "merchant_id", "new-merchant-id"));
+                        "merchant_code", "new-merchant-code"));
 
         givenSetup()
                 .body(toJson(List.of(newCredentials)))
@@ -244,25 +247,32 @@ public class GatewayAccountCredentialsResourceIT {
                 .then()
                 .statusCode(200)
                 .body("$", hasKey("credentials"))
-                .body("credentials", hasKey("username"))
-                .body("credentials.username", is("new-username"))
-                .body("credentials", hasKey("merchant_id"))
-                .body("credentials.merchant_id", is("new-merchant-id"))
-                .body("credentials", not(hasKey("password")))
+                .body("credentials", hasKey("one_off_customer_initiated"))
+                .body("credentials.one_off_customer_initiated", hasKey("username"))
+                .body("credentials.one_off_customer_initiated.username", is("new-username"))
+                .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
+                .body("credentials.one_off_customer_initiated.merchant_code", is("new-merchant-code"))
+                .body("credentials.one_off_customer_initiated", not(hasKey("password")))
                 .body("credentials", hasKey("gateway_merchant_id"))
                 .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
         Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
 
-        Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
-        assertThat(updatedCredentials, hasEntry("username", "new-username"));
-        assertThat(updatedCredentials, hasEntry("password", "new-password"));
-        assertThat(updatedCredentials, hasEntry("merchant_id", "new-merchant-id"));
+        Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+        assertThat(updatedCredentials, hasKey("one_off_customer_initiated"));
+        Map<String, String> oneOffCustomerInitiated = (Map<String, String>) updatedCredentials.get("one_off_customer_initiated");
+        assertThat(oneOffCustomerInitiated, hasEntry("username", "new-username"));
+        assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
+        assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
         assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
     }
 
-    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider, GatewayAccountCredentialState state,
-                                                                        GatewayAccountType gatewayAccountType) {
+    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(
+            String paymentProvider,
+            GatewayAccountCredentialState state,
+            GatewayAccountType gatewayAccountType,
+            Map<String, Object> credentials) {
+        
         long accountId = nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
@@ -275,10 +285,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .withActiveStartDate(activeStartDate.toInstant(ZoneOffset.UTC))
                 .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
                 .withState(state)
-                .withCredentials(Map.of(
-                        "merchant_id", "a-merchant-id",
-                        "username", "a-username",
-                        "password", "a-password"))
+                .withCredentials(credentials)
                 .build();
 
         return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)

@@ -58,6 +58,10 @@ public class GatewayAccountCredentialsRequestValidator {
 
         Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap();
         if (credentials != null) {
+            if (paymentGatewayName == WORLDPAY) {
+                throw new ValidationException(List.of("Field [credentials] is not supported for payment provider Worldpay"));
+            }
+            
             List<String> missingCredentialsFields = getMissingCredentialsFields(credentials, paymentGatewayName, FIELD_CREDENTIALS);
             if (!missingCredentialsFields.isEmpty()) {
                 throw new ValidationException(List.of("Field(s) missing: [" + String.join(", ", missingCredentialsFields) + ']'));
@@ -118,7 +122,7 @@ public class GatewayAccountCredentialsRequestValidator {
         switch (paymentProvider) {
             case WORLDPAY:
                 if (FIELD_CREDENTIALS.equals(path)) {
-                    return LEGACY_WORLDPAY_CREDENTIALS_KEYS;
+                    throw new UnsupportedOperationException(format("Path [%s] is not supported for updating Worldpay credentials", path));
                 }
                 return WORLDPAY_CREDENTIALS_KEYS;
             case STRIPE:
