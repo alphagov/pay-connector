@@ -55,6 +55,10 @@ import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -598,9 +602,10 @@ public class ContractTest {
     @State("a Worldpay gateway account with id 444 with gateway account credentials with id 555 and valid credentials")
     public void aWorldpayGatewayAccountWithFilledCredentialsWithIdExists() {
         Map<String, Object> credentials = Map.of(
-                "merchant_id", "a-merchant-id",
-                "username", "a-username",
-                "password", "blablabla");
+                ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                        CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
+                        CREDENTIALS_USERNAME, "a-username",
+                        CREDENTIALS_PASSWORD, "blablabla"));
 
         AddGatewayAccountCredentialsParams gatewayAccountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withId(555)

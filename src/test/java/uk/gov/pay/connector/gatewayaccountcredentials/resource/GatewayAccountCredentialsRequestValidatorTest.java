@@ -15,6 +15,7 @@ import uk.gov.pay.connector.app.WorldpayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import java.util.Collections;
@@ -179,7 +180,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "abcdef123abcdef")
                 ));
         var existingCredentials = new WorldpayCredentials();
-        existingCredentials.setLegacyOneOffCustomerInitiatedMerchantCode("a-merchant-code");
+        existingCredentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials());
         assertDoesNotThrow(() -> validator.validatePatch(request, "worldpay", existingCredentials));
     }
 
@@ -222,7 +223,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "ABCDEF123abcdef")
                 ));
         var credentials = new WorldpayCredentials();
-        credentials.setLegacyOneOffCustomerInitiatedMerchantCode("a-merchant-code");
+        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials());
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", credentials));
         assertThat(thrown.getErrors().get(0), is("Field [credentials/gateway_merchant_id] value [ABCDEF123abcdef] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]"));
     }

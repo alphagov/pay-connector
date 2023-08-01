@@ -200,10 +200,6 @@ public class GatewayAccountResourceTestBase {
             return credentials;
         }
 
-        Map<String, Object> buildCredentialsPayload() {
-            return ImmutableMap.of("credentials", getCredentials());
-        }
-
         Map buildServiceNamePayload() {
             return ImmutableMap.of("service_name", serviceName);
         }

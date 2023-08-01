@@ -190,9 +190,6 @@ public class GatewayAccountCredentialsService {
         switch (updatableCredentials) {
             case ONE_OFF_CIT:
                 worldpayCredentials.setOneOffCustomerInitiatedCredentials(worldpayMerchantCodeCredentials);
-                worldpayCredentials.setLegacyOneOffCustomerInitiatedMerchantCode(null);
-                worldpayCredentials.setLegacyOneOffCustomerInitiatedUsername(null);
-                worldpayCredentials.setLegacyOneOffCustomerInitiatedPassword(null);
                 break;
             case RECURRING_CIT:
                 worldpayCredentials.setRecurringCustomerInitiatedCredentials(worldpayMerchantCodeCredentials);

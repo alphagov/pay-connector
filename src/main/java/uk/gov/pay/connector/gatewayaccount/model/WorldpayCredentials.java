@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import io.swagger.v3.oas.annotations.media.Schema;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator;
@@ -17,18 +16,6 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WorldpayCredentials implements GatewayCredentials {
-
-    @JsonProperty(GatewayAccount.CREDENTIALS_MERCHANT_ID)
-    @Schema(hidden = true)
-    private String legacyOneOffCustomerInitiatedMerchantCode;
-
-    @JsonProperty(GatewayAccount.CREDENTIALS_USERNAME)
-    @Schema(hidden = true)
-    private String legacyOneOffCustomerInitiatedUsername;
-
-    @JsonProperty(GatewayAccount.CREDENTIALS_PASSWORD)
-    @Schema(hidden = true)
-    private String legacyOneOffCustomerInitiatedPassword;
 
     private WorldpayMerchantCodeCredentials oneOffCustomerInitiatedCredentials;
 
@@ -42,28 +29,8 @@ public class WorldpayCredentials implements GatewayCredentials {
         // Janet Jackson
     }
 
-    public void setLegacyOneOffCustomerInitiatedMerchantCode(String legacyOneOffCustomerInitiatedMerchantCode) {
-        this.legacyOneOffCustomerInitiatedMerchantCode = legacyOneOffCustomerInitiatedMerchantCode;
-    }
-
-    public void setLegacyOneOffCustomerInitiatedUsername(String legacyOneOffCustomerInitiatedUsername) {
-        this.legacyOneOffCustomerInitiatedUsername = legacyOneOffCustomerInitiatedUsername;
-    }
-
-    public void setLegacyOneOffCustomerInitiatedPassword(String legacyOneOffCustomerInitiatedPassword) {
-        this.legacyOneOffCustomerInitiatedPassword = legacyOneOffCustomerInitiatedPassword;
-    }
-
     @JsonIgnore
     public Optional<WorldpayMerchantCodeCredentials> getOneOffCustomerInitiatedCredentials() {
-        if (oneOffCustomerInitiatedCredentials == null && legacyOneOffCustomerInitiatedMerchantCode != null) {
-            return Optional.of(new WorldpayMerchantCodeCredentials(
-                    legacyOneOffCustomerInitiatedMerchantCode,
-                    legacyOneOffCustomerInitiatedUsername,
-                    legacyOneOffCustomerInitiatedPassword
-            ));
-        }
-
         return Optional.ofNullable(oneOffCustomerInitiatedCredentials);
     }
 
@@ -129,8 +96,7 @@ public class WorldpayCredentials implements GatewayCredentials {
 
     @Override
     public boolean hasCredentials() {
-        return legacyOneOffCustomerInitiatedMerchantCode != null
-                || oneOffCustomerInitiatedCredentials != null
+        return oneOffCustomerInitiatedCredentials != null
                 || (recurringCustomerInitiatedCredentials != null && recurringMerchantInitiatedCredentials != null);
     }
 
@@ -146,10 +112,7 @@ public class WorldpayCredentials implements GatewayCredentials {
 
         var that = (WorldpayCredentials) other;
 
-        return Objects.equals(legacyOneOffCustomerInitiatedMerchantCode, that.legacyOneOffCustomerInitiatedMerchantCode)
-                && Objects.equals(legacyOneOffCustomerInitiatedUsername, that.legacyOneOffCustomerInitiatedUsername)
-                && Objects.equals(legacyOneOffCustomerInitiatedPassword, that.legacyOneOffCustomerInitiatedPassword)
-                && Objects.equals(oneOffCustomerInitiatedCredentials, that.oneOffCustomerInitiatedCredentials)
+        return Objects.equals(oneOffCustomerInitiatedCredentials, that.oneOffCustomerInitiatedCredentials)
                 && Objects.equals(recurringCustomerInitiatedCredentials, that.recurringCustomerInitiatedCredentials)
                 && Objects.equals(recurringMerchantInitiatedCredentials, that.recurringMerchantInitiatedCredentials)
                 && Objects.equals(googlePayMerchantId, that.googlePayMerchantId);
@@ -157,9 +120,8 @@ public class WorldpayCredentials implements GatewayCredentials {
 
     @Override
     public int hashCode() {
-        return Objects.hash(legacyOneOffCustomerInitiatedMerchantCode, legacyOneOffCustomerInitiatedUsername,
-                legacyOneOffCustomerInitiatedPassword, oneOffCustomerInitiatedCredentials,
-                recurringCustomerInitiatedCredentials, recurringMerchantInitiatedCredentials, googlePayMerchantId);
+        return Objects.hash(oneOffCustomerInitiatedCredentials, recurringCustomerInitiatedCredentials,
+                recurringMerchantInitiatedCredentials, googlePayMerchantId);
     }
 
 }

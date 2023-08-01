@@ -22,6 +22,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.time.Duration;
@@ -43,6 +44,10 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -335,14 +340,16 @@ class Worldpay3dsFlexJwtServiceTest {
     }
 
     private void addGatewayAccountCredentialsEntity(GatewayAccountEntity gatewayAccountEntity, String paymentProvider) {
-        var creds = aGatewayAccountCredentialsEntity()
-                .withCredentials(Map.of(
-                        "username", "theUsername",
-                        "password", "thePassword",
-                        "merchant_id", "theMerchantCode"))
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider(paymentProvider)
-                .withState(ACTIVE)
+        GatewayAccountCredentialsEntityFixture gatewayAccountCredentialsEntityFixture = aGatewayAccountCredentialsEntity();
+        gatewayAccountCredentialsEntityFixture.withCredentials(Map.of(
+                ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                        CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
+                        CREDENTIALS_USERNAME, "a-username",
+                        CREDENTIALS_PASSWORD, "a-password")));
+        gatewayAccountCredentialsEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
+        gatewayAccountCredentialsEntityFixture.withPaymentProvider(paymentProvider);
+        gatewayAccountCredentialsEntityFixture.withState(ACTIVE);
+        var creds = gatewayAccountCredentialsEntityFixture
                 .build();
 
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));

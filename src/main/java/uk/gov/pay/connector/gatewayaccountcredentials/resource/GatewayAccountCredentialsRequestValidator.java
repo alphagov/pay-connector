@@ -28,8 +28,6 @@ import static uk.gov.service.payments.commons.api.validation.JsonPatchRequestVal
 public class GatewayAccountCredentialsRequestValidator {
 
     private static final Pattern WORLDPAY_MERCHANT_ID_PATTERN = Pattern.compile("[0-9a-f]{15}");
-
-    private static final List<String> LEGACY_WORLDPAY_CREDENTIALS_KEYS = List.of("merchant_id", "username", "password");
     private static final List<String> WORLDPAY_CREDENTIALS_KEYS = List.of("merchant_code", "username", "password");
     private static final List<String> STRIPE_CREDENTIALS_KEYS = List.of("stripe_account_id");
     private static final List<String> EPDQ_CREDENTIALS_KEYS = List.of("merchant_id", "username", "password",

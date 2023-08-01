@@ -77,51 +77,6 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
     }
 
     @Test
-    public void addingOneOffCustomerInitiatedUpdatesOnlyThoseButRemovesLegacyCredentials() {
-        Map<String, Object> existingGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> existingCredentials = new Gson().fromJson(((PGobject) existingGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
-        assertThat(existingCredentials, hasEntry("merchant_id", "a-merchant-id"));
-        assertThat(existingCredentials, hasEntry("username", "a-username"));
-        assertThat(existingCredentials, hasEntry("password", "a-password"));
-
-        givenSetup()
-                .body(toJson(List.of(
-                        Map.of("op", "replace",
-                                "path", "credentials/worldpay/one_off_customer_initiated",
-                                "value", Map.of("merchant_code", "new-merchant-code",
-                                                    "username", "new-username",
-                                                    "password", "new-password")))))
-                .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
-                .then()
-                .statusCode(200)
-                .body("$", hasKey("credentials"))
-                .body("credentials", hasKey("one_off_customer_initiated"))
-                .body("credentials.one_off_customer_initiated", hasEntry("merchant_code", "new-merchant-code"))
-                .body("credentials.one_off_customer_initiated", hasEntry("username", "new-username"))
-                .body("credentials.one_off_customer_initiated", not(hasKey("password")));
-
-        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
-
-        @SuppressWarnings("unchecked")
-        Map<String, String> updatedOneOffCustomerInitiated = (Map<String, String>) updatedCredentials.get("one_off_customer_initiated");
-        assertThat(updatedOneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
-        assertThat(updatedOneOffCustomerInitiated, hasEntry("username", "new-username"));
-        assertThat(updatedOneOffCustomerInitiated, hasEntry("password", "new-password"));
-
-        assertThat(updatedCredentials, not(hasKey("merchant_id")));
-        assertThat(updatedCredentials, not(hasKey("username")));
-        assertThat(updatedCredentials, not(hasKey("password")));
-
-        assertThat(updatedCredentials, not(hasKey("recurring_customer_initiated")));
-        assertThat(updatedCredentials, not(hasKey("recurring_merchant_initiated")));
-    }
-
-    @Test
     public void existingOneOffCredentialsCanBeReplaced() {
         givenSetup()
                 .body(toJson(List.of(

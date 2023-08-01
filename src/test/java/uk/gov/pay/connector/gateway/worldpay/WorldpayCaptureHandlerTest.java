@@ -35,14 +35,16 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -61,19 +63,20 @@ class WorldpayCaptureHandlerTest {
     private Response response;
 
     private final Map<String, Object> credentials = Map.of(
-            CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-            CREDENTIALS_USERNAME, "worldpay-password",
-            CREDENTIALS_PASSWORD, "password"
+            ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                    CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
+                    CREDENTIALS_USERNAME, "username",
+                    CREDENTIALS_PASSWORD, "password")
     );
 
     Map<String, Object> recurringCredentials = Map.of(
-            CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-            CREDENTIALS_USERNAME, "worldpay-password",
-            CREDENTIALS_PASSWORD, "password",
+            RECURRING_CUSTOMER_INITIATED, Map.of( CREDENTIALS_MERCHANT_CODE, "CIT-MERCHANTCODE",
+            CREDENTIALS_USERNAME, "cit-username",
+            CREDENTIALS_PASSWORD, "cit-password"),
             RECURRING_MERCHANT_INITIATED, Map.of(
-                    CREDENTIALS_MERCHANT_CODE, "ECURRING-MERCHANTCODE",
-                    CREDENTIALS_USERNAME, "recurring-worldpay-password",
-                    CREDENTIALS_PASSWORD, "recurring-password"
+                    CREDENTIALS_MERCHANT_CODE, "MIT-MERCHANTCODE",
+                    CREDENTIALS_USERNAME, "mit-password",
+                    CREDENTIALS_PASSWORD, "cit-password"
             )
     );
 
@@ -135,6 +138,7 @@ class WorldpayCaptureHandlerTest {
                         .withPaymentProvider("worldpay")
                         .withCredentials(recurringCredentials)
                         .build())
+                .withAgreementEntity(anAgreementEntity().build())
                 .build();
 
         CaptureResponse gatewayResponse = worldpayCaptureHandler.capture(CaptureGatewayRequest.valueOf(chargeEntity));

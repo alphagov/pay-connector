@@ -159,9 +159,6 @@ class GatewayAccountCredentialsEntityTest {
                 .build();
 
         var worldpayCredentials = (WorldpayCredentials)credentialsEntity.getCredentialsObject();
-        worldpayCredentials.setLegacyOneOffCustomerInitiatedMerchantCode("legacy-merchant-code");
-        worldpayCredentials.setLegacyOneOffCustomerInitiatedUsername("legacy-username");
-        worldpayCredentials.setLegacyOneOffCustomerInitiatedPassword("legacy-password");
         worldpayCredentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials("one-off-merchant-code", "one-off-username", "one-off-password"));
         worldpayCredentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials("cit-merchant-code", "cit-username", "cit-password"));
         worldpayCredentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials("mit-merchant-code", "mit-username", "mit-password"));
@@ -169,10 +166,7 @@ class GatewayAccountCredentialsEntityTest {
         
         credentialsEntity.setCredentials(worldpayCredentials);
 
-        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(7));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_MERCHANT_ID, "legacy-merchant-code"));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_USERNAME, "legacy-username"));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_PASSWORD, "legacy-password"));
+        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(4));
         assertThat(credentialsEntity.getCredentials(), hasEntry(FIELD_GATEWAY_MERCHANT_ID, "google-pay-merchant-id"));
         assertThat(credentialsEntity.getCredentials(), hasKey(ONE_OFF_CUSTOMER_INITIATED));
         assertThat(((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED)).entrySet(), hasSize(3));

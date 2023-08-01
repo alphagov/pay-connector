@@ -41,9 +41,10 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -63,11 +64,6 @@ class WorldpayWalletAuthorisationHandlerTest {
     @Mock
     private GatewayClient mockGatewayClient;
     private GatewayAccountEntity gatewayAccountEntity;
-    private Map<String, Object> gatewayAccountCredentials = Map.of(
-            CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-            CREDENTIALS_USERNAME, "worldpay-password",
-            CREDENTIALS_PASSWORD, "password"
-    );
     private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
     private ChargeEntity chargeEntity;
 
@@ -85,26 +81,24 @@ class WorldpayWalletAuthorisationHandlerTest {
     @BeforeEach
     void setUp() throws Exception {
         worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL));
-        chargeEntity = ChargeEntityFixture.aValidChargeEntity()
-                .withDescription("This is the description")
-                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                        .withPaymentProvider("worldpay")
-                        .withCredentials(Map.of(
-                                CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                                CREDENTIALS_USERNAME, username,
-                                CREDENTIALS_PASSWORD, password
-                        ))
-                        .build())
-                .build();
         gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName("worldpay")
                 .withType(TEST)
                 .build();
         var creds = aGatewayAccountCredentialsEntity()
-                .withCredentials(gatewayAccountCredentials)
+                .withCredentials(Map.of(
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, username,
+                                CREDENTIALS_PASSWORD, password)
+                ))
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)
+                .build();
+        chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withDescription("This is the description")
+                .withGatewayAccountCredentialsEntity(creds)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
         chargeEntity.setGatewayTransactionId("MyUniqueTransactionId!");
