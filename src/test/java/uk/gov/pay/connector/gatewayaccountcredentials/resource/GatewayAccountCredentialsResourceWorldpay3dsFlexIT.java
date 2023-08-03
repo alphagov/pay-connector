@@ -36,6 +36,10 @@ import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -217,9 +221,10 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                 .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
                 .withState(state)
                 .withCredentials(Map.of(
-                        "merchant_id", "a-merchant-id",
-                        "username", "a-username",
-                        "password", "a-password"))
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
+                                CREDENTIALS_USERNAME, "a-username",
+                                CREDENTIALS_PASSWORD, "a-password")))
                 .build();
 
         return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)

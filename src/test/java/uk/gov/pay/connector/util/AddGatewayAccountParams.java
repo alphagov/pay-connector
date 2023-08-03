@@ -25,6 +25,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountParams {
+
     private String accountId;
     private String externalId;
     private List<AddGatewayAccountCredentialsParams> credentials;

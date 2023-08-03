@@ -83,9 +83,10 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
@@ -102,7 +103,7 @@ class WorldpayPaymentProviderTest {
 
     private static final String MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS = "3D";
     private static final String MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE = "3DS_V2_CHALLENGE_IDENTIFIED";
-    
+
     private static final String VISA_CARD_NUMBER = "4444333322221111";
 
     private GatewayAccountEntity validGatewayAccount;
@@ -123,21 +124,21 @@ class WorldpayPaymentProviderTest {
     @BeforeEach
     void checkThatWorldpayIsUp() throws IOException {
         try {
-            var validRecurringMerchantInitiatedCredentials = Map.of(
+            var validWorldpayMerchantCodeCredentials = Map.of(
                     CREDENTIALS_MERCHANT_CODE, envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
                     CREDENTIALS_USERNAME, envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
                     CREDENTIALS_PASSWORD, envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"));
-            
+
             validCredentials = Map.of(
-                    CREDENTIALS_MERCHANT_ID, envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID"),
-                    CREDENTIALS_USERNAME, envOrThrow("GDS_CONNECTOR_WORLDPAY_USER"),
-                    CREDENTIALS_PASSWORD, envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD"),
-                    RECURRING_MERCHANT_INITIATED, validRecurringMerchantInitiatedCredentials);
+                    ONE_OFF_CUSTOMER_INITIATED, validWorldpayMerchantCodeCredentials,
+                    RECURRING_CUSTOMER_INITIATED, validWorldpayMerchantCodeCredentials,
+                    RECURRING_MERCHANT_INITIATED, validWorldpayMerchantCodeCredentials);
 
             validCredentialsFor3ds = Map.of(
-                    CREDENTIALS_MERCHANT_ID, envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
-                    CREDENTIALS_USERNAME, envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
-                    CREDENTIALS_PASSWORD, envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS"));
+                    ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                            CREDENTIALS_MERCHANT_CODE, envOrThrow("GDS_CONNECTOR_WORLDPAY_MERCHANT_ID_3DS"),
+                            CREDENTIALS_USERNAME, envOrThrow("GDS_CONNECTOR_WORLDPAY_USER_3DS"),
+                            CREDENTIALS_PASSWORD, envOrThrow("GDS_CONNECTOR_WORLDPAY_PASSWORD_3DS")));
         } catch (IllegalStateException ex) {
             assumeTrue(false, "Ignoring test since credentials not configured");
         }
@@ -387,7 +388,7 @@ class WorldpayPaymentProviderTest {
         var gatewayDeleteTokenRequest = DeleteStoredPaymentDetailsGatewayRequest.from(agreement, paymentInstrument);
         paymentProvider.deleteStoredPaymentDetails(gatewayDeleteTokenRequest);
         assertDoesNotThrow(() -> paymentProvider.deleteStoredPaymentDetails(gatewayDeleteTokenRequest));
-        
+
         ChargeEntity recurringCharge = createChargeEntity();
         recurringCharge.setAuthorisationMode(AuthorisationMode.AGREEMENT);
         recurringCharge.setAgreementEntity(agreement);
@@ -397,7 +398,7 @@ class WorldpayPaymentProviderTest {
         GatewayResponse authoriseAnotherUserNotPresentResponse = paymentProvider.authoriseUserNotPresent(gatewayPaymentRequest);
         assertTrue(authoriseAnotherUserNotPresentResponse.getGatewayError().isPresent());
     }
-    
+
     @ParameterizedTest
     @MethodSource("worldpayTestCardNumbersThatRequire3ds")
     void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithoutAddress(String cardBrand, String cardNumber) {

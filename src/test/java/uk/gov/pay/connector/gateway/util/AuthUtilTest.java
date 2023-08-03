@@ -16,26 +16,12 @@ import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 
 @ExtendWith(MockitoExtension.class)
 class AuthUtilTest {
     private final String merchantCode = "MERCHANTCODE";
     private final String username = "worldpay-username";
     private final String password = "password"; //pragma: allowlist secret
-    private final Map<String, Object> worldpayRecurringCredentials = Map.of(
-            CREDENTIALS_MERCHANT_ID, merchantCode,
-            CREDENTIALS_USERNAME, username,
-            CREDENTIALS_PASSWORD, password,
-            RECURRING_MERCHANT_INITIATED, Map.of(
-                    CREDENTIALS_MERCHANT_CODE, "RC-" + merchantCode,
-                    CREDENTIALS_USERNAME, "RC-" + username,
-                    CREDENTIALS_PASSWORD, "RC-" + password
-            ));
 
     @Test
     void getWorldpayAuthHeader_shouldThrowExceptionWhenNoCredentials_forRecurringCustomerInitiated() {
@@ -73,18 +59,6 @@ class AuthUtilTest {
         credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.AGREEMENT, true);
 
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
-        assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
-    }
-
-    @Test
-    void shouldGetAuthHeaderForOneOffPayment_whenOnlyLegacyCredentialsSet() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setLegacyOneOffCustomerInitiatedMerchantCode(merchantCode);
-        credentials.setLegacyOneOffCustomerInitiatedUsername(username);
-        credentials.setLegacyOneOffCustomerInitiatedPassword(password);
-
-        Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, false);
         String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
@@ -141,15 +115,6 @@ class AuthUtilTest {
         WorldpayCredentials credentials = new WorldpayCredentials();
         credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
         String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.AGREEMENT, true);
-        assertThat(merchantId, is(merchantCode));
-    }
-
-    @Test
-    void shouldGetMerchantCodeForOneOffPayment_whenOnlyLegacyCredentialsSet() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setLegacyOneOffCustomerInitiatedMerchantCode(merchantCode);
-
-        String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.WEB, false);
         assertThat(merchantId, is(merchantCode));
     }
 

@@ -65,6 +65,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_STRIPE_ACCOUNT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -152,9 +153,10 @@ public class ChargingITestBase {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
             credentials = Map.of(
-                    CREDENTIALS_MERCHANT_ID, "merchant-id",
-                    CREDENTIALS_USERNAME, "test-user",
-                    CREDENTIALS_PASSWORD, "test-password",
+                    ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                            CREDENTIALS_MERCHANT_CODE, "merchant-id",
+                            CREDENTIALS_USERNAME, "test-user",
+                            CREDENTIALS_PASSWORD, "test-password"),
                     RECURRING_CUSTOMER_INITIATED, Map.of(
                             CREDENTIALS_MERCHANT_CODE, "cit-merchant-id",
                             CREDENTIALS_USERNAME, "cit-user",

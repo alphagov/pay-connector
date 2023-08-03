@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -22,18 +24,21 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -46,31 +51,36 @@ class WorldpayRefundHandlerTest {
     private final URI WORLDPAY_URL = URI.create("http://worldpay.url");
 
     private final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
-    
+
     private ChargeEntityFixture chargeEntityFixture;
 
     private GatewayAccountEntity gatewayAccountEntity;
-    
+
     private WorldpayRefundHandler worldpayRefundHandler;
-    
-    @Mock private GatewayClient refundGatewayClient;
-    
+
+    @Mock
+    private GatewayClient refundGatewayClient;
+
+    @Captor
+    ArgumentCaptor<GatewayOrder> gatewayOrderCaptor;
+
     @BeforeEach
     void setup() {
         gatewayAccountEntity = aServiceAccount();
         chargeEntityFixture = aValidChargeEntity().withGatewayAccountEntity(gatewayAccountEntity);
-        
+
         worldpayRefundHandler = new WorldpayRefundHandler(refundGatewayClient, GATEWAY_URL_MAP);
     }
-    
+
     @Test
     void test_refund_request_contains_reference() throws Exception {
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "worldpay-password",
+                                CREDENTIALS_PASSWORD, "password")
                 ))
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(WORLDPAY.getName())
@@ -107,9 +117,12 @@ class WorldpayRefundHandlerTest {
                 eq(WORLDPAY_URL),
                 eq(WORLDPAY),
                 eq("test"),
-                argThat(argument -> argument.getPayload().equals(expectedRefundRequest) &&
-                        argument.getOrderRequestType().equals(OrderRequestType.REFUND)),
+                gatewayOrderCaptor.capture(),
                 anyMap());
+
+        GatewayOrder gatewayOrder = gatewayOrderCaptor.getValue();
+        assertThat(gatewayOrder.getPayload(), is(expectedRefundRequest));
+        assertThat(gatewayOrder.getOrderRequestType(), is(OrderRequestType.REFUND));
     }
 
     @Test
@@ -117,13 +130,14 @@ class WorldpayRefundHandlerTest {
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password",
+                        RECURRING_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "CIT-MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "cit-username",
+                                CREDENTIALS_PASSWORD, "cit-password"),
                         RECURRING_MERCHANT_INITIATED, Map.of(
-                                CREDENTIALS_MERCHANT_CODE, "ECURRING-MERCHANTCODE",
-                                CREDENTIALS_USERNAME, "recurring-worldpay-password",
-                                CREDENTIALS_PASSWORD, "recurring-password"
+                                CREDENTIALS_MERCHANT_CODE, "MIT-MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "mit-username",
+                                CREDENTIALS_PASSWORD, "mit-password"
                         )
                 ))
                 .withGatewayAccountEntity(gatewayAccountEntity)
@@ -134,6 +148,7 @@ class WorldpayRefundHandlerTest {
                 .withTransactionId("transaction-id")
                 .withGatewayAccountCredentialsEntity(credentialsEntity)
                 .withPaymentProvider(WORLDPAY.getName())
+                .withAgreementEntity(anAgreementEntity().build())
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
 
@@ -146,7 +161,7 @@ class WorldpayRefundHandlerTest {
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                         "<!DOCTYPE paymentService PUBLIC \"-//WorldPay//DTD WorldPay PaymentService v1//EN\"\n" +
                         "        \"http://dtd.worldpay.com/paymentService_v1.dtd\">\n" +
-                        "<paymentService version=\"1.4\" merchantCode=\"MERCHANTCODE\">\n" +
+                        "<paymentService version=\"1.4\" merchantCode=\"CIT-MERCHANTCODE\">\n" +
                         "    <modify>\n" +
                         "        <orderModification orderCode=\"transaction-id\">\n" +
                         "            <refund reference=\"" + refundEntity.getExternalId() + "\">\n" +
@@ -161,9 +176,12 @@ class WorldpayRefundHandlerTest {
                 eq(WORLDPAY_URL),
                 eq(WORLDPAY),
                 eq("test"),
-                argThat(argument -> argument.getPayload().equals(expectedRefundRequest) &&
-                        argument.getOrderRequestType().equals(OrderRequestType.REFUND)),
+                gatewayOrderCaptor.capture(),
                 anyMap());
+
+        GatewayOrder gatewayOrder = gatewayOrderCaptor.getValue();
+        assertThat(gatewayOrder.getPayload(), is(expectedRefundRequest));
+        assertThat(gatewayOrder.getOrderRequestType(), is(OrderRequestType.REFUND));
     }
 
     private GatewayAccountEntity aServiceAccount() {
@@ -176,13 +194,14 @@ class WorldpayRefundHandlerTest {
 
         var creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "MERCHANTCODE",
-                        CREDENTIALS_USERNAME, "worldpay-password",
-                        CREDENTIALS_PASSWORD, "password"))
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider(WORLDPAY.getName())
-                .withState(ACTIVE)
-                .build();
+                                ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                        CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
+                                        CREDENTIALS_USERNAME, "a-username",
+                                        CREDENTIALS_PASSWORD, "a-password")))
+                        .withGatewayAccountEntity(gatewayAccountEntity)
+                        .withPaymentProvider(WORLDPAY.getName())
+                        .withState(ACTIVE)
+                        .build();
 
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(creds));
 

@@ -46,6 +46,10 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildCorporateJsonAuthorisationDetailsFor;
@@ -488,9 +492,10 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .withGatewayAccountId(accountId)
                 .withState(ACTIVE)
                 .withCredentials(Map.of(
-                        "username", "a-username",
-                        "password", "a-password",
-                        "merchant_id", "a-merchant-if"))
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
+                                CREDENTIALS_USERNAME, "a-username",
+                                CREDENTIALS_PASSWORD, "a-password")))
                 .build();
         withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -509,7 +514,7 @@ public class CardResourceAuthoriseIT extends ChargingITestBase {
                 .then()
                 .statusCode(200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
-        
+
         wireMockServer.verify(postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
     }
 

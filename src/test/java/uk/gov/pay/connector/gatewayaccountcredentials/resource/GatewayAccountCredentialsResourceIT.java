@@ -54,7 +54,6 @@ public class GatewayAccountCredentialsResourceIT {
     private DatabaseTestHelper databaseTestHelper;
     private DatabaseFixtures databaseFixtures;
     private Long credentialsId;
-    private String credentialsExternalId;
     private Long accountId;
 
     @Before
@@ -62,14 +61,15 @@ public class GatewayAccountCredentialsResourceIT {
         databaseTestHelper = testContext.getDatabaseTestHelper();
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
 
-        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST, Map.of(
-                "merchant_id", "a-merchant-id",
-                "username", "a-username",
-                "password", "a-password"));
+        Map<String, Object> credentials = Map.of(
+                "one_off_customer_initiated", Map.of(
+                        "merchant_code", "a-merchant-code",
+                        "username", "a-username",
+                        "password", "a-password"));
+        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST, credentials);
         accountId = testAccount.getAccountId();
 
         credentialsId = testAccount.getCredentials().get(0).getId();
-        credentialsExternalId = testAccount.getCredentials().get(0).getExternalId();
     }
 
     @After
@@ -269,7 +269,7 @@ public class GatewayAccountCredentialsResourceIT {
             GatewayAccountCredentialState state,
             GatewayAccountType gatewayAccountType,
             Map<String, Object> credentials) {
-        
+
         long accountId = nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();

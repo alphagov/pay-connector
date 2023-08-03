@@ -266,41 +266,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
-    public void shouldReturnAccountInformationForGetAccountById_forLegacyCredentials() {
-        long accountId = RandomUtils.nextInt();
-        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider(WORLDPAY.getName())
-                .withGatewayAccountId(accountId)
-                .withState(ACTIVE)
-                .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, "legacy-merchant-code",
-                        CREDENTIALS_USERNAME, "legacy-username",
-                        CREDENTIALS_PASSWORD, "legacy-password"))
-                .build();
-
-        this.defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(accountId)
-                .withGatewayAccountCredentials(List.of(credentialsParams))
-                .insert();
-
-        givenSetup()
-                .get(ACCOUNTS_API_URL + accountId)
-                .then()
-                .statusCode(200)
-                .body("gateway_account_credentials[0].credentials", not(hasKey("merchant_id")))
-                .body("gateway_account_credentials[0].credentials", not(hasKey("username")))
-                .body("gateway_account_credentials[0].credentials", not(hasKey("password")))
-                .body("gateway_account_credentials[0].credentials", hasKey("one_off_customer_initiated"))
-                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("merchant_code", "legacy-merchant-code"))
-                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("username", "legacy-username"))
-                .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", not(hasKey("password")))
-                .body("gateway_account_credentials[0].credentials", not(hasKey("recurring_customer_initiated")))
-                .body("gateway_account_credentials[0].credentials", not(hasKey("recurring_merchant_initiated")));
-    }
-
-    @Test
     public void shouldReturnAccountInformationForGetAccountById_withStripeCredentials() {
         long accountId = RandomUtils.nextInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
@@ -438,7 +403,6 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
         String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
         String gatewayAccountId2 = createAGatewayAccountFor("sandbox");
         String serviceId = "someexternalserviceid";
-        GatewayAccountPayload gatewayAccountPayload = GatewayAccountPayload.createDefault().withMerchantId("a-merchant-id");
 
         databaseTestHelper.updateServiceIdFor(Long.parseLong(gatewayAccountId1), serviceId);
         databaseTestHelper.updateServiceIdFor(Long.parseLong(gatewayAccountId2), "notsearchedforserviceid");

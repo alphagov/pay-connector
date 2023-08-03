@@ -33,6 +33,10 @@ import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.ACCOUNTS_FRONTEND_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.createAGatewayAccountFor;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceTestBase.extractGatewayAccountId;
@@ -173,9 +177,10 @@ public class ChargesApiResourceAllowWebPaymentsIT {
                 .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
                 .withState(GatewayAccountCredentialState.ACTIVE)
                 .withCredentials(Map.of(
-                        "merchant_id", "a-merchant-id",
-                        "username", "a-username",
-                        "password", "a-password"))
+                                ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                        CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
+                                        CREDENTIALS_USERNAME, "a-username",
+                                        CREDENTIALS_PASSWORD, "a-password")))
                 .build();
 
         return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)

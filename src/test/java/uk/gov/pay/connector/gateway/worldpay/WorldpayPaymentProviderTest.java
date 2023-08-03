@@ -90,9 +90,9 @@ import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -189,10 +189,11 @@ class WorldpayPaymentProviderTest {
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
                         .withPaymentProvider("worldpay")
                         .withCredentials(Map.of(
-                                CREDENTIALS_MERCHANT_ID, ONE_OFF_MERCHANT_CODE,
-                                CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
-                                CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD
-                        ))
+                                ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                        CREDENTIALS_MERCHANT_CODE, ONE_OFF_MERCHANT_CODE,
+                                        CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
+                                        CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD)
+                                ))
                         .build())
                 .withGatewayAccountEntity(gatewayAccountEntity);
 
@@ -593,14 +594,6 @@ class WorldpayPaymentProviderTest {
                 .withExternalId("uniqueSessionId")
                 .withTransactionId("MyUniqueTransactionId!")
                 .withProviderSessionId(providerSessionId)
-                .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                        .withPaymentProvider("worldpay")
-                        .withCredentials(Map.of(
-                                CREDENTIALS_MERCHANT_ID, ONE_OFF_MERCHANT_CODE,
-                                CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
-                                CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD
-                        ))
-                        .build())
                 .build();
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyList(), anyMap()))
@@ -805,9 +798,10 @@ class WorldpayPaymentProviderTest {
 
         var creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
-                        CREDENTIALS_MERCHANT_ID, ONE_OFF_MERCHANT_CODE,
-                        CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
-                        CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD,
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, ONE_OFF_MERCHANT_CODE,
+                                CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
+                                CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD),
                         RECURRING_CUSTOMER_INITIATED, Map.of(
                                 CREDENTIALS_MERCHANT_CODE, CIT_MERCHANT_CODE,
                                 CREDENTIALS_USERNAME, CIT_USERNAME,
