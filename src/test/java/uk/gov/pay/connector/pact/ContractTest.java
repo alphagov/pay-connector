@@ -528,7 +528,7 @@ public class ContractTest {
                 .withExternalId("abc123")
                 .withPaymentGateway(WORLDPAY.getName())
                 .withAnalyticsId("an-analytics-id")
-                .withDefaultCredentials(WORLDPAY.getName())
+                .withWorldpayCredentials()
                 .build());
         dbHelper.insertWorldpay3dsFlexCredential(
                 Long.valueOf(worldpayGatewayAccountId),
@@ -558,7 +558,7 @@ public class ContractTest {
         worldpayMockClient.mockCredentialsValidationValid();
         dbHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId("333")
-                .withDefaultCredentials(WORLDPAY.getName())
+                .withWorldpayCredentials()
                 .withPaymentGateway(WORLDPAY.getName())
                 .build());
     }

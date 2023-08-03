@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.util;
 
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
@@ -8,23 +9,22 @@ import java.util.List;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.MANDATORY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountParams {
-    private static final Map<String, Object> defaultCredentials = Map.of(
-            CREDENTIALS_MERCHANT_ID, "merchant-id",
-            CREDENTIALS_USERNAME, "username",
-            CREDENTIALS_PASSWORD, "password"
-    );
     private String accountId;
     private String externalId;
     private List<AddGatewayAccountCredentialsParams> credentials;
@@ -106,7 +106,7 @@ public class AddGatewayAccountParams {
     public boolean isAllowMoto() {
         return allowMoto;
     }
-    
+
     public boolean isAllowAuthApi() {
         return allowAuthApi;
     }
@@ -207,22 +207,38 @@ public class AddGatewayAccountParams {
             return this;
         }
 
-        public AddGatewayAccountParamsBuilder withDefaultCredentials(String providerName) {
+        public AddGatewayAccountParamsBuilder withWorldpayCredentials() {
             this.gatewayAccountCredentialsParams = List.of(anAddGatewayAccountCredentialsParams()
-                    .withCredentials(defaultCredentials)
+                    .withCredentials(Map.of(
+                            ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "merchant-code",
+                                    CREDENTIALS_USERNAME, "username",
+                                    CREDENTIALS_PASSWORD, "password"),
+                            RECURRING_CUSTOMER_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "cit-merchant-code",
+                                    CREDENTIALS_USERNAME, "cit-username",
+                                    CREDENTIALS_PASSWORD, "cit-password"),
+                            RECURRING_MERCHANT_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "mit-merchant-code",
+                                    CREDENTIALS_USERNAME, "mit-username",
+                                    CREDENTIALS_PASSWORD, "mit-password")))
                     .withState(ACTIVE)
-                    .withPaymentProvider(providerName)
-                    .withGatewayAccountId(Long.valueOf(this.accountId))
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withGatewayAccountId(Long.parseLong(this.accountId))
                     .build());
             return this;
         }
 
         public AddGatewayAccountParamsBuilder withEpdqCredentials() {
             this.gatewayAccountCredentialsParams = List.of(anAddGatewayAccountCredentialsParams()
-                    .withCredentials(defaultCredentials)
+                    .withCredentials(Map.of(
+                            CREDENTIALS_MERCHANT_ID, "merchant-id",
+                            CREDENTIALS_USERNAME, "username",
+                            CREDENTIALS_PASSWORD, "password",
+                            CREDENTIALS_SHA_IN_PASSPHRASE, "sha-passphrase"))
                     .withState(ACTIVE)
                     .withPaymentProvider(EPDQ.getName())
-                    .withGatewayAccountId(Long.valueOf(this.accountId))
+                    .withGatewayAccountId(Long.parseLong(this.accountId))
                     .build());
             return this;
         }
