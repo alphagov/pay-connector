@@ -13,7 +13,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
-@PactBroker(scheme = "https", host = "${PACT_BROKER_HOST:pact-broker-test.cloudapps.digital}", tags = {"${PACT_CONSUMER_TAG}", "test-fargate"},
+@PactBroker(scheme = "https", host = "${PACT_BROKER_HOST:pact-broker.deploy.payments.service.gov.uk}", tags = {"${PACT_CONSUMER_TAG}", "test-fargate"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
         consumers = {"selfservice"})
 public class SelfServiceContractTest extends ContractTest {
