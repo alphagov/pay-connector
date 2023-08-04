@@ -55,6 +55,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -579,6 +580,149 @@ public class GatewayAccountCredentialsServiceTest {
         }
 
         @Test
+        void shouldChangeStateForWorldpayRecurringAccount_whenSettingCustomerInitiatedCredentials_andMerchantInitiatedAndFlexCredentialsAreSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .withCredentials(Map.of(
+                            RECURRING_MERCHANT_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "mit-merchant-code",
+                                    CREDENTIALS_USERNAME, "mit-username",
+                                    CREDENTIALS_PASSWORD, "mit-password"
+                            )
+                    ))
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_customer_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldChangeStateForWorldpayRecurringAccount_whenSettingMerchantInitiatedCredentials_andCustomerInitiatedAndFlexCredentialsAreSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .withCredentials(Map.of(
+                            RECURRING_CUSTOMER_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "cit-merchant-code",
+                                    CREDENTIALS_USERNAME, "cit-username",
+                                    CREDENTIALS_PASSWORD, "cit-password"
+                            )
+                    ))
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_merchant_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+
+        @Test
+        void shouldNotChangeStateForWorldpayRecurringAccount_whenSettingCustomerInitiatedCredentials_andMerchantInitiatedCredentialsAreNotSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .withCredentials(Map.of())
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_customer_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldNotChangeStateForWorldpayRecurringAccount_whenSettingMerchantInitiatedCredentials_andCustomerInitiatedCredentialsAreNotSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .withCredentials(Map.of())
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_merchant_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+
+        @Test
+        void shouldNotChangeStateForLiveWorldpayRecurringAccount_whenFlexCredentialsAreNotSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withGatewayName(WORLDPAY.getName())
+                    .withType(LIVE)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withState(CREATED)
+                    .withCredentials(Map.of(
+                            RECURRING_MERCHANT_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "mit-merchant-code",
+                                    CREDENTIALS_USERNAME, "mit-username",
+                                    CREDENTIALS_PASSWORD, "mit-password"
+                            )
+                    ))
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            JsonPatchRequest patchRequest = JsonPatchRequest.from(objectMapper.valueToTree(
+                    Map.of("path", "credentials/worldpay/recurring_customer_initiated",
+                            "op", "replace",
+                            "value", Map.of(
+                                    "merchant_code", "new-merchant-code")
+                    )));
+            gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, Collections.singletonList(patchRequest));
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
         void shouldChangeStateForWorldpayLiveMOTOAccount_whenCredentialsAreConfiguredAndNotFlexCredentials() {
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
                     .withGatewayName(WORLDPAY.getName())
@@ -669,6 +813,73 @@ public class GatewayAccountCredentialsServiceTest {
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
                     .withCredentials(null)
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldSetCredentialsStateToActiveWhenFlexAndRecurringCredentialsAreSetForALiveAccount() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .withType(LIVE)
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of(
+                            RECURRING_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "cit-merchant-code"),
+                            RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "mit-merchant-code")
+                    ))
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialsEntity.getState(), is(ACTIVE));
+        }
+        
+        @Test
+        void shouldNotUpdateStateWhenOnlyRecurringCustomerInitiatedCredentialsAreSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of(
+                            RECURRING_CUSTOMER_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "merchant-code",
+                                    CREDENTIALS_USERNAME, "username",
+                                    CREDENTIALS_PASSWORD, "password"
+                            )
+                    ))
+                    .withState(CREATED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+            gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
+
+            assertThat(credentialsEntity.getState(), is(CREATED));
+        }
+
+        @Test
+        void shouldNotUpdateStateWhenOnlyRecurringMerchantInitiatedCredentialsAreSet() {
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().build())
+                    .build();
+            GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withGatewayAccountEntity(gatewayAccountEntity)
+                    .withCredentials(Map.of(
+                            RECURRING_MERCHANT_INITIATED, Map.of(
+                                    CREDENTIALS_MERCHANT_CODE, "merchant-code",
+                                    CREDENTIALS_USERNAME, "username",
+                                    CREDENTIALS_PASSWORD, "password"
+                            )
+                    ))
                     .withState(CREATED)
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
