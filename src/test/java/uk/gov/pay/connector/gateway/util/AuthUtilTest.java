@@ -19,15 +19,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class AuthUtilTest {
-    private final String merchantCode = "MERCHANTCODE";
-    private final String username = "worldpay-username";
-    private final String password = "password"; //pragma: allowlist secret
+    private final String oneOffMerchantCode = "one-off-merchant-code";
+    private final String oneOffUsername = "one-off-username";
+    private final String oneOffPassword = "one-off-password";
+    private final String citMerchantCode = "cit-merchant-code";
+    private final String citUsername = "cit-username";
+    private final String citPassword = "cit-password";
+    private final String mitMerchantCode = "mit-merchant-code";
+    private final String mitUsername = "mit-username";
+    private final String mitPassword = "mit-password";
 
     @Test
     void getWorldpayAuthHeader_shouldThrowExceptionWhenNoCredentials_forRecurringCustomerInitiated() {
         WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
-        credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
+        credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
         MissingCredentialsForRecurringPaymentException thrown = assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
             AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, true);
         });
@@ -36,8 +42,8 @@ class AuthUtilTest {
     @Test
     void getWorldpayAuthHeader_shouldThrowExceptionWhenNoCredentials_forRecurringMerchantInitiated() {
         WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
-        credentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
+        credentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
         MissingCredentialsForRecurringPaymentException thrown = assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
             AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.AGREEMENT, true);
         });
@@ -45,48 +51,44 @@ class AuthUtilTest {
 
     @Test
     void shouldGetAuthHeaderForRecurringCustomerInitiatedPayment() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, true);
 
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(citUsername + ":" + citPassword).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
     @Test
     void shouldGetAuthHeaderForRecurringMerchantInitiatedPayment() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.AGREEMENT, true);
 
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(mitUsername + ":" + mitPassword).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
     @Test
-    void shouldGetAuthHeaderForOneOffPayment_whenOneOffCustomerInitiatedCredentialsSet() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+    void shouldGetAuthHeaderForOneOffPayment() {
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
 
         Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeader(credentials, AuthorisationMode.WEB, false);
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(oneOffUsername + ":" + oneOffPassword).getBytes(StandardCharsets.UTF_8));
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
     @Test
     void shouldGetAuthHeaderForManagingTokens() {
-        WorldpayCredentials worldpayCredentials = new WorldpayCredentials();
-        worldpayCredentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
-        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(username + ":" + password).getBytes(StandardCharsets.UTF_8));
-        Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeaderForManagingRecurringAuthTokens(worldpayCredentials);
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(citUsername + ":" + citPassword).getBytes(StandardCharsets.UTF_8));
+        Map<String, String> encodedHeader = AuthUtil.getWorldpayAuthHeaderForManagingRecurringAuthTokens(credentials);
         assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
     }
 
     @Test
     void getWorldpayMerchantCode_shouldThrowExceptionWhenNoCredentials_forRecurringCustomerInitiated() {
         WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
-        credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
+        credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
         MissingCredentialsForRecurringPaymentException thrown = assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
             AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.WEB, true);
         });
@@ -95,8 +97,8 @@ class AuthUtilTest {
     @Test
     void getWorldpayMerchantCode_shouldThrowExceptionWhenNoCredentials_forRecurringMerchantInitiated() {
         WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
-        credentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
+        credentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
         MissingCredentialsForRecurringPaymentException thrown = assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
             AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.AGREEMENT, true);
         });
@@ -104,27 +106,32 @@ class AuthUtilTest {
 
     @Test
     void shouldGetMerchantCodeForRecurringCustomerInitiatedPayment() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
         String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.WEB, true);
-        assertThat(merchantId, is(merchantCode));
+        assertThat(merchantId, is(citMerchantCode));
     }
 
     @Test
     void shouldGetMerchantCodeForRecurringMerchantInitiatedPayment() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
         String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.AGREEMENT, true);
-        assertThat(merchantId, is(merchantCode));
+        assertThat(merchantId, is(mitMerchantCode));
     }
 
     @Test
     void shouldGetMerchantCodeForOneOffPayment_whenOneOffCustomerInitiatedCredentialsSet() {
-        WorldpayCredentials credentials = new WorldpayCredentials();
-        credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(merchantCode, username, password));
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
 
         String merchantId = AuthUtil.getWorldpayMerchantCode(credentials, AuthorisationMode.WEB, false);
-        assertThat(merchantId, is(merchantCode));
+        assertThat(merchantId, is(oneOffMerchantCode));
+    }
+
+    private WorldpayCredentials getWorldpayCredentialsWithAllPaymentChannels() {
+        WorldpayCredentials worldpayCredentials = new WorldpayCredentials();
+        worldpayCredentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
+        worldpayCredentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(citMerchantCode, citUsername, citPassword));
+        worldpayCredentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials(mitMerchantCode, mitUsername, mitPassword));
+        return worldpayCredentials;
     }
 
 }
