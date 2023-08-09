@@ -88,7 +88,7 @@ public class ResponseUtil {
         return status(Status.FORBIDDEN).build();
     }
 
-    private static Response buildErrorResponse(Status status, String message) {
+    public static Response buildErrorResponse(Status status, String message) {
         ErrorResponse errorResponse = new ErrorResponse(ErrorIdentifier.GENERIC, List.of(message));
         return responseWithEntity(status, errorResponse);
     }

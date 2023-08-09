@@ -168,6 +168,30 @@ public class UserNotificationServiceTest {
     }
 
     @Test
+    void shouldSendPaymentConfirmationEmailSynchronouslyIfEmailNotifyIsEnabled() throws Exception {
+        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("serviceReference", "This is a reference");
+        personalisation.put("date", "1 January 2016 - 10:23:12");
+        personalisation.put("description", "This is a description");
+        personalisation.put("serviceName", "MyService");
+        personalisation.put("customParagraph", "^ template body");
+        personalisation.put("amount", "5.00");
+        personalisation.put("corporateCardSurcharge", "");
+        when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getEmailTemplateId(),
+                chargeEntity.getEmail(),
+                personalisation,
+                null,
+                null)).thenReturn(mockNotificationCreatedResponse);
+
+        Optional<String> maybeNotificationId = userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, chargeEntity.getGatewayAccount());
+        assertThat(maybeNotificationId.get(), is(notificationId.toString()));
+    }
+
+    @Test
     void shouldSendRefundIssuedEmailIfEmailNotifyIsEnabled() throws Exception {
         when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
         when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);

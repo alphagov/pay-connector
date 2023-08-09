@@ -74,46 +74,77 @@ public class UserNotificationService {
     }
 
     public Future<Optional<String>> sendPaymentConfirmedEmail(ChargeEntity chargeEntity, GatewayAccountEntity gatewayAccountEntity) {
-        return sendEmail(EmailNotificationType.PAYMENT_CONFIRMED, Charge.from(chargeEntity), gatewayAccountEntity,
-                buildConfirmationEmailPersonalisationFrom(chargeEntity));
+        var charge = Charge.from(chargeEntity);
+        return sendEmail(EmailNotificationType.PAYMENT_CONFIRMED, charge, gatewayAccountEntity,
+                buildConfirmationEmailPersonalisationFrom(charge, gatewayAccountEntity));
+    }
+
+    public Optional<String> sendPaymentConfirmedEmailSynchronously(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+        return sendEmailSynchronously(EmailNotificationType.PAYMENT_CONFIRMED, charge, gatewayAccountEntity,
+                buildConfirmationEmailPersonalisationFrom(charge, gatewayAccountEntity));
     }
 
     private Future<Optional<String>> sendEmail(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation) {
+        if (shouldSendEmail(emailNotificationType, charge, gatewayAccountEntity)) {
+            Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
+            return executorService.submit(() -> sendEmailInner(emailNotificationType, charge, gatewayAccountEntity, personalisation, responseTimeStopwatch));
+        }
+        else {
+            return CompletableFuture.completedFuture(Optional.empty());
+        }
+    }
+
+    private Optional<String> sendEmailSynchronously(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation) {
+        if (shouldSendEmail(emailNotificationType, charge, gatewayAccountEntity)) {
+            Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
+            return sendEmailInner(emailNotificationType, charge, gatewayAccountEntity, personalisation, responseTimeStopwatch);
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+    
+    private boolean shouldSendEmail(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         boolean isEmailEnabled = ofNullable(gatewayAccountEntity.getEmailNotifications().get(emailNotificationType))
                 .map(EmailNotificationEntity::isEnabled)
                 .orElse(false);
-        
-        if (!emailNotifyGloballyEnabled || !isEmailEnabled || gatewayAccountEntity.getEmailCollectionMode().equals(OFF) ||
-                gatewayAccountEntity.getEmailCollectionMode().equals(OPTIONAL) && ofNullable(charge.getEmail()).isEmpty()) {
-            return CompletableFuture.completedFuture(Optional.empty());
-        }
 
-        if (charge.getEmail() == null) {
+        boolean doNotTrySending = !emailNotifyGloballyEnabled || !isEmailEnabled || gatewayAccountEntity.getEmailCollectionMode().equals(OFF) ||
+                gatewayAccountEntity.getEmailCollectionMode().equals(OPTIONAL) && ofNullable(charge.getEmail()).isEmpty();
+
+        boolean noEmailAddress = charge.getEmail() == null;
+
+        if (doNotTrySending) {
+            return false;
+        }
+        else if (noEmailAddress) {
             logger.warn("Cannot send email for charge_external_id = {} because the charge does not have an email address", charge.getExternalId());
-            return CompletableFuture.completedFuture(Optional.empty());
+            return false;
         }
+        else {
+            return true;
+        }
+    }
 
-        Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
-        return executorService.submit(() -> {
-            try {
-                MDC.put(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId().toString());
-                MDC.put(PAYMENT_EXTERNAL_ID, charge.getExternalId());
-                NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, gatewayAccountEntity);
-                logger.info(format("Sending %s email.", emailNotificationType));
-                SendEmailResponse response = notifyClientSettings.getClient()
-                        .sendEmail(notifyClientSettings.getTemplateId(), charge.getEmail(), personalisation, null, notifyClientSettings.getEmailReplyToId());
-                return Optional.of(response.getNotificationId().toString());
-            } catch (NotificationClientException e) {
-                logger.error("Failed to send " + emailNotificationType + " email - charge_external_id=" + charge.getExternalId(), e);
-                metricRegistry.counter("notify-operations.failures").inc();
-                return Optional.empty();
-            } finally {
-                MDC.remove(GATEWAY_ACCOUNT_ID);
-                MDC.remove(PAYMENT_EXTERNAL_ID);
-                responseTimeStopwatch.stop();
-                metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
-            }
-        });
+    private Optional<String> sendEmailInner(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation, Stopwatch responseTimeStopwatch) {
+        try {
+            MDC.put(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId().toString());
+            MDC.put(PAYMENT_EXTERNAL_ID, charge.getExternalId());
+            NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, gatewayAccountEntity);
+            logger.info(format("Sending %s email.", emailNotificationType));
+            SendEmailResponse response = notifyClientSettings.getClient()
+                    .sendEmail(notifyClientSettings.getTemplateId(), charge.getEmail(), personalisation, null, notifyClientSettings.getEmailReplyToId());
+            return Optional.of(response.getNotificationId().toString());
+        } catch (NotificationClientException e) {
+            logger.error("Failed to send " + emailNotificationType + " email - charge_external_id=" + charge.getExternalId(), e);
+            metricRegistry.counter("notify-operations.failures").inc();
+            return Optional.empty();
+        } finally {
+            MDC.remove(GATEWAY_ACCOUNT_ID);
+            MDC.remove(PAYMENT_EXTERNAL_ID);
+            responseTimeStopwatch.stop();
+            metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
+        }
     }
 
     private NotifyClientSettings getNotifyClientSettings(EmailNotificationType emailNotificationType, GatewayAccountEntity gatewayAccountEntity) {
@@ -178,29 +209,28 @@ public class UserNotificationService {
         }
     }
 
-    private HashMap<String, String> buildConfirmationEmailPersonalisationFrom(ChargeEntity charge) {
-        GatewayAccountEntity gatewayAccount = charge.getGatewayAccount();
+    private HashMap<String, String> buildConfirmationEmailPersonalisationFrom(Charge charge, GatewayAccountEntity gatewayAccount) {
         EmailNotificationEntity emailNotification = gatewayAccount
                 .getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED);
 
         String customParagraph = emailNotification != null ? emailNotification.getTemplateBody() : "";
         HashMap<String, String> map = new HashMap<>();
 
-        map.put("serviceReference", charge.getReference().toString());
+        map.put("serviceReference", charge.getReference());
         map.put("date", DateTimeUtils.toUserFriendlyDate(charge.getCreatedDate()));
         map.put("amount", formatToPounds(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)));
         map.put("description", charge.getDescription());
         map.put("customParagraph", isBlank(customParagraph) ? "" : "^ " + LITERAL_DOLLAR_REFERENCE.matcher(customParagraph)
-                .replaceAll(Matcher.quoteReplacement(charge.getReference().toString())));
+                .replaceAll(Matcher.quoteReplacement(charge.getReference())));
         map.put("serviceName", StringUtils.defaultString(gatewayAccount.getServiceName()));
-        
+
         String corporateSurchargeMsg = charge.getCorporateSurcharge()
-                .map(corporateSurcharge -> 
+                .map(corporateSurcharge ->
                         format("Your payment includes a fee of £%s for using a corporate credit or debit card.",
                                 formatToPounds(corporateSurcharge)))
                 .orElse("");
         map.put("corporateCardSurcharge", corporateSurchargeMsg);
-        
+
         return map;
     }
 
