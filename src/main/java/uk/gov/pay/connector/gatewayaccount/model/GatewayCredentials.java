@@ -14,6 +14,11 @@ public interface GatewayCredentials {
         return Optional.empty();
     }
 
+    @JsonIgnore
+    default boolean isConfiguredForGooglePayPayments() {
+        return true;
+    }
+    
     boolean hasCredentials();
 
     public class Views {

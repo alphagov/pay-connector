@@ -127,7 +127,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void isAllowGooglePayShouldReturnFalseIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
+    void isAllowGooglePayShouldReturnFalseForWorldpayAccountIfFlagIsEnabledAndMerchantAccountIdIsNotAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .build();
@@ -138,7 +138,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void isAllowGooglePayShouldReturnTrueIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
+    void isAllowGooglePayShouldReturnTrueForWorldpayAccountIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))
@@ -150,7 +150,7 @@ class GatewayAccountEntityTest {
     }
 
     @Test
-    void isAllowGooglePayShouldReturnFalseIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
+    void isAllowGooglePayShouldReturnFalseForWorldpayAccountIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))
@@ -159,6 +159,17 @@ class GatewayAccountEntityTest {
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
         assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+    }
+
+    @Test
+    void isAllowGooglePayShouldReturnTrueForStripeAccountIfFlagIsEnabled() {
+        GatewayAccountCredentialsEntity credentialsEntityStripe = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider("stripe")
+                .build();
+        gatewayAccountEntity.setAllowGooglePay(true);
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityStripe));
+        
+        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(true));
     }
 
     @Test

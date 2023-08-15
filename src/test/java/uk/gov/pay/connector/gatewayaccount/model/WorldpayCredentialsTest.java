@@ -41,4 +41,17 @@ class WorldpayCredentialsTest {
         worldpayCredentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials("merchant-code", "username", "password"));
         assertThat(worldpayCredentials.hasCredentials(), is(true));
     }
+
+    @Test
+    void isConfiguredForGooglePayPaymentsShouldReturnTrueIfGatewayMerchantIdSet() {
+        WorldpayCredentials worldpayCredentials = new WorldpayCredentials();
+        worldpayCredentials.setGooglePayMerchantId("a-google-pay-merchant-id");
+        assertThat(worldpayCredentials.isConfiguredForGooglePayPayments(), is(true));
+    }
+
+    @Test
+    void isConfiguredForGooglePayPaymentsShouldReturnFalseIfGatewayMerchantIdNotSet() {
+        WorldpayCredentials worldpayCredentials = new WorldpayCredentials();
+        assertThat(worldpayCredentials.isConfiguredForGooglePayPayments(), is(false));
+    }
 }

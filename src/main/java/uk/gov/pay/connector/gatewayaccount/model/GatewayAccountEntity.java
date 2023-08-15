@@ -39,7 +39,6 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
@@ -245,7 +244,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                 .flatMap(GatewayCredentials::getGooglePayMerchantId)
                 .orElse(null);
     }
-    
+
     public List<GatewayAccountCredentialsEntity> getGatewayAccountCredentials() {
         return gatewayAccountCredentials;
     }
@@ -299,7 +298,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     }
     
     public boolean isAllowGooglePay() {
-        return allowGooglePay && isNotBlank(getGooglePayMerchantId());
+        Boolean hasCredentialsConfiguredForGooglePay = getCurrentOrActiveGatewayAccountCredential()
+                .map(GatewayAccountCredentialsEntity::getCredentialsObject)
+                .map(GatewayCredentials::isConfiguredForGooglePayPayments)
+                .orElse(false);
+        return allowGooglePay && hasCredentialsConfiguredForGooglePay;
     }
     
     public boolean isAllowApplePay() {

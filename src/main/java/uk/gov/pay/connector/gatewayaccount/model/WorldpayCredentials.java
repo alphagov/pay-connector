@@ -83,6 +83,12 @@ public class WorldpayCredentials implements GatewayCredentials {
         return Optional.ofNullable(googlePayMerchantId);
     }
 
+    @Override
+    @JsonIgnore
+    public boolean isConfiguredForGooglePayPayments() {
+        return googlePayMerchantId != null;
+    }
+
     @JsonProperty(GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID)
     @JsonView({Views.Api.class})
     private String getGooglePayMerchantIdForSerialization() {
