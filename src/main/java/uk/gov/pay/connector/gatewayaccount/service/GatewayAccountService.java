@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_AUTHORISATION_API;
@@ -241,7 +242,7 @@ public class GatewayAccountService {
     }
 
     private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {
-        if (!WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName())) {
+        if (!(WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName()) || STRIPE.getName().equals(gatewayAccountEntity.getGatewayName()))) {
             throw new DigitalWalletNotSupportedGatewayException(gatewayAccountEntity.getGatewayName());
         }
     }
