@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.epdq.EpdqNotificationService;
 import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
@@ -21,11 +20,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.HEADER;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -39,18 +36,15 @@ public class NotificationResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationResource.class);
 
     private final WorldpayNotificationService worldpayNotificationService;
-    private final EpdqNotificationService epdqNotificationService;
     private final SandboxNotificationService sandboxNotificationService;
     private final StripeNotificationService stripeNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
-                                EpdqNotificationService epdqNotificationService,
                                 SandboxNotificationService sandboxNotificationService,
                                 StripeNotificationService stripeNotificationService) {
         this.worldpayNotificationService = worldpayNotificationService;
         this.sandboxNotificationService = sandboxNotificationService;
-        this.epdqNotificationService = epdqNotificationService;
         this.stripeNotificationService = stripeNotificationService;
     }
 
@@ -109,32 +103,7 @@ public class NotificationResource {
         logResponseMessage(response, WORLDPAY);
         return Response.ok(response).build();
     }
-
-    @POST
-    @Consumes(APPLICATION_FORM_URLENCODED)
-    @Path("/v1/api/notifications/epdq")
-    @Produces({TEXT_XML, APPLICATION_JSON})
-    @Operation(
-            summary = "Handle ePDQ notifications",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected")
-            }
-    )
-    public Response authoriseEpdqNotifications(
-            @Parameter(example = "See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/epdq/capture-notification.txt for example notification")
-            String notification,
-            @Parameter(in = HEADER, example = "4.3.2.1")
-            @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
-        if (!epdqNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
-            logRejectionMessage(forwardedIpAddresses, EPDQ);
-            return forbiddenErrorResponse();
-        }
-        String response = "[OK]";
-        logResponseMessage(response, EPDQ);
-        return Response.ok(response).build();
-    }
-
+    
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/stripe")

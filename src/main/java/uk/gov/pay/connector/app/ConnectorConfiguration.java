@@ -47,8 +47,7 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private SandboxGatewayConfig sandboxConfig;
 
-    @Valid
-    @NotNull
+    @JsonProperty("epdq")
     private GatewayConfig epdqConfig;
 
     @Valid
@@ -184,7 +183,6 @@ public class ConnectorConfiguration extends Configuration {
         return sandboxConfig;
     }
 
-    @JsonProperty("epdq")
     public GatewayConfig getEpdqConfig() {
         return epdqConfig;
     }
@@ -202,7 +200,6 @@ public class ConnectorConfiguration extends Configuration {
             case WORLDPAY:
                 return getWorldpayConfig();
             case EPDQ:
-                return getEpdqConfig();
             case SMARTPAY:
             default:
                 throw new PaymentGatewayName.Unsupported();
