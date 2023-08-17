@@ -183,12 +183,7 @@ public class ConnectorConfiguration extends Configuration {
     public SandboxGatewayConfig getSandboxConfig() {
         return sandboxConfig;
     }
-
-    @JsonProperty("epdq")
-    public GatewayConfig getEpdqConfig() {
-        return epdqConfig;
-    }
-
+    
     @JsonProperty("stripe")
     public StripeGatewayConfig getStripeConfig() {
         return stripeConfig;
@@ -202,7 +197,6 @@ public class ConnectorConfiguration extends Configuration {
             case WORLDPAY:
                 return getWorldpayConfig();
             case EPDQ:
-                return getEpdqConfig();
             case SMARTPAY:
             default:
                 throw new PaymentGatewayName.Unsupported();
