@@ -49,6 +49,7 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
+import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.WebApplicationException;
 import java.net.URI;
 import java.time.Clock;
@@ -76,26 +77,26 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     private final String frontendUrl;
     private final MetricRegistry metricRegistry;
-    private final GatewayClient authoriseClient;
-    private final GatewayClient cancelClient;
+//    private final GatewayClient authoriseClient;
+//    private final GatewayClient cancelClient;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
-    private final Map<String, String> gatewayUrlMap;
-    private final EpdqCaptureHandler epdqCaptureHandler;
-    private final EpdqRefundHandler epdqRefundHandler;
+//    private final Map<String, String> gatewayUrlMap;
+//    private final EpdqCaptureHandler epdqCaptureHandler;
+//    private final EpdqRefundHandler epdqRefundHandler;
     private final Clock clock;
 
     @Inject
     public EpdqPaymentProvider(ConnectorConfiguration configuration, GatewayClientFactory gatewayClientFactory, Environment environment, Clock clock) {
-        gatewayUrlMap = configuration.getGatewayConfigFor(EPDQ).getUrls();
-        authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, environment.metrics());
-        cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, environment.metrics());
-        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, environment.metrics());
-        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, environment.metrics());
+//        gatewayUrlMap = configuration.getGatewayConfigFor(EPDQ).getUrls();
+//        authoriseClient = gatewayClientFactory.createGatewayClient(EPDQ, AUTHORISE, environment.metrics());
+//        cancelClient = gatewayClientFactory.createGatewayClient(EPDQ, CANCEL, environment.metrics());
+//        GatewayClient captureClient = gatewayClientFactory.createGatewayClient(EPDQ, CAPTURE, environment.metrics());
+//        GatewayClient refundClient = gatewayClientFactory.createGatewayClient(EPDQ, REFUND, environment.metrics());
         frontendUrl = configuration.getLinks().getFrontendUrl();
         metricRegistry = environment.metrics();
         externalRefundAvailabilityCalculator = new EpdqExternalRefundAvailabilityCalculator();
-        epdqCaptureHandler = new EpdqCaptureHandler(captureClient, gatewayUrlMap);
-        epdqRefundHandler = new EpdqRefundHandler(refundClient, gatewayUrlMap);
+//        epdqCaptureHandler = new EpdqCaptureHandler(captureClient, gatewayUrlMap);
+//        epdqRefundHandler = new EpdqRefundHandler(refundClient, gatewayUrlMap);
         this.clock = clock;
     }
 
@@ -111,14 +112,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException {
-        URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_NEW_ORDER));
-        GatewayClient.Response response = authoriseClient.postRequestFor(
-                url,
-                EPDQ,
-                request.getGatewayAccount().getType(),
-                buildAuthoriseOrder(request, frontendUrl), 
-                getEpdqAuthHeader(request.getGatewayCredentials()));
-        return getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
+        throw new NotSupportedException();
     }
 
     private static GatewayResponse getEpdqGatewayResponse(GatewayClient.Response response, Class<? extends BaseResponse> responseClass) throws GatewayErrorException {
@@ -140,19 +134,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
-        return epdqRefundHandler.refund(request);
+        throw new NotSupportedException();
     }
 
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
-        URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_MAINTENANCE_ORDER));
-        GatewayClient.Response response = cancelClient.postRequestFor(
-                url,
-                EPDQ,
-                request.getGatewayAccount().getType(),
-                buildCancelOrder(request),
-                getEpdqAuthHeader(request.getGatewayCredentials()));
-        return getEpdqGatewayResponse(response, EpdqCancelResponse.class);
+        throw new NotSupportedException();
     }
 
     @Override
@@ -161,27 +148,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
     }
 
     public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) throws GatewayException {
-        URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(chargeQueryGatewayRequest.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
-        GatewayClient.Response response = authoriseClient.postRequestFor(
-                url,
-                EPDQ,
-                chargeQueryGatewayRequest.getGatewayAccount().getType(),
-                buildQueryOrderRequestFor(chargeQueryGatewayRequest),
-                getEpdqAuthHeader(chargeQueryGatewayRequest.getGatewayCredentials()));
-        GatewayResponse<EpdqQueryResponse> epdqGatewayResponse = getUninterpretedEpdqGatewayResponse(response, EpdqQueryResponse.class);
-
-        return epdqGatewayResponse.getBaseResponse()
-                .map(epdqQueryResponse -> {
-                    ChargeStatus mappedStatus = EpdqStatusMapper.map(epdqQueryResponse.getStatus());
-                    return new ChargeQueryResponse(mappedStatus, epdqQueryResponse);
-                })
-                .orElseThrow(() ->
-                        new WebApplicationException(String.format(
-                                "Unable to query charge %s - an error occurred: %s",
-                                chargeQueryGatewayRequest.getChargeExternalId(),
-                                epdqGatewayResponse
-                        )));
-            
+        throw new NotSupportedException();
     }
 
     @Override
@@ -191,57 +158,12 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        Optional<String> transactionId = Optional.empty();
-        String stringifiedResponse;
-        BaseAuthoriseResponse.AuthoriseStatus authorisationStatus;
-        
-        try {
-            URI url = URI.create(String.format("%s/%s", gatewayUrlMap.get(request.getGatewayAccount().getType()), ROUTE_FOR_QUERY_ORDER));
-            GatewayClient.Response response = authoriseClient.postRequestFor(
-                    url,
-                    EPDQ,
-                    request.getGatewayAccount().getType(),
-                    buildQueryOrderRequestFor(request),
-                    getEpdqAuthHeader(request.getGatewayCredentials()));
-            GatewayResponse<BaseAuthoriseResponse> gatewayResponse = getEpdqGatewayResponse(response, EpdqAuthorisationResponse.class);
-            BaseAuthoriseResponse.AuthoriseStatus authoriseStatus = gatewayResponse.getBaseResponse()
-                    .map(BaseAuthoriseResponse::authoriseStatus).orElse(ERROR);
-            Auth3dsResultOutcome auth3DResult = request.getAuth3dsResult().getAuth3dsResultOutcome() == null ?
-                    Auth3dsResultOutcome.ERROR : // we treat no result from frontend as an error
-                    request.getAuth3dsResult().getAuth3dsResultOutcome();
-            
-            if (responseDoesNotMatchWithUserResult(authoriseStatus, auth3DResult)) {
-                LOGGER.warn("epdq.authorise-3ds.result.mismatch for chargeId={}, gatewayAccountId={}, frontendstatus={}, gatewaystatus={}",
-                        request.getChargeExternalId(), request.getGatewayAccount().getId(), auth3DResult, authoriseStatus);
-                metricRegistry.counter(format("epdq.authorise-3ds.result.mismatch.account.%s.frontendstatus.%s.gatewaystatus.%s",
-                        EPDQ.getName(),
-                        request.getAuth3dsResult().getAuth3dsResultOutcome(),
-                        authoriseStatus.name()))
-                        .inc();
-                gatewayResponse = reconstructErrorBiasedGatewayResponse(gatewayResponse, authoriseStatus, auth3DResult);
-            }
-            
-            if (gatewayResponse.getBaseResponse().isEmpty()) gatewayResponse.throwGatewayError();
-            
-            transactionId = Optional.ofNullable(gatewayResponse.getBaseResponse().get().getTransactionId());
-            stringifiedResponse = gatewayResponse.toString();
-            authorisationStatus = gatewayResponse.getBaseResponse().get().authoriseStatus();
-            
-        } catch (GatewayException e) {
-            stringifiedResponse = e.getMessage();
-            authorisationStatus = BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION;
-        }
-        
-        if (transactionId.isPresent()) {
-            return Gateway3DSAuthorisationResponse.of(stringifiedResponse, authorisationStatus, transactionId.get());
-        } else {
-            return Gateway3DSAuthorisationResponse.of(stringifiedResponse, authorisationStatus);
-        }
+        throw new NotSupportedException();
     }
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-        return epdqCaptureHandler.capture(request);
+        throw new NotSupportedException();
     }
 
     @Override

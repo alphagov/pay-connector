@@ -26,10 +26,7 @@ Alternatively, docs can be generated using [Pay API Docs generator](https://gith
 | `GDS_CONNECTOR_WORLDPAY_LIVE_URL` | - | Pointing to the LIVE gateway URL of Worldpay payment provider. |
 | `WORLDPAY_3DS_FLEX_DDC_TEST_URL` | - | Pointing to Worldpay's TEST Device Data Collection URL. |
 | `WORLDPAY_3DS_FLEX_DDC_LIVE_URL` | - | Pointing to Cardinal Commerce's LIVE Device Data Collection URL. |
-| `GDS_CONNECTOR_EPDQ_TEST_URL` | - | Pointing to the TEST gateway URL of ePDQ payment provider. |
-| `GDS_CONNECTOR_EPDQ_LIVE_URL` | - | Pointing to the LIVE gateway URL of ePDQ payment provider. |
 | `COLLECT_FEE_FEATURE_FLAG` | false | enable or disable collecting fees for the Stripe payment gateway. |
-| `EPDQ_ALLOWED_CIDRS` | - | A list of allowed Epdq CIDRs used for IP firewalling on notifications coming from Epdq. |
 | `SANDBOX_ALLOWED_CIDRS` | - | A list of allowed Sandbox CIDRs used for IP firewalling on notifications coming from Sandbox. |
 | `STRIPE_ALLOWED_CIDRS` | - | A list of allowed Stripe CIDRs used for IP firewalling on notifications coming from Stripe. |
 | `STRIPE_TRANSACTION_FEE_PERCENTAGE` | - | percentage of total charge amount to recover GOV.UK Pay platform costs. |

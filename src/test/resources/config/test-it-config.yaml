@@ -38,21 +38,6 @@ sandbox:
   allowedCidrs: ["3.3.3.0/22", "6.6.6.6/32"]
   sandboxAuthToken: "let-me-in"
 
-epdq:
-  allowedCidrs: ["4.3.2.0/24", "8.8.8.8/32"]
-  urls:
-    test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
-    live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
-  jerseyClientOverrides:
-    auth:
-      readTimeout: 20000ms
-    cancel:
-      readTimeout: 2000ms
-    refund:
-      readTimeout: 2000ms
-    capture:
-      readTimeout: 1000ms
-
 stripe:
   allowedCidrs: ["1.2.3.0/24", "9.9.9.9/32"]
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}

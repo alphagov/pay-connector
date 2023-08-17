@@ -32,21 +32,6 @@ worldpay:
 sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS:-[]}
 
-epdq:
-  allowedCidrs: ${EPDQ_ALLOWED_CIDRS:-[]}
-  urls:
-    test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
-    live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
-  jerseyClientOverrides:
-    auth:
-      readTimeout: 20000ms
-    cancel:
-      readTimeout: 2000ms
-    refund:
-      readTimeout: 2000ms
-    capture:
-      readTimeout: 1000ms
-
 stripe:
   allowedCidrs: ${STRIPE_ALLOWED_CIDRS:-[]}
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}

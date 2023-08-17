@@ -46,11 +46,7 @@ public class ConnectorConfiguration extends Configuration {
     @Valid
     @NotNull
     private SandboxGatewayConfig sandboxConfig;
-
-    @Valid
-    @NotNull
-    private GatewayConfig epdqConfig;
-
+    
     @Valid
     @NotNull
     private StripeGatewayConfig stripeConfig;
