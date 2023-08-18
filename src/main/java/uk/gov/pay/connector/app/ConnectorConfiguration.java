@@ -47,9 +47,6 @@ public class ConnectorConfiguration extends Configuration {
     @NotNull
     private SandboxGatewayConfig sandboxConfig;
 
-    @JsonProperty("epdq")
-    private GatewayConfig epdqConfig;
-
     @Valid
     @NotNull
     private StripeGatewayConfig stripeConfig;
@@ -181,10 +178,6 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("sandbox")
     public SandboxGatewayConfig getSandboxConfig() {
         return sandboxConfig;
-    }
-
-    public GatewayConfig getEpdqConfig() {
-        return epdqConfig;
     }
 
     @JsonProperty("stripe")
