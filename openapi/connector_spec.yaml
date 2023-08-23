@@ -4248,6 +4248,9 @@ components:
           type: string
           example: Joe B
           maxLength: 255
+        display_name:
+          type: string
+          example: MasterCard 1234
         email:
           type: string
           example: mr@payment.test
@@ -4259,6 +4262,12 @@ components:
           type: string
           description: last digits card number
           example: "4242"
+        network:
+          type: string
+          example: MasterCard
+        transaction_identifier:
+          type: string
+          example: 372C3858122B6BC39C6095ECA2F994A8AA012F3B025D0D72ECFD449C2A5877F9
         user_agent_header:
           type: string
           example: Mozilla/5.0
