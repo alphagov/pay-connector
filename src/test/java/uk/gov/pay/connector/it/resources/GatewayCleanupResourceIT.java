@@ -33,7 +33,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayCleanupResourceIT extends ChargingITestBase {
 
-    private static final String PROVIDER_NAME = "epdq";
+    private static final String PROVIDER_NAME = "worldpay";
 
     public GatewayCleanupResourceIT() {
         super(PROVIDER_NAME);
@@ -68,8 +68,8 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
                 .withGatewayCredentialId(credentialParams.getId())
                 .build());
 
-        epdqMockClient.mockCancelSuccess();
-        epdqMockClient.mockAuthorisationQuerySuccess();
+        worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         given().port(testContext.getPort())
                 .post("/v1/tasks/gateway-cleanup-sweep?limit=10")
@@ -106,8 +106,8 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         addCharge(AUTHORISATION_ERROR);
         addCharge(AUTHORISATION_ERROR);
 
-        epdqMockClient.mockCancelSuccess();
-        epdqMockClient.mockAuthorisationQuerySuccess();
+        worldpayMockClient.mockCancelSuccess();
+        worldpayMockClient.mockAuthorisationQuerySuccess();
 
         given().port(testContext.getPort())
                 .post("/v1/tasks/gateway-cleanup-sweep?limit=2")

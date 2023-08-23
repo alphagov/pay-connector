@@ -24,7 +24,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -38,16 +38,19 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccountId;
-import static uk.gov.pay.connector.it.util.NotificationUtils.epdqNotificationPayload;
+import static uk.gov.pay.connector.it.util.NotificationUtils.worldpayRefundNotificationPayload;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = SendRefundEmailIT.ConnectorAppWithCustomInjector.class, config = "config/test-it-config.yaml", 
-        configOverrides = {@ConfigOverride(key = "notifyConfig.emailNotifyEnabled", value = "true")})
+        configOverrides = {
+        @ConfigOverride(key = "notifyConfig.emailNotifyEnabled", value = "true"),
+        @ConfigOverride(key = "worldpay.secureNotificationEnabled", value = "false")
+})
 public class SendRefundEmailIT {
-    private static final String EPDQ_IP_ADDRESS = "4.3.2.1";
+    private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
 
     @DropwizardTestContext
     protected TestContext testContext;
@@ -83,16 +86,15 @@ public class SendRefundEmailIT {
         String payIdSub = "2";
         String refundExternalId = "999999";
 
-        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper, "epdq");
-        databaseTestHelper.addRefund(refundExternalId,
-                100,  REFUND_SUBMITTED, transactionId + "/" + payIdSub,
+        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper, "worldpay");
+        databaseTestHelper.addRefund(refundExternalId,100,  REFUND_SUBMITTED, refundExternalId,
                 ZonedDateTime.now(), chargeId.toString());
 
         given().port(testContext.getPort())
-                .header("X-Forwarded-For", EPDQ_IP_ADDRESS)
-                .body(epdqNotificationPayload(transactionId, payIdSub, "8", credentials.get(CREDENTIALS_SHA_OUT_PASSPHRASE).toString()))
-                .contentType(APPLICATION_FORM_URLENCODED)
-                .post("/v1/api/notifications/epdq");
+                .header("X-Forwarded-For", WORLDPAY_IP_ADDRESS)
+                .body(worldpayRefundNotificationPayload(transactionId, "REFUNDED", refundExternalId))
+                .contentType(TEXT_XML)
+                .post("/v1/api/notifications/worldpay");
 
         Thread.sleep(500L); // Email sent using ExecutorService task: give it some time to complete
 
@@ -102,7 +104,7 @@ public class SendRefundEmailIT {
     private void addGatewayAccount() {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(accountId)
-                .withPaymentGateway("epdq")
+                .withPaymentGateway("worldpay")
                 .withCredentials(credentials)
                 .build());
         databaseTestHelper.addEmailNotification(Long.valueOf(accountId), "a template", true, REFUND_ISSUED);

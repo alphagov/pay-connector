@@ -22,7 +22,6 @@ import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.rules.CardidStub;
-import uk.gov.pay.connector.rules.EpdqMockClient;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -113,7 +112,6 @@ public class ChargingITestBase {
     protected static final String JSON_SOURCE_KEY = "source";
 
     protected WorldpayMockClient worldpayMockClient;
-    protected EpdqMockClient epdqMockClient;
     protected StripeMockClient stripeMockClient;
     protected LedgerStub ledgerStub;
     protected CardidStub cardidStub;
@@ -144,7 +142,6 @@ public class ChargingITestBase {
     public void setUp() {
         wireMockServer = testContext.getWireMockServer();
         worldpayMockClient = new WorldpayMockClient(wireMockServer);
-        epdqMockClient = new EpdqMockClient(wireMockServer);
         stripeMockClient = new StripeMockClient(wireMockServer);
         ledgerStub = new LedgerStub(wireMockServer);
         cardidStub = new CardidStub(wireMockServer);

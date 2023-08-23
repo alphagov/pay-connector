@@ -1181,28 +1181,6 @@ paths:
       summary: Resolve charge status discrepancy
       tags:
       - Discrepancies
-  /v1/api/notifications/epdq:
-    post:
-      operationId: authoriseEpdqNotifications
-      parameters:
-      - example: 4.3.2.1
-        in: header
-        name: X-Forwarded-For
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: string
-      responses:
-        "200":
-          description: OK
-        "403":
-          description: Forbidden - notification rejected
-      summary: Handle ePDQ notifications
-      tags:
-      - Notifications
   /v1/api/notifications/sandbox:
     post:
       description: This endpoint returns a HTTP status code of 200 for authorized

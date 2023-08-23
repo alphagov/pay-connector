@@ -12,9 +12,6 @@ apple_pay_certificate: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVjRENDQkJhZ0F3S
 aws_access_key: x
 aws_secret_key: x
 
-epdq_live_url: https://example.com/stub/epdq
-epdq_test_url: https://example.com/stub/epdq
-
 worldpay_live_url: https://example.com/stub/worldpay
 worldpay_test_url: https://example.com/stub/worldpay
 secure_worldpay_notification_domain: london.cloudapps.digital

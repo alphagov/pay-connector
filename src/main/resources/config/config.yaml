@@ -71,24 +71,6 @@ sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS}
   sandboxAuthToken: ${SANDBOX_AUTH_TOKEN:-}
 
-epdq:
-  allowedCidrs: ${EPDQ_ALLOWED_CIDRS}
-  urls:
-    test: ${GDS_CONNECTOR_EPDQ_TEST_URL}
-    live: ${GDS_CONNECTOR_EPDQ_LIVE_URL}
-
-  # ePDQ can take a long time to respond to requests, often 3s or more and sometimes a lot longer, so we have quite
-  # generous timeouts for all operations.
-  jerseyClientOverrides:
-    auth:
-      readTimeout: 50000ms
-    cancel:
-      readTimeout: 20000ms
-    refund:
-      readTimeout: 20000ms
-    capture:
-      readTimeout: 20000ms
-
 stripe:
   allowedCidrs: ${STRIPE_ALLOWED_CIDRS}
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}

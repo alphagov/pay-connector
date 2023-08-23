@@ -192,7 +192,7 @@ public class ConnectorModule extends AbstractModule {
     @Singleton
     @Named("AllowedEpdqIpAddresses")
     public Set<String> allowedEpdqIpAddresses(ConnectorConfiguration config) {
-        return CidrUtils.getIpAddresses(config.getEpdqConfig().getAllowedCidrs());
+        return Set.of();
     }
 
     @Provides

@@ -145,7 +145,6 @@ abstract public class AppWithPostgresRule implements TestRule {
             newConfigOverride.add(config("worldpay.urls.test", "http://localhost:" + wireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
             newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
             newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.live", String.format("http://localhost:%s/shopper/3ds/ddc.html", wireMockPort)));
-            newConfigOverride.add(config("epdq.urls.test", "http://localhost:" + wireMockPort + "/epdq"));
             newConfigOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
         }
         newConfigOverride.add(config("ledgerBaseURL", "http://localhost:" + wireMockPort));
