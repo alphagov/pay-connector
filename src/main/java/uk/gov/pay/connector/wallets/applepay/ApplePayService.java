@@ -2,6 +2,7 @@ package uk.gov.pay.connector.wallets.applepay;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletAuthoriseService;
 import uk.gov.pay.connector.wallets.WalletService;
@@ -22,12 +23,15 @@ public class ApplePayService extends WalletService {
         super(authoriseService, WalletType.APPLE_PAY);
         this.applePayDecrypter = applePayDecrypter;
     }
-    
+
     @Override
-    public WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest applePayAuthRequest) {
+    public WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest, String paymentGatewayName) {
         LOGGER.info("Decrypting apple pay payload for charge with id {}", chargeId);
-        AppleDecryptedPaymentData result = applePayDecrypter.performDecryptOperation((ApplePayAuthRequest) applePayAuthRequest);
-        result.setPaymentInfo(applePayAuthRequest.getPaymentInfo());
+        ApplePayAuthRequest applePayAuthRequest = (ApplePayAuthRequest) walletAuthorisationRequest;
+        AppleDecryptedPaymentData result = paymentGatewayName.equals(PaymentGatewayName.STRIPE.getName()) ?
+                new AppleDecryptedPaymentData() :
+                applePayDecrypter.performDecryptOperation(applePayAuthRequest);
+        result.setPaymentInfo(walletAuthorisationRequest.getPaymentInfo());
         LOGGER.info("Finished decryption for id {}", chargeId);
         return result;
     }

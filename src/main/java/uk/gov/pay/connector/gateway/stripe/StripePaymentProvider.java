@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.exception.StripeException;
 import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
@@ -43,16 +44,18 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.wallets.StripeApplePayAuthorisationHandler;
+import uk.gov.pay.connector.gateway.stripe.wallets.StripeGooglePayAuthorisationHandler;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.model.StripeGooglePayAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -78,12 +81,15 @@ public class StripePaymentProvider implements PaymentProvider {
     private final StripeFailedPaymentFeeCollectionHandler stripeFailedPaymentFeeCollectionHandler;
     private final StripeQueryPaymentStatusHandler stripeQueryPaymentStatusHandler;
     private final StripeDisputeHandler stripeDisputeHandler;
+    private final StripeApplePayAuthorisationHandler stripeApplePayAuthorisationHandler;
+    private final StripeGooglePayAuthorisationHandler stripeGooglePayAuthorisationHandler;
     private final StripeSdkClient stripeSDKClient;
 
     @Inject
     public StripePaymentProvider(GatewayClientFactory gatewayClientFactory,
                                  ConnectorConfiguration configuration,
                                  JsonObjectMapper jsonObjectMapper,
+                                 ObjectMapper objectMapper,
                                  Environment environment,
                                  StripeSdkClient stripeSDKClient) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
@@ -95,6 +101,8 @@ public class StripePaymentProvider implements PaymentProvider {
         stripeCancelHandler = new StripeCancelHandler(client, stripeGatewayConfig);
         stripeRefundHandler = new StripeRefundHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeAuthoriseHandler = new StripeAuthoriseHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper);
+        stripeApplePayAuthorisationHandler = new StripeApplePayAuthorisationHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper);
+        stripeGooglePayAuthorisationHandler = new StripeGooglePayAuthorisationHandler(client, stripeGatewayConfig, configuration, jsonObjectMapper);
         stripeFailedPaymentFeeCollectionHandler = new StripeFailedPaymentFeeCollectionHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeQueryPaymentStatusHandler = new StripeQueryPaymentStatusHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeDisputeHandler = new StripeDisputeHandler(client, stripeGatewayConfig, jsonObjectMapper);
@@ -163,8 +171,12 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
-        throw new UnsupportedOperationException("Wallets are not supported for Stripe");
+    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) throws GatewayException {
+        return stripeApplePayAuthorisationHandler.authorise(request);
+    }
+    
+    public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(StripeGooglePayAuthorisationGatewayRequest request) throws GatewayException {
+        return stripeGooglePayAuthorisationHandler.authorise(request);
     }
 
     @Override

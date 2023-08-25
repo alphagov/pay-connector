@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ApplePayConfig;
@@ -36,6 +37,7 @@ import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.temporal.ChronoUnit.DAYS;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class ApplePayDecrypter {
 
@@ -79,17 +81,16 @@ public class ApplePayDecrypter {
                 throw new RuntimeException();
             }
         });
-        
+
         long daysToExpiry = DAYS.between(Instant.now(), primaryCertificate.getNotAfter().toInstant());
         LOGGER.info("The Apple Pay payment processing cert will expire in {} days", daysToExpiry);
     }
-    
+
     private String removeWhitespace(String input) {
-        return input.replaceAll("\\s+","");
+        return input.replaceAll("\\s+", "");
     }
 
     public AppleDecryptedPaymentData performDecryptOperation(ApplePayAuthRequest applePayAuthRequest) {
-        
         byte[] ephemeralPublicKey = BASE64_DECODER.decode(
                 applePayAuthRequest.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
         byte[] data = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getData().getBytes(UTF_8));

@@ -22,6 +22,7 @@ import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidFor
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.charge.service.motoapi.MotoApiCardNumberValidationService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
@@ -84,6 +85,7 @@ class CardResourceTest {
     private static final GooglePayService mockGooglePayService = mock(GooglePayService.class);
     private static final TokenService mockTokenService = mock(TokenService.class);
     private static final MotoApiCardNumberValidationService mockMotoApiCardNumberValidationService = mock(MotoApiCardNumberValidationService.class);
+    private static final ChargeService mockChargeService = mock(ChargeService.class);
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
@@ -95,7 +97,8 @@ class CardResourceTest {
                     mockApplePayService,
                     mockGooglePayService,
                     mockTokenService,
-                    mockMotoApiCardNumberValidationService))
+                    mockMotoApiCardNumberValidationService,
+                    mockChargeService))
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(OneTimeTokenInvalidExceptionMapper.class)
             .addProvider(OneTimeTokenAlreadyUsedExceptionMapper.class)

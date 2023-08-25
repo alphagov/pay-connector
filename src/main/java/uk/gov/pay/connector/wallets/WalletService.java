@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
+import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import javax.inject.Inject;
@@ -29,10 +30,22 @@ public abstract class WalletService {
         this.walletType = walletType;
     }
 
-    public Response authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
+    public Response authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest, String paymentGatewayName) {
         LOGGER.info("Authorising {} charge with id {} ", walletType.toString(), chargeId);
         GatewayResponse<BaseAuthoriseResponse> response =
-                authoriseService.doAuthorise(chargeId, getWalletAuthorisationData(chargeId, walletAuthorisationRequest));
+                authoriseService.doAuthorise(chargeId, getWalletAuthorisationData(chargeId, walletAuthorisationRequest, paymentGatewayName));
+
+        if (isAuthorisationSubmitted(response)) {
+            LOGGER.info("Charge {}: {} authorisation was deferred.", chargeId, walletType.toString());
+            return badRequestResponse("This transaction was deferred.");
+        }
+        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(chargeId, response);
+    }
+
+    public Response authoriseStripeGooglePay(String chargeId, StripeGooglePayAuthRequest stripeGooglePayAuthRequest, String paymentGatewayName) {
+        LOGGER.info("Authorising {} charge with id {} ", walletType.toString(), chargeId);
+        GatewayResponse<BaseAuthoriseResponse> response =
+                authoriseService.authoriseStripeGooglePay(chargeId, stripeGooglePayAuthRequest);
 
         if (isAuthorisationSubmitted(response)) {
             LOGGER.info("Charge {}: {} authorisation was deferred.", chargeId, walletType.toString());
@@ -41,7 +54,7 @@ public abstract class WalletService {
         return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(chargeId, response);
     }
     
-    protected abstract WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest);
+    protected abstract WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest, String paymentGatewayName);
     
     //PP-4314 These methods duplicated from the CardResource. This kind of handling shouldn't be there in the first place, so will refactor to be embedded in services rather than at resource level
     protected Response handleGatewayAuthoriseResponse(String chargeId, GatewayResponse<? extends BaseAuthoriseResponse> response) {

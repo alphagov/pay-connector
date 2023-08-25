@@ -44,6 +44,7 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
@@ -163,6 +164,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+    
+    @Mock
+    private StripePaymentProvider mockStripePaymentProvider;
 
     private WalletAuthoriseService walletAuthoriseService;
 
@@ -209,6 +213,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 authorisationService,
                 mockWalletAuthorisationDataToAuthCardDetailsConverter,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
+                mockStripePaymentProvider, 
                 mockEnvironment);
 
         setUpLogging();

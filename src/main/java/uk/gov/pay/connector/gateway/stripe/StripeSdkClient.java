@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
 import com.stripe.net.RequestOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 
 import javax.inject.Inject;
@@ -11,10 +13,12 @@ import java.util.Map;
 
 public class StripeSdkClient {
 
+    private static final Logger logger = LoggerFactory.getLogger(StripeSdkWrapper.class);
+
     private final StripeGatewayConfig stripeGatewayConfig;
-    
+
     private final StripeSdkWrapper stripeSDKWrapper;
-    
+
     @Inject
     public StripeSdkClient(StripeGatewayConfig stripeGatewayConfig, StripeSdkWrapper stripeSDKWrapper) {
         this.stripeGatewayConfig = stripeGatewayConfig;

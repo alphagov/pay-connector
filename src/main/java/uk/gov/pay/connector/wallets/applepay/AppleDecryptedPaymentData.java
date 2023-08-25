@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 

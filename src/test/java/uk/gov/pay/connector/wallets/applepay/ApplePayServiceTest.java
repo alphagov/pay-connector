@@ -64,7 +64,7 @@ class ApplePayServiceTest {
         when(mockedApplePayDecrypter.performDecryptOperation(applePayAuthRequest)).thenReturn(validData);
         when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = applePayService.authorise(externalChargeId, applePayAuthRequest);
+        Response authorisationResponse = applePayService.authorise(externalChargeId, applePayAuthRequest, "worldpay");
 
         verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
         assertThat(authorisationResponse.getStatus(), is(200));
@@ -85,7 +85,7 @@ class ApplePayServiceTest {
         when(mockedApplePayDecrypter.performDecryptOperation(applePayAuthRequest)).thenReturn(validData);
         when(mockedApplePayAuthoriseService.doAuthorise(externalChargeId, validData)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = applePayService.authorise(externalChargeId, applePayAuthRequest);
+        Response authorisationResponse = applePayService.authorise(externalChargeId, applePayAuthRequest, "worldpay");
 
         verify(mockedApplePayAuthoriseService).doAuthorise(externalChargeId, validData);
         assertThat(authorisationResponse.getStatus(), is(402));

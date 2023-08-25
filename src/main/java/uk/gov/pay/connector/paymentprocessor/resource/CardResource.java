@@ -10,10 +10,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedException;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.charge.service.motoapi.MotoApiCardNumberValidationService;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
@@ -35,6 +38,7 @@ import uk.gov.pay.connector.wallets.applepay.ApplePayService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayService;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -68,12 +72,14 @@ public class CardResource {
     private final GooglePayService googlePayService;
     private final TokenService tokenService;
     private final MotoApiCardNumberValidationService motoApiCardNumberValidationService;
+    private final ChargeService chargeService;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         ChargeEligibleForCaptureService chargeEligibleForCaptureService, DelayedCaptureService delayedCaptureService,
                         ChargeCancelService chargeCancelService, ApplePayService applePayService, GooglePayService googlePayService,
-                        TokenService tokenService, MotoApiCardNumberValidationService motoApiCardNumberValidationService) {
+                        TokenService tokenService, MotoApiCardNumberValidationService motoApiCardNumberValidationService,
+                        ChargeService chargeService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
@@ -83,6 +89,7 @@ public class CardResource {
         this.googlePayService = googlePayService;
         this.tokenService = tokenService;
         this.motoApiCardNumberValidationService = motoApiCardNumberValidationService;
+        this.chargeService = chargeService;
     }
 
     @POST
@@ -108,7 +115,8 @@ public class CardResource {
                                     @PathParam("chargeId") String chargeId,
                                     @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
-        return applePayService.authorise(chargeId, applePayAuthRequest);
+        Charge charge = chargeService.findCharge(chargeId).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        return applePayService.authorise(chargeId, applePayAuthRequest, charge.getPaymentGatewayName());
     }
 
     @POST
@@ -135,7 +143,35 @@ public class CardResource {
                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
-        return googlePayService.authorise(chargeId, googlePayAuthRequest);
+        Charge charge = chargeService.findCharge(chargeId).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        return googlePayService.authorise(chargeId, googlePayAuthRequest, charge.getPaymentGatewayName());
+    }
+
+    @POST
+    @Path("/v1/frontend/charges/{chargeId}/wallets/stripe/google")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Authorise GooglePay payment",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "402", description = "Gateway error",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error"),
+            }
+    )
+    public Response authoriseStripeGooglePayPayment(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                    @PathParam("chargeId") String chargeId,
+                                    @NotNull @Valid StripeGooglePayAuthRequest googlePayAuthRequest) {
+        logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
+        Charge charge = chargeService.findCharge(chargeId).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));
+        return googlePayService.authoriseStripeGooglePay(chargeId, googlePayAuthRequest, charge.getPaymentGatewayName());
     }
 
     @POST

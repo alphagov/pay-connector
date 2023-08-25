@@ -38,6 +38,7 @@ public class WalletPaymentInfo {
     private String network;
     @Schema(example = "372C3858122B6BC39C6095ECA2F994A8AA012F3B025D0D72ECFD449C2A5877F9")
     private String transactionIdentifier;
+    private String rawPaymentData;
 
     @Schema(example = "1f1154b7-620d-4654-801b-893b5bb22db1", description = "SessionId returned by Worldpay/CardinalCommerce as part of device data collection. Applicable for Google Pay payments only")
     @JsonProperty("worldpay_3ds_flex_ddc_result")
@@ -110,6 +111,10 @@ public class WalletPaymentInfo {
 
     public String getTransactionIdentifier() {
         return transactionIdentifier;
+    }
+
+    public String getRawPaymentData() {
+        return rawPaymentData;
     }
 
     public Optional<String> getWorldpay3dsFlexDdcResult() {

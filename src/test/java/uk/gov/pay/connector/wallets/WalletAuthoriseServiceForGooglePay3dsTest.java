@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
@@ -90,6 +91,9 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
 
+    @Mock
+    private StripePaymentProvider mockStripePaymentProvider;
+    
     @Captor
     private ArgumentCaptor<Optional<Auth3dsRequiredEntity>> auth3dsRequiredEntityArgumentCaptor;
     
@@ -112,7 +116,8 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
                 chargeService,
                 authorisationService,
                 mockWalletAuthorisationDataToAuthCardDetailsConverter,
-                mock(AuthorisationLogger.class), 
+                mock(AuthorisationLogger.class),
+                mockStripePaymentProvider,
                 mockEnvironment);
         
         when(chargeService.lockChargeForProcessing(anyString(), any(OperationType.class))).thenReturn(chargeEntity);

@@ -1822,6 +1822,55 @@ paths:
       summary: Authorise GooglePay payment
       tags:
       - Charge operations
+  /v1/frontend/charges/{chargeId}/wallets/stripe/google:
+    post:
+      operationId: authoriseStripeGooglePayPayment
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StripeGooglePayAuthRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "202":
+          description: Accepted - payment has been submitted for authorisation and
+            awaiting response from payment service provider
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - invalid payload or the payment has been declined
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Gateway error
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid payload or missing mandatory
+            attributes
+        "500":
+          description: Internal server error
+      summary: Authorise GooglePay payment
+      tags:
+      - Charge operations
   /v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc:
     get:
       operationId: getWorldpay3dsFlexDdcJwt
@@ -4085,6 +4134,28 @@ components:
           type:
             type: string
             writeOnly: true
+    StripeGooglePayAuthRequest:
+      type: object
+      properties:
+        cardExpiryDate:
+          type: string
+          format: date
+        lastDigitsCardNumber:
+          type: string
+        paymentInfo:
+          $ref: '#/components/schemas/WalletPaymentInfo'
+        payment_info:
+          $ref: '#/components/schemas/WalletPaymentInfo'
+        tokenId:
+          type: string
+        token_id:
+          type: string
+          writeOnly: true
+        walletType:
+          type: string
+          enum:
+          - APPLE_PAY
+          - GOOGLE_PAY
     Supplemental:
       type: object
       properties:
@@ -4265,6 +4336,8 @@ components:
         network:
           type: string
           example: MasterCard
+        raw_payment_data:
+          type: string
         transaction_identifier:
           type: string
           example: 372C3858122B6BC39C6095ECA2F994A8AA012F3B025D0D72ECFD449C2A5877F9

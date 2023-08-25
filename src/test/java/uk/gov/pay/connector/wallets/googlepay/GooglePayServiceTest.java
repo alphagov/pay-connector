@@ -58,7 +58,7 @@ class GooglePayServiceTest {
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
         when(mockedWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuthRequest);
+        Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuthRequest, "worldpay");
 
         verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
@@ -75,7 +75,7 @@ class GooglePayServiceTest {
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS);
         when(mockedWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuth3dsRequest)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuth3dsRequest);
+        Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuth3dsRequest, "worldpay");
 
         verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuth3dsRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
@@ -94,7 +94,7 @@ class GooglePayServiceTest {
         when(gatewayError.getMessage()).thenReturn("oops");
         when(mockedWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuthRequest);
+        Response authorisationResponse = googlePayService.authorise(externalChargeId, googlePayAuthRequest, "worldpay");
 
         verify(mockedWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));

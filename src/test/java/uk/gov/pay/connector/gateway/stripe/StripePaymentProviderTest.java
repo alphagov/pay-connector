@@ -135,7 +135,8 @@ class StripePaymentProviderTest {
     @Mock
     private StripeSdkClient stripeSDKClient;
 
-    private final JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
+    private final JsonObjectMapper jsonObjectMapper = new JsonObjectMapper(new ObjectMapper());
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
@@ -145,7 +146,7 @@ class StripePaymentProviderTest {
         when(gatewayClientFactory.createGatewayClient(eq(STRIPE), any(MetricRegistry.class))).thenReturn(gatewayClient);
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment, stripeSDKClient);
+        provider = new StripePaymentProvider(gatewayClientFactory, configuration, jsonObjectMapper, objectMapper, environment, stripeSDKClient);
     }
 
     @Test

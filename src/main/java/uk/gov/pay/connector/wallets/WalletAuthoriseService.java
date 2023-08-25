@@ -18,9 +18,12 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
+import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.model.StripeGooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import java.util.Optional;
@@ -36,6 +39,7 @@ public class WalletAuthoriseService {
     private final PaymentProviders paymentProviders;
     private final WalletAuthorisationDataToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter;
     private final AuthorisationLogger authorisationLogger;
+    private final StripePaymentProvider stripePaymentProvider;
     private MetricRegistry metricRegistry;
 
     @Inject
@@ -43,13 +47,14 @@ public class WalletAuthoriseService {
                                   ChargeService chargeService,
                                   AuthorisationService authorisationService,
                                   WalletAuthorisationDataToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter,
-                                  AuthorisationLogger authorisationLogger, 
-                                  Environment environment) {
+                                  AuthorisationLogger authorisationLogger,
+                                  StripePaymentProvider stripePaymentProvider, Environment environment) {
         this.paymentProviders = paymentProviders;
         this.authorisationService = authorisationService;
         this.walletAuthorisationDataToAuthCardDetailsConverter = walletAuthorisationDataToAuthCardDetailsConverter;
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
+        this.stripePaymentProvider = stripePaymentProvider;
         this.metricRegistry = environment.metrics();
     }
 
@@ -97,6 +102,67 @@ public class WalletAuthoriseService {
                     chargeStatus,
                     auth3dsDetailsEntity);
             
+            authorisationLogger.logChargeAuthorisation(
+                    LOGGER,
+                    charge,
+                    transactionId.orElse("missing transaction ID"),
+                    operationResponse,
+                    charge.getChargeStatus(),
+                    chargeStatus
+            );
+
+            return operationResponse;
+        });
+    }
+
+    public GatewayResponse<BaseAuthoriseResponse> authoriseStripeGooglePay(String chargeId, StripeGooglePayAuthRequest stripeGooglePayAuthRequest) {
+        return authorisationService.executeAuthorise(chargeId, () -> {
+            final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
+            GatewayResponse<BaseAuthoriseResponse> operationResponse;
+            ChargeStatus chargeStatus = null;
+            String requestStatus = "failure";
+
+            StripeGooglePayAuthorisationGatewayRequest gatewayRequest = new StripeGooglePayAuthorisationGatewayRequest(charge, stripeGooglePayAuthRequest);
+
+            try {
+                operationResponse = stripePaymentProvider.authoriseGooglePay(gatewayRequest);
+
+                LOGGER.info("Got operation response, present? : " + operationResponse.getBaseResponse().isPresent());
+                if (operationResponse.getBaseResponse().isPresent()) {
+                    requestStatus = "success";
+                    chargeStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
+                } else {
+                    operationResponse.throwGatewayError();
+                }
+
+            } catch (GatewayException e) {
+
+                LOGGER.info("Error occurred authorising charge. Charge external id: {}; message: {}", charge.getExternalId(), e.getMessage());
+
+                if (e instanceof GatewayErrorException) {
+                    LOGGER.error("Response from gateway: {}", ((GatewayErrorException) e).getResponseFromGateway());
+                }
+
+                chargeStatus = AuthorisationService.mapFromGatewayErrorException(e);
+                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            }
+
+            Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
+            LOGGER.info("Got transaction ID from Stripe " + transactionId.orElse("Not present"));
+            Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
+            Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
+                    operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
+            
+            logMetrics(charge, operationResponse, requestStatus, stripeGooglePayAuthRequest.getWalletType());
+
+            processGatewayAuthorisationResponse(
+                    charge.getExternalId(),
+                    stripeGooglePayAuthRequest,
+                    transactionId.orElse(null),
+                    sessionIdentifier.orElse(null),
+                    chargeStatus,
+                    auth3dsDetailsEntity);
+
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
                     charge,
