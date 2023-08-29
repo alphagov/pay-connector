@@ -62,8 +62,10 @@ class ApplePayDecrypterTest {
     private static final byte[] ALG_IDENTIFIER_BYTES = "id-aes256-GCM".getBytes(UTF_8);
     private static final String MERCHANT_ID_CERTIFICATE_OID = "1.2.840.113635.100.6.32";
 
-    @Mock private WorldpayConfig mockWorldpayConfig;
-    @Mock private ApplePayConfig mockApplePayConfig;
+    @Mock
+    private WorldpayConfig mockWorldpayConfig;
+    @Mock
+    private ApplePayConfig mockApplePayConfig;
     private ObjectMapper objectMapper = new ObjectMapper();
     private ApplePayAuthRequest applePayAuthRequest;
     private ApplePayDecrypter applePayDecrypter;
@@ -89,15 +91,15 @@ class ApplePayDecrypterTest {
         when(mockApplePayConfig.getPrimaryPublicCertificate()).thenReturn(invalidPrimaryCert);
         var applePayDecrypterWithInvalidPrimaryAndMissingSecondaryKeyCerts = new ApplePayDecrypter(mockWorldpayConfig, objectMapper);
 
-        assertThrows(InvalidKeyException.class, () -> 
+        assertThrows(InvalidKeyException.class, () ->
                 applePayDecrypterWithInvalidPrimaryAndMissingSecondaryKeyCerts.performDecryptOperation(applePayAuthRequest));
     }
-    
+
     @Test
     void should_decrypt_data_with_secondary_keys_when_primary_private_key_and_public_certificate_are_invalid() {
         String invalidPrimaryKey = "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgjyo3fzxT7j+CFxC7I4B5iVee2FUyn2vfOSjcgp2/g6qhRANCAARdoBFEtnuapXFKw4DYWsW0yV4bavpdWKszkefi19AhlIRE3WSNWSn25W5tZNFjMWtLISBmqANyufx2xP19oRvy"; //pragma: allowlist secret
         String invalidPrimaryCert = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVlVENDQkNDZ0F3SUJBZ0lJVWtJS3NpWXhhS293Q2dZSUtvWkl6ajBFQXdJd2dZRXhPekE1QmdOVkJBTU1NbFJsYzNRZ1FYQndiR1VnVjI5eWJHUjNhV1JsSUVSbGRtVnNiM0JsY25NZ1VtVnNZWFJwYjI1eklFTkJJQzBnUlVORE1TQXdIZ1lEVlFRTERCZERaWEowYVdacFkyRjBhVzl1SUVGMWRHaHZjbWwwZVRFVE1CRUdBMVVFQ2d3S1FYQndiR1VnU1c1akxqRUxNQWtHQTFVRUJoTUNWVk13SGhjTk1UWXdOekkxTVRVeU1ETTRXaGNOTVRnd09ESTBNVFV5TURNNFdqQ0JsekVyTUNrR0NnbVNKb21UOGl4a0FRRU1HMjFsY21Ob1lXNTBMbkpsWkhSbFlXMHVkMkZ5YzJGM0xteGliekV4TUM4R0ExVUVBd3dvVFdWeVkyaGhiblFnU1VRNklHMWxjbU5vWVc1MExuSmxaSFJsWVcwdWQyRnljMkYzTG14aWJ6RVRNQkVHQTFVRUN3d0tUVmxVVlRoWk5VUlJUVEVUTUJFR0ExVUVDZ3dLUVhCd2JHVWdTVzVqTGpFTE1Ba0dBMVVFQmhNQ1ZWTXdXVEFUQmdjcWhrak9QUUlCQmdncWhrak9QUU1CQndOQ0FBUmRvQkZFdG51YXBYRkt3NERZV3NXMHlWNGJhdnBkV0tzemtlZmkxOUFobElSRTNXU05XU24yNVc1dFpORmpNV3RMSVNCbXFBTnl1ZngyeFAxOW9SdnlvNElDYURDQ0FtUXdUd1lJS3dZQkJRVUhBUUVFUXpCQk1EOEdDQ3NHQVFVRkJ6QUJoak5vZEhSd09pOHZiMk56Y0MxMVlYUXVZMjl5Y0M1aGNIQnNaUzVqYjIwdmIyTnpjREEwTFhSbGMzUjNkMlJ5WTJGbFkyTXdIUVlEVlIwT0JCWUVGQVY3blM0bU5ETHkxZ3h2T0FjQ1MxaE9nWTRsTUF3R0ExVWRFd0VCL3dRQ01BQXdId1lEVlIwakJCZ3dGb0FVMXRiVld1WC8vY0o4Tk1ORDNyMW9kbHcycWI0d2dnRWRCZ05WSFNBRWdnRVVNSUlCRURDQ0FRd0dDU3FHU0liM1kyUUZBVENCL2pDQnd3WUlLd1lCQlFVSEFnSXdnYllNZ2JOU1pXeHBZVzVqWlNCdmJpQjBhR2x6SUdObGNuUnBabWxqWVhSbElHSjVJR0Z1ZVNCd1lYSjBlU0JoYzNOMWJXVnpJR0ZqWTJWd2RHRnVZMlVnYjJZZ2RHaGxJSFJvWlc0Z1lYQndiR2xqWVdKc1pTQnpkR0Z1WkdGeVpDQjBaWEp0Y3lCaGJtUWdZMjl1WkdsMGFXOXVjeUJ2WmlCMWMyVXNJR05sY25ScFptbGpZWFJsSUhCdmJHbGplU0JoYm1RZ1kyVnlkR2xtYVdOaGRHbHZiaUJ3Y21GamRHbGpaU0J6ZEdGMFpXMWxiblJ6TGpBMkJnZ3JCZ0VGQlFjQ0FSWXFhSFIwY0RvdkwzZDNkeTVoY0hCc1pTNWpiMjB2WTJWeWRHbG1hV05oZEdWaGRYUm9iM0pwZEhrdk1FRUdBMVVkSHdRNk1EZ3dOcUEwb0RLR01HaDBkSEE2THk5amNtd3RkV0YwTG1OdmNuQXVZWEJ3YkdVdVkyOXRMMkZ3Y0d4bGQzZGtjbU5oWldOakxtTnliREFPQmdOVkhROEJBZjhFQkFNQ0F5Z3dUd1lKS29aSWh2ZGpaQVlnQkVJTVFEVTRNREpFTVVNM056UkdNRGsyTWtZNE1URXlORGhGTlRNNFJFVXpRa1ZHTmpnd1F6YzVPRFpDUWpWQ05FUkRSVEJDTlRZeU5EbEdNemREUWtJNU5ETXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdUanRpWWprL0JLcDNWOERnNm1JbGNtNUZDT0YwNnp1YjdKc3I2d0NzdktBQ0lIOFUxMTRESTVIbm1mY052d000UlhGRFBUb29wNCtqak1BUHZpZGlwS2tnCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="; //pragma: allowlist secret
-        
+
         when(mockWorldpayConfig.getApplePayConfig()).thenReturn(mockApplePayConfig);
         when(mockApplePayConfig.getPrimaryPrivateKey()).thenReturn(invalidPrimaryKey);
         when(mockApplePayConfig.getPrimaryPublicCertificate()).thenReturn(invalidPrimaryCert);
@@ -115,7 +117,7 @@ class ApplePayDecrypterTest {
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
                 .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
 
-        AppleDecryptedPaymentData paymentDataToEncrypt =  anApplePayDecryptedPaymentData().withAmount(9999L).build();
+        AppleDecryptedPaymentData paymentDataToEncrypt = anApplePayDecryptedPaymentData().withAmount(9999L).build();
         String paymentDataToEncryptAsJson = objectMapper.writeValueAsString(paymentDataToEncrypt);
 
         KeyPair ephemeralKeyPair = createEphemeralKeyPair();
@@ -129,7 +131,7 @@ class ApplePayDecrypterTest {
         AppleDecryptedPaymentData result = applePayDecrypter.performDecryptOperation(authRequest);
         assertThat(result.getTransactionAmount(), is(9999L));
     }
-    
+
     @Test
     void shouldDecrypt_withSecondaryKeys_aPayloadEncryptedWithOurSecondaryPublicKey() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper()
@@ -137,7 +139,7 @@ class ApplePayDecrypterTest {
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
                 .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
 
-        AppleDecryptedPaymentData paymentDataToEncrypt =  anApplePayDecryptedPaymentData().withAmount(88888L).build();
+        AppleDecryptedPaymentData paymentDataToEncrypt = anApplePayDecryptedPaymentData().withAmount(88888L).build();
         String paymentDataToEncryptAsJson = objectMapper.writeValueAsString(paymentDataToEncrypt);
 
         KeyPair ephemeralKeyPair = createEphemeralKeyPair();
@@ -187,6 +189,15 @@ class ApplePayDecrypterTest {
     }
 
     @Test
+    void shouldThrowException_whenPaymentDataIsInvalidJSONString() {
+        var exception = assertThrows(InvalidApplePayPaymentDataException.class, () -> {
+            ApplePayAuthRequest applePayAuthRequest = anApplePayToken().withPaymentData("nope").build();
+            applePayDecrypter = new ApplePayDecrypter(mockWorldpayConfig, objectMapper);
+            applePayDecrypter.performDecryptOperation(applePayAuthRequest);
+        });
+    }
+
+    @Test
     void shouldThrowException_whenEphemeralKeyIsInvalid() {
         assertThrows(InvalidKeyException.class, () -> {
             ApplePayAuthRequest applePayAuthRequest = anApplePayToken().withEphemeralPublicKey("nope").build();
@@ -194,7 +205,6 @@ class ApplePayDecrypterTest {
             applePayDecrypter.performDecryptOperation(applePayAuthRequest);
         });
     }
-
     @Test
     void shouldThrowException_whenDataIsInvalid() {
         assertThrows(InvalidKeyException.class, () -> {

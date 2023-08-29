@@ -144,11 +144,11 @@ public class JsonRequestHelper {
     
     public static String buildJsonApplePayAuthorisationDetails(String cardHolderName, String email) {
         JsonObject header = new JsonObject();
-        header.addProperty("public_key_hash", "LbsUwAT6w1JV9tFXocU813TCHks+LSuFF0R/eBkrWnQ=");
-        header.addProperty("ephemeral_public_key", "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMwliotf2ICjiMwREdqyHSilqZzuV2fZey86nBIDlTY8sNMJv9CPpL5/DKg4bIEMe6qaj67mz4LWdr7Er0Ld5qA==");
-        header.addProperty("transaction_id", "2686f5297f123ec7fd9d31074d43d201953ca75f098890375f13aed2737d92f2");
-        header.addProperty("application_data", "some");
-        header.addProperty("wrapped_key", "some");
+        header.addProperty("publicKeyHash", "LbsUwAT6w1JV9tFXocU813TCHks+LSuFF0R/eBkrWnQ=");
+        header.addProperty("ephemeralPublicKey", "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMwliotf2ICjiMwREdqyHSilqZzuV2fZey86nBIDlTY8sNMJv9CPpL5/DKg4bIEMe6qaj67mz4LWdr7Er0Ld5qA==");
+        header.addProperty("transactionId", "2686f5297f123ec7fd9d31074d43d201953ca75f098890375f13aed2737d92f2");
+        header.addProperty("applicationData", "some");
+        header.addProperty("wrappedKey", "some");
 
         JsonObject encryptedPaymentData = new JsonObject();
         encryptedPaymentData.addProperty("version", "EC_v1");
@@ -165,7 +165,7 @@ public class JsonRequestHelper {
 
         JsonObject payload = new JsonObject();
         payload.add("payment_info", paymentInfo);
-        payload.add("encrypted_payment_data", encryptedPaymentData);
+        payload.addProperty("payment_data", encryptedPaymentData.toString());
         return toJson(payload);
     }
 
