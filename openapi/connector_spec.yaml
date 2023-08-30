@@ -2248,8 +2248,6 @@ components:
     ApplePayAuthRequest:
       type: object
       properties:
-        encrypted_payment_data:
-          $ref: '#/components/schemas/ApplePayEncryptedPaymentData'
         payment_data:
           type: string
           description: "paymentData of Apple Pay payment token as String. This is\
@@ -2266,20 +2264,6 @@ components:
           $ref: '#/components/schemas/WalletPaymentInfo'
       required:
       - payment_info
-    ApplePayEncryptedPaymentData:
-      type: object
-      properties:
-        data:
-          type: string
-          example: 4OZho15e9Yp5K0EtKergKzeRpPAjnK...JTga8W75IWAA==
-        header:
-          $ref: '#/components/schemas/Header'
-        signature:
-          type: string
-          example: MIAGCSqGSIb3DQEHAqCAMIACAQE..../tJr3SbTdxO25ZdN1bPH0Jiqgw7AAAAAAAA
-        version:
-          type: string
-          example: ECv1
     Auth3dsData:
       type: object
       properties:
@@ -3835,22 +3819,6 @@ components:
           $ref: '#/components/schemas/EncryptedPaymentData'
         payment_info:
           $ref: '#/components/schemas/WalletPaymentInfo'
-    Header:
-      type: object
-      properties:
-        application_data:
-          type: string
-        ephemeral_public_key:
-          type: string
-          example: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMwliotf2ICjiMwREdqyHSilqZzuV2fZey86nBIDlTY8sNMJv9CPpL5/DKg4bIEMe6qaj67mz4LWdr7Er0Ld5qA==
-        public_key_hash:
-          type: string
-          example: LbsUwAT6w1JV9tFXocU813TCHks+LSuFF0R/eBkrWnQ=
-        transaction_id:
-          type: string
-          example: 2686f5297f123ec7fd9d31074d43d201953ca75f098890375f13aed2737d92f2
-        wrapped_key:
-          type: string
     JsonNode:
       type: object
     LastDigitsCardNumber:
