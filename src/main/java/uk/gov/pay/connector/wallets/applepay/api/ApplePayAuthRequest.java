@@ -17,8 +17,6 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
     @NotNull
     @Valid
     private WalletPaymentInfo paymentInfo;
-    @Schema(name = "encrypted_payment_data")
-    private ApplePayEncryptedPaymentData encryptedPaymentData;
 
     @Schema(description = "paymentData of Apple Pay payment token as String. " +
             "This is de-serialised and decrypted for WorldPay payments. For Stripe payments, the value is passed as is when creating a token",
@@ -30,10 +28,6 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
         return paymentInfo;
     }
 
-    public ApplePayEncryptedPaymentData getEncryptedPaymentData() {
-        return encryptedPaymentData;
-    }
-
     public String getPaymentData() {
         return paymentData;
     }
@@ -41,92 +35,8 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
     public ApplePayAuthRequest() {
     }
 
-    public ApplePayAuthRequest(WalletPaymentInfo paymentInfo, String paymentData, ApplePayEncryptedPaymentData encryptedPaymentData) {
+    public ApplePayAuthRequest(WalletPaymentInfo paymentInfo, String paymentData) {
         this.paymentInfo = paymentInfo;
         this.paymentData = paymentData;
-        this.encryptedPaymentData = encryptedPaymentData;
-    }
-
-    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class ApplePayEncryptedPaymentData {
-        @Schema(example = "4OZho15e9Yp5K0EtKergKzeRpPAjnK...JTga8W75IWAA==")
-        private String data;
-        @Schema(example = "ECv1")
-        private String version;
-        private Header header;
-        @Schema(example = "MIAGCSqGSIb3DQEHAqCAMIACAQE..../tJr3SbTdxO25ZdN1bPH0Jiqgw7AAAAAAAA")
-        private String signature;
-
-
-        public String getSignature() {
-            return signature;
-        }
-
-        public String getData() {
-            return data;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public Header getHeader() {
-            return header;
-        }
-
-        public ApplePayEncryptedPaymentData() {
-        }
-
-        public ApplePayEncryptedPaymentData(String version, String data, Header header, String signature) {
-            this.data = data;
-            this.version = version;
-            this.header = header;
-            this.signature = signature;
-        }
-
-        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        public static class Header {
-            @Schema(example = "LbsUwAT6w1JV9tFXocU813TCHks+LSuFF0R/eBkrWnQ=")
-            private String publicKeyHash;
-            @Schema(example = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMwliotf2ICjiMwREdqyHSilqZzuV2fZey86nBIDlTY8sNMJv9CPpL5/DKg4bIEMe6qaj67mz4LWdr7Er0Ld5qA==")
-            private String ephemeralPublicKey;
-            @Schema(example = "2686f5297f123ec7fd9d31074d43d201953ca75f098890375f13aed2737d92f2")
-            private String transactionId;
-            private String applicationData;
-            private String wrappedKey;
-
-            public Header() {
-            }
-
-            public Header(String publicKeyHash, String ephemeralPublicKey, String transactionId, String applicationData, String wrappedKey) {
-                this.publicKeyHash = publicKeyHash;
-                this.ephemeralPublicKey = ephemeralPublicKey;
-                this.transactionId = transactionId;
-                this.applicationData = applicationData;
-                this.wrappedKey = wrappedKey;
-            }
-
-            public String getPublicKeyHash() {
-                return publicKeyHash;
-            }
-
-            public String getEphemeralPublicKey() {
-                return ephemeralPublicKey;
-            }
-
-            public String getTransactionId() {
-                return transactionId;
-            }
-
-            public String getApplicationData() {
-                return applicationData;
-            }
-
-            public String getWrappedKey() {
-                return wrappedKey;
-            }
-        }
     }
 }
