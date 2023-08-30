@@ -15,7 +15,6 @@ import javax.ws.rs.core.Response;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.gatewayErrorResponse;
 
-
 public abstract class WalletService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletService.class);

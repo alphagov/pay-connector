@@ -79,20 +79,21 @@ public class ApplePayDecrypter {
                 throw new RuntimeException();
             }
         });
-        
+
         long daysToExpiry = DAYS.between(Instant.now(), primaryCertificate.getNotAfter().toInstant());
         LOGGER.info("The Apple Pay payment processing cert will expire in {} days", daysToExpiry);
     }
-    
+
     private String removeWhitespace(String input) {
-        return input.replaceAll("\\s+","");
+        return input.replaceAll("\\s+", "");
     }
 
     public AppleDecryptedPaymentData performDecryptOperation(ApplePayAuthRequest applePayAuthRequest) {
-        
-        byte[] ephemeralPublicKey = BASE64_DECODER.decode(
-                applePayAuthRequest.getEncryptedPaymentData().getHeader().getEphemeralPublicKey().getBytes(UTF_8));
-        byte[] data = BASE64_DECODER.decode(applePayAuthRequest.getEncryptedPaymentData().getData().getBytes(UTF_8));
+
+        ApplePayPaymentData applePayPaymentData = deserialisePaymentData(applePayAuthRequest.getPaymentData());
+
+        byte[] ephemeralPublicKey = BASE64_DECODER.decode(applePayPaymentData.getHeader().getEphemeralPublicKey().getBytes(UTF_8));
+        byte[] data = BASE64_DECODER.decode(applePayPaymentData.getData().getBytes(UTF_8));
         byte[] rawData;
 
         try {
@@ -119,6 +120,15 @@ public class ApplePayDecrypter {
         } catch (JsonProcessingException e) {
             LOGGER.error("Error while trying to decrypt apple pay payload: " + e.getMessage());
             throw new InvalidKeyException("Error while trying to decrypt apple pay payload: " + e.getMessage());
+        }
+    }
+
+    private ApplePayPaymentData deserialisePaymentData(String paymentData) {
+        try {
+            return objectMapper.readValue(paymentData, ApplePayPaymentData.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("Error deserialising apple pay payment data: " + e.getMessage());
+            throw new InvalidApplePayPaymentDataException("Error while trying to deserialise apple pay payload: " + e.getMessage());
         }
     }
 
