@@ -24,6 +24,7 @@ import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.annotation.Nullable;
@@ -46,6 +47,8 @@ import java.util.Optional;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.ok;
+import static uk.gov.pay.connector.util.ResponseUtil.buildErrorResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.noContentResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithChargeNotFound;
 import static uk.gov.pay.connector.util.ResponseUtil.responseWithGatewayTransactionNotFound;
@@ -73,14 +76,17 @@ public class ChargesApiResource {
     private final ChargeService chargeService;
     private final ChargeExpiryService chargeExpiryService;
     private final GatewayAccountService gatewayAccountService;
+    private final UserNotificationService userNotificationService;
 
     @Inject
     public ChargesApiResource(ChargeService chargeService,
                               ChargeExpiryService chargeExpiryService,
-                              GatewayAccountService gatewayAccountService) {
+                              GatewayAccountService gatewayAccountService,
+                              UserNotificationService userNotificationService) {
         this.chargeService = chargeService;
         this.chargeExpiryService = chargeExpiryService;
         this.gatewayAccountService = gatewayAccountService;
+        this.userNotificationService = userNotificationService;
     }
 
     @GET
@@ -197,6 +203,33 @@ public class ChargesApiResource {
         return chargeService.findCharge(accountId, telephoneChargeCreateRequest)
                 .map(response -> Response.status(200).entity(response).build())
                 .orElseGet(() -> Response.status(201).entity(chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount)).build());
+    }
+
+    @POST
+    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/resend-confirmation-email")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Resend confirmation email for a charge",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "402", description = "Could not send email"),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    public Response resendConfirmationEmail(
+            @Parameter(example = "1", description = "Gateway account ID")
+            @PathParam(ACCOUNT_ID) Long accountId,
+            @Parameter(example = "spmh0fb7rbi1lebv1j3f7hc3m9", description = "Charge external ID")
+            @PathParam("chargeId") String chargeId) {
+        var account = gatewayAccountService.getGatewayAccount(accountId)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
+
+        return chargeService.findCharge(chargeId, accountId)
+                            .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account)
+                            .map((reference) -> noContentResponse())
+                            .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email")))
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
     @POST

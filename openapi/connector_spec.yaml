@@ -615,6 +615,35 @@ paths:
       summary: Get a refund
       tags:
       - Refunds
+  /v1/api/accounts/{accountId}/charges/{chargeId}/resend-confirmation-email:
+    post:
+      operationId: resendConfirmationEmail
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: accountId
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - description: Charge external ID
+        example: spmh0fb7rbi1lebv1j3f7hc3m9
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No content
+        "402":
+          description: Could not send email
+        "404":
+          description: Not found - charge not found
+        "500":
+          description: Internal server error
+      summary: Resend confirmation email for a charge
   /v1/api/accounts/{accountId}/credentials:
     post:
       operationId: createGatewayAccountCredentials
