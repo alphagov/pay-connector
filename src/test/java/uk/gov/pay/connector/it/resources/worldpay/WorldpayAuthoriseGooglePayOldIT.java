@@ -12,12 +12,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,14 +37,15 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
+//PP-11394 This test class can be removed when the endpoint "/v1/frontend/charges/{chargeId}/wallets/google" is removed 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
+public class WorldpayAuthoriseGooglePayOldIT extends ChargingITestBase {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
-    public WorldpayAuthoriseGooglePayIT() {
+    public WorldpayAuthoriseGooglePayOldIT() {
         super("worldpay");
     }
 
@@ -66,7 +67,7 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
 
         givenSetup()
                 .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePayWorldpay(chargeId))
+                .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200);
 
@@ -88,7 +89,7 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
 
         givenSetup()
                 .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePayWorldpay(chargeId))
+                .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200);
 
@@ -104,7 +105,7 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
 
         givenSetup()
                 .body(validPayload)
-                .post(authoriseChargeUrlForGooglePayWorldpay(chargeId))
+                .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -122,7 +123,7 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
 
         givenSetup()
                 .body(invalidPayload)
-                .post(authoriseChargeUrlForGooglePayWorldpay(chargeId))
+                .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(422)
                 .body("message", contains("Field [signature] must not be empty"))

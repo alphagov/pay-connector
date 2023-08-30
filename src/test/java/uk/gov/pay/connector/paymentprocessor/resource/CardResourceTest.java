@@ -1,5 +1,13 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
+import com.amazonaws.util.json.Jackson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.apache.commons.lang.StringUtils;
@@ -8,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedExceptionMapper;
@@ -43,8 +53,10 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.time.YearMonth;
+import java.util.List;
 import java.util.Optional;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ofPattern;
 import static java.time.temporal.ChronoUnit.MONTHS;
@@ -55,6 +67,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
@@ -108,12 +122,17 @@ class CardResourceTest {
 
     private final ChargeEntity chargeEntity = aValidChargeEntity().build();
     private TokenEntity tokenEntity;
+    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
+    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
     @BeforeEach
     public void setUp() {
         tokenEntity = new TokenEntity();
         tokenEntity.setUsed(false);
         tokenEntity.setChargeEntity(chargeEntity);
+        Logger root = (Logger) LoggerFactory.getLogger(CardResource.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
     }
 
     private static Object[] authoriseMotoApiPaymentInvalidInput() {
@@ -393,7 +412,62 @@ class CardResourceTest {
         assertThat(errorResponse.getMessages(), hasItem("InterpretedStatus not found for Gateway response"));
         assertThat(errorResponse.getIdentifier(), is(GENERIC));
     }
+    
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+        
+        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
+    }
+
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Email must be a maximum of 254 chars");
+    }
+
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfSignedMessageIsEmpty() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("aSignedMessage", "");
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Field [signed_message] must not be empty");
+    }
+
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfSignatureIsEmpty() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl", "");
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Field [signature] must not be empty");
+    }
+    
+    private void verify422andReceiptOfPayloadNotLoggedAndErrorMessage(Response response, String expectedErrorMessage) {
+        assertThat(response.getStatus(), is(422));
+        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+        assertThat(errorResponse.getMessages(), hasItem(expectedErrorMessage));
+        assertThat(errorResponse.getIdentifier(), is(GENERIC));
+        verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
+
+    }
+    
     private void mockGatewayError(GatewayError gatewayError) {
         GatewayResponse<BaseAuthoriseResponse> operationResponse = mock(GatewayResponse.class);
         when(operationResponse.getGatewayError()).thenReturn(Optional.of(gatewayError));
