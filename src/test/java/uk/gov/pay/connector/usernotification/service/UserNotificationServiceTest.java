@@ -254,6 +254,16 @@ public class UserNotificationServiceTest {
     }
 
     @Test
+    void shouldNotSendPaymentConfirmedEmailSynchronously_IfNotifyIsDisabled() throws Exception {
+        when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
+        userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, chargeEntity.getGatewayAccount());
+
+        verifyNoInteractions(mockNotifyClient);
+    }
+
+    @Test
     void shouldNotSendRefundIssuedEmail_IfNotifyIsDisabled() throws Exception {
         when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
@@ -284,6 +294,18 @@ public class UserNotificationServiceTest {
 
         userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
         userNotificationService.sendPaymentConfirmedEmail(chargeEntity, chargeEntity.getGatewayAccount());
+        verifyNoInteractions(mockNotifyClient);
+    }
+
+    @Test
+    void shouldNotSendPaymentConfirmedEmailSynchronously_whenConfirmationEmailNotificationsAreDisabledForService() {
+        chargeEntity.getGatewayAccount()
+                .getEmailNotifications()
+                .get(EmailNotificationType.PAYMENT_CONFIRMED)
+                .setEnabled(false);
+
+        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
+        userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, chargeEntity.getGatewayAccount());
         verifyNoInteractions(mockNotifyClient);
     }
 
