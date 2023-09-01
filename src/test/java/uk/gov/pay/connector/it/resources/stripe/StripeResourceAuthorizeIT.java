@@ -67,7 +67,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
-import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
+import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePayWorldpay;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
@@ -296,7 +296,7 @@ public class StripeResourceAuthorizeIT {
         given().port(testContext.getPort())
                 .contentType(JSON)
                 .body(validPayload)
-                .post(authoriseChargeUrlForGooglePay(externalChargeId))
+                .post(authoriseChargeUrlForGooglePayWorldpay(externalChargeId))
                 .then()
                 .statusCode(400)
                 .body("message", contains("Wallets are not supported for Stripe"))
