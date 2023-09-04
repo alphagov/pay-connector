@@ -13,16 +13,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,7 +29,6 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
 @RunWith(DropwizardJUnitRunner.class)
@@ -62,7 +59,7 @@ public class CardResourceAuthoriseGooglePayIT extends ChargingITestBase {
 
         givenSetup()
                 .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .post(authoriseChargeUrlForGooglePayWorldpay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
                 .body("message", contains("Card holder name must be a maximum of 255 chars"))
@@ -82,7 +79,7 @@ public class CardResourceAuthoriseGooglePayIT extends ChargingITestBase {
 
         givenSetup()
                 .body(googlePayload)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .post(authoriseChargeUrlForGooglePayWorldpay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
                 .body("message", contains("Email must be a maximum of 254 chars"))
