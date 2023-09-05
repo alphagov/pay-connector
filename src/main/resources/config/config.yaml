@@ -42,10 +42,10 @@ worldpay:
   secureNotificationEnabled: ${SECURE_WORLDPAY_NOTIFICATION_ENABLED:-false}
   notificationDomain: ${SECURE_WORLDPAY_NOTIFICATION_DOMAIN:-.worldpay.com}
   applePay:
-    primaryPrivateKey: ${APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY:-privateKeyWhichShouldBeBase64Encoded}
-    primaryPublicCertificate: ${APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE:-publicCertificateWhichShouldBeBase64Encoded}
-    secondaryPrivateKey: ${APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY_SECONDARY:-}
-    secondaryPublicCertificate: ${APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE_SECONDARY:-}
+    primaryPrivateKey: ${WORLDPAY_APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY:-privateKeyWhichShouldBeBase64Encoded}
+    primaryPublicCertificate: ${WORLDPAY_APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE:-publicCertificateWhichShouldBeBase64Encoded}
+    secondaryPrivateKey: ${WORLDPAY_APPLE_PAY_PAYMENT_PROCESSING_PRIVATE_KEY_SECONDARY:-}
+    secondaryPublicCertificate: ${WORLDPAY_APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE_SECONDARY:-}
   jerseyClientOverrides:
     auth:
       # Auth is run in a background thread which will release the HTTP request from frontend after 1 second
