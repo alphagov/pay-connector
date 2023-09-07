@@ -16,7 +16,7 @@ public class SandboxWalletAuthorisationHandler implements WalletAuthorisationHan
 
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) {
-        String lastDigitsCardNumber = request.getWalletAuthorisationData().getLastDigitsCardNumber();
+        String lastDigitsCardNumber = request.getWalletAuthorisationRequest().getPaymentInfo().getLastDigitsCardNumber();
         return sandboxGatewayResponseGenerator.getSandboxGatewayResponse(lastDigitsCardNumber);
     }
 

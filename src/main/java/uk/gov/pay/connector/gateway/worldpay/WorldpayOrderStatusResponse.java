@@ -1,12 +1,15 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.WorldpayAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashMap;
@@ -15,6 +18,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import static java.lang.String.format;
 import static java.util.function.Predicate.not;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
@@ -31,6 +35,8 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     public static final String WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY = "schemeTransactionIdentifier";
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayOrderStatusResponse.class);
+    
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
 
@@ -77,6 +83,12 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @XmlPath("reply/orderStatus/token/tokenDetails/@tokenEvent")
     private String tokenEvent;
+    
+    @XmlPath("reply/orderStatus/payment/paymentMethodDetail/card/expiryDate/date/@year")
+    private String expiryDateYear;
+
+    @XmlPath("reply/orderStatus/payment/paymentMethodDetail/card/expiryDate/date/@month")
+    private String expiryDateMonth;
 
     @XmlPath("reply/error/@code")
     public void setErrorCode(String errorCode) {
@@ -165,6 +177,19 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return refusedReturnCode;
     }
 
+    @Override
+    public Optional<CardExpiryDate> getCardExpiryDate() {
+        if (expiryDateMonth != null && expiryDateYear != null) {
+            try {
+                return Optional.of(CardExpiryDate.valueOf(expiryDateMonth + "/" + expiryDateYear.substring(2, 4)));
+            } catch (IndexOutOfBoundsException ex) {
+                LOGGER.error(format("Expiry date year in Worldpay response for transaction {} is in an unexpected format." + transactionId));
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
+    }
+    
     @Override
     public AuthoriseStatus authoriseStatus() {
         if ((is3dsVersionOneRequired()) || is3dsFlexChallengeRequired()) {

@@ -49,6 +49,7 @@ import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
+import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.ws.rs.client.ClientBuilder;
@@ -120,6 +121,7 @@ class WorldpayPaymentProviderTest {
     private CardExecutorService mockCardExecutorService = mock(CardExecutorService.class);
     private ConnectorConfiguration mockConnectorConfiguration = mock(ConnectorConfiguration.class);
     private AuthorisationConfig mockAuthorisationConfig = mock(AuthorisationConfig.class);
+    private ApplePayDecrypter mockApplePayDecrypter = mock(ApplePayDecrypter.class);
 
     @BeforeEach
     void checkThatWorldpayIsUp() throws IOException {
@@ -650,7 +652,7 @@ class WorldpayPaymentProviderTest {
                 gatewayClient,
                 gatewayClient,
                 gatewayClient,
-                new WorldpayWalletAuthorisationHandler(gatewayClient, gatewayUrlMap()),
+                new WorldpayWalletAuthorisationHandler(gatewayClient, gatewayUrlMap(), mockApplePayDecrypter),
                 new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser()),
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()),

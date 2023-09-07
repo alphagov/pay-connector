@@ -31,7 +31,7 @@ public abstract class WalletService {
     public Response authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
         LOGGER.info("Authorising {} charge with id {} ", walletType.toString(), chargeId);
         GatewayResponse<BaseAuthoriseResponse> response =
-                authoriseService.doAuthorise(chargeId, getWalletAuthorisationData(chargeId, walletAuthorisationRequest));
+                authoriseService.doAuthorise(chargeId, walletAuthorisationRequest);
 
         if (isAuthorisationSubmitted(response)) {
             LOGGER.info("Charge {}: {} authorisation was deferred.", chargeId, walletType.toString());
@@ -39,8 +39,6 @@ public abstract class WalletService {
         }
         return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(chargeId, response);
     }
-    
-    protected abstract WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest);
     
     //PP-4314 These methods duplicated from the CardResource. This kind of handling shouldn't be there in the first place, so will refactor to be embedded in services rather than at resource level
     protected Response handleGatewayAuthoriseResponse(String chargeId, GatewayResponse<? extends BaseAuthoriseResponse> response) {

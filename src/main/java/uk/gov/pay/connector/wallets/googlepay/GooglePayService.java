@@ -16,8 +16,4 @@ public class GooglePayService extends WalletService {
         super(authoriseService, WalletType.GOOGLE_PAY);
     }
     
-    @Override
-    public WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest googlePayAuthRequest) {
-        return (GooglePayAuthRequest) googlePayAuthRequest;
-    }
 }

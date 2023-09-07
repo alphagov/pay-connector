@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
+import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import javax.validation.Valid;
@@ -38,5 +39,11 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
     public ApplePayAuthRequest(WalletPaymentInfo paymentInfo, String paymentData) {
         this.paymentInfo = paymentInfo;
         this.paymentData = paymentData;
+    }
+
+    @Override
+    @Schema(hidden = true)
+    public WalletType getWalletType() {
+        return WalletType.APPLE_PAY;
     }
 }

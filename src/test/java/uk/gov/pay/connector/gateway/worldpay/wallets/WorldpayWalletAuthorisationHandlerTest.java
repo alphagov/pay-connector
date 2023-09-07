@@ -18,6 +18,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
@@ -38,6 +40,7 @@ import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -66,7 +69,7 @@ class WorldpayWalletAuthorisationHandlerTest {
     private GatewayAccountEntity gatewayAccountEntity;
     private WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
     private ChargeEntity chargeEntity;
-
+    private ApplePayDecrypter mockApplePayDecrypter = mock(ApplePayDecrypter.class);
     @Captor
     ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor;
 
@@ -80,7 +83,7 @@ class WorldpayWalletAuthorisationHandlerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL));
+        worldpayWalletAuthorisationHandler = new WorldpayWalletAuthorisationHandler(mockGatewayClient, Map.of(TEST.toString(), WORLDPAY_URL), mockApplePayDecrypter);
         gatewayAccountEntity = aGatewayAccountEntity()
                 .withGatewayName("worldpay")
                 .withType(TEST)
@@ -105,6 +108,7 @@ class WorldpayWalletAuthorisationHandlerTest {
         chargeEntity.setGatewayAccount(gatewayAccountEntity);
         when(mockGatewayClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenThrow(new GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
+        when(mockApplePayDecrypter.performDecryptOperation(any(ApplePayAuthRequest.class))).thenReturn(getAppleDecryptedPaymentData());
     }
 
     @Test
@@ -345,7 +349,8 @@ class WorldpayWalletAuthorisationHandlerTest {
 
     private WalletAuthorisationGatewayRequest getApplePayAuthorisationRequest(boolean withPayerEmail) {
         String payerEmail = withPayerEmail ? "aaa@bbb.test" : null;
-        AppleDecryptedPaymentData data = new AppleDecryptedPaymentData(
+
+        ApplePayAuthRequest applePayAuthRequest = new ApplePayAuthRequest(
                 new WalletPaymentInfo(
                         "4242",
                         "visa",
@@ -353,18 +358,32 @@ class WorldpayWalletAuthorisationHandlerTest {
                         "Mr. Payment",
                         payerEmail
                 ),
-                "4818528840010767",
-                LocalDate.of(2023, 12, 1),
-                "643",
-                10L,
-                "040010030273",
-                "3DSecure",
-                new AppleDecryptedPaymentData.PaymentData(
-                        "Ao/fzpIAFvp1eB9y8WVDMAACAAA=",
-                        "7"
-                )
+                "***ENCRYPTED_PAYMENT_DATA***"
+                
         );
-        return new WalletAuthorisationGatewayRequest(chargeEntity, data);
+        
+        return new WalletAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
+    }
+    
+    private AppleDecryptedPaymentData getAppleDecryptedPaymentData() {
+        return new AppleDecryptedPaymentData(
+                                new WalletPaymentInfo(
+                                    "4242",
+                                    "visa",
+                                    PayersCardType.DEBIT,
+                                    "Mr. Payment",
+                                    null
+                                    ),
+                                "4818528840010767",
+                                LocalDate.of(2023, 12, 1),
+                                "643",
+                                10L,
+                                "040010030273",
+                                "3DSecure",
+                                new AppleDecryptedPaymentData.PaymentData(
+                                        "Ao/fzpIAFvp1eB9y8WVDMAACAAA=",
+                                        "7")
+        );
     }
 
 }

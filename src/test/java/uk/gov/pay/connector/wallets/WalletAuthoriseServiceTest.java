@@ -57,9 +57,9 @@ import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
-import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
-import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.List;
 import java.util.Optional;
@@ -78,6 +78,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -96,8 +97,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
-import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture.anApplePayAuthRequest;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
@@ -106,6 +106,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
+    
+    private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("01/30");
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
@@ -132,7 +134,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     private EmittedEventDao mockEmmittedEventDao;
 
     @Mock
-    protected WalletAuthorisationDataToAuthCardDetailsConverter mockWalletAuthorisationDataToAuthCardDetailsConverter;
+    protected WalletAuthorisationRequestToAuthCardDetailsConverter mockWalletAuthorisationDataToAuthCardDetailsConverter;
 
     @Mock
     protected AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
@@ -166,10 +168,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private WalletAuthoriseService walletAuthoriseService;
 
-    private final AppleDecryptedPaymentData validApplePayDetails =
-            anApplePayDecryptedPaymentData()
-                    .withApplePaymentInfo(
-                            anApplePayPaymentInfo().build())
+    private final ApplePayAuthRequest validApplePayDetails =
+            anApplePayAuthRequest()
                     .build();
 
     @Mock
@@ -188,7 +188,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         lenient().when(mockMetricRegistry.counter(anyString())).thenReturn(mockCounter);
         lenient().when(mockEnvironment.metrics()).thenReturn(mockMetricRegistry);
         lenient().when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-        lenient().when(mockWalletAuthorisationDataToAuthCardDetailsConverter.convert(any(WalletAuthorisationData.class))).thenReturn(mockAuthCardDetails);
+        lenient().when(mockWalletAuthorisationDataToAuthCardDetailsConverter.convert(any(WalletAuthorisationRequest.class), nullable(CardExpiryDate.class))).thenReturn(mockAuthCardDetails);
         lenient().when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(mockAuthCardDetails)).thenReturn(mockCardDetailsEntity);
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         ConnectorConfiguration mockConfiguration = mock(ConnectorConfiguration.class);
@@ -269,7 +269,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
-        WalletAuthorisationData authorisationData =
+        WalletAuthorisationRequest authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
@@ -302,7 +302,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
-        WalletAuthorisationData authorisationData =
+        WalletAuthorisationRequest authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
@@ -359,7 +359,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Test
     void doAuthorise_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() throws Exception {
-        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null);
+        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.CANCELLED, null, null);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
 
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
@@ -373,7 +373,10 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     @Test
     void shouldRespondAuthorisationError() throws Exception {
         providerWillError();
-
+        GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code", null);
+        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        
+        
         GatewayResponse response = walletAuthoriseService.doAuthorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(response.isFailed(), is(true));
@@ -484,11 +487,12 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
     }
 
-    private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode) {
+    private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode, CardExpiryDate cardExpiryDate) {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
         lenient().when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
         lenient().when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         lenient().when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
+        lenient().when(worldpayResponse.getCardExpiryDate()).thenReturn(Optional.ofNullable(cardExpiryDate));
         return responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(SESSION_IDENTIFIER)
@@ -512,13 +516,13 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     private GatewayResponse providerWillAuthorise() throws Exception {
-        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null);
+        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null, EXPIRY_DATE);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
         return authResponse;
     }
 
     private void providerWillReject() throws Exception {
-        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null);
+        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.REJECTED, null, EXPIRY_DATE);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
     }
 
@@ -528,7 +532,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     }
 
     private void providerWillError() throws Exception {
-        GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code");
+        GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code", null);
         when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
     }
 

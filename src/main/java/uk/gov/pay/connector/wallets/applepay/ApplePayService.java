@@ -15,20 +15,8 @@ public class ApplePayService extends WalletService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplePayService.class);
 
-    private ApplePayDecrypter applePayDecrypter;
-
     @Inject
-    public ApplePayService(ApplePayDecrypter applePayDecrypter, WalletAuthoriseService authoriseService) {
+    public ApplePayService(WalletAuthoriseService authoriseService) {
         super(authoriseService, WalletType.APPLE_PAY);
-        this.applePayDecrypter = applePayDecrypter;
-    }
-    
-    @Override
-    public WalletAuthorisationData getWalletAuthorisationData(String chargeId, WalletAuthorisationRequest applePayAuthRequest) {
-        LOGGER.info("Decrypting apple pay payload for charge with id {}", chargeId);
-        AppleDecryptedPaymentData result = applePayDecrypter.performDecryptOperation((ApplePayAuthRequest) applePayAuthRequest);
-        result.setPaymentInfo(applePayAuthRequest.getPaymentInfo());
-        LOGGER.info("Finished decryption for id {}", chargeId);
-        return result;
     }
 }

@@ -5,18 +5,18 @@ import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 public class WalletAuthorisationGatewayRequest extends AuthorisationGatewayRequest {
-    private WalletAuthorisationData walletAuthorisationData;
+    private WalletAuthorisationRequest walletAuthorisationRequest;
 
-    public WalletAuthorisationGatewayRequest(ChargeEntity charge, WalletAuthorisationData walletAuthorisationData) {
+    public WalletAuthorisationGatewayRequest(ChargeEntity charge, WalletAuthorisationRequest walletAuthorisationRequest) {
         super(charge);
-        this.walletAuthorisationData = walletAuthorisationData;
+        this.walletAuthorisationRequest = walletAuthorisationRequest;
     }
 
-    public WalletAuthorisationData getWalletAuthorisationData() {
-        return walletAuthorisationData;
+    public WalletAuthorisationRequest getWalletAuthorisationRequest() {
+        return walletAuthorisationRequest;
     }
 
-    public static WalletAuthorisationGatewayRequest valueOf(ChargeEntity charge, WalletAuthorisationData applePaymentData) {
-        return new WalletAuthorisationGatewayRequest(charge, applePaymentData);
+    public static WalletAuthorisationGatewayRequest valueOf(ChargeEntity charge, WalletAuthorisationRequest walletAuthorisationRequest) {
+        return new WalletAuthorisationGatewayRequest(charge, walletAuthorisationRequest);
     }
 }
