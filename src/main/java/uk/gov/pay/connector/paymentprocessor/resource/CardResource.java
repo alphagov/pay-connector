@@ -31,9 +31,8 @@ import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.util.MDCUtils;
 import uk.gov.pay.connector.util.ResponseUtil;
-import uk.gov.pay.connector.wallets.applepay.ApplePayService;
+import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.GooglePayService;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.inject.Inject;
@@ -64,23 +63,21 @@ public class CardResource {
     private final ChargeEligibleForCaptureService chargeEligibleForCaptureService;
     private final DelayedCaptureService delayedCaptureService;
     private final ChargeCancelService chargeCancelService;
-    private final ApplePayService applePayService;
-    private final GooglePayService googlePayService;
+    private final WalletService walletService;
     private final TokenService tokenService;
     private final MotoApiCardNumberValidationService motoApiCardNumberValidationService;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         ChargeEligibleForCaptureService chargeEligibleForCaptureService, DelayedCaptureService delayedCaptureService,
-                        ChargeCancelService chargeCancelService, ApplePayService applePayService, GooglePayService googlePayService,
+                        ChargeCancelService chargeCancelService, WalletService walletService,
                         TokenService tokenService, MotoApiCardNumberValidationService motoApiCardNumberValidationService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
         this.delayedCaptureService = delayedCaptureService;
         this.chargeCancelService = chargeCancelService;
-        this.applePayService = applePayService;
-        this.googlePayService = googlePayService;
+        this.walletService = walletService;
         this.tokenService = tokenService;
         this.motoApiCardNumberValidationService = motoApiCardNumberValidationService;
     }
@@ -108,7 +105,7 @@ public class CardResource {
                                     @PathParam("chargeId") String chargeId,
                                     @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
-        return applePayService.authorise(chargeId, applePayAuthRequest);
+        return walletService.authorise(chargeId, applePayAuthRequest);
     }
 
     @POST
@@ -135,7 +132,7 @@ public class CardResource {
                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
-        return googlePayService.authorise(chargeId, googlePayAuthRequest);
+        return walletService.authorise(chargeId, googlePayAuthRequest);
     }
 
     @POST
