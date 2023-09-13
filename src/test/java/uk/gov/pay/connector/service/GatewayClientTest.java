@@ -53,7 +53,7 @@ public class GatewayClientTest {
     private MediaType mediaType = MediaType.APPLICATION_XML_TYPE;
 
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
-    private String[] labelNames = new String[] {"gatewayName", "gatewayAccountType", "orderRequestType"};
+    private String[] labelNames = new String[] {"gatewayName", "gatewayAccountType", "requestType"};
 
     @Mock
     private Client mockClient;

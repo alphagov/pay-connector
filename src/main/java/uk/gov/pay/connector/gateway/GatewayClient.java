@@ -43,12 +43,12 @@ public class GatewayClient {
     private static final Counter gatewayOperationsFailures = Counter.build()
         .name("gateway_operations_failures_total")
         .help("Number of failed gateway operations")
-        .labelNames("gatewayName", "gatewayAccountType", "orderRequestType")
+        .labelNames("gatewayName", "gatewayAccountType", "requestType")
         .register();
     private static final Histogram gatewayOperationsResponseTime = Histogram.build()
         .name("gateway_operations_response_time_seconds")
         .help("Response times for gateway operations in seconds")
-        .labelNames("gatewayName", "gatewayAccountType", "orderRequestType")
+        .labelNames("gatewayName", "gatewayAccountType", "requestType")
         .register();
 
     public GatewayClient(Client client, MetricRegistry metricRegistry) {
