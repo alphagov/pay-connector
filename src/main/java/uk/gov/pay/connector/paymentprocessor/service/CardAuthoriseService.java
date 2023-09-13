@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.Counter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -49,6 +50,11 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 public class CardAuthoriseService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CardAuthoriseService.class);
+    private static final Counter authorisationResultCounter = Counter.build()
+      .name("gateway_operations_authorisation_result_total")
+      .help("Counter of results of card authorisations")
+      .labelNames("paymentProvider", "gatewayAccountType", "billingAddressPresent", "authorisationResult")
+      .register();
 
     private final CardTypeDao cardTypeDao;
     private final AuthorisationService authorisationService;
@@ -230,6 +236,12 @@ public class CardAuthoriseService {
     }
 
     private void incrementMetricsPostAuthorisation(ChargeStatus newStatus, ChargeEntity updatedCharge, AuthorisationRequestSummary authorisationRequestSummary) {
+        authorisationResultCounter.labels(
+                updatedCharge.getPaymentProvider().toString().toLowerCase(),
+                updatedCharge.getGatewayAccount().getType().toString().toLowerCase(),
+                authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
+                newStatus.toString().toLowerCase()).inc();
+
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.authorise.%s.result.%s",
                 updatedCharge.getPaymentProvider(),
