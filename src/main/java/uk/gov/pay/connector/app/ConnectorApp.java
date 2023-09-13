@@ -248,7 +248,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
     private void initialisePrometheusMetrics(Environment environment, URI ecsContainerMetadataUri) {
         logger.info("Initialising prometheus metrics.");
-        CollectorRegistry collectorRegistry = new CollectorRegistry();
+        CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
         collectorRegistry.register(new DropwizardExports(environment.metrics(), new PrometheusDefaultLabelSampleBuilder(ecsContainerMetadataUri)));
         environment.admin().addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry)).addMapping("/metrics");
     }
