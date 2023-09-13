@@ -98,7 +98,7 @@ class WorldpayOrderStatusResponseTest {
         String response = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
         assertThat(worldpayOrderStatusResponse.getCardExpiryDate().isPresent(), is(true));
-        assertThat(worldpayOrderStatusResponse.getCardExpiryDate().get(), is(CardExpiryDate.valueOf("11/99")));
+        assertThat(worldpayOrderStatusResponse.getCardExpiryDate().get(), is(CardExpiryDate.valueOf("11/35")));
     }
 
     @Test
@@ -107,6 +107,7 @@ class WorldpayOrderStatusResponseTest {
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
         assertThat(worldpayOrderStatusResponse.getCardExpiryDate().isPresent(), is(false));
     }
+    
     @Test
     void get_expiry_date_should_return_empty_optional_when_expiry_date_year_is_invalid() throws Exception {
         String response = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE_WITH_INVALID_EXPIRY_YEAR);

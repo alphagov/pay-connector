@@ -12,11 +12,13 @@ import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static java.util.function.Predicate.not;
@@ -30,10 +32,10 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
     private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
     private static final String WORLDPAY_CANCELLED_EVENT = "CANCELLED";
-
     public static final String WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY = "paymentTokenID";
-
     public static final String WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY = "schemeTransactionIdentifier";
+    private static final Pattern TWO_DIGIT_MONTH = Pattern.compile("[0-9]{2}");
+    private static final Pattern FOUR_DIGIT_YEAR = Pattern.compile("[1-9][0-9]{3}");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayOrderStatusResponse.class);
     
@@ -179,15 +181,25 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @Override
     public Optional<CardExpiryDate> getCardExpiryDate() {
-        if (expiryDateMonth != null && expiryDateYear != null) {
-            try {
-                return Optional.of(CardExpiryDate.valueOf(expiryDateMonth + "/" + expiryDateYear.substring(2, 4)));
-            } catch (IndexOutOfBoundsException ex) {
-                LOGGER.error(format("Expiry date year in Worldpay response for transaction {} is in an unexpected format." + transactionId));
-                return Optional.empty();
-            }
+        if (expiryDateMonth == null || !TWO_DIGIT_MONTH.matcher(expiryDateMonth).matches()) {
+            LOGGER.error(format("Expiry date month in Worldpay response for transaction {} is in an unexpected format.", transactionId));
+            return Optional.empty();
         }
-        return Optional.empty();
+
+        if (expiryDateYear == null || !FOUR_DIGIT_YEAR.matcher(expiryDateYear).matches()) {
+            LOGGER.error(format("Expiry date year in Worldpay response for transaction {} is in an unexpected format.", transactionId));
+            return Optional.empty();
+        }
+        
+        var expiryDateYearMonth = YearMonth.of(Integer.parseInt(expiryDateYear), Integer.parseInt(expiryDateMonth));
+        CardExpiryDate expiryDate;
+        try {
+            expiryDate = CardExpiryDate.valueOf(expiryDateYearMonth);
+        } catch (IllegalArgumentException ex) {
+            LOGGER.error(format("Expiry date in Worldpay response for transaction {} is outside of the expected range. {}", transactionId, ex.getMessage()));
+            return Optional.empty();
+        }
+        return Optional.of(expiryDate);
     }
     
     @Override

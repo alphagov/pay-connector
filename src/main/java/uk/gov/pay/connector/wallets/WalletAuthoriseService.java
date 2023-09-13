@@ -86,7 +86,7 @@ public class WalletAuthoriseService {
             Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
-            Optional<CardExpiryDate> cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate);
+            CardExpiryDate cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate).orElse(null);
             
             logMetrics(charge, operationResponse, requestStatus, walletAuthorisationRequest.getWalletType());
 
@@ -97,7 +97,7 @@ public class WalletAuthoriseService {
                     sessionIdentifier.orElse(null),
                     chargeStatus,
                     auth3dsDetailsEntity,
-                    cardExpiryDate.orElse(null));
+                    cardExpiryDate);
             
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,

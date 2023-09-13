@@ -91,16 +91,20 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
     }
 
     private WalletAuthorisationData extractWalletAuthorisationData(WalletAuthorisationGatewayRequest request) {
-        if (request.getWalletAuthorisationRequest().getWalletType() == WalletType.APPLE_PAY) {
-            return decryptApplePaymentData(request.getGovUkPayPaymentId(), (ApplePayAuthRequest) request.getWalletAuthorisationRequest());
+        switch (request.getWalletAuthorisationRequest().getWalletType()) {
+            case APPLE_PAY:
+                return decryptApplePaymentData(request.getGovUkPayPaymentId(), (ApplePayAuthRequest) request.getWalletAuthorisationRequest());
+            case GOOGLE_PAY:
+                return (GooglePayAuthRequest) request.getWalletAuthorisationRequest();
+            default:
+                throw new IllegalArgumentException("Wallet Type not recognised");
         }
-        return (GooglePayAuthRequest) request.getWalletAuthorisationRequest();
     }
+    
     private WalletAuthorisationData decryptApplePaymentData(String chargeId, ApplePayAuthRequest applePayAuthRequest) {
-        LOGGER.info("Decrypting apple pay payload for charge with id {}", chargeId);
+        LOGGER.info("Decrypting Apple Pay payload for charge with id {}", chargeId);
         AppleDecryptedPaymentData result = applePayDecrypter.performDecryptOperation(applePayAuthRequest);
         result.setPaymentInfo(applePayAuthRequest.getPaymentInfo());
-        LOGGER.info("Finished decryption for id {}", chargeId);
         return result;
     }
     
