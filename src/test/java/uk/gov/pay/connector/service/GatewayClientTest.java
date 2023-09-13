@@ -53,7 +53,7 @@ public class GatewayClientTest {
     private MediaType mediaType = MediaType.APPLICATION_XML_TYPE;
 
     private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
-    private String[] labelNames = new String[] {"gatewayName", "gatewayAccountType", "requestType"};
+    private String[] labelNames = new String[]{"gatewayName", "gatewayAccountType", "requestType"};
 
     @Mock
     private Client mockClient;
@@ -85,14 +85,14 @@ public class GatewayClientTest {
         setupPostRequestMocks();
         when(mockResponse.getStatus()).thenReturn(500);
         when(mockMetricRegistry.counter("gateway-operations.worldpay.test.authorise.failures")).thenReturn(mockFailureCounter);
-        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "authorise"});
-        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "authorise"});
+        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "authorise"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "authorise"});
 
         assertThrows(GatewayException.GatewayErrorException.class,
                 () -> gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", mockGatewayOrder, emptyMap()));
 
-        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "authorise"});
-        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "authorise"});
+        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "authorise"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "authorise"});
         assertEquals(failureCounterBefore + 1, failureCounterAfter);
         assertEquals(histogramCountBefore + 1, histogramCountAfter);
         verify(mockResponse).close();
@@ -104,15 +104,15 @@ public class GatewayClientTest {
         setupPostRequestMocks();
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenThrow(new ProcessingException(new SocketException("socket failed")));
         when(mockMetricRegistry.counter("gateway-operations.worldpay.test.authorise.failures")).thenReturn(mockFailureCounter);
-        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "authorise"});
-        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "authorise"});
+        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "authorise"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "authorise"});
         doAnswer(invocationOnMock -> null).when(mockFailureCounter).inc();
-        
+
         assertThrows(GatewayException.GenericGatewayException.class,
                 () -> gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", mockGatewayOrder, emptyMap()));
 
-        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "authorise"});
-        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "authorise"});
+        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "authorise"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "authorise"});
         assertEquals(failureCounterBefore + 1, failureCounterAfter);
         assertEquals(histogramCountBefore + 1, histogramCountAfter);
         verify(mockFailureCounter).inc();
@@ -122,7 +122,7 @@ public class GatewayClientTest {
     public void shouldIncludeCookieIfSessionIdentifierAvailableInOrder() throws Exception {
         setupPostRequestMocks();
         when(mockResponse.getStatus()).thenReturn(200);
-        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "authorise"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "authorise"});
 
         gatewayClient.postRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", mockGatewayOrder,
                 ImmutableList.of(new HttpCookie("machine", "value")), emptyMap());
@@ -132,7 +132,7 @@ public class GatewayClientTest {
         inOrder.verify(mockBuilder).post(Entity.entity(orderPayload, mediaType));
         verify(mockResponseTimeHistogram).update(anyLong());
 
-        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "authorise"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "authorise"});
         assertEquals(histogramCountBefore + 1, histogramCountAfter);
     }
 
@@ -142,14 +142,14 @@ public class GatewayClientTest {
         when(mockResponse.getStatus()).thenReturn(500);
         doAnswer(invocationOnMock -> null).when(mockFailureCounter).inc();
         when(mockMetricRegistry.counter("gateway-operations.get.worldpay.test.query.failures")).thenReturn(mockFailureCounter);
-        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "query"});
-        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "query"});
+        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
 
         assertThrows(GatewayException.GatewayErrorException.class,
                 () -> gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap(), emptyMap()));
 
-        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "query"});
-        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "query"});
+        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
         assertEquals(failureCounterBefore + 1, failureCounterAfter);
         assertEquals(histogramCountBefore + 1, histogramCountAfter);
         verify(mockResponse).close();
@@ -161,15 +161,15 @@ public class GatewayClientTest {
         setupGetRequestMocks();
         when(mockMetricRegistry.counter("gateway-operations.get.worldpay.test.query.failures")).thenReturn(mockFailureCounter);
         when(mockBuilder.get()).thenThrow(new ProcessingException(new SocketException("socket failed")));
-        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "query"});
-        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "query"});
+        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
 
         assertThrows(GatewayException.GenericGatewayException.class,
                 () -> gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap(), emptyMap()));
         verify(mockFailureCounter).inc();
 
-        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[] {"worldpay", "test", "query"});
-        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "query"});
+        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
         assertEquals(failureCounterBefore + 1, failureCounterAfter);
         assertEquals(histogramCountBefore + 1, histogramCountAfter);
     }
@@ -178,7 +178,7 @@ public class GatewayClientTest {
     public void getRequestShouldIncludeCookieIfSessionIdentifierAvailableInOrder() throws Exception {
         setupGetRequestMocks();
         when(mockResponse.getStatus()).thenReturn(200);
-        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "query"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
 
         gatewayClient.getRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY,
                 ImmutableList.of(new HttpCookie("machine", "value")), emptyMap(), emptyMap());
@@ -188,7 +188,7 @@ public class GatewayClientTest {
         inOrder.verify(mockBuilder).get();
         verify(mockResponseTimeHistogram).update(anyLong());
 
-        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[] {"worldpay", "test", "query"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
         assertEquals(histogramCountBefore + 1, histogramCountAfter);
     }
 

@@ -51,10 +51,10 @@ public class CardAuthoriseService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CardAuthoriseService.class);
     private static final Counter authorisationResultCounter = Counter.build()
-      .name("gateway_operations_authorisation_result_total")
-      .help("Counter of results of card authorisations")
-      .labelNames("paymentProvider", "gatewayAccountType", "billingAddressPresent", "authorisationResult")
-      .register();
+            .name("gateway_operations_authorisation_result_total")
+            .help("Counter of results of card authorisations")
+            .labelNames("paymentProvider", "gatewayAccountType", "billingAddressPresent", "authorisationResult")
+            .register();
 
     private final CardTypeDao cardTypeDao;
     private final AuthorisationService authorisationService;

@@ -207,7 +207,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
         environment.jersey().register(injector.getInstance(AgreementsApiResource.class));
 
-        if(configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
+        if (configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
             setupSchedulers(environment, injector);
         }
         environment.lifecycle().manage(injector.getInstance(PayoutReconcileMessageReceiver.class));

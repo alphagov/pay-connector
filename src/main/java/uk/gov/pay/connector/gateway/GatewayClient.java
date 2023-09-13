@@ -41,15 +41,15 @@ public class GatewayClient {
     private final MetricRegistry metricRegistry;
 
     private static final Counter gatewayOperationsFailures = Counter.build()
-        .name("gateway_operations_failures_total")
-        .help("Number of failed gateway operations")
-        .labelNames("gatewayName", "gatewayAccountType", "requestType")
-        .register();
+            .name("gateway_operations_failures_total")
+            .help("Number of failed gateway operations")
+            .labelNames("gatewayName", "gatewayAccountType", "requestType")
+            .register();
     private static final Histogram gatewayOperationsResponseTime = Histogram.build()
-        .name("gateway_operations_response_time_seconds")
-        .help("Response times for gateway operations in seconds")
-        .labelNames("gatewayName", "gatewayAccountType", "requestType")
-        .register();
+            .name("gateway_operations_response_time_seconds")
+            .help("Response times for gateway operations in seconds")
+            .labelNames("gatewayName", "gatewayAccountType", "requestType")
+            .register();
 
     public GatewayClient(Client client, MetricRegistry metricRegistry) {
         this.client = client;
@@ -101,7 +101,7 @@ public class GatewayClient {
                                                 Map<String, String> headers,
                                                 Map<String, String> queryParams)
             throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        
+
         String metricsPrefix = format("gateway-operations.get.%s.%s.%s", gatewayName.getName(), gatewayAccountType, orderRequestType);
 
         Supplier<javax.ws.rs.core.Response> requestCallable = () -> {
@@ -187,7 +187,7 @@ public class GatewayClient {
     }
 
     private void incrementPrometheusFailureCounter(PaymentGatewayName gatewayName, String gatewayAccountType, OrderRequestType orderRequestType) {
-        this.gatewayOperationsFailures.labels(
+        gatewayOperationsFailures.labels(
                 gatewayName.toString().toLowerCase(),
                 gatewayAccountType.toLowerCase(),
                 orderRequestType.toString().toLowerCase()
