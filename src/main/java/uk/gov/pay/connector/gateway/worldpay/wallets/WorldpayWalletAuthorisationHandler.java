@@ -25,6 +25,7 @@ import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
@@ -97,7 +98,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
             case GOOGLE_PAY:
                 return (GooglePayAuthRequest) request.getWalletAuthorisationRequest();
             default:
-                throw new IllegalArgumentException("Wallet Type not recognised");
+                throw new IllegalArgumentException(format("Wallet Type not recognised: {}", request.getWalletAuthorisationRequest().getWalletType()));
         }
     }
     

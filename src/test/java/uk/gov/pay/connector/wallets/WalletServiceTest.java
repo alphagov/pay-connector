@@ -2,7 +2,6 @@ package uk.gov.pay.connector.wallets;
 
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +19,7 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Map;
 
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,7 +62,7 @@ public class WalletServiceTest {
 
         verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, applePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
-        assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION SUCCESS")));
+        assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION SUCCESS")));
     }
 
     @Test
@@ -101,7 +101,7 @@ public class WalletServiceTest {
 
         verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
-        assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION SUCCESS")));
+        assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION SUCCESS")));
     }
 
     @Test
@@ -119,7 +119,7 @@ public class WalletServiceTest {
 
         verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuth3dsRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
-        assertThat(authorisationResponse.getEntity(), is(ImmutableMap.of("status", "AUTHORISATION 3DS REQUIRED")));
+        assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION 3DS REQUIRED")));
     }
 
     @Test
@@ -142,6 +142,4 @@ public class WalletServiceTest {
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));
     }
-
-
 }

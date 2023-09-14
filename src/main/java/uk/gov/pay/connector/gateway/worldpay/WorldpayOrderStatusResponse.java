@@ -35,7 +35,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     public static final String WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY = "paymentTokenID";
     public static final String WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY = "schemeTransactionIdentifier";
     private static final Pattern TWO_DIGIT_MONTH = Pattern.compile("[0-9]{2}");
-    private static final Pattern FOUR_DIGIT_YEAR = Pattern.compile("[1-9][0-9]{3}");
+    private static final Pattern FOUR_DIGIT_YEAR = Pattern.compile("20[0-9]{2}");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayOrderStatusResponse.class);
     
@@ -192,14 +192,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         }
         
         var expiryDateYearMonth = YearMonth.of(Integer.parseInt(expiryDateYear), Integer.parseInt(expiryDateMonth));
-        CardExpiryDate expiryDate;
-        try {
-            expiryDate = CardExpiryDate.valueOf(expiryDateYearMonth);
-        } catch (IllegalArgumentException ex) {
-            LOGGER.error(format("Expiry date in Worldpay response for transaction {} is outside of the expected range. {}", transactionId, ex.getMessage()));
-            return Optional.empty();
-        }
-        return Optional.of(expiryDate);
+        return Optional.of(CardExpiryDate.valueOf(expiryDateYearMonth));
     }
     
     @Override
