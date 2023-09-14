@@ -21,7 +21,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
-import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 
@@ -34,7 +34,7 @@ public class WalletAuthoriseService {
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders paymentProviders;
-    private final WalletAuthorisationDataToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter;
+    private final WalletAuthorisationRequestToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter;
     private final AuthorisationLogger authorisationLogger;
     private MetricRegistry metricRegistry;
 
@@ -42,7 +42,7 @@ public class WalletAuthoriseService {
     public WalletAuthoriseService(PaymentProviders paymentProviders,
                                   ChargeService chargeService,
                                   AuthorisationService authorisationService,
-                                  WalletAuthorisationDataToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter,
+                                  WalletAuthorisationRequestToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter,
                                   AuthorisationLogger authorisationLogger, 
                                   Environment environment) {
         this.paymentProviders = paymentProviders;
@@ -53,7 +53,7 @@ public class WalletAuthoriseService {
         this.metricRegistry = environment.metrics();
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, WalletAuthorisationData walletAuthorisationData) {
+    public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
         return authorisationService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
@@ -61,7 +61,7 @@ public class WalletAuthoriseService {
             String requestStatus = "failure";
 
             try {
-                operationResponse = authorise(charge, walletAuthorisationData);
+                operationResponse = authorise(charge, walletAuthorisationRequest);
 
                 if (operationResponse.getBaseResponse().isPresent()) {
                     requestStatus = "success";
@@ -86,16 +86,18 @@ public class WalletAuthoriseService {
             Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
-
-            logMetrics(charge, operationResponse, requestStatus, walletAuthorisationData.getWalletType());
+            CardExpiryDate cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate).orElse(null);
+            
+            logMetrics(charge, operationResponse, requestStatus, walletAuthorisationRequest.getWalletType());
 
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
-                    walletAuthorisationData,
+                    walletAuthorisationRequest,
                     transactionId.orElse(null),
                     sessionIdentifier.orElse(null),
                     chargeStatus,
-                    auth3dsDetailsEntity);
+                    auth3dsDetailsEntity,
+                    cardExpiryDate);
             
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
@@ -135,22 +137,24 @@ public class WalletAuthoriseService {
 
     private void processGatewayAuthorisationResponse(
             String chargeExternalId,
-            WalletAuthorisationData walletAuthorisationData,
+            WalletAuthorisationRequest walletAuthorisationRequest,
             String transactionId,
             ProviderSessionIdentifier sessionIdentifier,
             ChargeStatus status,
-            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
-
-        LOGGER.info("Processing gateway auth response for {}", walletAuthorisationData.getWalletType().toString());
-        AuthCardDetails authCardDetailsToBePersisted = walletAuthorisationDataToAuthCardDetailsConverter.convert(walletAuthorisationData);
+            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
+            CardExpiryDate cardExpiryDate) {
+        
+        LOGGER.info("Processing gateway auth response for {}", walletAuthorisationRequest.getWalletType().toString());
+        
+        AuthCardDetails authCardDetailsToBePersisted = walletAuthorisationDataToAuthCardDetailsConverter.convert(walletAuthorisationRequest, cardExpiryDate);
         ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
                 status,
                 transactionId,
                 sessionIdentifier,
                 authCardDetailsToBePersisted,
-                walletAuthorisationData.getWalletType(),
-                walletAuthorisationData.getPaymentInfo().getEmail(),
+                walletAuthorisationRequest.getWalletType(),
+                walletAuthorisationRequest.getPaymentInfo().getEmail(),
                 auth3dsRequiredDetails);
 
         metricRegistry.counter(String.format(
@@ -161,11 +165,12 @@ public class WalletAuthoriseService {
                 status.toString())).inc();
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationData walletAuthorisationData)
+    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
             throws GatewayException {
-
-        LOGGER.info("Authorising charge for {}", walletAuthorisationData.getWalletType().toString());
-        var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationData);
+        
+        LOGGER.info("Authorising charge for {}", walletAuthorisationRequest.getWalletType().toString());
+        
+        var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationRequest);
         return getPaymentProviderFor(chargeEntity).authoriseWallet(authorisationGatewayRequest);
     }
 

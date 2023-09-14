@@ -10,6 +10,7 @@ public class TestTemplateResourceLoader {
     private static final String WORLDPAY_BASE_NAME = TEMPLATE_BASE_NAME + "/worldpay";
 
     public static final String WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/authorisation-success-response.xml";
+    public static final String WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE_WITH_INVALID_EXPIRY_YEAR = WORLDPAY_BASE_NAME + "/authorisation-success-response-with-invalid-expiry-year.xml";
     public static final String WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-honoured-response.xml";
     public static final String WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-soft-decline-result-rejected-response.xml";
     public static final String WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-soft-decline-result-out-of-scope-response.xml";

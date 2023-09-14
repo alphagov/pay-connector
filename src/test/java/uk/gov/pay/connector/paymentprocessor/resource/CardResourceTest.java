@@ -45,8 +45,7 @@ import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
-import uk.gov.pay.connector.wallets.applepay.ApplePayService;
-import uk.gov.pay.connector.wallets.googlepay.GooglePayService;
+import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.client.Entity;
@@ -94,8 +93,7 @@ class CardResourceTest {
     private static final ChargeEligibleForCaptureService mockChargeEligibleForCaptureService = mock(ChargeEligibleForCaptureService.class);
     private static final DelayedCaptureService mockDelayedCaptureService = mock(DelayedCaptureService.class);
     private static final ChargeCancelService mockChargeCancelService = mock(ChargeCancelService.class);
-    private static final ApplePayService mockApplePayService = mock(ApplePayService.class);
-    private static final GooglePayService mockGooglePayService = mock(GooglePayService.class);
+    private static final WalletService mockWalletService = mock(WalletService.class);
     private static final TokenService mockTokenService = mock(TokenService.class);
     private static final MotoApiCardNumberValidationService mockMotoApiCardNumberValidationService = mock(MotoApiCardNumberValidationService.class);
 
@@ -106,8 +104,7 @@ class CardResourceTest {
                     mockChargeEligibleForCaptureService,
                     mockDelayedCaptureService,
                     mockChargeCancelService,
-                    mockApplePayService,
-                    mockGooglePayService,
+                    mockWalletService,
                     mockTokenService,
                     mockMotoApiCardNumberValidationService))
             .setRegisterDefaultExceptionMappers(false)

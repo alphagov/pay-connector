@@ -1,20 +1,26 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import org.eclipse.persistence.oxm.annotations.XmlPath;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.WorldpayAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
+import static java.lang.String.format;
 import static java.util.function.Predicate.not;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.trim;
@@ -26,11 +32,13 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
     private static final String WORLDPAY_AUTHORISED_EVENT = "AUTHORISED";
     private static final String WORLDPAY_REFUSED_EVENT = "REFUSED";
     private static final String WORLDPAY_CANCELLED_EVENT = "CANCELLED";
-
     public static final String WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY = "paymentTokenID";
-
     public static final String WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY = "schemeTransactionIdentifier";
+    private static final Pattern TWO_DIGIT_MONTH = Pattern.compile("[0-9]{2}");
+    private static final Pattern FOUR_DIGIT_YEAR = Pattern.compile("20[0-9]{2}");
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayOrderStatusResponse.class);
+    
     @XmlPath("reply/orderStatus/@orderCode")
     private String transactionId;
 
@@ -77,6 +85,12 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @XmlPath("reply/orderStatus/token/tokenDetails/@tokenEvent")
     private String tokenEvent;
+    
+    @XmlPath("reply/orderStatus/payment/paymentMethodDetail/card/expiryDate/date/@year")
+    private String expiryDateYear;
+
+    @XmlPath("reply/orderStatus/payment/paymentMethodDetail/card/expiryDate/date/@month")
+    private String expiryDateMonth;
 
     @XmlPath("reply/error/@code")
     public void setErrorCode(String errorCode) {
@@ -165,6 +179,22 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         return refusedReturnCode;
     }
 
+    @Override
+    public Optional<CardExpiryDate> getCardExpiryDate() {
+        if (expiryDateMonth == null || !TWO_DIGIT_MONTH.matcher(expiryDateMonth).matches()) {
+            LOGGER.error(format("Expiry date month in Worldpay response for transaction {} is in an unexpected format.", transactionId));
+            return Optional.empty();
+        }
+
+        if (expiryDateYear == null || !FOUR_DIGIT_YEAR.matcher(expiryDateYear).matches()) {
+            LOGGER.error(format("Expiry date year in Worldpay response for transaction {} is in an unexpected format.", transactionId));
+            return Optional.empty();
+        }
+        
+        var expiryDateYearMonth = YearMonth.of(Integer.parseInt(expiryDateYear), Integer.parseInt(expiryDateMonth));
+        return Optional.of(CardExpiryDate.valueOf(expiryDateYearMonth));
+    }
+    
     @Override
     public AuthoriseStatus authoriseStatus() {
         if ((is3dsVersionOneRequired()) || is3dsFlexChallengeRequired()) {

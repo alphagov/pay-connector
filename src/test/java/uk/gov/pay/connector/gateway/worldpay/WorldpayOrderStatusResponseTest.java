@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITH_TRANSACTION_IDENTIFIER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE_WITH_INVALID_EXPIRY_YEAR;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 class WorldpayOrderStatusResponseTest {
@@ -89,6 +91,28 @@ class WorldpayOrderStatusResponseTest {
         String response = load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
         assertTrue(worldpayOrderStatusResponse.toString().contains("Mapped rejection reason: DO_NOT_HONOUR"));
+    }
+
+    @Test
+    void get_expiry_date_should_return_correctly_when_expiry_date_fields_are_present() throws Exception {
+        String response = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
+        assertThat(worldpayOrderStatusResponse.getCardExpiryDate().isPresent(), is(true));
+        assertThat(worldpayOrderStatusResponse.getCardExpiryDate().get(), is(CardExpiryDate.valueOf("11/35")));
+    }
+
+    @Test
+    void get_expiry_date_should_return_empty_optional_when_expiry_date_fields_are_absent() throws Exception {
+        String response = load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
+        WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
+        assertThat(worldpayOrderStatusResponse.getCardExpiryDate().isPresent(), is(false));
+    }
+    
+    @Test
+    void get_expiry_date_should_return_empty_optional_when_expiry_date_year_is_invalid() throws Exception {
+        String response = load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE_WITH_INVALID_EXPIRY_YEAR);
+        WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
+        assertThat(worldpayOrderStatusResponse.getCardExpiryDate().isPresent(), is(false));
     }
 
 }

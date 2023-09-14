@@ -4,6 +4,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Map;
 import java.util.Optional;
@@ -30,6 +31,8 @@ public interface BaseAuthoriseResponse extends BaseResponse {
         return Optional.empty();
     }
 
+    default Optional<CardExpiryDate> getCardExpiryDate() { return Optional.empty(); }
+    
     enum AuthoriseStatus {
         SUBMITTED(ChargeStatus.AUTHORISATION_SUBMITTED),
         AUTHORISED(ChargeStatus.AUTHORISATION_SUCCESS),
