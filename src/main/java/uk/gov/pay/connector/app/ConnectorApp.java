@@ -207,7 +207,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
         environment.jersey().register(injector.getInstance(AgreementsApiResource.class));
 
-        if (configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
+        if(configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
             setupSchedulers(environment, injector);
         }
         environment.lifecycle().manage(injector.getInstance(PayoutReconcileMessageReceiver.class));
@@ -243,18 +243,18 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
                 .scheduleAtFixedRate(metricsService::updateMetricData, 0, GRAPHITE_SENDING_PERIOD_SECONDS / 2, TimeUnit.SECONDS);
 
         initialiseGraphiteMetrics(configuration, environment);
+        configuration.getEcsContainerMetadataUriV4().ifPresent(uri -> initialisePrometheusMetrics(environment, uri));
+    }
 
+    private void initialisePrometheusMetrics(Environment environment, URI ecsContainerMetadataUri) {
         logger.info("Initialising prometheus metrics.");
-        CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
-        configuration.getEcsContainerMetadataUriV4().ifPresentOrElse(
-                uri -> collectorRegistry.register(new DropwizardExports(environment.metrics(), new PrometheusDefaultLabelSampleBuilder(uri))),
-                () -> collectorRegistry.register(new DropwizardExports(environment.metrics()))
-        );
+        CollectorRegistry collectorRegistry = new CollectorRegistry();
+        collectorRegistry.register(new DropwizardExports(environment.metrics(), new PrometheusDefaultLabelSampleBuilder(ecsContainerMetadataUri)));
         environment.admin().addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry)).addMapping("/metrics");
     }
 
     /**
-     * Graphite metric config to be deleted when we've completely moved to Prometheus
+     * Graphtie metric config to be deleted when we've completely moved to Prometheus
      */
     private void initialiseGraphiteMetrics(ConnectorConfiguration configuration, Environment environment) {
         GraphiteSender graphiteUDP = new GraphiteUDP(configuration.getGraphiteHost(), Integer.parseInt(configuration.getGraphitePort()));
