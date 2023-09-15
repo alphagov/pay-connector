@@ -181,20 +181,25 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     @Override
     public Optional<CardExpiryDate> getCardExpiryDate() {
-        if (expiryDateMonth == null || !TWO_DIGIT_MONTH.matcher(expiryDateMonth).matches()) {
-            LOGGER.error(format("Expiry date month in Worldpay response for transaction {} is in an unexpected format.", transactionId));
+        if (expiryDateMonth == null && expiryDateYear == null) {
+            if (AuthoriseStatus.AUTHORISED.toString().equals(lastEvent)) {
+                LOGGER.info("Expiry date is not included in Worldpay wallet payment authorisation success response.");
+            }
+            return Optional.empty();
+        }
+        if (expiryDateMonth == null || !TWO_DIGIT_MONTH.matcher(expiryDateMonth).matches()
+                || expiryDateYear == null || !FOUR_DIGIT_YEAR.matcher(expiryDateYear).matches()) {
+            int monthDigits = (expiryDateMonth == null) ? 0 : expiryDateMonth.length();
+            int yearDigits = (expiryDateYear == null) ? 0 : expiryDateYear.length();
+            LOGGER.error(format("Expiry date in Worldpay wallet payment authorisation response is in an unexpected format; month has %s digits, year has %s digits.", monthDigits, yearDigits));
             return Optional.empty();
         }
 
-        if (expiryDateYear == null || !FOUR_DIGIT_YEAR.matcher(expiryDateYear).matches()) {
-            LOGGER.error(format("Expiry date year in Worldpay response for transaction {} is in an unexpected format.", transactionId));
-            return Optional.empty();
-        }
-        
         var expiryDateYearMonth = YearMonth.of(Integer.parseInt(expiryDateYear), Integer.parseInt(expiryDateMonth));
         return Optional.of(CardExpiryDate.valueOf(expiryDateYearMonth));
     }
-    
+
+
     @Override
     public AuthoriseStatus authoriseStatus() {
         if ((is3dsVersionOneRequired()) || is3dsFlexChallengeRequired()) {
