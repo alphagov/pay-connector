@@ -16,6 +16,7 @@ import io.dropwizard.jersey.jackson.JsonProcessingExceptionMapper;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
@@ -93,6 +94,7 @@ import uk.gov.pay.connector.webhook.resource.NotificationResource;
 import uk.gov.service.payments.commons.utils.healthchecks.DatabaseHealthCheck;
 import uk.gov.service.payments.commons.utils.metrics.DatabaseMetricsService;
 import uk.gov.service.payments.commons.utils.prometheus.PrometheusDefaultLabelSampleBuilder;
+import uk.gov.service.payments.commons.utils.prometheus.PayMetrics;
 import uk.gov.service.payments.logging.GovUkPayDropwizardRequestJsonLogLayoutFactory;
 import uk.gov.service.payments.logging.LoggingFilter;
 import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
@@ -144,7 +146,8 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new ConstraintViolationExceptionMapper());
         environment.jersey().register(new ValidationExceptionMapper());
         environment.jersey().register(new UnsupportedOperationExceptionMapper());
-        environment.jersey().register(new LoggingExceptionMapper<>() {});
+        environment.jersey().register(new LoggingExceptionMapper<>() {
+        });
         environment.jersey().register(new JsonProcessingExceptionMapper());
         environment.jersey().register(new EarlyEofExceptionMapper());
         environment.jersey().register(new JsonMappingExceptionMapper());
@@ -244,13 +247,11 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         initialiseGraphiteMetrics(configuration, environment);
 
-        logger.info("Initialising prometheus metrics.");
-        CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
         configuration.getEcsContainerMetadataUriV4().ifPresentOrElse(
-                uri -> collectorRegistry.register(new DropwizardExports(environment.metrics(), new PrometheusDefaultLabelSampleBuilder(uri))),
-                () -> collectorRegistry.register(new DropwizardExports(environment.metrics()))
+                uri -> PayMetrics.initialisePrometheusMetrics(environment.metrics(), uri),
+                () -> PayMetrics.initialisePrometheusMetrics(environment.metrics())
         );
-        environment.admin().addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry)).addMapping("/metrics");
+        environment.admin().addServlet("prometheusMetrics", new MetricsServlet(CollectorRegistry.defaultRegistry)).addMapping("/metrics");
     }
 
     /**
