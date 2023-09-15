@@ -15,6 +15,7 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
+import uk.gov.service.payments.commons.utils.prometheus.Counter;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -31,9 +32,14 @@ public class StateTransitionService {
     private EventService eventService;
     private MetricRegistry metricRegistry;
 
+    private static final Counter stateTransitionCounter = new Counter(
+            "state_transition_total",
+            "Count of state transitions",
+            "gatewayName", "gatewayAccountType", "toState");
+
     @Inject
     public StateTransitionService(StateTransitionQueue stateTransitionQueue,
-                                  EventService eventService, 
+                                  EventService eventService,
                                   Environment environment) {
         this.stateTransitionQueue = stateTransitionQueue;
         this.eventService = eventService;
@@ -72,6 +78,7 @@ public class StateTransitionService {
         var logMessage = format("Offered payment state transition to emitter queue [from=%s] [to=%s] [chargeEventId=%s] [chargeId=%s]",
                 fromChargeState, targetChargeState, chargeEventEntity.getId(), externalId);
 
+        incrementPrometheusStateTransitionCounter(targetChargeState, chargeEventEntity);
         incrementPerGatewayStateTransitionCounter(targetChargeState, chargeEventEntity);
         incrementPerGatewayStateTransitionMeter(targetChargeState, chargeEventEntity);
         incrementPerGatewayAccountStateTransitionCounter(targetChargeState, chargeEventEntity);
@@ -89,6 +96,13 @@ public class StateTransitionService {
                 chargeEventEntity.getUpdated().toInstant());
     }
 
+    private void incrementPrometheusStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
+        stateTransitionCounter.labels(
+                chargeEventEntity.getChargeEntity().getPaymentProvider().toLowerCase(),
+                chargeEventEntity.getChargeEntity().getGatewayAccount().getType().toLowerCase(),
+                targetChargeState.toString().toLowerCase()).inc();
+    }
+
     private void incrementPerGatewayAccountStateTransitionCounter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
         metricRegistry.counter(String.format(
                 "state-transition.%s.%s.to.%s",
@@ -96,7 +110,7 @@ public class StateTransitionService {
                 chargeEventEntity.getChargeEntity().getPaymentProvider(),
                 targetChargeState)).inc();
     }
-    
+
     private void incrementPerGatewayStateTransitionMeter(ChargeStatus targetChargeState, ChargeEventEntity chargeEventEntity) {
         metricRegistry.meter(String.format(
                 "state-transition.%s.%s.to.%s.rate",
