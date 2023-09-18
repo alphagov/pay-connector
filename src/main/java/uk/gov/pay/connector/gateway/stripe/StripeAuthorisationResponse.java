@@ -59,7 +59,7 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
                 stripePaymentIntent.getStringifiedOutcome(),
                 stripePaymentIntent.getCustomerId(),
                 stripePaymentIntent.getPaymentMethod().getId(),
-                extractCardExpiryDate(stripePaymentIntent)
+                extractCardExpiryDate(stripePaymentIntent).orElse(null)
         );
     }
 
@@ -107,15 +107,19 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
         return Optional.of(cardExpiryDate);
     }
 
-    private static CardExpiryDate extractCardExpiryDate(StripePaymentIntentResponse stripePaymentIntent) {
+    private static Optional<CardExpiryDate> extractCardExpiryDate(StripePaymentIntentResponse stripePaymentIntent) {
         return stripePaymentIntent.getPaymentMethod().getCard().map(card -> {
             try {
+                if (card.getCardExpiryYear() == null || card.getCardExpiryMonth() == null) {
+                    LOGGER.info("Missing card expiry date on payment method");
+                    return null;
+                }
                 YearMonth yearMonth = YearMonth.of(card.getCardExpiryYear(), card.getCardExpiryMonth());
                 return CardExpiryDate.valueOf(yearMonth);
             } catch (DateTimeException e) {
                 LOGGER.error(String.format("Invalid card expiry date in response from Stripe: %s", e.getMessage()));
                 return null;
             }
-        }).orElse(null);
+        });
     }
 }

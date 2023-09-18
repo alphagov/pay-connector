@@ -176,6 +176,6 @@ public class StripePaymentIntentRequest extends StripePostRequest {
 
     @Override
     protected List<String> expansionFields() {
-        return Collections.singletonList("payment_method.card");
+        return List.of("payment_method.card");
     }
 }
