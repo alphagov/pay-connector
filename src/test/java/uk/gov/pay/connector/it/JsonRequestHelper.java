@@ -162,6 +162,9 @@ public class JsonRequestHelper {
         paymentInfo.addProperty("card_type", "DEBIT");
         paymentInfo.addProperty("cardholder_name", cardHolderName);
         paymentInfo.addProperty("email", email);
+        paymentInfo.addProperty("display_name", "Visa 4242");
+        paymentInfo.addProperty("transaction_identifier", "abc123");
+        paymentInfo.addProperty("network", "Visa");
 
         JsonObject payload = new JsonObject();
         payload.add("payment_info", paymentInfo);
