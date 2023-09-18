@@ -7,7 +7,9 @@ import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationG
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
@@ -170,5 +172,10 @@ public class StripePaymentIntentRequest extends StripePostRequest {
     @Override
     protected String idempotencyKeyType() {
         return "payment_intent";
+    }
+
+    @Override
+    protected List<String> expansionFields() {
+        return Collections.singletonList("payment_method.card");
     }
 }
