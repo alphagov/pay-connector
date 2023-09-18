@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.Counter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -35,7 +36,6 @@ import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTime
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
-import uk.gov.service.payments.commons.utils.prometheus.Counter;
 
 import javax.inject.Inject;
 import java.util.Map;
@@ -50,10 +50,11 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 public class CardAuthoriseService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CardAuthoriseService.class);
-    private static final Counter authorisationResultCounter = new Counter(
-            "gateway_operations_authorisation_result_total",
-            "Counter of results of card authorisations",
-            "paymentProvider", "gatewayAccountType", "billingAddressPresent", "authorisationResult");
+    private static final Counter authorisationResultCounter = Counter.build()
+            .name("gateway_operations_authorisation_result_total")
+            .help("Counter of results of card authorisations")
+            .labelNames("paymentProvider", "gatewayAccountType", "billingAddressPresent", "authorisationResult")
+            .register();
 
     private final CardTypeDao cardTypeDao;
     private final AuthorisationService authorisationService;

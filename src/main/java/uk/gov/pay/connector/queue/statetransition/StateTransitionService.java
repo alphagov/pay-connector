@@ -3,6 +3,7 @@ package uk.gov.pay.connector.queue.statetransition;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.Counter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,6 @@ import uk.gov.pay.connector.events.model.ResourceType;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundStateEventMap;
-import uk.gov.service.payments.commons.utils.prometheus.Counter;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -32,10 +32,11 @@ public class StateTransitionService {
     private EventService eventService;
     private MetricRegistry metricRegistry;
 
-    private static final Counter stateTransitionCounter = new Counter(
-            "state_transition_total",
-            "Count of state transitions",
-            "gatewayName", "gatewayAccountType", "toState");
+    private static final Counter stateTransitionCounter = Counter.build()
+            .name("state_transition_total")
+            .help("Count of state transitions")
+            .labelNames("gatewayName", "gatewayAccountType", "toState")
+            .register();
 
     @Inject
     public StateTransitionService(StateTransitionQueue stateTransitionQueue,

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.prometheus.client.Histogram;
+import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
@@ -11,8 +12,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientGetRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
-
-import uk.gov.service.payments.commons.utils.prometheus.Counter;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
@@ -41,11 +40,11 @@ public class GatewayClient {
     private final Client client;
     private final MetricRegistry metricRegistry;
 
-    private static final Counter gatewayOperationsFailures = new Counter(
-            "gateway_operations_failures_total",
-            "Number of failed gateway operations",
-            "gatewayName", "gatewayAccountType", "requestType"
-    );
+    private static final Counter gatewayOperationsFailures = Counter.build()
+            .name("gateway_operations_failures_total")
+            .help("Number of failed gateway operations")
+            .labelNames("gatewayName", "gatewayAccountType", "requestType")
+            .register();
 
     private static final Histogram gatewayOperationsResponseTime = Histogram.build()
             .name("gateway_operations_response_time_seconds")

@@ -17,6 +17,7 @@ import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
 import io.prometheus.client.exporter.MetricsServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +92,6 @@ import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.pay.connector.webhook.resource.NotificationResource;
 import uk.gov.service.payments.commons.utils.healthchecks.DatabaseHealthCheck;
 import uk.gov.service.payments.commons.utils.metrics.DatabaseMetricsService;
-import uk.gov.service.payments.commons.utils.prometheus.PayMetrics;
 import uk.gov.service.payments.logging.GovUkPayDropwizardRequestJsonLogLayoutFactory;
 import uk.gov.service.payments.logging.LoggingFilter;
 import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
@@ -244,11 +244,9 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
 
         initialiseGraphiteMetrics(configuration, environment);
 
-        configuration.getEcsContainerMetadataUriV4().ifPresentOrElse(
-                uri -> PayMetrics.initialisePrometheusMetrics(environment.metrics(), uri),
-                () -> PayMetrics.initialisePrometheusMetrics(environment.metrics())
-        );
-        environment.admin().addServlet("prometheusMetrics", new MetricsServlet(CollectorRegistry.defaultRegistry)).addMapping("/metrics");
+        CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
+        collectorRegistry.register(new DropwizardExports(environment.metrics()));
+        environment.admin().addServlet("prometheusMetrics", new MetricsServlet(collectorRegistry.defaultRegistry)).addMapping("/metrics");
     }
 
     /**
