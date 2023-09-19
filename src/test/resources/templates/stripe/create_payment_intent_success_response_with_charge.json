@@ -40,7 +40,13 @@
   },
   "next_action": null,
   "on_behalf_of": "acct_1EVFduJTPZ7tq2xO",
-  "payment_method": "pm_1FHESdEZsufgnuO0bzghQoZ2",
+  "payment_method": {
+    "id": "pm_1FHESdEZsufgnuO0bzghQoZ2",
+    "card": {
+      "exp_month": 8,
+      "exp_year": 2024
+    }
+  },
   "payment_method_options": {
     "card": {
       "request_three_d_secure": "automatic"

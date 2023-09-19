@@ -34,7 +34,7 @@ public class StripePaymentIntentResponse {
     private String customerId;
     
     @JsonProperty("payment_method")
-    private String paymentMethodId;
+    private StripePaymentMethodResponse paymentMethod;
 
     public String getId() {
         return id;
@@ -48,8 +48,8 @@ public class StripePaymentIntentResponse {
         return customerId;
     }
 
-    public String getPaymentMethodId() {
-        return paymentMethodId;
+    public StripePaymentMethodResponse getPaymentMethod() {
+        return paymentMethod;
     }
 
     public Optional<String> getRedirectUrl() {

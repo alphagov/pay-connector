@@ -36,7 +36,13 @@
     "type": "redirect_to_url"
   },
   "on_behalf_of": "acct_123",
-  "payment_method": "pm_123",
+  "payment_method": {
+    "id": "pm_123",
+    "card": {
+      "exp_month": 8,
+      "exp_year": 2024
+    }
+  },
   "payment_method_options": {
     "card": {
       "request_three_d_secure": "automatic"

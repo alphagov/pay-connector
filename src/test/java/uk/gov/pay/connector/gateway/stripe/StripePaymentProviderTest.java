@@ -175,6 +175,9 @@ class StripePaymentProviderTest {
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
             assertTrue(response.isSuccessful());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+            assertThat(response.getBaseResponse().get().getCardExpiryDate().isPresent(), is(true));
+            assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitMonth(), is("08"));
+            assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitYear(), is("24"));
         }
 
         @Test
