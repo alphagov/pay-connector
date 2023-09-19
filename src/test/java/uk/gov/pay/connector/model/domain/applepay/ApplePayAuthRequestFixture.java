@@ -4,14 +4,10 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
+import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+
 public final class ApplePayAuthRequestFixture {
-    private WalletPaymentInfo applePaymentInfo = new WalletPaymentInfo(
-            "4242",
-            "visa",
-            PayersCardType.DEBIT,
-            "Mr. Payment",
-            "aaa@bbb.test"
-    );
+    private WalletPaymentInfo applePaymentInfo = aWalletPaymentInfo().build();
     private String applePaymentData = "***ENCRYPTED***DATA***";
     
     private ApplePayAuthRequestFixture() {

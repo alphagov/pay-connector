@@ -52,6 +52,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL;
@@ -350,39 +351,37 @@ class WorldpayWalletAuthorisationHandlerTest {
     private WalletAuthorisationGatewayRequest getApplePayAuthorisationRequest(boolean withPayerEmail) {
         String payerEmail = withPayerEmail ? "aaa@bbb.test" : null;
 
+        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+                .withLastDigitsCardNumber("4242")
+                .withBrand("visa")
+                .withCardType(PayersCardType.DEBIT)
+                .withCardholderName("Mr. Payment")
+                .withEmail(payerEmail)
+                .build();
         ApplePayAuthRequest applePayAuthRequest = new ApplePayAuthRequest(
-                new WalletPaymentInfo(
-                        "4242",
-                        "visa",
-                        PayersCardType.DEBIT,
-                        "Mr. Payment",
-                        payerEmail
-                ),
-                "***ENCRYPTED_PAYMENT_DATA***"
-                
-        );
-        
+                walletPaymentInfo, "***ENCRYPTED_PAYMENT_DATA***");
+
         return new WalletAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
     }
-    
+
     private AppleDecryptedPaymentData getAppleDecryptedPaymentData() {
+        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+                .withLastDigitsCardNumber("4242")
+                .withBrand("visa")
+                .withCardType(PayersCardType.DEBIT)
+                .withCardholderName("Mr. Payment")
+                .build();
         return new AppleDecryptedPaymentData(
-                                new WalletPaymentInfo(
-                                    "4242",
-                                    "visa",
-                                    PayersCardType.DEBIT,
-                                    "Mr. Payment",
-                                    null
-                                    ),
-                                "4818528840010767",
-                                LocalDate.of(2023, 12, 1),
-                                "643",
-                                10L,
-                                "040010030273",
-                                "3DSecure",
-                                new AppleDecryptedPaymentData.PaymentData(
-                                        "Ao/fzpIAFvp1eB9y8WVDMAACAAA=",
-                                        "7")
+                walletPaymentInfo,
+                "4818528840010767",
+                LocalDate.of(2023, 12, 1),
+                "643",
+                10L,
+                "040010030273",
+                "3DSecure",
+                new AppleDecryptedPaymentData.PaymentData(
+                        "Ao/fzpIAFvp1eB9y8WVDMAACAAA=",
+                        "7")
         );
     }
 

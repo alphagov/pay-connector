@@ -157,8 +157,10 @@ public class StripePaymentIntentRequest extends StripePostRequest {
         return paymentMethodId;
     }
 
-    public String getTokenId() { return tokenId; }
-    
+    public String getTokenId() {
+        return tokenId;
+    }
+
     @Override
     protected String urlPath() {
         return "/v1/payment_intents";
