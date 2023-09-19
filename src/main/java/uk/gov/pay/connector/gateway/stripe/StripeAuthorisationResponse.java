@@ -109,14 +109,14 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
 
     private static Optional<CardExpiryDate> extractCardExpiryDate(StripePaymentIntentResponse stripePaymentIntent) {
         return stripePaymentIntent.getPaymentMethod().getCard().map(card -> {
+            if (card.getCardExpiryYear() == null || card.getCardExpiryMonth() == null) {
+                LOGGER.info("Missing card expiry date on payment method");
+                return null;
+            }
             try {
-                if (card.getCardExpiryYear() == null || card.getCardExpiryMonth() == null) {
-                    LOGGER.info("Missing card expiry date on payment method");
-                    return null;
-                }
                 YearMonth yearMonth = YearMonth.of(card.getCardExpiryYear(), card.getCardExpiryMonth());
                 return CardExpiryDate.valueOf(yearMonth);
-            } catch (DateTimeException e) {
+            } catch (DateTimeException | IllegalArgumentException e) {
                 LOGGER.error(String.format("Invalid card expiry date in response from Stripe: %s", e.getMessage()));
                 return null;
             }
