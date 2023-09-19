@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.CollectorRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
@@ -51,6 +53,8 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 
 @ExtendWith(MockitoExtension.class)
 class StateTransitionServiceTest {
+    private final CollectorRegistry collectorRegistry = CollectorRegistry.defaultRegistry;
+    private static final String[] labelNames = new String[]{"gatewayName", "gatewayAccountType", "toState"};
 
     StateTransitionService stateTransitionService;
 
@@ -81,6 +85,8 @@ class StateTransitionServiceTest {
                 .withId(100L)
                 .build();
 
+        double counterBefore = getMetricSample("state_transition_total", new String[]{"sandbox", "test", "entering card details"});
+
         stateTransitionService.offerPaymentStateTransition("external-id", ChargeStatus.CREATED, ENTERING_CARD_DETAILS, chargeEvent);
         ArgumentCaptor<PaymentStateTransition> paymentStateTransitionArgumentCaptor = ArgumentCaptor.forClass(PaymentStateTransition.class);
         verify(mockStateTransitionQueue).offer(paymentStateTransitionArgumentCaptor.capture());
@@ -89,6 +95,9 @@ class StateTransitionServiceTest {
         assertThat(paymentStateTransitionArgumentCaptor.getValue().getStateTransitionEventClass(), is(PaymentStarted.class));
 
         verify(mockEventService).recordOfferedEvent(PAYMENT, "external-id", "PAYMENT_STARTED", chargeEvent.getUpdated().toInstant());
+
+        double counterAfter = getMetricSample("state_transition_total", new String[]{"sandbox", "test", "entering card details"});
+        assertThat(counterAfter, is(counterBefore + 1.0));
     }
 
     @Test
@@ -127,6 +136,7 @@ class StateTransitionServiceTest {
         assertThat(externalIdCaptor.getValue(), is("external-id"));
         assertThat(eventTypeCaptor.getValue(), is("REFUND_CREATED_BY_USER"));
         assertThat(eventDateArgumentCaptor.getValue(), is(notNullValue()));
+
     }
 
     @Test
@@ -136,7 +146,7 @@ class StateTransitionServiceTest {
                 .withExternalId("external-id")
                 .build();
         ChargeEntity chargeEntity = aValidChargeEntity().build();
-        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, Charge.from(chargeEntity) );
+        RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, Charge.from(chargeEntity));
         ZonedDateTime doNotEmitRetryUntil = now(UTC);
 
         stateTransitionService.offerStateTransition(refundStateTransition, refundCreatedByUser, doNotEmitRetryUntil);
@@ -149,5 +159,9 @@ class StateTransitionServiceTest {
 
         verify(mockEventService).recordOfferedEvent(REFUND, refundHistory.getExternalId(),
                 "REFUND_CREATED_BY_USER", refundHistory.getHistoryStartDate().toInstant(), doNotEmitRetryUntil);
+    }
+
+    private double getMetricSample(String name, String[] labelValues) {
+        return Optional.ofNullable(collectorRegistry.getSampleValue(name, labelNames, labelValues)).orElse(0.0);
     }
 }
