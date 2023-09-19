@@ -50,6 +50,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -75,7 +76,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
-public class StripeResourceAuthorizeIT {
+public class StripeCardResourceAuthoriseIT {
     private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
     private static final String CVC = "123";
     private static final CardExpiryDate EXPIRY = CardExpiryDate.valueOf("11/99");
@@ -134,7 +135,7 @@ public class StripeResourceAuthorizeIT {
 
     @Test
     public void cardAuthorisationWithPaymentIntentsFailureShouldReturnBadRequest() {
-        stripeMockClient.mockAuthorisationFailedWithPaymentIntents();
+        stripeMockClient.mockCreatePaymentMethodAuthorisationRejected();
 
         addGatewayAccountWith3DS2Enabled();
 
@@ -270,19 +271,60 @@ public class StripeResourceAuthorizeIT {
     }
 
     @Test
-    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAnApplePayPayment() {
-        addGatewayAccount();
+    public void shouldAuthoriseApplePayPayment() {
+        stripeMockClient.mockCreateToken();
+        stripeMockClient.mockCreatePaymentIntent();
 
-        String externalChargeId = addCharge();
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String applePayAuthorisationRequest = buildJsonApplePayAuthorisationDetails("Someone", "foo@example.com");
 
         given().port(testContext.getPort())
                 .contentType(JSON)
-                .body(validApplePayAuthorisationDetails)
-                .post(authoriseChargeUrlForApplePay(externalChargeId))
+                .body(applePayAuthorisationRequest)
+                .post(authoriseChargeUrlForApplePay(chargeId))
                 .then()
-                .statusCode(400)
-                .body("message", contains("Wallets are not supported for Stripe"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .statusCode(200)
+                .body("status", is(AUTHORISATION_SUCCESS.toString()));
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is("08/24"));;
+    }
+
+    @Test
+    public void shouldRejectApplePayPayment_andSaveCardDetails() {
+        stripeMockClient.mockCreateToken();
+        stripeMockClient.mockCreatePaymentIntentAuthorisationRejected();
+
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String applePayAuthorisationRequest = buildJsonApplePayAuthorisationDetails("Someone", "foo@example.com");
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(applePayAuthorisationRequest)
+                .post(authoriseChargeUrlForApplePay(chargeId))
+                .then()
+                .statusCode(400);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_REJECTED.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is(nullValue()));;
     }
 
     @Test
@@ -299,7 +341,7 @@ public class StripeResourceAuthorizeIT {
                 .post(authoriseChargeUrlForGooglePayWorldpay(externalChargeId))
                 .then()
                 .statusCode(400)
-                .body("message", contains("Wallets are not supported for Stripe"))
+                .body("message", contains("Wallet Type GOOGLE_PAY is not supported for Stripe"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 

@@ -140,12 +140,14 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE_WITH_CHARGE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_success_response_with_charge.json";
     public static final String STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE_WITH_CUSTOMER = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_success_response_with_customer.json";
     public static final String STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_requires_3ds_response.json";
+    public static final String STRIPE_PAYMENT_INTENT_AUTHORISATION_REJECTED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_intent_authorisation_rejected_response.json";
     public static final String STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/payment_intent_cancel_response.json";
     public static final String STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/get_payment_intent_with_3ds_authorised_success_response.json";
     public static final String STRIPE_GET_PAYMENT_INTENT_WITH_MULTIPLE_CHARGES = TEMPLATE_BASE_NAME + "/stripe/get_payment_intent_with_multiple_charges.json";
     public static final String STRIPE_PAYMENT_INTENT_WITHOUT_BALANCE_TRANSACTION_EXPANDED = TEMPLATE_BASE_NAME + "/stripe/payment_intent_without_balance_transaction_expanded.json";
     public static final String STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_payment_method_success_response.json";
     public static final String STRIPE_CUSTOMER_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_customer_success_response.json";
+    public static final String STRIPE_TOKEN_SUCCESS_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/create_token_success_response.json";
     public static final String STRIPE_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/error_response.json";
     public static final String STRIPE_REFUND_FULL_CHARGE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/refund_full_charge.json";
     public static final String STRIPE_TRANSFER_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/transfer_success_response.json";

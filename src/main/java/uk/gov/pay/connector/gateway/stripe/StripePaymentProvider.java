@@ -47,18 +47,19 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.WalletType;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY;
 
@@ -163,8 +164,11 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) {
-        throw new UnsupportedOperationException("Wallets are not supported for Stripe");
+    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) throws GatewayException {
+        if (request.getWalletAuthorisationRequest().getWalletType() == WalletType.APPLE_PAY) {
+            return stripeAuthoriseHandler.authoriseApplePay(request); 
+        }
+        throw new UnsupportedOperationException(format("Wallet Type %s is not supported for Stripe", request.getWalletAuthorisationRequest().getWalletType()));
     }
 
     @Override
@@ -198,7 +202,7 @@ public class StripePaymentProvider implements PaymentProvider {
         try {
             stripeSDKClient.deleteCustomer(customerId, request.isLive());
         } catch (StripeException e) {
-            var message = String.format("Error when attempting to delete Stripe customer %s. Status code: %s, Error code: %s, Message: %s",
+            var message = format("Error when attempting to delete Stripe customer %s. Status code: %s, Error code: %s, Message: %s",
                     customerId, e.getStatusCode(), e.getCode(), e.getMessage());
             throw new GatewayException.GenericGatewayException(message);
         }

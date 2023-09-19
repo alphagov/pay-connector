@@ -1,0 +1,32 @@
+{
+  "error": {
+    "charge": "ch_3N6AIYHj08j2jFuB1UoZ5O8H",
+    "code": "card_declined",
+    "decline_code": "generic_decline",
+    "doc_url": "https://stripe.com/docs/error-codes/card-declined",
+    "message": "Your card was declined.",
+    "payment_intent": {
+      "id": "pi_3N6AIYHj08j2jFuB1IozJAVc",
+      "object": "payment_intent",
+      "amount": 1000,
+      "payment_method": {
+        "id": "pm_1FHESdEZsufgnuO0bzghQoZ2",
+        "card": {
+          "exp_month": 8,
+          "exp_year": 2024
+        }
+      },
+      "last_payment_error": {
+        "charge": "ch_3N6AIYHj08j2jFuB1UoZ5O8H",
+        "code": "card_declined",
+        "decline_code": "generic_decline",
+        "doc_url": "https://stripe.com/docs/error-codes/card-declined",
+        "message": "Your card was declined.",
+        "type": "card_error"
+      },
+      "latest_charge": "ch_3N6AIYHj08j2jFuB1UoZ5O8H",
+      "livemode": false
+    },
+    "type": "card_error"
+  }
+}

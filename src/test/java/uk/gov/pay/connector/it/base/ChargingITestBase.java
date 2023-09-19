@@ -478,7 +478,7 @@ public class ChargingITestBase {
     protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId) {
         return addChargeForSetUpAgreement(status, agreementExternalId, null);
     }
-    
+
     protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
         long chargeId = RandomUtils.nextInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
@@ -507,7 +507,7 @@ public class ChargingITestBase {
         databaseTestHelper.addAgreement(agreementParams);
         return agreementExternalId;
     }
-    
+
     protected Long addPaymentInstrument(String agreementExternalId, PaymentInstrumentStatus status) {
         Long paymentInstrumentId = nextLong();
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
