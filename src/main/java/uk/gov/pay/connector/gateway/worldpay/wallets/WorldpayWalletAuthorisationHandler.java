@@ -13,11 +13,10 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseOrderSessionId;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayGatewayResponseGenerator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.WalletAuthorisationHandler;
-import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 import javax.inject.Inject;
@@ -96,7 +95,7 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
             case APPLE_PAY:
                 return decryptApplePaymentData(request.getGovUkPayPaymentId(), (ApplePayAuthRequest) request.getWalletAuthorisationRequest());
             case GOOGLE_PAY:
-                return (GooglePayAuthRequest) request.getWalletAuthorisationRequest();
+                return (WorldpayGooglePayAuthRequest) request.getWalletAuthorisationRequest();
             default:
                 throw new IllegalArgumentException(format("Wallet Type not recognised: {}", request.getWalletAuthorisationRequest().getWalletType()));
         }

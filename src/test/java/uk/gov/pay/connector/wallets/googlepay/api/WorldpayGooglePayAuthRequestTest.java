@@ -11,14 +11,14 @@ import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-class GooglePayAuthRequestTest {
+class WorldpayGooglePayAuthRequestTest {
 
     @Test
     void shouldDeserializeFromJsonCorrectly() throws IOException {
         ObjectMapper objectMapper = Jackson.getObjectMapper();
         JsonNode expected = objectMapper.readTree(fixture("googlepay/example-3ds-auth-request.json"));
-        GooglePayAuthRequest actual = objectMapper.readValue(
-                fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
+        WorldpayGooglePayAuthRequest actual = objectMapper.readValue(
+                fixture("googlepay/example-3ds-auth-request.json"), WorldpayGooglePayAuthRequest.class);
 
         JsonNode paymentInfo = expected.get("payment_info");
         assertThat(actual.getPaymentInfo().getCardholderName(), is(paymentInfo.get("cardholder_name").asText()));

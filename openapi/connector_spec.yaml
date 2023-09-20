@@ -1817,7 +1817,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GooglePayAuthRequest'
+              $ref: '#/components/schemas/WorldpayGooglePayAuthRequest'
         required: true
       responses:
         "200":
@@ -3841,13 +3841,6 @@ components:
         rawGatewayResponse:
           type: string
           example: Worldpay response ()
-    GooglePayAuthRequest:
-      type: object
-      properties:
-        encrypted_payment_data:
-          $ref: '#/components/schemas/EncryptedPaymentData'
-        payment_info:
-          $ref: '#/components/schemas/WalletPaymentInfo'
     JsonNode:
       type: object
     LastDigitsCardNumber:
@@ -4329,6 +4322,13 @@ components:
           $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
         recurring_merchant_initiated:
           $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
+    WorldpayGooglePayAuthRequest:
+      type: object
+      properties:
+        encrypted_payment_data:
+          $ref: '#/components/schemas/EncryptedPaymentData'
+        payment_info:
+          $ref: '#/components/schemas/WalletPaymentInfo'
     WorldpayMerchantCodeCredentials:
       type: object
       properties:

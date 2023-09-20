@@ -8,7 +8,6 @@ import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationG
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +157,8 @@ public class StripePaymentIntentRequest extends StripePostRequest {
         return paymentMethodId;
     }
 
+    public String getTokenId() { return tokenId; }
+    
     @Override
     protected String urlPath() {
         return "/v1/payment_intents";
@@ -213,4 +214,6 @@ public class StripePaymentIntentRequest extends StripePostRequest {
     protected List<String> expansionFields() {
         return List.of("payment_method.card");
     }
+    
+
 }

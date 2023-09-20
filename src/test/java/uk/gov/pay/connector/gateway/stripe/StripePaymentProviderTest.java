@@ -53,6 +53,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
@@ -110,6 +111,8 @@ class StripePaymentProviderTest {
     public static final String PAYMENT_METHOD_ID = "pm_abc123";
     private static final String ISSUER_URL = "http://stripe.url/3ds";
     private static final String THREE_DS_VERSION = "2.0.1";
+    
+    private static final String TOKEN_ID = "token_abc_123";
 
     @Captor
     private ArgumentCaptor<StripeTransferInRequest> stripeTransferInRequestCaptor;
@@ -573,7 +576,7 @@ class StripePaymentProviderTest {
         }
 
         @Test
-        void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError() throws Exception {
+        void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError_forApplePay() throws Exception {
             when(gatewayClient.postRequestFor(any(StripeTokenRequest.class))).thenReturn(tokenResponse);
             when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                     .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
@@ -593,7 +596,7 @@ class StripePaymentProviderTest {
         }
         
         @Test
-        void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorCreatingToken() throws Exception {
+        void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorCreatingToken_forApplePay() throws Exception {
             when(gatewayClient.postRequestFor(any(StripeTokenRequest.class)))
                     .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
 
@@ -607,7 +610,7 @@ class StripePaymentProviderTest {
         }
 
         @Test
-        void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorCreatingPaymentIntent() throws Exception {
+        void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorCreatingPaymentIntent_forApplePay() throws Exception {
             when(gatewayClient.postRequestFor(any(StripeTokenRequest.class))).thenReturn(tokenResponse);
             when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                     .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
@@ -621,8 +624,62 @@ class StripePaymentProviderTest {
             assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
             assertThat(baseAuthoriseResponse.toString(), containsString("type: api_error"));
         }
+        
+        @Test
+        void shouldAuthoriseGooglePayPayment() throws Exception {
+            when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+            when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());
+
+            GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+            ChargeEntity charge = buildTestCharge(gatewayAccount);
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildGooglePayAuthorisationRequest(charge));
+
+            verify(gatewayClient).postRequestFor(stripePostRequestCaptor.capture());
+            var paymentIntentRequest = (StripePaymentIntentRequest) (stripePostRequestCaptor.getValue());
+
+            assertThat(paymentIntentRequest.getTokenId(), is(TOKEN_ID));
+            
+            assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+            assertTrue(response.isSuccessful());
+            assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
+            assertThat(response.getBaseResponse().get().getCardExpiryDate().isPresent(), is(true));
+            assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitMonth(), is("08"));
+            assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitYear(), is("24"));
+        }
     }
 
+    @Test
+    void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError_forGooglePay() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
+
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        ChargeEntity charge = buildTestCharge(gatewayAccount);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildGooglePayAuthorisationRequest(charge));
+
+        BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
+
+        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
+        assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
+    }
+
+    @Test
+    void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorCreatingPaymentIntent_forGooglePay() throws Exception {
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
+                .thenThrow(new GatewayErrorException("server error", errorResponse("api_error"), 400));
+
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        ChargeEntity charge = buildTestCharge(gatewayAccount);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildGooglePayAuthorisationRequest(charge));
+
+        BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
+        assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
+        assertThat(baseAuthoriseResponse.toString(), containsString("type: api_error"));
+    }
+    
     @Nested
     class TransferDisputeAmount {
         @Test
@@ -907,5 +964,20 @@ class StripePaymentProviderTest {
         );
 
         return new WalletAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
+    }
+
+    private WalletAuthorisationGatewayRequest buildGooglePayAuthorisationRequest(ChargeEntity chargeEntity) {
+        StripeGooglePayAuthRequest googlePayAuthRequest = new StripeGooglePayAuthRequest(
+                new WalletPaymentInfo(
+                        "4242",
+                        "visa",
+                        PayersCardType.DEBIT,
+                        "Mr. Payment",
+                        "foo@example.com"
+                ),
+                TOKEN_ID
+        );
+
+        return new WalletAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
 }

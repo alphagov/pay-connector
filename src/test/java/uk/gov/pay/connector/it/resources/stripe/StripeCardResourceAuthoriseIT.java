@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
-import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.ValidatableResponse;
@@ -27,7 +25,6 @@ import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +32,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -68,7 +64,6 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
-import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePayWorldpay;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
@@ -326,25 +321,7 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.card_brand", is("Visa"))
                 .body("card_details.expiry_date", is(nullValue()));;
     }
-
-    @Test
-    public void shouldReturnBadRequestResponseWhenTryingToAuthoriseAGooglePayPayment() throws IOException {
-        addGatewayAccount();
-        JsonNode validPayload = Jackson.getObjectMapper().readTree(
-                fixture("googlepay/example-auth-request.json"));
-
-        String externalChargeId = addCharge();
-
-        given().port(testContext.getPort())
-                .contentType(JSON)
-                .body(validPayload)
-                .post(authoriseChargeUrlForGooglePayWorldpay(externalChargeId))
-                .then()
-                .statusCode(400)
-                .body("message", contains("Wallet Type GOOGLE_PAY is not supported for Stripe"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
+    
     @Test
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
 
