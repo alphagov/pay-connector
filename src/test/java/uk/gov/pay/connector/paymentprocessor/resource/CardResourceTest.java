@@ -417,8 +417,9 @@ class CardResourceTest {
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
-        
-        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
+
+        verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
     }
 
     @Test
@@ -429,7 +430,8 @@ class CardResourceTest {
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
-        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Email must be a maximum of 254 chars");
+        verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
     }
 
     @Test
@@ -440,7 +442,8 @@ class CardResourceTest {
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
-        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Field [signed_message] must not be empty");
+        verify422AndErrorMessage(response, "Field [signed_message] must not be empty");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
     }
 
     @Test
@@ -451,19 +454,47 @@ class CardResourceTest {
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/worldpay")
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
-        verify422andReceiptOfPayloadNotLoggedAndErrorMessage(response, "Field [signature] must not be empty");
+        verify422AndErrorMessage(response, "Field [signature] must not be empty");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
     }
-    
-    private void verify422andReceiptOfPayloadNotLoggedAndErrorMessage(Response response, String expectedErrorMessage) {
+
+    @Test
+    void authoriseGooglePayStripeShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("Example Name", "A".repeat(256));
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/stripe")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+    }
+
+    @Test
+    void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/stripe")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+    }
+
+    private void verify422AndErrorMessage(Response response, String expectedErrorMessage) {
         assertThat(response.getStatus(), is(422));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(errorResponse.getMessages(), hasItem(expectedErrorMessage));
         assertThat(errorResponse.getIdentifier(), is(GENERIC));
+    }
+    
+    private void verifyReceiptOfPayloadNotLogged(Response response, String logMessage) {
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
-
     }
+    
     
     private void mockGatewayError(GatewayError gatewayError) {
         GatewayResponse<BaseAuthoriseResponse> operationResponse = mock(GatewayResponse.class);

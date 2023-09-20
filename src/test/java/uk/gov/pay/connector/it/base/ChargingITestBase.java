@@ -326,6 +326,9 @@ public class ChargingITestBase {
     public static String authoriseChargeUrlForApplePay(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/wallets/apple".replace("{chargeId}", chargeId);
     }
+    public static String authoriseChargeUrlForGooglePayStripe(String chargeId) {
+        return "/v1/frontend/charges/{chargeId}/wallets/google/stripe".replace("{chargeId}", chargeId);
+    }
 
     public static String authoriseChargeUrlForGooglePayWorldpay(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/wallets/google/worldpay".replace("{chargeId}", chargeId);
