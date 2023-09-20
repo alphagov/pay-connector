@@ -1848,7 +1848,7 @@ paths:
             attributes
         "500":
           description: Internal server error
-      summary: Authorise GooglePay payment via Stripe
+      summary: Authorise Google Pay payment via Stripe
       tags:
       - Charge operations
   /v1/frontend/charges/{chargeId}/wallets/google/worldpay:
@@ -4139,18 +4139,11 @@ components:
     StripeGooglePayAuthRequest:
       type: object
       properties:
-        paymentInfo:
-          $ref: '#/components/schemas/WalletPaymentInfo'
         payment_info:
           $ref: '#/components/schemas/WalletPaymentInfo'
-        tokenId:
-          type: string
         token_id:
           type: string
           writeOnly: true
-      required:
-      - paymentInfo
-      - tokenId
     Supplemental:
       type: object
       properties:
