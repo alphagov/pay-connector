@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.google.gson.Gson;
+import com.stripe.model.Transfer;
+import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -13,7 +16,6 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -103,14 +105,14 @@ public class StripeFailedPaymentFeeCollectionHandler {
                 charge.getExternalId(),
                 stripeGatewayConfig);
         String rawResponse = client.postRequestFor(transferInRequest).getEntity();
-        StripeTransfer stripeTransfer = jsonObjectMapper.getObject(rawResponse, StripeTransfer.class);
+        Transfer stripeTransfer = ApiResource.GSON.fromJson(rawResponse, Transfer.class);
 
         LOGGER.info("To collect fees for failed payment {}, transferred net amount {} - transfer id {} - from Stripe Connect account id {} in transfer group {}",
                 charge.getExternalId(),
                 feeAmount,
                 stripeTransfer.getId(),
-                stripeTransfer.getDestinationStripeAccountId(),
-                stripeTransfer.getStripeTransferGroup()
+                stripeTransfer.getDestination(),
+                stripeTransfer.getTransferGroup()
         );
     }
 }

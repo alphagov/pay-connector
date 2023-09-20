@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.google.gson.Gson;
+import com.stripe.model.Transfer;
+import com.stripe.model.TransferCollection;
+import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -15,8 +19,6 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.json.StripeSearchTransfersResponse;
-import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCaptureRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeSearchTransfersRequest;
@@ -130,10 +132,9 @@ public class StripeCaptureHandler implements CaptureHandler {
                     request.getGatewayAccount(), stripeGatewayConfig, request.getExternalId());
             
             String rawResponse = client.getRequestFor(searchTransfersRequest).getEntity();
-            StripeSearchTransfersResponse transfersResponse = jsonObjectMapper.getObject(rawResponse,
-                    StripeSearchTransfersResponse.class);
+            TransferCollection transfersResponse = ApiResource.GSON.fromJson(rawResponse, TransferCollection.class);
             
-            if (!transfersResponse.getTransfers().isEmpty()) {
+            if (!transfersResponse.getData().isEmpty()) {
                 LOGGER.info("Transfer of captured funds previously succeeded.");
                 return feeList;
             }
@@ -159,13 +160,13 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     private void transferToConnectAccount(CaptureGatewayRequest request, Long netTransferAmount, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(netTransferAmount.toString(), stripeChargeId, request, stripeGatewayConfig)).getEntity();
-        StripeTransfer stripeTransfer = jsonObjectMapper.getObject(transferResponse, StripeTransfer.class);
+        Transfer stripeTransfer = ApiResource.GSON.fromJson(transferResponse, Transfer.class);
         LOGGER.info("In capturing charge id {}, transferred net amount {} - transfer id {} -  to Stripe Connect account id {} in transfer group {}",
                 request.getExternalId(),
                 stripeTransfer.getAmount(),
                 stripeTransfer.getId(),
-                stripeTransfer.getDestinationStripeAccountId(),
-                stripeTransfer.getStripeTransferGroup()
+                stripeTransfer.getDestination(),
+                stripeTransfer.getTransferGroup()
         );
     }
 
