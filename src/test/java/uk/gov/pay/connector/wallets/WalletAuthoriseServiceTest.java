@@ -58,7 +58,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.List;
@@ -270,7 +270,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
         WalletAuthorisationRequest authorisationData =
-                Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+                Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
 
@@ -303,7 +303,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
         WalletAuthorisationRequest authorisationData =
-                Jackson.getObjectMapper().readValue(fixture("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
+                Jackson.getObjectMapper().readValue(fixture("googlepay/auth-request-with-empty-last-digits-card-number.json"), WorldpayGooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.doAuthorise(charge.getExternalId(), authorisationData);
 

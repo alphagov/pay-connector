@@ -30,7 +30,7 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
-import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
@@ -132,7 +132,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);
 
         WalletAuthorisationRequest authorisationData =
-                Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+                Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
 
         walletAuthoriseService.doAuthorise(chargeEntity.getExternalId(), authorisationData);
 

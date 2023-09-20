@@ -33,7 +33,7 @@ import uk.gov.pay.connector.util.MDCUtils;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -129,10 +129,10 @@ public class CardResource {
     )
     public Response authoriseChargeGooglePayWorldpay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
                                     @PathParam("chargeId") String chargeId,
-                                    @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
+                                    @NotNull @Valid WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
-        logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
-        return walletService.authorise(chargeId, googlePayAuthRequest);
+        logger.info("Received wallet payment info \n{} \nfor charge with id {}", worldpayGooglePayAuthRequest.getPaymentInfo().toString(), chargeId);
+        return walletService.authorise(chargeId, worldpayGooglePayAuthRequest);
     }
 
     @POST

@@ -2,7 +2,6 @@ package uk.gov.pay.connector.wallets;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 
 public class WalletAuthorisationGatewayRequest extends AuthorisationGatewayRequest {
     private WalletAuthorisationRequest walletAuthorisationRequest;

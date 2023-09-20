@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletAuthorisationData {
+public class WorldpayGooglePayAuthRequest implements WalletAuthorisationRequest, WalletAuthorisationData {
 
     @Schema(hidden = true)
     @NotNull
@@ -25,8 +25,8 @@ public class GooglePayAuthRequest implements WalletAuthorisationRequest, WalletA
     @Valid
     private final EncryptedPaymentData encryptedPaymentData;
 
-    GooglePayAuthRequest(@JsonProperty("payment_info") WalletPaymentInfo paymentInfo,
-                         @JsonProperty("encrypted_payment_data") EncryptedPaymentData encryptedPaymentData) {
+    WorldpayGooglePayAuthRequest(@JsonProperty("payment_info") WalletPaymentInfo paymentInfo,
+                                 @JsonProperty("encrypted_payment_data") EncryptedPaymentData encryptedPaymentData) {
         this.paymentInfo = paymentInfo;
         this.encryptedPaymentData = encryptedPaymentData;
     }
