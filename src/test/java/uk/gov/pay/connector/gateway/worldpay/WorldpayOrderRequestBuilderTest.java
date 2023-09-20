@@ -27,7 +27,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
-import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
 import static uk.gov.pay.connector.model.domain.googlepay.GooglePayAuthRequestFixture.anGooglePayAuthRequestFixture;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST;
@@ -55,14 +55,25 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
     protected static final String GOOGLE_PAY_ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8";
     protected static final String GOOGLE_PAY_USER_AGENT_HEADER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
 
-    private AppleDecryptedPaymentData validApplePayData =
+    private static final WalletPaymentInfo googlePayWalletPaymentInfo = aWalletPaymentInfo()
+             .withLastDigitsCardNumber("4242")
+             .withBrand("visa")
+             .withCardType(PayersCardType.DEBIT)
+             .withCardholderName("Example Name")
+             .withEmail("example@test.example")
+             .withAcceptHeader(GOOGLE_PAY_ACCEPT_HEADER)
+             .withUserAgentHeader(GOOGLE_PAY_USER_AGENT_HEADER)
+             .withIpAddress("8.8.8.8")
+             .build();
+    
+    private static final AppleDecryptedPaymentData validApplePayData =
             anApplePayDecryptedPaymentData()
                     .withApplePaymentInfo(
-                            anApplePayPaymentInfo()
+                            aWalletPaymentInfo()
                                     .withLastDigitsCardNumber("4242").build())
                     .build();
 
-    @Test
+     @Test
      void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
 
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
@@ -282,7 +293,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
                 anApplePayDecryptedPaymentData()
                         .withEciIndicator(null)
                         .withApplePaymentInfo(
-                                anApplePayPaymentInfo()
+                                aWalletPaymentInfo()
                                         .withCardholderName(null)
                                         .withLastDigitsCardNumber("4242").build())
                         .build();
@@ -320,17 +331,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
     @Test
      void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithoutIpAddress() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
-                .withGooglePaymentInfo(new WalletPaymentInfo(
-                        "4242",
-                        "visa",
-                        PayersCardType.DEBIT,
-                        "Example Name",
-                        "example@test.example",
-                        GOOGLE_PAY_ACCEPT_HEADER,
-                        GOOGLE_PAY_USER_AGENT_HEADER,
-                        "8.8.8.8"
-                        )
-                );
+                .withGooglePaymentInfo(googlePayWalletPaymentInfo);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
                 .withWalletTemplateData(validGooglePay3dsData)
@@ -351,17 +352,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
     @Test
      void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithIpAddress() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
-                .withGooglePaymentInfo(new WalletPaymentInfo(
-                                "4242",
-                                "visa",
-                                PayersCardType.DEBIT,
-                                "Example Name",
-                                "example@test.example",
-                                GOOGLE_PAY_ACCEPT_HEADER,
-                                GOOGLE_PAY_USER_AGENT_HEADER,
-                                "8.8.8.8"
-                        )
-                );
+                .withGooglePaymentInfo(googlePayWalletPaymentInfo);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
                 .withWalletTemplateData(validGooglePay3dsData)
@@ -383,17 +374,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
     @Test
      void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWhen3dsDisabled() throws Exception {
         GooglePayAuthRequestFixture validGooglePay3dsData = anGooglePayAuthRequestFixture()
-                .withGooglePaymentInfo(new WalletPaymentInfo(
-                                "4242",
-                                "visa",
-                                PayersCardType.DEBIT,
-                                "Example Name",
-                                "example@test.example",
-                                GOOGLE_PAY_ACCEPT_HEADER,
-                                GOOGLE_PAY_USER_AGENT_HEADER,
-                                "8.8.8.8"
-                        )
-                );
+                .withGooglePaymentInfo(googlePayWalletPaymentInfo);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType.GOOGLE_PAY)
                 .withWalletTemplateData(validGooglePay3dsData)

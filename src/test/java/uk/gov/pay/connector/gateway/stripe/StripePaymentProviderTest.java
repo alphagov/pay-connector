@@ -92,6 +92,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
+import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CUSTOMER_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
@@ -567,6 +568,12 @@ class StripePaymentProviderTest {
             ChargeEntity charge = buildTestCharge(gatewayAccount);
             GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildApplePayAuthorisationRequest(charge));
 
+            verify(gatewayClient, times(2)).postRequestFor(stripePostRequestCaptor.capture());
+            List<StripePostRequest> allRequests = stripePostRequestCaptor.getAllValues();
+            
+            var paymentIntentRequest = (StripePaymentIntentRequest) allRequests.get(1);
+            assertThat(paymentIntentRequest.getTokenId(), is("tok_1NrjK3Hj08j2jFuBm3LGVHYe"));
+            
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
             assertTrue(response.isSuccessful());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
@@ -588,6 +595,12 @@ class StripePaymentProviderTest {
 
             BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
 
+            verify(gatewayClient, times(2)).postRequestFor(stripePostRequestCaptor.capture());
+            List<StripePostRequest> allRequests = stripePostRequestCaptor.getAllValues();
+
+            var paymentIntentRequest = (StripePaymentIntentRequest) allRequests.get(1);
+            assertThat(paymentIntentRequest.getTokenId(), is("tok_1NrjK3Hj08j2jFuBm3LGVHYe"));
+            
             assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_REJECTED));
             assertThat(baseAuthoriseResponse.getTransactionId(), equalTo("pi_aaaaaaaaaaaaaaaaaaaaaaaa"));
             assertThat(baseAuthoriseResponse.toString(), containsString("type: card_error"));
@@ -952,29 +965,22 @@ class StripePaymentProviderTest {
     }
 
     private WalletAuthorisationGatewayRequest buildApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
+        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+                .withLastDigitsCardNumber("4242")
+                .withBrand("visa")
+                .withCardType(PayersCardType.DEBIT)
+                .withCardholderName("Mr. Payment")
+                .withEmail("foo@example.com")
+                .build();
         ApplePayAuthRequest applePayAuthRequest = new ApplePayAuthRequest(
-                new WalletPaymentInfo(
-                        "4242",
-                        "visa",
-                        PayersCardType.DEBIT,
-                        "Mr. Payment",
-                        "foo@example.com"
-                ),
-                "***ENCRYPTED_PAYMENT_DATA***"
-        );
+                walletPaymentInfo, "***ENCRYPTED_PAYMENT_DATA***");
 
         return new WalletAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
     }
 
     private WalletAuthorisationGatewayRequest buildGooglePayAuthorisationRequest(ChargeEntity chargeEntity) {
         StripeGooglePayAuthRequest googlePayAuthRequest = new StripeGooglePayAuthRequest(
-                new WalletPaymentInfo(
-                        "4242",
-                        "visa",
-                        PayersCardType.DEBIT,
-                        "Mr. Payment",
-                        "foo@example.com"
-                ),
+                aWalletPaymentInfo().build(),
                 TOKEN_ID
         );
 

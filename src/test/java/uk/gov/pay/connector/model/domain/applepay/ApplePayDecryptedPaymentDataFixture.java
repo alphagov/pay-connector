@@ -6,14 +6,10 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.time.LocalDate;
 
+import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+
 public final class ApplePayDecryptedPaymentDataFixture {
-    private WalletPaymentInfo applePaymentInfo = new WalletPaymentInfo(
-            "4242",
-            "visa",
-            PayersCardType.DEBIT,
-            "Mr. Payment",
-            "aaa@bbb.test"
-    );
+    private WalletPaymentInfo applePaymentInfo = aWalletPaymentInfo().build();
     private String applicationPrimaryAccountNumber = "4818528840010767";
     private LocalDate applicationExpirationDate = LocalDate.of(2023, 12, 1);
     private String currencyCode = "643";

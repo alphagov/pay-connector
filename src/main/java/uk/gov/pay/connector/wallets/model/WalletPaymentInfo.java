@@ -46,14 +46,6 @@ public class WalletPaymentInfo {
     public WalletPaymentInfo() {
     }
 
-    public WalletPaymentInfo(String lastDigitsCardNumber, String brand, PayersCardType cardType, String cardholderName, String email) {
-        this.lastDigitsCardNumber = lastDigitsCardNumber;
-        this.brand = brand;
-        this.cardType = cardType;
-        this.cardholderName = cardholderName;
-        this.email = email;
-    }
-
     public WalletPaymentInfo(String lastDigitsCardNumber,
                              String brand,
                              PayersCardType cardType,
@@ -61,11 +53,23 @@ public class WalletPaymentInfo {
                              String email,
                              String acceptHeader,
                              String userAgentHeader,
-                             String ipAddress) {
-        this(lastDigitsCardNumber, brand, cardType, cardholderName, email);
+                             String ipAddress, 
+                             String displayName, 
+                             String network, 
+                             String transactionIdentifier, 
+                             String worldpay3dsFlexDdcResult) {
+        this.lastDigitsCardNumber = lastDigitsCardNumber;
+        this.brand = brand;
+        this.cardType = cardType;
+        this.cardholderName = cardholderName;
+        this.email = email;
         this.acceptHeader = acceptHeader;
         this.userAgentHeader = userAgentHeader;
         this.ipAddress = ipAddress;
+        this.displayName = displayName;
+        this.network = network;
+        this.transactionIdentifier = transactionIdentifier;
+        this.worldpay3dsFlexDdcResult = worldpay3dsFlexDdcResult;
     }
 
     public String getCardholderName() {

@@ -10,15 +10,11 @@ import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import java.time.LocalDate;
 import java.util.Optional;
 
+import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+
 public class GooglePayAuthRequestFixture implements WalletAuthorisationRequest, WalletAuthorisationData {
     
-    private WalletPaymentInfo paymentInfo = new WalletPaymentInfo(
-            "4242",
-            "visa",
-            PayersCardType.DEBIT,
-            "Example Name",
-            "example@test.example"
-    ); 
+    private WalletPaymentInfo paymentInfo = aWalletPaymentInfo().build();
     
     private EncryptedPaymentData encryptedPaymentData = new EncryptedPaymentData(
             "aSignedMessage",

@@ -14,6 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.BDDMockito.given;
+import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
 
 @ExtendWith(MockitoExtension.class)
 class WalletAuthorisationDataToAuthCardDetailsConverterTest {
@@ -27,8 +28,13 @@ class WalletAuthorisationDataToAuthCardDetailsConverterTest {
     @Mock
     private WalletAuthorisationRequest mockWalletAuthorisationRequest;
 
-    private final WalletPaymentInfo walletPaymentInfo = new WalletPaymentInfo(LAST_4_DIGITS.toString(), CARD_BRAND,
-            PayersCardType.CREDIT, CARDHOLDER_NAME, EMAIL);
+    private final WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+            .withLastDigitsCardNumber(LAST_4_DIGITS.toString())
+            .withBrand(CARD_BRAND)
+            .withCardType(PayersCardType.CREDIT)
+            .withCardholderName(CARDHOLDER_NAME)
+            .withEmail(EMAIL)
+            .build();
 
     private final WalletAuthorisationRequestToAuthCardDetailsConverter walletAuthorisationDataToAuthCardDetailsConverter
             = new WalletAuthorisationRequestToAuthCardDetailsConverter();
@@ -64,8 +70,14 @@ class WalletAuthorisationDataToAuthCardDetailsConverterTest {
 
     @Test
     void convertsWhenLast4DigitsOfCardNumberIsEmptyString() {
-        given(mockWalletAuthorisationRequest.getPaymentInfo())
-                .willReturn(new WalletPaymentInfo("", CARD_BRAND, PayersCardType.CREDIT, CARDHOLDER_NAME, EMAIL));
+        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+                .withLastDigitsCardNumber("")
+                .withBrand(CARD_BRAND)
+                .withCardType(PayersCardType.CREDIT)
+                .withCardholderName(CARDHOLDER_NAME)
+                .withEmail(EMAIL)
+                .build();
+        given(mockWalletAuthorisationRequest.getPaymentInfo()).willReturn(walletPaymentInfo);
 
         var authCardDetails = walletAuthorisationDataToAuthCardDetailsConverter.convert(mockWalletAuthorisationRequest, EXPIRY_DATE);
 

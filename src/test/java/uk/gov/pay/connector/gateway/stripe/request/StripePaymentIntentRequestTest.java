@@ -12,6 +12,9 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture;
+import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -28,6 +31,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture.anApplePayAuthRequest;
 
 @ExtendWith(MockitoExtension.class)
 class StripePaymentIntentRequestTest {
@@ -91,6 +95,8 @@ class StripePaymentIntentRequestTest {
         assertThat(payload, not(containsString("customer=")));
         assertThat(payload, not(containsString("setup_future_usage=")));
         assertThat(payload, not(containsString("off_session=")));
+        assertThat(payload, not(containsString("payment_method_data[type]=")));
+        assertThat(payload, not(containsString("payment_method_data[card][token]=")));
     }
 
     @Test
@@ -155,7 +161,37 @@ class StripePaymentIntentRequestTest {
         assertThat(payload, containsString("off_session=true"));
         assertThat(payload, not(containsString("setup_future_usage=")));
     }
-    
+
+    @Test
+    void shouldIncludeTokenIdForCreateFromToken() {
+        String tokenId = "a-token-id";
+        
+        ApplePayAuthRequest applePayAuthRequest = anApplePayAuthRequest().build();
+        var authRequest = WalletAuthorisationGatewayRequest.valueOf(charge, applePayAuthRequest);
+        StripePaymentIntentRequest paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithToken(
+                authRequest, tokenId, stripeGatewayConfig, frontendUrl);
+        String payload = paymentIntentRequest.getGatewayOrder().getPayload();
+
+        assertThat(payload, containsString(URLEncoder.encode("payment_method_data[type]", UTF_8) + "=" + "card"));
+        assertThat(payload, containsString(URLEncoder.encode("payment_method_data[card][token]", UTF_8) + "=" + tokenId));
+        assertThat(payload, containsString("amount=" + amount));
+        assertThat(payload, containsString("confirmation_method=automatic"));
+        assertThat(payload, containsString("capture_method=manual"));
+        assertThat(payload, containsString("currency=GBP"));
+        assertThat(payload, containsString("transfer_group=" + chargeExternalId));
+        assertThat(payload, containsString("on_behalf_of=" + stripeConnectAccountId));
+        assertThat(payload, containsString("confirm=true"));
+        assertThat(payload, containsString("description=" + description));
+        assertThat(payload, containsString("return_url=" + URLEncoder.encode(frontendUrl + "/card_details/" + chargeExternalId + "/3ds_required_in", UTF_8)));
+        assertThat(payload, containsString(URLEncoder.encode("metadata[govuk_pay_transaction_external_id]", UTF_8) + "=" + chargeExternalId));
+        assertThat(payload, not(containsString("payment_method=")));
+        assertThat(payload, not(containsString("customer=")));
+        assertThat(payload, not(containsString("setup_future_usage=")));
+        assertThat(payload, not(containsString("off_session=")));
+        
+        
+    }
+
     private StripePaymentIntentRequest createOneOffStripePaymentIntentRequest() {
         var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
         return StripePaymentIntentRequest.createOneOffPaymentIntentRequest(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
