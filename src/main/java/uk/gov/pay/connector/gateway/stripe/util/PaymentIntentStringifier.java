@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gateway.stripe.json.LastPaymentError;
 import uk.gov.pay.connector.gateway.stripe.json.Outcome;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.response.StripePaymentIntentResponse;
 
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -16,9 +15,12 @@ public class PaymentIntentStringifier {
 
         StringJoiner joiner = new StringJoiner("");
         StringJoiner delimitedJoiner = new StringJoiner(", ");
-
-        joiner.add("Stripe authorisation response - ");
+        
         joiner.add("payment intent: " + paymentIntent.getId());
+        
+        if (paymentIntent.getNextAction() != null) {
+            joiner.add("next action: " + paymentIntent.getNextAction());
+        }
 
         Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
         optionalStripeCharge.map(charge -> {
@@ -53,34 +55,7 @@ public class PaymentIntentStringifier {
 
         return joiner.toString();
     }
-
-    public static String stringify(StripePaymentIntentResponse paymentIntent) {
-        StringJoiner joiner = new StringJoiner("");
-        StringJoiner delimitedJoiner = new StringJoiner(", ");
-
-        joiner.add("payment intent: " + paymentIntent.getId());
-
-        Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
-        optionalStripeCharge.map(charge -> {
-            joiner.add(" (");
-            if (charge.getId() != null) {
-                joiner.add("stripe charge: " + charge.getId());
-            }
-
-            charge.getOutcome()
-                    .map(outcome -> appendOutcomeLogs(outcome, delimitedJoiner));
-
-            if (delimitedJoiner.length() > 0) {
-                joiner.add(", ");
-            }
-
-            joiner.merge(delimitedJoiner);
-            return joiner.add(")");
-        });
-
-        return joiner.toString();
-    }
-
+    
     public static StringJoiner appendOutcomeLogs(Outcome outcome, StringJoiner joiner) {
         if (outcome.getNetworkStatus() != null) {
             joiner.add("outcome.network_status: " + outcome.getNetworkStatus());

@@ -3,6 +3,7 @@
   "object": "payment_intent",
   "status": "succeeded",
   "amount": 2400,
+  "payment_method": "pm_1FHESdEZsufgnuO0bzghQoZ2",
   "charges": {
     "object": "list",
     "data": [
