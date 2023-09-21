@@ -16,6 +16,7 @@
       "canceled_at": null,
       "cancellation_reason": null,
       "capture_method": "manual",
+      "payment_method": "pm_1FHESdEZsufgnuO0bzghQoZ2",
       "charges": {
         "object": "list",
         "data": [

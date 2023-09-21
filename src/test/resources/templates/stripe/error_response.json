@@ -66,7 +66,9 @@
             },
             "paid": false,
             "payment_intent": "pi_aaaaaaaaaaaaaaaaaaaaaaaa",
-            "payment_method": "pm_aaaaaaaaaaaaaaaaaaaaaaaa",
+            "payment_method": {
+              "id": "pm_1FHESdEZsufgnuO0bzghQoZ2"
+            },
             "payment_method_details": {
               "card": {
                 "brand": "visa",
