@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -21,7 +22,7 @@ import java.util.StringJoiner;
  **/
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeErrorResponse {
-
+    
     @JsonProperty("error")
     private Error error;
 
@@ -61,6 +62,10 @@ public class StripeErrorResponse {
 
         public Optional<StripePaymentIntent> getStripePaymentIntent() {
             return Optional.ofNullable(stripePaymentIntent);
+        }
+        
+        public Optional<CardExpiryDate> getCardExpiryDate() {
+            return stripePaymentIntent.getCardExpiryDate();
         }
 
         @Override

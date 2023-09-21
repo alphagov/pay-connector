@@ -3,11 +3,16 @@ package uk.gov.pay.connector.gateway.stripe.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
 import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.DateTimeException;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,6 +20,8 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripePaymentIntent {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StripePaymentIntent.class);
+    
     private static Map<StripeChargeStatus, BaseAuthoriseResponse.AuthoriseStatus> statusMap = Map.of(
             StripeChargeStatus.REQUIRES_CAPTURE, BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
             StripeChargeStatus.REQUIRES_ACTION, BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS
@@ -92,6 +99,28 @@ public class StripePaymentIntent {
 
     public NextAction getNextAction() {
         return nextAction;
+    }
+    
+    public Optional<CardExpiryDate> getCardExpiryDate() {
+        if (paymentMethod == null) {
+            LOGGER.error("Attempted to get card expiry date for payment intent with no payment method");
+            return Optional.empty();
+        }
+        return getPaymentMethod().getExpanded()
+                .flatMap(StripePaymentMethodResponse::getCard)
+                .map(card -> {
+                    if (card.getCardExpiryYear() == null || card.getCardExpiryMonth() == null) {
+                        LOGGER.info("Missing card expiry date on payment method");
+                        return null;
+                    }
+                    try {
+                        YearMonth yearMonth = YearMonth.of(card.getCardExpiryYear(), card.getCardExpiryMonth());
+                        return CardExpiryDate.valueOf(yearMonth);
+                    } catch (DateTimeException | IllegalArgumentException e) {
+                        LOGGER.error(String.format("Invalid card expiry date in response from Stripe: %s", e.getMessage()));
+                        return null;
+                    }
+                });
     }
 
     public String stringify() {
