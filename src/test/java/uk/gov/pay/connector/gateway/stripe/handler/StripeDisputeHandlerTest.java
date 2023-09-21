@@ -11,9 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.stripe.handler.StripeDisputeHandler;
 import uk.gov.pay.connector.gateway.stripe.request.StripeSubmitTestDisputeEvidenceRequest;
-import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.CoreMatchers.is;

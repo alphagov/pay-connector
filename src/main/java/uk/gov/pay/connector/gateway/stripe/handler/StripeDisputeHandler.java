@@ -4,7 +4,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.request.StripeSubmitTestDisputeEvidenceRequest;
-import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 public class StripeDisputeHandler {

@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
+import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
-import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.DateTimeException;
