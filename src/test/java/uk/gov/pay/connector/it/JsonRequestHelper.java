@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.it;
 
 import com.google.gson.JsonObject;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -169,6 +169,20 @@ public class JsonRequestHelper {
         JsonObject payload = new JsonObject();
         payload.add("payment_info", paymentInfo);
         payload.addProperty("payment_data", encryptedPaymentData.toString());
+        return toJson(payload);
+    }
+
+    public static String buildJsonGooglePayAuthorisationDetails(String cardHolderName, String email) {
+        JsonObject paymentInfo = new JsonObject();
+        paymentInfo.addProperty("last_digits_card_number", "4242");
+        paymentInfo.addProperty("brand", "visa");
+        paymentInfo.addProperty("card_type", "DEBIT");
+        paymentInfo.addProperty("cardholder_name", cardHolderName);
+        paymentInfo.addProperty("email", email);
+       
+        JsonObject payload = new JsonObject();
+        payload.add("payment_info", paymentInfo);
+        payload.addProperty("token_id", "a-token-id");
         return toJson(payload);
     }
 

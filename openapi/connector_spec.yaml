@@ -1802,6 +1802,55 @@ paths:
       summary: Authorise ApplePay payment
       tags:
       - Charge operations
+  /v1/frontend/charges/{chargeId}/wallets/google/stripe:
+    post:
+      operationId: authoriseChargeGooglePayStripe
+      parameters:
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StripeGooglePayAuthRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "202":
+          description: Accepted - payment has been submitted for authorisation and
+            awaiting response from payment service provider
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - invalid payload or the payment has been declined
+        "402":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Gateway error
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid payload or missing mandatory
+            attributes
+        "500":
+          description: Internal server error
+      summary: Authorise Google Pay payment via Stripe
+      tags:
+      - Charge operations
   /v1/frontend/charges/{chargeId}/wallets/google/worldpay:
     post:
       operationId: authoriseChargeGooglePayWorldpay
@@ -4087,6 +4136,14 @@ components:
           type:
             type: string
             writeOnly: true
+    StripeGooglePayAuthRequest:
+      type: object
+      properties:
+        payment_info:
+          $ref: '#/components/schemas/WalletPaymentInfo'
+        token_id:
+          type: string
+          writeOnly: true
     Supplemental:
       type: object
       properties:
