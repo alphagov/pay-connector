@@ -2,8 +2,12 @@ package uk.gov.pay.connector.gateway.stripe.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeExpandableField;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
+import uk.gov.pay.connector.gateway.stripe.json.StripeExpandableFieldDeserializer;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
@@ -34,7 +38,7 @@ public class StripePaymentIntentResponse {
     private String customerId;
     
     @JsonProperty("payment_method")
-    private StripePaymentMethodResponse paymentMethod;
+    private StripeExpandableField<StripePaymentMethodResponse> paymentMethod;
 
     public String getId() {
         return id;
@@ -48,7 +52,8 @@ public class StripePaymentIntentResponse {
         return customerId;
     }
 
-    public StripePaymentMethodResponse getPaymentMethod() {
+    @JsonDeserialize(using = StripeExpandableFieldDeserializer.class)
+    public StripeExpandableField<StripePaymentMethodResponse> getPaymentMethod() {
         return paymentMethod;
     }
 
