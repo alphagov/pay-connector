@@ -12,8 +12,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import java.net.URI;
@@ -167,7 +166,7 @@ class StripePaymentIntentRequestTest {
         String tokenId = "a-token-id";
         
         ApplePayAuthRequest applePayAuthRequest = anApplePayAuthRequest().build();
-        var authRequest = WalletAuthorisationGatewayRequest.valueOf(charge, applePayAuthRequest);
+        var authRequest = ApplePayAuthorisationGatewayRequest.valueOf(charge, applePayAuthRequest);
         StripePaymentIntentRequest paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithToken(
                 authRequest, tokenId, stripeGatewayConfig, frontendUrl);
         String payload = paymentIntentRequest.getGatewayOrder().getPayload();

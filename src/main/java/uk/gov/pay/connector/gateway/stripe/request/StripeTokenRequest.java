@@ -4,7 +4,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import java.util.Map;
@@ -24,8 +24,8 @@ public class StripeTokenRequest extends StripePostRequest {
         this.transactionIdentifier = applePayAuthRequest.getPaymentInfo().getTransactionIdentifier();
     }
 
-    public static StripeTokenRequest of(WalletAuthorisationGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
-        return new StripeTokenRequest(request.getGatewayAccount(), stripeGatewayConfig, request.getGatewayCredentials(), (ApplePayAuthRequest) request.getWalletAuthorisationRequest());
+    public static StripeTokenRequest of(ApplePayAuthorisationGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
+        return new StripeTokenRequest(request.getGatewayAccount(), stripeGatewayConfig, request.getGatewayCredentials(), request.getApplePayAuthRequest());
     }
 
     @Override

@@ -9,12 +9,15 @@ import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
-import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
 
 import javax.ws.rs.core.MediaType;
 import java.time.LocalDate;
 import java.util.Optional;
+
+import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE_APPLE_PAY;
+import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE_GOOGLE_PAY;
 
 public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
@@ -38,6 +41,9 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String agreementId;
         private String schemeTransactionIdentifier;
         private String paymentTokenId;
+        private AppleDecryptedPaymentData appleDecryptedPaymentData;
+        private WorldpayGooglePayAuthRequest googlePayPaymentData;
+
         public int getIntegrationVersion3ds() {
             return integrationVersion3ds;
         }
@@ -176,6 +182,22 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         public void setPaymentTokenId(String paymentTokenId) {
             this.paymentTokenId = paymentTokenId;
         }
+
+        public AppleDecryptedPaymentData getAppleDecryptedPaymentData() {
+            return appleDecryptedPaymentData;
+        }
+
+        public void setAppleDecryptedPaymentData(AppleDecryptedPaymentData appleDecryptedPaymentData) {
+            this.appleDecryptedPaymentData = appleDecryptedPaymentData;
+        }
+
+        public WorldpayGooglePayAuthRequest getGooglePayPaymentData() {
+            return googlePayPaymentData;
+        }
+
+        public void setGooglePayPaymentData(WorldpayGooglePayAuthRequest googlePayPaymentData) {
+            this.googlePayPaymentData = googlePayPaymentData;
+        }
     }
 
     public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
@@ -199,8 +221,12 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_RECURRING_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
     }
 
-    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseWalletOrderRequestBuilder(WalletType walletType) {
-        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), walletType.getWorldPayTemplate(), walletType.getOrderRequestType());
+    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseApplePayOrderRequestBuilder() {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER, AUTHORISE_APPLE_PAY);
+    }
+
+    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseGooglePayOrderRequestBuilder() {
+        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_GOOGLE_PAY_ORDER_TEMPLATE_BUILDER, AUTHORISE_GOOGLE_PAY);
     }
 
     public static WorldpayOrderRequestBuilder aWorldpay3dsResponseAuthOrderRequestBuilder() {
@@ -226,7 +252,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public static WorldpayOrderRequestBuilder aWorldpayDeleteTokenOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), DELETE_TOKEN_ORDER_TEMPLATE_BUILDER, OrderRequestType.DELETE_STORED_PAYMENT_DETAILS);
     }
-    
+
 
     private WorldpayOrderRequestBuilder(WorldpayTemplateData worldpayTemplateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {
         super(worldpayTemplateData, payloadBuilder, orderRequestType);
@@ -254,11 +280,6 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
-    public WorldpayOrderRequestBuilder withWalletTemplateData(WalletAuthorisationData walletTemplateData) {
-        worldpayTemplateData.setWalletAuthorisationData(walletTemplateData);
-        return this;
-    }
-
     public WorldpayOrderRequestBuilder withAcceptHeader(String acceptHeader) {
         worldpayTemplateData.setAcceptHeader(acceptHeader);
         return this;
@@ -274,7 +295,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         worldpayTemplateData.setRequires3ds(requires3ds);
         return this;
     }
-    
+
     public WorldpayOrderRequestBuilder withExemptionEngine(boolean exemptionEngine) {
         worldpayTemplateData.setExemptionEngineEnabled(exemptionEngine);
         return this;
@@ -288,8 +309,8 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public WorldpayOrderRequestBuilder withPayerEmail(String payerEmail) {
         worldpayTemplateData.setPayerEmail(payerEmail);
         return this;
-    }    
-    
+    }
+
     public WorldpayOrderRequestBuilder withIntegrationVersion3ds(int integrationVersion3ds) {
         worldpayTemplateData.setIntegrationVersion3ds(integrationVersion3ds);
         return this;
@@ -324,11 +345,22 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         worldpayTemplateData.setPaymentTokenId(paymentTokenId);
         return this;
     }
-    
+
     public WorldpayOrderRequestBuilder withSchemeTransactionIdentifier(String schemeTransactionIdentifier) {
         worldpayTemplateData.setSchemeTransactionIdentifier(schemeTransactionIdentifier);
         return this;
     }
+
+    public WorldpayOrderRequestBuilder withAppleDecryptedPaymentData(AppleDecryptedPaymentData appleDecryptedPaymentData) {
+        worldpayTemplateData.setAppleDecryptedPaymentData(appleDecryptedPaymentData);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withGooglePayPaymentData(WorldpayGooglePayAuthRequest googlePayAuthRequest) {
+        worldpayTemplateData.setGooglePayPaymentData(googlePayAuthRequest);
+        return this;
+    }
+
     @Override
     public MediaType getMediaType() {
         return MediaType.APPLICATION_XML_TYPE;

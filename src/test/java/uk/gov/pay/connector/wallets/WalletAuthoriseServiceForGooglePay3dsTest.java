@@ -30,7 +30,9 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
@@ -68,7 +70,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
     private ChargeService chargeService;
 
     @Mock
-    private WalletAuthorisationRequestToAuthCardDetailsConverter mockWalletAuthorisationDataToAuthCardDetailsConverter;
+    private WalletPaymentInfoToAuthCardDetailsConverter mockWalletPaymentInfoToAuthCardDetailsConverter;
 
     @Mock
     private Environment mockEnvironment;
@@ -112,12 +114,12 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
                 mockedProviders,
                 chargeService,
                 authorisationService,
-                mockWalletAuthorisationDataToAuthCardDetailsConverter,
+                mockWalletPaymentInfoToAuthCardDetailsConverter,
                 mock(AuthorisationLogger.class), 
                 mockEnvironment);
         
         when(chargeService.lockChargeForProcessing(anyString(), any(OperationType.class))).thenReturn(chargeEntity);
-        when(mockWalletAuthorisationDataToAuthCardDetailsConverter.convert(any(WalletAuthorisationRequest.class), nullable(CardExpiryDate.class)))
+        when(mockWalletPaymentInfoToAuthCardDetailsConverter.convert(any(WalletPaymentInfo.class), nullable(CardExpiryDate.class)))
                 .thenReturn(mockAuthCardDetails);
         when(chargeService.updateChargePostWalletAuthorisation(anyString(), any(ChargeStatus.class), anyString(), 
                 isNull(), eq(mockAuthCardDetails), any(WalletType.class), any(), 
@@ -131,10 +133,10 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);
 
-        WalletAuthorisationRequest authorisationData =
+        WorldpayGooglePayAuthRequest authorisationData =
                 Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
 
-        walletAuthoriseService.doAuthorise(chargeEntity.getExternalId(), authorisationData);
+        walletAuthoriseService.authorise(chargeEntity.getExternalId(), authorisationData);
 
         verify(chargeService).updateChargePostWalletAuthorisation(
                 anyString(),
@@ -155,7 +157,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         GatewayResponse.GatewayResponseBuilder<WorldpayOrderStatusResponse> responseBuilder = responseBuilder();
         responseBuilder.withResponse(worldpayOrderStatusResponse);
         GatewayResponse authResponse = responseBuilder.build();
-        when(mockedPaymentProvider.authoriseWallet(any(WalletAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        when(mockedPaymentProvider.authoriseGooglePay(any(GooglePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
         return authResponse;
     }
 }
