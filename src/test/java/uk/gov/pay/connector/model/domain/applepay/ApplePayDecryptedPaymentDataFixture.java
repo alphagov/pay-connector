@@ -1,15 +1,14 @@
 package uk.gov.pay.connector.model.domain.applepay;
 
-import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.time.LocalDate;
 
-import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 
 public final class ApplePayDecryptedPaymentDataFixture {
-    private WalletPaymentInfo applePaymentInfo = aWalletPaymentInfo().build();
+    private WalletPaymentInfo applePaymentInfo = anApplePayPaymentInfo().build();
     private String applicationPrimaryAccountNumber = "4818528840010767";
     private LocalDate applicationExpirationDate = LocalDate.of(2023, 12, 1);
     private String currencyCode = "643";

@@ -11,7 +11,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 
 @ExtendWith(MockitoExtension.class)
 class WalletPaymentInfoToAuthCardDetailsConverterTest {
@@ -22,7 +22,7 @@ class WalletPaymentInfoToAuthCardDetailsConverterTest {
     private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("04/27");
     private static final String CARD_BRAND = "master-card";
 
-    private final WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+    private final WalletPaymentInfo walletPaymentInfo = anApplePayPaymentInfo()
             .withLastDigitsCardNumber(LAST_4_DIGITS.toString())
             .withBrand(CARD_BRAND)
             .withCardType(PayersCardType.CREDIT)
@@ -59,7 +59,7 @@ class WalletPaymentInfoToAuthCardDetailsConverterTest {
 
     @Test
     void convertsWhenLast4DigitsOfCardNumberIsEmptyString() {
-        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+        WalletPaymentInfo walletPaymentInfo = anApplePayPaymentInfo()
                 .withLastDigitsCardNumber("")
                 .withBrand(CARD_BRAND)
                 .withCardType(PayersCardType.CREDIT)

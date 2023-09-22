@@ -16,19 +16,20 @@ public class WorldpayGooglePayAuthRequest implements GooglePayAuthRequest {
     @Schema(hidden = true)
     @NotNull
     @Valid
-    private final WalletPaymentInfo paymentInfo;
+    private final GooglePayPaymentInfo paymentInfo;
     @Schema(hidden = true)
     @NotNull
     @Valid
     private final GooglePayEncryptedPaymentData encryptedPaymentData;
 
-    public WorldpayGooglePayAuthRequest(@JsonProperty("payment_info") WalletPaymentInfo paymentInfo,
+    public WorldpayGooglePayAuthRequest(@JsonProperty("payment_info") GooglePayPaymentInfo paymentInfo,
                                  @JsonProperty("encrypted_payment_data") GooglePayEncryptedPaymentData encryptedPaymentData) {
         this.paymentInfo = paymentInfo;
         this.encryptedPaymentData = encryptedPaymentData;
     }
 
-    public WalletPaymentInfo getPaymentInfo() {
+    @Override
+    public GooglePayPaymentInfo getPaymentInfo() {
         return paymentInfo;
     }
 

@@ -17,19 +17,20 @@ public class StripeGooglePayAuthRequest implements GooglePayAuthRequest {
     @Schema(hidden = true)
     @NotNull
     @Valid
-    private final WalletPaymentInfo paymentInfo;
+    private final GooglePayPaymentInfo paymentInfo;
 
     @Schema(hidden = true)
     @NotNull
     @Valid
     private final String tokenId;
 
-    public StripeGooglePayAuthRequest(@JsonProperty("payment_info") WalletPaymentInfo paymentInfo, @JsonProperty("token_id") String tokenId) {
+    public StripeGooglePayAuthRequest(@JsonProperty("payment_info") GooglePayPaymentInfo paymentInfo, @JsonProperty("token_id") String tokenId) {
         this.paymentInfo = paymentInfo;
         this.tokenId = tokenId;
     }
 
-    public WalletPaymentInfo getPaymentInfo() {
+    @Override
+    public GooglePayPaymentInfo getPaymentInfo() {
         return paymentInfo;
     }
     

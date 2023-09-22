@@ -2339,9 +2339,43 @@ components:
             transactionId\":\"372c3858122b6bc39c6095eca2f994a8aa012f3b025d0d72ecfd449c2a5877f9\"\
             }}"
         payment_info:
-          $ref: '#/components/schemas/WalletPaymentInfo'
+          $ref: '#/components/schemas/ApplePayPaymentInfo'
       required:
       - payment_info
+    ApplePayPaymentInfo:
+      type: object
+      properties:
+        brand:
+          type: string
+          example: visa
+        card_type:
+          type: string
+          enum:
+          - DEBIT
+          - CREDIT
+          - CREDIT_OR_DEBIT
+          example: DEBIT
+        cardholder_name:
+          type: string
+          example: Joe B
+          maxLength: 255
+        display_name:
+          type: string
+          example: MasterCard 1234
+        email:
+          type: string
+          example: mr@payment.test
+          maxLength: 254
+        last_digits_card_number:
+          type: string
+          description: last digits card number
+          example: "4242"
+        network:
+          type: string
+          example: MasterCard
+        transaction_identifier:
+          type: string
+          example: 372C3858122B6BC39C6095ECA2F994A8AA012F3B025D0D72ECFD449C2A5877F9
     Auth3dsData:
       type: object
       properties:
@@ -3890,6 +3924,45 @@ components:
           writeOnly: true
       required:
       - signature
+    GooglePayPaymentInfo:
+      type: object
+      properties:
+        accept_header:
+          type: string
+          example: "text/html;q=1.0, */*;q=0.9"
+        brand:
+          type: string
+          example: visa
+        card_type:
+          type: string
+          enum:
+          - DEBIT
+          - CREDIT
+          - CREDIT_OR_DEBIT
+          example: DEBIT
+        cardholder_name:
+          type: string
+          example: Joe B
+          maxLength: 255
+        email:
+          type: string
+          example: mr@payment.test
+          maxLength: 254
+        ip_address:
+          type: string
+          example: 203.0.113.1
+        last_digits_card_number:
+          type: string
+          description: last digits card number
+          example: "4242"
+        user_agent_header:
+          type: string
+          example: Mozilla/5.0
+        worldpay_3ds_flex_ddc_result:
+          type: string
+          description: SessionId returned by Worldpay/CardinalCommerce as part of
+            device data collection. Applicable for Google Pay payments only
+          example: 1f1154b7-620d-4654-801b-893b5bb22db1
     JsonNode:
       type: object
     LastDigitsCardNumber:
@@ -4140,7 +4213,7 @@ components:
       type: object
       properties:
         payment_info:
-          $ref: '#/components/schemas/WalletPaymentInfo'
+          $ref: '#/components/schemas/GooglePayPaymentInfo'
         token_id:
           type: string
           writeOnly: true
@@ -4287,54 +4360,6 @@ components:
           type: string
           description: valid/invalid result for Worldpay flex credentials
           example: valid
-    WalletPaymentInfo:
-      type: object
-      properties:
-        accept_header:
-          type: string
-          example: "text/html;q=1.0, */*;q=0.9"
-        brand:
-          type: string
-          example: visa
-        card_type:
-          type: string
-          enum:
-          - DEBIT
-          - CREDIT
-          - CREDIT_OR_DEBIT
-          example: DEBIT
-        cardholder_name:
-          type: string
-          example: Joe B
-          maxLength: 255
-        display_name:
-          type: string
-          example: MasterCard 1234
-        email:
-          type: string
-          example: mr@payment.test
-          maxLength: 254
-        ip_address:
-          type: string
-          example: 203.0.113.1
-        last_digits_card_number:
-          type: string
-          description: last digits card number
-          example: "4242"
-        network:
-          type: string
-          example: MasterCard
-        transaction_identifier:
-          type: string
-          example: 372C3858122B6BC39C6095ECA2F994A8AA012F3B025D0D72ECFD449C2A5877F9
-        user_agent_header:
-          type: string
-          example: Mozilla/5.0
-        worldpay_3ds_flex_ddc_result:
-          type: string
-          description: SessionId returned by Worldpay/CardinalCommerce as part of
-            device data collection. Applicable for Google Pay payments only
-          example: 1f1154b7-620d-4654-801b-893b5bb22db1
     Worldpay3dsFlexCredentials:
       type: object
       properties:
@@ -4385,7 +4410,7 @@ components:
         encrypted_payment_data:
           $ref: '#/components/schemas/GooglePayEncryptedPaymentData'
         payment_info:
-          $ref: '#/components/schemas/WalletPaymentInfo'
+          $ref: '#/components/schemas/GooglePayPaymentInfo'
     WorldpayMerchantCodeCredentials:
       type: object
       properties:

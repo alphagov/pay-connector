@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -17,15 +16,16 @@ import javax.validation.constraints.NotNull;
 public class ApplePayAuthRequest implements WalletAuthorisationRequest {
     @NotNull
     @Valid
-    private WalletPaymentInfo paymentInfo;
+    private ApplePayPaymentInfo paymentInfo;
 
     @Schema(description = "paymentData of Apple Pay payment token as String. " +
             "This is de-serialised and decrypted for WorldPay payments. For Stripe payments, the value is passed as is when creating a token",
             example = "{\"version\":\"EC_v1\",\"data\":\"MLHhOn2BXhNw9wLLDR48DyeUcuSmRJ6KnAIGTMGqsgiMpc+AoJ…LUQ6UovkfSnW0sFH6NGZ0jhoap6LYnThYb9WT6yKfEm/rDhM=\",\"signature\":\"MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBglghkgBZQMEAgEFAD…ZuQFfsLJ+Nb3+7bpjfBsZAhA1sIT1XmHoGFdoCUT3AAAAAAAA\",\"header\":{\"ephemeralPublicKey\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE5/Qc6z4TY5HQ5n…KC3kJ4DtIWedPQ70N35PBZzJUrFjtvDZFUvs80uo2ynu+lw==\",\"publicKeyHash\":\"Xzn7W3vsrlKlb0QvUAviASubdtW4BotWrDo5mGG+UWY=\",\"transactionId\":\"372c3858122b6bc39c6095eca2f994a8aa012f3b025d0d72ecfd449c2a5877f9\"}}")
     private String paymentData;
 
+    @Override
     @JsonProperty("payment_info")
-    public WalletPaymentInfo getPaymentInfo() {
+    public ApplePayPaymentInfo getPaymentInfo() {
         return paymentInfo;
     }
 
@@ -36,7 +36,7 @@ public class ApplePayAuthRequest implements WalletAuthorisationRequest {
     public ApplePayAuthRequest() {
     }
 
-    public ApplePayAuthRequest(WalletPaymentInfo paymentInfo, String paymentData) {
+    public ApplePayAuthRequest(ApplePayPaymentInfo paymentInfo, String paymentData) {
         this.paymentInfo = paymentInfo;
         this.paymentData = paymentData;
     }

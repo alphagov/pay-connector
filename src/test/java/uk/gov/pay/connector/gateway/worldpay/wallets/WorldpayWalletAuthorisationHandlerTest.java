@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
@@ -52,7 +53,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
-import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL;
@@ -355,7 +356,7 @@ class WorldpayWalletAuthorisationHandlerTest {
     private ApplePayAuthorisationGatewayRequest getApplePayGatewayAuthorisationRequest(boolean withPayerEmail) {
         String payerEmail = withPayerEmail ? "aaa@bbb.test" : null;
 
-        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+        ApplePayPaymentInfo applePayPaymentInfo = anApplePayPaymentInfo()
                 .withLastDigitsCardNumber("4242")
                 .withBrand("visa")
                 .withCardType(PayersCardType.DEBIT)
@@ -363,13 +364,13 @@ class WorldpayWalletAuthorisationHandlerTest {
                 .withEmail(payerEmail)
                 .build();
         ApplePayAuthRequest applePayAuthRequest = new ApplePayAuthRequest(
-                walletPaymentInfo, "***ENCRYPTED_PAYMENT_DATA***");
+                applePayPaymentInfo, "***ENCRYPTED_PAYMENT_DATA***");
 
         return new ApplePayAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
     }
 
     private AppleDecryptedPaymentData getAppleDecryptedPaymentData() {
-        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+        WalletPaymentInfo walletPaymentInfo = anApplePayPaymentInfo()
                 .withLastDigitsCardNumber("4242")
                 .withBrand("visa")
                 .withCardType(PayersCardType.DEBIT)
