@@ -51,7 +51,8 @@ import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
@@ -566,7 +567,7 @@ class StripePaymentProviderTest {
             
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
             ChargeEntity charge = buildTestCharge(gatewayAccount);
-            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildApplePayAuthorisationRequest(charge));
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseApplePay(buildApplePayAuthorisationRequest(charge));
 
             verify(gatewayClient, times(2)).postRequestFor(stripePostRequestCaptor.capture());
             List<StripePostRequest> allRequests = stripePostRequestCaptor.getAllValues();
@@ -591,7 +592,7 @@ class StripePaymentProviderTest {
 
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
             ChargeEntity charge = buildTestCharge(gatewayAccount);
-            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildApplePayAuthorisationRequest(charge));
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseApplePay(buildApplePayAuthorisationRequest(charge));
 
             BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
 
@@ -615,7 +616,7 @@ class StripePaymentProviderTest {
 
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
             ChargeEntity charge = buildTestCharge(gatewayAccount);
-            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildApplePayAuthorisationRequest(charge));
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseApplePay(buildApplePayAuthorisationRequest(charge));
 
             BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
             assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
@@ -631,7 +632,7 @@ class StripePaymentProviderTest {
 
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
             ChargeEntity charge = buildTestCharge(gatewayAccount);
-            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildApplePayAuthorisationRequest(charge));
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseApplePay(buildApplePayAuthorisationRequest(charge));
 
             BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
             assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
@@ -645,7 +646,7 @@ class StripePaymentProviderTest {
 
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
             ChargeEntity charge = buildTestCharge(gatewayAccount);
-            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildGooglePayAuthorisationRequest(charge));
+            GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseGooglePay(buildGooglePayAuthorisationRequest(charge));
 
             verify(gatewayClient).postRequestFor(stripePostRequestCaptor.capture());
             var paymentIntentRequest = (StripePaymentIntentRequest) (stripePostRequestCaptor.getValue());
@@ -668,7 +669,7 @@ class StripePaymentProviderTest {
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         ChargeEntity charge = buildTestCharge(gatewayAccount);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildGooglePayAuthorisationRequest(charge));
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseGooglePay(buildGooglePayAuthorisationRequest(charge));
 
         BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
 
@@ -686,7 +687,7 @@ class StripePaymentProviderTest {
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
         ChargeEntity charge = buildTestCharge(gatewayAccount);
-        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildGooglePayAuthorisationRequest(charge));
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseGooglePay(buildGooglePayAuthorisationRequest(charge));
 
         BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
         assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
@@ -964,7 +965,7 @@ class StripePaymentProviderTest {
         return gatewayAccountEntity;
     }
 
-    private WalletAuthorisationGatewayRequest buildApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
+    private ApplePayAuthorisationGatewayRequest buildApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
         WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
                 .withLastDigitsCardNumber("4242")
                 .withBrand("visa")
@@ -975,15 +976,15 @@ class StripePaymentProviderTest {
         ApplePayAuthRequest applePayAuthRequest = new ApplePayAuthRequest(
                 walletPaymentInfo, "***ENCRYPTED_PAYMENT_DATA***");
 
-        return new WalletAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
+        return new ApplePayAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
     }
 
-    private WalletAuthorisationGatewayRequest buildGooglePayAuthorisationRequest(ChargeEntity chargeEntity) {
+    private GooglePayAuthorisationGatewayRequest buildGooglePayAuthorisationRequest(ChargeEntity chargeEntity) {
         StripeGooglePayAuthRequest googlePayAuthRequest = new StripeGooglePayAuthRequest(
                 aWalletPaymentInfo().build(),
                 TOKEN_ID
         );
 
-        return new WalletAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
+        return new GooglePayAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
 }

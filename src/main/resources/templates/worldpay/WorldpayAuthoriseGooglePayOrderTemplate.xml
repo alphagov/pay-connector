@@ -8,9 +8,9 @@
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <PAYWITHGOOGLE-SSL>
-                    <protocolVersion>${walletAuthorisationData.encryptedPaymentData.protocolVersion?xml}</protocolVersion>
-                    <signature>${walletAuthorisationData.encryptedPaymentData.signature?xml}</signature>
-                    <signedMessage>${walletAuthorisationData.encryptedPaymentData.signedMessage?xml}</signedMessage>
+                    <protocolVersion>${googlePayPaymentData.encryptedPaymentData.protocolVersion?xml}</protocolVersion>
+                    <signature>${googlePayPaymentData.encryptedPaymentData.signature?xml}</signature>
+                    <signedMessage>${googlePayPaymentData.encryptedPaymentData.signedMessage?xml}</signedMessage>
                 </PAYWITHGOOGLE-SSL>
                 <#if requires3ds>
                 <#if payerIpAddress??>
@@ -27,15 +27,15 @@
                 </#if>
                 <#if requires3ds>
                 <browser>
-                    <acceptHeader>${walletAuthorisationData.paymentInfo.acceptHeader?xml}</acceptHeader>
-                    <userAgentHeader>${walletAuthorisationData.paymentInfo.userAgentHeader?xml}</userAgentHeader>
+                    <acceptHeader>${acceptHeader?xml}</acceptHeader>
+                    <userAgentHeader>${userAgentHeader?xml}</userAgentHeader>
                 </browser>
                 </#if>
             </shopper>
             </#if>
-            <#if walletAuthorisationData.paymentInfo.worldpay3dsFlexDdcResult.isPresent()>
+            <#if googlePayPaymentData.paymentInfo.worldpay3dsFlexDdcResult.isPresent()>
             <additional3DSData
-                dfReferenceId="${walletAuthorisationData.paymentInfo.worldpay3dsFlexDdcResult.get()?xml}"
+                dfReferenceId="${googlePayPaymentData.paymentInfo.worldpay3dsFlexDdcResult.get()?xml}"
                 challengeWindowSize="390x400" challengePreference="noPreference"
             />
             </#if>

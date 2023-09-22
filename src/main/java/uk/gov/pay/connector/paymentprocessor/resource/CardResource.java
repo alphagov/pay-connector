@@ -88,7 +88,7 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Authorise ApplePay payment",
+            summary = "Authorise Apple Pay payment",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
@@ -102,7 +102,7 @@ public class CardResource {
                     @ApiResponse(responseCode = "500", description = "Internal server error"),
             }
     )
-    public Response authoriseCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+    public Response authoriseApplePay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
                                     @PathParam("chargeId") String chargeId,
                                     @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
@@ -114,7 +114,7 @@ public class CardResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Authorise GooglePay payment via Worldpay",
+            summary = "Authorise Google Pay payment via Worldpay",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),

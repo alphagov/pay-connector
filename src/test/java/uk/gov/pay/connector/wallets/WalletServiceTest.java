@@ -60,11 +60,11 @@ public class WalletServiceTest {
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
-        when(mockWalletAuthoriseService.doAuthorise(externalChargeId, applePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, applePayAuthRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = walletService.authorise(externalChargeId, applePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, applePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, applePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION SUCCESS")));
     }
@@ -81,11 +81,11 @@ public class WalletServiceTest {
                 .build();
         when(gatewayError.getErrorType()).thenReturn(errorType);
         when(gatewayError.getMessage()).thenReturn("oops");
-        when(mockWalletAuthoriseService.doAuthorise(externalChargeId, applePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, applePayAuthRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = walletService.authorise(externalChargeId, applePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, applePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, applePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse) authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));
@@ -100,11 +100,11 @@ public class WalletServiceTest {
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
-        when(mockWalletAuthoriseService.doAuthorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, worldpayGooglePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, worldpayGooglePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION SUCCESS")));
     }
@@ -118,11 +118,11 @@ public class WalletServiceTest {
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS);
-        when(mockWalletAuthoriseService.doAuthorise(externalChargeId, googlePayAuth3dsRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuth3dsRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuth3dsRequest);
 
-        verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, googlePayAuth3dsRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuth3dsRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION 3DS REQUIRED")));
     }
@@ -138,11 +138,11 @@ public class WalletServiceTest {
                 .build();
         when(gatewayError.getErrorType()).thenReturn(GATEWAY_ERROR);
         when(gatewayError.getMessage()).thenReturn("oops");
-        when(mockWalletAuthoriseService.doAuthorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
 
         Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, worldpayGooglePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, worldpayGooglePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));

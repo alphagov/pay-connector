@@ -3,16 +3,13 @@ package uk.gov.pay.connector.wallets.applepay;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import uk.gov.pay.connector.gateway.model.AuthorisationDetails;
-import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
-public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAuthorisationData {
+public class AppleDecryptedPaymentData {
     private WalletPaymentInfo paymentInfo;
     private String applicationPrimaryAccountNumber;
     private String currencyCode;
@@ -48,22 +45,12 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
         return Optional.ofNullable(applicationExpirationDate);
     }
 
-    @Override
-    public String getLastDigitsCardNumber() {
-        return paymentInfo.getLastDigitsCardNumber();
-    }
-
     public String getExpiryDateMonth() {
         return applicationExpirationDate.format(DateTimeFormatter.ofPattern("MM"));
     }
 
     public String getExpiryDateYear() {
         return applicationExpirationDate.format(DateTimeFormatter.ofPattern("yyyy"));
-    }
-    
-    @Override
-    public WalletType getWalletType() {
-        return WalletType.APPLE_PAY;
     }
 
     public String getCurrencyCode() {
@@ -90,7 +77,6 @@ public class AppleDecryptedPaymentData implements AuthorisationDetails, WalletAu
         this.paymentInfo = applePaymentInfo;
     }
     
-    @Override
     public WalletPaymentInfo getPaymentInfo() {
         return paymentInfo;
     }

@@ -6,31 +6,33 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseOrderSessionId;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayGatewayResponseGenerator;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.WalletAuthorisationHandler;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
-import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
+import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import javax.inject.Inject;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseWalletOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseGooglePayOrderRequestBuilder;
 
 
-public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHandler, WorldpayGatewayResponseGenerator {
+public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayResponseGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldpayWalletAuthorisationHandler.class);
     private final GatewayClient authoriseClient;
@@ -45,63 +47,67 @@ public class WorldpayWalletAuthorisationHandler implements WalletAuthorisationHa
         this.gatewayUrlMap = gatewayUrlMap;
         this.applePayDecrypter = applePayDecrypter;
     }
+    
+    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
+        AppleDecryptedPaymentData appleDecryptedPaymentData = decryptApplePaymentData(authorisationGatewayRequest.getGovUkPayPaymentId(), authorisationGatewayRequest.getApplePayAuthRequest());
 
-    @Override
-    public GatewayResponse<BaseAuthoriseResponse> authorise(WalletAuthorisationGatewayRequest request) throws GatewayException {
+        WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseApplePayOrderRequestBuilder();
+        worldpayOrderRequestBuilder.withAppleDecryptedPaymentData(appleDecryptedPaymentData);
+        
+        GatewayOrder gatewayOrder = buildWalletAuthoriseOrder(authorisationGatewayRequest, 
+                appleDecryptedPaymentData.getPaymentInfo(), worldpayOrderRequestBuilder);
 
+        return postGatewayRequest(gatewayOrder, authorisationGatewayRequest);
+    }
+
+    public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
+        WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseGooglePayOrderRequestBuilder();
+        worldpayOrderRequestBuilder.withGooglePayPaymentData((WorldpayGooglePayAuthRequest) authorisationGatewayRequest.getGooglePayAuthRequest());
+        
+        GatewayOrder gatewayOrder = buildWalletAuthoriseOrder(authorisationGatewayRequest, 
+                authorisationGatewayRequest.getGooglePayAuthRequest().getPaymentInfo(), worldpayOrderRequestBuilder);
+
+        return postGatewayRequest(gatewayOrder, authorisationGatewayRequest);
+    }
+
+    private GatewayResponse postGatewayRequest(GatewayOrder gatewayOrder, AuthorisationGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         GatewayClient.Response response = authoriseClient.postRequestFor(
                 gatewayUrlMap.get(request.getGatewayAccount().getType()),
                 WORLDPAY,
                 request.getGatewayAccount().getType(),
-                buildWalletAuthoriseOrder(request),
+                gatewayOrder,
                 getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
 
         return getWorldpayGatewayResponse(response);
     }
 
-    private GatewayOrder buildWalletAuthoriseOrder(WalletAuthorisationGatewayRequest request) {
+    private GatewayOrder buildWalletAuthoriseOrder(AuthorisationGatewayRequest request, WalletPaymentInfo walletPaymentInfo, WorldpayOrderRequestBuilder builder) {
 
         boolean is3dsRequired = request.getGatewayAccount().isRequires3ds();
         boolean isSendIpAddress = request.getGatewayAccount().isSendPayerIpAddressToGateway();
         boolean isSendPayerEmailToGateway = request.getGatewayAccount().isSendPayerEmailToGateway();
-
-        var builder = aWorldpayAuthoriseWalletOrderRequestBuilder(request.getWalletAuthorisationRequest().getWalletType());
-
-        WalletAuthorisationData walletAuthorisationData = extractWalletAuthorisationData(request);
         
         if (is3dsRequired && isSendIpAddress) {
-            builder.withPayerIpAddress(walletAuthorisationData.getPaymentInfo().getIpAddress());
+            builder.withPayerIpAddress(walletPaymentInfo.getIpAddress());
         }
 
         if (isSendPayerEmailToGateway) {
-            Optional.ofNullable(walletAuthorisationData.getPaymentInfo().getEmail()).ifPresent(builder::withPayerEmail);
+            Optional.ofNullable(walletPaymentInfo.getEmail()).ifPresent(builder::withPayerEmail);
         }
 
         return builder
-                .withWalletTemplateData(walletAuthorisationData)
                 .with3dsRequired(is3dsRequired)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
-                .withUserAgentHeader(walletAuthorisationData.getPaymentInfo().getUserAgentHeader())
-                .withUserAgentHeader(walletAuthorisationData.getPaymentInfo().getAcceptHeader())
+                .withUserAgentHeader(walletPaymentInfo.getUserAgentHeader())
+                .withAcceptHeader(walletPaymentInfo.getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
                 .withDescription(request.getDescription())
                 .withAmount(request.getAmount())
                 .build();
     }
-
-    private WalletAuthorisationData extractWalletAuthorisationData(WalletAuthorisationGatewayRequest request) {
-        switch (request.getWalletAuthorisationRequest().getWalletType()) {
-            case APPLE_PAY:
-                return decryptApplePaymentData(request.getGovUkPayPaymentId(), (ApplePayAuthRequest) request.getWalletAuthorisationRequest());
-            case GOOGLE_PAY:
-                return (WorldpayGooglePayAuthRequest) request.getWalletAuthorisationRequest();
-            default:
-                throw new IllegalArgumentException(format("Wallet Type not recognised: {}", request.getWalletAuthorisationRequest().getWalletType()));
-        }
-    }
     
-    private WalletAuthorisationData decryptApplePaymentData(String chargeId, ApplePayAuthRequest applePayAuthRequest) {
+    private AppleDecryptedPaymentData decryptApplePaymentData(String chargeId, ApplePayAuthRequest applePayAuthRequest) {
         LOGGER.info("Decrypting Apple Pay payload for charge with id {}", chargeId);
         AppleDecryptedPaymentData result = applePayDecrypter.performDecryptOperation(applePayAuthRequest);
         result.setPaymentInfo(applePayAuthRequest.getPaymentInfo());

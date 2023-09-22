@@ -21,6 +21,10 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
@@ -53,7 +57,7 @@ public class WalletAuthoriseService {
         this.metricRegistry = environment.metrics();
     }
 
-    public GatewayResponse<BaseAuthoriseResponse> doAuthorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
+    public GatewayResponse<BaseAuthoriseResponse> authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
         return authorisationService.executeAuthorise(chargeId, () -> {
             final ChargeEntity charge = prepareChargeForAuthorisation(chargeId);
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
@@ -61,7 +65,18 @@ public class WalletAuthoriseService {
             String requestStatus = "failure";
 
             try {
-                operationResponse = authorise(charge, walletAuthorisationRequest);
+
+                LOGGER.info("Authorising charge for {}", walletAuthorisationRequest.getWalletType().toString());
+                switch (walletAuthorisationRequest.getWalletType()) {
+                    case APPLE_PAY:
+                        operationResponse = authoriseApplePay(charge, walletAuthorisationRequest);
+                        break;
+                    case GOOGLE_PAY:
+                        operationResponse = authoriseGooglePay(charge, walletAuthorisationRequest);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException(format("Wallet type %s not recognised", walletAuthorisationRequest.getWalletType()));
+                }
 
                 if (operationResponse.getBaseResponse().isPresent()) {
                     requestStatus = "success";
@@ -146,7 +161,7 @@ public class WalletAuthoriseService {
         
         LOGGER.info("Processing gateway auth response for {}", walletAuthorisationRequest.getWalletType().toString());
         
-        AuthCardDetails authCardDetailsToBePersisted = walletAuthorisationDataToAuthCardDetailsConverter.convert(walletAuthorisationRequest, cardExpiryDate);
+        AuthCardDetails authCardDetailsToBePersisted = walletAuthorisationDataToAuthCardDetailsConverter.convert(walletAuthorisationRequest.getPaymentInfo(), cardExpiryDate);
         ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
                 status,
@@ -165,13 +180,18 @@ public class WalletAuthoriseService {
                 status.toString())).inc();
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authorise(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
+    private GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
             throws GatewayException {
-        
-        LOGGER.info("Authorising charge for {}", walletAuthorisationRequest.getWalletType().toString());
-        
-        var authorisationGatewayRequest = WalletAuthorisationGatewayRequest.valueOf(chargeEntity, walletAuthorisationRequest);
-        return getPaymentProviderFor(chargeEntity).authoriseWallet(authorisationGatewayRequest);
+        var authorisationGatewayRequest = ApplePayAuthorisationGatewayRequest.valueOf
+                (chargeEntity, (ApplePayAuthRequest) walletAuthorisationRequest);
+        return getPaymentProviderFor(chargeEntity).authoriseApplePay(authorisationGatewayRequest);
+    }
+
+    private GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(ChargeEntity chargeEntity, WalletAuthorisationRequest walletAuthorisationRequest)
+            throws GatewayException {
+        var authorisationGatewayRequest = GooglePayAuthorisationGatewayRequest.valueOf
+                (chargeEntity, (GooglePayAuthRequest) walletAuthorisationRequest);
+        return getPaymentProviderFor(chargeEntity).authoriseGooglePay(authorisationGatewayRequest);
     }
 
     private PaymentProvider getPaymentProviderFor(ChargeEntity chargeEntity) {

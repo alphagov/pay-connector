@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.sandbox.applepay;
+package uk.gov.pay.connector.gateway.sandbox.wallets;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.sandbox.SandboxGatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.sandbox.SandboxLast4DigitsCardNumbers;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -41,8 +41,8 @@ class SandboxWalletAuthorisationHandlerTest {
                                         .withLastDigitsCardNumber(AUTH_SUCCESS_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
                                         .build())
                         .build();
-        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
-                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePayAuthRequest));
+        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseApplePay(
+                new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePayAuthRequest));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -66,8 +66,8 @@ class SandboxWalletAuthorisationHandlerTest {
                                         .withLastDigitsCardNumber(AUTH_REJECTED_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
                                         .build())
                         .build();
-        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
-                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePayAuthRequest));
+        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseApplePay(
+                new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePayAuthRequest));
 
         assertThat(gatewayResponse.isSuccessful(), is(true));
         assertThat(gatewayResponse.isFailed(), is(false));
@@ -91,8 +91,8 @@ class SandboxWalletAuthorisationHandlerTest {
                                         .withLastDigitsCardNumber(AUTH_ERROR_APPLE_PAY_LAST_DIGITS_CARD_NUMBER)
                                         .build())
                         .build();
-        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authorise(
-                new WalletAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePayAuthRequest));
+        GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseApplePay(
+                new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().build(), applePayAuthRequest));
 
         assertThat(gatewayResponse.isSuccessful(), is(false));
         assertThat(gatewayResponse.isFailed(), is(true));

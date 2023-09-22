@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gateway.AuthoriseHandler;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
@@ -26,7 +27,8 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeCustomer;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
 import uk.gov.pay.connector.gateway.stripe.json.StripeToken;
 import uk.gov.pay.connector.util.JsonObjectMapper;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
@@ -107,7 +109,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         }
     }
 
-    public GatewayResponse authoriseApplePay(WalletAuthorisationGatewayRequest request) {
+    public GatewayResponse authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
                 .GatewayResponseBuilder
                 .responseBuilder();
@@ -124,12 +126,12 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         }
     }
 
-    public GatewayResponse authoriseGooglePay(WalletAuthorisationGatewayRequest request) {
+    public GatewayResponse authoriseGooglePay(GooglePayAuthorisationGatewayRequest request) {
         GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
-            String tokenId = ((StripeGooglePayAuthRequest) request.getWalletAuthorisationRequest()).getTokenId();
+            String tokenId = ((StripeGooglePayAuthRequest) request.getGooglePayAuthRequest()).getTokenId();
             StripePaymentIntent StripePaymentIntent = createPaymentIntentFromWalletToken(request, tokenId);
             return responseBuilder
                     .withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();
@@ -203,13 +205,13 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntent.class);
     }
 
-    private StripeToken createTokenForApplePay(WalletAuthorisationGatewayRequest request) 
+    private StripeToken createTokenForApplePay(ApplePayAuthorisationGatewayRequest authorisationGatewayRequest) 
             throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        String tokenJsonResponse = client.postRequestFor(StripeTokenRequest.of(request, stripeGatewayConfig)).getEntity();
+        String tokenJsonResponse = client.postRequestFor(StripeTokenRequest.of(authorisationGatewayRequest, stripeGatewayConfig)).getEntity();
         return jsonObjectMapper.getObject(tokenJsonResponse, StripeToken.class);
     }
 
-    private StripePaymentIntent createPaymentIntentFromWalletToken(WalletAuthorisationGatewayRequest request, String tokenId) 
+    private StripePaymentIntent createPaymentIntentFromWalletToken(AuthorisationGatewayRequest request, String tokenId) 
             throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         String paymentIntentJsonResponse = client.postRequestFor(StripePaymentIntentRequest.createPaymentIntentRequestWithToken(request, tokenId, stripeGatewayConfig, frontendUrl)).getEntity();
         return jsonObjectMapper.getObject(paymentIntentJsonResponse, StripePaymentIntent.class);
