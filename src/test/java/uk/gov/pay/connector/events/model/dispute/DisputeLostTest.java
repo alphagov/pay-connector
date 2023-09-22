@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.model.dispute;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
-import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 

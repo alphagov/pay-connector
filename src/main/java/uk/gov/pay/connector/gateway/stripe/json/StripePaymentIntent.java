@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
-import uk.gov.pay.connector.gateway.stripe.response.StripePaymentMethodResponse;
 import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -50,7 +49,7 @@ public class StripePaymentIntent {
 
     @JsonProperty("payment_method")
     @JsonDeserialize(using = StripeExpandableFieldDeserializer.class)
-    private StripeExpandableField<StripePaymentMethodResponse> paymentMethod;
+    private StripeExpandableField<StripePaymentMethod> paymentMethod;
 
     public ChargesCollection getChargesCollection() {
         return chargesCollection;
@@ -77,7 +76,7 @@ public class StripePaymentIntent {
         return customerId;
     }
 
-    public StripeExpandableField<StripePaymentMethodResponse> getPaymentMethod() {
+    public StripeExpandableField<StripePaymentMethod> getPaymentMethod() {
         return paymentMethod;
     }
 
@@ -107,7 +106,7 @@ public class StripePaymentIntent {
             return Optional.empty();
         }
         return getPaymentMethod().getExpanded()
-                .flatMap(StripePaymentMethodResponse::getCard)
+                .flatMap(StripePaymentMethod::getCard)
                 .map(card -> {
                     if (card.getCardExpiryYear() == null || card.getCardExpiryMonth() == null) {
                         LOGGER.info("Missing card expiry date on payment method");

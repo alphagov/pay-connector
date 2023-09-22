@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.stripe.response;
+package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

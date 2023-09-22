@@ -36,7 +36,7 @@ import uk.gov.pay.connector.events.model.dispute.DisputeLost;
 import uk.gov.pay.connector.events.model.dispute.DisputeWon;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
-import uk.gov.pay.connector.gateway.stripe.response.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;

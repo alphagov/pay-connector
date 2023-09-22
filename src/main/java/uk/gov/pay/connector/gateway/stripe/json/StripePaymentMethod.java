@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.stripe.response;
+package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,7 +7,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeObjectWithId;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class StripePaymentMethodResponse implements StripeObjectWithId {
+public class StripePaymentMethod implements StripeObjectWithId {
     @JsonProperty("id")
     private String id;
     
