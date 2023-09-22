@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -72,6 +73,11 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
     @Override
     public Optional<? extends Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<CardExpiryDate> getCardExpiryDate() {
+        return errorResponse.getError().getCardExpiryDate();
     }
 
     @Override
