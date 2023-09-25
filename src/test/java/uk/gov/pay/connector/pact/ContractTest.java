@@ -32,6 +32,7 @@ import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -367,6 +368,16 @@ public class ContractTest {
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), true, AuthorisationMode.MOTO_API);
+    }
+
+    @State("a charge with wallet type APPLE_PAY exists")
+    public void createChargeWithWalletTypeApplePay(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURE_READY, Instant.now(), true, AuthorisationMode.WEB);
+        dbHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
     }
 
     @State("a charge with authorisation mode moto_api and one_time_token exists")
