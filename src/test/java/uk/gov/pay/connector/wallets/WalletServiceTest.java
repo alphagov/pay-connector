@@ -2,12 +2,16 @@ package uk.gov.pay.connector.wallets;
 
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.github.michaelbull.result.Err;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -64,9 +68,10 @@ public class WalletServiceTest {
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION SUCCESS")));
     }
-
-    @Test
-    void shouldReturnInternalServerError_ifGatewayErrorsForApplePay() throws IOException {
+    
+    @ParameterizedTest
+    @EnumSource(ErrorType.class)
+    void shouldReturnInternalServerError_ifGatewayErrorsForApplePay(ErrorType errorType) throws IOException {
         String externalChargeId = "external-charge-id";
         ApplePayAuthRequest applePayAuthRequest = ApplePayAuthRequestBuilder.anApplePayToken().build();
         GatewayError gatewayError = mock(GatewayError.class);
@@ -74,7 +79,7 @@ public class WalletServiceTest {
                 .withGatewayError(gatewayError)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
-        when(gatewayError.getErrorType()).thenReturn(GATEWAY_ERROR);
+        when(gatewayError.getErrorType()).thenReturn(errorType);
         when(gatewayError.getMessage()).thenReturn("oops");
         when(mockWalletAuthoriseService.doAuthorise(externalChargeId, applePayAuthRequest)).thenReturn(gatewayResponse);
 
