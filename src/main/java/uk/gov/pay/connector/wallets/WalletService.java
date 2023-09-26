@@ -53,7 +53,7 @@ public class WalletService {
                 return gatewayErrorResponse(error.getMessage());
             default:
                 LOGGER.info("Charge {}: error {}", chargeId, error.getMessage());
-                return badRequestResponse(error.getMessage());
+                return gatewayErrorResponse(error.getMessage());
         }
     }
 
