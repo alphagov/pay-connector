@@ -10,6 +10,8 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.worldpay.request.WorldpayAuthoriseOrderRequest;
+import uk.gov.pay.connector.gateway.worldpay.request.WorldpayAuthoriseRecurringOrderRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
@@ -55,11 +57,12 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         LOGGER.info("Authorising user not present request: {}", request.getGatewayTransactionId().orElse("gatewayTransactionId is not present"));
 
         try {
+            GatewayOrder gatewayOrder = WorldpayAuthoriseRecurringOrderRequest.from(request).buildGatewayOrder();
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
-                    WorldpayOrderBuilder.buildAuthoriseRecurringOrder(request),
+                    gatewayOrder,
                     getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
             return getWorldpayGatewayResponse(response);
         } catch (GatewayException.GatewayErrorException e) {

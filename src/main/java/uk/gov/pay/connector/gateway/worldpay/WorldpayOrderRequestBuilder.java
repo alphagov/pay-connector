@@ -198,9 +198,6 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             this.googlePayPaymentData = googlePayPaymentData;
         }
     }
-
-    public static final TemplateBuilder AUTHORISE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");
-    public static final TemplateBuilder AUTHORISE_RECURRING_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseRecurringOrderTemplate.xml");
     public static final TemplateBuilder AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseApplePayOrderTemplate.xml");
     public static final TemplateBuilder AUTHORISE_GOOGLE_PAY_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml");
     public static final TemplateBuilder AUTH_3DS_RESPONSE_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("/worldpay/Worldpay3dsResponseAuthOrderTemplate.xml");
@@ -211,10 +208,6 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public static final TemplateBuilder DELETE_TOKEN_ORDER_TEMPLATE_BUILDER = new TemplateBuilder("worldpay/WorldpayDeleteTokenOrderTemplate.xml");
     private final WorldpayTemplateData worldpayTemplateData;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
-
-    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseRecurringOrderRequestBuilder() {
-        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_RECURRING_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
-    }
 
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseApplePayOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_APPLE_PAY_ORDER_TEMPLATE_BUILDER, AUTHORISE_APPLE_PAY);

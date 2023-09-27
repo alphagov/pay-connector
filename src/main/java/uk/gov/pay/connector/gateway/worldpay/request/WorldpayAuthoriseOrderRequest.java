@@ -1,19 +1,19 @@
-package uk.gov.pay.connector.gateway.worldpay;
+package uk.gov.pay.connector.gateway.worldpay.request;
 
-import org.checkerframework.checker.units.qual.N;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseOrderSessionId;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import java.util.Optional;
 
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseOrderRequest.WorldpayAuthoriseOrderRequestBuilder.aWorldpayAuthoriseOrderRequest;
+import static uk.gov.pay.connector.gateway.worldpay.request.WorldpayAuthoriseOrderRequest.WorldpayAuthoriseOrderRequestBuilder.aWorldpayAuthoriseOrderRequest;
 
 public class WorldpayAuthoriseOrderRequest extends WorldpayOrderRequest {
     private static final TemplateBuilder templateBuilder = new TemplateBuilder("/worldpay/WorldpayAuthoriseOrderTemplate.xml");

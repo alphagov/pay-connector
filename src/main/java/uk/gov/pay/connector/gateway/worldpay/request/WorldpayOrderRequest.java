@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.worldpay;
+package uk.gov.pay.connector.gateway.worldpay.request;
 
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
@@ -26,8 +26,6 @@ public abstract class WorldpayOrderRequest {
     public abstract OrderRequestType getOrderRequestType();
     
     protected abstract TemplateBuilder getTemplateBuilder();
-    
-//    protected abstract String buildOrderRequest();
     
     public GatewayOrder buildGatewayOrder() {
         String payload = getTemplateBuilder().buildWith(this);
