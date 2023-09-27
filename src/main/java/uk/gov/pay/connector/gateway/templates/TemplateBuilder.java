@@ -13,14 +13,14 @@ import java.util.Locale;
 
 import static freemarker.template.Configuration.VERSION_2_3_20;
 
-public class TemplateBuilder implements PayloadBuilder {
+public class TemplateBuilder {
     private Template template;
 
     public TemplateBuilder(String templatePath) {
         templateSetup("/templates", templatePath);
     }
 
-    public String buildWith(TemplateData templateData) {
+    public String buildWith(Object templateData) {
         Writer responseWriter = new StringWriter();
         try {
             template.process(templateData, responseWriter);

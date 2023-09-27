@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
@@ -82,11 +83,13 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         logMissingDdcResultFor3dsFlexIntegration(request);
 
         try {
+            GatewayOrder gatewayOrder = WorldpayAuthoriseOrderRequest.createAuthoriseOrderRequest(request, acceptLanguageHeaderParser, withExemptionEngine)
+                    .buildGatewayOrder();
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
-                    WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine, acceptLanguageHeaderParser),
+                    gatewayOrder,
                     getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
 
             if (response.getEntity().contains("request3DSecure")) {

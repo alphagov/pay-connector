@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseGooglePayOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseRecurringOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
@@ -29,22 +28,15 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
@@ -79,28 +71,6 @@ class WorldpayOrderRequestBuilderTest {
     );
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
-
-        Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
-
-        AuthCardDetails authCardDetails = getValidTestCard(minAddress);
-
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .withDescription("This is the description")
-                .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
     void shouldGenerateValidAuthoriseRecurringOrderRequestWithSchemeIdentifier() throws Exception {
         GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withPaymentTokenId("test-payment-token-123456")
@@ -128,137 +98,6 @@ class WorldpayOrderRequestBuilderTest {
                 .build();
 
         assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
-
-        Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
-
-        AuthCardDetails authCardDetails = getValidTestCard(minAddress);
-
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .with3dsRequired(true)
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .withDescription("This is the description")
-                .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithState() throws Exception {
-
-        Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
-
-        AuthCardDetails authCardDetails = getValidTestCard(usAddress);
-
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .withDescription("This is the description")
-                .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithStateWhen3dsEnabled() throws Exception {
-
-        Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
-
-        AuthCardDetails authCardDetails = getValidTestCard(usAddress);
-
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .with3dsRequired(true)
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .withDescription("This is the description")
-                .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
-
-        Address fullAddress = new Address("123 My Street", "This road", "SW8URR", "London", "London county", "GB");
-
-        AuthCardDetails authCardDetails = getValidTestCard(fullAddress);
-
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .withDescription("This is the description")
-                .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    void shouldGenerateValidAuthoriseOrderRequestWhenSpecialCharactersInUserInput() throws Exception {
-
-        Address address = new Address("123 & My Street", "This road -->", "SW8 > URR", "London !>", null, "GB");
-
-        AuthCardDetails authCardDetails = getValidTestCard(address);
-
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .withDescription("This is the description with <!-- ")
-                .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    @Test
-    void shouldGenerateValidAuthoriseOrderRequestWhenAddressIsMissing() throws Exception {
-        AuthCardDetails authCardDetails = getValidTestCard(null);
-
-        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .withDescription("This is the description")
-                .withAmount("500")
-                .withAuthorisationDetails(authCardDetails)
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 

@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
 import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
@@ -213,10 +212,6 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     private final WorldpayTemplateData worldpayTemplateData;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
 
-    public static WorldpayOrderRequestBuilder aWorldpayAuthoriseOrderRequestBuilder() {
-        return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
-    }
-
     public static WorldpayOrderRequestBuilder aWorldpayAuthoriseRecurringOrderRequestBuilder() {
         return new WorldpayOrderRequestBuilder(new WorldpayTemplateData(), AUTHORISE_RECURRING_ORDER_TEMPLATE_BUILDER, OrderRequestType.AUTHORISE);
     }
@@ -254,7 +249,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     }
 
 
-    private WorldpayOrderRequestBuilder(WorldpayTemplateData worldpayTemplateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {
+    private WorldpayOrderRequestBuilder(WorldpayTemplateData worldpayTemplateData, TemplateBuilder payloadBuilder, OrderRequestType orderRequestType) {
         super(worldpayTemplateData, payloadBuilder, orderRequestType);
         this.northAmericanRegionMapper = new NorthAmericanRegionMapper();
         this.worldpayTemplateData = worldpayTemplateData;

@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway;
 
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
-import uk.gov.pay.connector.gateway.templates.PayloadBuilder;
+import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 
 import javax.ws.rs.core.MediaType;
 
@@ -87,10 +87,10 @@ public abstract class OrderRequestBuilder {
 
     private final TemplateData templateData;
 
-    private PayloadBuilder payloadBuilder;
+    private TemplateBuilder payloadBuilder;
     private OrderRequestType orderRequestType;
 
-    public OrderRequestBuilder(TemplateData templateData, PayloadBuilder payloadBuilder, OrderRequestType orderRequestType) {
+    public OrderRequestBuilder(TemplateData templateData, TemplateBuilder payloadBuilder, OrderRequestType orderRequestType) {
         this.templateData = templateData;
         this.payloadBuilder = payloadBuilder;
         this.orderRequestType = orderRequestType;
