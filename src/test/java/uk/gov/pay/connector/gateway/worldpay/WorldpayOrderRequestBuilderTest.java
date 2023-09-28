@@ -18,7 +18,6 @@ import java.time.LocalDate;
 
 import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseGooglePayOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
@@ -66,19 +65,6 @@ class WorldpayOrderRequestBuilderTest {
             "ECv1",
             "MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl"
     );
-
-    @Test
-    void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
-        GatewayOrder actualRequest = aWorldpay3dsResponseAuthOrderRequestBuilder()
-                .withPaResponse3ds("I am an opaque 3D Secure PA response from the card issuer")
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withTransactionId("MyUniqueTransactionId!")
-                .withMerchantCode("MERCHANTCODE")
-                .build();
-
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST), actualRequest.getPayload());
-        assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
-    }
 
     @Test
     void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
