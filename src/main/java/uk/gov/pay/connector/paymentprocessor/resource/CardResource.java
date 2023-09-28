@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
-import com.google.common.collect.ImmutableMap;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -187,26 +186,20 @@ public class CardResource {
         AuthorisationResponse response = cardAuthoriseService.doAuthoriseWeb(chargeId, authCardDetails);
 
         return response.getGatewayError().map(this::handleError)
-                .orElseGet(() -> response.getAuthoriseStatus().map(status -> handleAuthResponse(chargeId, status))
+                .orElseGet(() -> response.getAuthoriseStatus().map(this::handleAuthResponse)
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
     }
 
-    private Response handleAuthResponse(String chargeId, AuthoriseStatus authoriseStatus) {
-        // TODO The following if statement can be deleted as it covers a uniquely epdq case. See PP-1494:
-        // "A charge at AUTHORISATION SUBMITTED should appear externally to be an error. i.e. payment can not be continued. 
-        // This is because ePDQ can defer authorisation for instance during a planned system outage. However we require 
-        // authorisation to be immediate so we should not support this. ePDQ have assured us it happens extremely rarely 
-        // so it is acceptable to treat this as an error."
-        if (authoriseStatus.equals(AuthoriseStatus.SUBMITTED)) {
-            logger.info("Charge {}: authorisation was deferred.", chargeId);
-            return badRequestResponse("This transaction was deferred.");
+    private Response handleAuthResponse(AuthoriseStatus authoriseStatus) {
+        switch (authoriseStatus) {
+            case REJECTED:
+                return badRequestResponse("This transaction was declined.");
+            case ERROR:
+            case EXCEPTION:
+                return gatewayErrorResponse("There was an error authorising the transaction.");
+            default:
+                return ResponseUtil.successResponseWithEntity(Map.of("status", authoriseStatus.getMappedChargeStatus().toString()));
         }
-
-        if (isAuthorisationDeclined(authoriseStatus)) {
-            return badRequestResponse("This transaction was declined.");
-        }
-
-        return ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", authoriseStatus.getMappedChargeStatus().toString()));
     }
 
     @POST
@@ -390,10 +383,5 @@ public class CardResource {
         } else {
             return ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response");
         }
-    }
-
-    private static boolean isAuthorisationDeclined(AuthoriseStatus authoriseStatus) {
-        return authoriseStatus.equals(AuthoriseStatus.REJECTED) ||
-                authoriseStatus.equals(AuthoriseStatus.ERROR);
     }
 }

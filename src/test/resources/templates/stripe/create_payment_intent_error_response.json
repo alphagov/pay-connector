@@ -1,0 +1,7 @@
+{
+  "error": {
+    "message": "Error while communicating with one of our backends.  Sorry about that!  We have been notified of the problem.  If you have any questions, we can help at https://support.stripe.com/.",
+    "request_log_url": "https://dashboard.stripe.com/logs/req_abc123",
+    "type": "api_error"
+  }
+}
