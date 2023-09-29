@@ -18,7 +18,7 @@ import java.util.Optional;
 import static uk.gov.pay.connector.gateway.model.PayersCardType.CREDIT_OR_DEBIT;
 
 @ValidAuthCardDetails
-public class AuthCardDetails implements AuthorisationDetails {
+public class AuthCardDetails {
 
     @Schema(example = "4242424242424242", description = "Card number. See https://docs.payments.service.gov.uk/testing_govuk_pay/#mock-card-numbers-and-email-addresses for test card numbers")
     private String cardNo;

@@ -28,7 +28,7 @@ public class WalletService {
     public Response authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
         LOGGER.info("Authorising {} charge with id {} ", walletAuthorisationRequest.getWalletType().toString(), chargeId);
         GatewayResponse<BaseAuthoriseResponse> response =
-                authoriseService.doAuthorise(chargeId, walletAuthorisationRequest);
+                authoriseService.authorise(chargeId, walletAuthorisationRequest);
 
         return response.getGatewayError()
                 .map(error -> handleError(chargeId, error))

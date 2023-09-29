@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
-public class Auth3dsResult implements AuthorisationDetails {
+public class Auth3dsResult {
 
     public enum Auth3dsResultOutcome {
         AUTHORISED, DECLINED, ERROR, CANCELED

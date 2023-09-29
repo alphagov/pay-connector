@@ -5,16 +5,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.pay.connector.wallets.model.WalletAuthorisationData;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDate;
-import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class WorldpayGooglePayAuthRequest implements WalletAuthorisationRequest, WalletAuthorisationData {
+public class WorldpayGooglePayAuthRequest implements GooglePayAuthRequest {
 
     @Schema(hidden = true)
     @NotNull
@@ -23,10 +20,10 @@ public class WorldpayGooglePayAuthRequest implements WalletAuthorisationRequest,
     @Schema(hidden = true)
     @NotNull
     @Valid
-    private final EncryptedPaymentData encryptedPaymentData;
+    private final GooglePayEncryptedPaymentData encryptedPaymentData;
 
-    WorldpayGooglePayAuthRequest(@JsonProperty("payment_info") WalletPaymentInfo paymentInfo,
-                                 @JsonProperty("encrypted_payment_data") EncryptedPaymentData encryptedPaymentData) {
+    public WorldpayGooglePayAuthRequest(@JsonProperty("payment_info") WalletPaymentInfo paymentInfo,
+                                 @JsonProperty("encrypted_payment_data") GooglePayEncryptedPaymentData encryptedPaymentData) {
         this.paymentInfo = paymentInfo;
         this.encryptedPaymentData = encryptedPaymentData;
     }
@@ -35,20 +32,8 @@ public class WorldpayGooglePayAuthRequest implements WalletAuthorisationRequest,
         return paymentInfo;
     }
 
-    @Override
-    @Schema(hidden = true)
-    public Optional<LocalDate> getCardExpiryDate() {
-        return Optional.empty();
-    }
-
-    public EncryptedPaymentData getEncryptedPaymentData() {
+    public GooglePayEncryptedPaymentData getEncryptedPaymentData() {
         return encryptedPaymentData;
-    }
-
-    @Override
-    @Schema(hidden = true)
-    public String getLastDigitsCardNumber() {
-        return getPaymentInfo().getLastDigitsCardNumber();
     }
 
     @Override

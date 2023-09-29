@@ -11,7 +11,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class StripeGooglePayAuthRequest implements WalletAuthorisationRequest {
+public class StripeGooglePayAuthRequest implements GooglePayAuthRequest {
 
 
     @Schema(hidden = true)

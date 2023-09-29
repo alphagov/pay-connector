@@ -1755,7 +1755,7 @@ paths:
       - Charges - Frontend
   /v1/frontend/charges/{chargeId}/wallets/apple:
     post:
-      operationId: authoriseCharge_1
+      operationId: authoriseApplePay
       parameters:
       - description: Charge external ID
         example: b02b63b370fd35418ad66b0101
@@ -1799,7 +1799,7 @@ paths:
             attributes
         "500":
           description: Internal server error
-      summary: Authorise ApplePay payment
+      summary: Authorise Apple Pay payment
       tags:
       - Charge operations
   /v1/frontend/charges/{chargeId}/wallets/google/stripe:
@@ -1897,7 +1897,7 @@ paths:
             attributes
         "500":
           description: Internal server error
-      summary: Authorise GooglePay payment via Worldpay
+      summary: Authorise Google Pay payment via Worldpay
       tags:
       - Charge operations
   /v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc:
@@ -2863,22 +2863,6 @@ components:
         version:
           type: integer
           format: int64
-    EncryptedPaymentData:
-      type: object
-      properties:
-        protocol_version:
-          type: string
-          example: ECv1
-          writeOnly: true
-        signature:
-          type: string
-          example: MEQCIB54h8T/hWY3864Ufkwo4SF5IjhoMV9hjpJRIsqbAn4LAiBZz1VBZ+aiaduX8MN3dBtzyDOZVstwG/8bqJZDbrhKfQ=
-        signed_message:
-          type: string
-          example: aSignedMessage
-          writeOnly: true
-      required:
-      - signature
     EpdqCredentials:
       type: object
       properties:
@@ -3890,6 +3874,22 @@ components:
         rawGatewayResponse:
           type: string
           example: Worldpay response ()
+    GooglePayEncryptedPaymentData:
+      type: object
+      properties:
+        protocol_version:
+          type: string
+          example: ECv1
+          writeOnly: true
+        signature:
+          type: string
+          example: MEQCIB54h8T/hWY3864Ufkwo4SF5IjhoMV9hjpJRIsqbAn4LAiBZz1VBZ+aiaduX8MN3dBtzyDOZVstwG/8bqJZDbrhKfQ=
+        signed_message:
+          type: string
+          example: aSignedMessage
+          writeOnly: true
+      required:
+      - signature
     JsonNode:
       type: object
     LastDigitsCardNumber:
@@ -4383,7 +4383,7 @@ components:
       type: object
       properties:
         encrypted_payment_data:
-          $ref: '#/components/schemas/EncryptedPaymentData'
+          $ref: '#/components/schemas/GooglePayEncryptedPaymentData'
         payment_info:
           $ref: '#/components/schemas/WalletPaymentInfo'
     WorldpayMerchantCodeCredentials:

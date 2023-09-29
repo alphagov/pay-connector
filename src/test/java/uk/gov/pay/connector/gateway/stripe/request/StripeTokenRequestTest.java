@@ -10,7 +10,7 @@ import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
@@ -74,7 +74,7 @@ class StripeTokenRequestTest {
     @Test
     void shouldCreateCorrectUrl() {
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
-        WalletAuthorisationGatewayRequest gatewayRequest = buildWalletGatewayAuthorisationRequest();
+        ApplePayAuthorisationGatewayRequest gatewayRequest = buildWalletGatewayAuthorisationRequest();
         StripeTokenRequest stripeTokenRequest = StripeTokenRequest.of(gatewayRequest, stripeGatewayConfig);
 
         assertThat(stripeTokenRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/tokens")));
@@ -83,7 +83,7 @@ class StripeTokenRequestTest {
     @Test
     void shouldNotIncludeIdempotencyHeader() {
         when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
-        WalletAuthorisationGatewayRequest gatewayRequest = buildWalletGatewayAuthorisationRequest();
+        ApplePayAuthorisationGatewayRequest gatewayRequest = buildWalletGatewayAuthorisationRequest();
         StripeTokenRequest stripeTokenRequest = StripeTokenRequest.of(gatewayRequest, stripeGatewayConfig);
 
         assertThat(stripeTokenRequest.getHeaders(), not(hasKey("Idempotency-Key")));
@@ -91,7 +91,7 @@ class StripeTokenRequestTest {
 
     @Test
     void payloadShouldIncludeExpectedFields() {
-        WalletAuthorisationGatewayRequest gatewayRequest = buildWalletGatewayAuthorisationRequest();
+        ApplePayAuthorisationGatewayRequest gatewayRequest = buildWalletGatewayAuthorisationRequest();
         StripeTokenRequest stripeTokenRequest = StripeTokenRequest.of(gatewayRequest, stripeGatewayConfig);
         
         String payload = stripeTokenRequest.getGatewayOrder().getPayload();
@@ -102,7 +102,7 @@ class StripeTokenRequestTest {
     }
 
     @NotNull
-    private WalletAuthorisationGatewayRequest buildWalletGatewayAuthorisationRequest() {
+    private ApplePayAuthorisationGatewayRequest buildWalletGatewayAuthorisationRequest() {
         WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
                 .withNetwork(network)
                 .withDisplayName(displayName)
@@ -112,6 +112,6 @@ class StripeTokenRequestTest {
                 .withApplePaymentData(paymentData)
                 .withApplePaymentInfo(walletPaymentInfo)
                 .build();
-        return new WalletAuthorisationGatewayRequest(charge, applePayAuthRequest);
+        return new ApplePayAuthorisationGatewayRequest(charge, applePayAuthRequest);
     }
 }

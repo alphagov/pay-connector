@@ -8,14 +8,14 @@
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <EMVCO_TOKEN-SSL type="APPLEPAY">
-                    <tokenNumber>${walletAuthorisationData.applicationPrimaryAccountNumber?xml}</tokenNumber>
-                    <expiryDate><date month="${walletAuthorisationData.getExpiryDateMonth()}" year="${walletAuthorisationData.getExpiryDateYear()}"/></expiryDate>
-                    <#if walletAuthorisationData.paymentInfo.cardholderName??>
-                    <cardHolderName>${walletAuthorisationData.paymentInfo.cardholderName?xml}</cardHolderName>
+                    <tokenNumber>${appleDecryptedPaymentData.applicationPrimaryAccountNumber?xml}</tokenNumber>
+                    <expiryDate><date month="${appleDecryptedPaymentData.getExpiryDateMonth()}" year="${appleDecryptedPaymentData.getExpiryDateYear()}"/></expiryDate>
+                    <#if appleDecryptedPaymentData.paymentInfo.cardholderName??>
+                    <cardHolderName>${appleDecryptedPaymentData.paymentInfo.cardholderName?xml}</cardHolderName>
                     </#if>
-                    <cryptogram>${walletAuthorisationData.paymentData.onlinePaymentCryptogram?xml}</cryptogram>
-                    <#if walletAuthorisationData.paymentData.eciIndicator??>
-                    <eciIndicator>0${walletAuthorisationData.paymentData.eciIndicator?xml}</eciIndicator>
+                    <cryptogram>${appleDecryptedPaymentData.paymentData.onlinePaymentCryptogram?xml}</cryptogram>
+                    <#if appleDecryptedPaymentData.paymentData.eciIndicator??>
+                    <eciIndicator>0${appleDecryptedPaymentData.paymentData.eciIndicator?xml}</eciIndicator>
                     </#if>
                 </EMVCO_TOKEN-SSL>
             </paymentDetails>

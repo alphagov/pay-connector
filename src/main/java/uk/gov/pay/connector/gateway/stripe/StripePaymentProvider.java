@@ -51,7 +51,8 @@ import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.pay.connector.wallets.WalletAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -163,15 +164,13 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletAuthorisationGatewayRequest request) throws GatewayException {
-        switch(request.getWalletAuthorisationRequest().getWalletType()) {
-            case APPLE_PAY:
-                return stripeAuthoriseHandler.authoriseApplePay(request);
-            case GOOGLE_PAY:
-                return stripeAuthoriseHandler.authoriseGooglePay(request);
-            default: 
-                throw new UnsupportedOperationException(format("Wallet Type %s is not supported for Stripe", request.getWalletAuthorisationRequest().getWalletType()));
-        }
+    public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
+        return stripeAuthoriseHandler.authoriseApplePay(authorisationGatewayRequest);
+    }
+
+    @Override
+    public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
+        return stripeAuthoriseHandler.authoriseGooglePay(authorisationGatewayRequest);
     }
 
     @Override
