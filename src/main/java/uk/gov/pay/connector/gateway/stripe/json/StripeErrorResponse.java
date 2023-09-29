@@ -65,7 +65,8 @@ public class StripeErrorResponse {
         }
         
         public Optional<CardExpiryDate> getCardExpiryDate() {
-            return stripePaymentIntent.getCardExpiryDate();
+            return Optional.ofNullable(stripePaymentIntent)
+                    .flatMap(StripePaymentIntent::getCardExpiryDate);
         }
 
         @Override

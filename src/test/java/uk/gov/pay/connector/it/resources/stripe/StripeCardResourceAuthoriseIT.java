@@ -402,6 +402,60 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
+    public void shouldReturnStatusAsRequires3dsForGooglePay() {
+        stripeMockClient.mockCreatePaymentIntentRequiring3DS();
+
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(googlePayAuthorisationRequest)
+                .post(authoriseChargeUrlForGooglePayStripe(chargeId))
+                .then()
+                .statusCode(200);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is("08/24"));
+    }
+    
+    @Test
+    public void shouldReturnStatusAsAuthorisationErrorForGooglePay() {
+        stripeMockClient.mockCreatePaymentIntentAuthorisationError();
+
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(googlePayAuthorisationRequest)
+                .post(authoriseChargeUrlForGooglePayStripe(chargeId))
+                .then()
+                .statusCode(402);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_ERROR.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is(nullValue()));
+    }
+    
+    @Test
     public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
 
         addGatewayAccount();
