@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.wallets;
 
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -10,6 +9,7 @@ import uk.gov.pay.connector.util.ResponseUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
+import java.util.Map;
 
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.gatewayErrorResponse;
@@ -30,20 +30,23 @@ public class WalletService {
         GatewayResponse<BaseAuthoriseResponse> response =
                 authoriseService.doAuthorise(chargeId, walletAuthorisationRequest);
 
-        if (isAuthorisationSubmitted(response)) {
-            LOGGER.info("Charge {}: {} authorisation was deferred.", chargeId, walletAuthorisationRequest.getWalletType().toString());
-            return badRequestResponse("This transaction was deferred.");
-        }
-        return isAuthorisationDeclined(response) ? badRequestResponse("This transaction was declined.") : handleGatewayAuthoriseResponse(chargeId, response);
-    }
-    
-    //PP-4314 These methods duplicated from the CardResource. This kind of handling shouldn't be there in the first place, so will refactor to be embedded in services rather than at resource level
-    protected Response handleGatewayAuthoriseResponse(String chargeId, GatewayResponse<? extends BaseAuthoriseResponse> response) {
         return response.getGatewayError()
                 .map(error -> handleError(chargeId, error))
-                .orElseGet(() -> response.getBaseResponse()
-                        .map(r -> ResponseUtil.successResponseWithEntity(ImmutableMap.of("status", r.authoriseStatus().getMappedChargeStatus().toString())))
+                .orElseGet(() -> response.getBaseResponse().map(this::handleAuthorisationResponse)
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
+
+    }
+
+    private Response handleAuthorisationResponse(BaseAuthoriseResponse baseAuthoriseResponse) {
+        switch (baseAuthoriseResponse.authoriseStatus()) {
+            case REJECTED:
+                return badRequestResponse("This transaction was declined.");
+            case ERROR:
+            case EXCEPTION:
+                return gatewayErrorResponse("There was an error authorising the transaction.");
+            default:
+                return ResponseUtil.successResponseWithEntity(Map.of("status", baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus().toString()));
+        }
     }
 
     protected Response handleError(String chargeId, GatewayError error) {
@@ -55,18 +58,5 @@ public class WalletService {
                 LOGGER.info("Charge {}: error {}", chargeId, error.getMessage());
                 return gatewayErrorResponse(error.getMessage());
         }
-    }
-
-    protected static boolean isAuthorisationSubmitted(GatewayResponse<BaseAuthoriseResponse> response) {
-        return response.getBaseResponse()
-                .filter(baseResponse -> baseResponse.authoriseStatus() == BaseAuthoriseResponse.AuthoriseStatus.SUBMITTED)
-                .isPresent();
-    }
-
-    protected static boolean isAuthorisationDeclined(GatewayResponse<BaseAuthoriseResponse> response) {
-        return response.getBaseResponse()
-                .filter(baseResponse -> baseResponse.authoriseStatus() == BaseAuthoriseResponse.AuthoriseStatus.REJECTED ||
-                        baseResponse.authoriseStatus() == BaseAuthoriseResponse.AuthoriseStatus.ERROR)
-                .isPresent();
     }
 }

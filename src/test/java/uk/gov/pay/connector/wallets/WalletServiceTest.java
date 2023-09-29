@@ -128,7 +128,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    void shouldReturnInternalServerError_ifGatewayErrorsForGooglePay() throws JsonProcessingException {
+    void shouldReturn402_ifGatewayErrorsForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
         WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
@@ -146,5 +146,26 @@ public class WalletServiceTest {
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));
+    }
+
+    @Test
+    void shouldReturn402_ifResponseHasAuthorisationStatusError() throws JsonProcessingException {
+        String externalChargeId = "external-charge-id";
+        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+        GatewayError gatewayError = mock(GatewayError.class);
+
+        
+        GatewayResponse gatewayResponse = responseBuilder()
+                .withResponse(worldpayResponse)
+                .build();
+        when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
+        when(mockWalletAuthoriseService.doAuthorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+
+        Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
+
+        verify(mockWalletAuthoriseService).doAuthorise(externalChargeId, worldpayGooglePayAuthRequest);
+        assertThat(authorisationResponse.getStatus(), is(402));
+        ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
+        assertThat(response.getMessages(), contains("There was an error authorising the transaction."));
     }
 }

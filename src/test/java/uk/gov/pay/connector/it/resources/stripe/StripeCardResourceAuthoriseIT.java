@@ -48,6 +48,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -148,6 +149,27 @@ public class StripeCardResourceAuthoriseIT {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
         assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_REJECTED.toString());
+    }
+
+    @Test
+    public void shouldReturn402_whenStripeReturnsANonDeclineErrorCode() {
+        stripeMockClient.mockCreatePaymentMethod();
+        stripeMockClient.mockCreatePaymentIntentAuthorisationError();
+
+        addGatewayAccountWith3DS2Enabled();
+
+        String externalChargeId = addCharge();
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetails)
+                .post(authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(402)
+                .body("message", contains("There was an error authorising the transaction."))
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+
+        assertFrontendChargeStatusIs(externalChargeId, AUTHORISATION_ERROR.toString());
     }
 
     @Test
