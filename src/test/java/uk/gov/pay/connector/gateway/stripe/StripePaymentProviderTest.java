@@ -662,6 +662,25 @@ class StripePaymentProviderTest {
     }
 
     @Test
+    void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction_forGooglePay() throws Exception {
+        when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
+        when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
+
+        GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
+        gatewayAccount.setIntegrationVersion3ds(2);
+        ChargeEntity charge = buildTestCharge(gatewayAccount);
+        GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseWallet(buildGooglePayAuthorisationRequest(charge));
+
+        assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
+        assertTrue(response.isSuccessful());
+        assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_123"));
+
+        Optional<Stripe3dsRequiredParams> stripeParamsFor3ds = (Optional<Stripe3dsRequiredParams>) response.getBaseResponse().get().getGatewayParamsFor3ds();
+        assertThat(stripeParamsFor3ds.isPresent(), is(true));
+        assertThat(stripeParamsFor3ds.get().toAuth3dsRequiredEntity().getIssuerUrl(), containsString("https://hooks.stripe.com"));
+    }
+
+    @Test
     void shouldMarkChargeAsAuthorisationRejected_whenStripeRespondsWithErrorTypeCardError_forGooglePay() throws Exception {
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
                 .thenThrow(new GatewayErrorException("server error", errorResponse("card_error"), 400));
