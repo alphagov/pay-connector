@@ -10,6 +10,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayEncryptedPaymentData;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayPaymentInfo;
 import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
@@ -28,7 +29,8 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
-import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
+import static uk.gov.pay.connector.model.domain.googlepay.GooglePayPaymentInfoFixture.aGooglePayPaymentInfo;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
@@ -55,7 +57,7 @@ class WorldpayOrderRequestBuilderTest {
     protected static final String GOOGLE_PAY_ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,/;q=0.8";
     protected static final String GOOGLE_PAY_USER_AGENT_HEADER = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
 
-    private static final WalletPaymentInfo googlePayWalletPaymentInfoFor3ds = aWalletPaymentInfo()
+    private static final GooglePayPaymentInfo googlePayWalletPaymentInfoFor3ds = aGooglePayPaymentInfo()
             .withLastDigitsCardNumber("4242")
             .withBrand("visa")
             .withCardType(PayersCardType.DEBIT)
@@ -69,7 +71,7 @@ class WorldpayOrderRequestBuilderTest {
     private static final AppleDecryptedPaymentData validApplePayData =
             anApplePayDecryptedPaymentData()
                     .withApplePaymentInfo(
-                            aWalletPaymentInfo()
+                            anApplePayPaymentInfo()
                                     .withLastDigitsCardNumber("4242").build())
                     .build();
     public static final GooglePayEncryptedPaymentData GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA = new GooglePayEncryptedPaymentData(
@@ -298,7 +300,7 @@ class WorldpayOrderRequestBuilderTest {
                 anApplePayDecryptedPaymentData()
                         .withEciIndicator(null)
                         .withApplePaymentInfo(
-                                aWalletPaymentInfo()
+                                anApplePayPaymentInfo()
                                         .withCardholderName(null)
                                         .withLastDigitsCardNumber("4242").build())
                         .build();
@@ -319,8 +321,8 @@ class WorldpayOrderRequestBuilderTest {
 
     @Test
     void shouldGenerateValidAuthoriseGooglePayOrderRequest() throws Exception {
-        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo().build();
-        WorldpayGooglePayAuthRequest validGooglePayData = new WorldpayGooglePayAuthRequest(walletPaymentInfo, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
+        GooglePayPaymentInfo googlePayPaymentInfo = aGooglePayPaymentInfo().build();
+        WorldpayGooglePayAuthRequest validGooglePayData = new WorldpayGooglePayAuthRequest(googlePayPaymentInfo, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
                 .withGooglePayPaymentData(validGooglePayData)

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.wallets.applepay;
 
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class ApplePayAuthRequestBuilder {
 
     public ApplePayAuthRequest build() {
         return new ApplePayAuthRequest(
-                new WalletPaymentInfo(),
+                new ApplePayPaymentInfo(),
                 getPaymentData()
         );
     }

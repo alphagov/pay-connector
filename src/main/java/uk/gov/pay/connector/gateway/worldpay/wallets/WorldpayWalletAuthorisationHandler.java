@@ -18,6 +18,7 @@ import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayReque
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
@@ -61,11 +62,23 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
     }
 
     public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
+        GooglePayAuthRequest googlePayAuthRequest = authorisationGatewayRequest.getGooglePayAuthRequest();
         WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseGooglePayOrderRequestBuilder();
         worldpayOrderRequestBuilder.withGooglePayPaymentData((WorldpayGooglePayAuthRequest) authorisationGatewayRequest.getGooglePayAuthRequest());
+
+        boolean is3dsRequired = authorisationGatewayRequest.getGatewayAccount().isRequires3ds();
+        boolean isSendIpAddress = authorisationGatewayRequest.getGatewayAccount().isSendPayerIpAddressToGateway();
+        worldpayOrderRequestBuilder
+                .withUserAgentHeader(googlePayAuthRequest.getPaymentInfo().getUserAgentHeader())
+                .withAcceptHeader(googlePayAuthRequest.getPaymentInfo().getAcceptHeader())
+        .with3dsRequired(is3dsRequired);
+        
+        if (is3dsRequired && isSendIpAddress) {
+            worldpayOrderRequestBuilder.withPayerIpAddress(googlePayAuthRequest.getPaymentInfo().getIpAddress());
+        }
         
         GatewayOrder gatewayOrder = buildWalletAuthoriseOrder(authorisationGatewayRequest, 
-                authorisationGatewayRequest.getGooglePayAuthRequest().getPaymentInfo(), worldpayOrderRequestBuilder);
+                googlePayAuthRequest.getPaymentInfo(), worldpayOrderRequestBuilder);
 
         return postGatewayRequest(gatewayOrder, authorisationGatewayRequest);
     }
@@ -82,24 +95,14 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
     }
 
     private GatewayOrder buildWalletAuthoriseOrder(AuthorisationGatewayRequest request, WalletPaymentInfo walletPaymentInfo, WorldpayOrderRequestBuilder builder) {
-
-        boolean is3dsRequired = request.getGatewayAccount().isRequires3ds();
-        boolean isSendIpAddress = request.getGatewayAccount().isSendPayerIpAddressToGateway();
         boolean isSendPayerEmailToGateway = request.getGatewayAccount().isSendPayerEmailToGateway();
-        
-        if (is3dsRequired && isSendIpAddress) {
-            builder.withPayerIpAddress(walletPaymentInfo.getIpAddress());
-        }
 
         if (isSendPayerEmailToGateway) {
             Optional.ofNullable(walletPaymentInfo.getEmail()).ifPresent(builder::withPayerEmail);
         }
 
         return builder
-                .with3dsRequired(is3dsRequired)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
-                .withUserAgentHeader(walletPaymentInfo.getUserAgentHeader())
-                .withAcceptHeader(walletPaymentInfo.getAcceptHeader())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
                 .withDescription(request.getDescription())

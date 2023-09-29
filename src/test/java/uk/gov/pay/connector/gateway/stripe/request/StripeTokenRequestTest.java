@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.net.URI;
@@ -29,7 +30,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture.anApplePayAuthRequest;
-import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 
 @ExtendWith(MockitoExtension.class)
 class StripeTokenRequestTest {
@@ -103,14 +104,14 @@ class StripeTokenRequestTest {
 
     @NotNull
     private ApplePayAuthorisationGatewayRequest buildWalletGatewayAuthorisationRequest() {
-        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+        ApplePayPaymentInfo applePayPaymentInfo = anApplePayPaymentInfo()
                 .withNetwork(network)
                 .withDisplayName(displayName)
                 .withTransactionIdentifier(transactionIdentifier)
                 .build();
         ApplePayAuthRequest applePayAuthRequest = anApplePayAuthRequest()
                 .withApplePaymentData(paymentData)
-                .withApplePaymentInfo(walletPaymentInfo)
+                .withApplePaymentInfo(applePayPaymentInfo)
                 .build();
         return new ApplePayAuthorisationGatewayRequest(charge, applePayAuthRequest);
     }

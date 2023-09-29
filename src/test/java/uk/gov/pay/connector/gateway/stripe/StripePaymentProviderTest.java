@@ -52,6 +52,7 @@ import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
@@ -93,7 +94,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
-import static uk.gov.pay.connector.model.domain.applepay.WalletPaymentInfoFixture.aWalletPaymentInfo;
+import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
+import static uk.gov.pay.connector.model.domain.googlepay.GooglePayPaymentInfoFixture.aGooglePayPaymentInfo;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CUSTOMER_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
@@ -985,7 +987,7 @@ class StripePaymentProviderTest {
     }
 
     private ApplePayAuthorisationGatewayRequest buildApplePayAuthorisationRequest(ChargeEntity chargeEntity) {
-        WalletPaymentInfo walletPaymentInfo = aWalletPaymentInfo()
+        ApplePayPaymentInfo applePayPaymentInfo = anApplePayPaymentInfo()
                 .withLastDigitsCardNumber("4242")
                 .withBrand("visa")
                 .withCardType(PayersCardType.DEBIT)
@@ -993,14 +995,14 @@ class StripePaymentProviderTest {
                 .withEmail("foo@example.com")
                 .build();
         ApplePayAuthRequest applePayAuthRequest = new ApplePayAuthRequest(
-                walletPaymentInfo, "***ENCRYPTED_PAYMENT_DATA***");
+                applePayPaymentInfo, "***ENCRYPTED_PAYMENT_DATA***");
 
         return new ApplePayAuthorisationGatewayRequest(chargeEntity, applePayAuthRequest);
     }
 
     private GooglePayAuthorisationGatewayRequest buildGooglePayAuthorisationRequest(ChargeEntity chargeEntity) {
         StripeGooglePayAuthRequest googlePayAuthRequest = new StripeGooglePayAuthRequest(
-                aWalletPaymentInfo().build(),
+                aGooglePayPaymentInfo().build(),
                 TOKEN_ID
         );
 
