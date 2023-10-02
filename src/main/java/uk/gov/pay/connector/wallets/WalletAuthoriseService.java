@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.setup.Environment;
+import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
@@ -41,6 +42,12 @@ public class WalletAuthoriseService {
     private final WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter;
     private final AuthorisationLogger authorisationLogger;
     private MetricRegistry metricRegistry;
+
+    private static final Counter walletPaymentAuthorisationSuccessCounter = Counter.build()
+            .name("wallet_payments_authorisation_total")
+            .help("Count of wallet payments authorisation")
+            .labelNames("gatewayName", "gatewayAccountType", "walletType", "successOrFailure")
+            .register();
 
     @Inject
     public WalletAuthoriseService(PaymentProviders paymentProviders,
@@ -139,6 +146,13 @@ public class WalletAuthoriseService {
                 chargeEntity.getGatewayAccount().getType(),
                 walletType.equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
                 successOrFailure)).inc();
+        walletPaymentAuthorisationSuccessCounter
+                .labels(
+                    chargeEntity.getPaymentProvider(),
+                    chargeEntity.getGatewayAccount().getType(),
+                    walletType.equals(WalletType.GOOGLE_PAY) ? "google-pay" : "apple-pay",
+                    successOrFailure
+                ).inc();
     }
 
     @Transactional
