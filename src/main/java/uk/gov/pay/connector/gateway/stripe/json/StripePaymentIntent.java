@@ -102,7 +102,7 @@ public class StripePaymentIntent {
     
     public Optional<CardExpiryDate> getCardExpiryDate() {
         if (paymentMethod == null) {
-            LOGGER.error("Attempted to get card expiry date for payment intent with no payment method");
+            LOGGER.info("Unable to get card expiry date as payment intent has no payment method set");
             return Optional.empty();
         }
         return getPaymentMethod().getExpanded()
