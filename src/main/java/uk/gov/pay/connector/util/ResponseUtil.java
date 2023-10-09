@@ -20,6 +20,7 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.AUTHORISATION_REJECTED;
 
 public class ResponseUtil {
     
@@ -53,6 +54,10 @@ public class ResponseUtil {
 
     public static Response badRequestResponse(String message) {
         return buildErrorResponse(BAD_REQUEST, message);
+    }
+
+    public static Response authorisationRejectedResponse(String message) {
+        return buildErrorResponse(BAD_REQUEST, AUTHORISATION_REJECTED, message);
     }
 
     public static Response badRequestResponse(List<String> messages) {
@@ -98,6 +103,10 @@ public class ResponseUtil {
         return responseWithEntity(status, errorResponse);
     }
 
+    public static Response buildErrorResponse(Status status, ErrorIdentifier errorIdentifier, String message) {
+        ErrorResponse errorResponse = new ErrorResponse(errorIdentifier, message);
+        return responseWithEntity(status, errorResponse);
+    }
     public static Response buildErrorResponse(Status status, ErrorIdentifier errorIdentifier, List<String> messages) {
         ErrorResponse errorResponse = new ErrorResponse(errorIdentifier, messages);
         return responseWithEntity(status, errorResponse);

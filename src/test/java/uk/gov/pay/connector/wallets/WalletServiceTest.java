@@ -2,7 +2,6 @@ package uk.gov.pay.connector.wallets;
 
 import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.michaelbull.result.Err;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +19,7 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthRequestBuilder;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -167,5 +167,25 @@ public class WalletServiceTest {
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("There was an error authorising the transaction."));
+    }
+
+    @Test
+    void shouldReturn400_ifResponseHasAuthorisationStatusRejected() throws JsonProcessingException {
+        String externalChargeId = "external-charge-id";
+        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+
+        GatewayResponse gatewayResponse = responseBuilder()
+                .withResponse(worldpayResponse)
+                .build();
+        when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.REJECTED);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+
+        Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
+
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        assertThat(authorisationResponse.getStatus(), is(400));
+        ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
+        assertThat(response.getMessages(), contains("This transaction was declined."));
+        assertThat(response.getIdentifier(), is(ErrorIdentifier.AUTHORISATION_REJECTED));
     }
 }

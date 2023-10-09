@@ -11,9 +11,8 @@ import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.Map;
 
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
+import static uk.gov.pay.connector.util.ResponseUtil.authorisationRejectedResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.gatewayErrorResponse;
-
 public class WalletService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletService.class);
@@ -40,7 +39,7 @@ public class WalletService {
     private Response handleAuthorisationResponse(BaseAuthoriseResponse baseAuthoriseResponse) {
         switch (baseAuthoriseResponse.authoriseStatus()) {
             case REJECTED:
-                return badRequestResponse("This transaction was declined.");
+                return authorisationRejectedResponse("This transaction was declined.");
             case ERROR:
             case EXCEPTION:
                 return gatewayErrorResponse("There was an error authorising the transaction.");

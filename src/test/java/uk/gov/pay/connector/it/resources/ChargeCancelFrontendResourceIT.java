@@ -132,7 +132,6 @@ public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
 
     @Test
     public void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
-
         String chargeId = addCharge(AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(1, HOURS), "irrelvant");
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = databaseTestHelper.getInternalEvents(chargeId);
