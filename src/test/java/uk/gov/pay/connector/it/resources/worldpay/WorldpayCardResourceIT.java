@@ -24,8 +24,8 @@ import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.COOKIE;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -170,7 +170,7 @@ public class WorldpayCardResourceIT extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .body("message", contains("This transaction was declined."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.AUTHORISATION_REJECTED.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }

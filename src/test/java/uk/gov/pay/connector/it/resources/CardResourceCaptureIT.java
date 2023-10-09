@@ -136,5 +136,4 @@ public class CardResourceCaptureIT extends ChargingITestBase {
                 .body("message", contains(message))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-
 }

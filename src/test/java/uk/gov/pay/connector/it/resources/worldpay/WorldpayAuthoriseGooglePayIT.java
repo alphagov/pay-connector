@@ -26,6 +26,7 @@ import java.util.Map;
 import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static io.restassured.http.ContentType.JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -109,7 +110,7 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
                 .body("message", contains("This transaction was declined."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                .body("error_identifier", is(ErrorIdentifier.AUTHORISATION_REJECTED.toString()));
 
         assertFrontendChargeStatusIs(chargeId, AUTHORISATION_REJECTED.getValue());
     }
