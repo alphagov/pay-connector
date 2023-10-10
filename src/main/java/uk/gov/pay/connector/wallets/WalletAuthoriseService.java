@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -28,9 +29,11 @@ import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayReque
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.YearMonth;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 
 public class WalletAuthoriseService {
     
@@ -70,6 +73,7 @@ public class WalletAuthoriseService {
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
             ChargeStatus chargeStatus = null;
             String requestStatus = "failure";
+            PaymentGatewayName paymentProvider = charge.getPaymentGatewayName();
 
             try {
 
@@ -109,6 +113,11 @@ public class WalletAuthoriseService {
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
             CardExpiryDate cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate).orElse(null);
+
+            // if sandbox, generate fake expiry date
+            if (paymentProvider == SANDBOX && cardExpiryDate == null) {
+                cardExpiryDate = CardExpiryDate.valueOf(YearMonth.of(2050, 12));
+            }
             
             logMetrics(charge, operationResponse, requestStatus, walletAuthorisationRequest.getWalletType());
 

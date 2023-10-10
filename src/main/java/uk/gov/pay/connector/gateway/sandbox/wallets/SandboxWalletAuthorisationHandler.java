@@ -16,7 +16,7 @@ public class SandboxWalletAuthorisationHandler {
     }
     
     public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
-        return authoriseWallet(request.getApplePayAuthRequest().getPaymentInfo());
+        return sandboxGatewayResponseGenerator.getSandboxGatewayWalletResponse(request.getDescription());
     }
 
     public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest request) {

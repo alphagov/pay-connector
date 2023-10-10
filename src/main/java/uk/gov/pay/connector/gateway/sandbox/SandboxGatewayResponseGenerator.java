@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.sandbox.wallets.SandboxWalletMagicValues;
 
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +13,10 @@ import java.util.Optional;
 import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GENERIC_GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
+import static uk.gov.pay.connector.gateway.sandbox.wallets.SandboxWalletMagicValues.DECLINED;
+import static uk.gov.pay.connector.gateway.sandbox.wallets.SandboxWalletMagicValues.ERROR;
+import static uk.gov.pay.connector.gateway.sandbox.wallets.SandboxWalletMagicValues.REFUSED;
+import static uk.gov.pay.connector.gateway.sandbox.wallets.SandboxWalletMagicValues.magicValueFromString;
 
 public class SandboxGatewayResponseGenerator {
 
@@ -20,6 +25,25 @@ public class SandboxGatewayResponseGenerator {
     public SandboxGatewayResponseGenerator(SandboxCardNumbers sandboxCardNumbers) {
         this.sandboxCardNumbers = sandboxCardNumbers;
     }
+
+    public GatewayResponse getSandboxGatewayWalletResponse(String description) {
+        GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
+        Optional<SandboxWalletMagicValues> possibleMagicValue = Optional.ofNullable(magicValueFromString(description));
+        
+        if (possibleMagicValue.isPresent()) {
+            var magicValue = possibleMagicValue.get();
+            if (magicValue == ERROR) {
+                return gatewayResponseBuilder
+                        .withGatewayError(new GatewayError(magicValue.errorMessage, GENERIC_GATEWAY_ERROR))
+                        .build();
+            }
+            if (magicValue == DECLINED || magicValue == REFUSED) {
+                return getSandboxGatewayResponse(false);
+            }
+        }
+        return getSandboxGatewayResponse(true);
+    }
+
 
     public GatewayResponse getSandboxGatewayResponse(String lastDigitsCardNumber) {
         GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
