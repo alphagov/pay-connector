@@ -12,6 +12,9 @@ import uk.gov.pay.connector.gateway.sandbox.SandboxGatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.sandbox.SandboxLast4DigitsCardNumbers;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+
+import java.time.YearMonth;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -53,6 +56,8 @@ class SandboxWalletAuthorisationHandlerTest {
         assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
         assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
+        assertThat(authoriseResponse.getCardExpiryDate().isPresent(), is(true));
+        assertThat(authoriseResponse.getCardExpiryDate().get(), is(CardExpiryDate.valueOf(YearMonth.of(2050, 12))));
     }
 
     @ParameterizedTest
@@ -79,6 +84,8 @@ class SandboxWalletAuthorisationHandlerTest {
         assertThat(authoriseResponse.getTransactionId(), is(notNullValue()));
         assertThat(authoriseResponse.getErrorCode(), is(nullValue()));
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
+        assertThat(authoriseResponse.getCardExpiryDate().isPresent(), is(true));
+        assertThat(authoriseResponse.getCardExpiryDate().get(), is(CardExpiryDate.valueOf(YearMonth.of(2050, 12))));
     }
 
     @Test

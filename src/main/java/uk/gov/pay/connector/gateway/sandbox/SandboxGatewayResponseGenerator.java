@@ -6,7 +6,9 @@ import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.sandbox.wallets.SandboxWalletMagicValues;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.YearMonth;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,10 +40,11 @@ public class SandboxGatewayResponseGenerator {
                         .build();
             }
             if (magicValue == DECLINED || magicValue == REFUSED) {
-                return getSandboxGatewayResponse(false);
+                return getSandboxGatewayResponse(false, true);
             }
         }
-        return getSandboxGatewayResponse(true);
+        
+        return getSandboxGatewayResponse(true, true);
     }
 
 
@@ -63,8 +66,12 @@ public class SandboxGatewayResponseGenerator {
                 .withGatewayError(new GatewayError("Unsupported card details.", GENERIC_GATEWAY_ERROR))
                 .build();
     }
-
+    
     public GatewayResponse getSandboxGatewayResponse(boolean isAuthorised) {
+        return getSandboxGatewayResponse(isAuthorised, false);
+    }
+
+    public GatewayResponse getSandboxGatewayResponse(boolean isAuthorised, boolean mockExpiry) {
         GatewayResponse.GatewayResponseBuilder<BaseAuthoriseResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder.withResponse(new BaseAuthoriseResponse() {
 
@@ -93,6 +100,11 @@ public class SandboxGatewayResponseGenerator {
             @Override
             public Optional<Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
                 return Optional.empty();
+            }
+            
+            @Override
+            public Optional<CardExpiryDate> getCardExpiryDate() { 
+                return Optional.ofNullable(mockExpiry ? CardExpiryDate.valueOf(YearMonth.of(2050, 12)) : null); 
             }
 
             @Override

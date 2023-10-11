@@ -29,16 +29,13 @@ import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayReque
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.time.YearMonth;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 
 public class WalletAuthoriseService {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletAuthoriseService.class);
-    
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders paymentProviders;
@@ -73,7 +70,6 @@ public class WalletAuthoriseService {
             GatewayResponse<BaseAuthoriseResponse> operationResponse;
             ChargeStatus chargeStatus = null;
             String requestStatus = "failure";
-            PaymentGatewayName paymentProvider = charge.getPaymentGatewayName();
 
             try {
 
@@ -114,11 +110,6 @@ public class WalletAuthoriseService {
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
             CardExpiryDate cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate).orElse(null);
 
-            // if sandbox, generate fake expiry date
-            if (paymentProvider == SANDBOX && cardExpiryDate == null) {
-                cardExpiryDate = CardExpiryDate.valueOf(YearMonth.of(2050, 12));
-            }
-            
             logMetrics(charge, operationResponse, requestStatus, walletAuthorisationRequest.getWalletType());
 
             processGatewayAuthorisationResponse(
