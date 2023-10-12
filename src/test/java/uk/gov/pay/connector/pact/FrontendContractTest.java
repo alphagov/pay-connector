@@ -86,6 +86,50 @@ public class FrontendContractTest {
                 .build());
     }
 
+    @State("a sandbox account exists with a charge with id testChargeId and description DECLINED that is in state ENTERING_CARD_DETAILS.")
+    public void aChargeExistsAwaitingAuthorisationWithDescriptionDeclined() {
+        long gatewayAccountId = 666L;
+        setUpGatewayAccount(dbHelper, gatewayAccountId);
+
+        String chargeExternalId = "testChargeId";
+
+        dbHelper.addCharge(anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .withAmount(100)
+                .withStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withReturnUrl("aReturnUrl")
+                .withTransactionId(chargeExternalId)
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withDescription("DECLINED")
+                .withCreatedDate(Instant.now())
+                .withEmail("test@test.com")
+                .withDelayedCapture(false)
+                .build());
+    }
+
+    @State("a sandbox account exists with a charge with id testChargeId and description ERROR that is in state ENTERING_CARD_DETAILS.")
+    public void aChargeExistsAwaitingAuthorisationWithDescriptionError() {
+        long gatewayAccountId = 666L;
+        setUpGatewayAccount(dbHelper, gatewayAccountId);
+
+        String chargeExternalId = "testChargeId";
+
+        dbHelper.addCharge(anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .withAmount(100)
+                .withStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withReturnUrl("aReturnUrl")
+                .withTransactionId(chargeExternalId)
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withDescription("ERROR")
+                .withCreatedDate(Instant.now())
+                .withEmail("test@test.com")
+                .withDelayedCapture(false)
+                .build());
+    }
+
     @State("a Worldpay account exists with 3DS flex credentials and a charge with id testChargeId")
     public void aWorldpayChargeExists() {
         long gatewayAccountId = 666L;

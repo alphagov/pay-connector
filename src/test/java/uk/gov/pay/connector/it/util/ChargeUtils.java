@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.util;
 
 import java.util.Map;
+
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -40,8 +41,18 @@ public class ChargeUtils {
                 "delayed_capture", true));
     }
 
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, 
+                                                                DatabaseTestHelper databaseTestHelper, String paymentProvider) {
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, "email@fake.test", paymentProvider);
+    }
+
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId,
                                                                 DatabaseTestHelper databaseTestHelper, String emailAddress, String paymentProvider) {
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, emailAddress, paymentProvider, "Test description");
+    }
+
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId,
+                                                                DatabaseTestHelper databaseTestHelper, String emailAddress, String paymentProvider, String description) {
         long chargeId = RandomUtils.nextInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
@@ -53,6 +64,7 @@ public class ChargeUtils {
                 .withStatus(status)
                 .withTransactionId(gatewayTransactionId)
                 .withEmail(emailAddress)
+                .withDescription(description)
                 .build());
         return externalChargeId;
     }
@@ -74,13 +86,6 @@ public class ChargeUtils {
                 .withGatewayCredentialId(gatewayCredentialId)
                 .build());
         return externalChargeId;
-    }
-
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId,
-                                                                String accountId, DatabaseTestHelper databaseTestHelper,
-                                                                String paymentProvider) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId,
-                databaseTestHelper, "email@fake.test", paymentProvider);
     }
 
     public static class ExternalChargeId {

@@ -13,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -35,7 +36,6 @@ import static java.lang.String.format;
 public class WalletAuthoriseService {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletAuthoriseService.class);
-    
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders paymentProviders;
@@ -109,7 +109,7 @@ public class WalletAuthoriseService {
             Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
             CardExpiryDate cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate).orElse(null);
-            
+
             logMetrics(charge, operationResponse, requestStatus, walletAuthorisationRequest.getWalletType());
 
             processGatewayAuthorisationResponse(

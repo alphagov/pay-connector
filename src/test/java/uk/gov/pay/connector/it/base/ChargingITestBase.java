@@ -286,8 +286,12 @@ public class ChargingITestBase {
         return createNewChargeWith(CREATED, "");
     }
 
-    protected String createNewChargeWithNoTransactionIdOrEmailAddress(ChargeStatus status) {
+    protected String createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ChargeStatus status) {
         return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null, paymentProvider).toString();
+    }
+
+    protected String createNewChargeWithDescriptionAndNoGatewayTransactionIdOrEmailAddress(ChargeStatus status, String description) {
+        return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null, paymentProvider, description).toString();
     }
 
     protected String createNewChargeWithNoTransactionId(ChargeStatus status) {

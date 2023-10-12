@@ -54,7 +54,6 @@ public abstract class CardServiceTest {
                 .build();
         entity.setCardDetails(new CardDetailsEntity());
         return entity;
-
     }
 
     protected ChargeEntity createNewChargeWithFees(String provider, Long chargeId, ChargeStatus status, String gatewayTransactionId) {
