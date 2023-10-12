@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
 import junitparams.Parameters;
 import org.junit.Before;
@@ -23,20 +22,20 @@ import java.util.Optional;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBase {
+public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBase {
 
     GatewayAccountDao gatewayAccountDao;
 
@@ -54,18 +53,81 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
     }
 
     @Test
-    public void createAGatewayAccountWithServiceId() {
-        String gatewayAccountId = createAGatewayAccountWithServiceId("some-special-service-id");
+    public void shouldCreateAccountWithServiceIdAndDefaultsForOtherProperties() {
+        Map<String, Object> payload = Map.of(
+                "service_id", "some-special-service-id");
+        ValidatableResponse response = givenSetup()
+                .body(toJson(payload))
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201)
+                .contentType(JSON)
+                .body("gateway_account_id", not(emptyString()))
+                .body("type", is("test"))
+                .body("requires_3ds", is(false));
+
         givenSetup()
-                .get(ACCOUNTS_API_URL + gatewayAccountId)
+                .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
                 .then()
                 .statusCode(200)
-                .body("service_id", is("some-special-service-id"));
+                .contentType(JSON)
+                .body("payment_provider", is("sandbox"))
+                .body("gateway_account_id", is(notNullValue()))
+                .body("type", is("test"))
+                .body("requires3ds", is(false))
+                .body("allow_apple_pay", is(false))
+                .body("allow_google_pay", is(false))
+                .body("corporate_credit_card_surcharge_amount", is(0))
+                .body("corporate_debit_card_surcharge_amount", is(0))
+                .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+    }
+
+    @Test
+    public void shouldCreateAccountWithAllConfigurationOptions() {
+        Map<String, Object> payload = Map.of(
+                "service_id", "some-special-service-id",
+                "service_name", "a-service-name",
+                "type", "live",
+                "payment_provider", "stripe",
+                "description", "a-description",
+                "analytics_id", "an-analytics-id",
+                "requires_3ds", true,
+                "allow_apple_pay", true,
+                "allow_google_pay", true
+        );
+        ValidatableResponse response = givenSetup()
+                .body(toJson(payload))
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201)
+                .contentType(JSON)
+                .body("gateway_account_id", not(emptyString()))
+                .body("service_name", is("a-service-name"))
+                .body("type", is("live"))
+                .body("requires_3ds", is(true))
+                .body("analytics_id", is("an-analytics-id"))
+                .body("description", is("a-description"));
+
+        givenSetup()
+                .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .body("payment_provider", is("stripe"))
+                .body("gateway_account_id", is(notNullValue()))
+                .body("service_name", is("a-service-name"))
+                .body("service_id", is("some-special-service-id"))
+                .body("type", is("live"))
+                .body("analytics_id", is("an-analytics-id"))
+                .body("description", is("a-description"))
+                .body("requires3ds", is(true))
+                .body("allow_apple_pay", is(true))
+                .body("allow_google_pay", is(true));
     }
 
     @Test
     public void createStripeGatewayAccountWithoutCredentials() {
-        Map<String, Object> payload = ImmutableMap.of(
+        Map<String, Object> payload = Map.of(
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service");
@@ -87,11 +149,11 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
     @Test
     public void createStripeGatewayAccountWithCredentials() {
         String stripeAccountId = "abc";
-        Map<String, Object> payload = ImmutableMap.of(
+        Map<String, Object> payload = Map.of(
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
-                "credentials", ImmutableMap.of("stripe_account_id", stripeAccountId));
+                "credentials", Map.of("stripe_account_id", stripeAccountId));
         String gatewayAccountId = givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
@@ -116,7 +178,7 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
         assertThat(gatewayAccountCredentialsList.size(), is(1));
         GatewayCredentials credentialsObject = gatewayAccountCredentialsList.get(0).getCredentialsObject();
         assertThat(credentialsObject, isA(StripeCredentials.class));
-        assertThat(((StripeCredentials)credentialsObject).getStripeAccountId(), is(stripeAccountId));
+        assertThat(((StripeCredentials) credentialsObject).getStripeAccountId(), is(stripeAccountId));
         assertThat(gatewayAccountCredentialsList.get(0).getCredentials().get("stripe_account_id"), is(stripeAccountId));
         assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
         assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("stripe"));
@@ -125,7 +187,7 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
 
     @Test
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
-        String payload = toJson(ImmutableMap.of("name", "test account", "type", "test"));
+        String payload = toJson(Map.of("name", "test account", "type", "test"));
 
         ValidatableResponse response = givenSetup()
                 .body(payload)
@@ -149,89 +211,9 @@ public class CreateGatewayAccountResourceIT extends GatewayAccountResourceTestBa
         assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("sandbox"));
         assertThat(gatewayAccountCredentialsList.get(0).getCredentials().isEmpty(), is(true));
     }
-
-    @Test
-    public void createGatewayAccount_shouldNotReturnCorporateSurcharges() {
-        String payload = toJson(ImmutableMap.of("name", "test account"));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        response.body("corporate_credit_card_surcharge_amount", is(nullValue()));
-        response.body("corporate_debit_card_surcharge_amount", is(nullValue()));
-        response.body("corporate_prepaid_debit_card_surcharge_amount", is(nullValue()));
-    }
-
-    @Test
-    public void createGatewayAccountWithProviderUrlTypeLive() {
-        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", LIVE.toString()));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, LIVE);
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", LIVE);
-    }
-
-    @Test
-    public void createGatewayAccountWithRequires3dsToTrue() {
-        String payload = toJson(ImmutableMap.of("payment_provider", "stripe", "type", LIVE.toString(), "requires_3ds", "true"));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, LIVE);
-
-        response.body("requires_3ds", is(true));
-    }
-
-    @Test
-    public void createGatewayAccountWithRequires3dsDefaultsToFalse() {
-        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay", "type", LIVE.toString()));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, LIVE);
-
-        response.body("requires_3ds", is(false));
-    }
-
-    @Test
-    public void createGatewayAccountWithNameDescriptionAndAnalyticsId() {
-        String payload = toJson(ImmutableMap.of("service_name", "my service name", "description", "desc", "analytics_id", "analytics-id"));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, TEST, "desc", "analytics-id", "my service name");
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
-    }
-
-    @Test
-    public void createGatewayAccountWithMissingProviderUrlTypeCreatesTestType() {
-        String payload = toJson(ImmutableMap.of("payment_provider", "worldpay"));
-        ValidatableResponse response = givenSetup()
-                .body(payload)
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201);
-
-        assertCorrectCreateResponse(response, TEST);
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "worldpay", TEST);
-    }
-
+    
     private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
         assertCorrectCreateResponse(response, type, null, null, null);
     }
+
 }
