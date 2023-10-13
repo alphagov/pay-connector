@@ -3330,6 +3330,14 @@ components:
       discriminator:
         propertyName: payment_provider
       properties:
+        allow_apple_pay:
+          type: boolean
+          description: Set to 'true' to enable Apple Pay for this account
+          writeOnly: true
+        allow_google_pay:
+          type: boolean
+          description: Set to 'true' to enable Google Pay for this account
+          writeOnly: true
         analytics_id:
           type: string
           description: Google Analytics (GA) unique ID for the GOV.UK Pay platform
@@ -4187,6 +4195,12 @@ components:
       - $ref: '#/components/schemas/GatewayAccountRequest'
       - type: object
         properties:
+          allow_apple_pay:
+            type: boolean
+            writeOnly: true
+          allow_google_pay:
+            type: boolean
+            writeOnly: true
           analytics_id:
             type: string
             writeOnly: true

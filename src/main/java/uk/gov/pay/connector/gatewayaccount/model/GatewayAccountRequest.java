@@ -46,6 +46,12 @@ public class GatewayAccountRequest {
 
     @JsonIgnore
     private boolean requires3ds;
+    
+    @JsonIgnore
+    private boolean allowApplePay;
+    
+    @JsonIgnore
+    private boolean allowGooglePay;
 
     public GatewayAccountRequest(@JsonProperty("type") @Schema(example = "live", description = "Account type for this provider (test/live)", defaultValue = "test") String providerAccountType,
                                  @JsonProperty("payment_provider") @Schema(example = "stripe", description = "The payment provider for which this account is created", defaultValue = "sandbox")
@@ -55,20 +61,23 @@ public class GatewayAccountRequest {
                                  @JsonProperty("description") @Schema(description = "Some useful non-ambiguous description about the gateway account", example = "account for some gov org") String description,
                                  @JsonProperty("analytics_id") @Schema(description = "Google Analytics (GA) unique ID for the GOV.UK Pay platform", example = "analytics-id")
                                  String analyticsId,
-                                 @JsonProperty("requires_3ds") @Schema(description = "Set to 'true' to enable 3DS for this account") boolean requires3ds
+                                 @JsonProperty("requires_3ds") @Schema(description = "Set to 'true' to enable 3DS for this account") boolean requires3ds,
+                                 @JsonProperty("allow_apple_pay") @Schema(description = "Set to 'true' to enable Apple Pay for this account") boolean allowApplePay,
+                                 @JsonProperty("allow_google_pay") @Schema(description = "Set to 'true' to enable Google Pay for this account") boolean allowGooglePay
     ) {
         this.serviceName = serviceName;
         this.serviceId = serviceId;
         this.description = description;
         this.analyticsId = analyticsId;
         this.requires3ds = requires3ds;
+        this.allowApplePay = allowApplePay;
+        this.allowGooglePay = allowGooglePay;
 
         this.providerAccountType = (providerAccountType == null || providerAccountType.isEmpty()) ?
                 TEST.toString() : providerAccountType;
 
         this.paymentProvider = (paymentProvider == null || paymentProvider.isEmpty()) ?
                 PaymentGatewayName.SANDBOX.getName() : paymentProvider;
-
     }
 
     @ValidationMethod(message = "Unsupported payment provider account type, should be one of (test, live)")
@@ -117,7 +126,15 @@ public class GatewayAccountRequest {
         return newHashMap();
     }
 
-    public boolean getRequires3ds() {
+    public boolean isRequires3ds() {
         return requires3ds;
+    }
+
+    public boolean isAllowApplePay() {
+        return allowApplePay;
+    }
+
+    public boolean isAllowGooglePay() {
+        return allowGooglePay;
     }
 }

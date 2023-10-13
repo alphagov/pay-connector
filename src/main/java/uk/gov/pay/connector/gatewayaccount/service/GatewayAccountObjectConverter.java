@@ -27,7 +27,9 @@ public class GatewayAccountObjectConverter {
         gatewayAccountEntity.setServiceId(gatewayAccountRequest.getServiceId());
         gatewayAccountEntity.setDescription(gatewayAccountRequest.getDescription());
         gatewayAccountEntity.setAnalyticsId(gatewayAccountRequest.getAnalyticsId());
-        gatewayAccountEntity.setRequires3ds(gatewayAccountRequest.getRequires3ds());
+        gatewayAccountEntity.setRequires3ds(gatewayAccountRequest.isRequires3ds());
+        gatewayAccountEntity.setAllowApplePay(gatewayAccountRequest.isAllowApplePay());
+        gatewayAccountEntity.setAllowGooglePay(gatewayAccountRequest.isAllowGooglePay());
         gatewayAccountEntity.setIntegrationVersion3ds(DEFAULT_INTEGRATION_VERSION_3_DS);
 
         gatewayAccountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(gatewayAccountEntity));

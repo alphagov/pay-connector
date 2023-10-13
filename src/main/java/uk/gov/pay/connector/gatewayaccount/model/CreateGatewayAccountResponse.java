@@ -104,7 +104,6 @@ public class CreateGatewayAccountResponse {
     public static class GatewayAccountResponseBuilder {
 
         private String providerAccountType;
-        private String paymentProvider;
         private String serviceName;
         private String description;
         private String analyticsId;
