@@ -19,15 +19,14 @@ import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeAuthorisationFailedResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCustomer;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
+import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
+import uk.gov.pay.connector.gateway.stripe.json.StripeToken;
 import uk.gov.pay.connector.gateway.stripe.request.StripeCustomerRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTokenRequest;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCustomer;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
-import uk.gov.pay.connector.gateway.stripe.json.StripeToken;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
@@ -101,8 +100,8 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
-            var StripePaymentIntent = createPaymentIntentForUserNotPresent(request);
-            return responseBuilder.withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();
+            var paymentIntent = createPaymentIntentForUserNotPresent(request);
+            return responseBuilder.withResponse(StripeAuthorisationResponse.of(paymentIntent)).build();
         } catch (GatewayException.GatewayErrorException e) {
             return handleGatewayError(responseBuilder, e);
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
@@ -117,9 +116,9 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .responseBuilder();
         try {
             StripeToken stripeTokenResponse = createTokenForApplePay(request);
-            StripePaymentIntent StripePaymentIntent = createPaymentIntentFromWalletToken(request, stripeTokenResponse.getId());
+            PaymentIntent paymentIntent = createPaymentIntentFromWalletToken(request, stripeTokenResponse.getId());
             return responseBuilder
-                    .withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();
+                    .withResponse(StripeAuthorisationResponse.of(paymentIntent)).build();
         } catch (GatewayException.GatewayErrorException e) {
             return handleGatewayError(responseBuilder, e);
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
@@ -134,9 +133,8 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .responseBuilder();
         try {
             String tokenId = ((StripeGooglePayAuthRequest) request.getGooglePayAuthRequest()).getTokenId();
-            StripePaymentIntent StripePaymentIntent = createPaymentIntentFromWalletToken(request, tokenId);
-            return responseBuilder
-                    .withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();
+            PaymentIntent paymentIntent = createPaymentIntentFromWalletToken(request, tokenId);
+            return responseBuilder.withResponse(StripeAuthorisationResponse.of(paymentIntent)).build();
         } catch (GatewayException.GatewayErrorException e) {
             return handleGatewayError(responseBuilder, e);
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
@@ -194,7 +192,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         return ApiResource.GSON.fromJson(jsonResponse, PaymentIntent.class);
     }
 
-    private StripePaymentIntent createPaymentIntentForUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request)
+    private PaymentIntent createPaymentIntentForUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
         var paymentInstrument = request.getPaymentInstrument().orElseThrow(() -> new IllegalArgumentException("Expected request to have payment instrument but it does not"));
         var recurringAuthToken = paymentInstrument.getRecurringAuthToken().orElseThrow(() -> new IllegalArgumentException("Payment instrument does not have recurring auth token set"));
@@ -204,7 +202,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         var paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestUseSavedPaymentDetails(
                 request, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
         String jsonResponse = client.postRequestFor(paymentIntentRequest).getEntity();
-        return jsonObjectMapper.getObject(jsonResponse, StripePaymentIntent.class);
+        return ApiResource.GSON.fromJson(jsonResponse, PaymentIntent.class);
     }
 
     private StripeToken createTokenForApplePay(ApplePayAuthorisationGatewayRequest authorisationGatewayRequest) 
@@ -213,9 +211,9 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         return jsonObjectMapper.getObject(tokenJsonResponse, StripeToken.class);
     }
 
-    private StripePaymentIntent createPaymentIntentFromWalletToken(AuthorisationGatewayRequest request, String tokenId) 
+    private PaymentIntent createPaymentIntentFromWalletToken(AuthorisationGatewayRequest request, String tokenId) 
             throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
-        String paymentIntentJsonResponse = client.postRequestFor(StripePaymentIntentRequest.createPaymentIntentRequestWithToken(request, tokenId, stripeGatewayConfig, frontendUrl)).getEntity();
-        return jsonObjectMapper.getObject(paymentIntentJsonResponse, StripePaymentIntent.class);
+        String jsonResponse = client.postRequestFor(StripePaymentIntentRequest.createPaymentIntentRequestWithToken(request, tokenId, stripeGatewayConfig, frontendUrl)).getEntity();
+        return ApiResource.GSON.fromJson(jsonResponse, PaymentIntent.class);
     }
 }

@@ -2,8 +2,9 @@ package uk.gov.pay.connector.gateway.stripe.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.ApiResource;
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -25,7 +26,7 @@ class PaymentIntentStringifierTest {
                 .replace("{{id}}", "pi_123")
                 .replace("{{type}}", PAYMENT_INTENT_PAYMENT_FAILED.getType());
         StripeNotification notification = mapper.readValue(payload, StripeNotification.class);
-        StripePaymentIntent paymentIntent = mapper.readValue(notification.getObject(), StripePaymentIntent.class);
+        PaymentIntent paymentIntent = ApiResource.GSON.fromJson(notification.getObject(), PaymentIntent.class);
 
         String expectedStringifiedPaymentIntent = "payment intent: pi_123 " +
                 "(stripe charge: ch_3K6dQPHj08j2jFuB1f9K4dcde, type: invalid_request_error, decline code: generic_decline, " +
@@ -46,7 +47,7 @@ class PaymentIntentStringifierTest {
                 .replace("{{id}}", "pi_123")
                 .replace("{{type}}", PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED.getType());
         StripeNotification notification = mapper.readValue(payload, StripeNotification.class);
-        StripePaymentIntent paymentIntent = mapper.readValue(notification.getObject(), StripePaymentIntent.class);
+        PaymentIntent paymentIntent = ApiResource.GSON.fromJson(notification.getObject(), PaymentIntent.class);
 
         String expectedStringifiedPaymentIntent = "payment intent: pi_123 " +
                 "(stripe charge: ch_1FF3RuEZsufgnuO0IPT8CY3o)";
@@ -57,12 +58,12 @@ class PaymentIntentStringifierTest {
     @Test
     void shouldBuildStringFromPaymentIntentResponse() throws JsonProcessingException {
         String payload = load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE_WITH_CHARGE);
-        StripePaymentIntent response = mapper.readValue(payload, StripePaymentIntent.class);
+        PaymentIntent response = ApiResource.GSON.fromJson(payload, PaymentIntent.class);
 
         String expectedStringified = "payment intent: pi_1FHESeEZsufgnuO08A2FUSPy (stripe charge: ch_3K6dQPHj08j2jFuB1f9K4dcde, " +
                 "outcome.network_status: approved_by_network, outcome.risk_level: normal, " +
                 "outcome.seller_message: Payment complete., outcome.type: authorized)";
-        String stringified = response.stringify();
+        String stringified = PaymentIntentStringifier.stringify(response);
         assertThat(stringified, is(expectedStringified));
     }
 }

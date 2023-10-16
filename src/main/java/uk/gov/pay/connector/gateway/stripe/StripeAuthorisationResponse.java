@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
+import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.YearMonth;
@@ -49,18 +50,6 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
         this.cardExpiryDate = cardExpiryDate;
     }
 
-    public static StripeAuthorisationResponse of(StripePaymentIntent stripePaymentIntent) {
-        return new StripeAuthorisationResponse(
-                stripePaymentIntent.getId(),
-                stripePaymentIntent.getAuthoriseStatus().orElse(null),
-                stripePaymentIntent.getRedirectUrl().orElse(null),
-                stripePaymentIntent.stringify(),
-                stripePaymentIntent.getCustomerId(),
-                stripePaymentIntent.getPaymentMethod().getId(),
-                stripePaymentIntent.getCardExpiryDate().orElse(null)
-        );
-    }
-
     public static StripeAuthorisationResponse of(PaymentIntent paymentIntent) {
         Map<StripeChargeStatus, BaseAuthoriseResponse.AuthoriseStatus> statusMap = Map.of(
                 StripeChargeStatus.REQUIRES_CAPTURE, BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
@@ -75,7 +64,7 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
                 paymentIntent.getId(),
                 statusMap.get(StripeChargeStatus.fromString(paymentIntent.getStatus())),
                 redirectUrl,
-                "paymentIntent.stringify()",
+                PaymentIntentStringifier.stringify(paymentIntent),
                 paymentIntent.getCustomer(),
                 paymentIntent.getPaymentMethod(),
                 CardExpiryDate.valueOf(YearMonth.of(card.getExpYear().intValue(), card.getExpMonth().intValue()))

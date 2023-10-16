@@ -14,6 +14,7 @@ import java.util.StringJoiner;
 
 public class PaymentIntentStringifier {
 
+    @Deprecated
     public static String stringify(StripePaymentIntent paymentIntent) {
 
         StringJoiner joiner = new StringJoiner("");
@@ -75,9 +76,9 @@ public class PaymentIntentStringifier {
             if (charge.getId() != null) {
                 joiner.add("stripe charge: " + charge.getId());
             }
-
-            appendLastPaymentErrorLogs(paymentIntent.getLastPaymentError(), delimitedJoiner);
-
+            if (paymentIntent.getLastPaymentError() != null) {
+                appendLastPaymentErrorLogs(paymentIntent.getLastPaymentError(), delimitedJoiner);
+            }
             if (charge.getFailureCode() != null) {
                 delimitedJoiner.add("code: " + charge.getFailureCode());
             }
@@ -87,9 +88,9 @@ public class PaymentIntentStringifier {
             if (charge.getStatus() != null) {
                 delimitedJoiner.add("status: " + charge.getStatus());
             }
-
-            appendOutcomeLogs(charge.getOutcome(), delimitedJoiner);
-
+            if (charge.getOutcome() != null) {
+                appendOutcomeLogs(charge.getOutcome(), delimitedJoiner);
+            }
             if (delimitedJoiner.length() > 0) {
                 joiner.add(", ");
             }
