@@ -22,8 +22,8 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 public class TaskQueue extends AbstractQueue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskQueue.class);
-    private final int deliveryDelayInSeconds;
-    
+    private final int defaultDeliveryDelayInSeconds;
+
     @Inject
     public TaskQueue(SqsQueueService sqsQueueService,
                      ConnectorConfiguration connectorConfiguration,
@@ -31,10 +31,14 @@ public class TaskQueue extends AbstractQueue {
         super(sqsQueueService, objectMapper,
                 connectorConfiguration.getSqsConfig().getTaskQueueUrl(),
                 connectorConfiguration.getTaskQueueConfig().getFailedMessageRetryDelayInSeconds());
-        this.deliveryDelayInSeconds = connectorConfiguration.getTaskQueueConfig().getDeliveryDelayInSeconds();
+        this.defaultDeliveryDelayInSeconds = connectorConfiguration.getTaskQueueConfig().getDeliveryDelayInSeconds();
     }
 
     public void addTaskToQueue(Task task) throws QueueException, JsonProcessingException {
+        addTaskToQueue(task, this.defaultDeliveryDelayInSeconds);
+    }
+
+    public void addTaskToQueue(Task task, int deliveryDelayInSeconds) throws QueueException, JsonProcessingException {
         String message = objectMapper.writeValueAsString(task);
         QueueMessage queueMessage = sendMessageToQueueWithDelay(message, deliveryDelayInSeconds);
         LOGGER.info("Task added to queue",
@@ -59,7 +63,7 @@ public class TaskQueue extends AbstractQueue {
         } catch (IOException e) {
             LOGGER.error("Error parsing message from tasks queue",
                     kv("message", qm.getMessageBody()),
-                    kv("error",  e.getMessage()));
+                    kv("error", e.getMessage()));
             return null;
         }
     }

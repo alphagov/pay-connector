@@ -14,16 +14,20 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
+import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static uk.gov.pay.connector.queue.tasks.TaskType.RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL;
 import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.RESOURCE_EXTERNAL_ID;
 
 public class TaskQueueService {
 
@@ -72,8 +76,7 @@ public class TaskQueueService {
                     kv("error", e.getMessage()))
             );
             Sentry.captureException(e);
-        }
-        finally {
+        } finally {
             MDC.remove(PAYMENT_EXTERNAL_ID);
         }
     }
@@ -117,6 +120,26 @@ public class TaskQueueService {
             Sentry.captureException(e);
         } finally {
             MDC.remove(PAYMENT_EXTERNAL_ID);
+        }
+    }
+
+    public void addRetryFailedPaymentOrRefundEmailTask(String paymentOrRefundExternalId, EmailNotificationType emailNotificationType) {
+        try {
+            MDC.put(RESOURCE_EXTERNAL_ID, paymentOrRefundExternalId);
+            MDC.put("email_notification_type", emailNotificationType.name());
+
+            String data = objectMapper.writeValueAsString(RetryPaymentOrRefundEmailTaskData.of(paymentOrRefundExternalId, emailNotificationType));
+            Task task = new Task(data, RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL);
+            taskQueue.addTaskToQueue(task, 900);
+
+            logger.info("Added retry failed payment or refund email task message to queue");
+        } catch (Exception e) {
+            logger.error("Error adding failed payment or refund email task message to queue",
+                    kv("error", e.getMessage()));
+            Sentry.captureException(e);
+        } finally {
+            MDC.remove(RESOURCE_EXTERNAL_ID);
+            MDC.remove("email_notification_type");
         }
     }
 }
