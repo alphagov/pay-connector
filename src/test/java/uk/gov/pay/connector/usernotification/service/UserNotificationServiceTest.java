@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -259,6 +260,40 @@ public class UserNotificationServiceTest {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
         userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, chargeEntity.getGatewayAccount());
+
+        verifyNoInteractions(mockNotifyClient);
+    }
+
+    @Test
+    void shouldSendRefundConfirmationEmailSynchronouslyIfEmailNotifyIsEnabled() throws Exception {
+        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotifyClient);
+        when(mockNotificationCreatedResponse.getNotificationId()).thenReturn(notificationId);
+        when(mockMetricRegistry.histogram(anyString())).thenReturn(mockHistogram);
+
+        HashMap<String, String> personalisation = new HashMap<>();
+        personalisation.put("serviceReference", charge.getReference());
+        personalisation.put("date", "1 January 2016 - 10:23:12");
+        personalisation.put("amount", "1.00");
+        personalisation.put("description", charge.getDescription());
+        personalisation.put("serviceName", StringUtils.defaultString(gatewayAccountEntity.getServiceName()));
+
+        when(mockNotifyClient.sendEmail(mockNotifyConfiguration.getRefundIssuedEmailTemplateId(),
+                chargeEntity.getEmail(),
+                personalisation,
+                null,
+                null)).thenReturn(mockNotificationCreatedResponse);
+
+        Optional<String> maybeNotificationId = userNotificationService.sendRefundIssuedEmailSynchronously(charge, chargeEntity.getGatewayAccount(), refundEntity);
+        assertThat(maybeNotificationId.get(), is(notificationId.toString()));
+    }
+
+    @Test
+    void shouldNotSendRefundConfirmedEmailSynchronously_IfNotifyIsDisabled() throws Exception {
+        when(mockNotifyConfiguration.isEmailNotifyEnabled()).thenReturn(false);
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
+        userNotificationService = new UserNotificationService(mockNotifyClientFactory, mockConfig, mockEnvironment);
+        userNotificationService.sendRefundIssuedEmailSynchronously(charge, chargeEntity.getGatewayAccount(), refundEntity);
 
         verifyNoInteractions(mockNotifyClient);
     }
