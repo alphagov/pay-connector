@@ -44,7 +44,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OPTI
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
-
 public class UserNotificationService {
 
     private static final Pattern LITERAL_DOLLAR_REFERENCE = Pattern.compile(Pattern.quote("$reference"));
@@ -82,6 +81,11 @@ public class UserNotificationService {
     public Optional<String> sendPaymentConfirmedEmailSynchronously(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
         return sendEmailSynchronously(EmailNotificationType.PAYMENT_CONFIRMED, charge, gatewayAccountEntity,
                 buildConfirmationEmailPersonalisationFrom(charge, gatewayAccountEntity));
+    }
+
+    public Optional<String> sendRefundIssuedEmailSynchronously(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundEntity refundEntity) {
+        return sendEmailSynchronously(EmailNotificationType.REFUND_ISSUED, charge, gatewayAccountEntity,
+                buildRefundEmailPersonalisationFrom(charge, refundEntity, gatewayAccountEntity));
     }
 
     private Future<Optional<String>> sendEmail(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation) {
