@@ -711,7 +711,7 @@ class StripePaymentProviderTest {
 
         BaseAuthoriseResponse baseAuthoriseResponse = response.getBaseResponse().get();
         assertThat(baseAuthoriseResponse.authoriseStatus().getMappedChargeStatus(), is(AUTHORISATION_ERROR));
-        assertThat(baseAuthoriseResponse.toString(), containsString("type: api_error"));
+        assertThat(baseAuthoriseResponse.toString(), containsString("\"type\": \"api_error\""));
     }
     
     @Nested

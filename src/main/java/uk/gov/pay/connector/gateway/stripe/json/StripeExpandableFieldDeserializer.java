@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import static java.lang.String.format;
 
+@Deprecated
 public class StripeExpandableFieldDeserializer extends JsonDeserializer<StripeExpandableField<?>> implements ContextualDeserializer {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

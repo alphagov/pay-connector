@@ -2,10 +2,14 @@ package uk.gov.pay.connector.gateway.stripe.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.stripe.model.PaymentIntent;
+import com.stripe.model.PaymentMethod;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.YearMonth;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -42,7 +46,8 @@ public class StripeErrorResponse {
         @JsonProperty("message")
         private String message;
         @JsonProperty("payment_intent")
-        private StripePaymentIntent stripePaymentIntent;
+        @JsonDeserialize(using = PaymentIntentDeserializer.class)
+        private PaymentIntent paymentIntent;
 
         public String getType() {
             return type;
@@ -60,13 +65,16 @@ public class StripeErrorResponse {
             return charge;
         }
 
-        public Optional<StripePaymentIntent> getStripePaymentIntent() {
-            return Optional.ofNullable(stripePaymentIntent);
+        public Optional<PaymentIntent> getPaymentIntent() {
+            return Optional.ofNullable(paymentIntent);
         }
         
         public Optional<CardExpiryDate> getCardExpiryDate() {
-            return Optional.ofNullable(stripePaymentIntent)
-                    .flatMap(StripePaymentIntent::getCardExpiryDate);
+            return Optional.ofNullable(paymentIntent)
+                    .flatMap(x -> {
+                        PaymentMethod.Card card = x.getPaymentMethodObject().getCard();
+                        return Optional.of(CardExpiryDate.valueOf(YearMonth.of(card.getExpYear().intValue(), card.getExpMonth().intValue())));
+                    });
         }
 
         @Override
@@ -84,16 +92,13 @@ public class StripeErrorResponse {
             if (StringUtils.isNotBlank(message)) {
                 joiner.add("message: " + getMessage());
             }
-            getStripePaymentIntent()
-                    .map(paymentIntent -> {
-                        joiner.add("payment intent: " + stripePaymentIntent.getId());
-                        stripePaymentIntent.getCharge()
-                                .map(charge -> {
-                                    charge.getOutcome()
-                                            .ifPresent(outcome -> PaymentIntentStringifier.appendOutcomeLogs(outcome, joiner));
-                                    return joiner;
-                                });
-                        return joiner;
+            getPaymentIntent()
+                    .ifPresent(paymentIntent -> {
+                        joiner.add("payment intent: " + this.paymentIntent.getId());
+                        if (paymentIntent.getCharges() != null && !paymentIntent.getCharges().getData().isEmpty() &&
+                                paymentIntent.getCharges().getData().get(0).getOutcome() != null) {
+                            PaymentIntentStringifier.appendOutcomeLogs(paymentIntent.getCharges().getData().get(0).getOutcome(), joiner);
+                        }
                     });
             return joiner.toString();
         }

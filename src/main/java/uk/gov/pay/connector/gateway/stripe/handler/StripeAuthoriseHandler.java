@@ -1,7 +1,24 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.google.gson.FieldNamingPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.TypeAdapterFactory;
 import com.google.inject.Inject;
+import com.stripe.model.EphemeralKey;
+import com.stripe.model.EphemeralKeyDeserializer;
+import com.stripe.model.EventData;
+import com.stripe.model.EventDataDeserializer;
+import com.stripe.model.EventRequest;
+import com.stripe.model.EventRequestDeserializer;
+import com.stripe.model.ExpandableField;
+import com.stripe.model.ExpandableFieldDeserializer;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.StripeError;
+import com.stripe.model.StripeObject;
+import com.stripe.model.StripeRawJsonObject;
+import com.stripe.model.StripeRawJsonObjectDeserializer;
 import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +37,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeAuthorisationFailedResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCustomer;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
 import uk.gov.pay.connector.gateway.stripe.json.StripeToken;
 import uk.gov.pay.connector.gateway.stripe.request.StripeCustomerRequest;
@@ -152,11 +168,12 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         }
 
         if (e.getFamily() == CLIENT_ERROR) {
-            StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
+            final JsonObject jsonObject = ApiResource.GSON.fromJson(e.getResponseFromGateway(), JsonObject.class).getAsJsonObject("error");
+            final StripeError error = ApiResource.GSON.fromJson(jsonObject, StripeError.class);
             logger.info("Authorisation failed. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                    stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), e.getStatus());
+                    error.getCode(), error.getMessage(), e.getStatus());
 
-            return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(stripeErrorResponse)).build();
+            return responseBuilder.withResponse(StripeAuthorisationFailedResponse.of(error)).build();
         }
 
         logger.info("Unrecognised response status when authorising - status={}, response={}",
