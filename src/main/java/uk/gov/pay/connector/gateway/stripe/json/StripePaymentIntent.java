@@ -105,7 +105,7 @@ public class StripePaymentIntent {
             LOGGER.info("Unable to get card expiry date as payment intent has no payment method set");
             return Optional.empty();
         }
-        return getPaymentMethod().getExpanded()
+        return paymentMethod.getExpanded()
                 .flatMap(StripePaymentMethod::getCard)
                 .map(card -> {
                     if (card.getCardExpiryYear() == null || card.getCardExpiryMonth() == null) {

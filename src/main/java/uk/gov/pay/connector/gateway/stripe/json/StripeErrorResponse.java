@@ -90,7 +90,7 @@ public class StripeErrorResponse {
                         stripePaymentIntent.getCharge()
                                 .map(charge -> {
                                     charge.getOutcome()
-                                            .map(outcome -> PaymentIntentStringifier.appendOutcomeLogs(outcome, joiner));
+                                            .ifPresent(outcome -> PaymentIntentStringifier.appendOutcomeLogs(outcome, joiner));
                                     return joiner;
                                 });
                         return joiner;

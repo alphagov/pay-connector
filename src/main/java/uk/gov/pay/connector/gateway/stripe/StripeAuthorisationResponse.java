@@ -1,15 +1,14 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.stripe.model.PaymentIntent;
+import com.stripe.model.PaymentMethod;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
+import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.time.DateTimeException;
 import java.time.YearMonth;
 import java.util.Map;
 import java.util.Objects;
@@ -21,8 +20,6 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
 
     public static final String STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY = "customerId";
     public static final String STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY = "paymentMethodId";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StripeAuthorisationResponse.class);
 
     private final String transactionId;
     private final AuthoriseStatus authoriseStatus;
@@ -61,6 +58,27 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
                 stripePaymentIntent.getCustomerId(),
                 stripePaymentIntent.getPaymentMethod().getId(),
                 stripePaymentIntent.getCardExpiryDate().orElse(null)
+        );
+    }
+
+    public static StripeAuthorisationResponse of(PaymentIntent paymentIntent) {
+        Map<StripeChargeStatus, BaseAuthoriseResponse.AuthoriseStatus> statusMap = Map.of(
+                StripeChargeStatus.REQUIRES_CAPTURE, BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
+                StripeChargeStatus.REQUIRES_ACTION, BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS
+        );
+
+        PaymentMethod.Card card = paymentIntent.getPaymentMethodObject().getCard();
+        String redirectUrl = Optional.ofNullable(paymentIntent.getNextAction()).map(PaymentIntent.NextAction::getRedirectToUrl)
+                .map(PaymentIntent.NextActionRedirectToUrl::getUrl).orElse(null);
+
+        return new StripeAuthorisationResponse(
+                paymentIntent.getId(),
+                statusMap.get(StripeChargeStatus.fromString(paymentIntent.getStatus())),
+                redirectUrl,
+                "paymentIntent.stringify()",
+                paymentIntent.getCustomer(),
+                paymentIntent.getPaymentMethod(),
+                CardExpiryDate.valueOf(YearMonth.of(card.getExpYear().intValue(), card.getExpMonth().intValue()))
         );
     }
 
