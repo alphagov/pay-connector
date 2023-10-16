@@ -356,4 +356,8 @@ public class RefundService {
     public void updateRefundParityStatus(String externalId, ParityCheckStatus parityCheckStatus) {
         refundDao.updateParityCheckStatus(externalId, ZonedDateTime.now(ZoneId.of("UTC")), parityCheckStatus);
     }
+
+    public Optional<RefundEntity> findRefundByExternalId(String externalId) {
+        return refundDao.findByExternalId(externalId);
+    }
 }
