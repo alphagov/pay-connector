@@ -9,9 +9,11 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
+import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
@@ -21,6 +23,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.RESOURCE_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.STRIPE_EVENT_ID;
 
 public class TaskQueueMessageHandler {
@@ -31,6 +34,7 @@ public class TaskQueueMessageHandler {
     private final StripeWebhookTaskHandler stripeWebhookTaskHandler;
     private final AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
     private final DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
+    private final RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler;
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -39,12 +43,14 @@ public class TaskQueueMessageHandler {
                                    StripeWebhookTaskHandler stripeWebhookTaskHandler,
                                    AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler,
                                    DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler,
+                                   RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler,
                                    ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
         this.stripeWebhookTaskHandler = stripeWebhookTaskHandler;
         this.authoriseWithUserNotPresentHandler = authoriseWithUserNotPresentHandler;
         this.deleteStoredPaymentDetailsHandler = deleteStoredPaymentDetailsHandler;
+        this.retryPaymentOrRefundEmailTaskHandler = retryPaymentOrRefundEmailTaskHandler;
         this.objectMapper = objectMapper;
     }
 
@@ -57,8 +63,8 @@ public class TaskQueueMessageHandler {
                         kv("queueMessageReceiptHandle", taskMessage.getQueueMessageReceiptHandle())
                 );
                 var taskType = taskMessage.getTask().getTaskType();
-                
-                switch(taskType) {
+
+                switch (taskType) {
                     case COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT:
                         PaymentTaskData paymentTaskData;
                         // backport existing task message format - will be removed
@@ -90,6 +96,13 @@ public class TaskQueueMessageHandler {
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         deleteStoredPaymentDetailsHandler.process(deleteStoredPaymentDetailsTaskData.getAgreementExternalId(), deleteStoredPaymentDetailsTaskData.getPaymentInstrumentExternalId());
                         break;
+                    case RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL:
+                        var retryPaymentOrRefundEmailTaskData = objectMapper.readValue(taskMessage.getTask().getData(), RetryPaymentOrRefundEmailTaskData.class);
+                        MDC.put(RESOURCE_EXTERNAL_ID, retryPaymentOrRefundEmailTaskData.getResourceExternalId());
+                        MDC.put("email_notification_type", retryPaymentOrRefundEmailTaskData.getEmailNotificationType().toString());
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        retryPaymentOrRefundEmailTaskHandler.process(retryPaymentOrRefundEmailTaskData);
+                        break;
                     default:
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());
                 }
@@ -106,6 +119,8 @@ public class TaskQueueMessageHandler {
                 MDC.remove(STRIPE_EVENT_ID);
                 MDC.remove(AGREEMENT_EXTERNAL_ID);
                 MDC.remove(PAYMENT_INSTRUMENT_EXTERNAL_ID);
+                MDC.remove(RESOURCE_EXTERNAL_ID);
+                MDC.remove("email_notification_type");
             }
         });
     }
