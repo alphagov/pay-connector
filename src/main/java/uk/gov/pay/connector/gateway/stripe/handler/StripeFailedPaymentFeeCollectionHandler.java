@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.stripe.model.Charge;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -11,8 +14,6 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
@@ -62,11 +63,11 @@ public class StripeFailedPaymentFeeCollectionHandler {
 
     }
 
-    private boolean stripeChargeHas3dsAttempt(StripeCharge stripeCharge) {
+    private boolean stripeChargeHas3dsAttempt(Charge stripeCharge) {
         return stripeCharge.getPaymentMethodDetails() != null &&
                 stripeCharge.getPaymentMethodDetails().getCard() != null &&
                 stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure() != null &&
-                stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure().getAuthenticated();
+                stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure().getResult().equals("authenticated");
     }
 
     private boolean chargeHasEventsIndicating3dsWasCompleted(ChargeEntity chargeEntity) {
@@ -75,21 +76,21 @@ public class StripeFailedPaymentFeeCollectionHandler {
                 (eventStatuses.contains(ChargeStatus.AUTHORISATION_REJECTED) || eventStatuses.contains(ChargeStatus.AUTHORISATION_SUCCESS));
     }
 
-    private Optional<StripeCharge> getStripeCharge(ChargeEntity charge) throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
-        StripePaymentIntent paymentIntent = getPaymentIntent(charge);
+    private Optional<Charge> getStripeCharge(ChargeEntity charge) throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        PaymentIntent paymentIntent = getPaymentIntent(charge);
 
-        List<StripeCharge> charges = paymentIntent.getChargesCollection().getCharges();
+        List<Charge> charges = paymentIntent.getCharges().getData();
         if (charges.size() > 1) {
             throw new RuntimeException("Expected at most 1 Charge for PaymentIntent, found " + charges.size());
         }
         return charges.stream().findFirst();
     }
 
-    private StripePaymentIntent getPaymentIntent(ChargeEntity charge)
+    private PaymentIntent getPaymentIntent(ChargeEntity charge)
             throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
         var request = StripeGetPaymentIntentRequest.of(charge, stripeGatewayConfig);
         String rawResponse = client.getRequestFor(request).getEntity();
-        return jsonObjectMapper.getObject(rawResponse, StripePaymentIntent.class);
+        return ApiResource.GSON.fromJson(rawResponse, PaymentIntent.class);
     }
 
     private void transferFeeFromConnectAccount(long feeAmount,
