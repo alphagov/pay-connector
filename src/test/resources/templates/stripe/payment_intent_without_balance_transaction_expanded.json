@@ -8,6 +8,7 @@
     "data": [
       {
         "id": "ch_123456",
+        "object": "charge",
         "amount": 2400,
         "captured": true,
         "balance_transaction": "abcd"

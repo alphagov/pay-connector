@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
 import com.google.gson.JsonObject;
+import com.stripe.model.BalanceTransaction;
+import com.stripe.model.Charge;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeError;
 import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
@@ -15,8 +18,6 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSearchTransfersResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeCaptureResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.util.List;
+import java.util.Optional;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
@@ -90,7 +92,7 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     private List<Fee> doCaptureAndTransferIfNotPreviouslySucceeded(CaptureGatewayRequest request) throws GatewayException {
         if (request.isCaptureRetry()) {
-            StripeCharge stripeCharge = queryStripeCharge(request);
+            Charge stripeCharge = queryStripeCharge(request);
             if (Boolean.TRUE.equals(stripeCharge.getCaptured())) {
                 LOGGER.info("Charge already captured with Stripe on a previous attempt");
                 return transferToConnectAccount(request, stripeCharge, true);
@@ -98,20 +100,20 @@ public class StripeCaptureHandler implements CaptureHandler {
         }
 
         LOGGER.info("Making request to Stripe to capture charge");
-        StripeCharge capturedCharge = captureWithPaymentIntentAPI(request);
+        Charge capturedCharge = captureWithPaymentIntentAPI(request);
         return transferToConnectAccount(request, capturedCharge, false);
     }
 
-    private StripeCharge queryStripeCharge(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayErrorException {
+    private Charge queryStripeCharge(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayErrorException {
         var getPaymentIntentRequest = new StripeGetPaymentIntentRequest(request.getGatewayAccount(), stripeGatewayConfig, request.getGatewayTransactionId());
         String rawResponse = client.getRequestFor(getPaymentIntentRequest).getEntity();
-        StripePaymentIntent paymentIntent = jsonObjectMapper.getObject(rawResponse, StripePaymentIntent.class);
+        PaymentIntent paymentIntent = ApiResource.GSON.fromJson(rawResponse, PaymentIntent.class);
 
         return getStripeChargeFromPaymentIntent(paymentIntent);
     }
 
-    private StripeCharge getStripeChargeFromPaymentIntent(StripePaymentIntent paymentIntent) throws GatewayException.GenericGatewayException {
-        List<StripeCharge> stripeCharges = paymentIntent.getChargesCollection().getCharges();
+    private Charge getStripeChargeFromPaymentIntent(PaymentIntent paymentIntent) throws GatewayException.GenericGatewayException {
+        List<Charge> stripeCharges = paymentIntent.getCharges().getData();
 
         if (stripeCharges.size() != 1) {
             throw new GatewayException.GenericGatewayException(
@@ -120,11 +122,12 @@ public class StripeCaptureHandler implements CaptureHandler {
         return stripeCharges.get(0);
     }
 
-    private List<Fee> transferToConnectAccount(CaptureGatewayRequest request, StripeCharge capturedCharge, boolean checkForExistingTransfer) 
+    private List<Fee> transferToConnectAccount(CaptureGatewayRequest request, Charge capturedCharge, boolean checkForExistingTransfer) 
             throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
 
-        Long stripeFee = capturedCharge.getFee().orElseThrow(() -> new GatewayException.GenericGatewayException(
-                String.format("Fee not found on Stripe charge %s when attempting to capture payment", capturedCharge.getId())));
+        Long stripeFee = Optional.ofNullable(capturedCharge.getBalanceTransactionObject()).map(BalanceTransaction::getFee)
+                .orElseThrow(() -> new GatewayException.GenericGatewayException(
+                        String.format("Fee not found on Stripe charge %s when attempting to capture payment", capturedCharge.getId())));
         List<Fee> feeList = generateFeeList(request, stripeFee);
         Long processingFee = StripeFeeCalculator.getTotalFeeAmount(feeList);
         Long netTransferAmount = request.getAmount() - processingFee;
@@ -148,10 +151,10 @@ public class StripeCaptureHandler implements CaptureHandler {
         return feeList;
     }
 
-    private StripeCharge captureWithPaymentIntentAPI(CaptureGatewayRequest request) throws GatewayException {
+    private Charge captureWithPaymentIntentAPI(CaptureGatewayRequest request) throws GatewayException {
         String captureResponse = client.postRequestFor(StripePaymentIntentCaptureRequest.of(request, stripeGatewayConfig)).getEntity();
-        StripePaymentIntent stripeCaptureResponse = jsonObjectMapper.getObject(captureResponse, StripePaymentIntent.class);
-        StripeCharge stripeCharge = getStripeChargeFromPaymentIntent(stripeCaptureResponse);
+        PaymentIntent stripeCaptureResponse = ApiResource.GSON.fromJson(captureResponse, PaymentIntent.class);
+        Charge stripeCharge = getStripeChargeFromPaymentIntent(stripeCaptureResponse);
 
         LOGGER.info("Captured charge id {} with platform account - stripe capture id {}",
                 request.getExternalId(),

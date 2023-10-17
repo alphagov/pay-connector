@@ -4,7 +4,6 @@ import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;

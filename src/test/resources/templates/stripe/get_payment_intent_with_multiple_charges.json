@@ -14,17 +14,23 @@
     "data": [
       {
         "id": "ch_123456",
+        "object": "charge",
         "amount": 2400,
         "captured": true,
         "balance_transaction": {
+          "id": "txn_1032Rp2eZvKYlo2CpErRBj09",
+          "object": "balance_transaction",
           "fee": 50
         }
       },
       {
         "id": "ch_78910",
+        "object": "charge",
         "amount": 1400,
         "captured": true,
         "balance_transaction": {
+          "id": "txn_1032Rp2eZvKYlo2CpErRBj09",
+          "object": "balance_transaction",
           "fee": 20
         }
       }

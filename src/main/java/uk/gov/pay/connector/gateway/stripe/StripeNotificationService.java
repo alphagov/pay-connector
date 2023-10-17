@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.Charge;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.ApiResource;
 import com.stripe.net.Webhook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +22,9 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.stripe.json.StripeBalance;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
+import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.payout.PayoutEmitterService;
 import uk.gov.pay.connector.queue.payout.Payout;
@@ -228,57 +231,52 @@ public class StripeNotificationService {
     }
 
     private void processPaymentIntentNotification(StripeNotification notification) {
-        try {
-            StripePaymentIntent paymentIntent = deserialise(notification.getObject(), StripePaymentIntent.class);
+        PaymentIntent paymentIntent = ApiResource.GSON.fromJson(notification.getObject(), PaymentIntent.class);
 
-            if (isBlank(paymentIntent.getId())) {
-                logger.warn("{} payment intent notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
-                return;
-            }
+        if (isBlank(paymentIntent.getId())) {
+            logger.warn("{} payment intent notification [{}] failed verification because it has no transaction ID", PAYMENT_GATEWAY_NAME, notification);
+            return;
+        }
 
-            Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, paymentIntent.getId());
+        Optional<ChargeEntity> maybeCharge = chargeService.findByProviderAndTransactionId(PAYMENT_GATEWAY_NAME, paymentIntent.getId());
 
-            if (maybeCharge.isEmpty()) {
-                logger.info("{} notification for payment intent [{}] could not be verified (associated charge entity not found)",
-                        PAYMENT_GATEWAY_NAME, paymentIntent.getId());
-                return;
-            }
+        if (maybeCharge.isEmpty()) {
+            logger.info("{} notification for payment intent [{}] could not be verified (associated charge entity not found)",
+                    PAYMENT_GATEWAY_NAME, paymentIntent.getId());
+            return;
+        }
 
-            ChargeEntity charge = maybeCharge.get();
+        ChargeEntity charge = maybeCharge.get();
 
-            if (PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED.getType().equals(notification.getType()) &&
-                    !paymentIntent.getAmountCapturable().equals(charge.getAmount())) {
-                logger.error("{} notification for payment intent [{}] does not have amount capturable equal to original charge {}",
-                        PAYMENT_GATEWAY_NAME, paymentIntent.getId(), charge.getExternalId());
-                return;
-            }
+        if (PAYMENT_INTENT_AMOUNT_CAPTURABLE_UPDATED.getType().equals(notification.getType()) &&
+                !paymentIntent.getAmountCapturable().equals(charge.getAmount())) {
+            logger.error("{} notification for payment intent [{}] does not have amount capturable equal to original charge {}",
+                    PAYMENT_GATEWAY_NAME, paymentIntent.getId(), charge.getExternalId());
+            return;
+        }
 
-            if (isChargeIn3DSRequiredOrReadyState(ChargeStatus.fromString(charge.getStatus()))) {
-                executePost3DSAuthorisation(charge, notification.getType(), paymentIntent);
-            }
-
-        } catch (StripeParseException e) {
-            logger.error("{} notification parsing for payment intent object failed: {}", PAYMENT_GATEWAY_NAME, e);
+        if (isChargeIn3DSRequiredOrReadyState(ChargeStatus.fromString(charge.getStatus()))) {
+            executePost3DSAuthorisation(charge, notification.getType(), paymentIntent);
         }
     }
 
-    private void executePost3DSAuthorisation(ChargeEntity charge, String notificationEventType, StripePaymentIntent paymentIntent) {
+    private void executePost3DSAuthorisation(ChargeEntity charge, String notificationEventType, PaymentIntent paymentIntent) {
         try {
             final StripeNotificationType type = byType(notificationEventType);
 
             Auth3dsResult auth3DsResult = new Auth3dsResult();
             auth3DsResult.setAuth3dsResult(getMappedAuth3dsResult(type));
 
-            auth3DsResult.setGatewayResponseStringified(paymentIntent.stringify());
+            auth3DsResult.setGatewayResponseStringified(PaymentIntentStringifier.stringify(paymentIntent));
 
-            Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
-            optionalStripeCharge.ifPresent(stripeCharge -> {
+            if (paymentIntent.getCharges() != null && paymentIntent.getCharges().getData() != null && !paymentIntent.getCharges().getData().isEmpty()) {
+                Charge stripeCharge = paymentIntent.getCharges().getData().get(0);
                 if (stripeCharge.getPaymentMethodDetails() != null &&
                         stripeCharge.getPaymentMethodDetails().getCard() != null &&
                         stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure() != null) {
-                            auth3DsResult.setThreeDsVersion(stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure().getVersion());
+                    auth3DsResult.setThreeDsVersion(stripeCharge.getPaymentMethodDetails().getCard().getThreeDSecure().getVersion());
                 }
-            });
+            }
             delayFor3dsReady(charge);
             card3dsResponseAuthService.process3DSecureAuthorisationWithoutLocking(charge.getExternalId(), auth3DsResult);
         } catch (OperationAlreadyInProgressRuntimeException e) {
