@@ -21,6 +21,10 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     public static final String STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY = "customerId";
     public static final String STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY = "paymentMethodId";
 
+    private static final Map<StripeChargeStatus, BaseAuthoriseResponse.AuthoriseStatus> STATUS_MAP = Map.of(
+            StripeChargeStatus.REQUIRES_CAPTURE, BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
+            StripeChargeStatus.REQUIRES_ACTION, BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS);
+
     private final String transactionId;
     private final AuthoriseStatus authoriseStatus;
     private final String redirectUrl;
@@ -50,18 +54,13 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
     }
 
     public static StripeAuthorisationResponse of(PaymentIntent paymentIntent) {
-        Map<StripeChargeStatus, BaseAuthoriseResponse.AuthoriseStatus> statusMap = Map.of(
-                StripeChargeStatus.REQUIRES_CAPTURE, BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED,
-                StripeChargeStatus.REQUIRES_ACTION, BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS
-        );
-
         PaymentMethod.Card card = paymentIntent.getPaymentMethodObject().getCard();
         String redirectUrl = Optional.ofNullable(paymentIntent.getNextAction()).map(PaymentIntent.NextAction::getRedirectToUrl)
                 .map(PaymentIntent.NextActionRedirectToUrl::getUrl).orElse(null);
 
         return new StripeAuthorisationResponse(
                 paymentIntent.getId(),
-                statusMap.get(StripeChargeStatus.fromString(paymentIntent.getStatus())),
+                STATUS_MAP.get(StripeChargeStatus.fromString(paymentIntent.getStatus())),
                 redirectUrl,
                 PaymentIntentStringifier.stringify(paymentIntent),
                 paymentIntent.getCustomer(),
