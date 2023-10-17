@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
 import com.google.gson.JsonObject;
+import com.stripe.model.Charge;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeError;
 import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
@@ -12,8 +14,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeRefund;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeGetPaymentIntentRequest;
@@ -47,9 +47,9 @@ public class StripeRefundHandler {
         String stripeChargeId;
         try {
             if (usePaymentIntent(request)) {
-                StripePaymentIntent stripePaymentIntent = getPaymentIntent(request);
-                stripeChargeId = stripePaymentIntent.getCharge()
-                        .map(StripeCharge::getId)
+                PaymentIntent stripePaymentIntent = getPaymentIntent(request);
+                stripeChargeId = stripePaymentIntent.getCharges().getData().stream().findFirst()
+                        .map(Charge::getId)
                         .orElseThrow(() -> new GatewayException.GenericGatewayException(
                                 String.format("Stripe charge not found for payment intent id %s", request.getTransactionId()))
                         );
@@ -93,9 +93,9 @@ public class StripeRefundHandler {
         return request.getTransactionId().startsWith("pi_");
     }
     
-    private StripePaymentIntent getPaymentIntent(RefundGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+    private PaymentIntent getPaymentIntent(RefundGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         final String rawResponse = client.getRequestFor(StripeGetPaymentIntentRequest.of(request, stripeGatewayConfig)).getEntity();
-        return jsonObjectMapper.getObject(rawResponse, StripePaymentIntent.class);
+        return ApiResource.GSON.fromJson(rawResponse, PaymentIntent.class);
     }
 
     private StripeRefund refundCharge(RefundGatewayRequest request, String stripeChargeId) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {

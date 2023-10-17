@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
 import com.google.gson.JsonObject;
+import com.stripe.model.PaymentIntent;
+import com.stripe.model.PaymentIntentSearchResult;
 import com.stripe.model.StripeError;
-import com.stripe.model.StripeErrorResponse;
 import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +14,6 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
-import uk.gov.pay.connector.gateway.stripe.json.StripeSearchPaymentIntentsResponse;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.request.StripeQueryPaymentStatusRequest;
 import uk.gov.pay.connector.gateway.stripe.response.StripeQueryResponse;
@@ -45,8 +44,8 @@ public class StripeQueryPaymentStatusHandler {
                 stripeGatewayConfig, chargeQueryGatewayRequest.getChargeExternalId());
         try {
             String rawResponse = client.getRequestFor(request).getEntity();
-            StripeSearchPaymentIntentsResponse queryResponse = jsonObjectMapper.getObject(rawResponse, StripeSearchPaymentIntentsResponse.class);
-            List<StripePaymentIntent> paymentIntentList = queryResponse.getPaymentIntents();
+            PaymentIntentSearchResult queryResponse = ApiResource.GSON.fromJson(rawResponse, PaymentIntentSearchResult.class);
+            List<PaymentIntent> paymentIntentList = queryResponse.getData();
             if (paymentIntentList == null || paymentIntentList.isEmpty()) {
                 LOGGER.info("There are no payment intents for charge: [{}]", chargeQueryGatewayRequest.getChargeExternalId());
                 return new ChargeQueryResponse(GatewayError.genericGatewayError("There are no payment intents for charge"));

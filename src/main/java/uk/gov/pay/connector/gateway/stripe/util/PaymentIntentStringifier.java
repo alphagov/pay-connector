@@ -6,59 +6,11 @@ import com.stripe.model.StripeError;
 import uk.gov.pay.connector.gateway.model.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.stripe.json.LastPaymentError;
 import uk.gov.pay.connector.gateway.stripe.json.Outcome;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 
 import java.util.Optional;
 import java.util.StringJoiner;
 
 public class PaymentIntentStringifier {
-
-    @Deprecated
-    public static String stringify(StripePaymentIntent paymentIntent) {
-
-        StringJoiner joiner = new StringJoiner("");
-        StringJoiner delimitedJoiner = new StringJoiner(", ");
-        
-        joiner.add("payment intent: " + paymentIntent.getId());
-        
-        if (paymentIntent.getNextAction() != null) {
-            joiner.add("next action: " + paymentIntent.getNextAction());
-        }
-
-        Optional<StripeCharge> optionalStripeCharge = paymentIntent.getCharge();
-        optionalStripeCharge.map(charge -> {
-            joiner.add(" (");
-            if (charge.getId() != null) {
-                joiner.add("stripe charge: " + charge.getId());
-            }
-
-            paymentIntent.getLastPaymentError()
-                    .ifPresent(lastPaymentError -> appendLastPaymentErrorLogs(lastPaymentError, delimitedJoiner));
-
-            if (charge.getFailureCode() != null) {
-                delimitedJoiner.add("code: " + charge.getFailureCode());
-            }
-            if (charge.getFailureMessage() != null) {
-                delimitedJoiner.add("message: " + charge.getFailureMessage());
-            }
-            if (charge.getStatus() != null) {
-                delimitedJoiner.add("status: " + charge.getStatus());
-            }
-
-            charge.getOutcome().ifPresent(outcome -> appendOutcomeLogs(outcome, delimitedJoiner));
-
-            if (delimitedJoiner.length() > 0) {
-                joiner.add(", ");
-            }
-
-            joiner.merge(delimitedJoiner);
-            return joiner.add(")");
-        });
-
-        return joiner.toString();
-    }    
-    
     public static String stringify(PaymentIntent paymentIntent) {
 
         StringJoiner joiner = new StringJoiner("");
