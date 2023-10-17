@@ -14,7 +14,7 @@
         <liquibase.version>4.21.1</liquibase.version>
         <dropwizard.version>2.1.6</dropwizard.version>
         <wiremock.version>2.35.1</wiremock.version>
-        <eclipselink.version>2.7.11</eclipselink.version>
+        <eclipselink.version>2.7.13</eclipselink.version>
         <guice.version>5.1.0</guice.version>
         <jackson.version>2.15.2</jackson.version>
         <pay-java-commons.version>1.0.20230913114417</pay-java-commons.version>
