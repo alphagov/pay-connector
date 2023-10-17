@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.google.gson.JsonObject;
+import com.stripe.model.StripeError;
+import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -10,7 +13,6 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeRefund;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
@@ -61,7 +63,9 @@ public class StripeRefundHandler {
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {
-                StripeErrorResponse.Error error = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class).getError();
+                final JsonObject jsonObject = ApiResource.GSON.fromJson(e.getResponseFromGateway(), JsonObject.class).getAsJsonObject("error");
+                final StripeError error = ApiResource.GSON.fromJson(jsonObject, StripeError.class);
+                
                 logger.error("Refund failed for refund gateway request {}. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
                         request, error.getCode(), error.getMessage(), e.getStatus());
 

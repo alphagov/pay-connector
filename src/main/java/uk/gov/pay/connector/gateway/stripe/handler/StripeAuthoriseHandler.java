@@ -1,24 +1,9 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.TypeAdapterFactory;
 import com.google.inject.Inject;
-import com.stripe.model.EphemeralKey;
-import com.stripe.model.EphemeralKeyDeserializer;
-import com.stripe.model.EventData;
-import com.stripe.model.EventDataDeserializer;
-import com.stripe.model.EventRequest;
-import com.stripe.model.EventRequestDeserializer;
-import com.stripe.model.ExpandableField;
-import com.stripe.model.ExpandableFieldDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeError;
-import com.stripe.model.StripeObject;
-import com.stripe.model.StripeRawJsonObject;
-import com.stripe.model.StripeRawJsonObjectDeserializer;
 import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

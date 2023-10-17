@@ -1,5 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.google.gson.JsonObject;
+import com.stripe.model.StripeError;
+import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -13,7 +16,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeCharge;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSearchTransfersResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
@@ -58,9 +60,11 @@ public class StripeCaptureHandler implements CaptureHandler {
         } catch (GatewayErrorException e) {
 
             if (e.getFamily() == CLIENT_ERROR) {
-                var stripeErrorResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), StripeErrorResponse.class);
-                String errorCode = stripeErrorResponse.getError().getCode();
-                String errorMessage = stripeErrorResponse.getError().getMessage();
+                final JsonObject jsonObject = ApiResource.GSON.fromJson(e.getResponseFromGateway(), JsonObject.class).getAsJsonObject("error");
+                final StripeError stripeErrorResponse = ApiResource.GSON.fromJson(jsonObject, StripeError.class);
+                
+                String errorCode = stripeErrorResponse.getCode();
+                String errorMessage = stripeErrorResponse.getMessage();
                 LOGGER.warn("Capture failed for transaction id {}. Failure code from Stripe: {}, failure message from " +
                                 "Stripe: {}. External Charge id: {}. Response code from Stripe: {}",
                         transactionId, errorCode, errorMessage, request.getExternalId(), e.getStatus());

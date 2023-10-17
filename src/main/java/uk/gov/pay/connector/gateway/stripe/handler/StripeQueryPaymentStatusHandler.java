@@ -1,5 +1,9 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
+import com.google.gson.JsonObject;
+import com.stripe.model.StripeError;
+import com.stripe.model.StripeErrorResponse;
+import com.stripe.net.ApiResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
@@ -9,7 +13,6 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.GatewayError;
-import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
 import uk.gov.pay.connector.gateway.stripe.json.StripeSearchPaymentIntentsResponse;
 import uk.gov.pay.connector.gateway.stripe.model.StripeChargeStatus;
@@ -62,13 +65,15 @@ public class StripeQueryPaymentStatusHandler {
             }
 
             if (ex.getFamily() == CLIENT_ERROR) {
-                StripeErrorResponse stripeErrorResponse = jsonObjectMapper.getObject(ex.getResponseFromGateway(), StripeErrorResponse.class);
+                final JsonObject jsonObject = ApiResource.GSON.fromJson(ex.getResponseFromGateway(), JsonObject.class).getAsJsonObject("error");
+                final StripeError stripeErrorResponse = ApiResource.GSON.fromJson(jsonObject, StripeError.class);
+                
                 LOGGER.info("Querying payment status. Failure code from Stripe: {}, failure message from Stripe: {}. Response code from Stripe: {}",
-                        stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), ex.getStatus());
+                        stripeErrorResponse.getCode(), stripeErrorResponse.getMessage(), ex.getStatus());
 
                 throw new GatewayException.GatewayErrorException(
                         format("Querying payment status. Failure code from Stripe: %s, failure message from Stripe: %s. Response code from Stripe: %s",
-                                stripeErrorResponse.getError().getCode(), stripeErrorResponse.getError().getMessage(), ex.getStatus()));
+                                stripeErrorResponse.getCode(), stripeErrorResponse.getMessage(), ex.getStatus()));
             }
 
             LOGGER.info("Unrecognised response status when querying payment status - status={}, response={}",

@@ -1,13 +1,16 @@
 package uk.gov.pay.connector.gateway.stripe.json;
 
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.model.StripeError;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.StripeAuthorisationRejectedCodeMapper;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
+import uk.gov.pay.connector.gateway.stripe.util.PaymentIntentStringifier;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.YearMonth;
@@ -99,7 +102,28 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "Stripe authorisation failed response (", ")");
         if (stripeError != null) {
-            joiner.add(stripeError.toString());
+
+            if (StringUtils.isNotBlank(stripeError.getCharge())) {
+                joiner.add("stripe charge: " + stripeError.getCharge());
+            }
+            if (StringUtils.isNotBlank(stripeError.getType())) {
+                joiner.add("type: " + stripeError.getType());
+            }
+            if (StringUtils.isNotBlank(stripeError.getCode())) {
+                joiner.add("code: " + stripeError.getCode());
+            }
+            if (StringUtils.isNotBlank(stripeError.getMessage())) {
+                joiner.add("message: " + stripeError.getMessage());
+            }
+            PaymentIntent paymentIntent = stripeError.getPaymentIntent();
+            if (paymentIntent != null) {
+                joiner.add("payment intent: " + paymentIntent.getId());
+                if (paymentIntent.getCharges() != null && !paymentIntent.getCharges().getData().isEmpty() &&
+                        paymentIntent.getCharges().getData().get(0).getOutcome() != null) {
+                    PaymentIntentStringifier.appendOutcomeLogs(paymentIntent.getCharges().getData().get(0).getOutcome(), joiner);
+                }
+
+            }
         }
 
         return joiner.toString();
