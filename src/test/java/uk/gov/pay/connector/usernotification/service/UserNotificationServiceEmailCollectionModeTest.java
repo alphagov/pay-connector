@@ -13,6 +13,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ExecutorServiceConfig;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.SendEmailResponse;
@@ -56,6 +57,8 @@ class UserNotificationServiceEmailCollectionModeTest {
 
     @Mock
     private NotifyConfiguration notifyConfiguration;
+    @Mock
+    private TaskQueueService mockTaskQueueService;
     
     private UserNotificationService userNotificationService;
     
@@ -71,8 +74,7 @@ class UserNotificationServiceEmailCollectionModeTest {
 
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        userNotificationService = new UserNotificationService(notifyClientFactory, connectorConfig, environment);
-
+        userNotificationService = new UserNotificationService(notifyClientFactory, connectorConfig, environment, mockTaskQueueService);
     }
 
     @ParameterizedTest

@@ -151,7 +151,7 @@ public class ChargesApiResourceTest {
 
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(account));
         when(chargeService.findCharge(chargeId, accountId)).thenReturn(Optional.of(charge));
-        when(userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account))
+        when(userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true))
                 .thenReturn(Optional.empty());
 
         Response response = resources
@@ -171,7 +171,7 @@ public class ChargesApiResourceTest {
 
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(account));
         when(chargeService.findCharge(chargeId, accountId)).thenReturn(Optional.of(charge));
-        when(userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account))
+        when(userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true))
                 .thenReturn(Optional.of("Email sent"));
 
         Response response = resources
