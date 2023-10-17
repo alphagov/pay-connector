@@ -20,8 +20,10 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
+import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.service.payments.commons.queue.model.QueueMessage;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 
 @ExtendWith(MockitoExtension.class)
 class TaskQueueMessageHandlerTest {
@@ -54,10 +57,15 @@ class TaskQueueMessageHandlerTest {
     @Mock
     private DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
     @Mock
+    private RetryPaymentOrRefundEmailTaskHandler mockRetryPaymentOrRefundEmailTaskHandler;
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+
+    @Captor
+    ArgumentCaptor<RetryPaymentOrRefundEmailTaskData> retryPaymentOrRefundEmailTaskDataArgumentCaptor;
     
     private TaskQueueMessageHandler taskQueueMessageHandler;
     
@@ -73,6 +81,7 @@ class TaskQueueMessageHandlerTest {
                 stripeWebhookTaskHandler,
                 authoriseWithUserNotPresentHandler,
                 deleteStoredPaymentDetailsHandler,
+                mockRetryPaymentOrRefundEmailTaskHandler,
                 objectMapper);
 
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);
@@ -139,7 +148,21 @@ class TaskQueueMessageHandlerTest {
         verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
-    
+
+    @Test
+    void shouldProcessRetryPaymentOrRefundEmailTask() throws Exception {
+
+        TaskMessage taskMessage = setupQueueMessage("{ \"resource_external_id\": \"external-id\", \"email_notification_type\": \"PAYMENT_CONFIRMED\"}", TaskType.RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL);
+        taskQueueMessageHandler.processMessages();
+        verify(mockRetryPaymentOrRefundEmailTaskHandler).process(retryPaymentOrRefundEmailTaskDataArgumentCaptor.capture());
+
+        RetryPaymentOrRefundEmailTaskData taskData = retryPaymentOrRefundEmailTaskDataArgumentCaptor.getValue();
+        assertThat(taskData.getEmailNotificationType(), is(PAYMENT_CONFIRMED));
+        assertThat(taskData.getResourceExternalId(), is("external-id"));
+
+        verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
+    }
+
     private TaskMessage setupQueueMessage(String data, TaskType taskType) throws QueueException {
         Task paymentTask = new Task(data, taskType);
         QueueMessage mockQueueMessage = mock(QueueMessage.class);
