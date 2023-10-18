@@ -39,13 +39,13 @@ public class RetryPaymentOrRefundEmailTaskHandler {
             Charge charge = getCharge(retryPaymentOrRefundEmailTaskData.getResourceExternalId());
             GatewayAccountEntity gatewayAccountEntity = getGatewayAccountEntity(charge.getGatewayAccountId());
 
-            userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, gatewayAccountEntity);
+            userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, gatewayAccountEntity, false);
         } else if (retryPaymentOrRefundEmailTaskData.getEmailNotificationType() == REFUND_ISSUED) {
             RefundEntity refundEntity = getRefund(retryPaymentOrRefundEmailTaskData.getResourceExternalId());
             Charge charge = getCharge(refundEntity.getChargeExternalId());
             GatewayAccountEntity gatewayAccountEntity = getGatewayAccountEntity(charge.getGatewayAccountId());
 
-            userNotificationService.sendRefundIssuedEmailSynchronously(charge, gatewayAccountEntity, refundEntity);
+            userNotificationService.sendRefundIssuedEmailSynchronously(charge, gatewayAccountEntity, refundEntity, false);
         }
     }
 

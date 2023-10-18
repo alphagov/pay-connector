@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
@@ -37,16 +38,20 @@ import java.util.regex.Pattern;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OFF;
 import static uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode.OPTIONAL;
+import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.RESOURCE_EXTERNAL_ID;
 
 public class UserNotificationService {
 
     private static final Pattern LITERAL_DOLLAR_REFERENCE = Pattern.compile(Pattern.quote("$reference"));
+    private final TaskQueueService taskQueueService;
 
     private String confirmationEmailTemplateId;
     private String refundIssuedEmailTemplateId;
@@ -57,7 +62,8 @@ public class UserNotificationService {
     private final MetricRegistry metricRegistry;
 
     @Inject
-    public UserNotificationService(NotifyClientFactory notifyClientFactory, ConnectorConfiguration configuration, Environment environment) {
+    public UserNotificationService(NotifyClientFactory notifyClientFactory, ConnectorConfiguration configuration,
+                                   Environment environment, TaskQueueService taskQueueService) {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
             this.notifyClientFactory = notifyClientFactory;
@@ -65,50 +71,58 @@ public class UserNotificationService {
             executorService = Executors.newFixedThreadPool(numberOfThreads);
         }
         this.metricRegistry = environment.metrics();
+        this.taskQueueService = taskQueueService;
     }
 
     public Future<Optional<String>> sendRefundIssuedEmail(RefundEntity refundEntity, Charge charge, GatewayAccountEntity gatewayAccountEntity) {
-        return sendEmail(EmailNotificationType.REFUND_ISSUED, charge, gatewayAccountEntity,
-                buildRefundEmailPersonalisationFrom(charge, refundEntity, gatewayAccountEntity));
+        return sendEmailAsync(REFUND_ISSUED, charge, gatewayAccountEntity,
+                buildRefundEmailPersonalisationFrom(charge, refundEntity, gatewayAccountEntity),
+                refundEntity.getExternalId()
+        );
     }
 
     public Future<Optional<String>> sendPaymentConfirmedEmail(ChargeEntity chargeEntity, GatewayAccountEntity gatewayAccountEntity) {
         var charge = Charge.from(chargeEntity);
-        return sendEmail(EmailNotificationType.PAYMENT_CONFIRMED, charge, gatewayAccountEntity,
-                buildConfirmationEmailPersonalisationFrom(charge, gatewayAccountEntity));
+        return sendEmailAsync(EmailNotificationType.PAYMENT_CONFIRMED, charge, gatewayAccountEntity,
+                buildConfirmationEmailPersonalisationFrom(charge, gatewayAccountEntity), charge.getExternalId());
     }
 
-    public Optional<String> sendPaymentConfirmedEmailSynchronously(Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+    public Optional<String> sendPaymentConfirmedEmailSynchronously(Charge charge, GatewayAccountEntity gatewayAccountEntity, boolean retryOnFailure) {
         return sendEmailSynchronously(EmailNotificationType.PAYMENT_CONFIRMED, charge, gatewayAccountEntity,
-                buildConfirmationEmailPersonalisationFrom(charge, gatewayAccountEntity));
+                buildConfirmationEmailPersonalisationFrom(charge, gatewayAccountEntity), charge.getExternalId(), retryOnFailure);
     }
 
-    public Optional<String> sendRefundIssuedEmailSynchronously(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundEntity refundEntity) {
+    public Optional<String> sendRefundIssuedEmailSynchronously(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundEntity refundEntity, boolean retryOnFailure) {
         return sendEmailSynchronously(EmailNotificationType.REFUND_ISSUED, charge, gatewayAccountEntity,
-                buildRefundEmailPersonalisationFrom(charge, refundEntity, gatewayAccountEntity));
+                buildRefundEmailPersonalisationFrom(charge, refundEntity, gatewayAccountEntity),
+                refundEntity.getExternalId(), retryOnFailure);
     }
 
-    private Future<Optional<String>> sendEmail(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation) {
+    private Future<Optional<String>> sendEmailAsync(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity,
+                                                    HashMap<String, String> personalisation, String paymentOrRefundExternalId) {
         if (shouldSendEmail(emailNotificationType, charge, gatewayAccountEntity)) {
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
-            return executorService.submit(() -> sendEmailInner(emailNotificationType, charge, gatewayAccountEntity, personalisation, responseTimeStopwatch));
-        }
-        else {
+            return executorService.submit(() -> sendEmailInner(emailNotificationType, charge, gatewayAccountEntity,
+                    personalisation, responseTimeStopwatch, paymentOrRefundExternalId, true));
+        } else {
             return CompletableFuture.completedFuture(Optional.empty());
         }
     }
 
-    private Optional<String> sendEmailSynchronously(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation) {
+    private Optional<String> sendEmailSynchronously(EmailNotificationType emailNotificationType, Charge charge,
+                                                    GatewayAccountEntity gatewayAccountEntity,
+                                                    HashMap<String, String> personalisation,
+                                                    String paymentOrRefundExternalId, boolean retryOnFailure) {
         if (shouldSendEmail(emailNotificationType, charge, gatewayAccountEntity)) {
             Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
-            return sendEmailInner(emailNotificationType, charge, gatewayAccountEntity, personalisation, responseTimeStopwatch);
-        }
-        else {
+            return sendEmailInner(emailNotificationType, charge, gatewayAccountEntity, personalisation, responseTimeStopwatch, paymentOrRefundExternalId, retryOnFailure);
+        } else {
             return Optional.empty();
         }
     }
-    
-    private boolean shouldSendEmail(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+
+    private boolean shouldSendEmail(EmailNotificationType emailNotificationType, Charge
+            charge, GatewayAccountEntity gatewayAccountEntity) {
         boolean isEmailEnabled = ofNullable(gatewayAccountEntity.getEmailNotifications().get(emailNotificationType))
                 .map(EmailNotificationEntity::isEnabled)
                 .orElse(false);
@@ -120,32 +134,43 @@ public class UserNotificationService {
 
         if (doNotTrySending) {
             return false;
-        }
-        else if (noEmailAddress) {
+        } else if (noEmailAddress) {
             logger.warn("Cannot send email for charge_external_id = {} because the charge does not have an email address", charge.getExternalId());
             return false;
-        }
-        else {
+        } else {
             return true;
         }
     }
 
-    private Optional<String> sendEmailInner(EmailNotificationType emailNotificationType, Charge charge, GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation, Stopwatch responseTimeStopwatch) {
+    private Optional<String> sendEmailInner(EmailNotificationType emailNotificationType, Charge charge,
+                                            GatewayAccountEntity gatewayAccountEntity, HashMap<String, String> personalisation,
+                                            Stopwatch responseTimeStopwatch, String paymentOrRefundExternalId, boolean retryOnFailure) {
         try {
             MDC.put(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId().toString());
             MDC.put(PAYMENT_EXTERNAL_ID, charge.getExternalId());
+            MDC.put(RESOURCE_EXTERNAL_ID, paymentOrRefundExternalId);
+            MDC.put("email_notification_type", emailNotificationType.name());
             NotifyClientSettings notifyClientSettings = getNotifyClientSettings(emailNotificationType, gatewayAccountEntity);
             logger.info(format("Sending %s email.", emailNotificationType));
             SendEmailResponse response = notifyClientSettings.getClient()
                     .sendEmail(notifyClientSettings.getTemplateId(), charge.getEmail(), personalisation, null, notifyClientSettings.getEmailReplyToId());
             return Optional.of(response.getNotificationId().toString());
         } catch (NotificationClientException e) {
-            logger.error("Failed to send " + emailNotificationType + " email - charge_external_id=" + charge.getExternalId(), e);
-            metricRegistry.counter("notify-operations.failures").inc();
+            if (retryOnFailure) {
+                taskQueueService.addRetryFailedPaymentOrRefundEmailTask(paymentOrRefundExternalId, emailNotificationType);
+                logger.info("Failed to send email. Added to task queue for retrying",
+                        kv("error", e.getMessage()), e);
+            } else {
+                logger.error("Failed to send email permanently",
+                        kv("error", e.getMessage()), e);
+                metricRegistry.counter("notify-operations.failures").inc();
+            }
             return Optional.empty();
         } finally {
             MDC.remove(GATEWAY_ACCOUNT_ID);
             MDC.remove(PAYMENT_EXTERNAL_ID);
+            MDC.remove(RESOURCE_EXTERNAL_ID);
+            MDC.remove("email_notification_type");
             responseTimeStopwatch.stop();
             metricRegistry.histogram("notify-operations.response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
         }
@@ -194,11 +219,10 @@ public class UserNotificationService {
             return new NotifyClientSettings(notifyClientFactory.getInstance(), payTemplateId, null);
         }
     }
-    
-    private static boolean hasCustomTemplateAndApiKey(Map<String, String> notifySettings, String customTemplateId) {
-        return notifySettings != null  && (notifySettings.containsKey(customTemplateId) && isNotBlank(notifySettings.get("api_token")));
-    }
 
+    private static boolean hasCustomTemplateAndApiKey(Map<String, String> notifySettings, String customTemplateId) {
+        return notifySettings != null && (notifySettings.containsKey(customTemplateId) && isNotBlank(notifySettings.get("api_token")));
+    }
 
     private void readEmailConfig(ConnectorConfiguration configuration) {
         emailNotifyGloballyEnabled = configuration.getNotifyConfiguration().isEmailNotifyEnabled();

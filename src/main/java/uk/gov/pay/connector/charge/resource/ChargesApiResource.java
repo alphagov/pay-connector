@@ -226,7 +226,7 @@ public class ChargesApiResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
 
         return chargeService.findCharge(chargeId, accountId)
-                            .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account)
+                            .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true)
                             .map((reference) -> noContentResponse())
                             .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email")))
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));

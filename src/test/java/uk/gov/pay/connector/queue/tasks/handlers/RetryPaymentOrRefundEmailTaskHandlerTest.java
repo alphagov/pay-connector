@@ -99,7 +99,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
             retryPaymentOrRefundEmailTaskHandler.process(data);
 
-            verify(mockUserNotificationService).sendPaymentConfirmedEmailSynchronously(charge, gatewayAccountEntity);
+            verify(mockUserNotificationService).sendPaymentConfirmedEmailSynchronously(charge, gatewayAccountEntity, false);
         }
     }
 
@@ -174,7 +174,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
             retryPaymentOrRefundEmailTaskHandler.process(data);
 
-            verify(mockUserNotificationService).sendRefundIssuedEmailSynchronously(charge, gatewayAccountEntity, refund);
+            verify(mockUserNotificationService).sendRefundIssuedEmailSynchronously(charge, gatewayAccountEntity, refund, false);
         }
     }
 }
