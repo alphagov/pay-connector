@@ -2,8 +2,11 @@ package uk.gov.pay.connector.queue.tasks.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 
+import java.time.Instant;
 import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -13,21 +16,30 @@ public class RetryPaymentOrRefundEmailTaskData {
     @JsonProperty("email_notification_type")
     private EmailNotificationType emailNotificationType;
 
+    @JsonProperty("failed_attempt_time")
+    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    private Instant failedAttemptTime;
+
     public RetryPaymentOrRefundEmailTaskData() {
         // empty
     }
 
-    public RetryPaymentOrRefundEmailTaskData(String paymentOrRefundExternalId, EmailNotificationType emailNotificationType) {
+    public RetryPaymentOrRefundEmailTaskData(String paymentOrRefundExternalId, EmailNotificationType emailNotificationType, Instant failedAttemptTime) {
         this.resourceExternalId = paymentOrRefundExternalId;
         this.emailNotificationType = emailNotificationType;
+        this.failedAttemptTime = failedAttemptTime;
     }
 
-    public static RetryPaymentOrRefundEmailTaskData of(String paymentOrRefundExternalId, EmailNotificationType emailNotificationType) {
-        return new RetryPaymentOrRefundEmailTaskData(paymentOrRefundExternalId, emailNotificationType);
+    public static RetryPaymentOrRefundEmailTaskData of(String paymentOrRefundExternalId, EmailNotificationType emailNotificationType, Instant failedAttemptTime) {
+        return new RetryPaymentOrRefundEmailTaskData(paymentOrRefundExternalId, emailNotificationType, failedAttemptTime);
     }
 
     public String getResourceExternalId() {
         return resourceExternalId;
+    }
+
+    public Instant getFailedAttemptTime() {
+        return failedAttemptTime;
     }
 
     public EmailNotificationType getEmailNotificationType() {

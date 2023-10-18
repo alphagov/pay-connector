@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -27,15 +29,19 @@ import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -44,6 +50,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.queue.tasks.TaskType.DELETE_STORED_PAYMENT_DETAILS;
 import static uk.gov.pay.connector.queue.tasks.TaskType.RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL;
+import static uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData.of;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,6 +59,8 @@ class TaskQueueServiceTest {
     @Mock
     private TaskQueue mockTaskQueue;
 
+    @Mock
+    private ConnectorConfiguration mockConnectorConfiguration;
     private TaskQueueService taskQueueService;
 
     @Mock
@@ -66,7 +75,10 @@ class TaskQueueServiceTest {
 
     @BeforeEach
     void setUp() {
-        taskQueueService = new TaskQueueService(mockTaskQueue, objectMapper);
+        SqsConfig mockSqsConfig = mock(SqsConfig.class);
+        when(mockConnectorConfiguration.getSqsConfig()).thenReturn(mockSqsConfig);
+        when(mockSqsConfig.getMaxAllowedDeliveryDelay()).thenReturn(100);
+        taskQueueService = new TaskQueueService(mockTaskQueue, objectMapper, mockConnectorConfiguration);
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueService.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockAppender);
@@ -276,16 +288,18 @@ class TaskQueueServiceTest {
         ArgumentCaptor<Task> taskArgumentCaptor;
         private final String externalId = "external-id-1";
 
+        private Clock clock = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+
         @Test
         void shouldAddRetryFailedPaymentOrRefundEmailTaskToQueue() throws QueueException, JsonProcessingException {
 
-            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(externalId, PAYMENT_CONFIRMED);
+            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(externalId, PAYMENT_CONFIRMED, clock.instant()));
 
-            verify(mockTaskQueue).addTaskToQueue(taskArgumentCaptor.capture(), eq(900));
+            verify(mockTaskQueue).addTaskToQueue(taskArgumentCaptor.capture(), eq(100));
 
             Task task = taskArgumentCaptor.getValue();
             assertThat(task.getTaskType(), is(RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL));
-            assertThat(task.getData(), is("{\"resource_external_id\":\"external-id-1\",\"email_notification_type\":\"PAYMENT_CONFIRMED\"}"));
+            assertThat(task.getData(), is("{\"resource_external_id\":\"external-id-1\",\"email_notification_type\":\"PAYMENT_CONFIRMED\",\"failed_attempt_time\":\"2020-01-01T10:10:10.100Z\"}"));
 
             verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
             LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
@@ -297,7 +311,7 @@ class TaskQueueServiceTest {
         void shouldLogErrorForFailedTaskAddition() throws QueueException, JsonProcessingException {
             doThrow(new QueueException("Something went wrong")).when(mockTaskQueue).addTaskToQueue(any());
 
-            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(externalId, PAYMENT_CONFIRMED);
+            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(externalId, PAYMENT_CONFIRMED, clock.instant()));
 
             verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
             LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();

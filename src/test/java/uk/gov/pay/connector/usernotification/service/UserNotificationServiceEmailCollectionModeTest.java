@@ -18,6 +18,7 @@ import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.service.notify.NotificationClient;
 import uk.gov.service.notify.SendEmailResponse;
 
+import java.time.Clock;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -74,7 +75,7 @@ class UserNotificationServiceEmailCollectionModeTest {
 
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        userNotificationService = new UserNotificationService(notifyClientFactory, connectorConfig, environment, mockTaskQueueService);
+        userNotificationService = new UserNotificationService(notifyClientFactory, connectorConfig, environment, mockTaskQueueService, Clock.systemUTC());
     }
 
     @ParameterizedTest

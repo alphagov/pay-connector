@@ -24,6 +24,10 @@ public class SqsConfig extends Configuration {
     private int messageMaximumWaitTimeInSeconds;
     @Max(10)
     private int messageMaximumBatchSize;
+
+    @Max(900)
+    private int maxAllowedDeliveryDelay;
+
     private String eventQueueUrl;
 
     private String taskQueueUrl;
@@ -58,6 +62,10 @@ public class SqsConfig extends Configuration {
 
     public int getMessageMaximumBatchSize() {
         return messageMaximumBatchSize;
+    }
+
+    public int getMaxAllowedDeliveryDelay() {
+        return maxAllowedDeliveryDelay;
     }
 
     public String getEventQueueUrl() {

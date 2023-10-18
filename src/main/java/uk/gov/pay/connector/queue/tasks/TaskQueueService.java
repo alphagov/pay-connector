@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -16,7 +17,6 @@ import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
@@ -34,13 +34,15 @@ public class TaskQueueService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final TaskQueue taskQueue;
     private final ObjectMapper objectMapper;
-
+    private final int maxAllowedDeliveryDelay;
 
     @Inject
     public TaskQueueService(TaskQueue taskQueue,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper,
+                            ConnectorConfiguration connectorConfiguration) {
         this.taskQueue = taskQueue;
         this.objectMapper = objectMapper;
+        maxAllowedDeliveryDelay = connectorConfiguration.getSqsConfig().getMaxAllowedDeliveryDelay();
     }
 
     public void offerTasksOnStateTransition(ChargeEntity chargeEntity) {
@@ -123,14 +125,14 @@ public class TaskQueueService {
         }
     }
 
-    public void addRetryFailedPaymentOrRefundEmailTask(String paymentOrRefundExternalId, EmailNotificationType emailNotificationType) {
+    public void addRetryFailedPaymentOrRefundEmailTask(RetryPaymentOrRefundEmailTaskData taskData) {
         try {
-            MDC.put(RESOURCE_EXTERNAL_ID, paymentOrRefundExternalId);
-            MDC.put("email_notification_type", emailNotificationType.name());
+            MDC.put(RESOURCE_EXTERNAL_ID, taskData.getResourceExternalId());
+            MDC.put("email_notification_type", taskData.getEmailNotificationType().name());
 
-            String data = objectMapper.writeValueAsString(RetryPaymentOrRefundEmailTaskData.of(paymentOrRefundExternalId, emailNotificationType));
+            String data = objectMapper.writeValueAsString(taskData);
             Task task = new Task(data, RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL);
-            taskQueue.addTaskToQueue(task, 900);
+            taskQueue.addTaskToQueue(task, maxAllowedDeliveryDelay);
 
             logger.info("Added retry failed payment or refund email task message to queue");
         } catch (Exception e) {
