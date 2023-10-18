@@ -216,6 +216,7 @@ notifyConfig:
   refundIssuedEmailTemplateId: ${NOTIFY_REFUND_ISSUED_EMAIL_TEMPLATE_ID}
   notificationBaseURL: ${NOTIFY_BASE_URL:-https://api.notifications.service.gov.uk}
   emailNotifyEnabled: ${NOTIFY_EMAIL_ENABLED:-false}
+  retryFailedEmailAfterSeconds: ${NOTIFY_RETRY_FAILED_EMAIL_AFTER_SECONDS:-3600}
 
 graphiteHost: ${METRICS_HOST:-localhost}
 graphitePort: ${METRICS_PORT:-8092}

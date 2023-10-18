@@ -12,6 +12,8 @@ public class NotifyConfiguration extends Configuration {
     private String notificationBaseURL;
     private boolean emailNotifyEnabled;
 
+    private long retryFailedEmailAfterSeconds;
+
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     public String getEmailTemplateId() {
@@ -32,5 +34,9 @@ public class NotifyConfiguration extends Configuration {
 
     public String getRefundIssuedEmailTemplateId() {
         return refundIssuedEmailTemplateId;
+    }
+
+    public long getRetryFailedEmailAfterSeconds() {
+        return retryFailedEmailAfterSeconds;
     }
 }

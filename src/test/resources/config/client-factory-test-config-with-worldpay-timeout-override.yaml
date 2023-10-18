@@ -160,6 +160,7 @@ notifyConfig:
   apiKey: ${NOTIFY_API_KEY:-pay-notify-api-key}
   notificationBaseURL: https://stubs.pymnt.localdomain
   emailNotifyEnabled: false
+  retryFailedEmailAfterSeconds: 3600
 
 graphiteHost: ${METRICS_HOST:-localhost}
 graphitePort: ${METRICS_PORT:-8092}
