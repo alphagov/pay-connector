@@ -17,6 +17,9 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -59,7 +62,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
         @Test
         void shouldThrowExceptionIfChargeIsNotFound() {
-            var data = of(paymentExternalId, PAYMENT_CONFIRMED);
+            var data = of(paymentExternalId, PAYMENT_CONFIRMED, Instant.parse("2020-01-01T09:10:10.100Z"));
 
             when(mockChargeService.findCharge(paymentExternalId))
                     .thenThrow(new ChargeNotFoundRuntimeException(paymentExternalId));
@@ -71,7 +74,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
         @Test
         void shouldThrowExceptionIfGatewayAccountIsNotFound() {
-            var data = of(paymentExternalId, PAYMENT_CONFIRMED);
+            var data = of(paymentExternalId, PAYMENT_CONFIRMED, Instant.parse("2020-01-01T09:10:10.100Z"));
 
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withId(1L).build();
             Charge charge = Charge.from(aValidChargeEntity()
@@ -87,7 +90,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
         @Test
         void shouldSendEmailForPaymentConfirmedNotificationType() {
-            var data = of(paymentExternalId, PAYMENT_CONFIRMED);
+            var data = of(paymentExternalId, PAYMENT_CONFIRMED, Instant.parse("2020-01-01T09:10:10.100Z"));
 
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withId(1L).build();
             Charge charge = Charge.from(aValidChargeEntity()
@@ -116,7 +119,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
         @Test
         void shouldThrowExceptionIfChargeIsNotFound() {
-            var data = of(refundExternalId, REFUND_ISSUED);
+            var data = of(refundExternalId, REFUND_ISSUED, Instant.parse("2020-01-01T09:10:10.100Z"));
 
 
             when(mockChargeService.findCharge(paymentExternalId))
@@ -129,7 +132,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
         @Test
         void shouldThrowExceptionIfGatewayAccountIsNotFound() {
-            var data = of(refundExternalId, REFUND_ISSUED);
+            var data = of(refundExternalId, REFUND_ISSUED, Instant.parse("2020-01-01T09:10:10.100Z"));
 
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withId(1L).build();
             Charge charge = Charge.from(aValidChargeEntity()
@@ -145,7 +148,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
         @Test
         void shouldThrowExceptionIfRefundIsNotFound() {
-            var data = of(refundExternalId, REFUND_ISSUED);
+            var data = of(refundExternalId, REFUND_ISSUED, Instant.parse("2020-01-01T09:10:10.100Z"));
 
             when(mockRefundService.findRefundByExternalId(refundExternalId))
                     .thenThrow(new RefundNotFoundRuntimeException(refundExternalId));
@@ -157,7 +160,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
         @Test
         void shouldSendEmailForRefundConfirmedNotificationType() {
-            var data = of(refundExternalId, REFUND_ISSUED);
+            var data = of(refundExternalId, REFUND_ISSUED, Instant.parse("2020-01-01T09:10:10.100Z"));
 
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withId(1L).build();
             Charge charge = Charge.from(aValidChargeEntity()

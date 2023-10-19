@@ -94,6 +94,7 @@ sqsConfig:
   accessKey: ${AWS_ACCESS_KEY:-access-key}
   messageMaximumWaitTimeInSeconds: ${AWS_SQS_MESSAGE_MAXIMUM_WAIT_TIME_IN_SECONDS:-20}
   messageMaximumBatchSize: ${AWS_SQS_MESSAGE_MAXIMUM_BATCH_SIZE:-10}
+  maxAllowedDeliveryDelayInSeconds: 900
 
 jerseyClient:
   timeout: 500ms
