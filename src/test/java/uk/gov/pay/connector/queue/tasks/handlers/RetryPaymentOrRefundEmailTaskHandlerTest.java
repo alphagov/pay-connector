@@ -6,12 +6,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.exception.RefundNotFoundRuntimeException;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -22,8 +25,11 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 
+import static java.time.temporal.ChronoUnit.DAYS;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -42,18 +48,33 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
     private RefundService mockRefundService;
     @Mock
     private ChargeService mockChargeService;
+
+    @Mock
+    private TaskQueueService mockTaskQueueService;
+
+    @Mock
+    private ConnectorConfiguration mockConnectorConfiguration;
     private final String paymentExternalId = "payment-external-id";
     private final String refundExternalId = "refund-external-id";
 
     private RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler;
 
+    private Clock clock = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+
     @BeforeEach
     void setup() {
+        NotifyConfiguration mockNotifyConfiguration = mock(NotifyConfiguration.class);
+        when(mockNotifyConfiguration.getRetryFailedEmailAfterSeconds()).thenReturn(10L);
+        when(mockConnectorConfiguration.getNotifyConfiguration()).thenReturn(mockNotifyConfiguration);
+        
         retryPaymentOrRefundEmailTaskHandler = new RetryPaymentOrRefundEmailTaskHandler(
                 mockChargeService,
                 mockRefundService,
                 mockGatewayAccountService,
-                mockUserNotificationService
+                mockUserNotificationService,
+                mockTaskQueueService,
+                mockConnectorConfiguration,
+                clock
         );
     }
 
@@ -179,5 +200,29 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
             verify(mockUserNotificationService).sendRefundIssuedEmailSynchronously(charge, gatewayAccountEntity, refund, false);
         }
+    }
+
+    @Test
+    void shouldAddTaskToTheTaskQueueIfTimeElapsedIsLessThanConfiguration() {
+        NotifyConfiguration mockNotifyConfiguration = mock(NotifyConfiguration.class);
+        when(mockNotifyConfiguration.getRetryFailedEmailAfterSeconds()).thenReturn(10L);
+        when(mockConnectorConfiguration.getNotifyConfiguration()).thenReturn(mockNotifyConfiguration);
+
+        retryPaymentOrRefundEmailTaskHandler = new RetryPaymentOrRefundEmailTaskHandler(
+                mockChargeService,
+                mockRefundService,
+                mockGatewayAccountService,
+                mockUserNotificationService,
+                mockTaskQueueService,
+                mockConnectorConfiguration,
+                Clock.fixed(Instant.parse("2020-01-01T10:10:30.100Z"), ZoneOffset.UTC)
+        );
+
+        var data = of(paymentExternalId, PAYMENT_CONFIRMED, Instant.parse("2020-01-01T10:10:25.100Z"));
+
+        retryPaymentOrRefundEmailTaskHandler.process(data);
+
+        verify(mockTaskQueueService).addRetryFailedPaymentOrRefundEmailTask(data);
+        verifyNoMoreInteractions(mockUserNotificationService);
     }
 }
