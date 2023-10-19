@@ -42,7 +42,7 @@ public class TaskQueueService {
                             ConnectorConfiguration connectorConfiguration) {
         this.taskQueue = taskQueue;
         this.objectMapper = objectMapper;
-        maxAllowedDeliveryDelay = connectorConfiguration.getSqsConfig().getMaxAllowedDeliveryDelay();
+        maxAllowedDeliveryDelay = connectorConfiguration.getSqsConfig().getMaxAllowedDeliveryDelayInSeconds();
     }
 
     public void offerTasksOnStateTransition(ChargeEntity chargeEntity) {

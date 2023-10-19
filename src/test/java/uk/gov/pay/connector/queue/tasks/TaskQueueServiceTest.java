@@ -77,7 +77,7 @@ class TaskQueueServiceTest {
     void setUp() {
         SqsConfig mockSqsConfig = mock(SqsConfig.class);
         when(mockConnectorConfiguration.getSqsConfig()).thenReturn(mockSqsConfig);
-        when(mockSqsConfig.getMaxAllowedDeliveryDelay()).thenReturn(100);
+        when(mockSqsConfig.getMaxAllowedDeliveryDelayInSeconds()).thenReturn(100);
         taskQueueService = new TaskQueueService(mockTaskQueue, objectMapper, mockConnectorConfiguration);
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueService.class);
         logger.setLevel(Level.INFO);
