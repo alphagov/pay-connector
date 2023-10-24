@@ -411,7 +411,7 @@ class CardResourceTest {
     }
     
     @Test
-    void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
+    void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong_WorldpaySpecificEndpoint() throws JsonProcessingException {
         String payloadStr = fixture("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
@@ -423,7 +423,7 @@ class CardResourceTest {
     }
 
     @Test
-    void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
+    void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong_WorldpaySpecificEndpoint() throws JsonProcessingException {
         String payloadStr = fixture("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
@@ -435,7 +435,7 @@ class CardResourceTest {
     }
 
     @Test
-    void authoriseGooglePayWorldpayShouldReturn422IfSignedMessageIsEmpty() throws JsonProcessingException {
+    void authoriseGooglePayWorldpayShouldReturn422IfSignedMessageIsEmpty_WorldpaySpecificEndpoint() throws JsonProcessingException {
         String payloadStr = fixture("googlepay/example-auth-request.json").replace("aSignedMessage", "");
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
@@ -447,7 +447,7 @@ class CardResourceTest {
     }
 
     @Test
-    void authoriseGooglePayWorldpayShouldReturn422IfSignatureIsEmpty() throws JsonProcessingException {
+    void authoriseGooglePayWorldpayShouldReturn422IfSignatureIsEmpty_WorldpaySpecificEndpoint() throws JsonProcessingException {
         String payloadStr = fixture("googlepay/example-auth-request.json").replace("MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl", "");
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
@@ -459,7 +459,7 @@ class CardResourceTest {
     }
 
     @Test
-    void authoriseGooglePayStripeShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
+    void authoriseGooglePayStripeShouldReturn422IfCardholderNameIsTooLong_StripeSpecificEndpoint() throws JsonProcessingException {
         String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("Example Name", "A".repeat(256));
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
@@ -471,11 +471,83 @@ class CardResourceTest {
     }
 
     @Test
-    void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
+    void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong_StripeSpecificEndpoint() throws JsonProcessingException {
         String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google/stripe")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+    }
+
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+    }
+
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+    }
+
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfSignedMessageIsEmpty() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("aSignedMessage", "");
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Field [signed_message] must not be empty");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+    }
+
+    @Test
+    void authoriseGooglePayWorldpayShouldReturn422IfSignatureIsEmpty() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request.json").replace("MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl", "");
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Field [signature] must not be empty");
+        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+    }
+
+    @Test
+    void authoriseGooglePayStripeShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("Example Name", "A".repeat(256));
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
+                .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
+
+        verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
+        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+    }
+
+    @Test
+    void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
+        String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
+        JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
+
+        Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");

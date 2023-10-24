@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import javax.validation.constraints.NotEmpty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "only required for Worldpay and Sandbox payments")
 public class GooglePayEncryptedPaymentData {
     @NotEmpty(message= "Field [signed_message] must not be empty")
     @Schema(hidden = true)

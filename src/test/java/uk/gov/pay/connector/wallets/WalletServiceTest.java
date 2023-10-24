@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
@@ -40,6 +41,9 @@ public class WalletServiceTest {
 
     @Mock
     private WalletAuthoriseService mockWalletAuthoriseService;
+    
+    @Mock
+    private ChargeService mockChargeService;
 
     @Mock
     private WorldpayOrderStatusResponse worldpayResponse;
@@ -48,7 +52,7 @@ public class WalletServiceTest {
 
     @BeforeEach
     void setUp() {
-        walletService = new WalletService(mockWalletAuthoriseService);
+        walletService = new WalletService(mockWalletAuthoriseService, mockChargeService);
     }
 
     @Test

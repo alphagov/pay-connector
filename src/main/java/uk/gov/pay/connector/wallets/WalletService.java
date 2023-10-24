@@ -2,10 +2,14 @@ package uk.gov.pay.connector.wallets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
+import uk.gov.pay.connector.wallets.googlepay.api.GenericGooglePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -19,9 +23,12 @@ public class WalletService {
 
     private WalletAuthoriseService authoriseService;
 
+    private final ChargeService chargeService;
+
     @Inject
-    public WalletService(WalletAuthoriseService authoriseService) {
+    public WalletService(WalletAuthoriseService authoriseService, ChargeService chargeService) {
         this.authoriseService = authoriseService;
+        this.chargeService = chargeService;
     }
 
     public Response authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
@@ -34,6 +41,18 @@ public class WalletService {
                 .orElseGet(() -> response.getBaseResponse().map(this::handleAuthorisationResponse)
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
 
+    }
+
+    public Response convertAndAuthorise(String chargeId, GenericGooglePayAuthRequest genericGooglePayAuthRequest) {
+        ChargeEntity chargeEntity = chargeService.findChargeByExternalId(chargeId);
+        switch(chargeEntity.getPaymentGatewayName()) {
+            case WORLDPAY: 
+                return authorise(chargeId, genericGooglePayAuthRequest.toWorldpayGooglePayAuthRequest());
+            case STRIPE: 
+                return authorise(chargeId, genericGooglePayAuthRequest.toStripeGooglePayAuthRequest());
+            default: 
+                throw new RuntimeException("payment provider not supported");
+        }
     }
 
     private Response handleAuthorisationResponse(BaseAuthoriseResponse baseAuthoriseResponse) {
@@ -58,4 +77,6 @@ public class WalletService {
                 return gatewayErrorResponse(error.getMessage());
         }
     }
+
+    
 }
