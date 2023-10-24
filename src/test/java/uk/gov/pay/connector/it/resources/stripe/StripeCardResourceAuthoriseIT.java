@@ -66,6 +66,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonGooglePayAuthorisationDetails;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
+import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
 import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePayStripe;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
@@ -347,7 +348,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldAuthoriseGooglePayPayment() {
+    public void shouldAuthoriseGooglePayPayment_StripeSpecificEndpoint() {
         stripeMockClient.mockCreatePaymentIntent();
 
         addGatewayAccount();
@@ -375,7 +376,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldRejectGooglePayPayment_andSaveCardDetails() {
+    public void shouldRejectGooglePayPayment_andSaveCardDetails_StripeSpecificEndpoint() {
         stripeMockClient.mockCreatePaymentIntentAuthorisationRejected();
 
         addGatewayAccount();
@@ -402,7 +403,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldReturnStatusAsRequires3dsForGooglePay() {
+    public void shouldReturnStatusAsRequires3dsForGooglePay_StripeSpecificEndpoint() {
         stripeMockClient.mockCreatePaymentIntentRequiring3DS();
 
         addGatewayAccount();
@@ -429,7 +430,7 @@ public class StripeCardResourceAuthoriseIT {
     }
     
     @Test
-    public void shouldReturnStatusAsAuthorisationErrorForGooglePay() {
+    public void shouldReturnStatusAsAuthorisationErrorForGooglePay_StripeSpecificEndpoint() {
         stripeMockClient.mockCreatePaymentIntentAuthorisationError();
 
         addGatewayAccount();
@@ -440,6 +441,115 @@ public class StripeCardResourceAuthoriseIT {
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
                 .post(authoriseChargeUrlForGooglePayStripe(chargeId))
+                .then()
+                .statusCode(402);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_ERROR.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is(nullValue()));
+    }
+
+    @Test
+    public void shouldAuthoriseGooglePayPayment() {
+        stripeMockClient.mockCreatePaymentIntent();
+
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(googlePayAuthorisationRequest)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .then()
+                .statusCode(200)
+                .body("status", is(AUTHORISATION_SUCCESS.toString()));
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_SUCCESS.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is("08/24"));
+    }
+
+    @Test
+    public void shouldRejectGooglePayPayment_andSaveCardDetails() {
+        stripeMockClient.mockCreatePaymentIntentAuthorisationRejected();
+
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(googlePayAuthorisationRequest)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .then()
+                .statusCode(400);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_REJECTED.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is("08/24"));;
+    }
+
+    @Test
+    public void shouldReturnStatusAsRequires3dsForGooglePay() {
+        stripeMockClient.mockCreatePaymentIntentRequiring3DS();
+
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(googlePayAuthorisationRequest)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .then()
+                .statusCode(200);
+
+        connectorRestApiClient
+                .withChargeId(chargeId)
+                .getFrontendCharge()
+                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
+                .body("email", is("foo@example.com"))
+                .body("card_details.cardholder_name", is("Someone"))
+                .body("card_details.last_digits_card_number", is("4242"))
+                .body("card_details.card_type", is("debit"))
+                .body("card_details.card_brand", is("Visa"))
+                .body("card_details.expiry_date", is("08/24"));
+    }
+
+    @Test
+    public void shouldReturnStatusAsAuthorisationErrorForGooglePay() {
+        stripeMockClient.mockCreatePaymentIntentAuthorisationError();
+
+        addGatewayAccount();
+        String chargeId = addCharge();
+        String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
+
+        given().port(testContext.getPort())
+                .contentType(JSON)
+                .body(googlePayAuthorisationRequest)
+                .post(authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(402);
 
