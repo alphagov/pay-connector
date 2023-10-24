@@ -1999,4 +1999,9 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="drop gin indexes" author="">
+        <dropIndex indexName="idx_lower_charges_cardholder_name_gin_idx" tableName="charges"/>
+        <dropIndex indexName="idx_lower_charges_email_gin_idx" tableName="charges"/>
+        <dropIndex indexName="idx_lower_charges_reference_gin_idx" tableName="charges"/>
+    </changeSet>
 </databaseChangeLog>
