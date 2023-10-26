@@ -51,7 +51,7 @@ public class WalletService {
             case STRIPE: 
                 return authorise(chargeId, genericGooglePayAuthRequest.toStripeGooglePayAuthRequest());
             default: 
-                throw new RuntimeException("payment provider not supported");
+                throw new UnsupportedOperationException("Payment provider not supported");
         }
     }
 
