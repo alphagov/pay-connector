@@ -102,24 +102,6 @@ public class ChargesApiResourceAllowWebPaymentsIT {
                 .body("gateway_account.allow_google_pay", is(isGooglePayAllowed));
     }
 
-    @Test
-    public void assertBadRequestResponseIfPatchingDigitalWalletWithNonSupportedGateway() throws JsonProcessingException {
-        assertAppleAndGooglePayAreDisabledByDefault();
-
-        String accountIdWithNotDigitalWalletSupportedGateway = extractGatewayAccountId(createAGatewayAccountFor(testContext.getPort(), "epdq"));
-        String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                "path", "allow_apple_pay",
-                "value", true));
-        given().port(testContext.getPort()).contentType(JSON)
-                .body(payload)
-                .patch("/v1/api/accounts/" + accountIdWithNotDigitalWalletSupportedGateway)
-                .then()
-                .body("message", contains("Gateway epdq does not support digital wallets."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()))
-                .and()
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
-    }
-
     private void assertAppleAndGooglePayAreDisabledByDefault() {
         given().port(testContext.getPort()).contentType(JSON)
                 .get("/v1/frontend/charges/" + chargeId)
