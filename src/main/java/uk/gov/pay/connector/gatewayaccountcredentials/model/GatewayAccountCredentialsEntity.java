@@ -180,7 +180,8 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     }
 
     public void setCredentials(GatewayCredentials credentials) {
-        this.credentials = objectMapper.convertValue(credentials, new TypeReference<Map<String, Object>>() {});
+        this.credentials = objectMapper.convertValue(credentials, new TypeReference<>() {
+        });
     }
 
     public void setState(GatewayAccountCredentialState state) {

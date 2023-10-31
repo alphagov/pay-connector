@@ -27,9 +27,12 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -64,13 +67,46 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
+    public void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
+        GatewayAccountEntity account = new GatewayAccountEntity(TEST);
+        account.setExternalId(randomUuid());
+        GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withCredentials(Map.of())
+                .withState(ACTIVE)
+                .build();
+        account.setGatewayAccountCredentials(List.of(gatewayAccountCredentials));
+
+        NotificationCredentials notificationCredentials = new NotificationCredentials(account);
+        notificationCredentials.setPassword("password");
+        notificationCredentials.setUserName("username");
+        account.setNotificationCredentials(notificationCredentials);
+
+        gatewayAccountDao.persist(account);
+
+        GatewayAccountEntity accountToUpdate = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
+        
+        assertFalse(accountToUpdate.isDisabled());
+        var gatewayAccountCredentialsEntity = accountToUpdate.getGatewayAccountCredentialsEntity(WORLDPAY.getName());
+        assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
+        assertThat(accountToUpdate.getNotificationCredentials(), not(nullValue()));
+
+        accountToUpdate.setDisabled(true);
+        accountToUpdate.setNotificationCredentials(null);
+        
+        gatewayAccountDao.merge(accountToUpdate);
+
+        GatewayAccountEntity updatedAccount = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
+        assertTrue(updatedAccount.isDisabled());
+        assertNull(updatedAccount.getNotificationCredentials());
+    }
+    
+    @Test
     public void persist_shouldCreateAnAccount() {
         final CardTypeEntity masterCardCredit = databaseTestHelper.getMastercardCreditCard();
         final CardTypeEntity visaCardDebit = databaseTestHelper.getVisaCreditCard();
 
-        createAccountRecordWithCards();
-
-        String paymentProvider = "test provider";
         GatewayAccountEntity account = new GatewayAccountEntity(TEST);
 
         account.setExternalId(randomUuid());
