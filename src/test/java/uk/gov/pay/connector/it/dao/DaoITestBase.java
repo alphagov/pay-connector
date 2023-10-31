@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import com.spotify.docker.client.exceptions.DockerException;
 import liquibase.Liquibase;
@@ -23,6 +24,7 @@ abstract public class DaoITestBase {
 
     protected static DatabaseTestHelper databaseTestHelper;
     protected static GuicedTestEnvironment env;
+    protected static ObjectMapper objectMapper = new ObjectMapper();
     
     private static String CHANGE_LOG_FILE = "it-migrations.xml";
 

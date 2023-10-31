@@ -126,7 +126,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Enumerated(EnumType.STRING)
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
 
-    @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private NotificationCredentials notificationCredentials;
 
     @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)

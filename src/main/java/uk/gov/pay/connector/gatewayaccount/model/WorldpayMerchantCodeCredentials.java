@@ -14,6 +14,8 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class WorldpayMerchantCodeCredentials {
 
+    public static final String DELETED = "<DELETED>";
+    
     @JsonView({GatewayCredentials.Views.Api.class})
     private String merchantCode;
     @JsonView({GatewayCredentials.Views.Api.class})
@@ -29,6 +31,11 @@ public class WorldpayMerchantCodeCredentials {
         this.merchantCode = merchantCode;
         this.username = username;
         this.password = password;
+    }
+    
+    public void redactSensitiveInformation() {
+        username = DELETED;
+        password = DELETED;
     }
 
     public String getMerchantCode() {

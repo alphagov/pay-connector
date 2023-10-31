@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.it.dao.DaoITestBase;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
@@ -21,8 +22,16 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials.DELETED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
@@ -146,17 +155,23 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldPersistHistory() {
+    public void shouldPersistHistory() throws Exception {
         long gatewayAccountId = nextLong();
         String externalCredentialId = randomUuid();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());
         var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+
+        Map<String, Object> credentials = Map.of(
+                ONE_OFF_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, "a-merchant-code-1", CREDENTIALS_PASSWORD, "passw0rd1"),
+                RECURRING_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-2", CREDENTIALS_USERNAME, "a-merchant-code-2", CREDENTIALS_PASSWORD, "passw0rd1"),
+                RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, "a-merchant-code-3", CREDENTIALS_PASSWORD, "passw0rd1")
+        );
         var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
-                .withCredentials(Map.of())
+                .withCredentials(credentials)
                 .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider(STRIPE.getName())
+                .withPaymentProvider(WORLDPAY.getName())
                 .withState(ACTIVE)
                 .build();
         gatewayAccountCredentialsEntity.setExternalId(externalCredentialId);
@@ -171,8 +186,15 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         assertThat(historyRows.get(0).get("state"), is("ACTIVE"));
         assertThat(historyRows.get(0).get("history_start_date"), not(nullValue()));
         assertThat(historyRows.get(0).get("history_end_date"), is(nullValue()));
+        assertEquals(objectMapper.readValue(historyRows.get(0).get("credentials").toString(), Map.class), credentials);
         
         gatewayAccountCredentialsEntity.setState(RETIRED);
+        WorldpayCredentials worldpayCredentials = (WorldpayCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
+        worldpayCredentials.getRecurringCustomerInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
+        worldpayCredentials.getOneOffCustomerInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
+        worldpayCredentials.getRecurringMerchantInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
+        gatewayAccountCredentialsEntity.setCredentials(worldpayCredentials);
+
         gatewayAccountCredentialsDao.merge(gatewayAccountCredentialsEntity);
 
         List<Map<String, Object>> historyRowsAfterUpdate = databaseTestHelper.getGatewayAccountCredentialsHistory(credentialsId);
@@ -180,8 +202,15 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
         assertThat(historyRowsAfterUpdate.get(0).get("state"), is("ACTIVE"));
         assertThat(historyRowsAfterUpdate.get(0).get("history_start_date"), not(nullValue()));
         assertThat(historyRowsAfterUpdate.get(0).get("history_end_date"), not(nullValue()));
+        assertEquals(objectMapper.readValue(historyRowsAfterUpdate.get(0).get("credentials").toString(), Map.class), credentials);
         assertThat(historyRowsAfterUpdate.get(1).get("state"), is("RETIRED"));
         assertThat(historyRowsAfterUpdate.get(1).get("history_start_date"), not(nullValue()));
         assertThat(historyRowsAfterUpdate.get(1).get("history_end_date"), is(nullValue()));
+        Map<String, Object> expectedCredentials = Map.of(
+                ONE_OFF_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED),
+                RECURRING_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-2", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED),
+                RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED)
+        );
+        assertEquals(objectMapper.readValue(historyRowsAfterUpdate.get(1).get("credentials").toString(), Map.class), expectedCredentials);
     }
 }
