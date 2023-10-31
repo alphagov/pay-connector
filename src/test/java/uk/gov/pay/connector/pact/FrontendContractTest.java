@@ -8,22 +8,37 @@ import au.com.dius.pact.provider.junit.loader.PactBrokerAuth;
 import au.com.dius.pact.provider.junit.target.HttpTarget;
 import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.pact.util.GatewayAccountUtil.setUpGatewayAccount;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -35,10 +50,16 @@ public class FrontendContractTest {
     @ClassRule
     public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule();
 
+    @ClassRule
+    public static WireMockRule wireMockRule = new WireMockRule(app.getWireMockPort());
+    
     @TestTarget
     public static Target target;
     private static DatabaseTestHelper dbHelper;
-
+    
+    private StripeMockClient stripeMockClient;
+    private WorldpayMockClient worldpayMockClient;
+    
     @BeforeClass
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
@@ -48,6 +69,8 @@ public class FrontendContractTest {
     @Before
     public void refreshDatabase() {
         dbHelper.truncateAllData();
+        stripeMockClient = new StripeMockClient(wireMockRule);
+        worldpayMockClient = new WorldpayMockClient(wireMockRule);
     }
     
     @State(("an unused token testToken exists with external charge id chargeExternalId associated with it"))
@@ -63,7 +86,7 @@ public class FrontendContractTest {
         
         dbHelper.addToken(params.getChargeId(), "testToken", false);
     }
-
+    
     @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
     public void aChargeExistsAwaitingAuthorisation() {
         long gatewayAccountId = 666L;
@@ -107,7 +130,7 @@ public class FrontendContractTest {
                 .withDelayedCapture(false)
                 .build());
     }
-
+    
     @State("a sandbox account exists with a charge with id testChargeId and description ERROR that is in state ENTERING_CARD_DETAILS.")
     public void aChargeExistsAwaitingAuthorisationWithDescriptionError() {
         long gatewayAccountId = 666L;
@@ -182,4 +205,75 @@ public class FrontendContractTest {
                 "a-payload",
                 "2.1.0");
     }
+    
+    @State("a Worldpay account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
+    public void aWorldpayChargeExistsAwaitingAuthorisation() {
+        worldpayMockClient.mockAuthorisationSuccess();
+        long gatewayAccountId = 666L;
+        int gatewayCredentialId = RandomUtils.nextInt();
+        createGatewayAccount(gatewayAccountId, gatewayCredentialId, PaymentGatewayName.WORLDPAY);
+        createChargeEnteringCardDetails("testChargeId", gatewayAccountId, gatewayCredentialId, PaymentGatewayName.WORLDPAY);
+    }
+    
+    @State("a Stripe account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
+    public void aStripeChargeExistsAwaitingAuthorisation() {
+        stripeMockClient.mockCreatePaymentIntent();
+        long gatewayAccountId = 666L;
+        int gatewayCredentialId = RandomUtils.nextInt();
+        createGatewayAccount(gatewayAccountId, gatewayCredentialId, PaymentGatewayName.STRIPE);
+        createChargeEnteringCardDetails("testChargeId", gatewayAccountId, gatewayCredentialId, PaymentGatewayName.STRIPE);
+    }
+    
+    private void createGatewayAccount(Long gatewayAccountId, int gatewayCredentialId, PaymentGatewayName paymentProvider) {
+        Map<String, Object> credentials;
+        switch(paymentProvider) {
+            case WORLDPAY: 
+                credentials = Map.of(
+                    ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                            CREDENTIALS_MERCHANT_CODE, "merchant-id",
+                            CREDENTIALS_USERNAME, "test-user",
+                            CREDENTIALS_PASSWORD, "test-password")
+                );
+                break;
+            case STRIPE: 
+                credentials = Map.of("stripe_account_id", RandomUtils.nextInt());
+                break;
+            default:
+                throw new RuntimeException("This provider state only supports Worldpay and Stripe accounts");
+        }
+        createGatewayAccount(gatewayAccountId, gatewayCredentialId, paymentProvider, credentials);
+    }
+    
+    private void createGatewayAccount(Long gatewayAccountId, int gatewayCredentialId, PaymentGatewayName paymentProvider, Map<String, Object> credentials) {
+        AddGatewayAccountCredentialsParams accountCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withId(gatewayCredentialId)
+                .withPaymentProvider(paymentProvider.getName())
+                .withGatewayAccountId(gatewayAccountId)
+                .withState(ACTIVE)
+                .withCredentials(credentials)
+                .build();
+
+        CardTypeEntity visaCreditCard = dbHelper.getVisaCreditCard();
+        DatabaseFixtures.withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(gatewayAccountId)
+                .withPaymentProvider(paymentProvider.getName())
+                .withGatewayAccountCredentials(List.of(accountCredentialsParams))
+                .withServiceId("external-service-id")
+                .withAllowAuthApi(true)
+                .withCardTypeEntities(List.of(visaCreditCard))
+                .insert();
+    }
+     
+    private void createChargeEnteringCardDetails(String externalChargeId, Long gatewayAccountId, int gatewayCredentialId, PaymentGatewayName paymentProvider) {
+        dbHelper.addCharge(anAddChargeParams()
+                .withExternalChargeId(externalChargeId)
+                .withPaymentProvider(paymentProvider.getName())
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .withAmount(100)
+                .withStatus(ChargeStatus.ENTERING_CARD_DETAILS)
+                .withGatewayCredentialId(Long.valueOf(gatewayCredentialId))
+                .build());
+    }
+    
 }
