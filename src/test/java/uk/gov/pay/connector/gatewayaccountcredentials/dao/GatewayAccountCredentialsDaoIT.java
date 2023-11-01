@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -156,28 +157,17 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
 
     @Test
     public void shouldPersistHistory() throws Exception {
-        long gatewayAccountId = nextLong();
-        String externalCredentialId = randomUuid();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .build());
-        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        GatewayAccountEntity gatewayAccountEntity = createAndPersistAGatewayAccount();
 
         Map<String, Object> credentials = Map.of(
                 ONE_OFF_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, "a-merchant-code-1", CREDENTIALS_PASSWORD, "passw0rd1"),
                 RECURRING_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-2", CREDENTIALS_USERNAME, "a-merchant-code-2", CREDENTIALS_PASSWORD, "passw0rd1"),
                 RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, "a-merchant-code-3", CREDENTIALS_PASSWORD, "passw0rd1")
         );
-        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
-                .withCredentials(credentials)
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider(WORLDPAY.getName())
-                .withState(ACTIVE)
-                .build();
-        gatewayAccountCredentialsEntity.setExternalId(externalCredentialId);
-        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
 
-        List<Map<String, Object>> credentialsForAccount = databaseTestHelper.getGatewayAccountCredentialsForAccount(gatewayAccountId);
+        var gatewayAccountCredentialsEntity = createAndPersistAGatewayAccountCredentialsEntity(gatewayAccountEntity, credentials);
+
+        List<Map<String, Object>> credentialsForAccount = databaseTestHelper.getGatewayAccountCredentialsForAccount(gatewayAccountEntity.getId());
         assertThat(credentialsForAccount, hasSize(2));
         long credentialsId = (long) credentialsForAccount.get(1).get("id");
         
@@ -212,5 +202,26 @@ public class GatewayAccountCredentialsDaoIT extends DaoITestBase {
                 RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED)
         );
         assertEquals(objectMapper.readValue(historyRowsAfterUpdate.get(1).get("credentials").toString(), Map.class), expectedCredentials);
+    }
+
+    private GatewayAccountCredentialsEntity createAndPersistAGatewayAccountCredentialsEntity(
+            GatewayAccountEntity gatewayAccountEntity, Map<String, Object> credentials) {
+        var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(credentials)
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
+        gatewayAccountCredentialsEntity.setExternalId(randomUuid());
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
+        return gatewayAccountCredentialsEntity;
+    }
+
+    private GatewayAccountEntity createAndPersistAGatewayAccount() {
+        long gatewayAccountId = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .build());
+        return gatewayAccountDao.findById(gatewayAccountId).get();
     }
 }
