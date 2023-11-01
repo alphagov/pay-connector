@@ -18,11 +18,12 @@ public class GatewayAccountCredentialsHistoryDao {
         this.entityManager = entityManager;
     }
 
-    public int delete(Long gatewayAccountId) {
-        String query = "DELETE FROM gateway_account_credentials_history WHERE gateway_account_id = ?1";
+    public int delete(String serviceId) {
+        String query = "DELETE FROM gateway_account_credentials_history WHERE " +
+                "gateway_account_id IN (SELECT gateway_account_id FROM gateway_accounts WHERE service_id = ?1)";
         
         return entityManager.get().createNativeQuery(query)
-                .setParameter(1, gatewayAccountId)
+                .setParameter(1, serviceId)
                 .executeUpdate();
     }
 }

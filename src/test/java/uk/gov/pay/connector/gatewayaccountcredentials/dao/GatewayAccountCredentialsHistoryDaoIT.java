@@ -40,16 +40,25 @@ public class GatewayAccountCredentialsHistoryDaoIT extends DaoITestBase {
     
     @Test
     public void deleteGatewayAccountCredentialsHistory() {
+        String serviceId = "archived-service-id";
+        var gatewayAccountEntity = createAGatewayAccount(serviceId);
+        persistTwoGatewayAccountCredentialsHistoryRows(gatewayAccountEntity);
+        
+        var anotherGatewayAccountEntity = createAGatewayAccount(serviceId);
+        persistTwoGatewayAccountCredentialsHistoryRows(anotherGatewayAccountEntity);
+
+        assertThat(gatewayAccountCredentialsHistoryDao.delete(serviceId), is(4));
+        assertTrue(databaseTestHelper.getGatewayAccountCredentialsHistoryForAccount(gatewayAccountEntity.getId()).isEmpty());
+        assertTrue(databaseTestHelper.getGatewayAccountCredentialsHistoryForAccount(anotherGatewayAccountEntity.getId()).isEmpty());
+    }
+    
+    private GatewayAccountEntity createAGatewayAccount(String serviceId) {
         long gatewayAccountId = nextLong();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
+                .withServiceId(serviceId)
                 .build());
-        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
-
-        persistTwoGatewayAccountCredentialsHistoryRows(gatewayAccountEntity);
-
-        assertThat(gatewayAccountCredentialsHistoryDao.delete(gatewayAccountId), is(2));
-        assertTrue(databaseTestHelper.getGatewayAccountCredentialsHistoryForAccount(gatewayAccountId).isEmpty());
+        return gatewayAccountDao.findById(gatewayAccountId).get();
     }
 
     private void persistTwoGatewayAccountCredentialsHistoryRows(GatewayAccountEntity gatewayAccountEntity) {
