@@ -24,17 +24,7 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
     public Optional<GatewayAccountEntity> findById(Long gatewayAccountId) {
         return super.findById(GatewayAccountEntity.class, gatewayAccountId);
     }
-
-    public Optional<GatewayAccountEntity> findByNotificationCredentialsUsername(String username) {
-        String query = "SELECT gae FROM GatewayAccountEntity gae " +
-                "WHERE gae.notificationCredentials.userName = :username";
-
-        return entityManager.get()
-                .createQuery(query, GatewayAccountEntity.class)
-                .setParameter("username", username)
-                .getResultList().stream().findFirst();
-    }
-
+    
     public boolean isATelephonePaymentNotificationAccount(String merchantId) {
         String query = "SELECT count(g) FROM gateway_accounts g, gateway_account_credentials gac " +
                 " where g.id = gac.gateway_account_id " +
@@ -77,5 +67,14 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("externalId", externalId)
                 .getResultList().stream().findFirst();
+    }
+
+    public List<GatewayAccountEntity> findByServiceId(String serviceId) {
+        String query = "SELECT g FROM GatewayAccountEntity g where g.serviceId = :serviceId";
+
+        return entityManager.get()
+                .createQuery(query, GatewayAccountEntity.class)
+                .setParameter("serviceId", serviceId)
+                .getResultList();
     }
 }

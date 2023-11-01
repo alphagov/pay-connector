@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -37,6 +38,7 @@ import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -66,6 +68,36 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         databaseTestHelper.truncateAllData();
     }
 
+    @Test
+    public void shouldFindGatewayAccountsForServiceId() {
+        String serviceId = "a-service-id";
+        
+        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
+        account1.setExternalId(randomUuid());
+        account1.setServiceId(serviceId);
+        gatewayAccountDao.persist(account1);
+
+        GatewayAccountEntity account2 = new GatewayAccountEntity(TEST);
+        account2.setExternalId(randomUuid());
+        account2.setServiceId(serviceId);
+        gatewayAccountDao.persist(account2);
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceId(serviceId);
+        assertThat(gatewayAccounts.size(), is(2));
+        assertThat(gatewayAccounts.stream().map(GatewayAccountEntity::getExternalId).collect(Collectors.toList()), 
+                containsInAnyOrder(account1.getExternalId(), account2.getExternalId()));
+    }
+
+    @Test
+    public void shouldFindNoGatewayAccountForServiceId() {
+        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
+        account1.setExternalId(randomUuid());
+        account1.setServiceId("a-service-id");
+        gatewayAccountDao.persist(account1);
+        
+        assertTrue(gatewayAccountDao.findByServiceId("non-existent").isEmpty());
+    }
+    
     @Test
     public void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
         GatewayAccountEntity account = new GatewayAccountEntity(TEST);
