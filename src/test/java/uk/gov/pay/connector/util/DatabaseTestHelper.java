@@ -1108,6 +1108,14 @@ public class DatabaseTestHelper {
                         .list());
     }
 
+    public List<Map<String, Object>> getGatewayAccountCredentialsHistoryForAccount(long accountId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_account_credentials_history where gateway_account_id = :accountId")
+                        .bind("accountId", accountId)
+                        .mapToMap()
+                        .list());
+    }
+
     public Map<String, Object> getGatewayAccountCredentialByExternalId(String credentialExternalId) {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * FROM gateway_account_credentials where external_id = :externalId")
