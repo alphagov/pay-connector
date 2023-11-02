@@ -10,13 +10,13 @@ import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGa
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
+import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
@@ -282,12 +282,14 @@ public class GatewayAccountService {
                         worldpayCredentials.getRecurringMerchantInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
                         creds.setCredentials(worldpayCredentials);
                         gatewayAccountCredentialsDao.merge(creds);
+                        break;
                     case EPDQ:
                         EpdqCredentials epdqCredentials = (EpdqCredentials) creds.getCredentialsObject();
                         epdqCredentials.setUsername("<DELETED>");
                         epdqCredentials.setPassword("<DELETED>");
                         creds.setCredentials(epdqCredentials);
                         gatewayAccountCredentialsDao.merge(creds);
+                        break;
                     default:
                         LOGGER.info("No credentials to redact.",
                                 kv(SERVICE_EXTERNAL_ID, serviceId),
