@@ -137,59 +137,6 @@ public class CardResource {
     }
     
     @POST
-    @Path("/v1/frontend/charges/{chargeId}/wallets/google/worldpay")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Operation(
-            summary = "Authorise Google Pay payment via Worldpay",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
-                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "402", description = "Gateway error",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "Not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error"),
-            }
-    )
-    public Response authoriseChargeGooglePayWorldpay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
-                                    @PathParam("chargeId") String chargeId,
-                                    @NotNull @Valid WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest) {
-        logger.info("Received encrypted payload for charge with id {} ", chargeId);
-        logger.info("Received wallet payment info \n{} \nfor charge with id {}", worldpayGooglePayAuthRequest.getPaymentInfo().toString(), chargeId);
-        return walletService.authorise(chargeId, worldpayGooglePayAuthRequest);
-    }
-
-    @POST
-    @Path("/v1/frontend/charges/{chargeId}/wallets/google/stripe")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Operation(
-            summary = "Authorise Google Pay payment via Stripe",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
-                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "402", description = "Gateway error",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "Not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error"),
-            }
-    )
-    public Response authoriseChargeGooglePayStripe(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
-                                                     @PathParam("chargeId") String chargeId,
-                                                     @NotNull @Valid StripeGooglePayAuthRequest stripeGooglePayAuthRequest) {
-        logger.info("Received wallet payment info \n{} \nfor charge with id {}", stripeGooglePayAuthRequest.getPaymentInfo().toString(), chargeId);
-        return walletService.authorise(chargeId, stripeGooglePayAuthRequest);
-    }
-
-    @POST
     @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
