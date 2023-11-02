@@ -4,12 +4,14 @@ import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
+import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
@@ -272,13 +274,19 @@ public class GatewayAccountService {
             gatewayAccountDao.merge(ga);
             ga.getGatewayAccountCredentials().forEach(creds -> {
                 creds.setState(RETIRED);
-                switch (creds.getPaymentProvider()) {
-                    case "worldpay":
+                switch (PaymentGatewayName.valueFrom(creds.getPaymentProvider())) {
+                    case WORLDPAY:
                         WorldpayCredentials worldpayCredentials = (WorldpayCredentials) creds.getCredentialsObject();
                         worldpayCredentials.getRecurringCustomerInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
                         worldpayCredentials.getOneOffCustomerInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
                         worldpayCredentials.getRecurringMerchantInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
                         creds.setCredentials(worldpayCredentials);
+                        gatewayAccountCredentialsDao.merge(creds);
+                    case EPDQ:
+                        EpdqCredentials epdqCredentials = (EpdqCredentials) creds.getCredentialsObject();
+                        epdqCredentials.setUsername("<DELETED>");
+                        epdqCredentials.setPassword("<DELETED>");
+                        creds.setCredentials(epdqCredentials);
                         gatewayAccountCredentialsDao.merge(creds);
                     default:
                         LOGGER.info("No credentials to redact.",

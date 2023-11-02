@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -111,6 +112,42 @@ public class OnServiceArchiveTest {
 
     @Test
     void shouldDisableEpdqAccount_redactCredentials_deleteCredentialsHistory() {
-        
+        String serviceId = "service-to-be-archived";
+
+        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
+        account1.setExternalId(randomUuid());
+        account1.setDisabled(false);
+        account1.setNotificationCredentials(new NotificationCredentials(account1));
+        Map<String, Object> epdqCreds = Map.of("merchant_id", "a-merchant-id",
+                "username", "a-secret-username",
+                "password", "a-secret-password",
+                "sha_in_passphrase", "123456",
+                "sha_out_passphrase", "123456");
+        account1.setGatewayAccountCredentials(List.of(
+                new GatewayAccountCredentialsEntity(account1, EPDQ.getName(), epdqCreds, GatewayAccountCredentialState.ACTIVE)));
+        when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(account1));
+
+        when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
+
+        gatewayAccountService.onServiceArchive(serviceId);
+
+        verify(mockGatewayAccountDao).findByServiceId(serviceId);
+
+        verify(mockGatewayAccountDao).merge(updatedGatewayAccountEntity.capture());
+        var capturedGatewayAccountEntity = updatedGatewayAccountEntity.getValue();
+        assertTrue(capturedGatewayAccountEntity.isDisabled());
+        assertNull(capturedGatewayAccountEntity.getNotificationCredentials());
+
+        verify(mockGatewayAccountCredentialsDao).merge(updatedGatewayAccountCredentialsEntity.capture());
+        var capturedGatewayAccountCredentialsEntity = updatedGatewayAccountCredentialsEntity.getValue();
+        assertThat(capturedGatewayAccountCredentialsEntity.getState(), is(RETIRED));
+        Map<String, Object> expectedCredentials = Map.of("merchant_id", "a-merchant-id",
+                "username", "<DELETED>",
+                "password", "<DELETED>",
+                "sha_in_passphrase", "123456",
+                "sha_out_passphrase", "123456");
+        assertThat(capturedGatewayAccountCredentialsEntity.getCredentials(), is(expectedCredentials));
+
+        verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
     }
 }
