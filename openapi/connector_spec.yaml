@@ -1851,104 +1851,6 @@ paths:
       summary: Authorise Google Pay payment
       tags:
       - Charge operations
-  /v1/frontend/charges/{chargeId}/wallets/google/stripe:
-    post:
-      operationId: authoriseChargeGooglePayStripe
-      parameters:
-      - description: Charge external ID
-        example: b02b63b370fd35418ad66b0101
-        in: path
-        name: chargeId
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StripeGooglePayAuthRequest'
-        required: true
-      responses:
-        "200":
-          description: OK
-        "202":
-          description: Accepted - payment has been submitted for authorisation and
-            awaiting response from payment service provider
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bad request - invalid payload or the payment has been declined
-        "402":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Gateway error
-        "404":
-          description: Not found
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Unprocessable Entity - Invalid payload or missing mandatory
-            attributes
-        "500":
-          description: Internal server error
-      summary: Authorise Google Pay payment via Stripe
-      tags:
-      - Charge operations
-  /v1/frontend/charges/{chargeId}/wallets/google/worldpay:
-    post:
-      operationId: authoriseChargeGooglePayWorldpay
-      parameters:
-      - description: Charge external ID
-        example: b02b63b370fd35418ad66b0101
-        in: path
-        name: chargeId
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WorldpayGooglePayAuthRequest'
-        required: true
-      responses:
-        "200":
-          description: OK
-        "202":
-          description: Accepted - payment has been submitted for authorisation and
-            awaiting response from payment service provider
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bad request - invalid payload or the payment has been declined
-        "402":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Gateway error
-        "404":
-          description: Not found
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Unprocessable Entity - Invalid payload or missing mandatory
-            attributes
-        "500":
-          description: Internal server error
-      summary: Authorise Google Pay payment via Worldpay
-      tags:
-      - Charge operations
   /v1/frontend/charges/{chargeId}/worldpay/3ds-flex/ddc:
     get:
       operationId: getWorldpay3dsFlexDdcJwt
@@ -4284,14 +4186,6 @@ components:
           type:
             type: string
             writeOnly: true
-    StripeGooglePayAuthRequest:
-      type: object
-      properties:
-        payment_info:
-          $ref: '#/components/schemas/GooglePayPaymentInfo'
-        token_id:
-          type: string
-          writeOnly: true
     Supplemental:
       type: object
       properties:
@@ -4479,13 +4373,6 @@ components:
           $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
         recurring_merchant_initiated:
           $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
-    WorldpayGooglePayAuthRequest:
-      type: object
-      properties:
-        encrypted_payment_data:
-          $ref: '#/components/schemas/GooglePayEncryptedPaymentData'
-        payment_info:
-          $ref: '#/components/schemas/GooglePayPaymentInfo'
     WorldpayMerchantCodeCredentials:
       type: object
       properties:
