@@ -106,13 +106,14 @@ class Worldpay3dsFlexJwtServiceTest {
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
+                .build()
                 .parseClaimsJws(token);
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat((Map<String, Object>) jws.getHeader(), hasEntry("typ", "JWT"));
         assertThat(jws.getBody(), hasKey("jti"));
         assertThat(jws.getBody(), hasKey("iat"));
-        assertThat(jws.getBody(), hasEntry("exp", (int) expectedTokenExpirationTimeEpochSeconds.getEpochSecond()));
+        assertThat(jws.getBody(), hasEntry("exp", expectedTokenExpirationTimeEpochSeconds.getEpochSecond()));
         assertThat(jws.getBody(), hasEntry("iss", "me"));
         assertThat(jws.getBody(), hasEntry("OrgUnitId", "myOrg"));
     }
@@ -169,6 +170,7 @@ class Worldpay3dsFlexJwtServiceTest {
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
+                .build()
                 .parseClaimsJws(maybeToken.get());
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
