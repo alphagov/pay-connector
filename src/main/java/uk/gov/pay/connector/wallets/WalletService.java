@@ -4,12 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
-import uk.gov.pay.connector.wallets.googlepay.api.GenericGooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -33,26 +32,12 @@ public class WalletService {
 
     public Response authorise(String chargeId, WalletAuthorisationRequest walletAuthorisationRequest) {
         LOGGER.info("Authorising {} charge with id {} ", walletAuthorisationRequest.getWalletType().toString(), chargeId);
-        GatewayResponse<BaseAuthoriseResponse> response =
-                authoriseService.authorise(chargeId, walletAuthorisationRequest);
-
+        GatewayResponse<BaseAuthoriseResponse> response = authoriseService.authorise(chargeId, walletAuthorisationRequest);
         return response.getGatewayError()
                 .map(error -> handleError(chargeId, error))
                 .orElseGet(() -> response.getBaseResponse().map(this::handleAuthorisationResponse)
                         .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
 
-    }
-
-    public Response convertAndAuthorise(String chargeId, GenericGooglePayAuthRequest genericGooglePayAuthRequest) {
-        ChargeEntity chargeEntity = chargeService.findChargeByExternalId(chargeId);
-        switch(chargeEntity.getPaymentGatewayName()) {
-            case WORLDPAY: 
-                return authorise(chargeId, genericGooglePayAuthRequest.toWorldpayGooglePayAuthRequest());
-            case STRIPE: 
-                return authorise(chargeId, genericGooglePayAuthRequest.toStripeGooglePayAuthRequest());
-            default: 
-                throw new UnsupportedOperationException("Payment provider not supported");
-        }
     }
 
     private Response handleAuthorisationResponse(BaseAuthoriseResponse baseAuthoriseResponse) {

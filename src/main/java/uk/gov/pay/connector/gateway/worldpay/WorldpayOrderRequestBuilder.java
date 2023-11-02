@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
-import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.ws.rs.core.MediaType;
 import java.time.LocalDate;
@@ -42,7 +42,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String schemeTransactionIdentifier;
         private String paymentTokenId;
         private AppleDecryptedPaymentData appleDecryptedPaymentData;
-        private WorldpayGooglePayAuthRequest googlePayPaymentData;
+        private GooglePayAuthRequest googlePayPaymentData;
 
         public int getIntegrationVersion3ds() {
             return integrationVersion3ds;
@@ -191,11 +191,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             this.appleDecryptedPaymentData = appleDecryptedPaymentData;
         }
 
-        public WorldpayGooglePayAuthRequest getGooglePayPaymentData() {
+        public GooglePayAuthRequest getGooglePayPaymentData() {
             return googlePayPaymentData;
         }
 
-        public void setGooglePayPaymentData(WorldpayGooglePayAuthRequest googlePayPaymentData) {
+        public void setGooglePayPaymentData(GooglePayAuthRequest googlePayPaymentData) {
             this.googlePayPaymentData = googlePayPaymentData;
         }
     }
@@ -356,7 +356,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
 
-    public WorldpayOrderRequestBuilder withGooglePayPaymentData(WorldpayGooglePayAuthRequest googlePayAuthRequest) {
+    public WorldpayOrderRequestBuilder withGooglePayPaymentData(GooglePayAuthRequest googlePayAuthRequest) {
         worldpayTemplateData.setGooglePayPaymentData(googlePayAuthRequest);
         return this;
     }

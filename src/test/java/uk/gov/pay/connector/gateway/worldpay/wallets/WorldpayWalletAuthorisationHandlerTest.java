@@ -22,7 +22,7 @@ import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayReque
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.io.IOException;
@@ -336,8 +336,8 @@ class WorldpayWalletAuthorisationHandlerTest {
 
     private GooglePayAuthorisationGatewayRequest getGooglePayAuthorisationGatewayRequest(boolean withPayerEmail) throws IOException {
         String fixturePath = withPayerEmail ? "googlepay/example-auth-request.json" : "googlepay/example-auth-request-without-email.json";
-        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture(fixturePath), WorldpayGooglePayAuthRequest.class);
-        return new GooglePayAuthorisationGatewayRequest(chargeEntity, worldpayGooglePayAuthRequest);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture(fixturePath), GooglePayAuthRequest.class);
+        return new GooglePayAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
 
     private GooglePayAuthorisationGatewayRequest getGooglePayAuthorisationGatewayRequestFor3ds(boolean isRequires3ds, boolean withIpAddress, boolean withPayerEmail,
@@ -346,11 +346,11 @@ class WorldpayWalletAuthorisationHandlerTest {
         String fixturePath = withDDCResult ? "googlepay/example-3ds-auth-request-with-ddc.json" :
                 withPayerEmail ? "googlepay/example-3ds-auth-request.json" :
                         "googlepay/example-3ds-auth-request-without-email.json";
-        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture(fixturePath), WorldpayGooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture(fixturePath), GooglePayAuthRequest.class);
         chargeEntity.getGatewayAccount().setRequires3ds(isRequires3ds);
         chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(withIpAddress);
         chargeEntity.setExternalId(GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS);
-        return new GooglePayAuthorisationGatewayRequest(chargeEntity, worldpayGooglePayAuthRequest);
+        return new GooglePayAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
 
     private ApplePayAuthorisationGatewayRequest getApplePayGatewayAuthorisationRequest(boolean withPayerEmail) {

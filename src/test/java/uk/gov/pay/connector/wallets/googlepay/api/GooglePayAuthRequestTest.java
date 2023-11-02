@@ -11,14 +11,14 @@ import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-class WorldpayGooglePayAuthRequestTest {
+class GooglePayAuthRequestTest {
 
     @Test
     void shouldDeserializeFromJsonCorrectly() throws IOException {
         ObjectMapper objectMapper = Jackson.getObjectMapper();
         JsonNode expected = objectMapper.readTree(fixture("googlepay/example-3ds-auth-request.json"));
-        WorldpayGooglePayAuthRequest actual = objectMapper.readValue(
-                fixture("googlepay/example-3ds-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+        GooglePayAuthRequest actual = objectMapper.readValue(
+                fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
 
         JsonNode paymentInfo = expected.get("payment_info");
         assertThat(actual.getPaymentInfo().getCardholderName(), is(paymentInfo.get("cardholder_name").asText()));
@@ -30,8 +30,9 @@ class WorldpayGooglePayAuthRequestTest {
         assertThat(actual.getPaymentInfo().getIpAddress(), is(paymentInfo.get("ip_address").asText()));
 
         JsonNode encryptedPaymentData = expected.get("encrypted_payment_data");
-        assertThat(actual.getEncryptedPaymentData().getSignature(), is(encryptedPaymentData.get("signature").asText()));
-        assertThat(actual.getEncryptedPaymentData().getProtocolVersion(), is(encryptedPaymentData.get("protocol_version").asText()));
-        assertThat(actual.getEncryptedPaymentData().getSignedMessage(), is(encryptedPaymentData.get("signed_message").asText()));
+        assertThat(actual.getEncryptedPaymentData().isPresent(), is(true));
+        assertThat(actual.getEncryptedPaymentData().get().getSignature(), is(encryptedPaymentData.get("signature").asText()));
+        assertThat(actual.getEncryptedPaymentData().get().getProtocolVersion(), is(encryptedPaymentData.get("protocol_version").asText()));
+        assertThat(actual.getEncryptedPaymentData().get().getSignedMessage(), is(encryptedPaymentData.get("signed_message").asText()));
     }
 }
