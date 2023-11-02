@@ -73,8 +73,8 @@ public class GatewayAccountService {
     private final GatewayAccountDao gatewayAccountDao;
     private final CardTypeDao cardTypeDao;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
-    private GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao;
-    private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
+    private final GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao;
+    private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
     @Inject
     public GatewayAccountService(GatewayAccountDao gatewayAccountDao, CardTypeDao cardTypeDao,

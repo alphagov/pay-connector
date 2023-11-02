@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -91,12 +92,9 @@ public class OnServiceArchiveTest {
 
         String serviceId = "service-to-be-archived";
 
-        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
-        account1.setExternalId(randomUuid());
-        account1.setDisabled(false);
-        account1.setGatewayAccountCredentials(List.of(
-                new GatewayAccountCredentialsEntity(account1, STRIPE.getName(), Map.of(STRIPE_ACCOUNT_ID_KEY, "acct_123"), ACTIVE)));
-        when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(account1));
+        GatewayAccountEntity gatewayAccount = setupGatewayAccountEntity(STRIPE, Map.of(STRIPE_ACCOUNT_ID_KEY, "acct_123"));
+        
+        when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(gatewayAccount));
 
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
 
@@ -109,37 +107,24 @@ public class OnServiceArchiveTest {
     @Test
     void shouldDisableWorldpayAccount_redactCredentials_deleteCredentialsHistory() {
         String serviceId = "service-to-be-archived";
-        Map<String, Object> worldpayCreds = Map.of(
-                ONE_OFF_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, "a-merchant-code-1", CREDENTIALS_PASSWORD, "passw0rd1"),
-                RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, "a-merchant-code-3", CREDENTIALS_PASSWORD, "passw0rd1"));
         
-        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
-        account1.setExternalId(randomUuid());
-        account1.setDisabled(false);
-        account1.setNotificationCredentials(new NotificationCredentials(account1));
-        account1.setGatewayAccountCredentials(List.of(
-                new GatewayAccountCredentialsEntity(account1, WORLDPAY.getName(), worldpayCreds, ACTIVE)));
-        when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(account1));
+        GatewayAccountEntity gatewayAccount = setupGatewayAccountEntity(WORLDPAY,
+                Map.of(ONE_OFF_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, "a-merchant-code-1", CREDENTIALS_PASSWORD, "passw0rd1"),
+                        RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, "a-merchant-code-3", CREDENTIALS_PASSWORD, "passw0rd1")));
+                
+        when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(gatewayAccount));
         
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
         
         gatewayAccountService.onServiceArchive(serviceId);
         
         verify(mockGatewayAccountDao).findByServiceId(serviceId);
-        
-        verify(mockGatewayAccountDao).merge(updatedGatewayAccountEntity.capture());
-        var capturedGatewayAccountEntity = updatedGatewayAccountEntity.getValue();
-        assertTrue(capturedGatewayAccountEntity.isDisabled());
-        assertNull(capturedGatewayAccountEntity.getNotificationCredentials());
-        
-        verify(mockGatewayAccountCredentialsDao).merge(updatedGatewayAccountCredentialsEntity.capture());
-        var capturedGatewayAccountCredentialsEntity = updatedGatewayAccountCredentialsEntity.getValue();
-        assertThat(capturedGatewayAccountCredentialsEntity.getState(), is(RETIRED));
-        Map<String, Object> expectedCredentials = Map.of(
+
+        verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials();
+
+        verifyExpectedGatewayAccountCredentialsAndStateIsRetired(Map.of(
                 ONE_OFF_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED),
-                RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED)
-        );
-        assertThat(capturedGatewayAccountCredentialsEntity.getCredentials(), is(expectedCredentials));
+                RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED)));
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
     }
@@ -148,18 +133,14 @@ public class OnServiceArchiveTest {
     void shouldDisableEpdqAccount_redactCredentials_deleteCredentialsHistory() {
         String serviceId = "service-to-be-archived";
 
-        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
-        account1.setExternalId(randomUuid());
-        account1.setDisabled(false);
-        account1.setNotificationCredentials(new NotificationCredentials(account1));
-        Map<String, Object> epdqCreds = Map.of("merchant_id", "a-merchant-id",
-                "username", "a-secret-username",
-                "password", "a-secret-password",
-                "sha_in_passphrase", "123456",
-                "sha_out_passphrase", "123456");
-        account1.setGatewayAccountCredentials(List.of(
-                new GatewayAccountCredentialsEntity(account1, EPDQ.getName(), epdqCreds, ACTIVE)));
-        when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(account1));
+        GatewayAccountEntity gatewayAccount = setupGatewayAccountEntity(EPDQ,
+                Map.of("merchant_id", "a-merchant-id",
+                        "username", "a-secret-username",
+                        "password", "a-secret-password",
+                        "sha_in_passphrase", "123456",
+                        "sha_out_passphrase", "123456"));
+        
+        when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(gatewayAccount));
 
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
 
@@ -167,21 +148,38 @@ public class OnServiceArchiveTest {
 
         verify(mockGatewayAccountDao).findByServiceId(serviceId);
 
+        verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials();
+
+        verifyExpectedGatewayAccountCredentialsAndStateIsRetired(Map.of("merchant_id", "a-merchant-id",
+                "username", "<DELETED>",
+                "password", "<DELETED>",
+                "sha_in_passphrase", "123456",
+                "sha_out_passphrase", "123456"));
+
+        verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
+    }
+
+    private void verifyExpectedGatewayAccountCredentialsAndStateIsRetired(Map<String, Object> expectedCredentials) {
+        verify(mockGatewayAccountCredentialsDao).merge(updatedGatewayAccountCredentialsEntity.capture());
+        var capturedGatewayAccountCredentialsEntity = updatedGatewayAccountCredentialsEntity.getValue();
+        assertThat(capturedGatewayAccountCredentialsEntity.getState(), is(RETIRED));
+        assertThat(capturedGatewayAccountCredentialsEntity.getCredentials(), is(expectedCredentials));
+    }
+
+    private void verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials() {
         verify(mockGatewayAccountDao).merge(updatedGatewayAccountEntity.capture());
         var capturedGatewayAccountEntity = updatedGatewayAccountEntity.getValue();
         assertTrue(capturedGatewayAccountEntity.isDisabled());
         assertNull(capturedGatewayAccountEntity.getNotificationCredentials());
+    }
 
-        verify(mockGatewayAccountCredentialsDao).merge(updatedGatewayAccountCredentialsEntity.capture());
-        var capturedGatewayAccountCredentialsEntity = updatedGatewayAccountCredentialsEntity.getValue();
-        assertThat(capturedGatewayAccountCredentialsEntity.getState(), is(RETIRED));
-        Map<String, Object> expectedCredentials = Map.of("merchant_id", "a-merchant-id",
-                "username", "<DELETED>",
-                "password", "<DELETED>",
-                "sha_in_passphrase", "123456",
-                "sha_out_passphrase", "123456");
-        assertThat(capturedGatewayAccountCredentialsEntity.getCredentials(), is(expectedCredentials));
-
-        verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
+    private static GatewayAccountEntity setupGatewayAccountEntity(PaymentGatewayName paymentGatewayName, Map<String, Object> creds) {
+        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
+        account1.setExternalId(randomUuid());
+        account1.setDisabled(false);
+        account1.setNotificationCredentials(new NotificationCredentials(account1));
+        account1.setGatewayAccountCredentials(List.of(
+                new GatewayAccountCredentialsEntity(account1, paymentGatewayName.getName(), creds, ACTIVE)));
+        return account1;
     }
 }
