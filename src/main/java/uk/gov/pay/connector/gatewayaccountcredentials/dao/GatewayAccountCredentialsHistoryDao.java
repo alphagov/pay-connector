@@ -5,8 +5,6 @@ import com.google.inject.persist.Transactional;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Transactional
 public class GatewayAccountCredentialsHistoryDao {
