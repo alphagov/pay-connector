@@ -8,9 +8,9 @@
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <PAYWITHGOOGLE-SSL>
-                    <protocolVersion>${googlePayPaymentData.encryptedPaymentData.protocolVersion?xml}</protocolVersion>
-                    <signature>${googlePayPaymentData.encryptedPaymentData.signature?xml}</signature>
-                    <signedMessage>${googlePayPaymentData.encryptedPaymentData.signedMessage?xml}</signedMessage>
+                    <protocolVersion>${googlePayPaymentData.encryptedPaymentData.get().protocolVersion?xml}</protocolVersion>
+                    <signature>${googlePayPaymentData.encryptedPaymentData.get().signature?xml}</signature>
+                    <signedMessage>${googlePayPaymentData.encryptedPaymentData.get().signedMessage?xml}</signedMessage>
                 </PAYWITHGOOGLE-SSL>
                 <#if requires3ds>
                 <#if payerIpAddress??>

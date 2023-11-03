@@ -32,9 +32,7 @@ import uk.gov.pay.connector.util.MDCUtils;
 import uk.gov.pay.connector.util.ResponseUtil;
 import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.GenericGooglePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -131,9 +129,9 @@ public class CardResource {
     )
     public Response authoriseChargeGooglePay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
                                                      @PathParam("chargeId") String chargeId,
-                                                     @NotNull @Valid GenericGooglePayAuthRequest genericGooglePayAuthRequest) {
-        logger.info("Received wallet payment info \n{} \nfor charge with id {}", genericGooglePayAuthRequest.getPaymentInfo().toString(), chargeId);
-        return walletService.convertAndAuthorise(chargeId, genericGooglePayAuthRequest);
+                                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
+        logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
+        return walletService.authorise(chargeId, googlePayAuthRequest);
     }
     
     @POST

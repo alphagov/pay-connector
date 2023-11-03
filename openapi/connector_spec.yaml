@@ -1817,7 +1817,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GenericGooglePayAuthRequest'
+              $ref: '#/components/schemas/GooglePayAuthRequest'
         required: true
       responses:
         "200":
@@ -3867,7 +3867,7 @@ components:
         rawGatewayResponse:
           type: string
           example: Worldpay response ()
-    GenericGooglePayAuthRequest:
+    GooglePayAuthRequest:
       type: object
       properties:
         encrypted_payment_data:

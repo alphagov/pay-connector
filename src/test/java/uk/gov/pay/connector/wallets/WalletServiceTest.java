@@ -19,7 +19,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthRequestBuilder;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.core.Response;
@@ -98,17 +98,17 @@ public class WalletServiceTest {
     @Test
     void shouldAuthoriseAValidChargeForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED);
-        when(mockWalletAuthoriseService.authorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(200));
         assertThat(authorisationResponse.getEntity(), is(Map.of("status", "AUTHORISATION SUCCESS")));
     }
@@ -116,7 +116,7 @@ public class WalletServiceTest {
     @Test
     void shouldReturnAuthorise3dsRequiredForAValid3dsChargeForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        WorldpayGooglePayAuthRequest googlePayAuth3dsRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-3ds-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuth3dsRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
@@ -134,7 +134,7 @@ public class WalletServiceTest {
     @Test
     void shouldReturn402_ifGatewayErrorsForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
         GatewayResponse gatewayResponse = responseBuilder()
                 .withGatewayError(gatewayError)
@@ -142,11 +142,11 @@ public class WalletServiceTest {
                 .build();
         when(gatewayError.getErrorType()).thenReturn(GATEWAY_ERROR);
         when(gatewayError.getMessage()).thenReturn("oops");
-        when(mockWalletAuthoriseService.authorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("oops"));
@@ -155,7 +155,7 @@ public class WalletServiceTest {
     @Test
     void shouldReturn402_ifResponseHasAuthorisationStatusError() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
 
         
@@ -163,11 +163,11 @@ public class WalletServiceTest {
                 .withResponse(worldpayResponse)
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.ERROR);
-        when(mockWalletAuthoriseService.authorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("There was an error authorising the transaction."));
@@ -176,17 +176,17 @@ public class WalletServiceTest {
     @Test
     void shouldReturn400_ifResponseHasAuthorisationStatusRejected() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        WorldpayGooglePayAuthRequest worldpayGooglePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), WorldpayGooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .build();
         when(worldpayResponse.authoriseStatus()).thenReturn(BaseAuthoriseResponse.AuthoriseStatus.REJECTED);
-        when(mockWalletAuthoriseService.authorise(externalChargeId, worldpayGooglePayAuthRequest)).thenReturn(gatewayResponse);
+        when(mockWalletAuthoriseService.authorise(externalChargeId, googlePayAuthRequest)).thenReturn(gatewayResponse);
 
-        Response authorisationResponse = walletService.authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        Response authorisationResponse = walletService.authorise(externalChargeId, googlePayAuthRequest);
 
-        verify(mockWalletAuthoriseService).authorise(externalChargeId, worldpayGooglePayAuthRequest);
+        verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(400));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
         assertThat(response.getMessages(), contains("This transaction was declined."));

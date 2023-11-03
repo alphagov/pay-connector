@@ -17,19 +17,21 @@ import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripeAuthorisationFailedResponse;
+import uk.gov.pay.connector.gateway.stripe.json.StripeCustomer;
 import uk.gov.pay.connector.gateway.stripe.json.StripeErrorResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
+import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
+import uk.gov.pay.connector.gateway.stripe.json.StripeToken;
 import uk.gov.pay.connector.gateway.stripe.request.StripeCustomerRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTokenRequest;
-import uk.gov.pay.connector.gateway.stripe.json.StripeCustomer;
-import uk.gov.pay.connector.gateway.stripe.json.StripePaymentMethod;
-import uk.gov.pay.connector.gateway.stripe.json.StripeToken;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.googlepay.api.StripeGooglePayAuthRequest;
+import uk.gov.service.payments.commons.api.exception.ValidationException;
+
+import java.util.List;
 
 import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
@@ -131,7 +133,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
-            String tokenId = ((StripeGooglePayAuthRequest) request.getGooglePayAuthRequest()).getTokenId();
+            String tokenId = request.getGooglePayAuthRequest().getTokenId().orElseThrow(() -> new ValidationException(List.of("Field [token_id] is required")));
             StripePaymentIntent StripePaymentIntent = createPaymentIntentFromWalletToken(request, tokenId);
             return responseBuilder
                     .withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();

@@ -9,10 +9,9 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayEncryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayPaymentInfo;
-import uk.gov.pay.connector.wallets.googlepay.api.WorldpayGooglePayAuthRequest;
-import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.LocalDate;
@@ -322,7 +321,7 @@ class WorldpayOrderRequestBuilderTest {
     @Test
     void shouldGenerateValidAuthoriseGooglePayOrderRequest() throws Exception {
         GooglePayPaymentInfo googlePayPaymentInfo = aGooglePayPaymentInfo().build();
-        WorldpayGooglePayAuthRequest validGooglePayData = new WorldpayGooglePayAuthRequest(googlePayPaymentInfo, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
+        GooglePayAuthRequest validGooglePayData = new GooglePayAuthRequest(googlePayPaymentInfo, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
                 .withGooglePayPaymentData(validGooglePayData)
@@ -338,7 +337,7 @@ class WorldpayOrderRequestBuilderTest {
 
     @Test
     void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithoutIpAddress() throws Exception {
-        WorldpayGooglePayAuthRequest validGooglePay3dsData = new WorldpayGooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
+        GooglePayAuthRequest validGooglePay3dsData = new GooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
                 .withGooglePayPaymentData(validGooglePay3dsData)
@@ -358,7 +357,7 @@ class WorldpayOrderRequestBuilderTest {
 
     @Test
     void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithIpAddress() throws Exception {
-        WorldpayGooglePayAuthRequest validGooglePay3dsData = new WorldpayGooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
+        GooglePayAuthRequest validGooglePay3dsData = new GooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
                 .withGooglePayPaymentData(validGooglePay3dsData)
@@ -379,7 +378,7 @@ class WorldpayOrderRequestBuilderTest {
 
     @Test
     void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWhen3dsDisabled() throws Exception {
-        WorldpayGooglePayAuthRequest validGooglePay3dsData = new WorldpayGooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
+        GooglePayAuthRequest validGooglePay3dsData = new GooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
                 .withGooglePayPaymentData(validGooglePay3dsData)
