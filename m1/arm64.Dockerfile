@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y tini wget
 
 # Add RDS CA certificates to the default truststore
 RUN wget -qO - https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem       | keytool -import -cacerts -storepass changeit -noprompt -alias rds-ca-2019-root \
- && wget -qO - https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem | keytool -import -cacerts -storepass changeit -noprompt -alias rds-combined-ca-bundle
+ && wget -qO - https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem | keytool -import -cacerts -storepass changeit -noprompt -alias rds-combined-ca-bundle \
+ && wget -qO - https://truststore.pki.rds.amazonaws.com/eu-west-1/eu-west-1-bundle.pem | keytool -import -cacerts -storepass changeit -noprompt -alias rds-eu-west-1-bundle \
+ && wget -qO - https://truststore.pki.rds.amazonaws.com/eu-central-1/eu-central-1-bundle.pem | keytool -import -cacerts -storepass changeit -noprompt -alias rds-eu-central-1-bundle
 
 ENV PORT 8080
 ENV ADMIN_PORT 8081
