@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.sandbox.SandboxGatewayResponseGenerator;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 public class SandboxWalletAuthorisationHandler {
 
@@ -20,11 +19,7 @@ public class SandboxWalletAuthorisationHandler {
     }
 
     public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest request) {
-        return authoriseWallet(request.getGooglePayAuthRequest().getPaymentInfo());
+        return sandboxGatewayResponseGenerator.getSandboxGatewayWalletResponse(request.getDescription());
     }
     
-    private GatewayResponse<BaseAuthoriseResponse> authoriseWallet(WalletPaymentInfo walletPaymentInfo) {
-        String lastDigitsCardNumber = walletPaymentInfo.getLastDigitsCardNumber();
-        return sandboxGatewayResponseGenerator.getSandboxGatewayResponse(lastDigitsCardNumber);
-    }
 }
