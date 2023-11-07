@@ -9,13 +9,11 @@ ENV LANG C.UTF-8
 
 RUN echo networkaddress.cache.ttl=$DNS_TTL >> "$JAVA_HOME/conf/security/java.security"
 
-# Add RDS CA certificates to the default truststore
-RUN wget -qO - https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem       | keytool -importcert -noprompt -cacerts -storepass changeit -alias rds-ca-2019-root \
- && wget -qO - https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem | keytool -importcert -noprompt -cacerts -storepass changeit -alias rds-combined-ca-bundle \
- && wget -qO - https://truststore.pki.rds.amazonaws.com/eu-west-1/eu-west-1-bundle.pem | keytool -importcert -noprompt -cacerts -storepass changeit -alias rds-eu-west-1-bundle \
- && wget -qO - https://truststore.pki.rds.amazonaws.com/eu-central-1/eu-central-1-bundle.pem | keytool -importcert -noprompt -cacerts -storepass changeit -alias rds-eu-central-1
 
 RUN ["apk", "add", "--no-cache", "bash", "tini"]
+
+COPY ./import_aws_rds_cert_bundles.sh /
+RUN /import_aws_rds_cert_bundles.sh && rm /import_aws_rds_cert_bundles.sh
 
 ENV PORT 8080
 ENV ADMIN_PORT 8081
