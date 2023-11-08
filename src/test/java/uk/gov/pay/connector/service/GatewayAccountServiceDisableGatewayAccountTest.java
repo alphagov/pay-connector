@@ -52,7 +52,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @ExtendWith(MockitoExtension.class)
-public class OnServiceArchiveTest {
+public class GatewayAccountServiceDisableGatewayAccountTest {
 
     private GatewayAccountService gatewayAccountService;
 
@@ -98,7 +98,7 @@ public class OnServiceArchiveTest {
 
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
 
-        gatewayAccountService.onServiceArchive(serviceId);
+        gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("No credentials to redact."));
@@ -116,7 +116,7 @@ public class OnServiceArchiveTest {
         
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
         
-        gatewayAccountService.onServiceArchive(serviceId);
+        gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
         
         verify(mockGatewayAccountDao).findByServiceId(serviceId);
 
@@ -144,7 +144,7 @@ public class OnServiceArchiveTest {
 
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
 
-        gatewayAccountService.onServiceArchive(serviceId);
+        gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
 
         verify(mockGatewayAccountDao).findByServiceId(serviceId);
 

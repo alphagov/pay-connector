@@ -267,7 +267,7 @@ public class GatewayAccountService {
         }
     }
 
-    public void onServiceArchive(String serviceId) {
+    public void disableAccountsAndRedactOrDeleteCredentials(String serviceId) {
         gatewayAccountDao.findByServiceId(serviceId).forEach(ga -> {
             ga.setDisabled(true);
             ga.setNotificationCredentials(null);
