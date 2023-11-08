@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
@@ -207,7 +206,7 @@ class GatewayAccountServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"worldpay", "stripe"})
+    @ValueSource(strings = {"worldpay", "stripe", "sandbox"})
     void shouldUpdateAllowApplePay(String provider) {
         JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
@@ -224,7 +223,7 @@ class GatewayAccountServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"worldpay", "stripe"})
+    @ValueSource(strings = {"worldpay", "stripe", "sandbox"})
     void shouldUpdateAllowGooglePay(String provider) {
         JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
                 "op", "replace",
@@ -238,20 +237,6 @@ class GatewayAccountServiceTest {
         assertThat(optionalGatewayAccount.isPresent(), is(true));
         verify(mockGatewayAccountEntity).setAllowGooglePay(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"allow_apple_pay", "allow_google_pay"})
-    void shouldNotAllowDigitalWalletForUnsupportedGateways(String path) {
-        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
-                "op", "replace",
-                "path", path,
-                "value", "true")));
-
-        when(mockGatewayAccountEntity.getGatewayName()).thenReturn("epdq");
-        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
-        assertThrows(DigitalWalletNotSupportedGatewayException.class,
-                () -> gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request));
     }
 
     @Test

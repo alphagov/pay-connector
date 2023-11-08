@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.exception.DigitalWalletNotSupportedGatewayException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
@@ -35,7 +34,6 @@ import java.util.stream.Collectors;
 
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_AUTHORISATION_API;
@@ -138,14 +136,12 @@ public class GatewayAccountService {
             entry(
                     FIELD_ALLOW_GOOGLE_PAY,
                     (gatewayAccountRequest, gatewayAccountEntity) -> {
-                        throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
                         gatewayAccountEntity.setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
                     }
             ),
             entry(
                     FIELD_ALLOW_APPLE_PAY,
                     (gatewayAccountRequest, gatewayAccountEntity) -> {
-                        throwIfNotDigitalWalletSupportedGateway(gatewayAccountEntity);
                         gatewayAccountEntity.setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
                     }
             ),
@@ -252,12 +248,6 @@ public class GatewayAccountService {
     private void throwIfNoActiveCredentialExist(GatewayAccountEntity gatewayAccountEntity) {
         if (!gatewayAccountCredentialsService.hasActiveCredentials(gatewayAccountEntity.getId())) {
             throw new GatewayAccountWithoutAnActiveCredentialException(gatewayAccountEntity.getId());
-        }
-    }
-
-    private void throwIfNotDigitalWalletSupportedGateway(GatewayAccountEntity gatewayAccountEntity) {
-        if (!(WORLDPAY.getName().equals(gatewayAccountEntity.getGatewayName()) || STRIPE.getName().equals(gatewayAccountEntity.getGatewayName()))) {
-            throw new DigitalWalletNotSupportedGatewayException(gatewayAccountEntity.getGatewayName());
         }
     }
 
