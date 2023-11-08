@@ -267,6 +267,7 @@ public class GatewayAccountService {
         }
     }
 
+    @Transactional
     public void disableAccountsAndRedactOrDeleteCredentials(String serviceId) {
         gatewayAccountDao.findByServiceId(serviceId).forEach(ga -> {
             ga.setDisabled(true);
