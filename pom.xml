@@ -11,7 +11,7 @@
     </parent>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <liquibase.version>4.21.1</liquibase.version>
+        <liquibase.version>4.24.0</liquibase.version>
         <dropwizard.version>2.1.9</dropwizard.version>
         <wiremock.version>2.35.1</wiremock.version>
         <eclipselink.version>2.7.13</eclipselink.version>
