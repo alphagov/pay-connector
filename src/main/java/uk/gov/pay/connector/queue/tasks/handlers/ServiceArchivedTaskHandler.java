@@ -4,6 +4,8 @@ import io.prometheus.client.Histogram;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
 
+import javax.inject.Inject;
+
 public class ServiceArchivedTaskHandler {
     private final GatewayAccountService gatewayAccountService;
 
@@ -13,16 +15,18 @@ public class ServiceArchivedTaskHandler {
             .unit("seconds")
             .register();
 
+    @Inject
     public ServiceArchivedTaskHandler(GatewayAccountService gatewayAccountService) {
         this.gatewayAccountService = gatewayAccountService;
     }
 
     public void process(ServiceArchivedTaskData serviceArchivedTaskData) {
-        Histogram.Timer responseTimeTimer = duration.startTimer();
-        try {
-            gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceArchivedTaskData.getServiceId());
-        } finally {
-            responseTimeTimer.observeDuration();
+        try (Histogram.Timer responseTimeTimer = duration.startTimer()) {
+            try {
+                gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceArchivedTaskData.getServiceId());
+            } finally {
+                responseTimeTimer.observeDuration();
+            }
         }
     }
 }

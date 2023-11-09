@@ -20,9 +20,11 @@ import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHand
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.ServiceArchivedTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
+import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.service.payments.commons.queue.model.QueueMessage;
@@ -58,6 +60,8 @@ class TaskQueueMessageHandlerTest {
     @Mock
     private RetryPaymentOrRefundEmailTaskHandler mockRetryPaymentOrRefundEmailTaskHandler;
     @Mock
+    private ServiceArchivedTaskHandler mockServiceArchivedTaskHandler;
+    @Mock
     private Appender<ILoggingEvent> mockAppender;
 
     @Captor
@@ -65,6 +69,9 @@ class TaskQueueMessageHandlerTest {
 
     @Captor
     ArgumentCaptor<RetryPaymentOrRefundEmailTaskData> retryPaymentOrRefundEmailTaskDataArgumentCaptor;
+    
+    @Captor
+    ArgumentCaptor<ServiceArchivedTaskData> serviceArchivedTaskDataArgumentCaptor;
     
     private TaskQueueMessageHandler taskQueueMessageHandler;
     
@@ -81,6 +88,7 @@ class TaskQueueMessageHandlerTest {
                 authoriseWithUserNotPresentHandler,
                 deleteStoredPaymentDetailsHandler,
                 mockRetryPaymentOrRefundEmailTaskHandler,
+                mockServiceArchivedTaskHandler,
                 objectMapper);
 
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);
@@ -147,6 +155,17 @@ class TaskQueueMessageHandlerTest {
         verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
+    
+    @Test
+    void shouldProcessServiceArchivedTask() throws Exception {
+        TaskMessage taskMessage = setupQueueMessage("{ \"service_external_id\": \"external-service-id\"}", TaskType.SERVICE_ARCHIVED);
+        taskQueueMessageHandler.processMessages();
+        verify(mockServiceArchivedTaskHandler).process(serviceArchivedTaskDataArgumentCaptor.capture());
+
+        ServiceArchivedTaskData taskData = serviceArchivedTaskDataArgumentCaptor.getValue();
+        assertThat(taskData.getServiceId(), is("external-service-id"));
+        verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
+    }
 
     @Test
     void shouldProcessRetryPaymentOrRefundEmailTask() throws Exception {
@@ -158,7 +177,6 @@ class TaskQueueMessageHandlerTest {
         RetryPaymentOrRefundEmailTaskData taskData = retryPaymentOrRefundEmailTaskDataArgumentCaptor.getValue();
         assertThat(taskData.getEmailNotificationType(), is(PAYMENT_CONFIRMED));
         assertThat(taskData.getResourceExternalId(), is("external-id"));
-
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
 

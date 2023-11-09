@@ -7,6 +7,9 @@ public class ServiceArchivedTaskData {
     @JsonProperty("service_external_id")
     private String serviceId;
 
+    public ServiceArchivedTaskData() {
+    }
+
     public ServiceArchivedTaskData(String serviceId) {
         this.serviceId = serviceId;
     }
