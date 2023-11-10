@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -259,7 +260,12 @@ public class GatewayAccountService {
 
     @Transactional
     public void disableAccountsAndRedactOrDeleteCredentials(String serviceId) {
-        gatewayAccountDao.findByServiceId(serviceId).forEach(ga -> {
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceId(serviceId);
+        
+        LOGGER.info(format("Disabling gateway accounts %s for service.", gatewayAccounts.stream().map(GatewayAccountEntity::getExternalId).collect(Collectors.joining(","))),
+                kv(SERVICE_EXTERNAL_ID, serviceId));
+        
+        gatewayAccounts.forEach(ga -> {
             ga.setDisabled(true);
             ga.setNotificationCredentials(null);
             gatewayAccountDao.merge(ga);

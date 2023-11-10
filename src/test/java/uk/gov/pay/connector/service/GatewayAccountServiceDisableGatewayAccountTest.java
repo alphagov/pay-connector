@@ -27,6 +27,7 @@ import uk.gov.pay.connector.usernotification.model.domain.NotificationCredential
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
@@ -100,8 +101,11 @@ public class GatewayAccountServiceDisableGatewayAccountTest {
 
         gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
 
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("No credentials to redact."));
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(), 
+                containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(), 
+                containsString("No credentials to redact."));
     }
     
     @Test

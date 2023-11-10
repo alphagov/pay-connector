@@ -10,10 +10,12 @@ import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHand
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.ServiceArchivedTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.DeleteStoredPaymentDetailsTaskData;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
+import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.inject.Inject;
@@ -24,6 +26,7 @@ import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_INSTRUMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.RESOURCE_EXTERNAL_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.SERVICE_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.STRIPE_EVENT_ID;
 
 public class TaskQueueMessageHandler {
@@ -35,6 +38,7 @@ public class TaskQueueMessageHandler {
     private final AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
     private final DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
     private final RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler;
+    private ServiceArchivedTaskHandler serviceArchivedTaskHandler;
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -44,6 +48,7 @@ public class TaskQueueMessageHandler {
                                    AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler,
                                    DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler,
                                    RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler,
+                                   ServiceArchivedTaskHandler serviceArchivedTaskHandler, 
                                    ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
@@ -51,6 +56,7 @@ public class TaskQueueMessageHandler {
         this.authoriseWithUserNotPresentHandler = authoriseWithUserNotPresentHandler;
         this.deleteStoredPaymentDetailsHandler = deleteStoredPaymentDetailsHandler;
         this.retryPaymentOrRefundEmailTaskHandler = retryPaymentOrRefundEmailTaskHandler;
+        this.serviceArchivedTaskHandler = serviceArchivedTaskHandler;
         this.objectMapper = objectMapper;
     }
 
@@ -103,6 +109,11 @@ public class TaskQueueMessageHandler {
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         retryPaymentOrRefundEmailTaskHandler.process(retryPaymentOrRefundEmailTaskData);
                         break;
+                    case SERVICE_ARCHIVED:
+                        var serviceArchivedTaskData = objectMapper.readValue(taskMessage.getTask().getData(), ServiceArchivedTaskData.class);
+                        MDC.put(SERVICE_EXTERNAL_ID, serviceArchivedTaskData.getServiceId());
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        serviceArchivedTaskHandler.process(serviceArchivedTaskData);
                     default:
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());
                 }
