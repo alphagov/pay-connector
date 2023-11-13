@@ -114,6 +114,7 @@ public class TaskQueueMessageHandler {
                         MDC.put(SERVICE_EXTERNAL_ID, serviceArchivedTaskData.getServiceId());
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         serviceArchivedTaskHandler.process(serviceArchivedTaskData);
+                        break;
                     default:
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());
                 }
