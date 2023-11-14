@@ -14,7 +14,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountObjectConverter {
 
-    private static final int DEFAULT_INTEGRATION_VERSION_3_DS = 1;
+    private static final int DEFAULT_INTEGRATION_VERSION_3_DS = 2;
 
     public static GatewayAccountEntity createEntityFrom(GatewayAccountRequest gatewayAccountRequest) {
 
