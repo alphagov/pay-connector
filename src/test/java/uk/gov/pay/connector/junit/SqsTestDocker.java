@@ -14,16 +14,16 @@ import org.testcontainers.containers.wait.strategy.Wait;
  * Start a Generic Test container with SQS docker image and creates queues if required.
  * No need to call stop() as container will be stopped after executing the tests
  */
-final class SqsTestDocker {
+public final class SqsTestDocker {
 
     private static final Logger logger = LoggerFactory.getLogger(SqsTestDocker.class);
 
     private static GenericContainer sqsContainer;
 
-    public static void initialise(String... queues) {
+    public static AmazonSQS initialise(String... queues) {
         try {
             createContainer();
-            createQueues(queues);
+            return createQueues(queues);
         } catch (Exception e) {
             logger.error("Exception initialising SQS Container - {}", e.getMessage());
             throw new SqsTestDockerException(e);
@@ -39,13 +39,14 @@ final class SqsTestDocker {
         }
     }
 
-    private static void createQueues(String... queues) {
+    private static AmazonSQS createQueues(String... queues) {
         AmazonSQS amazonSQS = getSqsClient();
         if (queues != null) {
             for (String queue : queues) {
                 amazonSQS.createQueue(queue);
             }
         }
+        return amazonSQS;
     }
 
     public static String getQueueUrl(String queueName) {

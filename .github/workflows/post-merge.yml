@@ -46,6 +46,16 @@ jobs:
           -DPACT_BROKER_PASSWORD=${{ secrets.pact_broker_password }} -DPACT_CONSUMER_TAG=master \
           -DPACT_CONSUMER_VERSION=${{ github.sha }}
 
+  adminusers-provider-contract-tests:
+    needs: publish-connector-consumer-contract-tests
+    uses: alphagov/pay-adminusers/.github/workflows/_run-pact-provider-tests.yml@master
+    with:
+      consumer: connector
+      consumer_tag: master
+    secrets:
+      pact_broker_username: ${{ secrets.pact_broker_username }}
+      pact_broker_password: ${{ secrets.pact_broker_password }}
+
   ledger-provider-contract-tests:
     needs: publish-connector-consumer-contract-tests
     uses: alphagov/pay-ledger/.github/workflows/_run-pact-provider-tests.yml@master
