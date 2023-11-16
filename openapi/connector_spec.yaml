@@ -2767,7 +2767,7 @@ components:
           type: string
           description: Only applicable for telephone payments reported. User's telephone
             number
-          example: +44000000000
+          example: "+44000000000"
         total_amount:
           type: integer
           format: int64
@@ -3108,7 +3108,7 @@ components:
           type: string
           description: Only applicable for telephone payments reported. User's telephone
             number
-          example: +44000000000
+          example: "+44000000000"
         total_amount:
           type: integer
           format: int64
@@ -4269,7 +4269,7 @@ components:
         telephone_number:
           type: string
           description: user's telephone number
-          example: +44000000000
+          example: "+44000000000"
           maxLength: 50
       required:
       - amount
