@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.junit;
 
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.inject.Injector;
 import io.dropwizard.db.DataSourceFactory;
@@ -17,13 +18,16 @@ public class TestContext {
     private int port;
     private Injector injector;
     private WireMockServer wireMockServer;
+    private AmazonSQS amazonSQS;
     private String databaseUrl;
     private String databaseUser;
     private String databasePassword;
 
-    TestContext(int port, ConnectorConfiguration connectorConfiguration, Injector injector, WireMockServer wireMockServer) {
+    TestContext(int port, ConnectorConfiguration connectorConfiguration, Injector injector, 
+                WireMockServer wireMockServer, AmazonSQS amazonSQS) {
         this.injector = injector;
         this.wireMockServer = wireMockServer;
+        this.amazonSQS = amazonSQS;
         DataSourceFactory dataSourceFactory = connectorConfiguration.getDataSourceFactory();
         databaseUrl = dataSourceFactory.getUrl();
         databaseUser = dataSourceFactory.getUser();
@@ -68,5 +72,9 @@ public class TestContext {
     
     public String getEventQueueUrl() {
         return connectorConfiguration.getSqsConfig().getEventQueueUrl();
+    }
+
+    public AmazonSQS getAmazonSQS() {
+        return amazonSQS;
     }
 }

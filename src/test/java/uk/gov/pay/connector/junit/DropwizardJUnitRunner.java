@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.junit;
 
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.dropwizard.testing.ConfigOverride;
-import io.dropwizard.testing.DropwizardTestSupport;
 import junitparams.JUnitParamsRunner;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.FrameworkField;
@@ -14,12 +14,10 @@ import uk.gov.service.payments.commons.testing.port.PortFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.google.common.collect.Lists.newArrayList;
 import static io.dropwizard.testing.ConfigOverride.config;
-import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 import static java.util.Arrays.stream;
 import static uk.gov.pay.connector.junit.DropwizardTestApplications.createIfNotRunning;
 import static uk.gov.pay.connector.junit.PostgresTestDocker.getDbPassword;
@@ -55,6 +53,8 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
 
     private int wireMockPort = PortFactory.findFreePort();
     private WireMockServer wireMockServer = new WireMockServer(wireMockConfig().port(wireMockPort));
+    
+    private AmazonSQS amazonSQS;
 
     public DropwizardJUnitRunner(Class<?> testClass) throws InitializationError {
         super(testClass);
@@ -73,7 +73,7 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
         }
 
         if (dropwizardConfigAnnotation.withDockerSQS()) {
-            SqsTestDocker.initialise("capture-queue", "event-queue", "tasks-queue");
+            amazonSQS = SqsTestDocker.initialise("capture-queue", "event-queue", "tasks-queue");
             configOverride.add(config("sqsConfig.captureQueueUrl", getQueueUrl("capture-queue")));
             configOverride.add(config("sqsConfig.eventQueueUrl", getQueueUrl("event-queue")));
             configOverride.add(config("sqsConfig.taskQueueUrl", getQueueUrl("tasks-queue")));
@@ -113,7 +113,8 @@ public final class DropwizardJUnitRunner extends JUnitParamsRunner {
     public Object createTest() throws Exception {
         Object testInstance = super.createTest();
         DropwizardConfig declaredConfiguration = dropwizardConfigAnnotation();
-        TestContext testContext = DropwizardTestApplications.getTestContextOf(declaredConfiguration.app(), declaredConfiguration.config(), wireMockServer);
+        TestContext testContext = DropwizardTestApplications.getTestContextOf(declaredConfiguration.app(), 
+                declaredConfiguration.config(), wireMockServer, amazonSQS);
         setTestContextToDeclaredAnnotations(testInstance, testContext);
         return testInstance;
     }

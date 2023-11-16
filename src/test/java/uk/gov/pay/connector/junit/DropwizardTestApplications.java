@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.junit;
 
+import com.amazonaws.services.sqs.AmazonSQS;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.common.collect.Sets;
 import io.dropwizard.Application;
@@ -77,11 +78,12 @@ final class DropwizardTestApplications {
         }
     }
 
-    static TestContext getTestContextOf(Class<? extends Application<?>> appClass, String configClasspathLocation, WireMockServer wireMockServer) {
+    static TestContext getTestContextOf(Class<? extends Application<?>> appClass, String configClasspathLocation, 
+                                        WireMockServer wireMockServer, AmazonSQS amazonSQS) {
         Pair<Class<? extends Application>, String> appConfig = Pair.of(appClass, configClasspathLocation);
         DropwizardTestSupport application = apps.get(appConfig);
         return new TestContext(application.getLocalPort(), ((ConnectorConfiguration) application.getConfiguration()),
-                InjectorLookup.getInjector(application.getApplication()).get(), wireMockServer);
+                InjectorLookup.getInjector(application.getApplication()).get(), wireMockServer, amazonSQS);
     }
 
     static void removeConfigOverridesFromSystemProperties() {
