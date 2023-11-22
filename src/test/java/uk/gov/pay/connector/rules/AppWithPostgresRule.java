@@ -55,7 +55,7 @@ abstract public class AppWithPostgresRule implements TestRule {
 
     public AppWithPostgresRule(String configPath, boolean stubPaymentGateways, ConfigOverride... configOverrides) {
         configFilePath = resourceFilePath(configPath);
-        postgres = new PostgresDockerRule("11.16");
+        postgres = new PostgresDockerRule("15.2");
 
         ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides, postgres);
         newConfigOverrides = overrideSqsConfig(newConfigOverrides);

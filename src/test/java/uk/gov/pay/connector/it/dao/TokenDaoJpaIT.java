@@ -31,6 +31,7 @@ public class TokenDaoJpaIT extends DaoITestBase {
 
     @Before
     public void setUp() {
+        databaseTestHelper.truncateAllData();
         tokenDao = env.getInstance(TokenDao.class);
         chargeDao = env.getInstance(ChargeDao.class);
         DatabaseFixtures.TestAccount defaultTestAccount = DatabaseFixtures

@@ -29,7 +29,7 @@ abstract public class DaoITestBase {
     private static String CHANGE_LOG_FILE = "it-migrations.xml";
 
     static {
-        postgres = new PostgresDockerRule("11.16");
+        postgres = new PostgresDockerRule("15.2");
     }
 
     @BeforeClass
