@@ -17,7 +17,7 @@ final class PostgresTestDocker {
     static void getOrCreate() {
         try {
             if (container == null) {
-                container = new PostgresContainer("11.16");
+                container = new PostgresContainer("15.2");
                 createDatabase();
             }
         } catch (Exception e) {
