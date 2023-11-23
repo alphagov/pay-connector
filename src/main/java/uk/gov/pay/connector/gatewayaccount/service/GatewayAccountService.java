@@ -279,6 +279,11 @@ public class GatewayAccountService {
                         worldpayCredentials.getRecurringMerchantInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
                         creds.setCredentials(worldpayCredentials);
                         gatewayAccountCredentialsDao.merge(creds);
+                        LOGGER.info("Credentials redacted",
+                                kv(SERVICE_EXTERNAL_ID, serviceId),
+                                kv("credential_external_id", creds.getExternalId()),
+                                kv(GATEWAY_ACCOUNT_ID, ga.getExternalId()),
+                                kv(PROVIDER, creds.getPaymentProvider()));
                         break;
                     case EPDQ:
                         EpdqCredentials epdqCredentials = (EpdqCredentials) creds.getCredentialsObject();
@@ -286,10 +291,16 @@ public class GatewayAccountService {
                         epdqCredentials.setPassword("<DELETED>");
                         creds.setCredentials(epdqCredentials);
                         gatewayAccountCredentialsDao.merge(creds);
+                        LOGGER.info("Credentials redacted",
+                                kv(SERVICE_EXTERNAL_ID, serviceId),
+                                kv("credential_external_id", creds.getExternalId()),
+                                kv(GATEWAY_ACCOUNT_ID, ga.getExternalId()),
+                                kv(PROVIDER, creds.getPaymentProvider()));
                         break;
                     default:
                         LOGGER.info("No credentials to redact.",
                                 kv(SERVICE_EXTERNAL_ID, serviceId),
+                                kv("credential_external_id", creds.getExternalId()),
                                 kv(GATEWAY_ACCOUNT_ID, ga.getExternalId()),
                                 kv(PROVIDER, creds.getPaymentProvider()));
                 }
