@@ -53,22 +53,22 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @ExtendWith(MockitoExtension.class)
-public class GatewayAccountServiceDisableGatewayAccountTest {
+class GatewayAccountServiceDisableGatewayAccountTest {
 
     private GatewayAccountService gatewayAccountService;
 
     @Mock
     private GatewayAccountDao mockGatewayAccountDao;
-    
+
     @Mock
     private GatewayAccountCredentialsHistoryDao mockGatewayAccountCredentialsHistoryDao;
-    
+
     @Mock
     private GatewayAccountCredentialsDao mockGatewayAccountCredentialsDao;
 
     @Captor
     private ArgumentCaptor<GatewayAccountEntity> updatedGatewayAccountEntity;
-    
+
     @Captor
     private ArgumentCaptor<GatewayAccountCredentialsEntity> updatedGatewayAccountCredentialsEntity;
 
@@ -77,24 +77,23 @@ public class GatewayAccountServiceDisableGatewayAccountTest {
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
-    
+
     @BeforeEach
     void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mock(CardTypeDao.class),
-                mock(GatewayAccountCredentialsService.class), mockGatewayAccountCredentialsHistoryDao, 
+                mock(GatewayAccountCredentialsService.class), mockGatewayAccountCredentialsHistoryDao,
                 mockGatewayAccountCredentialsDao);
+        Logger root = (Logger) LoggerFactory.getLogger(GatewayAccountService.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
     }
 
     @Test
     void shouldLogIfNotWorldpayOrEpdqCredentials() {
-        Logger root = (Logger) LoggerFactory.getLogger(GatewayAccountService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String serviceId = "service-to-be-archived";
 
         GatewayAccountEntity gatewayAccount = setupGatewayAccountEntity(STRIPE, Map.of(STRIPE_ACCOUNT_ID_KEY, "acct_123"));
-        
+
         when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(gatewayAccount));
 
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
@@ -102,26 +101,26 @@ public class GatewayAccountServiceDisableGatewayAccountTest {
         gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
 
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(), 
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(),
                 containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(), 
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
                 containsString("No credentials to redact."));
     }
-    
+
     @Test
     void shouldDisableWorldpayAccount_redactCredentials_deleteCredentialsHistory() {
         String serviceId = "service-to-be-archived";
-        
+
         GatewayAccountEntity gatewayAccount = setupGatewayAccountEntity(WORLDPAY,
                 Map.of(ONE_OFF_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, "a-merchant-code-1", CREDENTIALS_PASSWORD, "passw0rd1"),
                         RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, "a-merchant-code-3", CREDENTIALS_PASSWORD, "passw0rd1")));
-                
+
         when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(gatewayAccount));
-        
+
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
-        
+
         gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
-        
+
         verify(mockGatewayAccountDao).findByServiceId(serviceId);
 
         verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials();
@@ -131,6 +130,12 @@ public class GatewayAccountServiceDisableGatewayAccountTest {
                 RECURRING_MERCHANT_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-3", CREDENTIALS_USERNAME, DELETED, CREDENTIALS_PASSWORD, DELETED)));
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
+
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(),
+                containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
+                containsString("Credentials redacted"));
     }
 
     @Test
@@ -143,7 +148,7 @@ public class GatewayAccountServiceDisableGatewayAccountTest {
                         "password", "a-secret-password",
                         "sha_in_passphrase", "123456",
                         "sha_out_passphrase", "123456"));
-        
+
         when(mockGatewayAccountDao.findByServiceId(serviceId)).thenReturn(List.of(gatewayAccount));
 
         when(mockGatewayAccountCredentialsHistoryDao.delete(serviceId)).thenReturn(1);
@@ -161,6 +166,12 @@ public class GatewayAccountServiceDisableGatewayAccountTest {
                 "sha_out_passphrase", "123456"));
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
+
+        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(),
+                containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
+        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
+                containsString("Credentials redacted"));
     }
 
     private void verifyExpectedGatewayAccountCredentialsAndStateIsRetired(Map<String, Object> expectedCredentials) {
