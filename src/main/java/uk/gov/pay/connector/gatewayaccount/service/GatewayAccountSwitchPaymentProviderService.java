@@ -72,8 +72,7 @@ public class GatewayAccountSwitchPaymentProviderService {
 
         gatewayAccountEntity.setProviderSwitchEnabled(false);
         gatewayAccountEntity
-                .setIntegrationVersion3ds(switchToCredentialsEntity.getPaymentProvider().
-                        equalsIgnoreCase("worldpay") ? 1 : 2);
+                .setIntegrationVersion3ds(2);
 
         gatewayAccountCredentialsDao.merge(switchToCredentialsEntity);
         gatewayAccountCredentialsDao.merge(activeCredentialEntity);
