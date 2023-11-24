@@ -71,8 +71,6 @@ public class GatewayAccountSwitchPaymentProviderService {
         activeCredentialEntity.setActiveEndDate(Instant.now());
 
         gatewayAccountEntity.setProviderSwitchEnabled(false);
-        gatewayAccountEntity
-                .setIntegrationVersion3ds(2);
 
         gatewayAccountCredentialsDao.merge(switchToCredentialsEntity);
         gatewayAccountCredentialsDao.merge(activeCredentialEntity);
