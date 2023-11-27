@@ -25,6 +25,7 @@ public class JwtGeneratorTest {
 
         Jws<Claims> jws = Jwts.parser()
                 .setSigningKey(new SecretKeySpec(secret.getBytes(), "HmacSHA256"))
+                .build()
                 .parseClaimsJws(token);
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
