@@ -19,6 +19,11 @@ updates:
   - dependency-name: "eclipse-temurin"
     versions:
     - "> 11"
+  - dependency-name: "maven"
+    versions:
+      - ">= 3-eclipse-temurin-21-alpine"
+      - "3-eclipse-temurin-21-alpine"
+      - ">= 21"
   open-pull-requests-limit: 10
   labels:
   - dependencies
