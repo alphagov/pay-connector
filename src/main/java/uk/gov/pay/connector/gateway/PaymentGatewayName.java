@@ -1,13 +1,17 @@
 package uk.gov.pay.connector.gateway;
 
-import java.util.List;
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public enum PaymentGatewayName {
     SANDBOX("sandbox"), SMARTPAY("smartpay"), WORLDPAY("worldpay"), EPDQ("epdq"), STRIPE("stripe");
 
     private final String gatewayName;
     
-    private static List<String> unsupported = List.of(SMARTPAY.gatewayName, EPDQ.gatewayName);
+    private static final Set<String> UNSUPPORTED = Set.of(SMARTPAY.gatewayName, EPDQ.gatewayName);
+
+    private static final Set<String> PAYMENT_GATEWAY_NAMES = EnumSet.allOf(PaymentGatewayName.class).stream().map(x -> x.gatewayName).collect(Collectors.toSet());
 
     PaymentGatewayName(String gatewayName) {
         this.gatewayName = gatewayName;
@@ -18,7 +22,7 @@ public enum PaymentGatewayName {
     }
     
     public static boolean isUnsupported(String gatewayName) {
-        return unsupported.contains(gatewayName);
+        return UNSUPPORTED.contains(gatewayName);
     }
 
     public static class Unsupported extends RuntimeException {
@@ -30,16 +34,14 @@ public enum PaymentGatewayName {
         try {
             valueFrom(name);
             return true;
-        } catch (RuntimeException e){
+        } catch (Unsupported e){
             return false;
         }
     }
 
     public static PaymentGatewayName valueFrom(String gatewayName) {
-        for (PaymentGatewayName paymentGatewayName : values()) {
-            if (paymentGatewayName.getName().equals(gatewayName)) {
-                return paymentGatewayName;
-            }
+        if (PAYMENT_GATEWAY_NAMES.contains(gatewayName)) {
+            return PaymentGatewayName.valueOf(gatewayName.toUpperCase());
         }
         throw new Unsupported("Unsupported Payment Gateway " + gatewayName);
     }
