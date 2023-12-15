@@ -28,6 +28,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -37,7 +38,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
@@ -84,6 +84,10 @@ public class RefundService {
     }
 
     public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
+        if (PaymentGatewayName.isUnsupported(charge.getPaymentGatewayName())) {
+            throw new NotFoundException();
+        }
+        
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
         if (gatewayAccountEntity.isDisabled()) {
