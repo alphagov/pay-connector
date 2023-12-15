@@ -8,7 +8,7 @@ import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
@@ -18,15 +18,11 @@ public class EpdqChargeApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldSuccessfully_authorise3ds() {
-        String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_3DS_REQUIRED);
-        String chargeId = externalChargeId.replace("charge-", "");
-        String expectedHtml = "someHtml";
-        databaseTestHelper.updateCharge3dsDetails(Long.valueOf(chargeId), null, null, expectedHtml, null);
+    public void getChargeRefundStatusShouldBeUnavailable() {
+        String externalChargeId = createNewChargeWith(CAPTURED, "a-gateway-tx-id");
 
-        connectorRestApiClient.withChargeId(externalChargeId).getFrontendCharge()
+        connectorRestApiClient.withChargeId(externalChargeId).getCharge()
                 .statusCode(200)
-                .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
-                .body("auth_3ds_data.htmlOut", is(expectedHtml));
+                .body("refund_summary.status", is("unavailable"));
     }
 }
