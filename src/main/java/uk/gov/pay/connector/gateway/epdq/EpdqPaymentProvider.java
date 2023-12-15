@@ -109,7 +109,7 @@ public class EpdqPaymentProvider implements PaymentProvider {
 
     @Override
     public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundList) {
-        throw new UnsupportedOperationException();
+        return ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
     }
 
     @Override

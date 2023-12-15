@@ -187,7 +187,6 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
 
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 20L;
-        Long chargeId = defaultTestCharge.getChargeId();
         String externalChargeId = defaultTestCharge.getExternalChargeId();
 
         worldpayMockClient.mockRefundSuccess();
