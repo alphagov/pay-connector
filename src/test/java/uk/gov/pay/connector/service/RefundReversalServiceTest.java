@@ -17,7 +17,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
@@ -41,8 +41,6 @@ public class RefundReversalServiceTest {
     @Test
     void shouldFindRefundInLedger() {
 
-        when(mockRefundDao.findByExternalId(refundExternalId)).thenReturn(Optional.empty());
-
         LedgerTransaction ledgerTransaction = aValidLedgerTransaction()
                 .withExternalId(refundExternalId)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUBMITTED.getStatus())
@@ -53,8 +51,6 @@ public class RefundReversalServiceTest {
 
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getExternalId(), is(refundExternalId));
-
-        verifyNoMoreInteractions(mockRefundDao);
     }
 
     @Test
@@ -68,7 +64,7 @@ public class RefundReversalServiceTest {
         assertThat(result.isPresent(), is(true));
         assertThat(result.get().getExternalId(), is(refundExternalId));
 
-        verifyNoMoreInteractions(mockLedgerService);
+        verifyNoInteractions(mockLedgerService);
     }
     @Test
     void shouldNotFindRefund() {
