@@ -74,6 +74,7 @@ class RefundReversalResourceTest {
 
         assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
     }
+
     @Test
     void shouldReturn400ErrorWhenPaymentProviderIsNotStripe() {
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withId(gatewayAccountId).build();
@@ -97,6 +98,7 @@ class RefundReversalResourceTest {
         assertThat(response.getStatus(), is(Response.Status.BAD_REQUEST.getStatusCode()));
         assertThat(responseBody, is("Operation only available for Stripe"));
     }
+
     @Test
     void shouldReturn404WhenRefundDoesNotExist() {
         var wrongRefundExternalId = "a-wrong-refund";
@@ -151,17 +153,11 @@ class RefundReversalResourceTest {
         assertThat(errorResponse.getMessages(), hasItem("Refund with id [a-refund-id] not found for Charge wih id [a-charge-id] and gateway account with id [1234]."));
         assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
     }
+
     @Test
     void shouldReturn404WhenWrongGatewayAccountIsProvided() {
-        var nonExistingGatewayAccountId = 0L;
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                .withId(nonExistingGatewayAccountId)
-                .build();
-        when(mockGatewayAccountDao.findById(nonExistingGatewayAccountId)).thenReturn(Optional.empty());
-
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
-                .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
         Charge charge = Charge.from(chargeEntity);
         when(mockChargeService.findCharge(externalChargeId)).thenReturn(Optional.of(charge));
@@ -178,7 +174,7 @@ class RefundReversalResourceTest {
     }
 
     @Test
-    void shouldReturn404WhenWrongChargeIsPassed() {
+    void shouldReturn404WhenChargeDoesNotBelongToGatewayAccount() {
         var wrongGatewayAccountId = 998L;
 
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
@@ -206,7 +202,7 @@ class RefundReversalResourceTest {
 
         assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Charge with id [a-charge-id] does not exist for Refund with id [a-refund-id] and Gateway Account with id [1234]."));
+        assertThat(errorResponse.getMessages(), hasItem("Refund with id [a-refund-id] not found for Charge wih id [a-charge-id] and gateway account with id [1234]."));
     }
 
     @Test
@@ -227,4 +223,3 @@ class RefundReversalResourceTest {
         assertThat(errorResponse.getMessages(), hasItem("Charge with id [a-charge-id] not found."));
     }
 }
-

@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import uk.gov.pay.connector.charge.exception.ChargeNotFoundForRefundException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -32,7 +31,7 @@ import javax.ws.rs.core.UriInfo;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Path("/")
-@Tag(name = "RefundsReversal")
+@Tag(name = "Refunds")
 public class RefundReversalResource {
     private final ChargeService chargeService;
 
@@ -62,29 +61,36 @@ public class RefundReversalResource {
             }
     )
     public Response reverseRefund(@Parameter(example = "1", description = "Gateway account ID")
-                                 @PathParam("gatewayAccountId") Long gatewayAccountId,
-                                 @Parameter(example = "2c6vtn9pth38ppbmnt20d57t49", description = "Charge external ID")
-                                 @PathParam("chargeId") String chargeExternalId,
-                                 @Parameter(example = "3c6vtn9pth38ppbmnt20d57t49", description = "Refund external ID")
-                                 @PathParam("refundId") String refundExternalId,
-                                 @Context UriInfo uriInfo) {
+                                  @PathParam("gatewayAccountId") Long gatewayAccountId,
+                                  @Parameter(example = "2c6vtn9pth38ppbmnt20d57t49", description = "Charge external ID")
+                                  @PathParam("chargeId") String chargeExternalId,
+                                  @Parameter(example = "3c6vtn9pth38ppbmnt20d57t49", description = "Refund external ID")
+                                  @PathParam("refundId") String refundExternalId,
+                                  @Context UriInfo uriInfo) {
 
-        Charge charge = chargeService.findCharge(chargeExternalId).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
-        if (PaymentGatewayName.STRIPE.getName().equals(charge.getPaymentGatewayName())) {
-            GatewayAccountEntity gatewayAccount = gatewayAccountDao.findById(gatewayAccountId).orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
-            if(charge.getGatewayAccountId().equals(gatewayAccount.getId())) {
-                Refund refund = refundReversalService.findMaybeHistoricRefundByRefundId(refundExternalId).orElseThrow(() -> new RefundNotFoundRuntimeException(refundExternalId));
-                if(refund.getChargeExternalId().equals(chargeExternalId)) {
-                    return Response.ok().build();
-                }
-                throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
-            }
+        Charge charge = chargeService.findCharge(chargeExternalId)
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
 
-            throw new ChargeNotFoundForRefundException(chargeExternalId, refundExternalId, gatewayAccountId);
-        }
-
-        return Response.status(Response.Status.BAD_REQUEST)
+        if (!PaymentGatewayName.STRIPE.getName().equals(charge.getPaymentGatewayName())) {
+            return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Operation only available for Stripe")
                     .build();
+        }
+
+        GatewayAccountEntity gatewayAccount = gatewayAccountDao.findById(gatewayAccountId)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
+
+        if (!charge.getGatewayAccountId().equals(gatewayAccount.getId())) {
+            throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
+        }
+
+        Refund refund = refundReversalService.findMaybeHistoricRefundByRefundId(refundExternalId)
+                .orElseThrow(() -> new RefundNotFoundRuntimeException(refundExternalId));
+
+        if (!refund.getChargeExternalId().equals(chargeExternalId)) {
+            throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
+        }
+
+        return Response.ok().build();
     }
 }
