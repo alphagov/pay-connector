@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
+import com.stripe.model.Refund;
 import com.stripe.net.RequestOptions;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 
@@ -46,5 +47,14 @@ public class StripeSdkClient {
 
     private String getStripeApiKey(boolean live) {
         return live ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
+    }
+
+    public Refund getRefund(String stripeRefundId, boolean live) throws StripeException {
+        String apiKey = getStripeApiKey(live);
+        RequestOptions requestOptions = RequestOptions.builder()
+                .setApiKey(apiKey)
+                .build();
+
+        return stripeSDKWrapper.getRefund(stripeRefundId, requestOptions);
     }
 }
