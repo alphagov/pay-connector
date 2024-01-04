@@ -47,6 +47,7 @@ class StripeSdkClientTest {
     public static final String PAYOUT_ID = "payout-id";
     public static final String STRIPE_CONNECT_ACCOUNT_ID = "stripe-account-id";
     public static final String CUSTOMER_ID = "customer-id";
+    public static final String STRIPE_REFUND_ID = "a-stripe-refund-id";
 
     @BeforeEach
     public void setUp() {
@@ -98,5 +99,23 @@ class StripeSdkClientTest {
 
         verify(stripeSDKWrapper).deleteCustomer(eq(CUSTOMER_ID), requestOptionsArgumentCaptor.capture());
         assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(LIVE_API_KEY));
+    }
+
+    @Test
+    void getRefund_shouldUseLiveApiKey() throws Exception {
+        when(stripeAuthTokens.getLive()).thenReturn(LIVE_API_KEY);
+        stripeSDKClient.getRefund(STRIPE_REFUND_ID, true);
+
+        verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), requestOptionsArgumentCaptor.capture());
+        assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(LIVE_API_KEY));
+    }
+
+    @Test
+    void getRefund_shouldUseTestApiKey() throws Exception {
+        when(stripeAuthTokens.getTest()).thenReturn(TEST_API_KEY);
+        stripeSDKClient.getRefund(STRIPE_REFUND_ID, false);
+
+        verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), requestOptionsArgumentCaptor.capture());
+        assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(TEST_API_KEY));
     }
 }

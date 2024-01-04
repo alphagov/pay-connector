@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Customer;
+import com.stripe.model.Refund;
 import com.stripe.net.RequestOptions;
 
 import java.util.Map;
@@ -20,5 +21,9 @@ class StripeSdkWrapper {
 
     void deleteCustomer(String customerId, RequestOptions requestOptions) throws StripeException {
         Customer.retrieve(customerId, requestOptions).delete(requestOptions);
+    }
+
+    Refund getRefund(String stripeRefundId, RequestOptions requestOptions) throws StripeException {
+        return Refund.retrieve(stripeRefundId, requestOptions);
     }
 }
