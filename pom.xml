@@ -19,7 +19,7 @@
         <jackson.version>2.16.1</jackson.version>
         <pay-java-commons.version>1.0.20231127134353</pay-java-commons.version>
         <surefire.version>3.2.1</surefire.version>
-        <jooq.version>3.18.7</jooq.version>
+        <jooq.version>3.19.1</jooq.version>
         <postgresql.version>42.6.0</postgresql.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <jjwt.version>0.12.3</jjwt.version>
