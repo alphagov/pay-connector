@@ -22,6 +22,8 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
+import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
+import uk.gov.pay.connector.gateway.stripe.StripeSdkWrapper;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -266,6 +268,16 @@ public class ConnectorModule extends AbstractModule {
 
     protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
         return new NotifyClientFactory(connectorConfiguration);
+    }
+
+    @Provides
+    @Singleton
+    public StripeSdkClientFactory stripeSdkClientFactory(ConnectorConfiguration connectorConfiguration) {
+        return getStripeSdkClientFactory(connectorConfiguration);
+    }
+
+    protected StripeSdkClientFactory getStripeSdkClientFactory(ConnectorConfiguration connectorConfiguration) {
+        return new StripeSdkClientFactory(connectorConfiguration, new StripeSdkWrapper());
     }
 
     @Provides

@@ -12,6 +12,7 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
+import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -48,10 +49,12 @@ public class RefundReversalServiceTest {
     private LedgerService mockLedgerService;
     @Mock
     private StripeSdkClient mockStripeSDKClient;
-    
+    @Mock
+    private StripeSdkClientFactory mockStripeSDKClientFactory;
+
     @BeforeEach
     void setUp() {
-        refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao, mockStripeSDKClient);
+        refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao, mockStripeSDKClientFactory);
     }
 
     @Test
@@ -96,6 +99,8 @@ public class RefundReversalServiceTest {
     @Test
     void shouldNotThrowExceptionWhenRefundIsInFailedState() throws StripeException {
 
+        when(mockStripeSDKClientFactory.getInstance()).thenReturn(mockStripeSDKClient);
+
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(LIVE).build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
                 .withAmount(100L)
@@ -108,12 +113,14 @@ public class RefundReversalServiceTest {
         com.stripe.model.Refund mockedStripeRefund = Mockito.mock(com.stripe.model.Refund.class);
         when(mockStripeSDKClient.getRefund(stripeRefundId, isLiveGatewayAccount)).thenReturn(mockedStripeRefund);
         when(mockedStripeRefund.getStatus()).thenReturn("failed");
-        
+
         assertDoesNotThrow(() -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
     }
-    
+
     @Test
     void shouldThrowExceptionWhenRefundIsNotInFailedState() throws StripeException {
+
+        when(mockStripeSDKClientFactory.getInstance()).thenReturn(mockStripeSDKClient);
 
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(LIVE).build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
@@ -127,17 +134,19 @@ public class RefundReversalServiceTest {
         com.stripe.model.Refund mockedStripeRefund = Mockito.mock(com.stripe.model.Refund.class);
         when(mockStripeSDKClient.getRefund(stripeRefundId, isLiveGatewayAccount)).thenReturn(mockedStripeRefund);
         when(mockedStripeRefund.getStatus()).thenReturn("succeeded");
-       
+
         WebApplicationException thrown = assertThrows(WebApplicationException.class, () ->
                 refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
-        
+
         Response response = thrown.getResponse();
         ErrorResponse errorResponse = (ErrorResponse) response.getEntity();
-        assertThat(errorResponse.getMessages(), hasItems("Refund with Refund ID: " + refund.getExternalId() + " and Stripe ID: " + stripeRefundId +  " is not in a failed state"));
+        assertThat(errorResponse.getMessages(), hasItems("Refund with Refund ID: " + refund.getExternalId() + " and Stripe ID: " + stripeRefundId + " is not in a failed state"));
     }
 
     @Test
     void shouldThrowWebApplicationExceptionForUnexpectedError() throws StripeException {
+
+        when(mockStripeSDKClientFactory.getInstance()).thenReturn(mockStripeSDKClient);
 
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(LIVE).build();
         RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
@@ -152,13 +161,13 @@ public class RefundReversalServiceTest {
 
         when(mockStripeSDKClient.getRefund(stripeRefundId, isLiveGatewayAccount))
                 .thenThrow(mockStripeException);
-        
-        var thrown = assertThrows(WebApplicationException.class, 
+
+        var thrown = assertThrows(WebApplicationException.class,
                 () -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
-        
-        assertThat(thrown.getMessage(), 
+
+        assertThat(thrown.getMessage(),
                 is("Unexpected error trying to get refund with ID:" + refund.getExternalId() + " from Stripe"));
-        
+
         verify(mockStripeSDKClient).getRefund(stripeRefundId, isLiveGatewayAccount);
     }
 }

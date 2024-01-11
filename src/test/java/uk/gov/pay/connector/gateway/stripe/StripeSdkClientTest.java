@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -105,8 +106,11 @@ class StripeSdkClientTest {
     void getRefund_shouldUseLiveApiKey() throws Exception {
         when(stripeAuthTokens.getLive()).thenReturn(LIVE_API_KEY);
         stripeSDKClient.getRefund(STRIPE_REFUND_ID, true);
+        
+        verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
 
-        verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), requestOptionsArgumentCaptor.capture());
+        Map<String, Object> params = paramsArgumentCaptor.getValue();
+        assertThat(params, hasEntry("expand", List.of("charge")));
         assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(LIVE_API_KEY));
     }
 
@@ -115,7 +119,10 @@ class StripeSdkClientTest {
         when(stripeAuthTokens.getTest()).thenReturn(TEST_API_KEY);
         stripeSDKClient.getRefund(STRIPE_REFUND_ID, false);
 
-        verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), requestOptionsArgumentCaptor.capture());
+        verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
+        
+        Map<String, Object> params = paramsArgumentCaptor.getValue();
+        assertThat(params, hasEntry("expand", List.of("charge")));
         assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(TEST_API_KEY));
     }
 }
