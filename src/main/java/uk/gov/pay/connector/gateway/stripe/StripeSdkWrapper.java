@@ -23,7 +23,7 @@ class StripeSdkWrapper {
         Customer.retrieve(customerId, requestOptions).delete(requestOptions);
     }
 
-    Refund getRefund(String stripeRefundId, RequestOptions requestOptions) throws StripeException {
-        return Refund.retrieve(stripeRefundId, requestOptions);
+    Refund getRefund(String stripeRefundId, Map<String, Object> params, RequestOptions requestOptions) throws StripeException {
+        return Refund.retrieve(stripeRefundId, params, requestOptions);
     }
 }

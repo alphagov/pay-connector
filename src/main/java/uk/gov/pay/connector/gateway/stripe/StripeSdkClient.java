@@ -7,15 +7,16 @@ import com.stripe.net.RequestOptions;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 
 import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class StripeSdkClient {
 
     private final StripeGatewayConfig stripeGatewayConfig;
-    
+
     private final StripeSdkWrapper stripeSDKWrapper;
-    
+
     @Inject
     public StripeSdkClient(StripeGatewayConfig stripeGatewayConfig, StripeSdkWrapper stripeSDKWrapper) {
         this.stripeGatewayConfig = stripeGatewayConfig;
@@ -48,13 +49,16 @@ public class StripeSdkClient {
     private String getStripeApiKey(boolean live) {
         return live ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
     }
-
+    
     public Refund getRefund(String stripeRefundId, boolean live) throws StripeException {
         String apiKey = getStripeApiKey(live);
         RequestOptions requestOptions = RequestOptions.builder()
                 .setApiKey(apiKey)
                 .build();
+        var expandList = List.of("charge");
+        Map<String, Object> params = new HashMap<>();
+        params.put("expand", expandList);
 
-        return stripeSDKWrapper.getRefund(stripeRefundId, requestOptions);
+        return stripeSDKWrapper.getRefund(stripeRefundId, params, requestOptions);
     }
 }
