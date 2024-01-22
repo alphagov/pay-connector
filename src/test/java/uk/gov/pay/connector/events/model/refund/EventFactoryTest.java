@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events.model.refund;
 
+import org.hamcrest.Matchers;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureAbandonedAfterTooManyRetr
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureErrored;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
+import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.GatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayTimeoutDuringAuthorisation;
@@ -83,6 +85,7 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -615,5 +618,55 @@ class EventFactoryTest {
         
         CancelledWithGatewayAfterAuthorisationErrorEventDetails eventDetails = (CancelledWithGatewayAfterAuthorisationErrorEventDetails) event.getEventDetails();
         assertThat(eventDetails.getGatewayTransactionId(), is("gateway_transaction_id"));
+    }
+
+    @Test
+    void shouldThrowExceptionIfNoChargeFoundForPaymentStateTransitionEvent() throws EventCreationException {
+        long chargeEventEntityId = 100L;
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.empty()
+        );
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, PaymentCreated.class);
+        
+        var thrown = assertThrows(EventCreationException.class, () -> eventFactory.createEvents(paymentStateTransition));
+        assertThat(thrown.getMessage(), Matchers.is(String.format("Event id = [%s], exception = Failed to create PaymentStateTransition event because the associated charge event could not be found", paymentStateTransition.getChargeEventId())));
+    }
+    
+    @Test
+    void shouldThrowExceptionIfNoRefundHistoryFoundForRefundStateTransitionEvent() {
+        when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
+                "refund-history-external-id",
+                RefundStatus.CREATED)
+        ).thenReturn(Optional.empty());
+
+        StateTransition refundStateTransition = new RefundStateTransition(
+                "refund-history-external-id", RefundStatus.CREATED, RefundCreatedByUser.class
+        );
+        
+        var thrown = assertThrows(EventCreationException.class, () -> eventFactory.createEvents(refundStateTransition));
+        assertThat(thrown.getMessage(), Matchers.is(String.format("Event id = [%s], exception = Failed to create RefundStateTransition event because refund history could not be found", refundStateTransition.getIdentifier())));
+    }
+
+    @Test
+    void shouldThrowExceptionIfChargeNotFoundForRefundStateTransitionEvent() {
+        when(chargeService.findCharge("charge_external_id")).thenReturn(Optional.empty());
+        RefundHistory refundCreatedHistory = RefundHistoryEntityFixture.aValidRefundHistoryEntity()
+                .withStatus(RefundStatus.CREATED.getValue())
+                .withUserExternalId("user_external_id")
+                .withUserEmail("test@example.com")
+                .withChargeExternalId("charge_external_id")
+                .withAmount(1000L)
+                .build();
+        when(refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
+                refundCreatedHistory.getExternalId(),
+                refundCreatedHistory.getStatus())
+        ).thenReturn(Optional.of(refundCreatedHistory));
+
+        StateTransition refundStateTransition = new RefundStateTransition(
+                refundCreatedHistory.getExternalId(), refundCreatedHistory.getStatus(), RefundCreatedByUser.class
+        );
+        
+        var thrown = assertThrows(EventCreationException.class, () -> eventFactory.createEvents(refundStateTransition));
+        assertThat(thrown.getMessage(), Matchers.is(String.format("Event id = [%s], exception = Failed to create RefundStateTransition event because the charge could not be found", refundCreatedHistory.getChargeExternalId())));
     }
 }

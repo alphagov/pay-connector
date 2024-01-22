@@ -91,13 +91,13 @@ public class EventFactory {
             RefundStateTransition refundStateTransition = (RefundStateTransition) stateTransition;
             return createRefundEvents(refundStateTransition);
         } else {
-            throw new EventCreationException(stateTransition.getIdentifier());
+            throw new EventCreationException(stateTransition.getIdentifier(), "Failed to create StateTransition event because event is not an instance of PaymentStateTransition or RefundStateTransition");
         }
     }
 
     private List<Event> createPaymentEvents(PaymentStateTransition paymentStateTransition) throws EventCreationException {
         ChargeEventEntity chargeEvent = chargeEventDao.findById(ChargeEventEntity.class, paymentStateTransition.getChargeEventId())
-                .orElseThrow(() -> new EventCreationException(String.valueOf(paymentStateTransition.getChargeEventId())));
+                .orElseThrow(() -> new EventCreationException(String.valueOf(paymentStateTransition.getChargeEventId()), "Failed to create PaymentStateTransition event because the associated charge event could not be found"));
 
         PaymentEvent paymentEvent = createPaymentEvent(chargeEvent, paymentStateTransition.getStateTransitionEventClass());
 
@@ -116,9 +116,9 @@ public class EventFactory {
         RefundHistory refundHistory = refundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(
                         refundStateTransition.getRefundExternalId(),
                         refundStateTransition.getRefundStatus())
-                .orElseThrow(() -> new EventCreationException(refundStateTransition.getIdentifier()));
+                .orElseThrow(() -> new EventCreationException(refundStateTransition.getIdentifier(), "Failed to create RefundStateTransition event because refund history could not be found"));
         Charge charge = chargeService.findCharge(refundHistory.getChargeExternalId())
-                .orElseThrow(() -> new EventCreationException(refundHistory.getChargeExternalId()));
+                .orElseThrow(() -> new EventCreationException(refundHistory.getChargeExternalId(), "Failed to create RefundStateTransition event because the charge could not be found"));
 
         Event refundEvent = createRefundEvent(refundHistory, refundStateTransition.getStateTransitionEventClass(),
                 charge);
