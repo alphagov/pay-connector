@@ -84,13 +84,14 @@ public class RefundReversalResource {
             throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
         }
 
-        Refund refund = refundReversalService.findMaybeHistoricRefundByRefundId(refundExternalId)
+        Refund refund = refundReversalService.findMaybeHistoricRefundByRefundId(refundExternalId)   
                 .orElseThrow(() -> new RefundNotFoundRuntimeException(refundExternalId));
 
         if (!refund.getChargeExternalId().equals(chargeExternalId)) {
             throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
         }
-
+        
+        refundReversalService.reverseFailedRefund(gatewayAccount,refund);
         return Response.ok().build();
     }
 }
