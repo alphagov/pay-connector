@@ -51,7 +51,7 @@ public class RefundReversalServiceTest {
     
     @BeforeEach
     void setUp() {
-        refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao, mockStripeSDKClient);
+        //refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao, mockStripeSDKClientFactory);
     }
 
     @Test

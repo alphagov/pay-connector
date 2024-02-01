@@ -3,6 +3,7 @@ package uk.gov.pay.connector.refund.service;
 import com.stripe.exception.StripeException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
+import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -17,13 +18,13 @@ import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 public class RefundReversalService {
     private final LedgerService ledgerService;
     private final RefundDao refundDao;
-    private final StripeSdkClient stripeClient;
+    private final StripeSdkClientFactory stripeSdkClientFactory;
 
     @Inject
-    public RefundReversalService(LedgerService ledgerService, RefundDao refundDao, StripeSdkClient stripeClient) {
+    public RefundReversalService(LedgerService ledgerService, RefundDao refundDao, StripeSdkClientFactory stripeSdkClientFactory) {
         this.ledgerService = ledgerService;
         this.refundDao = refundDao;
-        this.stripeClient = stripeClient;
+        this.stripeSdkClientFactory = stripeSdkClientFactory;
     }
 
     public Optional<Refund> findMaybeHistoricRefundByRefundId(String refundExternalId) {
@@ -36,6 +37,8 @@ public class RefundReversalService {
         String stripeRefundId = refund.getGatewayTransactionId();
         boolean isLiveGatewayAccount = gatewayAccount.isLive();
         String refundExternalId = refund.getExternalId();
+
+        StripeSdkClient stripeClient = stripeSdkClientFactory.getInstance();
 
         try {
             com.stripe.model.Refund refundFromStripe = stripeClient.getRefund(stripeRefundId, isLiveGatewayAccount);
