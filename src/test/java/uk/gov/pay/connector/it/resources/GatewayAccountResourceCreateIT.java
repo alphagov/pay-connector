@@ -75,7 +75,7 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
                 .body("gateway_account_id", is(notNullValue()))
                 .body("type", is("test"))
                 .body("requires3ds", is(false))
-                .body("allow_apple_pay", is(false))
+                .body("allow_apple_pay", is(true))
                 .body("allow_google_pay", is(false))
                 .body("corporate_credit_card_surcharge_amount", is(0))
                 .body("corporate_debit_card_surcharge_amount", is(0))

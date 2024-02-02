@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_AUTHORISATION_API;
@@ -116,6 +117,10 @@ public class GatewayAccountService {
         LOGGER.info("Setting the new account to accept all card types by default");
 
         gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
+
+        if (SANDBOX.getName().equalsIgnoreCase(gatewayAccountRequest.getPaymentProvider())) {
+            gatewayAccountEntity.setAllowApplePay(true);
+        }
 
         gatewayAccountDao.persist(gatewayAccountEntity);
 

@@ -382,6 +382,22 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     }
 
     @Test
+    public void shouldSetApplePayEnabledByDefaultForSandboxAccount() {
+        String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
+        String gatewayAccountId2 = createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId1)
+                .then()
+                .body("allow_apple_pay", is(true));
+
+        givenSetup()
+                .get("/v1/api/accounts/" + gatewayAccountId2)
+                .then()
+                .body("allow_apple_pay", is(false));
+    }
+
+    @Test
     public void shouldGetGatewayAccountsByIds() {
         String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
         String gatewayAccountId2 = createAGatewayAccountFor("sandbox");
@@ -454,7 +470,7 @@ public class GatewayAccountResourceIT extends GatewayAccountResourceTestBase {
     public void shouldGetGatewayAccountsByApplePayEnabled() {
         String gatewayAccountId1 = createAGatewayAccountFor("worldpay");
         updateGatewayAccount(gatewayAccountId1, "allow_apple_pay", true);
-        createAGatewayAccountFor("sandbox");
+        createAGatewayAccountFor("stripe");
 
         givenSetup()
                 .get("/v1/api/accounts?apple_pay_enabled=true")
