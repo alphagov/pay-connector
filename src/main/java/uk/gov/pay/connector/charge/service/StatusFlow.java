@@ -57,9 +57,9 @@ public class StatusFlow {
     private final ChargeStatus submittedState;
     private final ChargeStatus failureTerminalState;
 
-    private StatusFlow(String name, List<ChargeStatus> terminatableStatuses, ChargeStatus lockState, ChargeStatus successTerminalState, ChargeStatus submittedState, ChargeStatus failureTerminalState) {
+    private StatusFlow(String name, List<ChargeStatus> terminableStatuses, ChargeStatus lockState, ChargeStatus successTerminalState, ChargeStatus submittedState, ChargeStatus failureTerminalState) {
         this.name = name;
-        this.terminatableStatuses = terminatableStatuses;
+        this.terminatableStatuses = terminableStatuses;
         this.lockState = lockState;
         this.successTerminalState = successTerminalState;
         this.submittedState = submittedState;
