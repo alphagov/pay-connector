@@ -90,20 +90,20 @@ public class ChargeExpiryService {
         this.clock = clock;
     }
 
-    private enum expiryMethod {
+    private enum ExpiryMethod {
         EXPIRE_WITHOUT_GATEWAY,
         EXPIRE_WITH_GATEWAY,
         CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING
     }
 
     Map<String, Integer> expire(List<ChargeEntity> charges) {
-        Map<expiryMethod, List<ChargeEntity>> chargesGroupedByExpiryMethod = charges
+        Map<ExpiryMethod, List<ChargeEntity>> chargesGroupedByExpiryMethod = charges
                 .stream()
                 .collect(Collectors.groupingBy(this::getExpiryMethod));
 
-        int expiredWithoutGatewaySuccess = expireChargesWithoutGateway(getNullSafeList(chargesGroupedByExpiryMethod.get(expiryMethod.EXPIRE_WITHOUT_GATEWAY)));
-        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGateway(getNullSafeList(chargesGroupedByExpiryMethod.get(expiryMethod.EXPIRE_WITH_GATEWAY)));
-        Pair<Integer, Integer> expireOrForceTransitionResult = expireChargesOrPotentiallyForceTransitionState(getNullSafeList(chargesGroupedByExpiryMethod.get(expiryMethod.CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING)));
+        int expiredWithoutGatewaySuccess = expireChargesWithoutGateway(getNullSafeList(chargesGroupedByExpiryMethod.get(ExpiryMethod.EXPIRE_WITHOUT_GATEWAY)));
+        Pair<Integer, Integer> expireWithCancellationResult = expireChargesWithGateway(getNullSafeList(chargesGroupedByExpiryMethod.get(ExpiryMethod.EXPIRE_WITH_GATEWAY)));
+        Pair<Integer, Integer> expireOrForceTransitionResult = expireChargesOrPotentiallyForceTransitionState(getNullSafeList(chargesGroupedByExpiryMethod.get(ExpiryMethod.CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING)));
 
         return ImmutableMap.of(
                 EXPIRY_SUCCESS, expiredWithoutGatewaySuccess + expireWithCancellationResult.getLeft() + expireOrForceTransitionResult.getLeft(),
@@ -111,15 +111,15 @@ public class ChargeExpiryService {
         );
     }
 
-    private expiryMethod getExpiryMethod(ChargeEntity chargeEntity) {
+    private ExpiryMethod getExpiryMethod(ChargeEntity chargeEntity) {
         var authorisationStage = getAuthorisationStage(chargeEntity);
         if ((authorisationStage == DURING_AUTHORISATION || authorisationStage == POST_AUTHORISATION)
                 && queryService.canQueryChargeGatewayStatus(chargeEntity.getPaymentGatewayName())) {
-            return expiryMethod.CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING;
+            return ExpiryMethod.CHECK_STATUS_WITH_GATEWAY_BEFORE_EXPIRING;
         } else if (authorisationStage == POST_AUTHORISATION) {
-            return expiryMethod.EXPIRE_WITH_GATEWAY;
+            return ExpiryMethod.EXPIRE_WITH_GATEWAY;
         } else {
-            return expiryMethod.EXPIRE_WITHOUT_GATEWAY;
+            return ExpiryMethod.EXPIRE_WITHOUT_GATEWAY;
         }
     }
 

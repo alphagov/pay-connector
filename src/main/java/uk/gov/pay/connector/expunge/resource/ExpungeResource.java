@@ -51,7 +51,7 @@ public class ExpungeResource {
             @Parameter(in = QUERY, example = "100",
                     description = "Number of refunds to expunge. Defaults to EXPUNGE_NO_OF_REFUNDS_PER_TASK_RUN environment variable or configuration default")
             @QueryParam("number_of_refunds_to_expunge") Integer noOfRefundsToExpunge) {
-        String correlationId = MDC.get(MDC_REQUEST_ID_KEY) == null ? "ExpungeResource-" + UUID.randomUUID().toString() : MDC.get(MDC_REQUEST_ID_KEY);
+        String correlationId = MDC.get(MDC_REQUEST_ID_KEY) == null ? "ExpungeResource-" + UUID.randomUUID() : MDC.get(MDC_REQUEST_ID_KEY);
         MDC.put(MDC_REQUEST_ID_KEY, correlationId);
         expungeService.expunge(noOfChargesToExpunge, noOfRefundsToExpunge);
         MDC.remove(MDC_REQUEST_ID_KEY);
