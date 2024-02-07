@@ -314,8 +314,8 @@ public class LedgerTransactionFixture {
         return this;
     }
 
-    public LedgerTransactionFixture withPaymentProvider(String paymemtProvider) {
-        this.paymentProvider = paymemtProvider;
+    public LedgerTransactionFixture withPaymentProvider(String paymentProvider) {
+        this.paymentProvider = paymentProvider;
         return this;
     }
 
