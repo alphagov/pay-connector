@@ -55,7 +55,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.responseWithGatewayTransact
 import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
-public class ChargesApiResource {
+public class  ChargesApiResource {
     public static final String EMAIL_KEY = "email";
     public static final String AMOUNT_KEY = "amount";
     public static final String LANGUAGE_KEY = "language";

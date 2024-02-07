@@ -19,12 +19,7 @@ import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
-import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
+import uk.gov.pay.connector.gatewayaccount.model.*;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
@@ -178,6 +173,26 @@ public class GatewayAccountResource {
                 .getGatewayAccountByExternal(externalId)
                 .map(GatewayAccountWithCredentialsResponse::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(format("Account with external id %s not found.", externalId)));
+    }
+
+    @GET
+    @Path("/v1/frontend/accounts/{accountId}")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Find gateway account by gateway account internal ID",
+            description = "Get gateway account by internal ID - for use by frontend app",
+            tags = {"Gateway accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountWithCredentialsResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public FrontendGatewayAccountResponse getFrontendGatewayAccountByInternalId(@PathParam("accountId") long accountId) {
+        return gatewayAccountService
+                .getGatewayAccount(accountId)
+                .map(FrontendGatewayAccountResponse::new)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(format("Account with id %s not found.", accountId)));
     }
 
     @GET
