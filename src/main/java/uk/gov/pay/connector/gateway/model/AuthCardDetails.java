@@ -266,4 +266,29 @@ public class AuthCardDetails {
     public int hashCode() {
         return Objects.hash(cardNo, cardHolder, cvc, endDate, address, cardBrand, userAgentHeader, acceptHeader, payersCardType, payersCardPrepaidStatus, corporateCard, worldpay3dsFlexDdcResult, ipAddress, jsScreenColorDepth, jsNavigatorLanguage, jsScreenHeight, jsScreenWidth, jsTimezoneOffsetMins, acceptLanguageHeader);
     }
+
+    @Override
+    public String toString() {
+        return "AuthCardDetails{" +
+                "cardNo='" + cardNo + '\'' +
+                ", cardHolder='" + cardHolder + '\'' +
+                ", cvc='" + cvc + '\'' +
+                ", endDate=" + endDate +
+                ", address=" + address +
+                ", cardBrand='" + cardBrand + '\'' +
+                ", userAgentHeader='" + userAgentHeader + '\'' +
+                ", acceptHeader='" + acceptHeader + '\'' +
+                ", payersCardType=" + payersCardType +
+                ", payersCardPrepaidStatus=" + payersCardPrepaidStatus +
+                ", corporateCard=" + corporateCard +
+                ", worldpay3dsFlexDdcResult='" + worldpay3dsFlexDdcResult + '\'' +
+                ", ipAddress='" + ipAddress + '\'' +
+                ", jsScreenColorDepth='" + jsScreenColorDepth + '\'' +
+                ", jsNavigatorLanguage='" + jsNavigatorLanguage + '\'' +
+                ", jsScreenHeight='" + jsScreenHeight + '\'' +
+                ", jsScreenWidth='" + jsScreenWidth + '\'' +
+                ", jsTimezoneOffsetMins='" + jsTimezoneOffsetMins + '\'' +
+                ", acceptLanguageHeader='" + acceptLanguageHeader + '\'' +
+                '}';
+    }
 }

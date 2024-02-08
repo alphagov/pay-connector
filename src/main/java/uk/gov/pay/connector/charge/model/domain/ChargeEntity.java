@@ -587,6 +587,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     }
 
     public static final class WebChargeEntityBuilder {
+        private String externalId;
         private Long amount;
         private String returnUrl;
         private String email;
@@ -612,6 +613,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
             return new WebChargeEntityBuilder();
         }
 
+        public WebChargeEntityBuilder withExternalId(String externalId) {
+            this.externalId = externalId;
+            return this;
+        }
+        
         public WebChargeEntityBuilder withAmount(Long amount) {
             this.amount = amount;
             return this;

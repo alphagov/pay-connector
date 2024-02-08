@@ -19,19 +19,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
-import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorExceptionMapper;
-import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedExceptionMapper;
-import uk.gov.pay.connector.charge.exception.motoapi.CardNumberRejectedException;
-import uk.gov.pay.connector.charge.exception.motoapi.CardNumberRejectedExceptionMapper;
-import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedException;
-import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenAlreadyUsedExceptionMapper;
-import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidException;
-import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenInvalidExceptionMapper;
-import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidForMotoApiException;
-import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidForMotoApiExceptionMapper;
+import uk.gov.pay.connector.charge.exception.motoapi.*;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.charge.service.motoapi.MotoApiCardNumberValidationService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
@@ -63,27 +55,10 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.CANCELLED;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.EXCEPTION;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
-import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.SUBMITTED;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.AUTHORISATION_ERROR;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.AUTHORISATION_REJECTED;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_REJECTED;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTRIBUTE_VALUE;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_ALREADY_USED;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_INVALID;
+import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.*;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class CardResourceTest {
@@ -95,6 +70,8 @@ class CardResourceTest {
     private static final ChargeCancelService mockChargeCancelService = mock(ChargeCancelService.class);
     private static final WalletService mockWalletService = mock(WalletService.class);
     private static final TokenService mockTokenService = mock(TokenService.class);
+    
+    private static final ChargeService mockChargeService = mock(ChargeService.class);
     private static final MotoApiCardNumberValidationService mockMotoApiCardNumberValidationService = mock(MotoApiCardNumberValidationService.class);
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
@@ -106,6 +83,7 @@ class CardResourceTest {
                     mockChargeCancelService,
                     mockWalletService,
                     mockTokenService,
+                    mockChargeService,
                     mockMotoApiCardNumberValidationService))
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(OneTimeTokenInvalidExceptionMapper.class)

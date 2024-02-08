@@ -49,6 +49,10 @@ public class AuthorisationService {
         } catch (AuthorisationExecutorTimedOutException e) {
             // Exception is mapped to a success response and authorisation is allowed to continue in background thread.
             throw new OperationAlreadyInProgressRuntimeException(OperationType.AUTHORISATION.getValue(), chargeId);
+        } catch (Exception e) {
+            logger.info("CAUGHT EXCEPTION EXECUTING AUTHORISE " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -67,6 +71,7 @@ public class AuthorisationService {
             case IN_PROGRESS:
                 throw new AuthorisationExecutorTimedOutException("Timeout while waiting for authorisation to complete");
             default:
+                logger.info("EXECUTE RESULT :" + executeResult.getLeft());
                 throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
         }
     }

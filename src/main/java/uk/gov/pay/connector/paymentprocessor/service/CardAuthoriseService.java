@@ -87,6 +87,7 @@ public class CardAuthoriseService {
     public AuthorisationResponse doAuthoriseWeb(String chargeId, AuthCardDetails authCardDetails) {
         return authorisationService.executeAuthorise(chargeId, () -> doAuthorise(chargeId, authCardDetails));
     }
+    
 
     public AuthorisationResponse doAuthoriseUserNotPresent(ChargeEntity chargeEntity) {
         var paymentInstrumentEntity = chargeEntity.getPaymentInstrument()
@@ -97,6 +98,7 @@ public class CardAuthoriseService {
     }
 
     private AuthorisationResponse doAuthorise(String chargeId, AuthCardDetails authCardDetails) {
+        LOGGER.info("PREPARING FOR AUTHORISATION");
         final ChargeEntity charge = prepareChargeForAuthorisation(chargeId, authCardDetails);
 
         GatewayResponse<BaseAuthoriseResponse> operationResponse;
@@ -104,11 +106,14 @@ public class CardAuthoriseService {
 
         try {
             PaymentProvider paymentProvider = getPaymentProviderFor(charge);
+            LOGGER.info("GOT PAYMENT PROVIDER");
 
             switch (charge.getAuthorisationMode()) {
                 case WEB:
+                    LOGGER.info("AUTH CARD DETAILS " + authCardDetails.toString());
                     CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
                     operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+                    LOGGER.info("OPERATION RESPONSE " + operationResponse);
                     break;
                 case AGREEMENT:
                     RecurringPaymentAuthorisationGatewayRequest recurringRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
@@ -125,6 +130,8 @@ public class CardAuthoriseService {
             newStatus = operationResponse.getBaseResponse().get().authoriseStatus().getMappedChargeStatus();
 
         } catch (GatewayException e) {
+            LOGGER.info("CAUGHT EXCEPTION " + e.getMessage());
+            e.printStackTrace();
             newStatus = AuthorisationService.mapFromGatewayErrorException(e);
             operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
         }
@@ -252,20 +259,26 @@ public class CardAuthoriseService {
 
     @Transactional
     public ChargeEntity prepareChargeForAuthorisation(String chargeId, AuthCardDetails authCardDetails) {
-        ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
-        ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
+        try {
+            ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
+            ensureCardBrandGateway3DSCompatibility(charge, authCardDetails.getCardBrand());
 
-        if (charge.getAuthorisationMode() == AuthorisationMode.WEB) {
-            getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(corporateCardSurcharge -> {
-                charge.setCorporateSurcharge(corporateCardSurcharge);
+            if (charge.getAuthorisationMode() == AuthorisationMode.WEB) {
+                getCorporateCardSurchargeFor(authCardDetails, charge).ifPresent(corporateCardSurcharge -> {
+                    charge.setCorporateSurcharge(corporateCardSurcharge);
 
-                LOGGER.info("Applied corporate card surcharge for charge",
-                        ArrayUtils.addAll(charge.getStructuredLoggingArgs(), kv("corporate_card_surcharge", corporateCardSurcharge)));
-            });
+                    LOGGER.info("Applied corporate card surcharge for charge",
+                            ArrayUtils.addAll(charge.getStructuredLoggingArgs(), kv("corporate_card_surcharge", corporateCardSurcharge)));
+                });
+            }
+
+            getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
+            return charge;
+        } catch (Exception e) {
+            LOGGER.info("CAUGHT EXCEPTION PREPARING CHARGE FOR AUTHORISATION " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-
-        getPaymentProviderFor(charge).generateTransactionId().ifPresent(charge::setGatewayTransactionId);
-        return charge;
     }
 
     private void ensureCardBrandGateway3DSCompatibility(ChargeEntity chargeEntity, String cardBrand) {

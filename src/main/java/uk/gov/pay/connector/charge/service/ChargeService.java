@@ -88,6 +88,7 @@ import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
+import uk.gov.pay.connector.paymentprocessor.model.CreateAndAuthoriseChargeRequest;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -385,6 +386,108 @@ public class ChargeService {
         });
     }
 
+//    public Optional<ChargeResponse> create(CreateAndAuthoriseChargeRequest chargeRequest, Long accountId, UriInfo uriInfo, String idempotencyKey) {
+//        try {
+//            return createCharge(chargeRequest, accountId, idempotencyKey)
+//                    .map(charge ->
+//                            populateResponseBuilderWith(aChargeResponseBuilder(), uriInfo, charge).build()
+//                    );
+//        } catch (RollbackException e) {
+//            if (idempotencyKey != null && idempotencyDao.findByGatewayAccountIdAndKey(accountId, idempotencyKey).isPresent()) {
+//                LOGGER.info("Race condition between two requests to create a charge with the same Idempotency Key handled");
+//                throw new IdempotencyKeyUsedException();
+//            }
+//            throw e;
+//        }
+//    }
+
+    @Transactional
+    public Optional<ChargeEntity> createCharge(CreateAndAuthoriseChargeRequest chargeRequest, Long accountId, String idempotencyKey) {
+        return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
+            checkIfGatewayAccountDisabled(gatewayAccount);
+
+            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
+
+            var authorisationMode = chargeRequest.getAuthorisationMode();
+
+            if (authorisationMode == MOTO_API) {
+                checkMotoApiAuthorisationModeAllowed(gatewayAccount);
+            } else {
+                checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
+            }
+
+            checkCardNumberInReferenceForPaymentLinkPayments(chargeRequest.getSource(), chargeRequest.getReference());
+
+            //checkAgreementOptions(chargeRequest, gatewayAccount);
+
+            chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
+                if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
+                    LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
+                }
+            });
+
+            GatewayAccountCredentialsEntity gatewayAccountCredential =
+                    getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
+
+            var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
+                    agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
+                            .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.")));
+
+            ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
+                    .withExternalId(chargeRequest.getPaymentId())
+                    .withAmount(chargeRequest.getAmount())
+                    .withDescription(chargeRequest.getDescription())
+                    .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
+                    .withGatewayAccount(gatewayAccount)
+                    .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
+                    .withPaymentProvider(gatewayAccountCredential.getPaymentProvider())
+                    .withEmail(chargeRequest.getEmail().orElse(null))
+                    .withLanguage(chargeRequest.getLanguage())
+                    .withDelayedCapture(chargeRequest.isDelayedCapture())
+                    .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
+                    .withSource(chargeRequest.getSource())
+                    .withMoto(authorisationMode == MOTO_API || chargeRequest.isMoto())
+                    .withServiceId(gatewayAccount.getServiceId())
+                    .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
+                    .withAgreementEntity(agreementEntity.orElse(null))
+                    .withAuthorisationMode(chargeRequest.getAuthorisationMode());
+
+            chargeRequest.getReturnUrl().ifPresent(chargeEntityBuilder::withReturnUrl);
+            ChargeEntity chargeEntity = chargeEntityBuilder.build();
+
+            chargeRequest.getPrefilledCardHolderDetails()
+                    .map(this::createCardDetailsEntity)
+                    .ifPresent(chargeEntity::setCardDetails);
+
+            if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                agreementEntity.ifPresent(agreement -> {
+                    checkAgreementHasActivePaymentInstrument(agreement);
+                    agreement.getPaymentInstrument()
+                            .ifPresent(chargeEntity::setPaymentInstrument);
+                });
+            }
+
+            chargeDao.persist(chargeEntity);
+
+            if (authorisationMode == AGREEMENT && idempotencyKey != null) {
+                Map<String, Object> requestBody = objectMapper.convertValue(chargeRequest, new TypeReference<>() {
+                });
+                IdempotencyEntity idempotencyEntity = new IdempotencyEntity(
+                        idempotencyKey,
+                        gatewayAccount,
+                        chargeEntity.getExternalId(),
+                        requestBody,
+                        Instant.now());
+                idempotencyDao.persist(idempotencyEntity);
+            }
+
+            transitionChargeState(chargeEntity, CREATED);
+            chargeDao.merge(chargeEntity);
+
+            return chargeEntity;
+        });
+    }
+
     private void checkCardNumberInReferenceForPaymentLinkPayments(Source source, String reference) {
         if (rejectPaymentLinkPaymentsWithCardNumberInReference != null && rejectPaymentLinkPaymentsWithCardNumberInReference
                 && (source == CARD_PAYMENT_LINK || source == CARD_AGENT_INITIATED_MOTO)) {
@@ -409,6 +512,16 @@ public class ChargeService {
     }
 
     private GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity(ChargeCreateRequest chargeRequest,
+                                                                               GatewayAccountEntity gatewayAccount) {
+        if (chargeRequest.getCredentialId() != null) {
+            return gatewayAccountCredentialsService.getCredentialInUsableState(
+                    chargeRequest.getCredentialId(), gatewayAccount.getId());
+        }
+
+        return gatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount);
+    }
+
+    private GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity(CreateAndAuthoriseChargeRequest chargeRequest,
                                                                                GatewayAccountEntity gatewayAccount) {
         if (chargeRequest.getCredentialId() != null) {
             return gatewayAccountCredentialsService.getCredentialInUsableState(

@@ -11,8 +11,11 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedException;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
+import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.DelayedCaptureService;
 import uk.gov.pay.connector.charge.service.motoapi.MotoApiCardNumberValidationService;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
@@ -22,8 +25,10 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.CreateAndAuthoriseChargeRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.token.TokenService;
@@ -46,6 +51,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Map;
+import java.util.Optional;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
@@ -64,13 +70,14 @@ public class CardResource {
     private final ChargeCancelService chargeCancelService;
     private final WalletService walletService;
     private final TokenService tokenService;
+    private final ChargeService chargeService;
     private final MotoApiCardNumberValidationService motoApiCardNumberValidationService;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         ChargeEligibleForCaptureService chargeEligibleForCaptureService, DelayedCaptureService delayedCaptureService,
                         ChargeCancelService chargeCancelService, WalletService walletService,
-                        TokenService tokenService, MotoApiCardNumberValidationService motoApiCardNumberValidationService) {
+                        TokenService tokenService, ChargeService chargeService, MotoApiCardNumberValidationService motoApiCardNumberValidationService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
@@ -78,6 +85,7 @@ public class CardResource {
         this.chargeCancelService = chargeCancelService;
         this.walletService = walletService;
         this.tokenService = tokenService;
+        this.chargeService = chargeService;
         this.motoApiCardNumberValidationService = motoApiCardNumberValidationService;
     }
 
@@ -157,6 +165,38 @@ public class CardResource {
                                     @PathParam("chargeId") String chargeId,
                                     @Valid AuthCardDetails authCardDetails) {
         AuthorisationResponse response = cardAuthoriseService.doAuthoriseWeb(chargeId, authCardDetails);
+
+        return response.getGatewayError().map(this::handleError)
+                .orElseGet(() -> response.getAuthoriseStatus().map(this::handleAuthResponse)
+                        .orElseGet(() -> ResponseUtil.serviceErrorResponse("InterpretedStatus not found for Gateway response")));
+    }
+
+    @POST
+    @Path("/v1/frontend/account/{accountId}/charges/create-and-authorise")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Creates a charge and submits it for authorisation",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "202", description = "Accepted - payment has been submitted for authorisation and awaiting response from payment service provider"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid payload or the payment has been declined",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "402", description = "Gateway error",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid payload or missing mandatory attributes",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error - For gateway errors or anything else not handled"),
+            }
+    )
+    public Response createAndAuthoriseCharge(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
+                                    @PathParam("accountId") long accountId,
+                                    @Valid CreateAndAuthoriseChargeRequest request,
+                                             @Context UriInfo uriInfo) {
+
+        ChargeEntity chargeEntity = chargeService.createCharge(request, accountId, null).orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
+        AuthorisationResponse response = cardAuthoriseService.doAuthoriseWeb(chargeEntity.getExternalId(), request.getAuthCardDetails());
 
         return response.getGatewayError().map(this::handleError)
                 .orElseGet(() -> response.getAuthoriseStatus().map(this::handleAuthResponse)
