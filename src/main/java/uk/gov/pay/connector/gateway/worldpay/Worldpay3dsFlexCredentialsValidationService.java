@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.gateway.ClientFactory;

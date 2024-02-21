@@ -4,7 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.junit.Before;
 import org.mockito.Mock;
 import uk.gov.pay.connector.app.ConnectorConfiguration;

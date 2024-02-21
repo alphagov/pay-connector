@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import io.restassured.http.ContentType;
 import org.junit.After;
 import org.junit.Before;

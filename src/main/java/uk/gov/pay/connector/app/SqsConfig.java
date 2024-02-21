@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.app;
 
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
 import uk.gov.pay.connector.app.validator.ValidSqsConfig;
 
 import javax.validation.constraints.Max;

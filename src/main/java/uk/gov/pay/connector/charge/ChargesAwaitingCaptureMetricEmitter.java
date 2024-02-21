@@ -2,7 +2,7 @@ package uk.gov.pay.connector.charge;
 
 import com.codahale.metrics.CachedGauge;
 import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.CaptureProcessConfig;

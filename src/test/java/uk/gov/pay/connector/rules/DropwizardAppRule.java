@@ -2,7 +2,7 @@ package uk.gov.pay.connector.rules;
 
 import com.google.inject.Injector;
 import io.dropwizard.Application;
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
 import io.dropwizard.testing.ConfigOverride;
 import uk.gov.pay.connector.app.InjectorLookup;
 

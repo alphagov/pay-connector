@@ -12,7 +12,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
