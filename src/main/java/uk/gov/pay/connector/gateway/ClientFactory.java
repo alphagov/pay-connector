@@ -7,11 +7,11 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
 import org.apache.hc.client5.http.impl.io.ManagedHttpClientConnectionFactory;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.util.TimeValue;
-import org.apache.http.conn.HttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -110,19 +110,10 @@ public class ClientFactory {
                 .connFactory(new ManagedHttpClientConnectionFactory())
                 .dnsResolver(SystemDefaultDnsResolver.INSTANCE)
                 .timeToLive(TimeValue.of(java.time.Duration.ofMillis(connectionTimeToLive.toMilliseconds())))
-                .
+                .name(format("%s.%s", gatewayName, operation));
 
 
-        return new InstrumentedHttpClientConnectionManager(
-                metricRegistry,
-               null,
-                new ManagedHttpClientConnectionFactory(),
-                null,
-                SystemDefaultDnsResolver.INSTANCE,
-                connectionTimeToLive.toMilliseconds(),
-                TimeUnit.MILLISECONDS,
-                format("%s.%s", gatewayName, operation)
-        );
+        return builder.build();
     }
 }
 

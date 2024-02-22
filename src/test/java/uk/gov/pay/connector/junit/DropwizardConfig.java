@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.junit;
 
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

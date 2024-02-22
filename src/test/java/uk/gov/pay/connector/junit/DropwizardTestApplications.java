@@ -3,7 +3,7 @@ package uk.gov.pay.connector.junit;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.common.collect.Sets;
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;

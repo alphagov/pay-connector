@@ -9,8 +9,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <eclipselink.version>2.7.13</eclipselink.version>
         <pay-java-commons.version>1.0.20240205110547</pay-java-commons.version>
-        <surefire.version>3.2.1</surefire.version>
-        <postgresql.version>42.7.2</postgresql.version>
+        <surefire.version>3.2.5</surefire.version>
         <jjwt.version>0.12.3</jjwt.version>
         <pact.version>3.6.15</pact.version>
         <swaggger-version>2.2.20</swaggger-version>
@@ -158,6 +157,10 @@
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-db</artifactId>
+        </dependency>
 
         <!-- Main dependencies that need explicit versions -->
         <dependency>
@@ -218,17 +221,12 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
+            <version>42.7.2</version>
         </dependency>
         <dependency>
             <groupId>uk.gov.service.notify</groupId>
             <artifactId>notifications-java-client</artifactId>
             <version>4.1.0-RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.functionaljava</groupId>
-            <artifactId>functionaljava-java8</artifactId>
-            <version>4.8.1</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
@@ -279,11 +277,6 @@
             <version>3.19.1</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-io</artifactId>
-            <version>9.4.43.v20210629</version>
-        </dependency>
-        <dependency>
             <groupId>black.door</groupId>
             <artifactId>hate</artifactId>
             <version>v1r4t5</version>
@@ -303,6 +296,11 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.functionaljava</groupId>
+            <artifactId>functionaljava-java8</artifactId>
+            <version>4.8.1</version>
+        </dependency>
+        <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
             <version>21.10.0</version>
@@ -319,8 +317,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-db</artifactId>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
 
         <!-- Test dependencies that are imported from one of the BOMs specified
@@ -346,13 +345,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-testing</artifactId>
             <scope>test</scope>
         </dependency>
 
@@ -369,15 +373,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.npathai</groupId>
-            <artifactId>hamcrest-optional</artifactId>
-            <version>2.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-commons</artifactId>
             <version>1.9.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>pl.pragmatists</groupId>
+            <artifactId>JUnitParams</artifactId>
+            <version>1.1.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -405,8 +409,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.dropwizard</groupId>
-            <artifactId>dropwizard-testing</artifactId>
+            <groupId>io.dropwizard.modules</groupId>
+            <artifactId>dropwizard-testing-junit4</artifactId>
             <version>3.0.6</version>
             <scope>test</scope>
         </dependency>
@@ -426,23 +430,6 @@
             <groupId>uk.gov.service.payments</groupId>
             <artifactId>testing</artifactId>
             <version>${pay-java-commons.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.10.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.carlosbecker</groupId>
-            <artifactId>guice-junit-test-runner</artifactId>
-            <version>1.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>pl.pragmatists</groupId>
-            <artifactId>JUnitParams</artifactId>
-            <version>1.1.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

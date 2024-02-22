@@ -23,10 +23,10 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.core.Response;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
+import static uk.gov.pay.connector.util.JsonResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
 public class WalletServiceTest {
@@ -96,9 +97,9 @@ public class WalletServiceTest {
     }
 
     @Test
-    void shouldAuthoriseAValidChargeForGooglePay() throws JsonProcessingException {
+    void shouldAuthoriseAValidChargeForGooglePay() throws JsonProcessingException, FileNotFoundException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
@@ -114,9 +115,9 @@ public class WalletServiceTest {
     }
 
     @Test
-    void shouldReturnAuthorise3dsRequiredForAValid3dsChargeForGooglePay() throws JsonProcessingException {
+    void shouldReturnAuthorise3dsRequiredForAValid3dsChargeForGooglePay() throws JsonProcessingException, FileNotFoundException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuth3dsRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuth3dsRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
@@ -132,9 +133,9 @@ public class WalletServiceTest {
     }
 
     @Test
-    void shouldReturn402_ifGatewayErrorsForGooglePay() throws JsonProcessingException {
+    void shouldReturn402_ifGatewayErrorsForGooglePay() throws JsonProcessingException, FileNotFoundException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
         GatewayResponse gatewayResponse = responseBuilder()
                 .withGatewayError(gatewayError)
@@ -153,9 +154,9 @@ public class WalletServiceTest {
     }
 
     @Test
-    void shouldReturn402_ifResponseHasAuthorisationStatusError() throws JsonProcessingException {
+    void shouldReturn402_ifResponseHasAuthorisationStatusError() throws JsonProcessingException, FileNotFoundException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
 
         
@@ -174,9 +175,9 @@ public class WalletServiceTest {
     }
 
     @Test
-    void shouldReturn400_ifResponseHasAuthorisationStatusRejected() throws JsonProcessingException {
+    void shouldReturn400_ifResponseHasAuthorisationStatusRejected() throws JsonProcessingException, FileNotFoundException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)

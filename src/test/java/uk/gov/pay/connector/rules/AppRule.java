@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.Injector;
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
 import io.dropwizard.core.Configuration;
 import io.dropwizard.core.setup.Environment;
 import org.junit.rules.TestRule;

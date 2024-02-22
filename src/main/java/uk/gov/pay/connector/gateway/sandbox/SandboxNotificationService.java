@@ -2,9 +2,9 @@ package uk.gov.pay.connector.gateway.sandbox;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 
+import javax.annotation.Nullable;
 import java.util.Set;
 
 public class SandboxNotificationService {

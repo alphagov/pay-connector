@@ -96,6 +96,7 @@ import uk.gov.service.payments.commons.utils.metrics.DatabaseMetricsService;
 import uk.gov.service.payments.logging.GovUkPayDropwizardRequestJsonLogLayoutFactory;
 import uk.gov.service.payments.logging.LoggingFilter;
 import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
+import uk.gov.service.payments.logging.SentryAppenderFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -129,6 +130,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         bootstrap.addCommand(new DependentResourceWaitCommand());
         bootstrap.addCommand(new RenderStateTransitionGraphCommand());
         bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(LogstashConsoleAppenderFactory.class);
+        bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(SentryAppenderFactory.class);
         bootstrap.getObjectMapper().getSubtypeResolver().registerSubtypes(GovUkPayDropwizardRequestJsonLogLayoutFactory.class);
     }
 
