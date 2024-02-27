@@ -71,4 +71,11 @@ class RandomIdGeneratorTest {
 
         assertThat(randomId, is("102b63b370fd35418ad66b0100"));
     }
+
+    @Test
+    void random13ByteHexGenerator_shouldGenerate13BytesHexId() {
+        String correctionPaymentId = RandomIdGenerator.random13ByteHexGenerator();
+        assertEquals(26, correctionPaymentId.length(), "The length of the correction payment ID should be 26 characters");
+        assertTrue(correctionPaymentId.matches("[0-9a-f]+"), "The correction payment ID should contain only hexadecimal characters");
+    }
 }

@@ -39,5 +39,13 @@ public class RandomIdGenerator {
                 .substring(0, 26);
     }
 
-
+    public static String random13ByteHexGenerator() {
+        byte[] bytes = new byte[13];
+        RANDOM.nextBytes(bytes);
+        StringBuilder sb = new StringBuilder(26);
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
 }
