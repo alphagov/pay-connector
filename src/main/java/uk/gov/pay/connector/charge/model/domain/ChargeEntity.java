@@ -18,7 +18,6 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
-import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
@@ -28,25 +27,7 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.SupportedLanguageJpaConverter;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.Valid;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -58,19 +39,11 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 import static uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions.isValidTransition;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
-import static uk.gov.service.payments.logging.LoggingKeys.AGREEMENT_EXTERNAL_ID;
-import static uk.gov.service.payments.logging.LoggingKeys.AUTHORISATION_MODE;
-import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
-import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
-import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
-import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
+import static uk.gov.service.payments.logging.LoggingKeys.*;
 
 @Entity
 @Table(name = "charges")
@@ -105,12 +78,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "corporate_surcharge")
     private Long corporateSurcharge;
 
-    @Embedded
-    private CardDetailsEntity cardDetails;
-
-    @Embedded
-    private Auth3dsRequiredEntity auth3dsRequiredDetails;
-
     @ManyToOne
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
@@ -132,10 +99,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "reference")
     @Convert(converter = ServicePaymentReferenceConverter.class)
     private ServicePaymentReference reference;
-
-    @Column(name = "provider_session_id")
-    private String providerSessionId;
-
     @Column(name = "created_date")
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     private Instant createdDate;
@@ -171,10 +134,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "moto")
     private boolean moto;
 
-    @Column(name = "exemption_3ds")
-    @Enumerated(EnumType.STRING)
-    private Exemption3ds exemption3ds;
-
     @Column(name = "payment_provider")
     private String paymentProvider;
 
@@ -202,7 +161,13 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Column(name = "updated_date")
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     private Instant updatedDate;
+    
+    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.PERSIST)
+    private CardDetailsEntity cardDetails;
 
+    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.PERSIST)
+    private Auth3dsRequiredEntity auth3dsRequiredDetails;
+    
     public ChargeEntity() {
         //for jpa
     }
@@ -329,24 +294,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return serviceId;
     }
 
-    public String getProviderSessionId() {
-        return providerSessionId;
-    }
-
     public Optional<ExternalMetadata> getExternalMetadata() {
         return Optional.ofNullable(externalMetadata);
     }
 
     public boolean isMoto() {
         return moto;
-    }
-
-    public void setExemption3ds(Exemption3ds exemption3ds) {
-        this.exemption3ds = exemption3ds;
-    }
-
-    public Exemption3ds getExemption3ds() {
-        return exemption3ds;
     }
 
     public String getPaymentProvider() {
@@ -418,10 +371,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public void setProviderSessionId(String providerSessionId) {
-        this.providerSessionId = providerSessionId;
     }
 
     public WalletType getWalletType() {

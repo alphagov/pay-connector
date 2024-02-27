@@ -1,10 +1,24 @@
 package uk.gov.pay.connector.charge.model.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 
-@Embeddable
+import javax.persistence.*;
+
+@Entity
+@Table(name = "charge_card_3ds_details")
+@Access(AccessType.FIELD)
+@SequenceGenerator(name = "charge_card_3ds_details_id_seq",
+        sequenceName = "charge_card_3ds_details_id_seq", allocationSize = 1)
 public class Auth3dsRequiredEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charge_card_3ds_details_id_seq")
+    private Long id;
+
+    @JoinColumn(name = "charge_id", updatable = false, insertable = false)
+    @JsonIgnore
+    private ChargeEntity chargeEntity;
 
     @Column(name = "pa_request_3ds")
     private String paRequest;
@@ -29,6 +43,13 @@ public class Auth3dsRequiredEntity {
     
     @Column(name = "version_3ds")
     private String threeDsVersion;
+
+    @Column(name = "provider_session_id")
+    private String providerSessionId;
+
+    @Column(name = "exemption_3ds")
+    @Enumerated(EnumType.STRING)
+    private Exemption3ds exemption3ds;
 
     public String getPaRequest() {
         return paRequest;
@@ -93,6 +114,20 @@ public class Auth3dsRequiredEntity {
     public void setThreeDsVersion(String threeDsVersion) {
         this.threeDsVersion = threeDsVersion;
     }
-    
-    
+
+    public String getProviderSessionId() {
+        return providerSessionId;
+    }
+
+    public void setProviderSessionId(String providerSessionId) {
+        this.providerSessionId = providerSessionId;
+    }
+
+    public Exemption3ds getExemption3ds() {
+        return exemption3ds;
+    }
+
+    public void setExemption3ds(Exemption3ds exemption3ds) {
+        this.exemption3ds = exemption3ds;
+    }
 }

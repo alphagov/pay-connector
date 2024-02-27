@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.charge.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
@@ -11,20 +13,24 @@ import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
 
-import javax.persistence.Column;
-import javax.persistence.Convert;
-import javax.persistence.Embeddable;
-import javax.persistence.Embedded;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import java.util.Objects;
 import java.util.Optional;
 
-@Embeddable
+@Entity
+@Table(name = "charge_card_details")
+@Access(AccessType.FIELD)
+@SequenceGenerator(name = "charge_card_details_id_seq",
+        sequenceName = "charge_card_details_id_seq", allocationSize = 1)
 public class CardDetailsEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charge_card_details_id_seq")
+    private Long id;
+
+    @JoinColumn(name = "charge_id", updatable = false, insertable = false)
+    @JsonIgnore
+    private ChargeEntity chargeEntity;
 
     @Column(name = "first_digits_card_number")
     @JsonProperty("first_digits_card_number")
