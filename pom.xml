@@ -323,7 +323,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sqs</artifactId>
-            <version>1.12.578</version>
+            <version>1.12.667</version>
         </dependency>
         <dependency>
             <groupId>org.dhatim</groupId>
