@@ -196,7 +196,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         Auth3dsResult auth3dsResult = AuthUtils.buildAuth3dsResult();
         ProviderSessionIdentifier providerSessionId = ProviderSessionIdentifier.of("provider-session-id");
-        charge.setProviderSessionId(providerSessionId.toString());
+        charge.getCardDetails().setProviderSessionId(providerSessionId.toString());
 
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 
@@ -287,7 +287,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails().getIssuerUrl(), is(REQUIRES_3DS_ISSUER_URL));
         assertThat(charge.get3dsRequiredDetails().getPaRequest(), is(REQUIRES_3DS_PA_REQUEST));
-        assertThat(charge.getProviderSessionId(), is("provider-session-identifier"));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is("provider-session-identifier"));
 
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
@@ -323,7 +323,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(charge.get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails().getWorldpayChallengePayload(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_PAYLOAD));
         assertThat(charge.get3dsRequiredDetails().getThreeDsVersion(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_3DS_VERSION));
-        assertThat(charge.getProviderSessionId(), is("provider-session-identifier"));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is("provider-session-identifier"));
 
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));

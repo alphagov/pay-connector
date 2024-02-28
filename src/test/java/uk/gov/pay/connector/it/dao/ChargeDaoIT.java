@@ -213,7 +213,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
-        assertThat(charge.get().getProviderSessionId(), is(providerSessionId));
+        assertThat(charge.get().getCardDetails().getProviderSessionId(), is(providerSessionId));
     }
 
     @Test
@@ -313,12 +313,12 @@ public class ChargeDaoIT extends DaoITestBase {
                 .build();
         chargeDao.persist(chargeEntity);
 
-        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds());
+        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getCardDetails().getExemption3ds());
 
-        chargeEntity.setExemption3ds(Exemption3ds.EXEMPTION_NOT_REQUESTED);
+        chargeEntity.getCardDetails().setExemption3ds(Exemption3ds.EXEMPTION_NOT_REQUESTED);
         chargeDao.merge(chargeEntity);
 
-        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds(),
+        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getCardDetails().getExemption3ds(),
                 Exemption3ds.EXEMPTION_NOT_REQUESTED);
     }
 

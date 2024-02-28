@@ -151,7 +151,7 @@ class ChargeServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
         assertThat(chargeEntity.getCardDetails(), is(mockCardDetailsEntity));
@@ -188,7 +188,7 @@ class ChargeServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
         assertThat(chargeEntity.getCardDetails(), is(cardDetails));
@@ -232,7 +232,7 @@ class ChargeServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
         assertThat(chargeEntity.getCardDetails(), is(cardDetails));
@@ -285,7 +285,7 @@ class ChargeServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
         assertThat(chargeEntity.getCardDetails(), is(cardDetails));

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
@@ -76,6 +77,13 @@ public class CardDetailsEntity {
     @Embedded
     @JsonProperty("billing_address")
     private AddressEntity billingAddress;
+
+    @Column(name = "provider_session_id")
+    private String providerSessionId;
+
+    @Column(name = "exemption_3ds")
+    @Enumerated(EnumType.STRING)
+    private Exemption3ds exemption3ds;
 
     public CardDetailsEntity() {
     }
@@ -169,7 +177,23 @@ public class CardDetailsEntity {
         this.cardType = cardType;
         return this;
     }
-    
+
+    public String getProviderSessionId() {
+        return providerSessionId;
+    }
+
+    public void setProviderSessionId(String providerSessionId) {
+        this.providerSessionId = providerSessionId;
+    }
+
+    public Exemption3ds getExemption3ds() {
+        return exemption3ds;
+    }
+
+    public void setExemption3ds(Exemption3ds exemption3ds) {
+        this.exemption3ds = exemption3ds;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

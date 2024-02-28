@@ -34,7 +34,7 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
     }
 
     public Optional<ProviderSessionIdentifier> getProviderSessionId() {
-        return Optional.ofNullable(charge.getProviderSessionId()).map(ProviderSessionIdentifier::of);
+        return Optional.ofNullable(charge.getCardDetails().getProviderSessionId()).map(ProviderSessionIdentifier::of);
     }
 
     public ChargeEntity getCharge() {

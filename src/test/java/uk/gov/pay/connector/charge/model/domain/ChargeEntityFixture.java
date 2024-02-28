@@ -164,10 +164,10 @@ public class ChargeEntityFixture {
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
-        chargeEntity.setProviderSessionId(providerSessionId);
+        chargeEntity.getCardDetails().setProviderSessionId(providerSessionId);
         chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setWalletType(walletType);
-        chargeEntity.setExemption3ds(exemption3ds);
+        chargeEntity.getCardDetails().setExemption3ds(exemption3ds);
         chargeEntity.setPaymentInstrument(paymentInstrument);
         chargeEntity.setUpdatedDate(updatedDate);
 

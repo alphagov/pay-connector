@@ -463,7 +463,7 @@ class ChargeServiceTest {
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
-        verify(chargeSpy).setProviderSessionId("provider-session-identifier");
+        verify(chargeSpy).getCardDetails().setProviderSessionId("provider-session-identifier");
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
         verify(mockEventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
     }

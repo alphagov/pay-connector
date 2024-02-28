@@ -321,7 +321,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -349,7 +349,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -381,7 +381,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -415,7 +415,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -499,7 +499,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
@@ -692,7 +692,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
     }
 
     @Test
@@ -704,7 +704,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
-        assertThat(charge.getProviderSessionId(), is(nullValue()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(nullValue()));
     }
 
     @Test
@@ -870,7 +870,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(CAPTURE_QUEUED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
@@ -1114,7 +1114,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(chargeLocal.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(chargeLocal.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(chargeLocal.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(chargeLocal.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeLocal), isNull());
@@ -1155,7 +1155,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(REJECTED));
 
-        assertThat(chargeLocal.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(chargeLocal.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(chargeLocal.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(chargeLocal.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeLocal), isNull());
@@ -1195,7 +1195,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
-        assertThat(chargeLocal.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(chargeLocal.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(chargeLocal.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(chargeLocal.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeLocal), isNull());

@@ -248,7 +248,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -281,7 +281,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -314,7 +314,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
@@ -414,7 +414,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
     }
 
     @Test
@@ -423,7 +423,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(charge.getProviderSessionId(), is(nullValue()));
+        assertThat(charge.getCardDetails().getProviderSessionId(), is(nullValue()));
     }
 
     @Test

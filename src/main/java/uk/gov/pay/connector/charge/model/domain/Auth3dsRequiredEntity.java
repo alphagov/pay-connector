@@ -44,13 +44,6 @@ public class Auth3dsRequiredEntity {
     @Column(name = "version_3ds")
     private String threeDsVersion;
 
-    @Column(name = "provider_session_id")
-    private String providerSessionId;
-
-    @Column(name = "exemption_3ds")
-    @Enumerated(EnumType.STRING)
-    private Exemption3ds exemption3ds;
-
     public String getPaRequest() {
         return paRequest;
     }
@@ -113,21 +106,5 @@ public class Auth3dsRequiredEntity {
 
     public void setThreeDsVersion(String threeDsVersion) {
         this.threeDsVersion = threeDsVersion;
-    }
-
-    public String getProviderSessionId() {
-        return providerSessionId;
-    }
-
-    public void setProviderSessionId(String providerSessionId) {
-        this.providerSessionId = providerSessionId;
-    }
-
-    public Exemption3ds getExemption3ds() {
-        return exemption3ds;
-    }
-
-    public void setExemption3ds(Exemption3ds exemption3ds) {
-        this.exemption3ds = exemption3ds;
     }
 }

@@ -25,7 +25,7 @@ class Gateway3dsExemptionResultObtainedTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
-        assertThat(actual, hasJsonPath("$.event_details.exemption3ds", equalTo(chargeEntity.getExemption3ds().toString())));
+        assertThat(actual, hasJsonPath("$.event_details.exemption3ds", equalTo(chargeEntity.getCardDetails().getExemption3ds().toString())));
     }
 
     @Test

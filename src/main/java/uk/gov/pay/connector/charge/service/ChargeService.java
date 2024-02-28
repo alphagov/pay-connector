@@ -762,7 +762,7 @@ public class ChargeService {
                                                       String rejectedReason) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
-            Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
+            Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getCardDetails().setProviderSessionId(identifier));
             Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
             Optional.ofNullable(walletType).ifPresent(charge::setWalletType);
             Optional.ofNullable(emailAddress).ifPresent(charge::setEmail);
@@ -822,7 +822,7 @@ public class ChargeService {
                 setTransactionId(charge, transactionId);
                 transitionChargeState(charge, status);
                 Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
-                Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
+                Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getCardDetails().setProviderSessionId(identifier));
                 if (charge.isSavePaymentInstrumentToAgreement()) {
                     Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
                 }

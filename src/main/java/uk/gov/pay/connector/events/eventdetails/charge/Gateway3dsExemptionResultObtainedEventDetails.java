@@ -14,7 +14,7 @@ public class Gateway3dsExemptionResultObtainedEventDetails extends EventDetails 
     }
 
     public static Gateway3dsExemptionResultObtainedEventDetails from(ChargeEntity charge) {
-        String exemption3ds = Optional.ofNullable(charge.getExemption3ds()).map(Enum::toString).orElse(null);
+        String exemption3ds = Optional.ofNullable(charge.getCardDetails().getExemption3ds()).map(Enum::toString).orElse(null);
         return new Gateway3dsExemptionResultObtainedEventDetails(exemption3ds);
     }
 

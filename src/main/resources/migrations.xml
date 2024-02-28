@@ -2029,6 +2029,8 @@
             <column name="integration_version_3ds" type="smallint" defaultValue="1"/>
             <column name="card_type" type="varchar(20)"/>
             <column name="address_state_province" type="varchar(2)"/>
+            <column name="provider_session_id" type="text"/>
+            <column name="exemption_3ds" type="varchar(50)"/>
         </createTable>
     </changeSet>
 
@@ -2043,14 +2045,12 @@
             </column>
             <column name="pa_request_3ds" type="text"/>
             <column name="issuer_url_3ds" type="text"/>
-            <column name="provider_session_id" type="text"/>
             <column name="html_out_3ds" type="text"/>
             <column name="md_3ds" type="text"/>
             <column name="worldpay_challenge_acs_url_3ds" type="text"/>
             <column name="worldpay_challenge_transaction_id_3ds" type="text"/>
             <column name="worldpay_challenge_payload_3ds" type="text"/>
             <column name="version_3ds" type="varchar(10)"/>
-            <column name="exemption_3ds" type="varchar(50)"/>
         </createTable>
     </changeSet>
 
