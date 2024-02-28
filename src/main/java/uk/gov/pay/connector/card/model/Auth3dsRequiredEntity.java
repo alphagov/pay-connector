@@ -3,7 +3,16 @@ package uk.gov.pay.connector.card.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 
-import javax.persistence.*;
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "charge_card_3ds_details")
