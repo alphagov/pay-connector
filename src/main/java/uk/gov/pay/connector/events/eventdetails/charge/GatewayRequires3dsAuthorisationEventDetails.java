@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 

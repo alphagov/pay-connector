@@ -207,8 +207,8 @@ class ChargeServiceFindTest {
 
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
-                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService,
+                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService,
+                mockGatewayAccountCredentialsService, mockTaskQueueService,
                 mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
     }
     @Test

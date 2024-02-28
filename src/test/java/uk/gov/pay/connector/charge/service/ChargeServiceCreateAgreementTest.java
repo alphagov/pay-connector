@@ -191,8 +191,8 @@ class ChargeServiceCreateAgreementTest {
 
         chargeService = new ChargeService(mockTokenDao, mockChargeDao, mockChargeEventDao, mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao,
                 mockConfig, mockProviders, mockStateTransitionService, mockLedgerService, mockedRefundService, mockEventService,
-                mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
+                mockGatewayAccountCredentialsService,
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
                 mockExternalTransactionStateFactory, objectMapper, null);
     }
 

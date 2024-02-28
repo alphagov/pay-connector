@@ -14,7 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.service.CardService;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -26,9 +27,9 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
-import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
-import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
+import uk.gov.pay.connector.card.model.OperationType;
+import uk.gov.pay.connector.card.service.AuthorisationService;
+import uk.gov.pay.connector.card.service.CardExecutorService;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
@@ -52,7 +53,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
+import static uk.gov.pay.connector.card.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
 
 @ExtendWith(MockitoExtension.class)
@@ -92,6 +93,9 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
     
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
+    
+    @Mock
+    private CardService cardService;
 
     @Captor
     private ArgumentCaptor<Optional<Auth3dsRequiredEntity>> auth3dsRequiredEntityArgumentCaptor;
@@ -114,14 +118,14 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
                 mockedProviders,
                 chargeService,
                 authorisationService,
-                mockWalletPaymentInfoToAuthCardDetailsConverter,
+                cardService, mockWalletPaymentInfoToAuthCardDetailsConverter,
                 mock(AuthorisationLogger.class), 
                 mockEnvironment);
         
         when(chargeService.lockChargeForProcessing(anyString(), any(OperationType.class))).thenReturn(chargeEntity);
         when(mockWalletPaymentInfoToAuthCardDetailsConverter.convert(any(WalletPaymentInfo.class), nullable(CardExpiryDate.class)))
                 .thenReturn(mockAuthCardDetails);
-        when(chargeService.updateChargePostWalletAuthorisation(anyString(), any(ChargeStatus.class), anyString(), 
+        when(cardService.updateChargePostWalletAuthorisation(anyString(), any(ChargeStatus.class), anyString(), 
                 isNull(), eq(mockAuthCardDetails), any(WalletType.class), any(), 
                 any(Optional.class))
         ).thenReturn(chargeEntity);
@@ -138,7 +142,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
 
         walletAuthoriseService.authorise(chargeEntity.getExternalId(), authorisationData);
 
-        verify(chargeService).updateChargePostWalletAuthorisation(
+        verify(cardService).updateChargePostWalletAuthorisation(
                 anyString(),
                 any(ChargeStatus.class),
                 anyString(),

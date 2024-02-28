@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.pay.connector.card.model.Exemption3ds;
 import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;

@@ -14,7 +14,8 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
-import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Exemption3ds;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -59,7 +60,7 @@ public class ChargeEntityFixture {
     private List<Fee> fees;
     private WalletType walletType = null;
     private ExternalMetadata externalMetadata = null;
-    private CardDetailsEntity cardDetails = null;
+    private CardDetailsEntity cardDetails = new CardDetailsEntity();
     private ParityCheckStatus parityCheckStatus = null;
     private String gatewayTransactionId = null;
     private Source source = null;

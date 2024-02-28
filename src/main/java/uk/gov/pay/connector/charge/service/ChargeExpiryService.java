@@ -26,8 +26,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
-import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.paymentprocessor.service.QueryService;
+import uk.gov.pay.connector.card.model.OperationType;
+import uk.gov.pay.connector.card.service.QueryService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
 import javax.inject.Inject;

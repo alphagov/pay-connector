@@ -75,8 +75,8 @@ import uk.gov.pay.connector.healthcheck.CardExecutorServiceHealthCheck;
 import uk.gov.pay.connector.healthcheck.Ping;
 import uk.gov.pay.connector.healthcheck.SQSHealthCheck;
 import uk.gov.pay.connector.healthcheck.resource.HealthCheckResource;
-import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
-import uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource;
+import uk.gov.pay.connector.card.resource.CardResource;
+import uk.gov.pay.connector.card.resource.DiscrepancyResource;
 import uk.gov.pay.connector.queue.managed.CaptureMessageReceiver;
 import uk.gov.pay.connector.queue.managed.PayoutReconcileMessageReceiver;
 import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
@@ -97,7 +97,6 @@ import uk.gov.service.payments.logging.GovUkPayDropwizardRequestJsonLogLayoutFac
 import uk.gov.service.payments.logging.LoggingFilter;
 import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
 
-import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.EnumSet.of;

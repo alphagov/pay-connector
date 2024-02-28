@@ -41,8 +41,8 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentException;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
-import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
-import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
+import uk.gov.pay.connector.card.model.Exemption3ds;
+import uk.gov.pay.connector.card.service.AuthorisationService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
@@ -69,10 +69,10 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
-import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
-import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
-import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
-import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_REJECTED;
+import static uk.gov.pay.connector.card.model.Exemption3ds.EXEMPTION_HONOURED;
+import static uk.gov.pay.connector.card.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
+import static uk.gov.pay.connector.card.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
+import static uk.gov.pay.connector.card.model.Exemption3ds.EXEMPTION_REJECTED;
 
 public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGatewayResponseGenerator {
 

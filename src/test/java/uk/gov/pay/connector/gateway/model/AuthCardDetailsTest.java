@@ -8,7 +8,7 @@ import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.card.model.AuthoriseRequest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

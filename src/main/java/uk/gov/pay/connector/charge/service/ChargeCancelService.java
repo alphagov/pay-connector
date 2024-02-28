@@ -13,8 +13,8 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.paymentprocessor.service.QueryService;
+import uk.gov.pay.connector.card.model.OperationType;
+import uk.gov.pay.connector.card.service.QueryService;
 
 import javax.inject.Inject;
 import java.util.List;

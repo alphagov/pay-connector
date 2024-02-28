@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.model.charge;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.pay.connector.card.model.Exemption3ds;
 
 import java.time.Instant;
 

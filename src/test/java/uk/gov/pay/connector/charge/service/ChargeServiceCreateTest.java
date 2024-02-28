@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -285,8 +284,8 @@ class ChargeServiceCreateTest {
 
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
-                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
+                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService,
+                mockGatewayAccountCredentialsService,
                 mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper, mockCardidService);
     }
 
@@ -948,8 +947,8 @@ class ChargeServiceCreateTest {
         private ChargeService getNewChargeService() {
             return new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                     mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                    mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
-                    mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
+                    mockStateTransitionService, ledgerService, mockedRefundService, mockEventService,
+                    mockGatewayAccountCredentialsService,
                     mockTaskQueueService, null, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper, mockCardidService);
         }
 

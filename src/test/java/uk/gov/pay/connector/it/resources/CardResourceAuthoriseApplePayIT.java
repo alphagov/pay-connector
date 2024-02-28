@@ -18,7 +18,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
+import uk.gov.pay.connector.card.resource.CardResource;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;

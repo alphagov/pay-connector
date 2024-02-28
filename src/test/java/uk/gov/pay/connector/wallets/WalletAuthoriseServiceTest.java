@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
+import uk.gov.pay.connector.card.service.CardService;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -51,9 +52,9 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
-import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
-import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
-import uk.gov.pay.connector.paymentprocessor.service.CardServiceTest;
+import uk.gov.pay.connector.card.service.AuthorisationService;
+import uk.gov.pay.connector.card.service.CardExecutorService;
+import uk.gov.pay.connector.card.service.CardServiceTest;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -101,8 +102,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture.anApplePayAuthRequest;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
-import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
+import static uk.gov.pay.connector.card.service.CardExecutorService.ExecutionStatus.COMPLETED;
+import static uk.gov.pay.connector.card.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
 
 @ExtendWith(MockitoExtension.class)
 class WalletAuthoriseServiceTest extends CardServiceTest {
@@ -177,6 +178,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
+    
+    @Mock
+    private CardService cardService;
 
     @InjectMocks
     private EventService mockEventService;
@@ -203,14 +207,14 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
-                ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
-                mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
+                ledgerService, mockRefundService, mockEventService, mockGatewayAccountCredentialsService,
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
                 mockExternalTransactionStateFactory, objectMapper, null));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
                 authorisationService,
-                mockWalletPaymentInfoToAuthCardDetailsConverter,
+                cardService, mockWalletPaymentInfoToAuthCardDetailsConverter,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 mockEnvironment);
 

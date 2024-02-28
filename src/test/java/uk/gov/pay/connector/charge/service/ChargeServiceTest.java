@@ -19,7 +19,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
@@ -100,7 +100,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
+import static uk.gov.pay.connector.card.model.OperationType.AUTHORISATION_3DS;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceTest {
@@ -222,8 +222,8 @@ class ChargeServiceTest {
 
         chargeService = new ChargeService(mockedTokenDao, mockedChargeDao, mockedChargeEventDao,
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
-                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
-                mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
+                mockStateTransitionService, ledgerService, mockedRefundService, mockEventService,
+                mockGatewayAccountCredentialsService,
                 mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
     }
 
@@ -410,86 +410,6 @@ class ChargeServiceTest {
 
         verify(chargeSpy).setUpdatedDate(any());
         verify(mockTaskQueueService).offerTasksOnStateTransition(chargeSpy);
-    }
-
-    @Test
-    void shouldUpdateChargePost3dsAuthorisationWithoutTransactionId() {
-        ChargeEntity chargeSpy = spy(aValidChargeEntity()
-                .withStatus(AUTHORISATION_3DS_READY)
-                .build());
-
-        final String chargeEntityExternalId = chargeSpy.getExternalId();
-        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
-
-        chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_REJECTED, AUTHORISATION_3DS, null,
-                null, null, null);
-
-        verify(chargeSpy, never()).setGatewayTransactionId(anyString());
-        verify(chargeSpy).setStatus(AUTHORISATION_REJECTED);
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
-    }
-
-    @Test
-    void shouldUpdateChargePost3dsAuthorisationWithTransactionId() {
-        ChargeEntity chargeSpy = spy(aValidChargeEntity()
-                .withStatus(AUTHORISATION_3DS_READY)
-                .build());
-
-        final String chargeEntityExternalId = chargeSpy.getExternalId();
-        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
-        
-        chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
-                null, null, null);
-
-        verify(chargeSpy).setGatewayTransactionId("transaction-id");
-        verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
-    }
-
-    @Test
-    void shouldUpdateChargePost3dsAuthorisationIf3dsRequiredAgainAndTransactionId() {
-        final Auth3dsRequiredEntity mockedAuth3dsRequiredEntity = mock(Auth3dsRequiredEntity.class);
-        ChargeEntity chargeSpy = spy(aValidChargeEntity()
-                .withStatus(AUTHORISATION_3DS_READY)
-                .withAuth3dsDetailsEntity(mockedAuth3dsRequiredEntity)
-                .build());
-
-        final String chargeEntityExternalId = chargeSpy.getExternalId();
-        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
-        when(mockedAuth3dsRequiredEntity.getThreeDsVersion()).thenReturn("2.1.0");
-        
-        chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS, "transaction-id",
-                mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"), null);
-
-        verify(chargeSpy).setGatewayTransactionId("transaction-id");
-        verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
-        verify(chargeSpy).getCardDetails().setProviderSessionId("provider-session-identifier");
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
-        verify(mockEventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
-    }
-
-    @Test
-    void shouldUpdateChargePost3dsAuthorisationWithGatewayRecurringAuthToken_whenSavePaymentInstrumentToAgreementTrue() {
-        ChargeEntity chargeSpy = spy(aValidChargeEntity()
-                .withStatus(AUTHORISATION_3DS_READY)
-                .withSavePaymentInstrumentToAgreement(true)
-                .build());
-
-        Map<String, String> recurringAuthToken = Map.of("token", "foo");
-        PaymentInstrumentEntity paymentInstrument = new PaymentInstrumentEntity();
-
-        final String chargeEntityExternalId = chargeSpy.getExternalId();
-        when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
-        when(mockPaymentInstrumentService.createPaymentInstrument(chargeSpy, recurringAuthToken)).thenReturn(paymentInstrument);
-        
-        chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
-                null, null, recurringAuthToken);
-
-        verify(chargeSpy).setGatewayTransactionId("transaction-id");
-        verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
-        verify(chargeSpy).setPaymentInstrument(paymentInstrument);
-        verify(mockPaymentInstrumentService).createPaymentInstrument(chargeSpy, recurringAuthToken);
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
     }
 
     @Test

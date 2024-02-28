@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
-import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 
 public final class Auth3dsRequiredEntityFixture {
     private String paRequest;

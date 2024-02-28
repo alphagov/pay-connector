@@ -12,7 +12,7 @@ import uk.gov.pay.connector.it.base.ChargingITestBase;
 import uk.gov.pay.connector.junit.DropwizardConfig;
 import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
-import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
+import uk.gov.pay.connector.card.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;

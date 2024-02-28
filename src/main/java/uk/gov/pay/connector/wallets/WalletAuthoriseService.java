@@ -7,7 +7,8 @@ import io.dropwizard.setup.Environment;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.service.CardService;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -20,8 +21,8 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
-import uk.gov.pay.connector.paymentprocessor.model.OperationType;
-import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
+import uk.gov.pay.connector.card.model.OperationType;
+import uk.gov.pay.connector.card.service.AuthorisationService;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
@@ -37,6 +38,7 @@ public class WalletAuthoriseService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WalletAuthoriseService.class);
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
+    private final CardService cardService;
     private final PaymentProviders paymentProviders;
     private final WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter;
     private final AuthorisationLogger authorisationLogger;
@@ -52,11 +54,12 @@ public class WalletAuthoriseService {
     public WalletAuthoriseService(PaymentProviders paymentProviders,
                                   ChargeService chargeService,
                                   AuthorisationService authorisationService,
-                                  WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter,
-                                  AuthorisationLogger authorisationLogger, 
+                                  CardService cardService, WalletPaymentInfoToAuthCardDetailsConverter walletPaymentInfoToAuthCardDetailsConverter,
+                                  AuthorisationLogger authorisationLogger,
                                   Environment environment) {
         this.paymentProviders = paymentProviders;
         this.authorisationService = authorisationService;
+        this.cardService = cardService;
         this.walletPaymentInfoToAuthCardDetailsConverter = walletPaymentInfoToAuthCardDetailsConverter;
         this.chargeService = chargeService;
         this.authorisationLogger = authorisationLogger;
@@ -175,7 +178,7 @@ public class WalletAuthoriseService {
         LOGGER.info("Processing gateway auth response for {}", walletAuthorisationRequest.getWalletType().toString());
         
         AuthCardDetails authCardDetailsToBePersisted = walletPaymentInfoToAuthCardDetailsConverter.convert(walletAuthorisationRequest.getPaymentInfo(), cardExpiryDate);
-        ChargeEntity updatedCharge = chargeService.updateChargePostWalletAuthorisation(
+        ChargeEntity updatedCharge = cardService.updateChargePostWalletAuthorisation(
                 chargeExternalId,
                 status,
                 transactionId,

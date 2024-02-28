@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.epdq.model;
 
-import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 
 public class Epdq3dsRequiredParams implements Gateway3dsRequiredParams {

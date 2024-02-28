@@ -39,7 +39,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -88,7 +88,7 @@ import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
-import uk.gov.pay.connector.paymentprocessor.model.OperationType;
+import uk.gov.pay.connector.card.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -166,8 +166,6 @@ public class ChargeService {
     private final RefundService refundService;
     private final EventService eventService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
-    private final AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter;
-    private final PaymentInstrumentService paymentInstrumentService;
     private final TaskQueueService taskQueueService;
     private final IdempotencyDao idempotencyDao;
     private final ExternalTransactionStateFactory externalTransactionStateFactory;
@@ -191,9 +189,7 @@ public class ChargeService {
                          LedgerService ledgerService,
                          RefundService refundService,
                          EventService eventService,
-                         PaymentInstrumentService paymentInstrumentService,
                          GatewayAccountCredentialsService gatewayAccountCredentialsService,
-                         AuthCardDetailsToCardDetailsEntityConverter authCardDetailsToCardDetailsEntityConverter,
                          TaskQueueService taskQueueService,
                          Worldpay3dsFlexJwtService worldpay3dsFlexJwtService,
                          IdempotencyDao idempotencyDao,
@@ -214,9 +210,7 @@ public class ChargeService {
         this.ledgerService = ledgerService;
         this.refundService = refundService;
         this.eventService = eventService;
-        this.paymentInstrumentService = paymentInstrumentService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
-        this.authCardDetailsToCardDetailsEntityConverter = authCardDetailsToCardDetailsEntityConverter;
         this.taskQueueService = taskQueueService;
         this.idempotencyDao = idempotencyDao;
         this.externalTransactionStateFactory = externalTransactionStateFactory;
@@ -532,6 +526,13 @@ public class ChargeService {
                 });
     }
 
+    @Transactional
+    public void markChargeAsEligibleForAuthoriseUserNotPresent(String chargeExternalId) {
+        var charge = findChargeByExternalId(chargeExternalId);
+        transitionChargeState(charge, AUTHORISATION_USER_NOT_PRESENT_QUEUED);
+        taskQueueService.addAuthoriseWithUserNotPresentTask(charge);
+    }
+
     private ChargeResponse.ChargeResponseBuilder populateResponseBuilderWith(
             AbstractChargeResponseBuilder<ChargeResponse.ChargeResponseBuilder, ChargeResponse> responseBuilder,
             ChargeEntity chargeEntity) {
@@ -695,179 +696,7 @@ public class ChargeService {
         ChargeStatus chargeStatus = ChargeStatus.fromString(chargeEntity.getStatus());
         return !chargeStatus.toExternal().isFinished() && !chargeStatus.equals(AWAITING_CAPTURE_REQUEST);
     }
-
-    public ChargeEntity updateChargePostCardAuthorisation(String chargeExternalId,
-                                                          ChargeStatus newStatus,
-                                                          String transactionId,
-                                                          Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                          ProviderSessionIdentifier sessionIdentifier,
-                                                          AuthCardDetails authCardDetails,
-                                                          Map<String, String> recurringAuthToken,
-                                                          Boolean canRetry,
-                                                          String rejectedReason) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
-                null, null, recurringAuthToken, canRetry, rejectedReason);
-
-    }
-
-    public ChargeEntity updateChargePostWalletAuthorisation(String chargeExternalId,
-                                                            ChargeStatus status,
-                                                            String transactionId,
-                                                            ProviderSessionIdentifier sessionIdentifier,
-                                                            AuthCardDetails authCardDetails,
-                                                            WalletType walletType,
-                                                            String emailAddress,
-                                                            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails.orElse(null), sessionIdentifier,
-                walletType, emailAddress, null, null, null);
-    }
-
-    private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
-                                                                   ChargeStatus newStatus,
-                                                                   AuthCardDetails authCardDetails,
-                                                                   String transactionId,
-                                                                   Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                                   ProviderSessionIdentifier sessionIdentifier,
-                                                                   WalletType walletType,
-                                                                   String emailAddress,
-                                                                   Map<String, String> recurringAuthToken,
-                                                                   Boolean canRetry,
-                                                                   String rejectedReason) {
-        updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
-                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken, canRetry, rejectedReason);
-        ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
-        if (chargeEntity.getAuthorisationMode() == MOTO_API) {
-            eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
-        } else if (chargeEntity.getAuthorisationMode() == AGREEMENT) {
-            eventService.emitAndRecordEvent(PaymentDetailsTakenFromPaymentInstrument.from(chargeEntity));
-        } else {
-            eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
-        }
-
-        return chargeEntity;
-    }
-
-    // cannot be private: Guice requires @Transactional methods to be public
-    @Transactional
-    public ChargeEntity updateChargePostAuthorisation(String chargeExternalId,
-                                                      ChargeStatus newStatus,
-                                                      AuthCardDetails authCardDetails,
-                                                      String transactionId,
-                                                      Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                      ProviderSessionIdentifier sessionIdentifier,
-                                                      WalletType walletType,
-                                                      String emailAddress,
-                                                      Map<String, String> recurringAuthToken,
-                                                      Boolean canRetry,
-                                                      String rejectedReason) {
-        return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
-            setTransactionId(charge, transactionId);
-            Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getCardDetails().setProviderSessionId(identifier));
-            Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
-            Optional.ofNullable(walletType).ifPresent(charge::setWalletType);
-            Optional.ofNullable(emailAddress).ifPresent(charge::setEmail);
-
-            CardDetailsEntity detailsEntity = authCardDetailsToCardDetailsEntityConverter.convert(authCardDetails);
-
-            // propagate details that aren't mapped from payment instrument to auth card details onto the charge
-            // this logic should be removable when payment instruments are modelled and used for all authorisation types
-            if (charge.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
-                charge.getPaymentInstrument()
-                        .ifPresent(paymentInstrument -> {
-                            detailsEntity.setFirstDigitsCardNumber(paymentInstrument.getCardDetails().getFirstDigitsCardNumber());
-                            detailsEntity.setLastDigitsCardNumber(paymentInstrument.getCardDetails().getLastDigitsCardNumber());
-                        });
-
-                charge.setCanRetry(canRetry);
-
-                if (canRetry != null && !canRetry) {
-                    inactivateAgreement(charge, rejectedReason);
-                }
-            }
-            charge.setCardDetails(detailsEntity);
-
-            if (charge.isSavePaymentInstrumentToAgreement()) {
-                Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
-            }
-
-            transitionChargeState(charge, newStatus);
-
-            LOGGER.info("Stored confirmation details for charge - charge_external_id={}",
-                    chargeExternalId);
-
-            return charge;
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
-    }
-
-    private void inactivateAgreement(ChargeEntity charge, String rejectedReason) {
-        charge.getAgreement().ifPresent(agreementEntity -> {
-            AgreementInactivated inactivatedEvent = AgreementInactivated
-                    .from(agreementEntity, rejectedReason, Instant.now());
-            ledgerService.postEvent(inactivatedEvent);
-        });
-        charge.getPaymentInstrument().ifPresent(paymentInstrumentEntity ->
-                paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.INACTIVE)
-        );
-    }
-
-    @Transactional
-    public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
-                                                         OperationType operationType,
-                                                         String transactionId,
-                                                         Auth3dsRequiredEntity auth3dsRequiredDetails,
-                                                         ProviderSessionIdentifier sessionIdentifier,
-                                                         Map<String, String> recurringAuthToken) {
-        return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
-            try {
-                setTransactionId(charge, transactionId);
-                transitionChargeState(charge, status);
-                Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
-                Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getCardDetails().setProviderSessionId(identifier));
-                if (charge.isSavePaymentInstrumentToAgreement()) {
-                    Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
-                }
-            } catch (InvalidStateTransitionException e) {
-                if (chargeIsInLockedStatus(operationType, charge)) {
-                    throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
-                }
-                throw new IllegalStateRuntimeException(charge.getExternalId());
-            }
-
-            if (auth3dsRequiredDetails != null && isNotBlank(auth3dsRequiredDetails.getThreeDsVersion())) {
-                eventService.emitAndRecordEvent(Gateway3dsInfoObtained.from(charge, Instant.now()));
-            }
-
-            return charge;
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
-    }
-
-    public ChargeEntity updateChargePostCapture(ChargeEntity chargeEntity, ChargeStatus nextStatus) {
-        if (nextStatus == CAPTURED) {
-            transitionChargeState(chargeEntity, CAPTURE_SUBMITTED);
-            transitionChargeState(chargeEntity, CAPTURED);
-        } else {
-            transitionChargeState(chargeEntity, nextStatus);
-        }
-        return chargeEntity;
-    }
-
-    @Transactional
-    public void markChargeAsEligibleForAuthoriseUserNotPresent(String chargeExternalId) {
-        var charge = findChargeByExternalId(chargeExternalId);
-        transitionChargeState(charge, AUTHORISATION_USER_NOT_PRESENT_QUEUED);
-        taskQueueService.addAuthoriseWithUserNotPresentTask(charge);
-    }
-
-    private void setTransactionId(ChargeEntity chargeEntity, String transactionId) {
-        if (transactionId != null && !transactionId.isBlank()) {
-            chargeEntity.setGatewayTransactionId(transactionId);
-        }
-    }
-
-    private void setPaymentInstrument(Map<String, String> recurringAuthToken, ChargeEntity charge) {
-        var paymentInstrument = paymentInstrumentService.createPaymentInstrument(charge, recurringAuthToken);
-        charge.setPaymentInstrument(paymentInstrument);
-    }
+    
 
     @Transactional
     public ChargeEntity lockChargeForProcessing(String chargeId, OperationType operationType) {
@@ -1060,7 +889,7 @@ public class ChargeService {
                 .build();
     }
 
-    private boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
+    public boolean chargeIsInLockedStatus(OperationType operationType, ChargeEntity chargeEntity) {
         return operationType.getLockingStatus().equals(ChargeStatus.fromString(chargeEntity.getStatus()));
     }
 
