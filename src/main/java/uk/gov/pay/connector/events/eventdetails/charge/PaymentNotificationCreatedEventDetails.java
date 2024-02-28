@@ -68,7 +68,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     }
 
     public static PaymentNotificationCreatedEventDetails from(ChargeEntity charge) {
-        Optional<CardDetailsEntity> cardDetails = Optional.ofNullable(charge.getChargeCardDetails()).map(ChargeCardDetailsEntity::getCardDetails);
+        Optional<CardDetailsEntity> cardDetails = charge.getChargeCardDetails().getCardDetails();
         String credentialExternalId = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
                 .map(GatewayAccountCredentialsEntity::getExternalId)
                 .orElse(null);

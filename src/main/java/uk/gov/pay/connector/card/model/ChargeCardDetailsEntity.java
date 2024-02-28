@@ -1,7 +1,10 @@
 package uk.gov.pay.connector.card.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.persistence.Access;
 import javax.persistence.AccessType;
@@ -16,6 +19,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.Optional;
 
 @Entity
 @Table(name = "charge_card_details")
@@ -45,12 +49,15 @@ public class ChargeCardDetailsEntity {
     @Enumerated(EnumType.STRING)
     private Exemption3ds exemption3ds;
 
+    public ChargeCardDetailsEntity() {
+    }
+    
     public ChargeCardDetailsEntity(CardDetailsEntity cardDetails) {
         this.cardDetails = cardDetails;
     }
 
-    public CardDetailsEntity getCardDetails() {
-        return cardDetails;
+    public Optional<CardDetailsEntity> getCardDetails() {
+        return Optional.ofNullable(cardDetails);
     }
 
     public void setCardDetails(CardDetailsEntity cardDetails) {
@@ -79,5 +86,38 @@ public class ChargeCardDetailsEntity {
 
     public void setExemption3ds(Exemption3ds exemption3ds) {
         this.exemption3ds = exemption3ds;
+    }
+
+    public LastDigitsCardNumber getLastDigitsCardNumber() {
+        return getCardDetails().map(CardDetailsEntity::getLastDigitsCardNumber).orElse(null);
+    }
+
+    public FirstDigitsCardNumber getFirstDigitsCardNumber() {
+        return getCardDetails().map(CardDetailsEntity::getFirstDigitsCardNumber).orElse(null);
+    }
+
+    public String getCardHolderName() {
+        return getCardDetails().map(CardDetailsEntity::getCardHolderName).orElse(null);
+    }
+    
+
+    public CardExpiryDate getExpiryDate() {
+        return getCardDetails().map(CardDetailsEntity::getExpiryDate).orElse(null);
+    }
+
+    public Optional<AddressEntity> getBillingAddress() {
+        return getCardDetails().map(CardDetailsEntity::getBillingAddress).orElse(null);
+    }
+
+    public String getCardBrand() {
+        return getCardDetails().map(CardDetailsEntity::getCardBrand).orElse(null);
+    }
+
+    public CardType getCardType() {
+        return getCardDetails().map(CardDetailsEntity::getCardType).orElse(null);
+    }
+
+    public Optional<CardBrandLabelEntity> getCardTypeDetails() {
+        return getCardDetails().map(CardDetailsEntity::getCardTypeDetails).orElse(null);
     }
 }

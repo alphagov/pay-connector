@@ -216,12 +216,12 @@ class ChargeServiceCreateTelephonePaymentTest {
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
         assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
                 is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneOffset.UTC))));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getExpiryDate().toString(), is("01/19"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardBrand(), is("visa"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardType(), is(nullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getExpiryDate().toString(), is("01/19"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardType(), is(nullValue()));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
@@ -272,11 +272,11 @@ class ChargeServiceCreateTelephonePaymentTest {
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
         assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
                 is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneOffset.UTC))));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getExpiryDate(), is(nullValue()));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getExpiryDate(), is(nullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
@@ -327,11 +327,11 @@ class ChargeServiceCreateTelephonePaymentTest {
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
         assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
                 is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, now(ZoneOffset.UTC))));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getExpiryDate(), is(nullValue()));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getExpiryDate(), is(nullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
@@ -387,11 +387,11 @@ class ChargeServiceCreateTelephonePaymentTest {
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
         assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
                 is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneOffset.UTC))));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getExpiryDate().toString(), is("01/19"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getExpiryDate().toString(), is("01/19"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
@@ -446,11 +446,11 @@ class ChargeServiceCreateTelephonePaymentTest {
         assertThat(createdChargeEntity.getEmail(), is("jane.doe@example.com"));
         assertThat(ZonedDateTime.ofInstant(createdChargeEntity.getCreatedDate(), ZoneOffset.UTC),
                 is(ZonedDateTimeMatchers.within(3, ChronoUnit.SECONDS, ZonedDateTime.now(ZoneOffset.UTC))));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Jane Doe"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getExpiryDate().toString(), is("01/19"));
-        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardBrand(), is("visa"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getLastDigitsCardNumber().toString(), is("1234"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getFirstDigitsCardNumber().toString(), is("123456"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardHolderName(), is("Jane Doe"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getExpiryDate().toString(), is("01/19"));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardBrand(), is("visa"));
         assertThat(createdChargeEntity.getGatewayTransactionId(), is("1PROV"));
         assertThat(createdChargeEntity.getExternalMetadata().get().getMetadata(), equalTo(metadata));
         assertThat(createdChargeEntity.getLanguage(), is(SupportedLanguage.ENGLISH));
@@ -496,7 +496,7 @@ class ChargeServiceCreateTelephonePaymentTest {
         assertThat(chargeResponse.getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
         assertThat(chargeResponse.getAuthCode(), is("666"));
         assertThat(chargeResponse.getPaymentOutcome().getStatus(), is("success"));
-        assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(chargeResponse.getCardBrand(), is("visa"));
         assertThat(chargeResponse.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(chargeResponse.getEmail(), is("jane.doe@example.com"));
         assertThat(chargeResponse.getCardDetails().getExpiryDate().toString(), is("01/19"));
@@ -537,7 +537,7 @@ class ChargeServiceCreateTelephonePaymentTest {
         assertThat(chargeResponse.getPaymentOutcome().getCode().get(), is("P0010"));
         assertThat(chargeResponse.getPaymentOutcome().getSupplemental().get().getErrorCode().get(), is("ECKOH01234"));
         assertThat(chargeResponse.getPaymentOutcome().getSupplemental().get().getErrorMessage().get(), is("textual message describing error code"));
-        assertThat(chargeResponse.getCardDetails().getCardBrand(), is("visa"));
+        assertThat(chargeResponse.getCardBrand(), is("visa"));
         assertThat(chargeResponse.getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(chargeResponse.getEmail(), is("jane.doe@example.com"));
         assertThat(chargeResponse.getCardDetails().getExpiryDate(), is(nullValue()));

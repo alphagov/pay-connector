@@ -528,7 +528,7 @@ public class ChargeService {
 
         PersistedCard persistedCard = null;
         if (chargeEntity.getChargeCardDetails() != null) {
-            persistedCard = chargeEntity.getChargeCardDetails().getCardDetails().toCard();
+            persistedCard = chargeEntity.getChargeCardDetails().getCardDetails().map(CardDetailsEntity::toCard).orElse(null);
         }
 
         ChargeResponse.ChargeResponseBuilder builderOfResponse = responseBuilder
@@ -602,8 +602,11 @@ public class ChargeService {
         String chargeId = chargeEntity.getExternalId();
         PersistedCard persistedCard = null;
         if (chargeEntity.getChargeCardDetails() != null) {
-            persistedCard = chargeEntity.getChargeCardDetails().getCardDetails().toCard();
-            persistedCard.setCardBrand(findCardBrandLabel(chargeEntity.getChargeCardDetails().getCardDetails().getCardBrand()).orElse(""));
+            persistedCard = chargeEntity.getChargeCardDetails().getCardDetails().map(cardDetailsEntity -> {
+                PersistedCard card = cardDetailsEntity.toCard();
+                card.setCardBrand(findCardBrandLabel(cardDetailsEntity.getCardBrand()).orElse(""));
+                return card;
+            }).orElse(null);
         }
 
         ChargeResponse.Auth3dsData auth3dsData = null;
@@ -1040,8 +1043,11 @@ public class ChargeService {
                 .withAuthorisationMode(charge.getAuthorisationMode());
 
         if (charge.getChargeCardDetails() != null) {
-            var persistedCard = charge.getChargeCardDetails().getCardDetails().toCard();
-            persistedCard.setCardBrand(findCardBrandLabel(charge.getChargeCardDetails().getCardDetails().getCardBrand()).orElse(""));
+            var persistedCard = charge.getChargeCardDetails().getCardDetails().map(cardDetailsEntity -> {
+                PersistedCard card = cardDetailsEntity.toCard();
+                card.setCardBrand(findCardBrandLabel(cardDetailsEntity.getCardBrand()).orElse(""));
+                return card;
+            }).orElse(null);
             responseBuilder.withCardDetails(persistedCard);
         }
 

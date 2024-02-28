@@ -163,6 +163,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     private Instant updatedDate;
     
+    // TODO: If we want to make this more modular, we could not embed this and instead separately look it up when we need it
     @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.PERSIST)
     private ChargeCardDetailsEntity chargeCardDetails;
     

@@ -31,7 +31,7 @@ class AuthCardDetailsTest {
         assertThat(authCardDetails.getAddress().isPresent(), is(true));
 
         Address address = authCardDetails.getAddress().get();
-        AddressEntity addressEntity = chargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().get();
+        AddressEntity addressEntity = chargeEntity.getChargeCardDetails().getBillingAddress().get();
 
         assertThat(address.getLine1(), is(addressEntity.getLine1()));
         assertThat(address.getLine2(), is(addressEntity.getLine2()));

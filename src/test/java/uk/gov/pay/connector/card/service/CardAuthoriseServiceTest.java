@@ -667,7 +667,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
-        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails();
+        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails().get();
         assertThat(cardDetails, is(notNullValue()));
     }
 
@@ -683,7 +683,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
-        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails();
+        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails().get();
         assertThat(cardDetails, is(notNullValue()));
     }
 
@@ -998,7 +998,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
 
-        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails();
+        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails().get();
         assertThat(cardDetails, is(notNullValue()));
     }
 
@@ -1016,7 +1016,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
 
-        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails();
+        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails().get();
         assertThat(cardDetails, is(notNullValue()));
     }
 
@@ -1085,7 +1085,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThrows(AuthorisationTimedOutException.class, () -> cardAuthorisationService.doAuthoriseMotoApi(charge, cardInformation, authoriseRequest));
 
-        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails();
+        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails().get();
         assertThat(cardDetails, is(cardDetailsEntity));
         assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
 

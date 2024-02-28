@@ -80,7 +80,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
         assertThat(chargeDaoOptional.isPresent(), is(true));
 
-        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getChargeCardDetails().getCardDetails();
+        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getChargeCardDetails().getCardDetails().get();
 
         assertThat(cardDetailsEntity.getCardHolderName(), is(testCardDetails.getCardHolderName()));
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(testCardDetails.getLastDigitsCardNumber()));
@@ -108,7 +108,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
         assertThat(chargeDaoOptional.isPresent(), is(true));
 
-        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getChargeCardDetails().getCardDetails();
+        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getChargeCardDetails().getCardDetails().get();
 
         assertThat(cardDetailsEntity.getCardHolderName(), is(testCardDetails.getCardHolderName()));
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(nullValue()));

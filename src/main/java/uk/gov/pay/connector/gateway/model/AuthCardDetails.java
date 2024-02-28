@@ -75,7 +75,7 @@ public class AuthCardDetails {
         authCardDetails.setPayersCardPrepaidStatus(cardInformation.getPrepaidStatus());
 
         Optional.ofNullable(chargeEntity.getChargeCardDetails())
-                .flatMap(chargeCardDetailsEntity -> chargeCardDetailsEntity.getCardDetails().getBillingAddress())
+                .flatMap(chargeCardDetailsEntity -> chargeCardDetailsEntity.getBillingAddress())
                 .map(Address::from)
                 .ifPresent(authCardDetails::setAddress);
 

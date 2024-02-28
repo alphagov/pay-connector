@@ -114,7 +114,7 @@ public class LedgerTransactionFixture {
             ledgerTransactionFixture.isLive(gatewayAccount.isLive());
         }
         if (nonNull(chargeEntity.getChargeCardDetails())) {
-            CardDetailsEntity chargeEntityCardDetails = chargeEntity.getChargeCardDetails().getCardDetails();
+            CardDetailsEntity chargeEntityCardDetails = chargeEntity.getChargeCardDetails().getCardDetails().get();
             Address ledgerAddress = chargeEntityCardDetails.getBillingAddress().map(addressEntity -> {
                 return new Address(addressEntity.getLine1(),
                         addressEntity.getLine2(),

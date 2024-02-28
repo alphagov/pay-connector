@@ -386,7 +386,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getReference(), is(testCharge.getReference()));
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
         assertThat(charge.getPaymentProvider(), is(testCharge.getPaymentProvider()));
-        assertThat(charge.getChargeCardDetails().getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(charge.getChargeCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
         assertThat(charge.getExternalMetadata(), is(Optional.empty()));
     }
 
@@ -449,7 +449,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
         assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
         assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
-        assertThat(charge.getChargeCardDetails().getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(charge.getChargeCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
     }
 
     @Test
@@ -489,7 +489,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
         assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
         assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
-        assertThat(charge.getChargeCardDetails().getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
+        assertThat(charge.getChargeCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertThat(charge.getCanRetry(), is(true));
     }
 

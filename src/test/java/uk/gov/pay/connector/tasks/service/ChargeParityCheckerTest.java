@@ -132,7 +132,7 @@ class ChargeParityCheckerTest {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
-        chargeEntity.getChargeCardDetails().getCardDetails().setBillingAddress(null);
+        chargeEntity.getChargeCardDetails().getCardDetails().get().setBillingAddress(null);
 
         assertThat(transaction.getCardDetails().getBillingAddress(), is(notNullValue()));
 
@@ -146,7 +146,7 @@ class ChargeParityCheckerTest {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
-        chargeEntity.getChargeCardDetails().getCardDetails().setCardHolderName(null);
+        chargeEntity.getChargeCardDetails().getCardDetails().get().setCardHolderName(null);
 
         assertThat(transaction.getCardDetails().getCardholderName(), is(notNullValue()));
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
@@ -195,8 +195,8 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldReturnDataMismatchIfCardDetailsDoesNotMatchWithLedger() {
-        chargeEntity.getChargeCardDetails().getCardDetails().setBillingAddress(null);
-        chargeEntity.getChargeCardDetails().getCardDetails().setExpiryDate(null);
+        chargeEntity.getChargeCardDetails().getCardDetails().get().setBillingAddress(null);
+        chargeEntity.getChargeCardDetails().getCardDetails().get().setExpiryDate(null);
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .withCardDetails(new CardDetails("test-name", null, "test-brand",
                         "6666", "123656", "11/88", null))

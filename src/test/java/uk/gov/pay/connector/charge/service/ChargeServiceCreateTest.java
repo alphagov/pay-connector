@@ -355,7 +355,7 @@ class ChargeServiceCreateTest {
         assertThat(telephoneChargeResponse.get().getAuthorisedDate().toString(), is("2018-02-21T16:05:33Z"));
         assertThat(telephoneChargeResponse.get().getAuthCode(), is("666"));
         assertThat(telephoneChargeResponse.get().getPaymentOutcome().getStatus(), is("success"));
-        assertThat(telephoneChargeResponse.get().getCardDetails().getCardBrand(), is("visa"));
+        assertThat(telephoneChargeResponse.get().getCardBrand(), is("visa"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getCardHolderName(), is("Jane Doe"));
         assertThat(telephoneChargeResponse.get().getEmail(), is("jane.doe@example.com"));
         assertThat(telephoneChargeResponse.get().getCardDetails().getExpiryDate().toString(), is("01/19"));

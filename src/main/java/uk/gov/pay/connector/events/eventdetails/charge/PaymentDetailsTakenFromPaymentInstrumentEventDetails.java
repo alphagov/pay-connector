@@ -46,15 +46,15 @@ public class PaymentDetailsTakenFromPaymentInstrumentEventDetails extends EventD
         var cardDetails = charge.getChargeCardDetails();
         var builder = new PaymentDetailsTakenFromPaymentInstrumentEventDetailsBuilder()
                 .setGatewayTransactionId(charge.getGatewayTransactionId())
-                .setCardType(Optional.ofNullable(cardDetails.getCardDetails().getCardType()).map(Enum::toString).orElse(null))
-                .setCardBrand(cardDetails.getCardDetails().getCardBrand())
-                .setCardBrandLabel(cardDetails.getCardDetails().getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
-                .setFirstDigitsCardNumber(cardDetails.getCardDetails().getFirstDigitsCardNumber().toString())
-                .setLastDigitsCardNumber(cardDetails.getCardDetails().getLastDigitsCardNumber().toString())
-                .setCardholderName(cardDetails.getCardDetails().getCardHolderName())
-                .setExpiryDate(cardDetails.getCardDetails().getExpiryDate().toString());
+                .setCardType(Optional.ofNullable(cardDetails.getCardType()).map(Enum::toString).orElse(null))
+                .setCardBrand(cardDetails.getCardBrand())
+                .setCardBrandLabel(cardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
+                .setFirstDigitsCardNumber(cardDetails.getFirstDigitsCardNumber().toString())
+                .setLastDigitsCardNumber(cardDetails.getLastDigitsCardNumber().toString())
+                .setCardholderName(cardDetails.getCardHolderName())
+                .setExpiryDate(cardDetails.getExpiryDate().toString());
 
-        cardDetails.getCardDetails().getBillingAddress().ifPresent(billingAddress -> {
+        cardDetails.getBillingAddress().ifPresent(billingAddress -> {
             builder.setAddressLine1(billingAddress.getLine1())
                     .setAddressLine2(billingAddress.getLine2())
                     .setAddressPostcode(billingAddress.getPostcode())

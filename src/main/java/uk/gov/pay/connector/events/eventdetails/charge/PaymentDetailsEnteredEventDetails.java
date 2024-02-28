@@ -64,7 +64,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withWallet(Optional.ofNullable(charge.getWalletType()).map(Enum::toString).orElse(null));
         
-        Optional.ofNullable(charge.getChargeCardDetails()).map(ChargeCardDetailsEntity::getCardDetails).ifPresent(
+        charge.getChargeCardDetails().getCardDetails().ifPresent(
                 cardDetails -> 
                     builder.withCardType(Optional.ofNullable(cardDetails.getCardType()).map(Enum::toString).orElse(null))
                             .withCardBrand(cardDetails.getCardBrand())

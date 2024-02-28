@@ -35,13 +35,13 @@ public class PaymentDetailsSubmittedByAPIEventDetails extends EventDetails {
 
         Optional.ofNullable(charge.getChargeCardDetails())
                 .ifPresent(cardDetails ->
-                        builder.withCardType(Optional.ofNullable(cardDetails.getCardDetails().getCardType()).map(Enum::toString).orElse(null))
-                                .withCardBrand(cardDetails.getCardDetails().getCardBrand())
-                                .withCardBrandLabel(cardDetails.getCardDetails().getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
-                                .withFirstDigitsCardNumber(cardDetails.getCardDetails().getFirstDigitsCardNumber().toString())
-                                .withLastDigitsCardNumber(cardDetails.getCardDetails().getLastDigitsCardNumber().toString())
-                                .withCardholderName(cardDetails.getCardDetails().getCardHolderName())
-                                .withExpiryDate(cardDetails.getCardDetails().getExpiryDate().toString())
+                        builder.withCardType(Optional.ofNullable(cardDetails.getCardType()).map(Enum::toString).orElse(null))
+                                .withCardBrand(cardDetails.getCardBrand())
+                                .withCardBrandLabel(cardDetails.getCardTypeDetails().map(CardBrandLabelEntity::getLabel).orElse(null))
+                                .withFirstDigitsCardNumber(cardDetails.getFirstDigitsCardNumber().toString())
+                                .withLastDigitsCardNumber(cardDetails.getLastDigitsCardNumber().toString())
+                                .withCardholderName(cardDetails.getCardHolderName())
+                                .withExpiryDate(cardDetails.getExpiryDate().toString())
                 );
 
         return builder.build();

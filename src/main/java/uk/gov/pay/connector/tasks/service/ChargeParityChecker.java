@@ -83,7 +83,7 @@ public class ChargeParityChecker {
 
             fieldsMatch = matchCommonFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCreatedDate(chargeEntity, transaction);
-            fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getChargeCardDetails().getCardDetails(), transaction.getCardDetails());
+            fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getChargeCardDetails().getCardDetails().get(), transaction.getCardDetails());
             fieldsMatch = fieldsMatch && matchGatewayAccountFields(chargeEntity.getGatewayAccount(), transaction);
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
