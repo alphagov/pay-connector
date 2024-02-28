@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.model;
+package uk.gov.pay.connector.card.model;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;

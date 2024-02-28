@@ -13,13 +13,13 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.card.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
+import uk.gov.pay.connector.card.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
@@ -193,10 +193,10 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
-        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
-        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
-        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
-        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(createdChargeEntity.getChargeCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Joe Bogs"));
+        AddressEntity addressEntity = createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().get();
         assertThat(addressEntity.getCity(), is("London"));
         assertThat(addressEntity.getCountry(), is("GB"));
         assertThat(addressEntity.getLine1(), is("Line1"));
@@ -225,10 +225,10 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
 
-        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
-        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
-        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
-        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(createdChargeEntity.getChargeCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Joe Bogs"));
+        AddressEntity addressEntity = createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().get();
         assertThat(addressEntity.getLine1(), is("Line1"));
         assertThat(addressEntity.getLine2(), is(nullValue()));
         assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
@@ -256,10 +256,10 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
 
-        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
-        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
-        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
-        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(createdChargeEntity.getChargeCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Joe Bogs"));
+        AddressEntity addressEntity = createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().get();
         assertThat(addressEntity.getLine1(), is("Line1"));
         assertThat(addressEntity.getLine2(), is("Line2"));
         assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
@@ -285,9 +285,9 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
 
-        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
-        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(false));
-        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is("Joe Bogs"));
+        assertThat(createdChargeEntity.getChargeCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().isPresent(), is(false));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is("Joe Bogs"));
     }
 
     @Test
@@ -308,10 +308,10 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
 
-        assertThat(createdChargeEntity.getCardDetails(), is(notNullValue()));
-        assertThat(createdChargeEntity.getCardDetails().getBillingAddress().isPresent(), is(true));
-        assertThat(createdChargeEntity.getCardDetails().getCardHolderName(), is(nullValue()));
-        AddressEntity addressEntity = createdChargeEntity.getCardDetails().getBillingAddress().get();
+        assertThat(createdChargeEntity.getChargeCardDetails(), is(notNullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().isPresent(), is(true));
+        assertThat(createdChargeEntity.getChargeCardDetails().getCardDetails().getCardHolderName(), is(nullValue()));
+        AddressEntity addressEntity = createdChargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().get();
         assertThat(addressEntity.getLine1(), is("Line1"));
         assertThat(addressEntity.getLine2(), is(nullValue()));
         assertThat(addressEntity.getPostcode(), is("AB1 CD2"));
@@ -333,7 +333,7 @@ class ChargeServiceCreatePrefilledCardholderDetailsTest {
 
         verify(mockedChargeDao).persist(chargeEntityArgumentCaptor.capture());
         ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
-        assertThat(createdChargeEntity.getCardDetails(), is(nullValue()));
+        assertThat(createdChargeEntity.getChargeCardDetails(), is(nullValue()));
     }
 
 }

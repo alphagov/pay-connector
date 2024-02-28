@@ -6,7 +6,7 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
-import uk.gov.pay.connector.charge.util.StripeFeeCalculator;
+import uk.gov.pay.connector.card.util.StripeFeeCalculator;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.GatewayClient;

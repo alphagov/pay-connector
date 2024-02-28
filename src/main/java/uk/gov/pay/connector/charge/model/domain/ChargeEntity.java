@@ -4,7 +4,8 @@ import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -18,7 +19,6 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
-import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
@@ -164,10 +164,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private Instant updatedDate;
     
     @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.PERSIST)
-    private CardDetailsEntity cardDetails;
-
-    @OneToOne(mappedBy = "chargeEntity", cascade = CascadeType.PERSIST)
-    private Auth3dsRequiredEntity auth3dsRequiredDetails;
+    private ChargeCardDetailsEntity chargeCardDetails;
     
     public ChargeEntity() {
         //for jpa
@@ -214,7 +211,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.externalMetadata = externalMetadata;
         this.source = source;
         this.gatewayTransactionId = gatewayTransactionId;
-        this.cardDetails = cardDetails;
+        this.chargeCardDetails = new ChargeCardDetailsEntity(cardDetails);
         this.moto = moto;
         this.serviceId = serviceId;
         this.agreementEntity = agreementEntity;
@@ -411,24 +408,16 @@ public class ChargeEntity extends AbstractVersionedEntity {
                 .orElse(null);
     }
 
-    public CardDetailsEntity getCardDetails() {
-        return cardDetails;
+    public ChargeCardDetailsEntity getChargeCardDetails() {
+        return chargeCardDetails;
     }
 
-    public void setCardDetails(CardDetailsEntity cardDetailsEntity) {
-        this.cardDetails = cardDetailsEntity;
+    public void setChargeCardDetails(ChargeCardDetailsEntity cardDetailsEntity) {
+        this.chargeCardDetails = cardDetailsEntity;
     }
 
     public PaymentGatewayName getPaymentGatewayName() {
         return PaymentGatewayName.valueFrom(paymentProvider);
-    }
-
-    public Auth3dsRequiredEntity get3dsRequiredDetails() {
-        return auth3dsRequiredDetails;
-    }
-
-    public void set3dsRequiredDetails(Auth3dsRequiredEntity auth3dsRequiredDetails) {
-        this.auth3dsRequiredDetails = auth3dsRequiredDetails;
     }
 
     public SupportedLanguage getLanguage() {

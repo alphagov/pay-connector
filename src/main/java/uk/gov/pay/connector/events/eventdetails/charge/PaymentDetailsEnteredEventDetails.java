@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
@@ -63,7 +64,7 @@ public class PaymentDetailsEnteredEventDetails extends EventDetails {
                 .withGatewayTransactionId(charge.getGatewayTransactionId())
                 .withWallet(Optional.ofNullable(charge.getWalletType()).map(Enum::toString).orElse(null));
         
-        Optional.ofNullable(charge.getCardDetails()).ifPresent(
+        Optional.ofNullable(charge.getChargeCardDetails()).map(ChargeCardDetailsEntity::getCardDetails).ifPresent(
                 cardDetails -> 
                     builder.withCardType(Optional.ofNullable(cardDetails.getCardType()).map(Enum::toString).orElse(null))
                             .withCardBrand(cardDetails.getCardBrand())

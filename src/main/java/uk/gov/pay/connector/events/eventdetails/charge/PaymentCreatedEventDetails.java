@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
-import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.card.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -132,15 +132,15 @@ public class PaymentCreatedEventDetails extends EventDetails {
     }
 
     private static void addCardDetailsIfExist(ChargeEntity charge, Builder builder) {
-        Optional.ofNullable(charge.getCardDetails()).ifPresent(
+        Optional.ofNullable(charge.getChargeCardDetails()).ifPresent(
                 cardDetails ->
-                        builder.withCardholderName(cardDetails.getCardHolderName())
-                                .withAddressLine1(cardDetails.getBillingAddress().map(AddressEntity::getLine1).orElse(null))
-                                .withAddressLine2(cardDetails.getBillingAddress().map(AddressEntity::getLine2).orElse(null))
-                                .withAddressCity(cardDetails.getBillingAddress().map(AddressEntity::getCity).orElse(null))
-                                .withAddressCountry(cardDetails.getBillingAddress().map(AddressEntity::getCountry).orElse(null))
-                                .withAddressCounty(cardDetails.getBillingAddress().map(AddressEntity::getCounty).orElse(null))
-                                .withAddressPostcode(cardDetails.getBillingAddress().map(AddressEntity::getPostcode).orElse(null)));
+                        builder.withCardholderName(cardDetails.getCardDetails().getCardHolderName())
+                                .withAddressLine1(cardDetails.getCardDetails().getBillingAddress().map(AddressEntity::getLine1).orElse(null))
+                                .withAddressLine2(cardDetails.getCardDetails().getBillingAddress().map(AddressEntity::getLine2).orElse(null))
+                                .withAddressCity(cardDetails.getCardDetails().getBillingAddress().map(AddressEntity::getCity).orElse(null))
+                                .withAddressCountry(cardDetails.getCardDetails().getBillingAddress().map(AddressEntity::getCountry).orElse(null))
+                                .withAddressCounty(cardDetails.getCardDetails().getBillingAddress().map(AddressEntity::getCounty).orElse(null))
+                                .withAddressPostcode(cardDetails.getCardDetails().getBillingAddress().map(AddressEntity::getPostcode).orElse(null)));
     }
 
     public Long getAmount() {

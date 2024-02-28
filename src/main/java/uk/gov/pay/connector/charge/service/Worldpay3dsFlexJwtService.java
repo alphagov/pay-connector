@@ -59,10 +59,10 @@ public class Worldpay3dsFlexJwtService {
     
     private boolean shouldGenerateChallengeToken(ChargeEntity chargeEntity) {
         return chargeEntity.getStatus().equals(ChargeStatus.AUTHORISATION_3DS_REQUIRED.toString()) &&
-                chargeEntity.get3dsRequiredDetails() != null &&
-                chargeEntity.get3dsRequiredDetails().getWorldpayChallengeAcsUrl() != null &&
-                chargeEntity.get3dsRequiredDetails().getWorldpayChallengePayload() != null &&
-                chargeEntity.get3dsRequiredDetails().getWorldpayChallengeTransactionId() != null;
+                chargeEntity.getChargeCardDetails().get3dsRequiredDetails() != null &&
+                chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeAcsUrl() != null &&
+                chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengePayload() != null &&
+                chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeTransactionId() != null;
     }
 
     private String generateChallengeToken(ChargeEntity chargeEntity) {
@@ -95,9 +95,9 @@ public class Worldpay3dsFlexJwtService {
         claims.put("ReturnUrl", format("%s/card_details/%s/3ds_required_in", linksConfig.getFrontendUrl(), chargeEntity.getExternalId()));
         claims.put("ObjectifyPayload", true);
         claims.put("Payload", Map.of(
-                "ACSUrl", chargeEntity.get3dsRequiredDetails().getWorldpayChallengeAcsUrl(),
-                "Payload", chargeEntity.get3dsRequiredDetails().getWorldpayChallengePayload(),
-                "TransactionId", chargeEntity.get3dsRequiredDetails().getWorldpayChallengeTransactionId()));
+                "ACSUrl", chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeAcsUrl(),
+                "Payload", chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengePayload(),
+                "TransactionId", chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeTransactionId()));
         return claims;
     }
 

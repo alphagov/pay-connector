@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
@@ -74,8 +74,8 @@ public class AuthCardDetails {
         authCardDetails.setPayersCardType(CardidCardType.toPayersCardType(cardInformation.getType()));
         authCardDetails.setPayersCardPrepaidStatus(cardInformation.getPrepaidStatus());
 
-        Optional.ofNullable(chargeEntity.getCardDetails())
-                .flatMap(CardDetailsEntity::getBillingAddress)
+        Optional.ofNullable(chargeEntity.getChargeCardDetails())
+                .flatMap(chargeCardDetailsEntity -> chargeCardDetailsEntity.getCardDetails().getBillingAddress())
                 .map(Address::from)
                 .ifPresent(authCardDetails::setAddress);
 

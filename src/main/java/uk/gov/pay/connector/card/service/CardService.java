@@ -7,11 +7,11 @@ import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.card.model.OperationType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
+import uk.gov.pay.connector.card.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
@@ -131,8 +131,8 @@ public class CardService {
                                                       String rejectedReason) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
-            Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getCardDetails().setProviderSessionId(identifier));
-            Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
+            Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getChargeCardDetails().setProviderSessionId(identifier));
+            Optional.ofNullable(auth3dsRequiredDetails).ifPresent(threeDsDetails -> charge.getChargeCardDetails().set3dsRequiredDetails(threeDsDetails));
             Optional.ofNullable(walletType).ifPresent(charge::setWalletType);
             Optional.ofNullable(emailAddress).ifPresent(charge::setEmail);
 
@@ -153,7 +153,7 @@ public class CardService {
                     inactivateAgreement(charge, rejectedReason);
                 }
             }
-            charge.setCardDetails(detailsEntity);
+            charge.getChargeCardDetails().setCardDetails(detailsEntity);
 
             if (charge.isSavePaymentInstrumentToAgreement()) {
                 Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
@@ -179,8 +179,8 @@ public class CardService {
             try {
                 setTransactionId(charge, transactionId);
                 chargeService.transitionChargeState(charge, status);
-                Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
-                Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getCardDetails().setProviderSessionId(identifier));
+                Optional.ofNullable(auth3dsRequiredDetails).ifPresent(threeDsDetails -> charge.getChargeCardDetails().set3dsRequiredDetails(threeDsDetails));
+                Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(identifier -> charge.getChargeCardDetails().setProviderSessionId(identifier));
                 if (charge.isSavePaymentInstrumentToAgreement()) {
                     Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
                 }

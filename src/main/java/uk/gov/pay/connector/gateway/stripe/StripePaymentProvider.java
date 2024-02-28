@@ -145,7 +145,7 @@ public class StripePaymentProvider implements PaymentProvider {
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
 
         if (request.getAuth3dsResult() != null && request.getAuth3dsResult().getAuth3dsResultOutcome() != null) {
-            Gateway3dsRequiredParams params = new Stripe3dsRequiredParams(request.getCharge().get3dsRequiredDetails(), request.getAuth3dsResult().getThreeDsVersion());
+            Gateway3dsRequiredParams params = new Stripe3dsRequiredParams(request.getCharge().getChargeCardDetails().get3dsRequiredDetails(), request.getAuth3dsResult().getThreeDsVersion());
             switch (request.getAuth3dsResult().getAuth3dsResultOutcome()) {
                 case CANCELED:
                     return Gateway3DSAuthorisationResponse.of(request.getAuth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.CANCELLED, params);

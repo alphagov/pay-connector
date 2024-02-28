@@ -1,6 +1,5 @@
-package uk.gov.pay.connector.charge.model;
+package uk.gov.pay.connector.card.model;
 
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.service.payments.commons.model.WrappedStringValue;
 
 import java.util.Objects;

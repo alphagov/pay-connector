@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.paymentinstrument.model;
 
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 
 import java.time.Instant;
 import java.util.Map;

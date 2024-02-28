@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.card.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.wallets.WalletType;
@@ -21,7 +21,6 @@ import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

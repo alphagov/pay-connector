@@ -52,7 +52,7 @@ class PaymentInstrumentServiceTest {
         var actualPaymentInstrumentEntity = paymentInstrumentEntityCaptor.getValue();
         assertThat(actualPaymentInstrumentEntity.getCreatedDate(), is(NOW));
         assertThat(actualPaymentInstrumentEntity.getRecurringAuthToken(), is(Optional.of(token)));
-        assertThat(actualPaymentInstrumentEntity.getCardDetails(), is(chargeEntity.getCardDetails()));
+        assertThat(actualPaymentInstrumentEntity.getCardDetails(), is(chargeEntity.getChargeCardDetails()));
         assertThat(actualPaymentInstrumentEntity.getStartDate(), is(NOW));
         assertThat(actualPaymentInstrumentEntity.getStatus(), is(PaymentInstrumentStatus.CREATED));
         assertThat(actualPaymentInstrumentEntity, is(paymentInstrument));

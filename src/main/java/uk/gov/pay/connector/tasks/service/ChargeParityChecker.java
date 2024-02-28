@@ -5,11 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -83,7 +83,7 @@ public class ChargeParityChecker {
 
             fieldsMatch = matchCommonFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCreatedDate(chargeEntity, transaction);
-            fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getCardDetails(), transaction.getCardDetails());
+            fieldsMatch = fieldsMatch && matchCardDetails(chargeEntity.getChargeCardDetails().getCardDetails(), transaction.getCardDetails());
             fieldsMatch = fieldsMatch && matchGatewayAccountFields(chargeEntity.getGatewayAccount(), transaction);
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
@@ -280,7 +280,7 @@ public class ChargeParityChecker {
         if (chargeEntity.getCreatedDate().isBefore(CHECK_AUTHORISATION_SUMMARY_PARITY_AFTER_DATE)) {
             return true;
         }
-        if (chargeEntity.get3dsRequiredDetails() == null) {
+        if (chargeEntity.getChargeCardDetails().get3dsRequiredDetails() == null) {
             if (transaction.getAuthorisationSummary() == null) {
                 return true;
             }
@@ -297,7 +297,7 @@ public class ChargeParityChecker {
             return false;
         }
 
-        return isEquals(chargeEntity.get3dsRequiredDetails().getThreeDsVersion(),
+        return isEquals(chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion(),
                 transaction.getAuthorisationSummary().getThreeDSecure().getVersion(), "authorisation_summary.three_d_secure.version");
     }
 

@@ -13,7 +13,7 @@ public class Gateway3dsInfoObtainedEventDetails extends EventDetails {
     }
 
     public static Gateway3dsInfoObtainedEventDetails from(ChargeEntity charge) {
-        return new Gateway3dsInfoObtainedEventDetails(charge.get3dsRequiredDetails().getThreeDsVersion());
+        return new Gateway3dsInfoObtainedEventDetails(charge.getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion());
     }
 
     @JsonProperty("version_3ds")

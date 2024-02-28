@@ -7,10 +7,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -218,7 +219,7 @@ class HistoricalEventEmitterServiceTest {
         chargeEntity.setAuthorisationMode(MOTO_API);
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, null);
-        chargeEntity.setCardDetails(cardDetailsEntity);
+        chargeEntity.setChargeCardDetails(new ChargeCardDetailsEntity(cardDetailsEntity));
 
         ChargeEventEntity authSuccessEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
@@ -241,7 +242,7 @@ class HistoricalEventEmitterServiceTest {
         chargeEntity.setAuthorisationMode(AGREEMENT);
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, null);
-        chargeEntity.setCardDetails(cardDetailsEntity);
+        chargeEntity.setChargeCardDetails(new ChargeCardDetailsEntity(cardDetailsEntity));
 
         ChargeEventEntity authSuccessEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
@@ -704,7 +705,7 @@ class HistoricalEventEmitterServiceTest {
     void shouldEmitGateway3dsInfoObtainedEvent_whenThreeDsVersionIsMissingFromLedger() throws QueueException {
         var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
         auth3dsRequiredEntity.setThreeDsVersion("2.1.1");
-        chargeEntity.set3dsRequiredDetails(auth3dsRequiredEntity);
+        chargeEntity.getChargeCardDetails().set3dsRequiredDetails(auth3dsRequiredEntity);
 
         ChargeEventEntity successEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))

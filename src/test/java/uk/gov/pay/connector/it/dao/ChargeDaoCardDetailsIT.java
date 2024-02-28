@@ -2,12 +2,13 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
+import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -79,7 +80,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
         assertThat(chargeDaoOptional.isPresent(), is(true));
 
-        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getCardDetails();
+        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getChargeCardDetails().getCardDetails();
 
         assertThat(cardDetailsEntity.getCardHolderName(), is(testCardDetails.getCardHolderName()));
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(testCardDetails.getLastDigitsCardNumber()));
@@ -107,7 +108,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
         assertThat(chargeDaoOptional.isPresent(), is(true));
 
-        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getCardDetails();
+        CardDetailsEntity cardDetailsEntity = chargeDaoOptional.get().getChargeCardDetails().getCardDetails();
 
         assertThat(cardDetailsEntity.getCardHolderName(), is(testCardDetails.getCardHolderName()));
         assertThat(cardDetailsEntity.getLastDigitsCardNumber(), is(nullValue()));
@@ -142,7 +143,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
                 .build();
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", CardType.DEBIT, new AddressEntity(billingAddress));
-        chargeEntity.setCardDetails(cardDetailsEntity);
+        chargeEntity.setChargeCardDetails(new ChargeCardDetailsEntity(cardDetailsEntity));
         chargeDao.persist(chargeEntity);
 
         Map<String, Object> cardDetailsSaved = databaseTestHelper.getChargeCardDetails(chargeEntity.getId());
@@ -172,7 +173,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
                 .build();
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
                 "Mr. Pay Mc Payment", CardExpiryDate.valueOf("03/09"), "VISA", null, new AddressEntity(billingAddress));
-        chargeEntity.setCardDetails(cardDetailsEntity);
+        chargeEntity.setChargeCardDetails(new ChargeCardDetailsEntity(cardDetailsEntity));
         chargeDao.persist(chargeEntity);
 
         Map<String, Object> cardDetailsSaved = databaseTestHelper.getChargeCardDetails(chargeEntity.getId());

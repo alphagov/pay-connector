@@ -2029,20 +2029,6 @@
             <column name="integration_version_3ds" type="smallint" defaultValue="1"/>
             <column name="card_type" type="varchar(20)"/>
             <column name="address_state_province" type="varchar(2)"/>
-            <column name="provider_session_id" type="text"/>
-            <column name="exemption_3ds" type="varchar(50)"/>
-        </createTable>
-    </changeSet>
-
-    <changeSet id="add charge_card_3ds_details table" author="">
-        <createTable tableName="charge_card_details">
-            <column name="id" type="bigserial" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="charge_id" type="bigserial">
-                <constraints foreignKeyName="fk__charge_card_auth_3ds_details" referencedTableName="charges"
-                             referencedColumnNames="id" nullable="false"/>
-            </column>
             <column name="pa_request_3ds" type="text"/>
             <column name="issuer_url_3ds" type="text"/>
             <column name="html_out_3ds" type="text"/>
@@ -2051,6 +2037,8 @@
             <column name="worldpay_challenge_transaction_id_3ds" type="text"/>
             <column name="worldpay_challenge_payload_3ds" type="text"/>
             <column name="version_3ds" type="varchar(10)"/>
+            <column name="provider_session_id" type="text"/>
+            <column name="exemption_3ds" type="varchar(50)"/>
         </createTable>
     </changeSet>
 

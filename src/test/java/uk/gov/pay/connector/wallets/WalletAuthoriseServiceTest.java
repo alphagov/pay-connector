@@ -22,12 +22,12 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.card.service.CardService;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
-import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
+import uk.gov.pay.connector.card.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -252,12 +252,12 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getChargeCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getChargeCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
@@ -285,12 +285,12 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getChargeCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getChargeCardDetails(), is(mockCardDetailsEntity));
         assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
@@ -318,14 +318,14 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
-        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getChargeCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
-        assertThat(charge.getCardDetails(), is(notNullValue()));
-        assertThat(charge.getCardDetails().getFirstDigitsCardNumber(), is(nullValue()));
-        assertThat(charge.getCardDetails().getLastDigitsCardNumber(), is(nullValue()));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getChargeCardDetails(), is(notNullValue()));
+        assertThat(charge.getChargeCardDetails().getCardDetails().getFirstDigitsCardNumber(), is(nullValue()));
+        assertThat(charge.getChargeCardDetails().getCardDetails().getLastDigitsCardNumber(), is(nullValue()));
         assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
@@ -398,7 +398,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        CardDetailsEntity cardDetails = charge.getCardDetails();
+        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails();
         assertThat(cardDetails, is(mockCardDetailsEntity));
     }
 
@@ -408,7 +408,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        CardDetailsEntity cardDetails = charge.getCardDetails();
+        CardDetailsEntity cardDetails = charge.getChargeCardDetails().getCardDetails();
         assertThat(cardDetails, is(mockCardDetailsEntity));
     }
 
@@ -418,7 +418,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(charge.getCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getChargeCardDetails().getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
     }
 
     @Test
@@ -427,7 +427,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(charge.getCardDetails().getProviderSessionId(), is(nullValue()));
+        assertThat(charge.getChargeCardDetails().getProviderSessionId(), is(nullValue()));
     }
 
     @Test

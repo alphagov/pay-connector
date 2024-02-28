@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.model;
 
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.charge.model.AddressEntity;
+import uk.gov.pay.connector.card.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
@@ -31,7 +31,7 @@ class AuthCardDetailsTest {
         assertThat(authCardDetails.getAddress().isPresent(), is(true));
 
         Address address = authCardDetails.getAddress().get();
-        AddressEntity addressEntity = chargeEntity.getCardDetails().getBillingAddress().get();
+        AddressEntity addressEntity = chargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().get();
 
         assertThat(address.getLine1(), is(addressEntity.getLine1()));
         assertThat(address.getLine2(), is(addressEntity.getLine2()));

@@ -121,7 +121,7 @@ public class HistoricalEventEmitter {
     }
 
     private void process3DSVersionEvent(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
-        if (charge.get3dsRequiredDetails() != null && isNotBlank(charge.get3dsRequiredDetails().getThreeDsVersion())) {
+        if (charge.getChargeCardDetails().get3dsRequiredDetails() != null && isNotBlank(charge.getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion())) {
                 var chargeEvent = chargeEventEntities
                         .stream()
                         .filter(event -> TERMINAL_AUTHENTICATION_STATES.contains(event.getStatus()))

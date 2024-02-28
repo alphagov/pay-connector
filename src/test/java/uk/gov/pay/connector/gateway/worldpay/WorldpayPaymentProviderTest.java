@@ -243,7 +243,7 @@ class WorldpayPaymentProviderTest {
     private void verifyChargeUpdatedWith(Exemption3ds exemption3ds) {
         ArgumentCaptor<ChargeEntity> chargeDaoArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
         verify(chargeDao).merge(chargeDaoArgumentCaptor.capture());
-        assertThat(chargeDaoArgumentCaptor.getValue().getCardDetails().getExemption3ds(), is(exemption3ds));
+        assertThat(chargeDaoArgumentCaptor.getValue().getChargeCardDetails().getExemption3ds(), is(exemption3ds));
     }
 
     @Test

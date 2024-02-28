@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -14,20 +15,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-@Entity
-@Table(name = "charge_card_3ds_details")
-@Access(AccessType.FIELD)
-@SequenceGenerator(name = "charge_card_3ds_details_id_seq",
-        sequenceName = "charge_card_3ds_details_id_seq", allocationSize = 1)
+@Embeddable
 public class Auth3dsRequiredEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charge_card_3ds_details_id_seq")
-    private Long id;
-
-    @JoinColumn(name = "charge_id", updatable = false, insertable = false)
-    @JsonIgnore
-    private ChargeEntity chargeEntity;
 
     @Column(name = "pa_request_3ds")
     private String paRequest;

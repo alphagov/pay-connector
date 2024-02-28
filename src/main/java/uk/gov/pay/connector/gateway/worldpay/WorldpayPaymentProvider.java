@@ -281,7 +281,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     @Transactional
     public void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {
-        charge.getCardDetails().setExemption3ds(exemption3ds);
+        charge.getChargeCardDetails().setExemption3ds(exemption3ds);
         LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
         chargeDao.merge(charge);
         eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, Instant.now()));

@@ -1,10 +1,10 @@
-package uk.gov.pay.connector.charge.util;
+package uk.gov.pay.connector.card.util;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;

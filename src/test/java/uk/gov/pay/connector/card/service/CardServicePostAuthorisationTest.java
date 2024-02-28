@@ -15,12 +15,11 @@ import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
-import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
+import uk.gov.pay.connector.card.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
@@ -149,10 +148,10 @@ class CardServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getChargeCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
-        assertThat(chargeEntity.getCardDetails(), is(mockCardDetailsEntity));
+        assertThat(chargeEntity.getChargeCardDetails(), is(mockCardDetailsEntity));
         assertThat(chargeEntity.getCanRetry(), is(nullValue()));
 
         verify(mockStateTransitionService).offerPaymentStateTransition(EXTERNAL_ID, AUTHORISATION_READY, AUTHORISATION_SUCCESS, mockChargeEventEntity);
@@ -186,10 +185,10 @@ class CardServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getChargeCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
-        assertThat(chargeEntity.getCardDetails(), is(cardDetails));
+        assertThat(chargeEntity.getChargeCardDetails(), is(cardDetails));
         assertThat(chargeEntity.getCanRetry(), is(true));
 
         assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.ACTIVE));
@@ -230,10 +229,10 @@ class CardServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getChargeCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
-        assertThat(chargeEntity.getCardDetails(), is(cardDetails));
+        assertThat(chargeEntity.getChargeCardDetails(), is(cardDetails));
         assertThat(chargeEntity.getCanRetry(), is(false));
 
         assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.INACTIVE));
@@ -283,10 +282,10 @@ class CardServicePostAuthorisationTest {
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
-        assertThat(chargeEntity.getCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
+        assertThat(chargeEntity.getChargeCardDetails().getProviderSessionId(), is(PROVIDER_SESSION_IDENTIFIER.toString()));
         assertThat(chargeEntity.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(chargeEntity.getWalletType(), is(nullValue()));
-        assertThat(chargeEntity.getCardDetails(), is(cardDetails));
+        assertThat(chargeEntity.getChargeCardDetails(), is(cardDetails));
         assertThat(chargeEntity.getCanRetry(), is(nullValue()));
 
         assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.ACTIVE));

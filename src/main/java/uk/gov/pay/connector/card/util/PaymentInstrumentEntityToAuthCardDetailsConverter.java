@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.util;
+package uk.gov.pay.connector.card.util;
 
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;

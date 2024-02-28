@@ -12,6 +12,7 @@ import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
+import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -29,27 +30,25 @@ import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementReq
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.FrontendChargeResponse;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.PrefilledCardHolderDetails;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
-import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
-import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.card.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.charge.model.telephone.Supplemental;
 import uk.gov.pay.connector.charge.model.telephone.TelephoneChargeCreateRequest;
 import uk.gov.pay.connector.charge.resource.ChargesApiResource;
-import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
@@ -69,17 +68,10 @@ import uk.gov.pay.connector.common.model.domain.PrefilledAddress;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
-import uk.gov.pay.connector.events.model.agreement.AgreementInactivated;
-import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
-import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
-import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
-import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -87,7 +79,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
-import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.card.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -95,7 +86,6 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
-import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -122,7 +112,6 @@ import static javax.ws.rs.HttpMethod.POST;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
@@ -348,7 +337,7 @@ public class ChargeService {
 
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
-                    .ifPresent(chargeEntity::setCardDetails);
+                    .ifPresent(prefilledDetails -> chargeEntity.setChargeCardDetails(new ChargeCardDetailsEntity(prefilledDetails)));
 
             if (authorisationMode == AuthorisationMode.AGREEMENT) {
                 agreementEntity.ifPresent(agreement -> {
@@ -538,8 +527,8 @@ public class ChargeService {
             ChargeEntity chargeEntity) {
 
         PersistedCard persistedCard = null;
-        if (chargeEntity.getCardDetails() != null) {
-            persistedCard = chargeEntity.getCardDetails().toCard();
+        if (chargeEntity.getChargeCardDetails() != null) {
+            persistedCard = chargeEntity.getChargeCardDetails().getCardDetails().toCard();
         }
 
         ChargeResponse.ChargeResponseBuilder builderOfResponse = responseBuilder
@@ -612,22 +601,22 @@ public class ChargeService {
             ChargeEntity chargeEntity) {
         String chargeId = chargeEntity.getExternalId();
         PersistedCard persistedCard = null;
-        if (chargeEntity.getCardDetails() != null) {
-            persistedCard = chargeEntity.getCardDetails().toCard();
-            persistedCard.setCardBrand(findCardBrandLabel(chargeEntity.getCardDetails().getCardBrand()).orElse(""));
+        if (chargeEntity.getChargeCardDetails() != null) {
+            persistedCard = chargeEntity.getChargeCardDetails().getCardDetails().toCard();
+            persistedCard.setCardBrand(findCardBrandLabel(chargeEntity.getChargeCardDetails().getCardDetails().getCardBrand()).orElse(""));
         }
 
         ChargeResponse.Auth3dsData auth3dsData = null;
         ChargeResponse.AuthorisationSummary authorisationSummary = null;
-        if (chargeEntity.get3dsRequiredDetails() != null) {
+        if (chargeEntity.getChargeCardDetails().get3dsRequiredDetails() != null) {
             auth3dsData = new ChargeResponse.Auth3dsData();
-            auth3dsData.setPaRequest(chargeEntity.get3dsRequiredDetails().getPaRequest());
-            auth3dsData.setIssuerUrl(chargeEntity.get3dsRequiredDetails().getIssuerUrl());
+            auth3dsData.setPaRequest(chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getIssuerUrl());
 
             authorisationSummary = new ChargeResponse.AuthorisationSummary();
             ChargeResponse.AuthorisationSummary.ThreeDSecure threeDSecure = new ChargeResponse.AuthorisationSummary.ThreeDSecure();
             threeDSecure.setRequired(true);
-            threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
+            threeDSecure.setVersion(chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion());
             authorisationSummary.setThreeDSecure(threeDSecure);
         }
 
@@ -1050,21 +1039,21 @@ public class ChargeService {
                 .withMoto(charge.isMoto())
                 .withAuthorisationMode(charge.getAuthorisationMode());
 
-        if (charge.getCardDetails() != null) {
-            var persistedCard = charge.getCardDetails().toCard();
-            persistedCard.setCardBrand(findCardBrandLabel(charge.getCardDetails().getCardBrand()).orElse(""));
+        if (charge.getChargeCardDetails() != null) {
+            var persistedCard = charge.getChargeCardDetails().getCardDetails().toCard();
+            persistedCard.setCardBrand(findCardBrandLabel(charge.getChargeCardDetails().getCardDetails().getCardBrand()).orElse(""));
             responseBuilder.withCardDetails(persistedCard);
         }
 
         charge.getAgreement().ifPresent(agreementEntity -> responseBuilder.withAgreementId(agreementEntity.getExternalId()));
         charge.getAgreement().map(AgreementResponse::from).ifPresent(responseBuilder::withAgreement);
 
-        if (charge.get3dsRequiredDetails() != null) {
+        if (charge.getChargeCardDetails().get3dsRequiredDetails() != null) {
             var auth3dsData = new ChargeResponse.Auth3dsData();
-            auth3dsData.setPaRequest(charge.get3dsRequiredDetails().getPaRequest());
-            auth3dsData.setIssuerUrl(charge.get3dsRequiredDetails().getIssuerUrl());
-            auth3dsData.setHtmlOut(charge.get3dsRequiredDetails().getHtmlOut());
-            auth3dsData.setMd(charge.get3dsRequiredDetails().getMd());
+            auth3dsData.setPaRequest(charge.getChargeCardDetails().get3dsRequiredDetails().getPaRequest());
+            auth3dsData.setIssuerUrl(charge.getChargeCardDetails().get3dsRequiredDetails().getIssuerUrl());
+            auth3dsData.setHtmlOut(charge.getChargeCardDetails().get3dsRequiredDetails().getHtmlOut());
+            auth3dsData.setMd(charge.getChargeCardDetails().get3dsRequiredDetails().getMd());
 
             if (WORLDPAY.getName().equals(charge.getPaymentProvider())) {
                 worldpay3dsFlexJwtService.generateChallengeTokenIfAppropriate(charge).ifPresent(

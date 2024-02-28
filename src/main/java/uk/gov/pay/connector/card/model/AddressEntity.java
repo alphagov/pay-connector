@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.model;
+package uk.gov.pay.connector.card.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.domain.Address;

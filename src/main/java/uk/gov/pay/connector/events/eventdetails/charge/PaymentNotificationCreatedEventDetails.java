@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
+import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 
@@ -67,7 +68,7 @@ public class PaymentNotificationCreatedEventDetails extends EventDetails {
     }
 
     public static PaymentNotificationCreatedEventDetails from(ChargeEntity charge) {
-        Optional<CardDetailsEntity> cardDetails = Optional.ofNullable(charge.getCardDetails());
+        Optional<CardDetailsEntity> cardDetails = Optional.ofNullable(charge.getChargeCardDetails()).map(ChargeCardDetailsEntity::getCardDetails);
         String credentialExternalId = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
                 .map(GatewayAccountCredentialsEntity::getExternalId)
                 .orElse(null);

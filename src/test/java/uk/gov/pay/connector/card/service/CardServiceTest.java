@@ -5,9 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -88,7 +89,7 @@ public abstract class CardServiceTest {
                         aChargeEventEntity().withChargeEntity(new ChargeEntity()).withStatus(ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR).withUpdated(ZonedDateTime.now().minusHours(1)).build()
                 ))
                 .build();
-        entity.setCardDetails(new CardDetailsEntity());
+        entity.setChargeCardDetails(new ChargeCardDetailsEntity(null));
         return entity;
     }
 
@@ -173,8 +174,8 @@ public abstract class CardServiceTest {
                 mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"), null);
 
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
-        verify(chargeSpy).set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
-        verify(chargeSpy).getCardDetails().setProviderSessionId("provider-session-identifier");
+        verify(chargeSpy).getChargeCardDetails().set3dsRequiredDetails(mockedAuth3dsRequiredEntity);
+        verify(chargeSpy).getChargeCardDetails().setProviderSessionId("provider-session-identifier");
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
         verify(eventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
     }

@@ -27,7 +27,7 @@ class Gateway3dsInfoObtainedTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_INFO_OBTAINED")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
-        assertThat(actual, hasJsonPath("$.event_details.version_3ds", equalTo(chargeEntity.get3dsRequiredDetails().getThreeDsVersion())));
+        assertThat(actual, hasJsonPath("$.event_details.version_3ds", equalTo(chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion())));
     }
 
     @Test

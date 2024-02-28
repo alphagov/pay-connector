@@ -4,10 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.charge.model.AddressEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.fee.model.Fee;
@@ -165,10 +165,10 @@ public class ChargeEntityFixture {
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
-        chargeEntity.getCardDetails().setProviderSessionId(providerSessionId);
-        chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
+        chargeEntity.getChargeCardDetails().setProviderSessionId(providerSessionId);
+        chargeEntity.getChargeCardDetails().set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setWalletType(walletType);
-        chargeEntity.getCardDetails().setExemption3ds(exemption3ds);
+        chargeEntity.getChargeCardDetails().setExemption3ds(exemption3ds);
         chargeEntity.setPaymentInstrument(paymentInstrument);
         chargeEntity.setUpdatedDate(updatedDate);
 

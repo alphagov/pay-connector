@@ -36,7 +36,7 @@ public class PaymentInstrumentService {
         var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                 .withCreatedDate(now)
                 .withRecurringAuthToken(recurringAuthToken)
-                .withCardDetails(charge.getCardDetails())
+                .withCardDetails(charge.getChargeCardDetails().getCardDetails())
                 .withStatus(PaymentInstrumentStatus.CREATED) 
                 .withStartDate(now)
                 .build();

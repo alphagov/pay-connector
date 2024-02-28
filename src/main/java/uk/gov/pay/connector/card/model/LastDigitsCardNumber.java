@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.charge.model;
+package uk.gov.pay.connector.card.model;
 
 import uk.gov.service.payments.commons.model.WrappedStringValue;
 

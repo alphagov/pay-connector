@@ -86,7 +86,7 @@ class PaymentDetailsEnteredTest {
     @Test
     void whenAllTheDataIsAvailableForUsCountry() throws JsonProcessingException {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        chargeEntity.getCardDetails().getBillingAddress().ifPresent(address -> address.setStateOrProvince(UsState.VERMONT.getAbbreviation()));
+        chargeEntity.getChargeCardDetails().getCardDetails().getBillingAddress().ifPresent(address -> address.setStateOrProvince(UsState.VERMONT.getAbbreviation()));
         String actual = PaymentDetailsEntered.from(chargeEntity).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(time)));

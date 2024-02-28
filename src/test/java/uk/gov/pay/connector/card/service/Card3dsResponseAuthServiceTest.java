@@ -18,7 +18,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
-import uk.gov.pay.connector.charge.util.AuthCardDetailsToCardDetailsEntityConverter;
+import uk.gov.pay.connector.card.util.AuthCardDetailsToCardDetailsEntityConverter;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
@@ -198,7 +198,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
 
         Auth3dsResult auth3dsResult = AuthUtils.buildAuth3dsResult();
         ProviderSessionIdentifier providerSessionId = ProviderSessionIdentifier.of("provider-session-id");
-        charge.getCardDetails().setProviderSessionId(providerSessionId.toString());
+        charge.getChargeCardDetails().setProviderSessionId(providerSessionId.toString());
 
         ArgumentCaptor<Auth3dsResponseGatewayRequest> argumentCaptor = ArgumentCaptor.forClass(Auth3dsResponseGatewayRequest.class);
 
@@ -287,9 +287,9 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(false));
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
-        assertThat(charge.get3dsRequiredDetails().getIssuerUrl(), is(REQUIRES_3DS_ISSUER_URL));
-        assertThat(charge.get3dsRequiredDetails().getPaRequest(), is(REQUIRES_3DS_PA_REQUEST));
-        assertThat(charge.getCardDetails().getProviderSessionId(), is("provider-session-identifier"));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails().getIssuerUrl(), is(REQUIRES_3DS_ISSUER_URL));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails().getPaRequest(), is(REQUIRES_3DS_PA_REQUEST));
+        assertThat(charge.getChargeCardDetails().getProviderSessionId(), is("provider-session-identifier"));
 
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));
@@ -321,11 +321,11 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
         assertThat(response.isSuccessful(), is(false));
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(GENERATED_TRANSACTION_ID));
-        assertThat(charge.get3dsRequiredDetails().getWorldpayChallengeAcsUrl(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_ACS_URL));
-        assertThat(charge.get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_TRANSACTION_ID));
-        assertThat(charge.get3dsRequiredDetails().getWorldpayChallengePayload(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_PAYLOAD));
-        assertThat(charge.get3dsRequiredDetails().getThreeDsVersion(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_3DS_VERSION));
-        assertThat(charge.getCardDetails().getProviderSessionId(), is("provider-session-identifier"));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeAcsUrl(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_ACS_URL));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_TRANSACTION_ID));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengePayload(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_CHALLENGE_PAYLOAD));
+        assertThat(charge.getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion(), is(REQUIRES_3DS_WORLDPAY_3DS_FLEX_3DS_VERSION));
+        assertThat(charge.getChargeCardDetails().getProviderSessionId(), is("provider-session-identifier"));
 
         assertTrue(argumentCaptor.getValue().getTransactionId().isPresent());
         assertThat(argumentCaptor.getValue().getTransactionId().get(), is(GENERATED_TRANSACTION_ID));

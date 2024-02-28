@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.card.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
-import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -113,8 +113,8 @@ public class LedgerTransactionFixture {
             ledgerTransactionFixture.withGatewayAccountId(gatewayAccount.getId());
             ledgerTransactionFixture.isLive(gatewayAccount.isLive());
         }
-        if (nonNull(chargeEntity.getCardDetails())) {
-            CardDetailsEntity chargeEntityCardDetails = chargeEntity.getCardDetails();
+        if (nonNull(chargeEntity.getChargeCardDetails())) {
+            CardDetailsEntity chargeEntityCardDetails = chargeEntity.getChargeCardDetails().getCardDetails();
             Address ledgerAddress = chargeEntityCardDetails.getBillingAddress().map(addressEntity -> {
                 return new Address(addressEntity.getLine1(),
                         addressEntity.getLine2(),
@@ -151,11 +151,11 @@ public class LedgerTransactionFixture {
         refundSummary.setStatus(refundAvailability.getStatus());
         ledgerTransactionFixture.withRefundSummary(refundSummary);
 
-        if (chargeEntity.get3dsRequiredDetails() != null) {
+        if (chargeEntity.getChargeCardDetails().get3dsRequiredDetails() != null) {
             AuthorisationSummary authorisationSummary = new AuthorisationSummary();
             ThreeDSecure threeDSecure = new ThreeDSecure();
             threeDSecure.setRequired(true);
-            threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
+            threeDSecure.setVersion(chargeEntity.getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion());
             authorisationSummary.setThreeDSecure(threeDSecure);
             ledgerTransactionFixture.withAuthorisationSummary(authorisationSummary);
         }

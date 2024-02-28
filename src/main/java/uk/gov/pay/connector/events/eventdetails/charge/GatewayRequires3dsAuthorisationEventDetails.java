@@ -19,7 +19,7 @@ public class GatewayRequires3dsAuthorisationEventDetails extends EventDetails {
 
     public static GatewayRequires3dsAuthorisationEventDetails from(ChargeEntity charge) {
         return new GatewayRequires3dsAuthorisationEventDetails(
-                Optional.ofNullable(charge.get3dsRequiredDetails())
+                Optional.ofNullable(charge.getChargeCardDetails().get3dsRequiredDetails())
                         .map(Auth3dsRequiredEntity::getThreeDsVersion)
                         .orElse(null)
         );

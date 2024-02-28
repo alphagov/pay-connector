@@ -187,14 +187,14 @@ public class ChargeDaoIT extends DaoITestBase {
 
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
-        assertThat(charge.get().get3dsRequiredDetails().getPaRequest(), is(paRequest));
-        assertThat(charge.get().get3dsRequiredDetails().getIssuerUrl(), is(issuerUrl));
-        assertThat(charge.get().get3dsRequiredDetails().getHtmlOut(), is(htmlOut));
-        assertThat(charge.get().get3dsRequiredDetails().getMd(), is(md));
-        assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengeAcsUrl(), is(worldpayChallengeAcsUrl));
-        assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(worldpayChallengeTransactionId));
-        assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengePayload(), is(worldpayChallengePayload));
-        assertThat(charge.get().get3dsRequiredDetails().getThreeDsVersion(), is(threeDsVersion));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getPaRequest(), is(paRequest));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getIssuerUrl(), is(issuerUrl));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getHtmlOut(), is(htmlOut));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getMd(), is(md));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeAcsUrl(), is(worldpayChallengeAcsUrl));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(worldpayChallengeTransactionId));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getWorldpayChallengePayload(), is(worldpayChallengePayload));
+        assertThat(charge.get().getChargeCardDetails().get3dsRequiredDetails().getThreeDsVersion(), is(threeDsVersion));
     }
 
     @Test
@@ -213,7 +213,7 @@ public class ChargeDaoIT extends DaoITestBase {
 
         Optional<ChargeEntity> charge = chargeDao.findById(chargeEntity.getId());
 
-        assertThat(charge.get().getCardDetails().getProviderSessionId(), is(providerSessionId));
+        assertThat(charge.get().getChargeCardDetails().getProviderSessionId(), is(providerSessionId));
     }
 
     @Test
@@ -313,12 +313,12 @@ public class ChargeDaoIT extends DaoITestBase {
                 .build();
         chargeDao.persist(chargeEntity);
 
-        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getCardDetails().getExemption3ds());
+        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getChargeCardDetails().getExemption3ds());
 
-        chargeEntity.getCardDetails().setExemption3ds(Exemption3ds.EXEMPTION_NOT_REQUESTED);
+        chargeEntity.getChargeCardDetails().setExemption3ds(Exemption3ds.EXEMPTION_NOT_REQUESTED);
         chargeDao.merge(chargeEntity);
 
-        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getCardDetails().getExemption3ds(),
+        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getChargeCardDetails().getExemption3ds(),
                 Exemption3ds.EXEMPTION_NOT_REQUESTED);
     }
 
@@ -386,7 +386,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getReference(), is(testCharge.getReference()));
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
         assertThat(charge.getPaymentProvider(), is(testCharge.getPaymentProvider()));
-        assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(charge.getChargeCardDetails().getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
         assertThat(charge.getExternalMetadata(), is(Optional.empty()));
     }
 
@@ -449,7 +449,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getGatewayAccount(), is(notNullValue()));
         assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
         assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
-        assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+        assertThat(charge.getChargeCardDetails().getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
     }
 
     @Test
@@ -489,7 +489,7 @@ public class ChargeDaoIT extends DaoITestBase {
         assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
         assertThat(charge.getReturnUrl(), is(defaultTestCharge.getReturnUrl()));
         assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
-        assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
+        assertThat(charge.getChargeCardDetails().getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertThat(charge.getCanRetry(), is(true));
     }
 

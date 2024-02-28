@@ -1,37 +1,30 @@
-package uk.gov.pay.connector.charge.model;
+package uk.gov.pay.connector.card.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.card.model.Exemption3ds;
-import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
+import uk.gov.pay.connector.card.model.domain.PersistedCard;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
+import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import java.util.Objects;
 import java.util.Optional;
 
-@Entity
-@Table(name = "charge_card_details")
-@Access(AccessType.FIELD)
-@SequenceGenerator(name = "charge_card_details_id_seq",
-        sequenceName = "charge_card_details_id_seq", allocationSize = 1)
+@Embeddable
 public class CardDetailsEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charge_card_details_id_seq")
-    private Long id;
-
-    @JoinColumn(name = "charge_id", updatable = false, insertable = false)
-    @JsonIgnore
-    private ChargeEntity chargeEntity;
 
     @Column(name = "first_digits_card_number")
     @JsonProperty("first_digits_card_number")
@@ -77,13 +70,6 @@ public class CardDetailsEntity {
     @Embedded
     @JsonProperty("billing_address")
     private AddressEntity billingAddress;
-
-    @Column(name = "provider_session_id")
-    private String providerSessionId;
-
-    @Column(name = "exemption_3ds")
-    @Enumerated(EnumType.STRING)
-    private Exemption3ds exemption3ds;
 
     public CardDetailsEntity() {
     }
@@ -176,22 +162,6 @@ public class CardDetailsEntity {
     public CardDetailsEntity setCardType(CardType cardType) {
         this.cardType = cardType;
         return this;
-    }
-
-    public String getProviderSessionId() {
-        return providerSessionId;
-    }
-
-    public void setProviderSessionId(String providerSessionId) {
-        this.providerSessionId = providerSessionId;
-    }
-
-    public Exemption3ds getExemption3ds() {
-        return exemption3ds;
-    }
-
-    public void setExemption3ds(Exemption3ds exemption3ds) {
-        this.exemption3ds = exemption3ds;
     }
 
     @Override
