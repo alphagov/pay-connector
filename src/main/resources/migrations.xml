@@ -2055,4 +2055,21 @@
             <column name="account_holder_name" type="text"/>
         </createTable>
     </changeSet>
+
+    <changeSet id="add gateway_account_card_configuration table" author="">
+        <createTable tableName="gateway_account_card_configuration">
+            <column name="corporate_credit_card_surcharge_amount" type="bigint" defaultValue="0"/>
+            <column name="corporate_debit_card_surcharge_amount" type="bigint" defaultValue="0"/>
+            <column name="corporate_prepaid_debit_card_surcharge_amount" type="bigint" defaultValue="0"/>
+            <column name="allow_apple_pay" type="boolean" defaultValue="false"/>
+            <column name="allow_google_pay" type="boolean" defaultValue="false"/>
+            <column name="integration_version_3ds" type="int" defaultValue="1"/>
+            <column name="send_payer_ip_address_to_gateway" type="boolean" defaultValue="false"/>
+            <column name="block_prepaid_cards" type="boolean" defaultValue="false"/>
+            <column name="moto_mask_card_number_input" type="boolean" defaultValue="false"/>
+            <column name="moto_mask_card_security_code_input" type="boolean" defaultValue="false"/>
+            <column name="send_payer_email_to_gateway" type="boolean" defaultValue="false"/>
+            <column name="send_reference_to_gateway" type="boolean" defaultValue="false"/>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
