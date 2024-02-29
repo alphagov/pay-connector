@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.card.service.CardAuthoriseService;
+import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 
 public class AuthoriseWithUserNotPresentHandler {
     private final ChargeService chargeService;

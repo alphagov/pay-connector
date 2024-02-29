@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.model;
 
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.FirstDigitsCardNumber;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;

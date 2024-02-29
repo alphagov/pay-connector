@@ -2,7 +2,7 @@ package uk.gov.pay.connector.model;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.LastDigitsCardNumber;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;

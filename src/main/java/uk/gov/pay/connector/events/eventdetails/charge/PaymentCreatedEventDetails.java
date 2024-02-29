@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
-import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.paymentprocessor.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;

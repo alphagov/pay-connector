@@ -22,7 +22,7 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
-import uk.gov.pay.connector.card.service.QueryService;
+import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 
 import java.util.Optional;
 

@@ -17,7 +17,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.card.service.QueryService;
+import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 
 import java.util.List;
 import java.util.Map;

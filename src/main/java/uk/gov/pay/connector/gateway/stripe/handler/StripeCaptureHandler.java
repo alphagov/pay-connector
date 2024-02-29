@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.stripe.handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.card.util.StripeFeeCalculator;
+import uk.gov.pay.connector.paymentprocessor.util.StripeFeeCalculator;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureHandler;
 import uk.gov.pay.connector.gateway.CaptureResponse;

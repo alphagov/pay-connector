@@ -1,15 +1,14 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
-import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
-import uk.gov.pay.connector.card.model.CardDetailsEntity;
-import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.CardDetailsEntity;
+import uk.gov.pay.connector.paymentprocessor.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 

@@ -3,7 +3,7 @@ package uk.gov.pay.connector.paymentinstrument.model;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.paymentprocessor.model.CardDetailsEntity;
 import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
 import uk.gov.pay.connector.util.RandomIdGenerator;

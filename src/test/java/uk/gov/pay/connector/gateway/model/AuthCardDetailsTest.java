@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.gateway.model;
 
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.card.model.AddressEntity;
+import uk.gov.pay.connector.paymentprocessor.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.card.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

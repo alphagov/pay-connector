@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.response;
 
-import uk.gov.pay.connector.card.model.Auth3dsRequiredEntity;
+import uk.gov.pay.connector.paymentprocessor.model.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 
 import java.util.Optional;

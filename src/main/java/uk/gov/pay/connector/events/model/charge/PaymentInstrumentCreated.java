@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.events.model.charge;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;

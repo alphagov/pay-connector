@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.model.domain;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
-import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.paymentprocessor.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
-import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;

@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.charge.util;
 
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.card.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
+import uk.gov.pay.connector.paymentprocessor.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.card.model.AddressEntity;
-import uk.gov.pay.connector.card.model.CardDetailsEntity;
+import uk.gov.pay.connector.paymentprocessor.model.AddressEntity;
+import uk.gov.pay.connector.paymentprocessor.model.CardDetailsEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;

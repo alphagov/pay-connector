@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.util;
 
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 

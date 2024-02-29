@@ -2,13 +2,13 @@ package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
 import org.junit.Test;
-import uk.gov.pay.connector.card.model.ChargeCardDetailsEntity;
+import uk.gov.pay.connector.paymentprocessor.model.ChargeCardDetailsEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.card.model.AddressEntity;
-import uk.gov.pay.connector.card.model.CardDetailsEntity;
-import uk.gov.pay.connector.card.model.FirstDigitsCardNumber;
-import uk.gov.pay.connector.card.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.AddressEntity;
+import uk.gov.pay.connector.paymentprocessor.model.CardDetailsEntity;
+import uk.gov.pay.connector.paymentprocessor.model.FirstDigitsCardNumber;
+import uk.gov.pay.connector.paymentprocessor.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
