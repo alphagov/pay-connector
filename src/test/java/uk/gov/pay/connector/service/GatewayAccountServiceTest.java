@@ -173,7 +173,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setCorporateCreditCardSurchargeAmount(100L);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setCorporateCreditCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -187,7 +187,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setCorporateDebitCardSurchargeAmount(100L);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setCorporateDebitCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -201,7 +201,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setCorporatePrepaidDebitCardSurchargeAmount(100L);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setCorporatePrepaidDebitCardSurchargeAmount(100L);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -218,7 +218,7 @@ class GatewayAccountServiceTest {
         
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setAllowApplePay(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setAllowApplePay(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -235,7 +235,7 @@ class GatewayAccountServiceTest {
 
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setAllowGooglePay(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setAllowGooglePay(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -278,7 +278,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setBlockPrepaidCards(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setBlockPrepaidCards(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -292,7 +292,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setBlockPrepaidCards(false);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setBlockPrepaidCards(false);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -335,7 +335,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setMotoMaskCardNumberInput(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setMotoMaskCardNumberInput(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -349,7 +349,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setMotoMaskCardNumberInput(false);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setMotoMaskCardNumberInput(false);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -363,7 +363,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setMotoMaskCardSecurityCodeInput(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setMotoMaskCardSecurityCodeInput(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -377,7 +377,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setMotoMaskCardSecurityCodeInput(false);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setMotoMaskCardSecurityCodeInput(false);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -419,7 +419,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setSendPayerIpAddressToGateway(false);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setSendPayerIpAddressToGateway(false);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -433,7 +433,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setSendPayerIpAddressToGateway(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setSendPayerIpAddressToGateway(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -447,7 +447,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setSendPayerEmailToGateway(false);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setSendPayerEmailToGateway(false);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -461,7 +461,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setSendPayerEmailToGateway(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setSendPayerEmailToGateway(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -508,7 +508,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setSendReferenceToGateway(false);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setSendReferenceToGateway(false);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -522,7 +522,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setSendReferenceToGateway(true);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setSendReferenceToGateway(true);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
@@ -537,7 +537,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
         Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
         assertThat(optionalGatewayAccount.isPresent(), is(true));
-        verify(mockGatewayAccountEntity).setIntegrationVersion3ds(2);
+        verify(mockGatewayAccountEntity).getCardConfigurationEntity().setIntegrationVersion3ds(2);
         verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 

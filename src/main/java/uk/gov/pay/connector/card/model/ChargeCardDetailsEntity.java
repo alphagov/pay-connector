@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import javax.persistence.Access;
@@ -26,7 +27,7 @@ import java.util.Optional;
 @Access(AccessType.FIELD)
 @SequenceGenerator(name = "charge_card_details_id_seq",
         sequenceName = "charge_card_details_id_seq", allocationSize = 1)
-public class ChargeCardDetailsEntity {
+public class ChargeCardDetailsEntity extends AbstractVersionedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "charge_card_details_id_seq")

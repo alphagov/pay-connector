@@ -143,7 +143,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
 
         account.setExternalId(randomUuid());
         account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));
-        account.setSendReferenceToGateway(true);
+        account.getCardConfigurationEntity().setSendReferenceToGateway(true);
 
         gatewayAccountDao.persist(account);
 
@@ -152,13 +152,13 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(account.getDescription(), is(nullValue()));
         assertThat(account.getAnalyticsId(), is(nullValue()));
         assertThat(account.getNotificationCredentials(), is(nullValue()));
-        assertThat(account.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(0L));
-        assertThat(account.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(0L));
-        assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
-        assertThat(account.isSendPayerIpAddressToGateway(), is(false));
-        assertThat(account.isSendPayerEmailToGateway(), is(false));
+        assertThat(account.getCardConfigurationEntity().getCorporateNonPrepaidCreditCardSurchargeAmount(), is(0L));
+        assertThat(account.getCardConfigurationEntity().getCorporateNonPrepaidDebitCardSurchargeAmount(), is(0L));
+        assertThat(account.getCardConfigurationEntity().getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
+        assertThat(account.getCardConfigurationEntity().isSendPayerIpAddressToGateway(), is(false));
+        assertThat(account.getCardConfigurationEntity().isSendPayerEmailToGateway(), is(false));
         assertThat(account.isProviderSwitchEnabled(), is(false));
-        assertThat(account.isSendReferenceToGateway(), is(true));
+        assertThat(account.getCardConfigurationEntity().isSendReferenceToGateway(), is(true));
 
         List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(account.getId());
 
@@ -196,9 +196,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getServiceId(), is(accountRecord.getServiceId()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCardConfigurationEntity().getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCardConfigurationEntity().getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCardConfigurationEntity().getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
         assertThat(gatewayAccount.getCardTypes(), contains(
                 allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
@@ -228,9 +228,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
         assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
         assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCardConfigurationEntity().getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCardConfigurationEntity().getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
+        assertThat(gatewayAccount.getCardConfigurationEntity().getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
 
     }
 

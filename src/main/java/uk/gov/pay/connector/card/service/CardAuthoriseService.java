@@ -280,7 +280,7 @@ public class CardAuthoriseService {
     }
 
     private boolean gatewayCardBrand3DSMismatch(ChargeEntity chargeEntity, String cardBrand) {
-        return !chargeEntity.getGatewayAccount().isRequires3ds() && cardBrandRequires3ds(cardBrand);
+        return !chargeEntity.getGatewayAccount().getCardConfigurationEntity().isRequires3ds() && cardBrandRequires3ds(cardBrand);
     }
 
     private boolean cardBrandRequires3ds(String cardBrand) {

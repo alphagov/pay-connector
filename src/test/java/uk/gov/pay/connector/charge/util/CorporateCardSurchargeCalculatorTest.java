@@ -43,7 +43,7 @@ class CorporateCardSurchargeCalculatorTest {
                 .withPayersCardPrepaidStatus(PayersCardPrepaidStatus.NOT_PREPAID)
                 .build();
         GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-        gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(100L);
+        gatewayAccountEntity.getCardConfigurationEntity().setCorporateCreditCardSurchargeAmount(100L);
         ChargeEntity chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)

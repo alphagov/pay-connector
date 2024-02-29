@@ -70,8 +70,8 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
         WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseGooglePayOrderRequestBuilder();
         worldpayOrderRequestBuilder.withGooglePayPaymentData(authorisationGatewayRequest.getGooglePayAuthRequest());
 
-        boolean is3dsRequired = authorisationGatewayRequest.getGatewayAccount().isRequires3ds();
-        boolean isSendIpAddress = authorisationGatewayRequest.getGatewayAccount().isSendPayerIpAddressToGateway();
+        boolean is3dsRequired = authorisationGatewayRequest.getGatewayAccount().getCardConfigurationEntity().isRequires3ds();
+        boolean isSendIpAddress = authorisationGatewayRequest.getGatewayAccount().getCardConfigurationEntity().isSendPayerIpAddressToGateway();
         worldpayOrderRequestBuilder
                 .withUserAgentHeader(googlePayAuthRequest.getPaymentInfo().getUserAgentHeader())
                 .withAcceptHeader(googlePayAuthRequest.getPaymentInfo().getAcceptHeader())
@@ -99,7 +99,7 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
     }
 
     private GatewayOrder buildWalletAuthoriseOrder(AuthorisationGatewayRequest request, WalletPaymentInfo walletPaymentInfo, WorldpayOrderRequestBuilder builder) {
-        boolean isSendPayerEmailToGateway = request.getGatewayAccount().isSendPayerEmailToGateway();
+        boolean isSendPayerEmailToGateway = request.getGatewayAccount().getCardConfigurationEntity().isSendPayerEmailToGateway();
 
         if (isSendPayerEmailToGateway) {
             Optional.ofNullable(walletPaymentInfo.getEmail()).ifPresent(builder::withPayerEmail);

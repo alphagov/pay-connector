@@ -341,7 +341,7 @@ public class GatewayAccountResource {
                             if (!requires3ds && gatewayAccount.hasAnyAcceptedCardType3dsRequired()) {
                                 return Response.status(Status.CONFLICT).build();
                             }
-                            gatewayAccount.setRequires3ds(requires3ds);
+                            gatewayAccount.getCardConfigurationEntity().setRequires3ds(requires3ds);
                             return Response.ok().build();
                         }
                 )
@@ -394,7 +394,7 @@ public class GatewayAccountResource {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount -> {
-                    if (!gatewayAccount.isRequires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
+                    if (!gatewayAccount.getCardConfigurationEntity().isRequires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
                         return Response.status(Status.CONFLICT).build();
                     }
                     gatewayAccount.setCardTypes(cardTypeEntities);

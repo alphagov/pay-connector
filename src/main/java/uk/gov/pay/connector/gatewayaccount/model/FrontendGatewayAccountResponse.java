@@ -95,17 +95,17 @@ public class FrontendGatewayAccountResponse {
         this.serviceName = gatewayAccountEntity.getServiceName();
         this.serviceId = gatewayAccountEntity.getServiceId();
         this.analyticsId = gatewayAccountEntity.getAnalyticsId();
-        this.corporateCreditCardSurchargeAmount = gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount();
-        this.corporateDebitCardSurchargeAmount = gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount();
-        this.corporatePrepaidDebitCardSurchargeAmount = gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount();
-        this.allowApplePay = gatewayAccountEntity.isAllowApplePay();
-        this.allowGooglePay = gatewayAccountEntity.isAllowGooglePay();
-        this.blockPrepaidCards = gatewayAccountEntity.isBlockPrepaidCards();
+        this.corporateCreditCardSurchargeAmount = gatewayAccountEntity.getCardConfigurationEntity().getCorporateNonPrepaidCreditCardSurchargeAmount();
+        this.corporateDebitCardSurchargeAmount = gatewayAccountEntity.getCardConfigurationEntity().getCorporateNonPrepaidDebitCardSurchargeAmount();
+        this.corporatePrepaidDebitCardSurchargeAmount = gatewayAccountEntity.getCardConfigurationEntity().getCorporatePrepaidDebitCardSurchargeAmount();
+        this.allowApplePay = gatewayAccountEntity.getCardConfigurationEntity().isAllowApplePay();
+        this.allowGooglePay = gatewayAccountEntity.getCardConfigurationEntity().isAllowGooglePay();
+        this.blockPrepaidCards = gatewayAccountEntity.getCardConfigurationEntity().isBlockPrepaidCards();
         this.emailCollectionMode = gatewayAccountEntity.getEmailCollectionMode();
-        this.requires3ds = gatewayAccountEntity.isRequires3ds();
-        this.integrationVersion3ds = gatewayAccountEntity.getIntegrationVersion3ds();
-        this.motoMaskCardNumberInput = gatewayAccountEntity.isMotoMaskCardNumberInput();
-        this.motoMaskCardSecurityCodeInput = gatewayAccountEntity.isMotoMaskCardSecurityCodeInput();
+        this.requires3ds = gatewayAccountEntity.getCardConfigurationEntity().isRequires3ds();
+        this.integrationVersion3ds = gatewayAccountEntity.getCardConfigurationEntity().getIntegrationVersion3ds();
+        this.motoMaskCardNumberInput = gatewayAccountEntity.getCardConfigurationEntity().isMotoMaskCardNumberInput();
+        this.motoMaskCardSecurityCodeInput = gatewayAccountEntity.getCardConfigurationEntity().isMotoMaskCardSecurityCodeInput();
         this.cardTypes = gatewayAccountEntity.getCardTypes();
     }
 

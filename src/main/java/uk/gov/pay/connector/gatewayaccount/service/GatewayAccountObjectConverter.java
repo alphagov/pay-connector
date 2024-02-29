@@ -27,10 +27,10 @@ public class GatewayAccountObjectConverter {
         gatewayAccountEntity.setServiceId(gatewayAccountRequest.getServiceId());
         gatewayAccountEntity.setDescription(gatewayAccountRequest.getDescription());
         gatewayAccountEntity.setAnalyticsId(gatewayAccountRequest.getAnalyticsId());
-        gatewayAccountEntity.setRequires3ds(gatewayAccountRequest.isRequires3ds());
-        gatewayAccountEntity.setAllowApplePay(gatewayAccountRequest.isAllowApplePay());
-        gatewayAccountEntity.setAllowGooglePay(gatewayAccountRequest.isAllowGooglePay());
-        gatewayAccountEntity.setIntegrationVersion3ds(DEFAULT_INTEGRATION_VERSION_3_DS);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(gatewayAccountRequest.isRequires3ds());
+        gatewayAccountEntity.getCardConfigurationEntity().setAllowApplePay(gatewayAccountRequest.isAllowApplePay());
+        gatewayAccountEntity.getCardConfigurationEntity().setAllowGooglePay(gatewayAccountRequest.isAllowGooglePay());
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(DEFAULT_INTEGRATION_VERSION_3_DS);
 
         gatewayAccountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(gatewayAccountEntity));
         gatewayAccountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(gatewayAccountEntity));
@@ -51,7 +51,7 @@ public class GatewayAccountObjectConverter {
                 .description(entity.getDescription())
                 .analyticsId(entity.getAnalyticsId())
                 .providerAccountType(entity.getType())
-                .requires3ds(entity.isRequires3ds())
+                .requires3ds(entity.getCardConfigurationEntity().isRequires3ds())
                 .location(uri)
                 .generateLinks(uri)
                 .build();

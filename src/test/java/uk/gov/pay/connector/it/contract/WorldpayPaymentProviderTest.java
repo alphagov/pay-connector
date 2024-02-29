@@ -168,7 +168,7 @@ class WorldpayPaymentProviderTest {
                 .build();
         validGatewayAccountFor3ds.setId(1234L);
         validGatewayAccountFor3ds.setType(TEST);
-        validGatewayAccountFor3ds.setRequires3ds(true);
+        validGatewayAccountFor3ds.getCardConfigurationEntity().setRequires3ds(true);
         validGatewayAccountFor3ds.setGatewayAccountCredentials(List.of(validGatewayAccountCredentialsEntityFor3ds));
 
         mockMetricRegistry = mock(MetricRegistry.class);
@@ -191,8 +191,8 @@ class WorldpayPaymentProviderTest {
     @ParameterizedTest
     @MethodSource("worldpayTestCardNumbers")
     void submitAuthForSoftDecline(String cardBrand, String cardNumber) {
-        validGatewayAccount.setRequires3ds(true);
-        validGatewayAccount.setIntegrationVersion3ds(2);
+        validGatewayAccount.getCardConfigurationEntity().setRequires3ds(true);
+        validGatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
 
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
@@ -213,8 +213,8 @@ class WorldpayPaymentProviderTest {
     @ParameterizedTest
     @MethodSource("worldpayTestCardNumbers")
     void submitAuthRequestWithExemptionEngineFlag(String cardBrand, String cardNumber) {
-        validGatewayAccount.setRequires3ds(true);
-        validGatewayAccount.setIntegrationVersion3ds(2);
+        validGatewayAccount.getCardConfigurationEntity().setRequires3ds(true);
+        validGatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
         validGatewayAccount.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
 
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
@@ -429,7 +429,7 @@ class WorldpayPaymentProviderTest {
     void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsWithPayerEmail(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
-        validGatewayAccountFor3ds.setSendPayerEmailToGateway(true);
+        validGatewayAccountFor3ds.getCardConfigurationEntity().setSendPayerEmailToGateway(true);
 
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())
@@ -461,9 +461,9 @@ class WorldpayPaymentProviderTest {
     void shouldBeAbleToSendAuthorisationRequestForMerchantUsing3dsFlexWithNonJs(String cardBrand, String cardNumber) {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
 
-        validGatewayAccount.setRequires3ds(true);
-        validGatewayAccount.setSendPayerEmailToGateway(true);
-        validGatewayAccount.setIntegrationVersion3ds(2);
+        validGatewayAccount.getCardConfigurationEntity().setRequires3ds(true);
+        validGatewayAccount.getCardConfigurationEntity().setSendPayerEmailToGateway(true);
+        validGatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
 
         ChargeEntity charge = aValidChargeEntity()
                 .withTransactionId(randomUUID().toString())

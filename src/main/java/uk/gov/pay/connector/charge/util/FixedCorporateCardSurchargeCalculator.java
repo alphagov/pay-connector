@@ -13,16 +13,16 @@ class FixedCorporateCardSurchargeCalculator {
                 case NOT_PREPAID:
                     switch (authCardDetails.getPayersCardType()) {
                         case CREDIT:
-                            return gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount();
+                            return gatewayAccount.getCardConfigurationEntity().getCorporateNonPrepaidCreditCardSurchargeAmount();
                         case DEBIT:
-                            return gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount();
+                            return gatewayAccount.getCardConfigurationEntity().getCorporateNonPrepaidDebitCardSurchargeAmount();
                         case CREDIT_OR_DEBIT:
                             return 0;
                     }
                 case PREPAID:
                     switch (authCardDetails.getPayersCardType()) {
                         case DEBIT:
-                            return gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount();
+                            return gatewayAccount.getCardConfigurationEntity().getCorporatePrepaidDebitCardSurchargeAmount();
                         case CREDIT_OR_DEBIT:
                             return 0;
                     }

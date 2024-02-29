@@ -176,8 +176,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withTransactionId("transaction-id")
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerIpAddressToGateway(true);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -201,8 +201,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withTransactionId("transaction-id")
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setSendPayerIpAddressToGateway(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerIpAddressToGateway(false);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -222,7 +222,7 @@ class WorldpayAuthoriseHandlerTest {
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
 
-        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         worldpayAuthoriseHandler.authoriseWithExemption(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
 
@@ -247,8 +247,8 @@ class WorldpayAuthoriseHandlerTest {
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
@@ -270,7 +270,7 @@ class WorldpayAuthoriseHandlerTest {
     @Test
     void should_not_include_elements_when_worldpay_3ds_flex_ddc_result_is_not_present() throws Exception {
 
-        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
 
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
@@ -345,8 +345,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withEmail("test@email.invalid")
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(false);
-        gatewayAccountEntity.setSendPayerEmailToGateway(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(true);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -371,8 +371,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withEmail("test@email.invalid")
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setSendPayerEmailToGateway(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(true);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -397,8 +397,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withEmail("test@email.invalid")
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(false);
-        gatewayAccountEntity.setSendPayerEmailToGateway(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(false);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -423,8 +423,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withEmail("test@email.invalid")
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setSendPayerEmailToGateway(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(false);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -449,8 +449,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withEmail(null)
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(false);
-        gatewayAccountEntity.setSendPayerEmailToGateway(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(true);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -475,8 +475,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withEmail(null)
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setSendPayerEmailToGateway(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(true);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -503,8 +503,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withAgreementEntity(anAgreementEntity().withExternalId("test-agreement-123456").build())
                 .build();
 
-        gatewayAccountEntity.setRequires3ds(false);
-        gatewayAccountEntity.setSendPayerEmailToGateway(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(false);
 
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
@@ -530,7 +530,7 @@ class WorldpayAuthoriseHandlerTest {
                 .withTransactionId("transaction-id")
                 .build();
 
-        gatewayAccountEntity.setSendReferenceToGateway(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendReferenceToGateway(true);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -557,7 +557,7 @@ class WorldpayAuthoriseHandlerTest {
                 .withTransactionId("transaction-id")
                 .build();
 
-        gatewayAccountEntity.setSendReferenceToGateway(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setSendReferenceToGateway(false);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
@@ -584,8 +584,8 @@ class WorldpayAuthoriseHandlerTest {
                 .withTransactionId("transaction-id")
                 .build();
 
-        gatewayAccountEntity.setIntegrationVersion3ds(2);
-        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(2);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
 
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);

@@ -59,7 +59,7 @@ public class MotoApiCardNumberValidationService {
     }
 
     private void checkCardIsAllowedForGatewayAccount(ChargeEntity charge, CardInformation cardInformation) {
-        if (charge.getGatewayAccount().isBlockPrepaidCards() && cardInformation.getPrepaidStatus() == PayersCardPrepaidStatus.PREPAID) {
+        if (charge.getGatewayAccount().getCardConfigurationEntity().isBlockPrepaidCards() && cardInformation.getPrepaidStatus() == PayersCardPrepaidStatus.PREPAID) {
             logger.info("Card number rejected: Card is prepaid and the gateway account has prepaid cards blocked");
             throw new CardNumberRejectedException("Prepaid cards are not accepted");
         }

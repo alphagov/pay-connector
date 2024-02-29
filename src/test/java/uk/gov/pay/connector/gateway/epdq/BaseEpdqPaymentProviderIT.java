@@ -238,7 +238,7 @@ public abstract class BaseEpdqPaymentProviderIT {
     private GatewayAccountEntity buildTestGatewayAccountEntity() {
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity();
         gatewayAccount.setId(1L);
-        gatewayAccount.setRequires3ds(false);
+        gatewayAccount.getCardConfigurationEntity().setRequires3ds(false);
         gatewayAccount.setType(TEST);
 
         GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
@@ -251,15 +251,15 @@ public abstract class BaseEpdqPaymentProviderIT {
 
     private GatewayAccountEntity buildTestGatewayAccountWith3dsEntity() {
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        gatewayAccount.setRequires3ds(true);
-        gatewayAccount.setIntegrationVersion3ds(1);
+        gatewayAccount.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         return gatewayAccount;
     }
 
     private GatewayAccountEntity buildTestGatewayAccountWith3ds2Entity() {
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountWith3dsEntity();
-        gatewayAccount.setIntegrationVersion3ds(2);
-        gatewayAccount.setSendPayerIpAddressToGateway(true);
+        gatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
+        gatewayAccount.getCardConfigurationEntity().setSendPayerIpAddressToGateway(true);
         return gatewayAccount;
     }
 

@@ -17,9 +17,9 @@ public class EpdqAuthorisationRequestSummary implements AuthorisationRequestSumm
 
     public EpdqAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
-        dataFor3ds = gatewayAccount.isRequires3ds() ? PRESENT : NOT_PRESENT;
-        dataFor3ds2 = (gatewayAccount.isRequires3ds()
-                && gatewayAccount.getIntegrationVersion3ds() == 2) ? PRESENT : NOT_PRESENT;
+        dataFor3ds = gatewayAccount.getCardConfigurationEntity().isRequires3ds() ? PRESENT : NOT_PRESENT;
+        dataFor3ds2 = (gatewayAccount.getCardConfigurationEntity().isRequires3ds()
+                && gatewayAccount.getCardConfigurationEntity().getIntegrationVersion3ds() == 2) ? PRESENT : NOT_PRESENT;
         ipAddress = authCardDetails.getIpAddress().orElse(null);
     }
 

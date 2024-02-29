@@ -119,7 +119,7 @@ public class GatewayAccountService {
         gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
 
         if (SANDBOX.getName().equalsIgnoreCase(gatewayAccountRequest.getPaymentProvider())) {
-            gatewayAccountEntity.setAllowApplePay(true);
+            gatewayAccountEntity.getCardConfigurationEntity().setAllowApplePay(true);
         }
 
         gatewayAccountDao.persist(gatewayAccountEntity);
@@ -142,13 +142,13 @@ public class GatewayAccountService {
             entry(
                     FIELD_ALLOW_GOOGLE_PAY,
                     (gatewayAccountRequest, gatewayAccountEntity) -> {
-                        gatewayAccountEntity.setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
+                        gatewayAccountEntity.getCardConfigurationEntity().setAllowGooglePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
                     }
             ),
             entry(
                     FIELD_ALLOW_APPLE_PAY,
                     (gatewayAccountRequest, gatewayAccountEntity) -> {
-                        gatewayAccountEntity.setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
+                        gatewayAccountEntity.getCardConfigurationEntity().setAllowApplePay(Boolean.parseBoolean(gatewayAccountRequest.valueAsString()));
                     }
             ),
             entry(
@@ -161,15 +161,15 @@ public class GatewayAccountService {
             ),
             entry(
                     FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setCorporateCreditCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
             ),
             entry(
                     FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setCorporateDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
             ),
             entry(
                     FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setCorporatePrepaidDebitCardSurchargeAmount(gatewayAccountRequest.valueAsLong())
             ),
             entry(
                     FIELD_ALLOW_ZERO_AMOUNT,
@@ -177,11 +177,11 @@ public class GatewayAccountService {
             ),
             entry(
                     FIELD_INTEGRATION_VERSION_3DS,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(gatewayAccountRequest.valueAsInt())
             ),
             entry(
                     FIELD_BLOCK_PREPAID_CARDS,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setBlockPrepaidCards(gatewayAccountRequest.valueAsBoolean())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setBlockPrepaidCards(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                     FIELD_ALLOW_MOTO,
@@ -189,11 +189,11 @@ public class GatewayAccountService {
             ),
             entry(
                     FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardNumberInput(gatewayAccountRequest.valueAsBoolean())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setMotoMaskCardNumberInput(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                     FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setMotoMaskCardSecurityCodeInput(gatewayAccountRequest.valueAsBoolean())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setMotoMaskCardSecurityCodeInput(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                     FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
@@ -201,15 +201,15 @@ public class GatewayAccountService {
             ),
             entry(
                     FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerIpAddressToGateway(gatewayAccountRequest.valueAsBoolean())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setSendPayerIpAddressToGateway(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                     FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendPayerEmailToGateway(gatewayAccountRequest.valueAsBoolean())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setSendPayerEmailToGateway(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                     FIELD_SEND_REFERENCE_TO_GATEWAY,
-                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendReferenceToGateway(gatewayAccountRequest.valueAsBoolean())
+                    (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.getCardConfigurationEntity().setSendReferenceToGateway(gatewayAccountRequest.valueAsBoolean())
             ),
             entry(
                     FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,

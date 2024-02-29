@@ -182,7 +182,7 @@ class StripePaymentProviderTest {
             when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());
 
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-            gatewayAccount.setIntegrationVersion3ds(2);
+            gatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
             ChargeEntity charge = buildTestCharge(gatewayAccount);
             GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
@@ -202,7 +202,7 @@ class StripePaymentProviderTest {
             when(paymentIntentsResponse.getEntity()).thenReturn(successCreatePaymentIntentsResponse());
 
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-            gatewayAccount.setIntegrationVersion3ds(2);
+            gatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
             ChargeEntity charge = buildTestCharge(gatewayAccount);
             GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestUsAuthorisationRequest(charge), charge);
 
@@ -249,7 +249,7 @@ class StripePaymentProviderTest {
             when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
 
             GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-            gatewayAccount.setIntegrationVersion3ds(2);
+            gatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
             ChargeEntity charge = buildTestCharge(gatewayAccount);
             GatewayResponse<BaseAuthoriseResponse> response = provider.authorise(buildTestAuthorisationRequest(charge), charge);
 
@@ -669,7 +669,7 @@ class StripePaymentProviderTest {
         when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class))).thenReturn(paymentIntentsResponse);
 
         GatewayAccountEntity gatewayAccount = buildTestGatewayAccountEntity();
-        gatewayAccount.setIntegrationVersion3ds(2);
+        gatewayAccount.getCardConfigurationEntity().setIntegrationVersion3ds(2);
         ChargeEntity charge = buildTestCharge(gatewayAccount);
         GatewayResponse<BaseAuthoriseResponse> response = provider.authoriseGooglePay(buildGooglePayAuthorisationRequest(charge));
 

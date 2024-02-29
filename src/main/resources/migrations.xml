@@ -2012,9 +2012,10 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="charge_id" type="bigserial">
-                <constraints foreignKeyName="fk__charge_card_details" referencedTableName="charges"
+                <constraints foreignKeyName="fk__charge_card_details_charge" referencedTableName="charges"
                              referencedColumnNames="id" nullable="false"/>
             </column>
+            <column name="version" type="bigint" defaultValue="0"/>
             <column name="card_brand" type="text"/>
             <column name="last_digits_card_number" type="char(4)"/>
             <column name="cardholder_name" type="varchar(255)"/>
@@ -2048,9 +2049,10 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="charge_id" type="bigserial">
-                <constraints foreignKeyName="fk__charge_pay_by_bank_details" referencedTableName="charges"
+                <constraints foreignKeyName="fk__charge_pay_by_bank_details_charge" referencedTableName="charges"
                              referencedColumnNames="id" nullable="false" unique="true"/>
             </column>
+            <column name="version" type="bigint" defaultValue="0"/>
             <column name="bank_name" type="text"/>
             <column name="account_holder_name" type="text"/>
         </createTable>
@@ -2058,6 +2060,15 @@
 
     <changeSet id="add gateway_account_card_configuration table" author="">
         <createTable tableName="gateway_account_card_configuration">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="gateway_account_id" type="bigserial">
+                <constraints foreignKeyName="fk__gateway_account_card_configuration_gateway_account" referencedTableName="gateway_accounts"
+                             referencedColumnNames="id" nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValue="0"/>
+            <column name="requires_3ds" type="boolean" defaultValue="false"/>
             <column name="corporate_credit_card_surcharge_amount" type="bigint" defaultValue="0"/>
             <column name="corporate_debit_card_surcharge_amount" type="bigint" defaultValue="0"/>
             <column name="corporate_prepaid_debit_card_surcharge_amount" type="bigint" defaultValue="0"/>

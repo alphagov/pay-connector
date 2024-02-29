@@ -205,8 +205,8 @@ class WorldpayPaymentProviderTest {
     @Test
     void should_not_update_exemption_3ds_null_when_authorisation_results_in_error() {
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -223,8 +223,8 @@ class WorldpayPaymentProviderTest {
     @Test
     void should_not_include_exemption_if_account_has_no_worldpay_3ds_flex_credentials() throws Exception {
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(null);
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
@@ -249,8 +249,8 @@ class WorldpayPaymentProviderTest {
     @Test
     void should_not_include_exemption_if_account_has_exemption_engine_set_to_false() throws Exception {
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(
                 aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(false).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
@@ -270,8 +270,8 @@ class WorldpayPaymentProviderTest {
     @Test
     void should_not_include_exemption_if_account_has_exemption_engine_set_to_true_but_3ds_is_not_enabled() throws Exception {
 
-        gatewayAccountEntity.setRequires3ds(false);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
@@ -290,8 +290,8 @@ class WorldpayPaymentProviderTest {
     @Test
     void should_set_exemption_rejected_when_request_made_with_an_exemption() throws Exception {
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -314,8 +314,8 @@ class WorldpayPaymentProviderTest {
 
     @Test
     void should_set_exemption_out_of_scope_when_request_made_with_an_exemption() throws Exception {
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -357,8 +357,8 @@ class WorldpayPaymentProviderTest {
     }
 
     private void verifyAuthorisationNotRetried(String worldpayXmlResponse) throws Exception {
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -375,8 +375,8 @@ class WorldpayPaymentProviderTest {
     @Test
     void should_include_exemption_if_account_has_exemption_engine_set_to_true() throws Exception {
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -396,8 +396,8 @@ class WorldpayPaymentProviderTest {
     @Test
     void should_retry_without_exemption_flag_when_authorising_with_exemption_flag_results_in_soft_decline() throws Exception {
 
-        gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setIntegrationVersion3ds(1);
+        gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         chargeEntityFixture.withStatus(ChargeStatus.AUTHORISATION_READY);

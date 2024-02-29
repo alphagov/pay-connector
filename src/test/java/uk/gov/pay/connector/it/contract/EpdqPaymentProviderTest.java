@@ -374,7 +374,7 @@ class EpdqPaymentProviderTest {
             gatewayAccountEntity = new GatewayAccountEntity();
             gatewayAccountEntity.setId(123L);
             gatewayAccountEntity.setType(TEST);
-            gatewayAccountEntity.setRequires3ds(require3ds);
+            gatewayAccountEntity.getCardConfigurationEntity().setRequires3ds(require3ds);
             gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                     .withCredentials(validEpdqCredentials)
                     .withGatewayAccountEntity(gatewayAccountEntity)
@@ -385,8 +385,8 @@ class EpdqPaymentProviderTest {
                     List.of(gatewayAccountCredentialsEntity));
 
             if (requires3ds2) {
-                gatewayAccountEntity.setIntegrationVersion3ds(2);
-                gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
+                gatewayAccountEntity.getCardConfigurationEntity().setIntegrationVersion3ds(2);
+                gatewayAccountEntity.getCardConfigurationEntity().setSendPayerIpAddressToGateway(true);
             }
 
             chargeEntity = aValidChargeEntity()

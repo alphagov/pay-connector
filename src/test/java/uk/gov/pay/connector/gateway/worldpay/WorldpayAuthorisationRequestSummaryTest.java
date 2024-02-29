@@ -40,7 +40,7 @@ class WorldpayAuthorisationRequestSummaryTest {
 
     @Test
     void requires3dsFalseMeansDataFor3dsNotPresent() {
-        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().isRequires3ds()).willReturn(false);
         var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds(), is(NOT_PRESENT));
     }
@@ -61,7 +61,7 @@ class WorldpayAuthorisationRequestSummaryTest {
 
     @Test
     void dataFor3ds2AlwaysNotApplicable() {
-        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().isRequires3ds()).willReturn(false);
         var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.dataFor3ds2(), is(NOT_APPLICABLE));
     }

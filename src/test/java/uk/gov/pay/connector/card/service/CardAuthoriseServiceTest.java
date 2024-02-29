@@ -346,7 +346,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetailsEntity);
 
-        charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(0L);
+        charge.getGatewayAccount().getCardConfigurationEntity().setCorporateCreditCardSurchargeAmount(0L);
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
@@ -379,7 +379,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
 
-        charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
+        charge.getGatewayAccount().getCardConfigurationEntity().setCorporateCreditCardSurchargeAmount(250L);
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
         assertTrue(response.getAuthoriseStatus().isPresent());
@@ -413,7 +413,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetailsEntity);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
-        charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+        charge.getGatewayAccount().getCardConfigurationEntity().setCorporateDebitCardSurchargeAmount(50L);
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
         assertTrue(response.getAuthoriseStatus().isPresent());
@@ -447,7 +447,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         charge.setAuthorisationMode(authorisationMode);
-        charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+        charge.getGatewayAccount().getCardConfigurationEntity().setCorporateDebitCardSurchargeAmount(50L);
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
@@ -480,7 +480,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         charge.setAuthorisationMode(AuthorisationMode.EXTERNAL);
-        charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+        charge.getGatewayAccount().getCardConfigurationEntity().setCorporateDebitCardSurchargeAmount(50L);
 
         var exception = assertThrows(IllegalArgumentException.class, () -> cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails));
         assertThat(exception.getMessage(), is("Authorise operation does not support authorisation mode"));
@@ -838,7 +838,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseForMotoApiPayment();
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
-        charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
+        charge.getGatewayAccount().getCardConfigurationEntity().setCorporateDebitCardSurchargeAmount(50L);
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
 

@@ -289,7 +289,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        return gatewayAccount.isRequires3ds() && gatewayAccount.getWorldpay3dsFlexCredentials()
+        return gatewayAccount.getCardConfigurationEntity().isRequires3ds() && gatewayAccount.getWorldpay3dsFlexCredentials()
                 .map(Worldpay3dsFlexCredentials::isExemptionEngineEnabled)
                 .orElse(false);
     }

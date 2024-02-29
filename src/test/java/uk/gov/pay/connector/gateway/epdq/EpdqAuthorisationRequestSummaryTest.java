@@ -40,37 +40,37 @@ class EpdqAuthorisationRequestSummaryTest {
 
     @Test
     void requires3dsTrueMeansDataFor3dsPresent() {
-        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().isRequires3ds()).willReturn(true);
         var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds(), is(PRESENT));
     }
 
     @Test
     void requires3dsFalseMeansDataFor3dsNotPresent() {
-        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().isRequires3ds()).willReturn(false);
         var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds(), is(NOT_PRESENT));
     }
 
     @Test
     void requires3dsFalseMeansDataFor3ds2NotPresent() {
-        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(false);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().isRequires3ds()).willReturn(false);
         var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds2(), is(NOT_PRESENT));
     }
     
     @Test
     void requires3dsTrueAnd3dsVersion1MeansDataFor3ds2NotPresent() {
-        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
-        given(mockGatewayAccountEntity.getIntegrationVersion3ds()).willReturn(1);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().isRequires3ds()).willReturn(true);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().getIntegrationVersion3ds()).willReturn(1);
         var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds2(), is(NOT_PRESENT));
     }
 
     @Test
     void requires3dsTrueAnd3dsVersion2MeansDataFor3ds2Present() {
-        given(mockGatewayAccountEntity.isRequires3ds()).willReturn(true);
-        given(mockGatewayAccountEntity.getIntegrationVersion3ds()).willReturn(2);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().isRequires3ds()).willReturn(true);
+        given(mockGatewayAccountEntity.getCardConfigurationEntity().getIntegrationVersion3ds()).willReturn(2);
         var epdqAuthorisationRequestSummary = new EpdqAuthorisationRequestSummary(mockGatewayAccountEntity, mockAuthCardDetails);
         assertThat(epdqAuthorisationRequestSummary.dataFor3ds2(), is(PRESENT));
     }

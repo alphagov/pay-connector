@@ -77,41 +77,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "analytics_id")
     private String analyticsId;
 
-    @Column(name = "requires_3ds")
-    private boolean requires3ds;
-
-    @Column(name = "allow_google_pay")
-    private boolean allowGooglePay;
-
-    @Column(name = "allow_apple_pay")
-    private boolean allowApplePay;
-
-    @Column(name = "corporate_credit_card_surcharge_amount")
-    private long corporateCreditCardSurchargeAmount;
-
-    @Column(name = "corporate_debit_card_surcharge_amount")
-    private long corporateDebitCardSurchargeAmount;
-
-    @Column(name = "corporate_prepaid_debit_card_surcharge_amount")
-    private long corporatePrepaidDebitCardSurchargeAmount;
-
     @Column(name = "allow_zero_amount")
     private boolean allowZeroAmount;
 
-    @Column(name = "block_prepaid_cards")
-    private boolean blockPrepaidCards;
-
     @Column(name = "allow_moto")
     private boolean allowMoto;
-
-    @Column(name = "moto_mask_card_number_input")
-    private boolean motoMaskCardNumberInput;
-
-    @Column(name = "moto_mask_card_security_code_input")
-    private boolean motoMaskCardSecurityCodeInput;
-
-    @Column(name = "integration_version_3ds")
-    private int integrationVersion3ds;
 
     @Column(name = "notify_settings", columnDefinition = "json")
     @Convert(converter = JsonToStringStringMapConverter.class)
@@ -128,29 +98,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private NotificationCredentials notificationCredentials;
-
-    @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
-    private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
-
-    @Column(name = "send_payer_ip_address_to_gateway")
-    private boolean sendPayerIpAddressToGateway;
-
-    @Column(name = "send_payer_email_to_gateway")
-    private boolean sendPayerEmailToGateway;
-
-    @Column(name = "send_reference_to_gateway")
-    private boolean sendReferenceToGateway;
-
-    @Column(name = "allow_authorisation_api")
-    private boolean allowAuthorisationApi;
-
-    @ManyToMany
-    @JoinTable(
-            name = "accepted_card_types",
-            joinColumns = @JoinColumn(name = "gateway_account_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "card_type_id", referencedColumnName = "id")
-    )
-    private List<CardTypeEntity> cardTypes = newArrayList();
 
     @Column(name = "allow_telephone_payment_notifications")
     private boolean allowTelephonePaymentNotifications;
@@ -169,10 +116,29 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "disabled_reason")
     private String disabledReason;
 
+    @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
+    private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
+
+    @Column(name = "allow_authorisation_api")
+    private boolean allowAuthorisationApi;
+
+    @ManyToMany
+    @JoinTable(
+            name = "accepted_card_types",
+            joinColumns = @JoinColumn(name = "gateway_account_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "card_type_id", referencedColumnName = "id")
+    )
+    private List<CardTypeEntity> cardTypes = newArrayList();
+    
+    @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
+    private GatewayAccountCardConfigurationEntity gatewayAccountCardConfigurationEntity;
+
     public GatewayAccountEntity() {
+        gatewayAccountCardConfigurationEntity = new GatewayAccountCardConfigurationEntity();
     }
 
     public GatewayAccountEntity(GatewayAccountType type) {
+        gatewayAccountCardConfigurationEntity = new GatewayAccountCardConfigurationEntity();
         this.type = type;
     }
     
@@ -292,73 +258,17 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public Optional<Worldpay3dsFlexCredentials> getWorldpay3dsFlexCredentials() {
         return Optional.ofNullable(worldpay3dsFlexCredentialsEntity).map(Worldpay3dsFlexCredentials::fromEntity);
     }
-
-    public boolean isRequires3ds() {
-        return requires3ds;
-    }
-    
-    public boolean isAllowGooglePay() {
-        Boolean hasCredentialsConfiguredForGooglePay = getCurrentOrActiveGatewayAccountCredential()
-                .map(GatewayAccountCredentialsEntity::getCredentialsObject)
-                .map(GatewayCredentials::isConfiguredForGooglePayPayments)
-                .orElse(false);
-        return allowGooglePay && hasCredentialsConfiguredForGooglePay;
-    }
-    
-    public boolean isAllowApplePay() {
-        return allowApplePay;
-    }
     
     public boolean isAllowZeroAmount() {
         return allowZeroAmount;
-    }
-    
-    public boolean isBlockPrepaidCards() {
-        return blockPrepaidCards;
     }
     
     public boolean isAllowMoto() {
         return allowMoto;
     }
     
-    public boolean isMotoMaskCardNumberInput() {
-        return motoMaskCardNumberInput;
-    }
-    
-    public boolean isMotoMaskCardSecurityCodeInput() {
-        return motoMaskCardSecurityCodeInput;
-    }
-    
-    public long getCorporateNonPrepaidCreditCardSurchargeAmount() {
-        return corporateCreditCardSurchargeAmount;
-    }
-    
-    public long getCorporateNonPrepaidDebitCardSurchargeAmount() {
-        return corporateDebitCardSurchargeAmount;
-    }
-    
-    public long getCorporatePrepaidDebitCardSurchargeAmount() {
-        return corporatePrepaidDebitCardSurchargeAmount;
-    }
-    
-    public int getIntegrationVersion3ds() {
-        return integrationVersion3ds;
-    }
-    
     public boolean isAllowTelephonePaymentNotifications() {
         return allowTelephonePaymentNotifications;
-    }
-    
-    public boolean isSendPayerIpAddressToGateway() {
-        return sendPayerIpAddressToGateway;
-    }
-    
-    public boolean isSendPayerEmailToGateway() {
-        return sendPayerEmailToGateway;
-    }
-    
-    public boolean isSendReferenceToGateway() {
-        return sendReferenceToGateway;
     }
     
     public boolean isAllowAuthorisationApi() {
@@ -405,10 +315,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.cardTypes = cardTypes;
     }
 
-    public void setRequires3ds(boolean requires3ds) {
-        this.requires3ds = requires3ds;
-    }
-
     public void setType(GatewayAccountType type) {
         this.type = type;
     }
@@ -446,60 +352,16 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return LIVE.equals(type);
     }
 
-    public void setCorporateCreditCardSurchargeAmount(long corporateCreditCardSurchargeAmount) {
-        this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
-    }
-
-    public void setCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
-        this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
-    }
-
-    public void setCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
-        this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
-    }
-
-    public void setAllowGooglePay(boolean allowGooglePay) {
-        this.allowGooglePay = allowGooglePay;
-    }
-
-    public void setAllowApplePay(boolean allowApplePay) {
-        this.allowApplePay = allowApplePay;
-    }
-
     public void setAllowZeroAmount(boolean allowZeroAmount) {
         this.allowZeroAmount = allowZeroAmount;
-    }
-
-    public void setBlockPrepaidCards(boolean blockPrepaidCards) {
-        this.blockPrepaidCards = blockPrepaidCards;
     }
 
     public void setAllowMoto(boolean allowMoto) {
         this.allowMoto = allowMoto;
     }
 
-    public void setMotoMaskCardNumberInput(boolean motoMaskCardNumberInput) {
-        this.motoMaskCardNumberInput = motoMaskCardNumberInput;
-    }
-
-    public void setMotoMaskCardSecurityCodeInput(boolean motoMaskCardSecurityCodeInput) {
-        this.motoMaskCardSecurityCodeInput = motoMaskCardSecurityCodeInput;
-    }
-
-    public void setIntegrationVersion3ds(int integrationVersion3ds) {
-        this.integrationVersion3ds = integrationVersion3ds;
-    }
-
     public void setWorldpay3dsFlexCredentialsEntity(Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity) {
         this.worldpay3dsFlexCredentialsEntity = worldpay3dsFlexCredentialsEntity;
-    }
-
-    public void setSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
-        this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
-    }
-
-    public void setSendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
-        this.sendPayerEmailToGateway = sendPayerEmailToGateway;
     }
 
     public void setAllowTelephonePaymentNotifications(boolean allowTelephonePaymentNotifications) {
@@ -522,10 +384,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.providerSwitchEnabled = providerSwitchEnabled;
     }
 
-    public void setSendReferenceToGateway(boolean sendReferenceToGateway) {
-        this.sendReferenceToGateway = sendReferenceToGateway;
-    }
-
     public void setRecurringEnabled(boolean recurringEnabled) {
         this.recurringEnabled = recurringEnabled;
     }
@@ -538,4 +396,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         this.disabledReason = disabledReason;
     }
 
+    public GatewayAccountCardConfigurationEntity getCardConfigurationEntity() {
+        return gatewayAccountCardConfigurationEntity;
+    }
 }

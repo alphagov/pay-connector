@@ -131,10 +131,10 @@ class GatewayAccountEntityTest {
         GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .build();
-        gatewayAccountEntity.setAllowGooglePay(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setAllowGooglePay(true);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+        assertThat(gatewayAccountEntity.getCardConfigurationEntity().isAllowGooglePay(), is(false));
     }
 
     @Test
@@ -143,10 +143,10 @@ class GatewayAccountEntityTest {
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))
                 .build();
-        gatewayAccountEntity.setAllowGooglePay(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setAllowGooglePay(true);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(true));
+        assertThat(gatewayAccountEntity.getCardConfigurationEntity().isAllowGooglePay(), is(true));
     }
 
     @Test
@@ -155,10 +155,10 @@ class GatewayAccountEntityTest {
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))
                 .build();
-        gatewayAccountEntity.setAllowGooglePay(false);
+        gatewayAccountEntity.getCardConfigurationEntity().setAllowGooglePay(false);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(false));
+        assertThat(gatewayAccountEntity.getCardConfigurationEntity().isAllowGooglePay(), is(false));
     }
 
     @Test
@@ -166,10 +166,10 @@ class GatewayAccountEntityTest {
         GatewayAccountCredentialsEntity credentialsEntityStripe = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("stripe")
                 .build();
-        gatewayAccountEntity.setAllowGooglePay(true);
+        gatewayAccountEntity.getCardConfigurationEntity().setAllowGooglePay(true);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityStripe));
         
-        assertThat(gatewayAccountEntity.isAllowGooglePay(), is(true));
+        assertThat(gatewayAccountEntity.getCardConfigurationEntity().isAllowGooglePay(), is(true));
     }
 
     @Test

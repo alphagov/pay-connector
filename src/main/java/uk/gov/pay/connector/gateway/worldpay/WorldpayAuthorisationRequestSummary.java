@@ -18,7 +18,7 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     public WorldpayAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetupAgreement) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         deviceDataCollectionResult = authCardDetails.getWorldpay3dsFlexDdcResult().map(address -> PRESENT).orElse(NOT_PRESENT);
-        dataFor3ds = (deviceDataCollectionResult == PRESENT || gatewayAccount.isRequires3ds()) ? PRESENT : NOT_PRESENT;
+        dataFor3ds = (deviceDataCollectionResult == PRESENT || gatewayAccount.getCardConfigurationEntity().isRequires3ds()) ? PRESENT : NOT_PRESENT;
         ipAddress = authCardDetails.getIpAddress().orElse(null);
         this.isSetupAgreement = isSetupAgreement ? PRESENT: NOT_PRESENT;
     }

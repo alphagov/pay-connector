@@ -27,22 +27,22 @@ public interface WorldpayOrderBuilder {
                                                                                  CardAuthorisationGatewayRequest request,
                                                                                  AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
 
-        if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
+        if (request.getGatewayAccount().getCardConfigurationEntity().isSendPayerIpAddressToGateway()) {
             request.getAuthCardDetails().getIpAddress().ifPresent(builder::withPayerIpAddress);
         }
 
-        if (request.getGatewayAccount().isSendPayerEmailToGateway()) {
+        if (request.getGatewayAccount().getCardConfigurationEntity().isSendPayerEmailToGateway()) {
             Optional.ofNullable(request.getEmail()).ifPresent(builder::withPayerEmail);
         }
 
-        if (request.getGatewayAccount().isSendReferenceToGateway()) {
+        if (request.getGatewayAccount().getCardConfigurationEntity().isSendReferenceToGateway()) {
             builder.withDescription(request.getReference().toString());
         } else {
             builder.withDescription(request.getDescription());
         }
 
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
-                request.getGatewayAccount().isRequires3ds();
+                request.getGatewayAccount().getCardConfigurationEntity().isRequires3ds();
 
         return (WorldpayOrderRequestBuilder) builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
@@ -53,7 +53,7 @@ public interface WorldpayOrderBuilder {
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
                 .withAmount(request.getAmount())
                 .withAuthorisationDetails(request.getAuthCardDetails())
-                .withIntegrationVersion3ds(request.getGatewayAccount().getIntegrationVersion3ds())
+                .withIntegrationVersion3ds(request.getGatewayAccount().getCardConfigurationEntity().getIntegrationVersion3ds())
                 .withPaymentPlatformReference(request.getGovUkPayPaymentId())
                 .withBrowserLanguage(acceptLanguageHeaderParser.getPreferredLanguageFromAcceptLanguageHeader(request.getAuthCardDetails().getAcceptLanguageHeader()));
     }

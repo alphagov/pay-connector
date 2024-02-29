@@ -123,7 +123,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
     private void logMissingDdcResultFor3dsFlexIntegration(CardAuthorisationGatewayRequest request) {
         GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
-        if (gatewayAccount.isRequires3ds() && gatewayAccount.getIntegrationVersion3ds() == 2 &&
+        if (gatewayAccount.getCardConfigurationEntity().isRequires3ds() && gatewayAccount.getCardConfigurationEntity().getIntegrationVersion3ds() == 2 &&
                 request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isEmpty()) {
             LOGGER.info("[3DS Flex] Missing device data collection result for {}", gatewayAccount.getId());
         }
