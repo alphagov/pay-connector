@@ -3,19 +3,16 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
+import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -37,30 +34,27 @@ import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelpe
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class ChargeEventsResourceIT {
+    @ClassRule
+    public static DropwizardAppWithPostgresRule connectorApp = new DropwizardAppWithPostgresRule();
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     public static final String USER_EMAIL = "test@test.com";
-    public String gatewayRefundTransactionId;
-
-    @DropwizardTestContext
-    private TestContext testContext;
+    private String gatewayRefundTransactionId;
     private DatabaseTestHelper databaseTestHelper;
     private String accountId = "72332423443245";
     private RestAssuredClient connectorApi;
 
+    private AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+            .withAccountId(accountId)
+            .withPaymentGateway("sandbox")
+            .withServiceName("a cool service")
+            .build();
+
     @Before
     public void setUp() {
-        databaseTestHelper = testContext.getDatabaseTestHelper();
-        connectorApi = new RestAssuredClient(testContext.getPort(), accountId);
-        var gatewayAccountParams = anAddGatewayAccountParams()
-                .withAccountId(accountId)
-                .withPaymentGateway("sandbox")
-                .withServiceName("a cool service")
-                .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        databaseTestHelper = connectorApp.getDatabaseTestHelper();
+        connectorApi = new RestAssuredClient(connectorApp.getLocalPort(), accountId);
         gatewayRefundTransactionId = RandomStringUtils.randomAlphanumeric(30);
     }
 
@@ -72,8 +66,11 @@ public class ChargeEventsResourceIT {
     @Test
     public void shouldGetAllEventsForAGivenChargeWithoutRefunds() {
         ZonedDateTime createdDate = ZonedDateTime.now();
+        String externalChargeId = "external-charge-id";
 
-        DatabaseFixtures.TestCharge testCharge = createTestCharge().insert();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        DatabaseFixtures.TestCharge testCharge = createTestCharge(externalChargeId).insert();
 
         DatabaseFixtures.TestChargeEvent createdTestChargeEvent = createTestChargeEvent(testCharge)
                 .withChargeStatus(CREATED).withDate(createdDate).insert();
@@ -90,7 +87,10 @@ public class ChargeEventsResourceIT {
         createTestChargeEvent(testCharge)
                 .withChargeStatus(CAPTURED).withDate(createdDate.plusSeconds(6)).insert();
 
+        var result = databaseTestHelper.getChargeEvents(testCharge.getChargeId());
+
         connectorApi
+                .withAccountId(accountId)
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))
                 .body("events.size()", equalTo(3))
@@ -101,10 +101,12 @@ public class ChargeEventsResourceIT {
 
     @Test
     public void shouldGetAllEventsForAGivenChargeWithRefunds() {
-
         ZonedDateTime createdDate = ZonedDateTime.now();
+        String externalChargeId = "an-external-charge-id";
 
-        DatabaseFixtures.TestCharge testCharge = createTestCharge().insert();
+        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+
+        DatabaseFixtures.TestCharge testCharge = createTestCharge(externalChargeId).insert();
 
         DatabaseFixtures.TestChargeEvent createdTestChargeEvent = createTestChargeEvent(testCharge)
                 .withChargeStatus(CREATED).withDate(createdDate).insert();
@@ -190,13 +192,14 @@ public class ChargeEventsResourceIT {
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
-    private DatabaseFixtures.TestCharge createTestCharge() {
+    private DatabaseFixtures.TestCharge createTestCharge(String externalChargeId) {
         DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(Long.valueOf(accountId));
 
         return withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
+                .withExternalChargeId(externalChargeId)
                 .withAmount(100L)
                 .withTestAccount(testAccount)
                 .withChargeStatus(CAPTURED);

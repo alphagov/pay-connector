@@ -5,13 +5,9 @@ import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.it.util.ChargeUtils;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -63,9 +59,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class CardResourceAuthoriseIT extends ChargingITestBase {
+public class CardResourceAuthoriseIT extends NewChargingITestBase {
 
     public CardResourceAuthoriseIT() {
         super("sandbox");

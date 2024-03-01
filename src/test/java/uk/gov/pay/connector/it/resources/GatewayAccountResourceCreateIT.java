@@ -46,9 +46,20 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
     }
 
     @Test
-    @Parameters({"sandbox", "worldpay", "epdq"})
-    public void createAGatewayAccount(String provider) {
-        ValidatableResponse response = createAGatewayAccountFor(testContext.getPort(), provider, "my test service", "analytics");
+    public void createASandboxGatewayAccount() {
+        ValidatableResponse response = createAGatewayAccountFor(testContext.getPort(), "sandbox", "my test service", "analytics");
+        assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+    }
+
+    @Test
+    public void createAWorldpaySandboxGatewayAccount() {
+        ValidatableResponse response = createAGatewayAccountFor(testContext.getPort(), "worldpay", "my test service", "analytics");
+        assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+    }
+
+    @Test
+    public void createAWorldpayStripeGatewayAccount() {
+        ValidatableResponse response = createAGatewayAccountFor(testContext.getPort(), "stripe", "my test service", "analytics");
         assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
     }
 

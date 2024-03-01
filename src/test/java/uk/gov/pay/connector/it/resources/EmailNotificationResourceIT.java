@@ -2,14 +2,10 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,9 +17,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class EmailNotificationResourceIT extends GatewayAccountResourceTestBase {
+public class EmailNotificationResourceIT extends NewGatewayAccountResourceTestBase {
 
     @Test
     public void patchEmailNotification_shouldNotUpdateIfMissingField() {

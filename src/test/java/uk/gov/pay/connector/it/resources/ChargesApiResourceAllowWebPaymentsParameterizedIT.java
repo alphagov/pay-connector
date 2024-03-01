@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -14,6 +16,8 @@ import uk.gov.pay.connector.util.DatabaseTestHelper;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +34,17 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_C
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
-public class ChargesApiResourceAllowWebPaymentsIT extends NewChargingITestBase {
-    
+@RunWith(Parameterized.class)
+public class ChargesApiResourceAllowWebPaymentsParameterizedIT extends NewChargingITestBase {
+
     private static ObjectMapper objectMapper = new ObjectMapper();
+
+    @Parameterized.Parameter(value = 0)
+    public boolean setAllowGooglePayFlag;
+    @Parameterized.Parameter(value = 1)
+    public boolean setGatewayMerchantId;
+    @Parameterized.Parameter(value = 2)
+    public boolean isGooglePayAllowed;
 
     private DatabaseFixtures.TestAccount testAccount;
     private DatabaseTestHelper databaseTestHelper;
@@ -40,8 +52,8 @@ public class ChargesApiResourceAllowWebPaymentsIT extends NewChargingITestBase {
     private Long accountId;
     private String chargeId;
     private Long credentialsId;
-    
-    public ChargesApiResourceAllowWebPaymentsIT() {
+
+    public ChargesApiResourceAllowWebPaymentsParameterizedIT() {
         super("worldpay");
     }
 
@@ -57,16 +69,28 @@ public class ChargesApiResourceAllowWebPaymentsIT extends NewChargingITestBase {
         credentialsId = testAccount.getCredentials().get(0).getId();
     }
 
+    // Each element in the inner array will be assigned to a variable of the test class, annotated by @Parameterized.Parameter(value = 0), etc.
+    // The test will be run for each set, using different values.
+    // { setAllowGooglePayFlag, setGatewayMerchantId, isGooglePayAllowed }
+    @Parameterized.Parameters()
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+                { true, false, false }, { true, true, true }, { false, true, false }
+        });
+    }
+
     @Test
-    public void assertApplePayPermission() throws JsonProcessingException {
+    public void assertGooglePayPermission() throws JsonProcessingException {
         assertAppleAndGooglePayAreDisabledByDefault();
 
-        allowWebPaymentsOnGatewayAccount("allow_apple_pay");
+        if (setAllowGooglePayFlag) allowWebPaymentsOnGatewayAccount("allow_google_pay");
+        
+        if (setGatewayMerchantId) addGatewayMerchantIdToGatewayAccount();
 
         given().port(connectorApp.getLocalPort()).contentType(JSON)
                 .get("/v1/frontend/charges/" + chargeId)
                 .then()
-                .body("gateway_account.allow_apple_pay", is(true));
+                .body("gateway_account.allow_google_pay", is(isGooglePayAllowed));
     }
 
     private void assertAppleAndGooglePayAreDisabledByDefault() {

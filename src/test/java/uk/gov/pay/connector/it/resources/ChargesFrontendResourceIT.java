@@ -5,16 +5,11 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -68,13 +63,9 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
-public class ChargesFrontendResourceIT {
+public class ChargesFrontendResourceIT extends NewChargingITestBase {
 
     public static final String AGREEMENT_ID = "12345678901234567890123456";
-    @DropwizardTestContext
-    private TestContext testContext;
 
     private DatabaseTestHelper databaseTestHelper;
     private String accountId = String.valueOf(nextLong());
@@ -91,9 +82,13 @@ public class ChargesFrontendResourceIT {
 
     private RestAssuredClient connectorRestApi;
 
+    public ChargesFrontendResourceIT() {
+        super("sandbox");
+    }
+
     @Before
     public void setupGatewayAccount() {
-        databaseTestHelper = testContext.getDatabaseTestHelper();
+        databaseTestHelper = connectorApp.getDatabaseTestHelper();
         CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
         CardTypeEntity visaCredit = databaseTestHelper.getVisaCreditCard();
         var gatewayAccountParams = anAddGatewayAccountParams()
@@ -108,7 +103,7 @@ public class ChargesFrontendResourceIT {
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCredit.getId());
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), visaCredit.getId());
-        connectorRestApi = new RestAssuredClient(testContext.getPort(), accountId);
+        connectorRestApi = new RestAssuredClient(connectorApp.getLocalPort(), accountId);
     }
     
     @After
@@ -119,7 +114,7 @@ public class ChargesFrontendResourceIT {
     @Test
     public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
         String chargeId = postToCreateACharge(expectedAmount);
-        String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeId;
+        String expectedLocation = "https://localhost:" + connectorApp.getLocalPort() + "/v1/frontend/charges/" + chargeId;
 
         validateGetCharge(expectedAmount, chargeId, CREATED, true)
                 .body("links", hasSize(3))
@@ -131,7 +126,7 @@ public class ChargesFrontendResourceIT {
     @Test
     public void getChargeShouldIncludeCorporateCardSurchargeAndTotalAmount() {
         String chargeExternalId = postToCreateACharge(expectedAmount);
-        String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
+        String expectedLocation = "https://localhost:" + connectorApp.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
         databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
 
@@ -170,7 +165,7 @@ public class ChargesFrontendResourceIT {
                 .withReference(agreementReference).withDescription(agreementDescription).withUserIdentifier(agreementUserIdentifier)
                 .withCreatedDate(Instant.now()).withLive(false).withGatewayAccountId(accountId).build());
         String chargeExternalId = postToCreateAChargeWithAgreement(expectedAmount);
-        String expectedLocation = "https://localhost:" + testContext.getPort() + "/v1/frontend/charges/" + chargeExternalId;
+        String expectedLocation = "https://localhost:" + connectorApp.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
         databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
 

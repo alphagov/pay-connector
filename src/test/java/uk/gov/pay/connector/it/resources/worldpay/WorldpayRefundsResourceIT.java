@@ -7,12 +7,8 @@ import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -60,9 +56,7 @@ import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class WorldpayRefundsResourceIT extends ChargingITestBase {
+public class WorldpayRefundsResourceIT extends NewChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
@@ -73,7 +67,6 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
 
     @Before
     public void setUp() {
-        super.setUp();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -394,7 +387,7 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
                 .insert();
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                testContext.getPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                connectorApp.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         getRefundsFor(defaultTestAccount.getAccountId(),
                 defaultTestCharge.getExternalChargeId())
@@ -518,7 +511,7 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
                 .body("created_date", is(notNullValue()));
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                testContext.getPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                connectorApp.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");
         response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))
@@ -526,5 +519,4 @@ public class WorldpayRefundsResourceIT extends ChargingITestBase {
 
         return refundId;
     }
-
 }

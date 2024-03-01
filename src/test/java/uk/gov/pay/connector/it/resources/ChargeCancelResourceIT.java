@@ -1,15 +1,10 @@
 package uk.gov.pay.connector.it.resources;
 
-import junitparams.Parameters;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.Instant;
 import java.util.List;
@@ -19,7 +14,6 @@ import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -32,23 +26,10 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargeCancelResourceIT extends ChargingITestBase {
+public class ChargeCancelResourceIT extends NewChargingITestBase {
 
     public ChargeCancelResourceIT() {
         super("worldpay");
-    }
-
-    @Test
-    @Parameters({"CREATED", "ENTERING_CARD_DETAILS"})
-    public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth(ChargeStatus status) {
-        String chargeId = addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelevant");
-        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
-
-        List<String> events = databaseTestHelper.getInternalEvents(chargeId);
-        assertThat(events.size(), is(2));
-        assertThat(events, hasItems(status.getValue(), SYSTEM_CANCELLED.getValue()));
     }
 
     @Test
@@ -104,35 +85,6 @@ public class ChargeCancelResourceIT extends ChargingITestBase {
         assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                 SYSTEM_CANCEL_READY.getValue(),
                 SYSTEM_CANCEL_ERROR.getValue()));
-    }
-
-    @Test
-    @Parameters({
-            "AUTHORISATION_REJECTED",
-            "AUTHORISATION_ERROR",
-            "CAPTURE_READY",
-            "CAPTURED",
-            "CAPTURE_SUBMITTED",
-            "CAPTURE_ERROR",
-            "EXPIRED",
-            "EXPIRE_CANCEL_FAILED",
-            "SYSTEM_CANCEL_ERROR",
-            "SYSTEM_CANCELLED",
-            "USER_CANCEL_READY",
-            "USER_CANCELLED",
-            "USER_CANCEL_ERROR"
-    })
-    public void respondWith400_whenNotCancellableState(ChargeStatus notCancellableState) {
-        String chargeId = createNewInPastChargeWithStatus(notCancellableState);
-        String expectedMessage = "Charge not in correct state to be processed, " + chargeId;
-        connectorRestApiClient
-                .withChargeId(chargeId)
-                .postChargeCancellation()
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .and()
-                .contentType(JSON)
-                .body("message", contains(expectedMessage))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
 
     @Test

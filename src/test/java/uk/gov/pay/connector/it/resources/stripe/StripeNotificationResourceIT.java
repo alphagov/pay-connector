@@ -5,15 +5,10 @@ import io.restassured.response.Response;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationUtilTest;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -42,11 +37,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(
-        app = ConnectorApp.class,
-        config = "config/test-it-config.yaml")
-public class StripeNotificationResourceIT {
+public class StripeNotificationResourceIT extends NewChargingITestBase {
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/stripe";
     private static final String RESPONSE_EXPECTED_BY_STRIPE = "[OK]";
@@ -58,21 +49,23 @@ public class StripeNotificationResourceIT {
 
     private String accountId;
     private DatabaseTestHelper databaseTestHelper;
-    @DropwizardTestContext
-    private TestContext testContext;
-
+    
     private WireMockServer wireMockServer;
 
     private StripeMockClient stripeMockClient;
 
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
 
+    public StripeNotificationResourceIT() {
+        super("stripe");
+    }
+
     @Before
     public void setup() {
         accountId = String.valueOf(RandomUtils.nextInt());
 
-        databaseTestHelper = testContext.getDatabaseTestHelper();
-        wireMockServer = testContext.getWireMockServer();
+        databaseTestHelper = connectorApp.getDatabaseTestHelper();
+        wireMockServer = connectorApp.getWireMockServer();
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(STRIPE.getName())
                 .withGatewayAccountId(Long.valueOf(accountId))
@@ -85,7 +78,7 @@ public class StripeNotificationResourceIT {
                 .withGatewayAccountCredentials(List.of(accountCredentialsParams))
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-        connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
+        connectorRestApiClient = new RestAssuredClient(connectorApp.getLocalPort(), accountId);
 
         stripeMockClient = new StripeMockClient(wireMockServer);
     }
@@ -132,7 +125,7 @@ public class StripeNotificationResourceIT {
         createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
         given()
-                .port(testContext.getPort())
+                .port(connectorApp.getLocalPort())
                 .body("")
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
@@ -189,7 +182,7 @@ public class StripeNotificationResourceIT {
 
     private Response notifyConnectorWithHeader(String payload, String header) {
         return given()
-                .port(testContext.getPort())
+                .port(connectorApp.getLocalPort())
                 .body(payload)
                 .header("Stripe-Signature", header)
                 .header("X-Forwarded-For", STRIPE_IP_ADDRESS)
@@ -199,7 +192,7 @@ public class StripeNotificationResourceIT {
 
     private Response notifyConnectorWithHeader(String payload, String stripeSignature, String forwardedIpAddresses) {
         return given()
-                .port(testContext.getPort())
+                .port(connectorApp.getLocalPort())
                 .body(payload)
                 .header("Stripe-Signature", stripeSignature)
                 .header("X-Forwarded-For", forwardedIpAddresses)
