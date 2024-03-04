@@ -11,6 +11,6 @@ public class GatewayAccountNotFoundException extends WebApplicationException {
     }
     
     public GatewayAccountNotFoundException(String message) {
-        super(notFoundResponse(format(message)));
+        super(notFoundResponse(message));
     }
 }
