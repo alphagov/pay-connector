@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
@@ -26,6 +27,7 @@ import javax.ws.rs.core.Response;
 import static org.apache.http.HttpStatus.SC_CREATED;
 
 @Path("/")
+@Tag(name = "Agreements")
 public class AgreementsApiResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AgreementsApiResource.class);
