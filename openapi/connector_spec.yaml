@@ -292,6 +292,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Missing required fields
       summary: Create an agreement
+      tags:
+      - Agreements
   /v1/api/accounts/{accountId}/agreements/{agreementId}/cancel:
     post:
       operationId: cancelAgreement
@@ -319,6 +321,8 @@ paths:
           content:
             '*/*': {}
           description: default response
+      tags:
+      - Agreements
   /v1/api/accounts/{accountId}/charges:
     post:
       operationId: createNewCharge
