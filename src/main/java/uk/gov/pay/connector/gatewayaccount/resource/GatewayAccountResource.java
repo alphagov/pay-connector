@@ -465,41 +465,6 @@ public class GatewayAccountResource {
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
-    @PATCH
-    @Path("/v1/api/accounts/{accountId}/description-analytics-id")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Transactional
-    @Operation(
-            summary = "Update description & analytics id of a gateway account",
-            tags = {"Gateway accounts"},
-            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
-                    "    \"description\": \"some-description\"," +
-                    "    \"analytics_id\": \"some-analytics-id\"" +
-                    "}", requiredProperties = {"description"}))),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "400", description = "Bad request",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "Not found")
-            }
-    )
-    public Response updateDescriptionAndOrAnalyticsID(@Parameter(example = "1", description = "Gateway account ID")
-                                                      @PathParam("accountId") Long gatewayAccountId, Map<String, String> payload) {
-        if (!payload.containsKey(DESCRIPTION_FIELD_NAME) && !payload.containsKey(ANALYTICS_ID_FIELD_NAME)) {
-            return fieldsMissingResponse(Arrays.asList(DESCRIPTION_FIELD_NAME, ANALYTICS_ID_FIELD_NAME));
-        }
-        Optional<String> descriptionMaybe = Optional.ofNullable(payload.get(DESCRIPTION_FIELD_NAME));
-        Optional<String> analyticsIdMaybe = Optional.ofNullable(payload.get(ANALYTICS_ID_FIELD_NAME));
-        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccountEntity -> {
-                    descriptionMaybe.ifPresent(gatewayAccountEntity::setDescription);
-                    analyticsIdMaybe.ifPresent(gatewayAccountEntity::setAnalyticsId);
-                    return Response.ok().build();
-                })
-                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
-    }
-
     @POST
     @Path("/v1/api/accounts/{accountId}/switch-psp")
     @Consumes(APPLICATION_JSON)
