@@ -731,42 +731,6 @@ paths:
       summary: Update a gateway account credential
       tags:
       - Gateway account credentials
-  /v1/api/accounts/{accountId}/description-analytics-id:
-    patch:
-      operationId: updateDescriptionAndOrAnalyticsID
-      parameters:
-      - description: Gateway account ID
-        example: 1
-        in: path
-        name: accountId
-        required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-              example:
-                description: some-description
-                analytics_id: some-analytics-id
-              required:
-              - description
-      responses:
-        "200":
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bad request
-        "404":
-          description: Not found
-      summary: Update description & analytics id of a gateway account
-      tags:
-      - Gateway accounts
   /v1/api/accounts/{accountId}/email-notification:
     patch:
       description: Allowed paths <br> - /payment_confirmed/enabled (values true/false)
