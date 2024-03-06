@@ -2,11 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.Instant;
@@ -35,10 +31,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargeExpiryResourceIT extends ChargingITestBase {
-
+public class ChargeExpiryResourceIT extends NewChargingITestBase {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String PROVIDER_NAME = "worldpay";

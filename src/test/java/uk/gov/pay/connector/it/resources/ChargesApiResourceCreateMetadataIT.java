@@ -2,13 +2,9 @@ package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.postgresql.util.PGobject;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -30,9 +26,7 @@ import static org.junit.Assert.assertNull;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargesApiResourceCreateMetadataIT extends ChargingITestBase {
+public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
 
     public ChargesApiResourceCreateMetadataIT() {
         super(PROVIDER_NAME);

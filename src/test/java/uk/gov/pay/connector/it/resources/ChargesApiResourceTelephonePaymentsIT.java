@@ -5,11 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.HashMap;
@@ -29,12 +25,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(
-        app = ConnectorApp.class,
-        config = "config/test-it-config.yaml"
-)
-public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
+public class ChargesApiResourceTelephonePaymentsIT extends NewChargingITestBase {
 
     private static final String PROVIDER_NAME = "sandbox";
     private static final HashMap<String, Object> postBody = new HashMap<>();
@@ -48,9 +39,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
     }
 
     @Before
-    @Override
     public void setUp() {
-        super.setUp();
         postBody.put("amount", 12000);
         postBody.put("reference", "MRPC12345");
         postBody.put("description", "New passport application");
@@ -138,7 +127,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .body("state.status", is("success"))
                 .body("state.finished", is(true));
 
-        DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
+        DatabaseTestHelper testHelper = connectorApp.getDatabaseTestHelper();
         Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId).get(0);
         Long chargeId = Long.parseLong(chargeDetails.get("id").toString());
         assertThat(chargeDetails.get("language"), is("en"));
@@ -329,7 +318,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .statusCode(201)
                 .contentType(JSON);
 
-        DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
+        DatabaseTestHelper testHelper = connectorApp.getDatabaseTestHelper();
         Map<String, Object> chargeDetails = testHelper.getChargeByGatewayTransactionId(providerId).get(0);
 
         assertThat(chargeDetails.get("source"), is(CARD_EXTERNAL_TELEPHONE.toString()));
@@ -365,7 +354,7 @@ public class ChargesApiResourceTelephonePaymentsIT extends ChargingITestBase {
                 .body("state.status", is("success"))
                 .body("state.finished", is(true));
 
-        DatabaseTestHelper testHelper = testContext.getDatabaseTestHelper();
+        DatabaseTestHelper testHelper = connectorApp.getDatabaseTestHelper();
         List<Map<String, Object>> chargesByGatewayTransactionId = testHelper.getChargeByGatewayTransactionId(providerId);
 
         assertThat(chargesByGatewayTransactionId.size(), is(1));

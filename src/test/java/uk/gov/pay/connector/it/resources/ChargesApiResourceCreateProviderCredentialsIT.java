@@ -1,14 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.hamcrest.Matchers;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -26,9 +21,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargesApiResourceCreateProviderCredentialsIT extends ChargingITestBase {
+public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingITestBase {
 
     public ChargesApiResourceCreateProviderCredentialsIT() {
         super(PROVIDER_NAME);

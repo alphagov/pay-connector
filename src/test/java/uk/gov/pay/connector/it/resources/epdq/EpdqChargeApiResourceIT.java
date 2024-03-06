@@ -1,18 +1,12 @@
 package uk.gov.pay.connector.it.resources.epdq;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class EpdqChargeApiResourceIT extends ChargingITestBase {
+public class EpdqChargeApiResourceIT extends NewChargingITestBase {
     public EpdqChargeApiResourceIT() {
         super("epdq");
     }

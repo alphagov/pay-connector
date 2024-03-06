@@ -2,12 +2,8 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import io.restassured.http.ContentType;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -17,9 +13,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class WorldpayChargeCancelResourceIT extends ChargingITestBase {
+public class WorldpayChargeCancelResourceIT extends NewChargingITestBase {
 
     public WorldpayChargeCancelResourceIT() {
         super("worldpay");

@@ -1,11 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
@@ -18,9 +14,7 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends ChargingITestBase {
+public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewChargingITestBase {
 
     private static final String JSON_PREFILLED_CARDHOLDER_DETAILS_KEY = "prefilled_cardholder_details";
     private static final String JSON_BILLING_ADDRESS_KEY = "billing_address";

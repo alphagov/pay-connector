@@ -2,11 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 
 import java.util.List;
 
@@ -23,15 +19,12 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class GatewayCleanupResourceIT extends ChargingITestBase {
+public class GatewayCleanupResourceIT extends NewChargingITestBase {
 
     private static final String PROVIDER_NAME = "worldpay";
 
@@ -71,7 +64,7 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         worldpayMockClient.mockCancelSuccess();
         worldpayMockClient.mockAuthorisationQuerySuccess();
 
-        given().port(testContext.getPort())
+        given().port(connectorApp.getLocalPort())
                 .post("/v1/tasks/gateway-cleanup-sweep?limit=10")
                 .then()
                 .statusCode(OK.getStatusCode())
@@ -109,7 +102,7 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
         worldpayMockClient.mockCancelSuccess();
         worldpayMockClient.mockAuthorisationQuerySuccess();
 
-        given().port(testContext.getPort())
+        given().port(connectorApp.getLocalPort())
                 .post("/v1/tasks/gateway-cleanup-sweep?limit=2")
                 .then()
                 .statusCode(OK.getStatusCode())
@@ -120,7 +113,7 @@ public class GatewayCleanupResourceIT extends ChargingITestBase {
 
     @Test
     public void shouldReturn422WhenLimitQueryParamMissing() {
-        given().port(testContext.getPort())
+        given().port(connectorApp.getLocalPort())
                 .post("/v1/tasks/gateway-cleanup-sweep")
                 .then()
                 .statusCode(422)

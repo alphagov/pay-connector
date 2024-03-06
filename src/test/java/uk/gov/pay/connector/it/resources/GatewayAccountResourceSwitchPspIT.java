@@ -3,10 +3,6 @@ package uk.gov.pay.connector.it.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.List;
@@ -21,9 +17,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class GatewayAccountResourceSwitchPspIT extends GatewayAccountResourceTestBase {
+public class GatewayAccountResourceSwitchPspIT extends NewGatewayAccountResourceTestBase {
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 

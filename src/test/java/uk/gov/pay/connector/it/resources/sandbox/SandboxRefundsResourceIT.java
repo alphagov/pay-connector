@@ -5,15 +5,11 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -30,7 +26,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.eclipse.jetty.http.HttpStatus.FORBIDDEN_403;
-import static org.eclipse.jetty.http.HttpStatus.UNPROCESSABLE_ENTITY_422;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -47,9 +42,7 @@ import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidL
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class SandboxRefundsResourceIT extends ChargingITestBase {
+public class SandboxRefundsResourceIT extends NewChargingITestBase {
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
@@ -60,7 +53,6 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
 
     @Before
     public void setUp() {
-        super.setUp();
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -450,7 +442,7 @@ public class SandboxRefundsResourceIT extends ChargingITestBase {
                 .body("created_date", isWithin(10, SECONDS));
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                testContext.getPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                connectorApp.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");
         response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))

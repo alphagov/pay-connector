@@ -2,13 +2,9 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.Instant;
 import java.util.List;
@@ -42,9 +38,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELL
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargeCancelFrontendResourceIT extends ChargingITestBase {
+public class ChargeCancelFrontendResourceIT extends NewChargingITestBase {
 
     private static final List<ChargeStatus> NON_USER_CANCELLABLE_STATUSES = ImmutableList.of(
             AUTHORISATION_REJECTED,

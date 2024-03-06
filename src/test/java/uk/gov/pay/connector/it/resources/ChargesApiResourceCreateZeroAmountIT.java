@@ -1,11 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -15,9 +11,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargesApiResourceCreateZeroAmountIT extends ChargingITestBase {
+public class ChargesApiResourceCreateZeroAmountIT extends NewChargingITestBase {
 
     public ChargesApiResourceCreateZeroAmountIT() {
         super(PROVIDER_NAME);

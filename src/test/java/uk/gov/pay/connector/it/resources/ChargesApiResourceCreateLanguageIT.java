@@ -2,11 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
@@ -16,9 +12,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class ChargesApiResourceCreateLanguageIT extends ChargingITestBase {
+public class ChargesApiResourceCreateLanguageIT extends NewChargingITestBase {
 
     public ChargesApiResourceCreateLanguageIT() {
         super(PROVIDER_NAME);

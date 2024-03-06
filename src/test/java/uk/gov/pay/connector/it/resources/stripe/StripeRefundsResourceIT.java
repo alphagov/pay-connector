@@ -6,12 +6,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -33,9 +29,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class StripeRefundsResourceIT extends ChargingITestBase {
+public class StripeRefundsResourceIT extends NewChargingITestBase {
     private String stripeAccountId = "stripe_account_id";
     private String accountId = String.valueOf(nextLong());
 
@@ -49,7 +43,6 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
 
     @Before
     public void setUp() {
-        super.setUp();
         stripeMockClient = new StripeMockClient(wireMockServer);
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
@@ -91,7 +84,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", testChargeCreatedWithStripeChargeAPI.getAmount());
         String refundPayload = new Gson().toJson(refundData);
-        ValidatableResponse response = given().port(testContext.getPort())
+        ValidatableResponse response = given().port(connectorApp.getLocalPort())
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -130,7 +123,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
-        ValidatableResponse response = given().port(testContext.getPort())
+        ValidatableResponse response = given().port(connectorApp.getLocalPort())
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -165,7 +158,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
-        given().port(testContext.getPort())
+        given().port(connectorApp.getLocalPort())
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -191,7 +184,7 @@ public class StripeRefundsResourceIT extends ChargingITestBase {
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
 
-        given().port(testContext.getPort())
+        given().port(connectorApp.getLocalPort())
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)

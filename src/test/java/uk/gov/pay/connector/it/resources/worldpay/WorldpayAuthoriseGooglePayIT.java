@@ -9,13 +9,9 @@ import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.NewChargingITestBase;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -34,9 +30,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
+public class WorldpayAuthoriseGooglePayIT extends NewChargingITestBase {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
@@ -45,10 +39,8 @@ public class WorldpayAuthoriseGooglePayIT extends ChargingITestBase {
         super("worldpay");
     }
 
-    @Override
     @Before
     public void setUp() {
-        super.setUp();
         Logger root = (Logger) LoggerFactory.getLogger(CardResource.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
