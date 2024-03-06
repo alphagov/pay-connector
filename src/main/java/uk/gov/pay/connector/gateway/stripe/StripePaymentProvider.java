@@ -221,11 +221,7 @@ public class StripePaymentProvider implements PaymentProvider {
     public void transferDisputeAmount(StripeDisputeData stripeDisputeData, Charge charge, GatewayAccountEntity gatewayAccount,
                                       GatewayAccountCredentialsEntity gatewayAccountCredentials) throws GatewayException {
 
-        if (stripeDisputeData.getBalanceTransactionList().size() > 1) {
-            throw new RuntimeException("Expected lost dispute to have a single balance_transaction, but has " + stripeDisputeData.getBalanceTransactionList().size());
-        }
-        BalanceTransaction balanceTransaction = stripeDisputeData.getBalanceTransactionList().get(0);
-        long transferAmount = Math.abs(balanceTransaction.getNetAmount());
+        long transferAmount = getTransferAmountForLostDispute(stripeDisputeData);
         String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
 
         StripeTransferInRequest transferInRequest = StripeTransferInRequest.createDisputeTransferRequest(
@@ -248,5 +244,13 @@ public class StripePaymentProvider implements PaymentProvider {
                 stripeTransfer.getDestinationStripeAccountId(),
                 stripeTransfer.getStripeTransferGroup()
         );
+    }
+
+    private static long getTransferAmountForLostDispute(StripeDisputeData stripeDisputeData) {
+        long total = stripeDisputeData.getBalanceTransactionList().stream().mapToLong(BalanceTransaction::getNetAmount).sum();
+        if (total > 0) {
+            throw new RuntimeException("Expected total of balance_transactions for a lost dispute to be negative, but was positive");
+        }
+        return Math.abs(total);
     }
 }
