@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
-import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,9 +12,7 @@ import java.util.List;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.events.model.dispute.DisputeLost.from;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 
@@ -36,7 +33,7 @@ class DisputeLostTest {
                 List.of(balanceTransaction), null, null, true);
         String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
 
-        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, Instant.ofEpochSecond(1642579160L), transaction, true);
+        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, Instant.ofEpochSecond(1642579160L), transaction, true, balanceTransaction.getNetAmount(), Math.abs(balanceTransaction.getFee()));
 
         String disputeLostJson = disputeLost.toJsonString();
         assertThat(disputeLostJson, hasJsonPath("$.event_type", equalTo("DISPUTE_LOST")));
@@ -68,7 +65,7 @@ class DisputeLostTest {
                 List.of(balanceTransaction), null, null, false);
         String disputeExternalId = "fca65e80d2293ee3bf158a0d12";
 
-        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, Instant.ofEpochSecond(1642579160L), transaction, false);
+        DisputeLost disputeLost = from(disputeExternalId, stripeDisputeData, Instant.ofEpochSecond(1642579160L), transaction, false, balanceTransaction.getNetAmount(), Math.abs(balanceTransaction.getFee()));
 
         String disputeLostJson = disputeLost.toJsonString();
         assertThat(disputeLostJson, hasJsonPath("$.event_type", equalTo("DISPUTE_LOST")));
@@ -83,27 +80,5 @@ class DisputeLostTest {
         assertThat(disputeLostJson, hasJsonPath("$.event_details.amount", equalTo(6500)));
         assertThat(disputeLostJson, hasNoJsonPath("$.event_details.net_amount"));
         assertThat(disputeLostJson, hasNoJsonPath("$.event_details.fee"));
-    }
-
-    @Test
-    void shouldThrowExceptionWhenMoreThanOneBalanceTransactionPresent() {
-        LedgerTransaction transaction = aValidLedgerTransaction()
-                .withExternalId("payment-external-id")
-                .withGatewayAccountId(1234L)
-                .withGatewayTransactionId("payment-intent-id")
-                .withServiceId("service-id")
-                .isLive(true)
-                .build();
-        BalanceTransaction balanceTransaction = new BalanceTransaction(6500L, 1500L, -8000L);
-        BalanceTransaction balanceTransaction2 = new BalanceTransaction(6500L, 1500L, 8000L);
-        EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
-        StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
-                "pi_123456789", "needs_response", 6500L, "fradulent", 1642579160L, List.of(balanceTransaction,
-                balanceTransaction2), evidenceDetails, null, false);
-
-        var thrown = assertThrows(RuntimeException.class, () ->
-                DisputeLost.from("a-dispute-external-id", stripeDisputeData, Instant.ofEpochSecond(1642579160L),
-                        transaction, true));
-        assertThat(thrown.getMessage(), is("Dispute data has too many balance_transactions"));
     }
 }

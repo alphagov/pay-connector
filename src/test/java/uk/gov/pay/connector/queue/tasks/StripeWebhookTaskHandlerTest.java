@@ -60,8 +60,10 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -72,6 +74,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE_LOST_WITH_MULTIPLE_BALANCE_TRANSACTIONS;
 
 @ExtendWith(MockitoExtension.class)
 public class StripeWebhookTaskHandlerTest {
@@ -103,8 +106,6 @@ public class StripeWebhookTaskHandlerTest {
     private StripeWebhookTaskHandler stripeWebhookTaskHandler;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private String payload;
     private final String PLACEHOLDER_TYPE = "{{type}}";
     private final String PLACEHOLDER_STATUS = "{{status}}";
 
@@ -115,7 +116,6 @@ public class StripeWebhookTaskHandlerTest {
         Logger logger = (Logger) LoggerFactory.getLogger(StripeWebhookTaskHandler.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockLogAppender);
-        payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
         when(configuration.getStripeConfig()).thenReturn(stripeGatewayConfig);
         stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, chargeService, eventService, stripePaymentProvider,
                 gatewayAccountService, gatewayAccountCredentialsService, configuration, clock);
@@ -247,7 +247,8 @@ public class StripeWebhookTaskHandlerTest {
                 argThat(disputeData -> disputeData.getId().equals("du_1111111111")),
                 argThat(c -> c.getExternalId().equals(transaction.getTransactionId())), 
                 argThat(g -> g.getId().equals(gatewayAccountId)), 
-                argThat(gac -> gac.getExternalId().equals(gatewayAccountCredentials.getExternalId())));
+                argThat(gac -> gac.getExternalId().equals(gatewayAccountCredentials.getExternalId())),
+                longThat(transferAmount -> transferAmount.equals(8000L)));
         verify(eventService).emitEvent(argumentCaptor.capture());
 
         DisputeLost disputeLost = argumentCaptor.getValue();
@@ -260,6 +261,52 @@ public class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getFee(), is(stripeDisputeData.getBalanceTransactionList().get(0).getFee()));
         assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
         assertThat(eventDetails.getNetAmount(), is(stripeDisputeData.getBalanceTransactionList().get(0).getNetAmount()));
+
+        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
+
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = "Event sent to payment event queue: " + disputeLost.getResourceExternalId();
+
+        assertThat(logStatement.get(0).getFormattedMessage(), Is.is(expectedLogMessage));
+    }
+
+    @Test
+    void shouldMakeTransferInStripeAndEmitEventForLostDispute_forMultipleBalanceTransactions() throws Exception {
+        LedgerTransaction transaction = buildTransaction(true);
+        Charge charge = Charge.from(transaction);
+        GatewayAccountEntity gatewayAccount = aGatewayAccountEntity().withId(gatewayAccountId).build();
+        GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity().build();
+
+        StripeNotification stripeNotification = getDisputeNotificationWithMultipleBalanceTransactions("charge.dispute.closed", "lost", true);
+        StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
+
+        when(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate()).thenReturn(Instant.ofEpochSecond(1259539200));
+        when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
+                .thenReturn(Optional.of(transaction));
+        when(gatewayAccountService.getGatewayAccount(gatewayAccountId)).thenReturn(Optional.of(gatewayAccount));
+        when(gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccount)).thenReturn(Optional.of(gatewayAccountCredentials));
+
+        stripeWebhookTaskHandler.process(stripeNotification);
+        ArgumentCaptor<DisputeLost> argumentCaptor = ArgumentCaptor.forClass(DisputeLost.class);
+
+        verify(stripePaymentProvider).transferDisputeAmount(
+                argThat(disputeData -> disputeData.getId().equals("du_1111111111")),
+                argThat(c -> c.getExternalId().equals(transaction.getTransactionId())),
+                argThat(g -> g.getId().equals(gatewayAccountId)),
+                argThat(gac -> gac.getExternalId().equals(gatewayAccountCredentials.getExternalId())),
+                longThat(transferAmount -> transferAmount.equals(7950L)));
+        verify(eventService).emitEvent(argumentCaptor.capture());
+
+        DisputeLost disputeLost = argumentCaptor.getValue();
+        assertThat(disputeLost.getEventType(), is("DISPUTE_LOST"));
+        assertThat(disputeLost.getResourceType(), is(ResourceType.DISPUTE));
+        assertThat(disputeLost.getTimestamp(), is(stripeNotification.getCreated().toInstant()));
+
+        DisputeLostEventDetails eventDetails = (DisputeLostEventDetails) disputeLost.getEventDetails();
+        assertThat(eventDetails.getGatewayAccountId(), is("1000"));
+        assertThat(eventDetails.getFee(), is(1501L));
+        assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
+        assertThat(eventDetails.getNetAmount(), is(-7950L));
 
         verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
 
@@ -292,7 +339,8 @@ public class StripeWebhookTaskHandlerTest {
                 argThat(disputeData -> disputeData.getId().equals("du_1111111111")),
                 argThat(c -> c.getExternalId().equals(transaction.getTransactionId())),
                 argThat(g -> g.getId().equals(gatewayAccountId)),
-                argThat(gac -> gac.getExternalId().equals(gatewayAccountCredentials.getExternalId())));
+                argThat(gac -> gac.getExternalId().equals(gatewayAccountCredentials.getExternalId())),
+                longThat(transferAmount -> transferAmount.equals(8000L)));
         verify(eventService).emitEvent(argumentCaptor.capture());
 
         DisputeLost disputeLost = argumentCaptor.getValue();
@@ -328,7 +376,7 @@ public class StripeWebhookTaskHandlerTest {
         stripeWebhookTaskHandler.process(stripeNotification);
         ArgumentCaptor<DisputeLost> argumentCaptor = ArgumentCaptor.forClass(DisputeLost.class);
 
-        verify(stripePaymentProvider, never()).transferDisputeAmount(any() ,any(), any(), any());
+        verify(stripePaymentProvider, never()).transferDisputeAmount(any() ,any(), any(), any(), anyLong());
         verify(eventService).emitEvent(argumentCaptor.capture());
 
         DisputeLost disputeLost = argumentCaptor.getValue();
@@ -362,7 +410,7 @@ public class StripeWebhookTaskHandlerTest {
         stripeWebhookTaskHandler.process(stripeNotification);
         ArgumentCaptor<DisputeLost> argumentCaptor = ArgumentCaptor.forClass(DisputeLost.class);
 
-        verify(stripePaymentProvider, never()).transferDisputeAmount(any() ,any(), any(), any());
+        verify(stripePaymentProvider, never()).transferDisputeAmount(any() ,any(), any(), any(), anyLong());
         verify(eventService).emitEvent(argumentCaptor.capture());
 
         DisputeLost disputeLost = argumentCaptor.getValue();
@@ -616,12 +664,20 @@ public class StripeWebhookTaskHandlerTest {
     }
 
     private StripeNotification getDisputeNotification(String webhookType, String status, boolean liveStripeAccount) throws JsonProcessingException {
-        String finalPayload = payload
+        return getDisputeNotification(webhookType, status, liveStripeAccount, STRIPE_NOTIFICATION_CHARGE_DISPUTE);
+    }
+
+    private StripeNotification getDisputeNotificationWithMultipleBalanceTransactions(String webhookType, String status, boolean liveStripeAccount) throws JsonProcessingException {
+        return getDisputeNotification(webhookType, status, liveStripeAccount, STRIPE_NOTIFICATION_CHARGE_DISPUTE_LOST_WITH_MULTIPLE_BALANCE_TRANSACTIONS);
+    }
+
+    private StripeNotification getDisputeNotification(String webhookType, String status, boolean liveStripeAccount, String template) throws JsonProcessingException {
+        String payload = TestTemplateResourceLoader.load(template)
                 .replace(PLACEHOLDER_TYPE, webhookType)
                 .replace(PLACEHOLDER_STATUS, status);
         if (!liveStripeAccount) {
-            finalPayload = finalPayload.replaceAll("\"livemode\": true", "\"livemode\": false");
+            payload = payload.replaceAll("\"livemode\": true", "\"livemode\": false");
         }
-        return objectMapper.readValue(finalPayload, StripeNotification.class);
+        return objectMapper.readValue(payload, StripeNotification.class);
     }
 }

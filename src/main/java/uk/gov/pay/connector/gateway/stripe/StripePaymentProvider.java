@@ -39,15 +39,14 @@ import uk.gov.pay.connector.gateway.stripe.handler.StripeDisputeHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeFailedPaymentFeeCollectionHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeQueryPaymentStatusHandler;
 import uk.gov.pay.connector.gateway.stripe.handler.StripeRefundHandler;
+import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 import uk.gov.pay.connector.gateway.stripe.json.StripeTransfer;
 import uk.gov.pay.connector.gateway.stripe.request.StripeTransferInRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
-import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -219,9 +218,8 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     public void transferDisputeAmount(StripeDisputeData stripeDisputeData, Charge charge, GatewayAccountEntity gatewayAccount,
-                                      GatewayAccountCredentialsEntity gatewayAccountCredentials) throws GatewayException {
-
-        long transferAmount = getTransferAmountForLostDispute(stripeDisputeData);
+                                      GatewayAccountCredentialsEntity gatewayAccountCredentials, long transferAmount) throws GatewayException {
+        
         String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
 
         StripeTransferInRequest transferInRequest = StripeTransferInRequest.createDisputeTransferRequest(
@@ -244,13 +242,5 @@ public class StripePaymentProvider implements PaymentProvider {
                 stripeTransfer.getDestinationStripeAccountId(),
                 stripeTransfer.getStripeTransferGroup()
         );
-    }
-
-    private static long getTransferAmountForLostDispute(StripeDisputeData stripeDisputeData) {
-        long total = stripeDisputeData.getBalanceTransactionList().stream().mapToLong(BalanceTransaction::getNetAmount).sum();
-        if (total > 0) {
-            throw new RuntimeException("Expected total of balance_transactions for a lost dispute to be negative, but was positive");
-        }
-        return Math.abs(total);
     }
 }
