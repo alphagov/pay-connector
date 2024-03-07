@@ -103,7 +103,7 @@ import static java.util.EnumSet.of;
 import static javax.servlet.DispatcherType.REQUEST;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
-
+    //This comment is just to trigger a CodeQL scan when I raise a PR, will delete once tested.
     private static final Logger logger = LoggerFactory.getLogger(ConnectorApp.class);
 
     public static final boolean NON_STRICT_VARIABLE_SUBSTITUTOR = false;
