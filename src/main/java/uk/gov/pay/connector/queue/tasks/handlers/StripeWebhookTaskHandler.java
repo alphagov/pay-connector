@@ -33,6 +33,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
+import uk.gov.pay.connector.queue.tasks.util.StripeDisputeCalculator;
 
 import javax.inject.Inject;
 import java.time.Clock;
@@ -83,7 +84,7 @@ public class StripeWebhookTaskHandler {
                                     StripePaymentProvider stripePaymentProvider,
                                     GatewayAccountService gatewayAccountService,
                                     GatewayAccountCredentialsService gatewayAccountCredentialsService,
-                                    ConnectorConfiguration configuration, 
+                                    ConnectorConfiguration configuration,
                                     Clock clock) {
         this.ledgerService = ledgerService;
         this.chargeService = chargeService;
@@ -116,7 +117,7 @@ public class StripeWebhookTaskHandler {
                             stripeDisputeData.getReason());
                     return;
                 }
-                
+
                 switch (stripeNotificationType) {
                     case DISPUTE_CREATED:
                         DisputeCreated disputeCreatedEvent = DisputeCreated.from(disputeExternalId, stripeDisputeData, transaction,
@@ -184,21 +185,24 @@ public class StripeWebhookTaskHandler {
         }
     }
 
-    private DisputeEvent handleDisputeLost(StripeDisputeData stripeDisputeData, LedgerTransaction transaction, 
+    private DisputeEvent handleDisputeLost(StripeDisputeData stripeDisputeData, LedgerTransaction transaction,
                                            String disputeExternalId, Instant eventTimestamp) throws GatewayException {
         boolean rechargeDispute = shouldRechargeDispute(stripeDisputeData, transaction);
+        long netAmount = StripeDisputeCalculator.getNetAmountForLostDispute(stripeDisputeData);
+        long transferAmount = Math.abs(netAmount);
+        long fee = StripeDisputeCalculator.getFeeForLostDispute(stripeDisputeData);
         if (rechargeDispute) {
             Charge charge = Charge.from(transaction);
             GatewayAccountEntity gatewayAccount = gatewayAccountService.getGatewayAccount(Long.valueOf(transaction.getGatewayAccountId()))
                     .orElseThrow(() -> new GatewayAccountNotFoundException(transaction.getGatewayAccountId()));
             GatewayAccountCredentialsEntity gatewayAccountCredentials = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccount)
                     .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException("Unable to resolve gateway account credentials for charge " + charge.getExternalId()));
-            stripePaymentProvider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccount, gatewayAccountCredentials);
+            stripePaymentProvider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccount, gatewayAccountCredentials, transferAmount);
         } else {
             logger.info("Skipping recharging for dispute {} for payment {} as it was created before the date we started recharging from",
                     stripeDisputeData.getId(), transaction.getTransactionId());
         }
-        return DisputeLost.from(disputeExternalId, stripeDisputeData, eventTimestamp, transaction, rechargeDispute);
+        return DisputeLost.from(disputeExternalId, stripeDisputeData, eventTimestamp, transaction, rechargeDispute, netAmount, fee);
     }
 
     private boolean shouldRechargeDispute(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {

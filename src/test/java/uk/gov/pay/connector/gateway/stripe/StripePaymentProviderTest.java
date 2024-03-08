@@ -716,21 +716,6 @@ class StripePaymentProviderTest {
     
     @Nested
     class TransferDisputeAmount {
-        @Test
-        void shouldThrowExceptionWhenBalanceTransactionTotalIsPositive() throws Exception {
-            BalanceTransaction balanceTransaction = new BalanceTransaction(6500L, 1500L, 8000L);
-            EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
-            StripeDisputeData stripeDisputeData = new StripeDisputeData("du_1LIaq8Dv3CZEaFO2MNQJK333",
-                    "pi_123456789", "needs_response", 6500L, "fraudulent", 
-                    1642579160L, List.of(balanceTransaction), evidenceDetails, null, true);
-
-            var gatewayAccountEntity = buildTestGatewayAccountEntity();
-            ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
-            Charge charge = Charge.from(chargeEntity);
-
-            RuntimeException exception = assertThrows(RuntimeException.class, () -> provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity()));
-            assertThat(exception.getMessage(), is("Expected total of balance_transactions for a lost dispute to be negative, but was positive"));
-        }
 
         @Test
         void shouldMakeTransferRequestForLostDispute() throws Exception {
@@ -741,7 +726,21 @@ class StripePaymentProviderTest {
             String stripePlatformAccountId = "platform-account-id";
             String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeId);
 
-            Charge charge = transferDisputeAmount(stripeDisputeId, paymentIntentId, evidenceDetails, stripePlatformAccountId, List.of(balanceTransaction));
+            StripeDisputeData stripeDisputeData = new StripeDisputeData(stripeDisputeId,
+                    paymentIntentId, "needs_response", 6500L, "fraudulent",
+                    1642579160L, List.of(balanceTransaction), evidenceDetails, null, false);
+
+            var gatewayAccountEntity = buildTestGatewayAccountEntity();
+            ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
+            Charge charge = Charge.from(chargeEntity);
+
+            when(gatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
+
+            GatewayClient.Response response = mock(GatewayClient.Response.class);
+            when(response.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
+            when(gatewayClient.postRequestFor(any(StripeTransferInRequest.class))).thenReturn(response);
+
+            provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity(), 8000L);
 
             verify(gatewayClient).postRequestFor(stripeTransferInRequestCaptor.capture());
 
@@ -757,53 +756,6 @@ class StripePaymentProviderTest {
             assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
         }
 
-        @Test
-        void shouldMakeTransferRequestForLostDispute_whenMultipleBalanceTransactions() throws Exception {
-            BalanceTransaction balanceTransaction1 = new BalanceTransaction(-6500L, 1500L, -8000L);
-            BalanceTransaction balanceTransaction2 = new BalanceTransaction(-100L, 0L, -100L);
-            BalanceTransaction balanceTransaction3 = new BalanceTransaction(10L, 0L, 10L);
-            List<BalanceTransaction> balanceTransactionList = List.of(balanceTransaction1, balanceTransaction2, balanceTransaction3);
-
-            EvidenceDetails evidenceDetails = new EvidenceDetails(1642679160L);
-            String stripeDisputeId = "du_1LIaq8Dv3CZEaFO2MNQJK333";
-            String paymentIntentId = "pi_123456789";
-            String stripePlatformAccountId = "platform-account-id";
-            String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeId);
-
-            Charge charge = transferDisputeAmount(stripeDisputeId, paymentIntentId, evidenceDetails, stripePlatformAccountId, balanceTransactionList);
-
-            verify(gatewayClient).postRequestFor(stripeTransferInRequestCaptor.capture());
-
-            String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().getPayload();
-
-            assertThat(payload, containsString("destination=" + stripePlatformAccountId));
-            assertThat(payload, containsString("amount=8090"));
-            assertThat(payload, containsString("transfer_group=" + charge.getExternalId()));
-            assertThat(payload, containsString("expand%5B%5D=balance_transaction"));
-            assertThat(payload, containsString("expand%5B%5D=destination_payment"));
-            assertThat(payload, containsString("currency=GBP"));
-            assertThat(payload, containsString("metadata%5Bstripe_charge_id%5D=" + paymentIntentId));
-            assertThat(payload, containsString("metadata%5Bgovuk_pay_transaction_external_id%5D=" + disputeExternalId));
-        }
-        
-        private Charge transferDisputeAmount(String stripeDisputeId, String paymentIntentId, EvidenceDetails evidenceDetails, String stripePlatformAccountId, List<BalanceTransaction> balanceTransactionList) throws GatewayException {
-            StripeDisputeData stripeDisputeData = new StripeDisputeData(stripeDisputeId,
-                    paymentIntentId, "needs_response", 6500L, "fraudulent",
-                    1642579160L, balanceTransactionList, evidenceDetails, null, false);
-
-            var gatewayAccountEntity = buildTestGatewayAccountEntity();
-            ChargeEntity chargeEntity = buildTestCharge(gatewayAccountEntity);
-            Charge charge = Charge.from(chargeEntity);
-
-            when(gatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
-
-            GatewayClient.Response response = mock(GatewayClient.Response.class);
-            when(response.getEntity()).thenReturn(load(STRIPE_TRANSFER_RESPONSE));
-            when(gatewayClient.postRequestFor(any(StripeTransferInRequest.class))).thenReturn(response);
-
-            provider.transferDisputeAmount(stripeDisputeData, charge, gatewayAccountEntity, chargeEntity.getGatewayAccountCredentialsEntity());
-            return charge;
-        }
     }
 
     @Nested
