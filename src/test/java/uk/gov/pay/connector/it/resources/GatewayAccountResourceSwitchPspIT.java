@@ -2,7 +2,8 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.List;
@@ -17,7 +18,9 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-public class GatewayAccountResourceSwitchPspIT extends NewGatewayAccountResourceTestBase {
+public class GatewayAccountResourceSwitchPspIT {
+    @RegisterExtension
+    public static GatewayAccountResourceITBaseExtensions app = new GatewayAccountResourceITBaseExtensions("sandbox");
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -46,7 +49,7 @@ public class GatewayAccountResourceSwitchPspIT extends NewGatewayAccountResource
                         .withPaymentProvider("stripe")
                         .build();
 
-        databaseTestHelper.addGatewayAccount(
+        app.getDatabaseTestHelper().addGatewayAccount(
                 anAddGatewayAccountParams()
                         .withAccountId(gatewayAccountId)
                         .withPaymentGateway("stripe")
@@ -58,20 +61,20 @@ public class GatewayAccountResourceSwitchPspIT extends NewGatewayAccountResource
         String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
                 "gateway_account_credential_external_id", switchToExtId));
 
-        givenSetup()
+        app.givenSetup()
                 .body(payload)
                 .post("/v1/api/accounts/" + gatewayAccountId + "/switch-psp")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        Map<String, Object> account = databaseTestHelper.getGatewayAccount(Long.valueOf(gatewayAccountId));
+        Map<String, Object> account = app.getDatabaseTestHelper().getGatewayAccount(Long.valueOf(gatewayAccountId));
         assertThat((Integer) account.get("integration_version_3ds"), is(2));
         assertThat((Boolean) account.get("provider_switch_enabled"), is(false));
 
-        Map<String, Object> retiredCredentials = databaseTestHelper.getGatewayAccountCredentialByExternalId(activeExtId);
+        Map<String, Object> retiredCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialByExternalId(activeExtId);
         assertThat(retiredCredentials.get("state").toString(), is(RETIRED.name()));
 
-        Map<String, Object> activeCredentials = databaseTestHelper.getGatewayAccountCredentialByExternalId(switchToExtId);
+        Map<String, Object> activeCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialByExternalId(switchToExtId);
         assertThat(activeCredentials.get("state").toString(), is(ACTIVE.name()));
     }
 }

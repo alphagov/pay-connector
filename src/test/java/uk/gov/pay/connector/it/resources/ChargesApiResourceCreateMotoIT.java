@@ -1,7 +1,8 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Test;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -9,16 +10,24 @@ import java.util.Map;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_MOTO_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class ChargesApiResourceCreateMotoIT extends NewChargingITestBase {
+public class ChargesApiResourceCreateMotoIT {
 
-    public ChargesApiResourceCreateMotoIT() {
-        super(PROVIDER_NAME);
-    }
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
     @Test
-    public void shouldReturn422WhenMotoIsTrueIfAccountDoesNotAllowIt() {
+    void shouldReturn422WhenMotoIsTrueIfAccountDoesNotAllowIt() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -27,7 +36,7 @@ public class ChargesApiResourceCreateMotoIT extends NewChargingITestBase {
                 JSON_MOTO_KEY, true
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -36,8 +45,8 @@ public class ChargesApiResourceCreateMotoIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldCreateMotoChargeIfAccountAllowsIt() {
-        databaseTestHelper.allowMoto(Long.parseLong(accountId));
+    void shouldCreateMotoChargeIfAccountAllowsIt() {
+        app.getDatabaseTestHelper().allowMoto(Long.parseLong(app.getAccountId()));
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -47,7 +56,7 @@ public class ChargesApiResourceCreateMotoIT extends NewChargingITestBase {
                 JSON_MOTO_KEY, true
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(201)
                 .contentType(JSON)

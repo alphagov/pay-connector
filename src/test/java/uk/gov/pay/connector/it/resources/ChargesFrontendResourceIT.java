@@ -2,14 +2,14 @@ package uk.gov.pay.connector.it.resources;
 
 import com.google.common.collect.ImmutableMap;
 import io.restassured.response.ValidatableResponse;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -63,7 +63,10 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesFrontendResourceIT extends NewChargingITestBase {
+public class ChargesFrontendResourceIT {
+
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
     public static final String AGREEMENT_ID = "12345678901234567890123456";
 
@@ -82,13 +85,9 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
 
     private RestAssuredClient connectorRestApi;
 
-    public ChargesFrontendResourceIT() {
-        super("sandbox");
-    }
-
-    @Before
+    @BeforeEach
     public void setupGatewayAccount() {
-        databaseTestHelper = connectorApp.getDatabaseTestHelper();
+        databaseTestHelper = app.getDatabaseTestHelper();
         CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
         CardTypeEntity visaCredit = databaseTestHelper.getVisaCreditCard();
         var gatewayAccountParams = anAddGatewayAccountParams()
@@ -103,18 +102,13 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), mastercardCredit.getId());
         databaseTestHelper.addAcceptedCardType(Long.valueOf(accountId), visaCredit.getId());
-        connectorRestApi = new RestAssuredClient(connectorApp.getLocalPort(), accountId);
-    }
-    
-    @After
-    public void tearDown(){
-        databaseTestHelper.truncateAllData();
+        connectorRestApi = new RestAssuredClient(app.getLocalPort(), accountId);
     }
 
     @Test
-    public void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
+    void getChargeShouldIncludeExpectedLinksAndGatewayAccount() {
         String chargeId = postToCreateACharge(expectedAmount);
-        String expectedLocation = "https://localhost:" + connectorApp.getLocalPort() + "/v1/frontend/charges/" + chargeId;
+        String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeId;
 
         validateGetCharge(expectedAmount, chargeId, CREATED, true)
                 .body("links", hasSize(3))
@@ -124,9 +118,9 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void getChargeShouldIncludeCorporateCardSurchargeAndTotalAmount() {
+    void getChargeShouldIncludeCorporateCardSurchargeAndTotalAmount() {
         String chargeExternalId = postToCreateACharge(expectedAmount);
-        String expectedLocation = "https://localhost:" + connectorApp.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
+        String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
         databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
 
@@ -155,7 +149,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void getChargeShouldIncludeAgreementInResponseToFrontEndForRecurringCardPayment() {
+    void getChargeShouldIncludeAgreementInResponseToFrontEndForRecurringCardPayment() {
         var agreementReference = "refs";
         var agreementServiceId = "service-id";
         var agreementDescription = "a valid description";
@@ -165,7 +159,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
                 .withReference(agreementReference).withDescription(agreementDescription).withUserIdentifier(agreementUserIdentifier)
                 .withCreatedDate(Instant.now()).withLive(false).withGatewayAccountId(accountId).build());
         String chargeExternalId = postToCreateAChargeWithAgreement(expectedAmount);
-        String expectedLocation = "https://localhost:" + connectorApp.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
+        String expectedLocation = "https://localhost:" + app.getLocalPort() + "/v1/frontend/charges/" + chargeExternalId;
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
         databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
 
@@ -201,7 +195,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void getChargeShouldNotIncludeAgreementInResponseToFrontEndForANonRecurringCardPayment() {
+    void getChargeShouldNotIncludeAgreementInResponseToFrontEndForANonRecurringCardPayment() {
         String chargeExternalId = postToCreateACharge(expectedAmount);
         final Long chargeId = databaseTestHelper.getChargeIdByExternalId(chargeExternalId);
         databaseTestHelper.updateCorporateSurcharge(chargeId, corporateCreditCardSurchargeAmount);
@@ -215,7 +209,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
 
 
     @Test
-    public void getChargeShouldIncludeWalletType() {
+    void getChargeShouldIncludeWalletType() {
         String externalChargeId = postToCreateACharge(expectedAmount);
         final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
         databaseTestHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
@@ -228,7 +222,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void getChargeShouldIncludeFeeIfItExists() {
+    void getChargeShouldIncludeFeeIfItExists() {
         String externalChargeId = postToCreateACharge(expectedAmount);
         final long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
         final long feeCollected = 100L;
@@ -242,7 +236,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void getChargeShouldIncludeNetAmountIfFeeExists() {
+    void getChargeShouldIncludeNetAmountIfFeeExists() {
         String externalChargeId = RandomIdGenerator.newId();
         long chargeId = nextLong();
 
@@ -267,7 +261,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturnInternalChargeStatusIfStatusIsAuthorised() {
+    void shouldReturnInternalChargeStatusIfStatusIsAuthorised() {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = nextLong();
 
@@ -290,7 +284,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturnEmptyCardBrandLabelIfStatusIsAuthorisedAndBrandUnknown() {
+    void shouldReturnEmptyCardBrandLabelIfStatusIsAuthorisedAndBrandUnknown() {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = nextLong();
 
@@ -310,7 +304,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldIncludeAuth3dsDataInResponse() {
+    void shouldIncludeAuth3dsDataInResponse() {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = nextLong();
         String issuerUrl = "https://issuer.example.com/3ds";
@@ -337,7 +331,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldNotIncludeBillingAddress_whenNoAddressDetailsPresentInDB() {
+    void shouldNotIncludeBillingAddress_whenNoAddressDetailsPresentInDB() {
         String externalChargeId = RandomIdGenerator.newId();
         Long chargeId = nextLong();
 
@@ -360,7 +354,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void getChargeShouldIncludeExternalChargeStatus() {
+    void getChargeShouldIncludeExternalChargeStatus() {
         String externalChargeId = RandomIdGenerator.newId();
         long chargeId = nextLong();
 
@@ -388,7 +382,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldUpdateChargeStatusToEnteringCardDetails() {
+    void shouldUpdateChargeStatusToEnteringCardDetails() {
         String chargeId = postToCreateACharge(expectedAmount);
         String putBody = toJson(ImmutableMap.of("new_status", ENTERING_CARD_DETAILS.getValue()));
 
@@ -403,7 +397,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void cannotGetCharge_WhenInvalidChargeId() {
+    void cannotGetCharge_WhenInvalidChargeId() {
         String chargeId = RandomIdGenerator.newId();
         connectorRestApi
                 .withChargeId(chargeId)
@@ -415,7 +409,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void patchValidEmailOnChargeWithReplaceOp_shouldReturnOk() {
+    void patchValidEmailOnChargeWithReplaceOp_shouldReturnOk() {
         String chargeId = postToCreateACharge(expectedAmount);
         String email = randomAlphabetic(242) + "@example.com";
 
@@ -431,7 +425,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void patchValidEmailOnChargeWithAnyOpExceptReplace_shouldReturnBadRequest() {
+    void patchValidEmailOnChargeWithAnyOpExceptReplace_shouldReturnBadRequest() {
         String chargeId = postToCreateACharge(expectedAmount);
         String patchBody = createPatch("delete", "email", "a@b.c");
 
@@ -446,7 +440,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void patchTooLongEmailOnCharge_shouldReturnBadRequest() {
+    void patchTooLongEmailOnCharge_shouldReturnBadRequest() {
         String chargeId = postToCreateACharge(expectedAmount);
         String tooLongEmail = randomAlphanumeric(243) + "@example.com";
         String patchBody = createPatch("replace", "email", tooLongEmail);
@@ -462,7 +456,7 @@ public class ChargesFrontendResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void patchUnpatchableChargeField_shouldReturnBadRequest() {
+    void patchUnpatchableChargeField_shouldReturnBadRequest() {
         String chargeId = postToCreateACharge(expectedAmount);
         String patchBody = createPatch("replace", "amount", "1");
 

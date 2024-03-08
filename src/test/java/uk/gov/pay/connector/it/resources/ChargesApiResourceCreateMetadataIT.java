@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -23,17 +24,29 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNull;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.EMAIL;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_CHARGE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_EMAIL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_MESSAGE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_METADATA_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 
-public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
+public class ChargesApiResourceCreateMetadataIT {
 
-    public ChargesApiResourceCreateMetadataIT() {
-        super(PROVIDER_NAME);
-    }
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
     @Test
-    public void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
+    void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -43,23 +56,23 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
                 JSON_METADATA_KEY, Map.of()
         ));
 
-        ValidatableResponse response = connectorRestApiClient
+        ValidatableResponse response = app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body("$", not(hasKey("metadata")));
 
         String chargeExternalId = response.extract().path(JSON_CHARGE_KEY);
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getCharge()
                 .body("$", not(hasKey("metadata")));
 
-        assertNull(databaseTestHelper.getChargeByExternalId(chargeExternalId).get("metadata"));
+        assertNull(app.getDatabaseTestHelper().getChargeByExternalId(chargeExternalId).get("metadata"));
     }
 
     @Test
-    public void shouldCreateChargeWithExternalMetadata() {
+    void shouldCreateChargeWithExternalMetadata() {
         Map<String, Object> metadata = Map.of(
                 "key1", "string",
                 "key2", true,
@@ -76,7 +89,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
                 JSON_METADATA_KEY, metadata
         ));
 
-        ValidatableResponse response = connectorRestApiClient
+        ValidatableResponse response = app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
@@ -85,7 +98,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
                 .body(JSON_METADATA_KEY + ".key3", is(123));
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
-        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(externalChargeId);
+        Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(externalChargeId);
         ExternalMetadataConverter converter = new ExternalMetadataConverter();
         ExternalMetadata externalMetadata = converter.convertToEntityAttribute((PGobject) charge.get("external_metadata"));
 
@@ -93,7 +106,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturn422ForInvalidMetadata() {
+    void shouldReturn422ForInvalidMetadata() {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("key1", null);
         metadata.put("key2", new HashMap<>());
@@ -111,7 +124,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
                 JSON_METADATA_KEY, metadata
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -124,7 +137,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturn201IfMetadataIsNull_BecauseWeDoNotDeserializeNullValues() {
+    void shouldReturn201IfMetadataIsNull_BecauseWeDoNotDeserializeNullValues() {
         Map<String, Object> payload = new HashMap<>();
         payload.put(JSON_AMOUNT_KEY, AMOUNT);
         payload.put(JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE);
@@ -135,14 +148,14 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
 
         String postBody = toJsonWithNulls(payload);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(201)
                 .contentType(JSON);
     }
 
     @Test
-    public void shouldFailValidationWhenMetadataIsAString() {
+    void shouldFailValidationWhenMetadataIsAString() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -152,7 +165,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
                 JSON_METADATA_KEY, "metadata cannot be a string"
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)
@@ -161,7 +174,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldFailValidationWhenMetadataIsAnArray() {
+    void shouldFailValidationWhenMetadataIsAnArray() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -171,7 +184,7 @@ public class ChargesApiResourceCreateMetadataIT extends NewChargingITestBase {
                 JSON_METADATA_KEY, new Object[1]
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)

@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Test;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.util.List;
 
@@ -19,52 +20,38 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
-public class GatewayCleanupResourceIT extends NewChargingITestBase {
-
-    private static final String PROVIDER_NAME = "worldpay";
-
-    public GatewayCleanupResourceIT() {
-        super(PROVIDER_NAME);
-    }
+public class GatewayCleanupResourceIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
 
     @Test
     public void shouldCleanUpChargesInAuthorisationErrorStates() {
-        String chargeId1 = addCharge(AUTHORISATION_REJECTED);
-        String chargeId2 = addCharge(AUTHORISATION_ERROR);
-        String chargeId3 = addCharge(AUTHORISATION_UNEXPECTED_ERROR);
-        String chargeId4 = addCharge(AUTHORISATION_TIMEOUT);
+        String chargeId1 = app.addCharge(AUTHORISATION_REJECTED);
+        String chargeId2 = app.addCharge(AUTHORISATION_ERROR);
+        String chargeId3 = app.addCharge(AUTHORISATION_UNEXPECTED_ERROR);
+        String chargeId4 = app.addCharge(AUTHORISATION_TIMEOUT);
 
-        credentialParams = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider("sandbox")
-                .withGatewayAccountId(Long.parseLong(accountId))
-                .withState(RETIRED)
-                .withCredentials(credentials)
-                .build();
-
-        // add a non-ePDQ charge that shouldn't be picked up
-        var worldpayAccount = withDatabaseTestHelper(databaseTestHelper)
+        // add a non-Worldpay charge that shouldn't be picked up
+        var sandboxAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .withAccountId(RandomUtils.nextLong())
                 .withPaymentProvider(SANDBOX.getName())
-                .withGatewayAccountCredentials(List.of(credentialParams))
                 .insert();
 
-        databaseTestHelper.addCharge(anAddChargeParams()
-                .withGatewayAccountId(String.valueOf(worldpayAccount.getAccountId()))
+        app.getDatabaseTestHelper().addCharge(anAddChargeParams()
+                .withGatewayAccountId(String.valueOf(sandboxAccount.getAccountId()))
                 .withPaymentProvider("sandbox")
                 .withStatus(AUTHORISATION_ERROR)
-                .withGatewayCredentialId(credentialParams.getId())
+                .withGatewayCredentialId(app.getCredentialParams().getId())
                 .build());
 
-        worldpayMockClient.mockCancelSuccess();
-        worldpayMockClient.mockAuthorisationQuerySuccess();
+        app.getWorldpayMockClient().mockCancelSuccess();
+        app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
-        given().port(connectorApp.getLocalPort())
+        given().port(app.getLocalPort())
                 .post("/v1/tasks/gateway-cleanup-sweep?limit=10")
                 .then()
                 .statusCode(OK.getStatusCode())
@@ -72,20 +59,20 @@ public class GatewayCleanupResourceIT extends NewChargingITestBase {
                 .body("cleanup-success", is(3))
                 .body("cleanup-failed", is(0));
 
-        String chargeStatus1 = databaseTestHelper.getChargeStatusByExternalId(chargeId1);
-        String chargeStatus2 = databaseTestHelper.getChargeStatusByExternalId(chargeId2);
-        String chargeStatus3 = databaseTestHelper.getChargeStatusByExternalId(chargeId3);
-        String chargeStatus4 = databaseTestHelper.getChargeStatusByExternalId(chargeId4);
+        String chargeStatus1 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId1);
+        String chargeStatus2 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId2);
+        String chargeStatus3 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId3);
+        String chargeStatus4 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId4);
         
         assertThat(chargeStatus1, is(AUTHORISATION_REJECTED.getValue()));
         assertThat(chargeStatus2, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
         assertThat(chargeStatus3, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
         assertThat(chargeStatus4, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
 
-        List<String> events1 = databaseTestHelper.getInternalEvents(chargeId1);
-        List<String> events2 = databaseTestHelper.getInternalEvents(chargeId2);
-        List<String> events3 = databaseTestHelper.getInternalEvents(chargeId3);
-        List<String> events4 = databaseTestHelper.getInternalEvents(chargeId4);
+        List<String> events1 = app.getDatabaseTestHelper().getInternalEvents(chargeId1);
+        List<String> events2 = app.getDatabaseTestHelper().getInternalEvents(chargeId2);
+        List<String> events3 = app.getDatabaseTestHelper().getInternalEvents(chargeId3);
+        List<String> events4 = app.getDatabaseTestHelper().getInternalEvents(chargeId4);
 
         assertThat(events1, contains(AUTHORISATION_REJECTED.getValue()));
         assertThat(events2, contains(AUTHORISATION_ERROR.getValue(), AUTHORISATION_ERROR_CANCELLED.getValue()));
@@ -95,14 +82,14 @@ public class GatewayCleanupResourceIT extends NewChargingITestBase {
 
     @Test
     public void shouldLimitChargesCleanedUp() {
-        addCharge(AUTHORISATION_ERROR);
-        addCharge(AUTHORISATION_ERROR);
-        addCharge(AUTHORISATION_ERROR);
+        app.addCharge(AUTHORISATION_ERROR);
+        app.addCharge(AUTHORISATION_ERROR);
+        app.addCharge(AUTHORISATION_ERROR);
 
-        worldpayMockClient.mockCancelSuccess();
-        worldpayMockClient.mockAuthorisationQuerySuccess();
+        app.getWorldpayMockClient().mockCancelSuccess();
+        app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
-        given().port(connectorApp.getLocalPort())
+        given().port(app.getLocalPort())
                 .post("/v1/tasks/gateway-cleanup-sweep?limit=2")
                 .then()
                 .statusCode(OK.getStatusCode())
@@ -113,7 +100,7 @@ public class GatewayCleanupResourceIT extends NewChargingITestBase {
 
     @Test
     public void shouldReturn422WhenLimitQueryParamMissing() {
-        given().port(connectorApp.getLocalPort())
+        given().port(app.getLocalPort())
                 .post("/v1/tasks/gateway-cleanup-sweep")
                 .then()
                 .statusCode(422)

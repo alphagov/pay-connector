@@ -3,14 +3,9 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.restassured.response.ValidatableResponse;
-import io.restassured.specification.RequestSpecification;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
+import org.junit.jupiter.api.AfterAll;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.AppWithPostgresAndSqsRule;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,45 +18,35 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class NewGatewayAccountResourceTestBase {
+public class GatewayAccountResourceITBaseExtensions extends AppWithPostgresAndSqsExtension {
+    private final String paymentProvider;
+
+    public GatewayAccountResourceITBaseExtensions(String paymentProvider) {
+        super();
+        this.paymentProvider = paymentProvider;
+    }
 
     public static final String ACCOUNTS_API_URL = "/v1/api/accounts/";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
     public static final String ACCOUNTS_EXTERNAL_ID_URL = ACCOUNTS_API_URL + "external-id/";
     public static final String ACCOUNT_FRONTEND_EXTERNAL_ID_URL = "/v1/frontend/accounts/external-id/";
 
-    @ClassRule
-    public static final AppWithPostgresAndSqsRule connectorApp = new AppWithPostgresAndSqsRule();
-
-    protected DatabaseTestHelper databaseTestHelper;
-    protected DatabaseFixtures databaseFixtures;
-
-    @Before
-    public void setUp() {
-        databaseTestHelper = connectorApp.getDatabaseTestHelper();
-        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
-    }
-
-    @After
-    public void tearDown() {
+    @AfterAll
+    public static void tearDown() {
         databaseTestHelper.truncateAllData();
     }
 
-    protected RequestSpecification givenSetup() {
-        return given().port(connectorApp.getLocalPort())
-                .contentType(JSON);
-    }
 
     protected String createAGatewayAccountFor(String provider) {
-        return extractGatewayAccountId(createAGatewayAccountFor(connectorApp.getLocalPort(), provider));
+        return extractGatewayAccountId(createAGatewayAccountFor(getLocalPort(), provider));
     }
 
     protected String createAGatewayAccountFor(String provider, String desc, String analyticsId) {
-        return extractGatewayAccountId(createAGatewayAccountFor(connectorApp.getLocalPort(), provider, desc, analyticsId));
+        return extractGatewayAccountId(createAGatewayAccountFor(getLocalPort(), provider, desc, analyticsId));
     }
 
     protected String createAGatewayAccountFor(String provider, String description, String analyticsId, String requires3ds, String type) {
-        return extractGatewayAccountId(createAGatewayAccountFor(connectorApp.getLocalPort(), provider, description, analyticsId, requires3ds, type, null));
+        return extractGatewayAccountId(createAGatewayAccountFor(getLocalPort(), provider, description, analyticsId, requires3ds, type, null));
     }
 
     public static String extractGatewayAccountId(ValidatableResponse validatableResponse) {
@@ -77,7 +62,7 @@ public class NewGatewayAccountResourceTestBase {
     }
 
     protected String createAGatewayAccountWithServiceId(String serviceId) {
-        return extractGatewayAccountId(createAGatewayAccountFor(connectorApp.getLocalPort(), "sandbox", "description", "analytics-id", "", "test", serviceId));
+        return extractGatewayAccountId(createAGatewayAccountFor(getLocalPort(), "sandbox", "description", "analytics-id", "", "test", serviceId));
     }
 
     public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires3ds, String type, String serviceId) {
@@ -109,7 +94,7 @@ public class NewGatewayAccountResourceTestBase {
 
     void updateGatewayAccount(String gatewayAccountId, String path, Object value) {
         given()
-                .port(connectorApp.getLocalPort())
+                .port(getLocalPort())
                 .contentType(JSON)
                 .body(Map.of("path", path,
                         "op", "replace",
@@ -221,5 +206,9 @@ public class NewGatewayAccountResourceTestBase {
             return merchantId;
         }
 
+    }
+
+    public String getPaymentProvider() {
+        return paymentProvider;
     }
 }

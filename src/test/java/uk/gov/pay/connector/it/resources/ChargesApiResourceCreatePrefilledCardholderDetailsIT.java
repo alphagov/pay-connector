@@ -1,7 +1,8 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Test;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;
@@ -11,10 +12,21 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_CHARGE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_PROVIDER_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.PROVIDER_NAME;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
-public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewChargingITestBase {
+public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
 
     private static final String JSON_PREFILLED_CARDHOLDER_DETAILS_KEY = "prefilled_cardholder_details";
     private static final String JSON_BILLING_ADDRESS_KEY = "billing_address";
@@ -25,12 +37,11 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
     private static final String JSON_ADDRESS_LINE_CITY = "city";
     private static final String JSON_ADDRESS_LINE_COUNTRY_CODE = "country";
 
-    public ChargesApiResourceCreatePrefilledCardholderDetailsIT() {
-        super(PROVIDER_NAME);
-    }
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
     @Test
-    public void shouldReturn201WhenPrefilledCardHolderDetailsFieldsAreMaximum() {
+    void shouldReturn201WhenPrefilledCardHolderDetailsFieldsAreMaximum() {
         String line1 = randomAlphanumeric(255);
         String city = randomAlphanumeric(255);
         String postCode = randomAlphanumeric(25);
@@ -52,7 +63,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
                 )
         ));
 
-        connectorRestApiClient.postCreateCharge(postBody)
+        app.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -64,7 +75,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
     }
 
     @Test
-    public void shouldReturn201WithAllPrefilledCardHolderDetailsFields() {
+    void shouldReturn201WithAllPrefilledCardHolderDetailsFields() {
         String cardholderName = "Joe Bogs";
         String line1 = "Line 1";
         String city = "City";
@@ -87,7 +98,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
                 )
         ));
 
-        connectorRestApiClient.postCreateCharge(postBody)
+        app.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -105,7 +116,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
     }
 
     @Test
-    public void shouldReturn201WithSomePrefilledCardHolderDetailsFields() {
+    void shouldReturn201WithSomePrefilledCardHolderDetailsFields() {
         String cardholderName = "Joe Bogs";
         String line1 = "Line 1";
         String postCode = "AB1 CD2";
@@ -124,7 +135,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
                 )
         ));
 
-        connectorRestApiClient.postCreateCharge(postBody)
+        app.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -142,7 +153,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
     }
 
     @Test
-    public void shouldReturn201AndNoCountryWhenSuppliedCountryIsTooLong() {
+    void shouldReturn201AndNoCountryWhenSuppliedCountryIsTooLong() {
         String cardholderName = "Joe Bogs";
         String line1 = "Line 1";
         String postCode = "AB1 CD2";
@@ -163,7 +174,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
                 )
         ));
 
-        connectorRestApiClient.postCreateCharge(postBody)
+        app.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -181,7 +192,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
     }
 
     @Test
-    public void shouldReturn201WithNoCardDetailsWhenPrefilledCardHolderDetailsFieldsAreNotPresent() {
+    void shouldReturn201WithNoCardDetailsWhenPrefilledCardHolderDetailsFieldsAreNotPresent() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -189,7 +200,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        connectorRestApiClient.postCreateCharge(postBody)
+        app.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -202,7 +213,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
     }
 
     @Test
-    public void shouldReturn201WithBillingAddresssWhenPrefilledCardHolderDetailsFieldsContainsCardHolderNameOnly() {
+    void shouldReturn201WithBillingAddresssWhenPrefilledCardHolderDetailsFieldsContainsCardHolderNameOnly() {
         String cardholderName = "Joe Bogs";
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -214,7 +225,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT extends NewCha
                 )
         ));
 
-        connectorRestApiClient.postCreateCharge(postBody)
+        app.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))

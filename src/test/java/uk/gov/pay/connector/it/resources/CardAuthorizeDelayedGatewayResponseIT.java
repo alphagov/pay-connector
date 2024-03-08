@@ -1,12 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.lang.reflect.Field;
@@ -19,9 +16,10 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
+public class CardAuthorizeDelayedGatewayResponseIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    
     private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
     private static final String[] VALID_SANDBOX_CARD_LIST = new String[]{
@@ -36,22 +34,18 @@ public class CardAuthorizeDelayedGatewayResponseIT extends ChargingITestBase {
             "6011000990139424",
             "36148900647913"};
 
-    public CardAuthorizeDelayedGatewayResponseIT() {
-        super("sandbox");
-    }
-    
     @Test
-    public void shouldReturn202_WhenGatewayAuthorisationResponseIsDelayed() throws NoSuchFieldException, IllegalAccessException {
-        AuthorisationConfig conf = testContext.getAuthorisationConfig();
+    void shouldReturn202_WhenGatewayAuthorisationResponseIsDelayed() throws NoSuchFieldException, IllegalAccessException {
+        AuthorisationConfig conf = app.getAuthorisationConfig();
         Field timeoutInSeconds = conf.getClass().getDeclaredField("asynchronousAuthTimeoutInMilliseconds");
         timeoutInSeconds.setAccessible(true);
         timeoutInSeconds.setInt(conf, 0);
 
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        given().port(testContext.getPort())
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(202)
                 .contentType(JSON)
