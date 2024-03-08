@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -17,18 +19,32 @@ import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_CREDENTIAL_ID_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_PROVIDER_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingITestBase {
+public class ChargesApiResourceCreateProviderCredentialsIT {
 
-    public ChargesApiResourceCreateProviderCredentialsIT() {
-        super(PROVIDER_NAME);
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
     }
 
     @Test
-    public void shouldCreateChargeForCredentialIdProvided() {
+    void shouldCreateChargeForCredentialIdProvided() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider("worldpay")
@@ -44,7 +60,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 .withGatewayAccountCredentials(List.of(credentialsToUse, activeCredentials))
                 .withAccountId(accountId)
                 .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -54,19 +70,19 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 JSON_CREDENTIAL_ID_KEY, credentialsToUse.getExternalId()
         ));
 
-        String chargeId = connectorRestApiClient
+        String chargeId = app.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_PROVIDER_KEY, is("worldpay"))
                 .extract().body().jsonPath().get("charge_id");
 
-        Map<String, Object> charge = databaseTestHelper.getChargeByExternalId(chargeId);
+        Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(chargeId);
         assertThat(charge.get("gateway_account_credential_id"), is(credentialsToUse.getId()));
     }
 
     @Test
-    public void shouldReturn400WhenCredentialsNotFoundForCredentialIdProvided() {
+    void shouldReturn400WhenCredentialsNotFoundForCredentialIdProvided() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider("worldpay")
@@ -77,7 +93,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 .withGatewayAccountCredentials(List.of(credentials))
                 .withAccountId(accountId)
                 .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -87,7 +103,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 JSON_CREDENTIAL_ID_KEY, "random-credential-id"
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -96,7 +112,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
     }
 
     @Test
-    public void shouldReturn400WhenNoCredentialsAreInUsableState() {
+    void shouldReturn400WhenNoCredentialsAreInUsableState() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider("worldpay")
@@ -108,7 +124,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 .withGatewayAccountCredentials(List.of(credentials))
                 .withAccountId(accountId)
                 .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -118,7 +134,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 JSON_CREDENTIAL_ID_KEY, credentials.getExternalId()
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -127,7 +143,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
     }
 
     @Test
-    public void shouldReturn400WhenCredentialsInCreatedState() {
+    void shouldReturn400WhenCredentialsInCreatedState() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider("worldpay")
@@ -139,7 +155,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 .withGatewayAccountCredentials(List.of(credentials))
                 .withAccountId(accountId)
                 .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -148,7 +164,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT extends NewChargingIT
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .contentType(JSON)

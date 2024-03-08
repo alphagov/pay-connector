@@ -1,13 +1,11 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -27,34 +25,36 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
-public class CardResourceCaptureIT extends ChargingITestBase {
+public class CardResourceCaptureIT {
 
-    public CardResourceCaptureIT() {
-        super("sandbox");
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
     }
 
     @Test
-    public void shouldFailPayment_IfCaptureStatusIsUnknown() {
-        String failedChargeId = createNewCharge(CAPTURE_ERROR);
-        assertApiStateIs(failedChargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
+    void shouldFailPayment_IfCaptureStatusIsUnknown() {
+        String failedChargeId = app.createNewCharge(CAPTURE_ERROR);
+        app.assertApiStateIs(failedChargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
     }
 
     @Test
-    public void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
-        String chargeId = authoriseNewCharge();
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+    void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
+        String chargeId = app.authoriseNewCharge();
+        app.givenSetup()
+                .post(app.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        app.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
     @Test
-    public void shouldReturn404IfChargeDoesNotExist_ForCapture() {
+    void shouldReturn404IfChargeDoesNotExist_ForCapture() {
         String unknownId = "398579438759438";
         String message = String.format("Charge with id [%s] not found.", unknownId);
 
@@ -62,36 +62,36 @@ public class CardResourceCaptureIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfChargeIsCaptureReady() {
-        String chargeId = createNewChargeWithNoTransactionId(CAPTURE_READY);
+    void shouldReturnErrorWithoutChangingChargeState_IfChargeIsCaptureReady() {
+        String chargeId = app.createNewChargeWithNoTransactionId(CAPTURE_READY);
         String message = "Charge not in correct state to be processed, " + chargeId;
         captureAndVerifyFor(chargeId, 400, message);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_READY.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_READY.getValue());
     }
 
     @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfChargeIsExpired() {
-        String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
+    void shouldReturnErrorWithoutChangingChargeState_IfChargeIsExpired() {
+        String chargeId = app.createNewChargeWithNoTransactionId(EXPIRED);
         String message = format("Charge not in correct state to be processed, %s", chargeId);
         captureAndVerifyFor(chargeId, 400, message);
-        assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
     @Test
-    public void shouldPreserveCardDetails_IfCaptureReady() {
-        String externalChargeId = authoriseNewCharge();
+    void shouldPreserveCardDetails_IfCaptureReady() {
+        String externalChargeId = app.authoriseNewCharge();
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
 
-        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
 
-        givenSetup()
-                .post(captureChargeUrlFor(externalChargeId))
+        app.givenSetup()
+                .post(app.captureChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(204);
 
-        chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, is(notNullValue()));
         assertThat(chargeCardDetails.get("last_digits_card_number"), is(notNullValue()));
         assertThat(chargeCardDetails.get("first_digits_card_number"), is(notNullValue()));
@@ -105,31 +105,31 @@ public class CardResourceCaptureIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldSetPaymentInstrumentOnAgreementAndCancelPreviousPaymentInstruments_forSetUpAgreementCharge() {
-        String agreementExternalId = addAgreement();
-        Long previousPaymentInstrumentId = addPaymentInstrument(agreementExternalId, PaymentInstrumentStatus.ACTIVE);
-        Long newPaymentInstrumentId = addPaymentInstrument(null, PaymentInstrumentStatus.CREATED);
-        ChargeUtils.ExternalChargeId externalChargeId = addChargeForSetUpAgreement(AUTHORISATION_SUCCESS, agreementExternalId, newPaymentInstrumentId);
+    void shouldSetPaymentInstrumentOnAgreementAndCancelPreviousPaymentInstruments_forSetUpAgreementCharge() {
+        String agreementExternalId = app.addAgreement();
+        Long previousPaymentInstrumentId = app.addPaymentInstrument(agreementExternalId, PaymentInstrumentStatus.ACTIVE);
+        Long newPaymentInstrumentId = app.addPaymentInstrument(null, PaymentInstrumentStatus.CREATED);
+        ChargeUtils.ExternalChargeId externalChargeId = app.addChargeForSetUpAgreement(AUTHORISATION_SUCCESS, agreementExternalId, newPaymentInstrumentId);
 
-        givenSetup()
-                .post(captureChargeUrlFor(externalChargeId.toString()))
+        app.givenSetup()
+                .post(app.captureChargeUrlFor(externalChargeId.toString()))
                 .then()
                 .statusCode(204);
 
-        Map<String, Object> previousPaymentInstrument = databaseTestHelper.getPaymentInstrument(previousPaymentInstrumentId);
+        Map<String, Object> previousPaymentInstrument = app.getDatabaseTestHelper().getPaymentInstrument(previousPaymentInstrumentId);
         assertThat(previousPaymentInstrument.get("status"), is("CANCELLED"));
 
-        Map<String, Object> newPaymentInstrument = databaseTestHelper.getPaymentInstrument(newPaymentInstrumentId);
+        Map<String, Object> newPaymentInstrument = app.getDatabaseTestHelper().getPaymentInstrument(newPaymentInstrumentId);
         assertThat(newPaymentInstrument.get("status"), is("ACTIVE"));
         assertThat(newPaymentInstrument.get("agreement_external_id"), is(agreementExternalId));
 
-        Map<String, Object> agreement = databaseTestHelper.getAgreementByExternalId(agreementExternalId);
+        Map<String, Object> agreement = app.getDatabaseTestHelper().getAgreementByExternalId(agreementExternalId);
         assertThat(agreement.get("payment_instrument_id"), is(newPaymentInstrumentId));
     }
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+        app.givenSetup()
+                .post(app.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(expectedStatusCode)
                 .contentType(JSON)

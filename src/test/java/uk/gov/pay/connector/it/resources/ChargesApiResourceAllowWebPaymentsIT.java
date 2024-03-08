@@ -3,17 +3,21 @@ package uk.gov.pay.connector.it.resources;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,47 +34,59 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_C
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 
-public class ChargesApiResourceAllowWebPaymentsIT extends NewChargingITestBase {
-    
+public class ChargesApiResourceAllowWebPaymentsIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
+    }
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     private DatabaseFixtures.TestAccount testAccount;
-    private DatabaseTestHelper databaseTestHelper;
-    private DatabaseFixtures databaseFixtures;
     private Long accountId;
     private String chargeId;
     private Long credentialsId;
     
-    public ChargesApiResourceAllowWebPaymentsIT() {
-        super("worldpay");
-    }
-
-
-    @Before
-    public void setup() {
-        databaseTestHelper = connectorApp.getDatabaseTestHelper();
-        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
+    @BeforeEach
+    void setupGateway() {
         testAccount = addGatewayAccountAndCredential("worldpay");
         accountId = testAccount.getAccountId();
-        chargeId = createCharge(connectorApp.getLocalPort(), accountId.toString());
+        chargeId = createCharge(app.getLocalPort(), accountId.toString());
 
         credentialsId = testAccount.getCredentials().get(0).getId();
     }
 
     @Test
-    public void assertApplePayPermission() throws JsonProcessingException {
+    void assertApplePayPermission() throws JsonProcessingException {
         assertAppleAndGooglePayAreDisabledByDefault();
 
         allowWebPaymentsOnGatewayAccount("allow_apple_pay");
 
-        given().port(connectorApp.getLocalPort()).contentType(JSON)
+        given().port(app.getLocalPort()).contentType(JSON)
                 .get("/v1/frontend/charges/" + chargeId)
                 .then()
                 .body("gateway_account.allow_apple_pay", is(true));
     }
 
+    @ParameterizedTest()
+    @MethodSource("permissions")
+    void assertGooglePayPermission(boolean setAllowGooglePayFlag, boolean setGatewayMerchantId, boolean isGooglePayAllowed) throws JsonProcessingException {
+        assertAppleAndGooglePayAreDisabledByDefault();
+
+        if (setAllowGooglePayFlag) allowWebPaymentsOnGatewayAccount("allow_google_pay");
+
+        if (setGatewayMerchantId) addGatewayMerchantIdToGatewayAccount();
+
+        given().port(app.getLocalPort()).contentType(JSON)
+                .get("/v1/frontend/charges/" + chargeId)
+                .then()
+                .body("gateway_account.allow_google_pay", is(isGooglePayAllowed));
+    }
+
     private void assertAppleAndGooglePayAreDisabledByDefault() {
-        given().port(connectorApp.getLocalPort()).contentType(JSON)
+        given().port(app.getLocalPort()).contentType(JSON)
                 .get("/v1/frontend/charges/" + chargeId)
                 .then()
                 .body("gateway_account.allow_apple_pay", is(false))
@@ -82,7 +98,7 @@ public class ChargesApiResourceAllowWebPaymentsIT extends NewChargingITestBase {
                 "path", path,
                 "value", true));
 
-        given().port(connectorApp.getLocalPort()).contentType(JSON)
+        given().port(app.getLocalPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountId)
                 .then()
@@ -95,7 +111,7 @@ public class ChargesApiResourceAllowWebPaymentsIT extends NewChargingITestBase {
                 "path", "credentials/gateway_merchant_id",
                 "value", "94b53bf6b12b6c5")));
 
-        given().port(connectorApp.getLocalPort()).contentType(JSON)
+        given().port(app.getLocalPort()).contentType(JSON)
                 .body(payload)
                 .patch("/v1/api/accounts/" + accountId + "/credentials/" + credentialsId)
                 .then()
@@ -132,10 +148,18 @@ public class ChargesApiResourceAllowWebPaymentsIT extends NewChargingITestBase {
                                         CREDENTIALS_PASSWORD, "a-password")))
                 .build();
 
-        return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
+        return app.getDatabaseFixtures().aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
                 .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
                 .insert();
+    }
+
+    static Collection<Object[]> permissions() {
+        return List.of(new Object[][]{
+                { true, false, false },
+                { true, true, true },
+                { false, true, false }
+        });
     }
 }

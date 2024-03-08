@@ -1,18 +1,14 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.restassured.specification.RequestSpecification;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestToken;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import static io.restassured.RestAssured.given;
@@ -23,49 +19,47 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class SecurityTokensResourceIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
+    }
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
-
-    @DropwizardTestContext
-    private TestContext testContext;
-
-    private DatabaseTestHelper databaseTestHelper;
-
-    @Before
-    public void setup() {
-        databaseTestHelper = testContext.getDatabaseTestHelper();
+    
+    @BeforeEach
+    void setup() {
 
         defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .insert();
 
         defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
     }
 
-    @After
-    public void tearDown() {
-        databaseTestHelper.truncateAllData();
+    @AfterEach
+    void tearDown() {
+        app.getDatabaseTestHelper().truncateAllData();
     }
 
     @Test
-    public void shouldReturn404ForGetTokenAndMotoAPIPayment() {
+    void shouldReturn404ForGetTokenAndMotoAPIPayment() {
         DatabaseFixtures.TestCharge charge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withAuthorisationMode(MOTO_API)
                 .withTestAccount(defaultTestAccount)
                 .insert();
         TestToken token = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestToken()
                 .withCharge(charge)
                 .withUsed(false)
@@ -80,9 +74,9 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldGetUnusedToken() {
+    void shouldGetUnusedToken() {
         TestToken token = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestToken()
                 .withCharge(defaultTestCharge)
                 .withUsed(false)
@@ -100,9 +94,9 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldGetUsedToken() {
+    void shouldGetUsedToken() {
         TestToken token = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestToken()
                 .withCharge(defaultTestCharge)
                 .withUsed(true)
@@ -120,7 +114,7 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldReturn404ForTokenNotFound() {
+    void shouldReturn404ForTokenNotFound() {
         givenSetup()
                 .get("/v1/frontend/tokens/non-existent-secure-redirect-token")
                 .then()
@@ -130,9 +124,9 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldDeleteToken() {
+    void shouldDeleteToken() {
         TestToken token = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestToken()
                 .withCharge(defaultTestCharge)
                 .withUsed(false)
@@ -153,9 +147,9 @@ public class SecurityTokensResourceIT {
     }
 
     @Test
-    public void shouldMarkTokenAsUsed() {
+    void shouldMarkTokenAsUsed() {
         TestToken token = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestToken()
                 .withCharge(defaultTestCharge)
                 .withUsed(false)
@@ -167,11 +161,11 @@ public class SecurityTokensResourceIT {
                 .statusCode(204)
                 .body(emptyOrNullString());
 
-        assertTrue(databaseTestHelper.isChargeTokenUsed(token.getSecureRedirectToken()));
+        assertTrue(app.getDatabaseTestHelper().isChargeTokenUsed(token.getSecureRedirectToken()));
     }
 
     @Test
-    public void shouldReturn404WhenTryingToMarkNotFoundTokenUsed() {
+    void shouldReturn404WhenTryingToMarkNotFoundTokenUsed() {
         givenSetup()
                 .post("/v1/frontend/tokens/" + "not_found" + "/used")
                 .then()
@@ -181,7 +175,7 @@ public class SecurityTokensResourceIT {
     }
 
     private RequestSpecification givenSetup() {
-        return given().port(testContext.getPort())
+        return given().port(app.getLocalPort())
                 .contentType(JSON);
     }
 

@@ -1,9 +1,12 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.Instant;
@@ -26,25 +29,29 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 
-public class ChargeCancelResourceIT extends NewChargingITestBase {
+public class ChargeCancelResourceIT {
 
-    public ChargeCancelResourceIT() {
-        super("worldpay");
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
     }
 
     @Test
     public void shouldPreserveCardDetailsIfCancelled() {
-        String externalChargeId = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        String externalChargeId = app.addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
-        worldpayMockClient.mockCancelSuccess();
+        app.getWorldpayMockClient().mockCancelSuccess();
 
-        Map<String, Object> cardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(cardDetails.isEmpty(), is(false));
 
-        cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
+        app.cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
 
-        cardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(cardDetails, is(notNullValue()));
         assertThat(cardDetails.get("card_brand"), is(notNullValue()));
         assertThat(cardDetails.get("last_digits_card_number"), is(notNullValue()));
@@ -60,12 +67,12 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
 
     @Test
     public void shouldRespondWith204WithLockingStatus_IfCancelledAfterAuth() {
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
-        worldpayMockClient.mockCancelSuccess();
+        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
+        app.getWorldpayMockClient().mockCancelSuccess();
 
-        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
+        app.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
-        List<String> events = databaseTestHelper.getInternalEvents(chargeId);
+        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(3));
         assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                 SYSTEM_CANCEL_READY.getValue(),
@@ -75,12 +82,12 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
     @Test
     public void shouldRespondWith204WithLockingStatus_IfCancelFailedAfterAuth() {
 
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
-        worldpayMockClient.mockCancelError();
+        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        app.getWorldpayMockClient().mockCancelError();
 
-        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
+        app.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
 
-        List<String> events = databaseTestHelper.getInternalEvents(chargeId);
+        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(3));
         assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                 SYSTEM_CANCEL_READY.getValue(),
@@ -91,7 +98,7 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
     public void respondWith202_whenCancelAlreadyInProgress() {
         String chargeId = createNewInPastChargeWithStatus(SYSTEM_CANCEL_READY);
         String expectedMessage = "System Cancellation for charge already in progress, " + chargeId;
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(ACCEPTED.getStatusCode())
@@ -104,7 +111,7 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
     @Test
     public void respondWith404_whenPaymentNotFound() {
         String unknownChargeId = "2344363244";
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withChargeId(unknownChargeId)
                 .postChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -119,7 +126,7 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId("")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -134,7 +141,7 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId("ABSDCEFG")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -149,7 +156,7 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = format("Charge with id [%s] not found.", chargeId);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId("12345")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -161,6 +168,6 @@ public class ChargeCancelResourceIT extends NewChargingITestBase {
     }
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
-        return addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        return app.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
     }
 }

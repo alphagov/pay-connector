@@ -979,6 +979,12 @@ public class DatabaseTestHelper {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE idempotency").execute());
     }
 
+    public void truncateAgreements() {
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE agreements CASCADE").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE payment_instruments CASCADE").execute());
+        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE idempotency").execute());
+    }
+
     public Long getChargeIdByExternalId(String externalChargeId) {
 
         String chargeId = jdbi.withHandle(h ->

@@ -1,17 +1,16 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZonedDateTime;
@@ -35,15 +34,18 @@ import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 public class ChargeEventsResourceIT {
-    @ClassRule
-    public static DropwizardAppWithPostgresRule connectorApp = new DropwizardAppWithPostgresRule();
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
+    }
 
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     public static final String USER_EMAIL = "test@test.com";
     private String gatewayRefundTransactionId;
-    private DatabaseTestHelper databaseTestHelper;
     private String accountId = "72332423443245";
-    private RestAssuredClient connectorApi;
 
     private AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
             .withAccountId(accountId)
@@ -51,16 +53,14 @@ public class ChargeEventsResourceIT {
             .withServiceName("a cool service")
             .build();
 
-    @Before
-    public void setUp() {
-        databaseTestHelper = connectorApp.getDatabaseTestHelper();
-        connectorApi = new RestAssuredClient(connectorApp.getLocalPort(), accountId);
+    @BeforeEach
+    public void setUpRefund() {
         gatewayRefundTransactionId = RandomStringUtils.randomAlphanumeric(30);
     }
 
-    @After
+    @AfterEach
     public void teardown() {
-        databaseTestHelper.truncateAllData();
+        app.getDatabaseTestHelper().truncateAllData();
     }
 
     @Test
@@ -68,7 +68,7 @@ public class ChargeEventsResourceIT {
         ZonedDateTime createdDate = ZonedDateTime.now();
         String externalChargeId = "external-charge-id";
 
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
 
         DatabaseFixtures.TestCharge testCharge = createTestCharge(externalChargeId).insert();
 
@@ -87,9 +87,9 @@ public class ChargeEventsResourceIT {
         createTestChargeEvent(testCharge)
                 .withChargeStatus(CAPTURED).withDate(createdDate.plusSeconds(6)).insert();
 
-        var result = databaseTestHelper.getChargeEvents(testCharge.getChargeId());
+        var result = app.getDatabaseTestHelper().getChargeEvents(testCharge.getChargeId());
 
-        connectorApi
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))
@@ -104,7 +104,7 @@ public class ChargeEventsResourceIT {
         ZonedDateTime createdDate = ZonedDateTime.now();
         String externalChargeId = "an-external-charge-id";
 
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
 
         DatabaseFixtures.TestCharge testCharge = createTestCharge(externalChargeId).insert();
 
@@ -157,9 +157,9 @@ public class ChargeEventsResourceIT {
                 .insert(RefundStatus.REFUND_SUBMITTED, testGatewayReferenceRefund2, historyRefund2SubmittedStartDate, refundTest2RefundedDate)
                 .insert(RefundStatus.REFUNDED, testGatewayReferenceRefund2, refundTest2RefundedDate);
 
-        List<Map<String, Object>> charges = databaseTestHelper.getChargeEvents(testCharge.getChargeId());
-        List<Map<String, Object>> refunds = databaseTestHelper.getRefundsHistoryByChargeExternalId(testCharge.getExternalChargeId());
-        connectorApi
+        List<Map<String, Object>> charges = app.getDatabaseTestHelper().getChargeEvents(testCharge.getChargeId());
+        List<Map<String, Object>> refunds = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(testCharge.getExternalChargeId());
+        app.getConnectorRestApiClient()
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))
                 .body("events.size()", equalTo(7))
@@ -174,7 +174,7 @@ public class ChargeEventsResourceIT {
 
     @Test
     public void shouldReturn404WhenAccountIdIsNonNumeric() {
-        connectorApi.withAccountId("invalidAccountId")
+        app.getConnectorRestApiClient().withAccountId("invalidAccountId")
                 .getEvents("123charge")
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -184,7 +184,7 @@ public class ChargeEventsResourceIT {
 
     @Test
     public void shouldReturn404WhenIsChargeIdNotExists() {
-        connectorApi.withAccountId(accountId)
+        app.getConnectorRestApiClient().withAccountId(accountId)
                 .getEvents("non-existent-charge")
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -193,11 +193,11 @@ public class ChargeEventsResourceIT {
     }
 
     private DatabaseFixtures.TestCharge createTestCharge(String externalChargeId) {
-        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .withAccountId(Long.valueOf(accountId));
 
-        return withDatabaseTestHelper(databaseTestHelper)
+        return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withExternalChargeId(externalChargeId)
                 .withAmount(100L)
@@ -206,18 +206,18 @@ public class ChargeEventsResourceIT {
     }
 
     private DatabaseFixtures.TestChargeEvent createTestChargeEvent(DatabaseFixtures.TestCharge testCharge) {
-        return withDatabaseTestHelper(databaseTestHelper)
+        return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestChargeEvent()
                 .withTestCharge(testCharge);
     }
 
     private DatabaseFixtures.TestRefundHistory createTestRefundHistory(DatabaseFixtures.TestRefund testRefund) {
-        return withDatabaseTestHelper(databaseTestHelper)
+        return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestRefundHistory(testRefund);
     }
 
     private DatabaseFixtures.TestRefund createTestRefund(DatabaseFixtures.TestCharge testCharge) {
-        return withDatabaseTestHelper(databaseTestHelper)
+        return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestRefund()
                 .withTestCharge(testCharge);
     }

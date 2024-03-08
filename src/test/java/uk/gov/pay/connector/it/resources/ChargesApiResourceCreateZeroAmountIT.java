@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Test;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -9,12 +11,25 @@ import java.util.Map;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.EMAIL;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_EMAIL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class ChargesApiResourceCreateZeroAmountIT extends NewChargingITestBase {
+public class ChargesApiResourceCreateZeroAmountIT {
 
-    public ChargesApiResourceCreateZeroAmountIT() {
-        super(PROVIDER_NAME);
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
     }
 
     @Test
@@ -27,7 +42,7 @@ public class ChargesApiResourceCreateZeroAmountIT extends NewChargingITestBase {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -37,7 +52,7 @@ public class ChargesApiResourceCreateZeroAmountIT extends NewChargingITestBase {
 
     @Test
     public void shouldMakeChargeWhenAmountIsZeroIfAccountAllowsIt() {
-        databaseTestHelper.allowZeroAmount(Long.parseLong(accountId));
+        app.getDatabaseTestHelper().allowZeroAmount(Long.parseLong(app.getAccountId()));
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, 0,
@@ -47,7 +62,7 @@ public class ChargesApiResourceCreateZeroAmountIT extends NewChargingITestBase {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(201)
                 .contentType(JSON)

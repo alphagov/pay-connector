@@ -1,19 +1,22 @@
 package uk.gov.pay.connector.it.resources;
 
+import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.hamcrest.Matchers;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -52,47 +55,53 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_LOCAL_DATE_IN_UTC;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
-public class ChargesApiResourceIT extends ChargingITestBase {
+public class ChargesApiResourceIT {
+
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
+    }
 
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
-    private static final String PROVIDER_NAME = "sandbox";
 
-    public ChargesApiResourceIT() {
-        super(PROVIDER_NAME);
-    }
+    private final DatabaseTestHelper databaseTestHelper = app.getDatabaseTestHelper();
+    private final String accountId = app.getAccountId();
 
     @Test
-    public void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
+    void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
         Instant startOfTest = Instant.now();
         String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
 
-        String chargeId = authoriseNewCharge();
+        String chargeId = app.authoriseNewCharge();
 
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+        app.givenSetup()
+                .post(app.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
-        testContext.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
+        app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
 
-        getCharge(chargeId)
+        app.getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
                 .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
     }
 
     @Test
-    public void shouldReturn404OnGetCharge_whenAccountIdIsNonNumeric() {
-        connectorRestApiClient
+    void shouldReturn404OnGetCharge_whenAccountIdIsNonNumeric() {
+        app.getConnectorRestApiClient()
                 .withAccountId("wrongAccount")
                 .withChargeId("123")
                 .withHeader(HttpHeaders.ACCEPT, JSON.getAcceptHeader())
@@ -104,8 +113,8 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturn404WhenGettingNonExistentChargeId() {
-        connectorRestApiClient
+    void shouldReturn404WhenGettingNonExistentChargeId() {
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId("does-not-exist")
                 .getCharge()
@@ -113,7 +122,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetChargeStatusAsInProgressIfInternalStatusIsAuthorised() {
+    void shouldGetChargeStatusAsInProgressIfInternalStatusIsAuthorised() {
 
         long chargeId = nextInt();
         String externalChargeId = "charge1";
@@ -129,7 +138,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
 
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -140,7 +149,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetCardDetails_whenStatusIsBeyondAuthorised() {
+    void shouldGetCardDetails_whenStatusIsBeyondAuthorised() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -156,7 +165,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         databaseTestHelper.updateChargeCardDetails(chargeId, AuthCardDetailsFixture.anAuthCardDetails().withCardNo("12345678").build());
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -168,7 +177,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetMetadataWhenSet() {
+    void shouldGetMetadataWhenSet() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
         ExternalMetadata externalMetadata = new ExternalMetadata(
@@ -183,7 +192,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withExternalMetadata(externalMetadata)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -195,7 +204,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotReturnMetadataWhenNull() {
+    void shouldNotReturnMetadataWhenNull() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -207,7 +216,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -217,7 +226,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCardBrandLabel_whenChargeIsAuthorised() {
+    void shouldReturnCardBrandLabel_whenChargeIsAuthorised() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -234,7 +243,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -244,7 +253,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3ds() {
+    void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3ds() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -258,7 +267,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         databaseTestHelper.updateCharge3dsFlexChallengeDetails(chargeId, "acsUrl", "transactionId", "payload", "2.1.0");
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -269,7 +278,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
+    void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -284,7 +293,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -294,7 +303,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotReturnBillingAddress_whenNoAddressDetailsPresentInDB() {
+    void shouldNotReturnBillingAddress_whenNoAddressDetailsPresentInDB() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -309,7 +318,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 CardExpiryDate.valueOf("03/18"), null, null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -319,7 +328,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnFeeIfItExists() {
+    void shouldReturnFeeIfItExists() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
         long feeCollected = 100L;
@@ -328,7 +337,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         createCharge(externalChargeId, chargeId);
         databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id", FeeType.TRANSACTION);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -338,7 +347,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnNetAmountIfFeeExists() {
+    void shouldReturnNetAmountIfFeeExists() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
         long feeCollected = 100L;
@@ -349,7 +358,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
         createCharge(externalChargeId, chargeId);
         databaseTestHelper.addFee(RandomIdGenerator.newId(), chargeId, 100L, feeCollected, ZonedDateTime.now(), "irrelevant_id", FeeType.TRANSACTION);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -360,9 +369,9 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void cannotGetCharge_WhenInvalidChargeId() {
+    void cannotGetCharge_WhenInvalidChargeId() {
         String chargeId = "23235124";
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(chargeId)
                 .getCharge()
@@ -373,12 +382,12 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
+    void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+        String extChargeId = app.addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
         // run expiry task
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -386,7 +395,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .body("expiry-failed", is(0));
 
         // get the charge back and assert its status is expired
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .getCharge()
@@ -398,18 +407,18 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
-        String extChargeId = addChargeAndCardDetails(ChargeStatus.AUTHORISATION_3DS_REQUIRED, ServicePaymentReference.of("ref"),
+    void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
+        String extChargeId = app.addChargeAndCardDetails(ChargeStatus.AUTHORISATION_3DS_REQUIRED, ServicePaymentReference.of("ref"),
                 Instant.now().minus(90, MINUTES));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
                 .body("expiry-success", is(1))
                 .body("expiry-failed", is(0));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .getCharge()
@@ -421,13 +430,13 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
+    void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
+        String extChargeId = app.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
                 ServicePaymentReference.of("ref"), Instant.now().minus(120, HOURS));
 
         // run expiry task
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postChargeExpiryTask()
                 .statusCode(OK.getStatusCode())
                 .contentType(JSON)
@@ -435,7 +444,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .body("expiry-failed", is(0));
 
         // get the charge back and assert its status is expired
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .getCharge()
@@ -447,19 +456,19 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
+    void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
+        String extChargeId = app.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
                 ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .postMarkChargeAsCaptureApproved()
                 .statusCode(NO_CONTENT.getStatusCode());
 
         // get the charge back and assert its status is expired
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .getCharge()
@@ -471,19 +480,19 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
+    void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(CAPTURE_APPROVED,
+        String extChargeId = app.addChargeAndCardDetails(CAPTURE_APPROVED,
                 ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .postMarkChargeAsCaptureApproved()
                 .statusCode(NO_CONTENT.getStatusCode());
 
         // get the charge back and assert its status is expired
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .getCharge()
@@ -495,8 +504,8 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
-        connectorRestApiClient
+    void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId("i-do-not-exist")
                 .postMarkChargeAsCaptureApproved()
@@ -507,13 +516,13 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+    void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
         //create charge
-        String extChargeId = addChargeAndCardDetails(EXPIRED,
+        String extChargeId = app.addChargeAndCardDetails(EXPIRED,
                 ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
         final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(extChargeId)
                 .postMarkChargeAsCaptureApproved()
@@ -524,7 +533,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnDebitCardType_whenCardTypeIsDebit() {
+    void shouldReturnDebitCardType_whenCardTypeIsDebit() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -540,7 +549,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 CardExpiryDate.valueOf("03/18"), DEBIT.toString(), null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -550,7 +559,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnNullCardType_whenCardTypeIsNull() {
+    void shouldReturnNullCardType_whenCardTypeIsNull() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -566,7 +575,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 CardExpiryDate.valueOf("03/18"), null, null, null, null, null, null, null);
         databaseTestHelper.addToken(chargeId, "tokenId");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -576,7 +585,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnChargeWhenAuthorisationModeIsMotoApi() {
+    void shouldReturnChargeWhenAuthorisationModeIsMotoApi() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -587,7 +596,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withAuthorisationMode(AuthorisationMode.MOTO_API)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -597,7 +606,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCanRetryTrueWhenChargeCanBeRetried() {
+    void shouldReturnCanRetryTrueWhenChargeCanBeRetried() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -610,7 +619,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withCanRetry(true)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -620,7 +629,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCanBeRetried() {
+    void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCanBeRetried() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -633,7 +642,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withCanRetry(true)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -643,7 +652,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCannotBeRetried() {
+    void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCannotBeRetried() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -656,7 +665,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withCanRetry(false)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -666,7 +675,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeAgreementAndUnspecifiedWhetherItCanBeRetried() {
+    void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeAgreementAndUnspecifiedWhetherItCanBeRetried() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -679,7 +688,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withCanRetry(null)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()
@@ -689,7 +698,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeWeb() {
+    void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeWeb() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
@@ -702,7 +711,7 @@ public class ChargesApiResourceIT extends ChargingITestBase {
                 .withCanRetry(true)
                 .build());
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .withChargeId(externalChargeId)
                 .getCharge()

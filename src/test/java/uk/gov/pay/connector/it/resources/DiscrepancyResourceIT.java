@@ -2,9 +2,11 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
@@ -33,18 +35,22 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
-public class DiscrepancyResourceIT extends NewChargingITestBase {
-    public DiscrepancyResourceIT() {
-        super("worldpay");
+public class DiscrepancyResourceIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
     }
 
     @Test
-    public void shouldReturnAllCharges_whenRequestDiscrepancyReport() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(1, HOURS), "irrelevant");
-        String chargeId2 = addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelevant");
-        worldpayMockClient.mockAuthorisationQuerySuccess();
+    void shouldReturnAllCharges_whenRequestDiscrepancyReport() {
+        String chargeId = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        String chargeId2 = app.addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
-        List<JsonNode> results = connectorRestApiClient
+        List<JsonNode> results = app.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(Arrays.asList(chargeId, chargeId2)))
                 .statusCode(200)
                 .contentType(JSON)
@@ -68,19 +74,19 @@ public class DiscrepancyResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturnDiscrepencyReportForExpungedCharges() throws JsonProcessingException {
-        DatabaseFixtures.TestCharge charge = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+    void shouldReturnDiscrepencyReportForExpungedCharges() throws JsonProcessingException {
+        DatabaseFixtures.TestCharge charge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
-                .withTestAccount(getTestAccount())
+                .withTestAccount(app.getTestAccount())
                 .withExternalChargeId("external_charge_id_10")
                 .withTransactionId("gateway_transaction_id_")
                 .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
                 .withAuthorisationMode(AuthorisationMode.WEB);
 
-        ledgerStub.returnLedgerTransaction(charge.getExternalChargeId(), charge, null);
-        worldpayMockClient.mockAuthorisationQuerySuccess();
+        app.getLedgerStub().returnLedgerTransaction(charge.getExternalChargeId(), charge, null);
+        app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
-        List<JsonNode> results = connectorRestApiClient
+        List<JsonNode> results = app.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(singletonList(charge.getExternalChargeId())))
                 .statusCode(200)
                 .contentType(JSON)
@@ -97,11 +103,11 @@ public class DiscrepancyResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReportOnChargesThatAreInErrorStatesInGatewayAccount() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+    void shouldReportOnChargesThatAreInErrorStatesInGatewayAccount() {
+        String chargeId = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE));
 
-        List<JsonNode> results = connectorRestApiClient
+        List<JsonNode> results = app.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(Arrays.asList(chargeId)))
                 .statusCode(200)
                 .contentType(JSON)
@@ -120,22 +126,22 @@ public class DiscrepancyResourceIT extends NewChargingITestBase {
     }
     
     @Test
-    public void should404_whenAChargeIdDoesntExist() {
-        worldpayMockClient.mockAuthorisationQuerySuccess();
+    void should404_whenAChargeIdDoesntExist() {
+        app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
-        ledgerStub.returnTransactionNotFound("nonExistentId");
-        connectorRestApiClient
+        app.getLedgerStub().returnTransactionNotFound("nonExistentId");
+        app.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(singletonList("nonExistentId")))
                 .statusCode(404);
     }
 
     @Test
-    public void shouldProcessDiscrepanciesWherePayStateIsExpiredAndGatewayStateIsAuthorised() {
-        String chargeId = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
-        String chargeId2 = addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+    void shouldProcessDiscrepanciesWherePayStateIsExpiredAndGatewayStateIsAuthorised() {
+        String chargeId = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+        String chargeId2 = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
-        List<JsonNode> results = connectorRestApiClient
+        List<JsonNode> results = app.getConnectorRestApiClient()
                 .resolveDiscrepancies(toJson(Arrays.asList(chargeId, chargeId2)))
                 .statusCode(200)
                 .contentType(JSON)
@@ -155,14 +161,14 @@ public class DiscrepancyResourceIT extends NewChargingITestBase {
     }
     
     private void mockAuthorisationQueryAndCancel(String authQueryResponse) {
-        wireMockServer.resetAll();
-        wireMockServer.stubFor(post(urlPathEqualTo(WORLDPAY_URL)).inScenario("process discrepancies")
+        app.getWorldpayWireMockServer().resetAll();
+        app.getWorldpayWireMockServer().stubFor(post(urlPathEqualTo(WORLDPAY_URL)).inScenario("process discrepancies")
                 .whenScenarioStateIs(STARTED)
                 .withRequestBody(matchingXPath("//orderInquiry[@orderCode]"))
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, TEXT_XML).withStatus(200).withBody(authQueryResponse))
                 .willSetStateTo("payment status queried"));
 
-        wireMockServer.stubFor(post(urlPathEqualTo(WORLDPAY_URL)).inScenario("process discrepancies")
+        app.getWorldpayWireMockServer().stubFor(post(urlPathEqualTo(WORLDPAY_URL)).inScenario("process discrepancies")
                 .whenScenarioStateIs("payment status queried")
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, TEXT_XML).withStatus(200).withBody(load(WORLDPAY_CANCEL_SUCCESS_RESPONSE)))
                 .willSetStateTo(STARTED));

@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-
+// TODO implement overriding
 @RunWith(DropwizardJUnitRunner.class)
 @DropwizardConfig(app = RefundReversalResourceIT.ConnectorAppWithCustomInjector.class, config = "config/test-it-config.yaml")
 public class RefundReversalResourceIT {

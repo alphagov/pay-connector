@@ -2,16 +2,13 @@ package uk.gov.pay.connector.it.resources.stripe;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -39,9 +36,14 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class StripeResourceCancelIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
+    }
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";
 
@@ -51,20 +53,17 @@ public class StripeResourceCancelIT {
     private String paymentProvider = PaymentGatewayName.STRIPE.getName();
 
     private DatabaseTestHelper databaseTestHelper;
-
-    @DropwizardTestContext
-    private TestContext testContext;
-
+    
     private WireMockServer wireMockServer;
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
 
-    @Before
-    public void setup() {
-        wireMockServer = testContext.getWireMockServer();
+    @BeforeEach
+    void setup() {
+        wireMockServer = app.getWireMockServer();
         stripeMockClient = new StripeMockClient(wireMockServer);
         
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
-        databaseTestHelper = testContext.getDatabaseTestHelper();
+        databaseTestHelper = app.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
 
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
@@ -76,7 +75,7 @@ public class StripeResourceCancelIT {
     }
 
     @Test
-    public void userCancelCharge() {
+    void userCancelCharge() {
 
         addGatewayAccount();
 
@@ -85,7 +84,7 @@ public class StripeResourceCancelIT {
         
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .post("/v1/frontend/charges/{chargeId}/cancel".replace("{chargeId}", externalChargeId))
                 .then()
@@ -99,7 +98,7 @@ public class StripeResourceCancelIT {
     }
 
     @Test
-    public void systemCancelCharge() {
+    void systemCancelCharge() {
 
         addGatewayAccount();
 
@@ -108,7 +107,7 @@ public class StripeResourceCancelIT {
 
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .post("/v1/api/accounts/" + accountId + "/charges/" + externalChargeId + "/cancel")
                 .then()

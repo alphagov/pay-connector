@@ -1,7 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.junit.Test;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -9,16 +11,31 @@ import java.util.Map;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.EMAIL;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_MOTO_API;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_EMAIL_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
+public class ChargesApiResourceCreateReturnUrlIT {
 
-    public ChargesApiResourceCreateReturnUrlIT() {
-        super(PROVIDER_NAME);
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+
+    @BeforeAll
+    public static void setUp() {
+        app.setUpBase();
     }
     
     @Test
-    public void shouldReturn422WhenReturnUrlIsMissing() {
+    void shouldReturn422WhenReturnUrlIsMissing() {
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -27,7 +44,7 @@ public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -37,7 +54,7 @@ public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturn422WhenReturnUrlIsPresentAndAuthorisationModeMotoApi() {
+    void shouldReturn422WhenReturnUrlIsPresentAndAuthorisationModeMotoApi() {
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -48,7 +65,7 @@ public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -58,7 +75,7 @@ public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturn422WhenReturnUrlIsEmptyString() {
+    void shouldReturn422WhenReturnUrlIsEmptyString() {
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -68,7 +85,7 @@ public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -78,7 +95,7 @@ public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturn422WhenReturnUrlIsNotValid() {
+    void shouldReturn422WhenReturnUrlIsNotValid() {
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -87,7 +104,7 @@ public class ChargesApiResourceCreateReturnUrlIT extends NewChargingITestBase {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
