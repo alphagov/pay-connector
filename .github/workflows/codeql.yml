@@ -3,6 +3,9 @@ name: CodeQL
 on:
   pull_request:
     branches: [ "master" ]
+    paths:
+      # Temporarily add back in
+      - 'src/**'
   push:
     branches: [ "master" ]
   schedule:
