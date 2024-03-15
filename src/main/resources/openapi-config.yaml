@@ -16,7 +16,6 @@ resourceClasses:
   - uk.gov.pay.connector.paymentprocessor.resource.DiscrepancyResource
   - uk.gov.pay.connector.refund.resource.RefundsResource
   - uk.gov.pay.connector.report.resource.ParityCheckerResource
-  - uk.gov.pay.connector.report.resource.PerformanceReportResource
   - uk.gov.pay.connector.token.resource.SecurityTokensResource
   - uk.gov.pay.connector.usernotification.resource.EmailNotificationResource
   - uk.gov.pay.connector.webhook.resource.NotificationResource
