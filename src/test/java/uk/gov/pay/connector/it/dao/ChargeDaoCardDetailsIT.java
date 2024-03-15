@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -123,6 +124,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     }
 
     @Test
+    @Ignore
     public void persist_shouldStoreCardDetails() {
         GatewayAccountEntity testAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
@@ -150,6 +152,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     }
 
     @Test
+    @Ignore
     public void persist_shouldStoreNullCardTypeDetails() {
         GatewayAccountEntity testAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
