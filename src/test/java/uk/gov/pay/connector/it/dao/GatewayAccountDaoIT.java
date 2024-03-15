@@ -557,12 +557,29 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }    
     
     @Test
-    public void shouldSearchForAccountsByPaymentProviderMerchantId() {
+    public void shouldSearchForAccountsByWorldpayMerchantCodeInOneOffPaymentCredentials() {
         long gatewayAccountId_1 = nextLong();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withPaymentGateway("worldpay")
                 .withCredentials(Map.of("one_off_customer_initiated", Map.of("merchant_code", "acc123")))
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setPaymentProviderAccountId("acc123");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringPaymentCredentials() {
+        long gatewayAccountId_1 = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withPaymentGateway("worldpay")
+                .withCredentials(Map.of("recurring_customer_initiated", Map.of("merchant_code", "acc123")))
                 .build());
 
         var params = new GatewayAccountSearchParams();
