@@ -80,7 +80,7 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
-public class ChargesApiResourceCreateIT 
+public class ChargesApiResourceCreateIT {
     @RegisterExtension
     public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox",
                     config("eventQueue.eventQueueEnabled", "true"),
