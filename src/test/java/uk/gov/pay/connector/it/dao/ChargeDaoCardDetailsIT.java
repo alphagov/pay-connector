@@ -138,6 +138,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
         Address billingAddress = AddressFixture.anAddress().build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(testAccount)
                 .withGatewayAccountCredentialsEntity(credentialsEntity)
                 .build();
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
@@ -168,6 +169,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
 
         Address billingAddress = AddressFixture.anAddress().build();
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(testAccount)
                 .withGatewayAccountCredentialsEntity(credentialsEntity)
                 .build();
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("123456"), LastDigitsCardNumber.of("1258"),
