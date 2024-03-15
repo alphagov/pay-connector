@@ -42,7 +42,7 @@ jobs:
         run: |
           docker pull postgres:15.2
       - name: Compile
-        run: mvn clean compile
+        run: mvn clean compile --no-transfer-progress
       - name: Check for OpenApi file changes
         run: |
           if [[ $(git status --porcelain) ]]; then
@@ -50,7 +50,7 @@ jobs:
             exit 1
           fi
       - name: Run unit and integration tests
-        run: mvn verify
+        run: mvn verify --no-transfer-progress
       - name: Check for generated pact files
         run: |
           if [ ! -d target/pacts ]; then
