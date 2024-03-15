@@ -104,6 +104,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     /**
      * @deprecated Use {@link GatewayAccountCredentialsEntity#getCredentialsObject()} instead
      */
+    @Deprecated(since = "19/07/2023")
     public Map<String, Object> getCredentials() {
         return credentials;
     }
@@ -173,8 +174,9 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     }
 
     /**
-     * @deprecated Use {@link GatewayAccountCredentialsEntity#setCredentials(GatewayCredentials)} ()} instead
+     * @deprecated Use {@link GatewayAccountCredentialsEntity#setCredentials(GatewayCredentials)} instead
      */
+    @Deprecated(since = "19/07/2023")
     public void setCredentials(Map<String, Object> credentials) {
         this.credentials = credentials;
     }
