@@ -222,7 +222,7 @@ public class GatewayAccountSearchParams {
                     "    select gateway_account_id " +
                     "    from gateway_account_credentials gac " +
                     "    where gac.gateway_account_id = ga.id and gac.credentials->>'stripe_account_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
-                    "    or gac.credentials->'one_off_customer_initiated'->>'merchant_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD + ") a" +
+                    "    or gac.credentials->'one_off_customer_initiated'->>'merchant_code' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD + ") a" +
                     ")");
         }
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
