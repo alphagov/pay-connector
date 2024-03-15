@@ -78,7 +78,6 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
-    private static final Logger logger = LoggerFactory.getLogger(ChargingITestBaseExtension.class);
     public static final String ADDRESS_LINE_1 = "The Money Pool";
     public static final String ADDRESS_CITY = "London";
     public static final String ADDRESS_POSTCODE = "DO11 4RS";
