@@ -54,7 +54,7 @@ import static org.hamcrest.collection.IsMapWithSize.anEmptyMap;
                 " ga.id in (   select gateway_account_id   from " +
                         "(     select gateway_account_id     from gateway_account_credentials gac     " +
                         "where gac.gateway_account_id = ga.id and gac.credentials->>'stripe_account_id' = #paymentProviderAccountId" +
-                        "    or gac.credentials->>'merchant_id' = #paymentProviderAccountId) a)")
+                        "    or gac.credentials->'one_off_customer_initiated'->>'merchant_code' = #paymentProviderAccountId) a)")
         );
     }
 
