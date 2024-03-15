@@ -3,9 +3,13 @@ package uk.gov.pay.connector.extension;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.testing.ConfigOverride;
+import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
@@ -19,12 +23,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.InjectorLookup;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
+import uk.gov.pay.connector.charge.dao.ChargeDao;
+import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
+import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.it.dao.GuicedTestEnvironment;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.SqsTestDocker;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.service.payments.commons.testing.port.PortFactory;
@@ -38,6 +48,7 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static uk.gov.pay.connector.junit.SqsTestDocker.getQueueUrl;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getConnectionUrl;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
@@ -108,6 +119,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeAllCallback, AfterA
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         mapper = new ObjectMapper();
 
+        injector = Guice.createInjector(new SQSModule(sqsClient));
     }
 
     @Override
@@ -164,7 +176,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeAllCallback, AfterA
 
     // TODO implement getting AuthorisationConfig
     public AuthorisationConfig getAuthorisationConfig() {
-        return null;
+        return dropwizardAppExtension.getConfiguration().getAuthorisationConfig();
     }
 
     public DropwizardAppExtension<ConnectorConfiguration> getAppRule() {
@@ -213,5 +225,16 @@ public class AppWithPostgresAndSqsExtension implements BeforeAllCallback, AfterA
 
     public String getEventQueueUrl() {
         return sqsClient.getQueueUrl("event-queue").getQueueUrl();
+    }
+
+    public class SQSModule extends AbstractModule {
+        private AmazonSQS sqsInstance;
+        public SQSModule(AmazonSQS sqsInstance) {
+            this.sqsInstance = sqsInstance;
+        }
+        @Override
+        protected void configure() {
+            bind(AmazonSQS.class).toInstance(this.sqsInstance);
+        }
     }
 }

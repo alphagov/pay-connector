@@ -14,6 +14,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -77,7 +80,7 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
-public class ChargesApiResourceCreateIT {
+public class ChargesApiResourceCreateIT 
     @RegisterExtension
     public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox",
                     config("eventQueue.eventQueueEnabled", "true"),

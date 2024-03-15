@@ -11,6 +11,8 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -76,6 +78,7 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
+    private static final Logger logger = LoggerFactory.getLogger(ChargingITestBaseExtension.class);
     public static final String ADDRESS_LINE_1 = "The Money Pool";
     public static final String ADDRESS_CITY = "London";
     public static final String ADDRESS_POSTCODE = "DO11 4RS";
@@ -597,7 +600,7 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
         return credentialParams;
     }
 
-    public AuthorisationConfig getAuthorisationConfig() {
-        return null;
-    }
+//    public AuthorisationConfig getAuthorisationConfig() {
+//        return dropwizardAppExtension.getConfiguration().getAuthorisationConfig();
+//    }
 }
