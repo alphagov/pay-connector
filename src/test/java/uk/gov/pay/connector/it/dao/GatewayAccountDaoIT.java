@@ -562,7 +562,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withPaymentGateway("worldpay")
-                .withCredentials(Map.of("one_off_customer_initiated", Map.of("merchant_id", "acc123")))
+                .withCredentials(Map.of("one_off_customer_initiated", Map.of("merchant_code", "acc123")))
                 .build());
 
         var params = new GatewayAccountSearchParams();

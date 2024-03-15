@@ -404,7 +404,6 @@ public class GatewayAccountResourceIT extends NewGatewayAccountResourceTestBase 
         givenSetup()
                 .get("/v1/api/accounts?payment_provider_account_id=one-off-merchant-code")
                 .then()
-                .log().all()
                 .statusCode(200)
                 .body("accounts", hasSize(1))
                 .body("accounts[0].gateway_account_id", is(accountIdAsInt))
