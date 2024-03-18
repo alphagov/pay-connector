@@ -86,10 +86,6 @@ public class ChargesApiResourceCreateIT {
                     config("eventQueue.eventQueueEnabled", "true"),
                     config("captureProcessConfig.backgroundProcessingEnabled", "true"));
 
-    @BeforeAll
-    public static void setUp() {
-        app.setUpBase();
-    }
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
     private static final String JSON_STATE_KEY = "state.status";
@@ -97,13 +93,6 @@ public class ChargesApiResourceCreateIT {
     private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
     private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
     private static final String VALID_CARD_NUMBER = "4242424242424242";
-    
-    @BeforeEach
-    void purge() {
-        purgeEventQueue();
-        app.createConnectorRestApiClient();
-        app.resetDatabase();
-    }
 
     @Test
     void makeChargeAndRetrieveAmount() {

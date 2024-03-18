@@ -15,10 +15,7 @@ import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorApp;
@@ -54,7 +51,7 @@ import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
 
-public class AppWithPostgresAndSqsExtension implements BeforeAllCallback, AfterAllCallback {
+public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterAllCallback {
 
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
     private static final String JPA_UNIT = "ConnectorUnit";
@@ -126,6 +123,9 @@ public class AppWithPostgresAndSqsExtension implements BeforeAllCallback, AfterA
     public void beforeAll(ExtensionContext context) throws Exception {
         dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
     }
+
+    @Override
+    public void beforeEach(ExtensionContext context) {}
 
     @Override
     public void afterAll(ExtensionContext context) {

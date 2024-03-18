@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.it.base;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.JsonObject;
 import io.dropwizard.testing.ConfigOverride;
@@ -9,7 +11,9 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,20 +176,21 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withCredentials(credentials)
                 .build();
 
-//        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
-//        testAccount = withDatabaseTestHelper(databaseTestHelper)
-//                .aTestAccount()
-//                .withAccountId(Long.parseLong(accountId))
-//                .withPaymentProvider(getPaymentProvider())
-//                .withGatewayAccountCredentials(List.of(credentialParams))
-//                .withServiceId(SERVICE_ID)
-//                .withAllowAuthApi(true)
-//                .withCardTypeEntities(List.of(visaCreditCard))
-//                .insert();
-
-
         ledgerStub.acceptPostEvent();
         cardidStub = new CardidStub(getWireMockServer());
+    }
+    
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        createConnectorRestApiClient();
+        resetDatabase();
+        purgeEventQueue();
+    }
+    
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        setUpBase();
+        super.beforeAll(context);
     }
     
     public void createConnectorRestApiClient() {
@@ -205,7 +210,11 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withCardTypeEntities(List.of(visaCreditCard))
                 .insert();
     }
-       
+
+    private void purgeEventQueue() {
+        AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
+        sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
+    }
 
     public Map<String, Object> getCredentials() {
         return credentials;
