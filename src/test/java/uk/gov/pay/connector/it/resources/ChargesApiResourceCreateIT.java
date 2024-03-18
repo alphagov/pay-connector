@@ -101,6 +101,8 @@ public class ChargesApiResourceCreateIT {
     @BeforeEach
     void purge() {
         purgeEventQueue();
+        app.createConnectorRestApiClient();
+        app.resetDatabase();
     }
 
     @Test

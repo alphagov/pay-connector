@@ -172,6 +172,28 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withCredentials(credentials)
                 .build();
 
+//        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
+//        testAccount = withDatabaseTestHelper(databaseTestHelper)
+//                .aTestAccount()
+//                .withAccountId(Long.parseLong(accountId))
+//                .withPaymentProvider(getPaymentProvider())
+//                .withGatewayAccountCredentials(List.of(credentialParams))
+//                .withServiceId(SERVICE_ID)
+//                .withAllowAuthApi(true)
+//                .withCardTypeEntities(List.of(visaCreditCard))
+//                .insert();
+
+
+        ledgerStub.acceptPostEvent();
+        cardidStub = new CardidStub(getWireMockServer());
+    }
+    
+    public void createConnectorRestApiClient() {
+        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
+    }
+    
+    public void resetDatabase() {
+        databaseTestHelper.truncateAllData();
         CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
         testAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -182,13 +204,8 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withAllowAuthApi(true)
                 .withCardTypeEntities(List.of(visaCreditCard))
                 .insert();
-
-
-        ledgerStub.acceptPostEvent();
-        cardidStub = new CardidStub(getWireMockServer());
-
-
     }
+       
 
     public Map<String, Object> getCredentials() {
         return credentials;
