@@ -224,7 +224,8 @@ public class AppWithPostgresAndSqsExtension implements BeforeAllCallback, AfterA
     }
 
     public String getEventQueueUrl() {
-        return sqsClient.getQueueUrl("event-queue").getQueueUrl();
+//        return sqsClient.getQueueUrl("event-queue").getQueueUrl();
+        return SqsTestDocker.getQueueUrl("event-queue");
     }
 
     public class SQSModule extends AbstractModule {
