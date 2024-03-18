@@ -393,12 +393,10 @@ public class GatewayAccountResourceIT extends NewGatewayAccountResourceTestBase 
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(accountId)
-                .withAllowAuthApi(true)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withDefaultCredentials()
                 .withGatewayAccountCredentials(List.of(credentialsParams))
                 .insert();
-        databaseTestHelper.allowApplePay(accountId);
 
         int accountIdAsInt = Math.toIntExact(accountId);
         givenSetup()
@@ -407,12 +405,11 @@ public class GatewayAccountResourceIT extends NewGatewayAccountResourceTestBase 
                 .statusCode(200)
                 .body("accounts", hasSize(1))
                 .body("accounts[0].gateway_account_id", is(accountIdAsInt))
-                .body("accounts[0].payment_provider", is("worldpay"))
-                .body("accounts[0].allow_apple_pay", is(true));
+                .body("accounts[0].payment_provider", is("worldpay"));
     }
 
     @Test
-    public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInRecurringPaymentCredentials() {
+    public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
         long accountId = RandomUtils.nextInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
@@ -429,12 +426,10 @@ public class GatewayAccountResourceIT extends NewGatewayAccountResourceTestBase 
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
                 .withAccountId(accountId)
-                .withAllowAuthApi(true)
                 .withPaymentProvider(WORLDPAY.getName())
                 .withDefaultCredentials()
                 .withGatewayAccountCredentials(List.of(credentialsParams))
                 .insert();
-        databaseTestHelper.allowApplePay(accountId);
 
         int accountIdAsInt = Math.toIntExact(accountId);
         givenSetup()
@@ -443,10 +438,9 @@ public class GatewayAccountResourceIT extends NewGatewayAccountResourceTestBase 
                 .statusCode(200)
                 .body("accounts", hasSize(1))
                 .body("accounts[0].gateway_account_id", is(accountIdAsInt))
-                .body("accounts[0].payment_provider", is("worldpay"))
-                .body("accounts[0].allow_apple_pay", is(true));
+                .body("accounts[0].payment_provider", is("worldpay"));
     }
-
+    
     @Test
     public void shouldSetApplePayEnabledByDefaultForSandboxAccount() {
         String gatewayAccountId1 = createAGatewayAccountFor("sandbox");
