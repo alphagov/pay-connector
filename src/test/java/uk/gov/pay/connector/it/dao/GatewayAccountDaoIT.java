@@ -541,9 +541,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     
     @Test
     public void shouldSearchForAccountsByPaymentProviderAccountId() {
-        long gatewayAccountId_1 = nextLong();
+        long gatewayAccountId = nextLong();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("sandbox")
                 .withCredentials(Map.of("stripe_account_id", "acc123"))
                 .build());
@@ -553,14 +553,14 @@ public class GatewayAccountDaoIT extends DaoITestBase {
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
         assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
     }    
     
     @Test
-    public void shouldSearchForAccountsByPaymentProviderMerchantId() {
-        long gatewayAccountId_1 = nextLong();
+    public void shouldSearchForAccountsByWorldpayMerchantCodeInOneOffPaymentCredentials() {
+        long gatewayAccountId = nextLong();
         databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
+                .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("worldpay")
                 .withCredentials(Map.of("one_off_customer_initiated", Map.of("merchant_code", "acc123")))
                 .build());
@@ -570,7 +570,41 @@ public class GatewayAccountDaoIT extends DaoITestBase {
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
         assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
+        long gatewayAccountId = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway("worldpay")
+                .withCredentials(Map.of("recurring_customer_initiated", Map.of("merchant_code", "acc123")))
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setPaymentProviderAccountId("acc123");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+    }
+
+    @Test
+    public void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringMerchantInitiatedCredentials() {
+        long gatewayAccountId = nextLong();
+        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway("worldpay")
+                .withCredentials(Map.of("recurring_merchant_initiated", Map.of("merchant_code", "acc123")))
+                .build());
+
+        var params = new GatewayAccountSearchParams();
+        params.setPaymentProviderAccountId("acc123");
+
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+        assertThat(gatewayAccounts, hasSize(1));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
     }
 
     @Test
