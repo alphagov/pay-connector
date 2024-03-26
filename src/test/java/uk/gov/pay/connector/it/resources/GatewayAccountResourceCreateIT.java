@@ -1,19 +1,15 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
-import junitparams.Parameters;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
 
 import java.util.List;
 import java.util.Map;
@@ -26,48 +22,46 @@ import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEmptyString.isEmptyString;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBase {
-
+public class GatewayAccountResourceCreateIT {
+    @RegisterExtension
+    public static GatewayAccountResourceITBaseExtensions app = new GatewayAccountResourceITBaseExtensions("sandbox");
     GatewayAccountDao gatewayAccountDao;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        super.setUp();
-        gatewayAccountDao = testContext.getInstanceFromGuiceContainer(GatewayAccountDao.class);
+        gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
     }
 
     @Test
     public void createASandboxGatewayAccount() {
-        ValidatableResponse response = createAGatewayAccountFor(testContext.getPort(), "sandbox", "my test service", "analytics");
-        assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+        ValidatableResponse response = app.createAGatewayAccountFor(app.getLocalPort(), "sandbox", "my test service", "analytics");
+        app.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
     }
 
     @Test
     public void createAWorldpaySandboxGatewayAccount() {
-        ValidatableResponse response = createAGatewayAccountFor(testContext.getPort(), "worldpay", "my test service", "analytics");
-        assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+        ValidatableResponse response = app.createAGatewayAccountFor(app.getLocalPort(), "worldpay", "my test service", "analytics");
+        app.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
     }
 
     @Test
     public void createAWorldpayStripeGatewayAccount() {
-        ValidatableResponse response = createAGatewayAccountFor(testContext.getPort(), "stripe", "my test service", "analytics");
-        assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+        ValidatableResponse response = app.createAGatewayAccountFor(app.getLocalPort(), "stripe", "my test service", "analytics");
+        app.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
     }
 
     @Test
     public void shouldCreateAccountWithServiceIdAndDefaultsForOtherProperties() {
         Map<String, Object> payload = Map.of(
                 "service_id", "some-special-service-id");
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = app.givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -77,7 +71,7 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
                 .body("type", is("test"))
                 .body("requires_3ds", is(false));
 
-        givenSetup()
+        app.givenSetup()
                 .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
                 .then()
                 .statusCode(200)
@@ -106,7 +100,7 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
                 "allow_apple_pay", true,
                 "allow_google_pay", true
         );
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = app.givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -119,7 +113,7 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
                 .body("analytics_id", is("an-analytics-id"))
                 .body("description", is("a-description"));
 
-        givenSetup()
+        app.givenSetup()
                 .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
                 .then()
                 .statusCode(200)
@@ -142,7 +136,7 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service");
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -165,7 +159,7 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
                 "credentials", Map.of("stripe_account_id", stripeAccountId));
-        String gatewayAccountId = givenSetup()
+        String gatewayAccountId = app.givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
                 .then()
@@ -200,14 +194,14 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
     public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
         String payload = toJson(Map.of("name", "test account", "type", "test"));
 
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = app.givenSetup()
                 .body(payload)
                 .post(ACCOUNTS_API_URL)
                 .then()
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, TEST);
-        assertGettingAccountReturnsProviderName(testContext.getPort(), response, "sandbox", TEST);
+        app.assertGettingAccountReturnsProviderName(app.getLocalPort(), response, "sandbox", TEST);
 
         String gatewayAccountId = response.extract()
                 .body()
@@ -224,7 +218,7 @@ public class GatewayAccountResourceCreateIT extends GatewayAccountResourceTestBa
     }
     
     private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
-        assertCorrectCreateResponse(response, type, null, null, null);
+        app.assertCorrectCreateResponse(response, type, null, null, null);
     }
 
 }

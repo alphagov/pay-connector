@@ -3,12 +3,13 @@ package uk.gov.pay.connector.it.resources.sandbox;
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -42,41 +43,39 @@ import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidL
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 
-public class SandboxRefundsResourceIT extends NewChargingITestBase {
+public class SandboxRefundsResourceIT  {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
-
-    public SandboxRefundsResourceIT() {
-        super("sandbox");
-    }
-
-    @Before
-    public void setUp() {
+    
+    @BeforeEach
+    void setUpCharge() {
         defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
-                .withAccountId(Long.parseLong(accountId))
-                .withPaymentProvider(getPaymentProvider())
-                .withGatewayAccountCredentials(List.of(credentialParams))
-                .withCredentials(credentials);
+                .withAccountId(Long.parseLong(app.getAccountId()))
+                .withPaymentProvider(app.getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(app.getCredentialParams()))
+                .withCredentials(app.getCredentials());
 
         defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
-                .withPaymentProvider(getPaymentProvider())
-                .withGatewayCredentialId(credentialParams.getId())
+                .withPaymentProvider(app.getPaymentProvider())
+                .withGatewayCredentialId(app.getCredentialParams().getId())
                 .insert();
     }
 
     @Test
-    public void shouldRespond_403_WhenGatewayAccountDisabled() {
+    void shouldRespond_403_WhenGatewayAccountDisabled() {
         Long refundAmount = 50L;
 
-        databaseTestHelper.setDisabled(defaultTestAccount.getAccountId());
+        app.getDatabaseTestHelper().setDisabled(defaultTestAccount.getAccountId());
 
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
                 .statusCode(FORBIDDEN_403)
@@ -85,13 +84,13 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
     
     @Test
-    public void shouldBeAbleToRequestARefund_partialAmount() {
+    void shouldBeAbleToRequestARefund_partialAmount() {
         Long refundAmount = 50L;
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
 
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
 
@@ -99,7 +98,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldBeAbleToRefundTwoRequestsWhereAmountAvailableMatch() {
+    void shouldBeAbleToRefundTwoRequestsWhereAmountAvailableMatch() {
         Long refundAmount = 50L;
         //first refund request
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
@@ -109,7 +108,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
         validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount() - refundAmount);
         String refundId_2 = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(2));
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId_2, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
@@ -118,7 +117,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldRespond_412_WhenSecondRefundRequestAmountAvailableMismatches() {
+    void shouldRespond_412_WhenSecondRefundRequestAmountAvailableMismatches() {
         Long refundAmount = 50L;
         //first refund request
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
@@ -130,7 +129,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 .body("message", contains("Refund Amount Available Mismatch"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_AMOUNT_AVAILABLE_MISMATCH.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
 
@@ -138,7 +137,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldBeAbleToRequestARefund_fullAmount() {
+    void shouldBeAbleToRequestARefund_fullAmount() {
 
         Long refundAmount = defaultTestCharge.getAmount();
 
@@ -146,7 +145,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 userExternalId, userEmail);
         String refundId = assertRefundResponseWith(refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
         assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("user_external_id", userExternalId));
@@ -157,7 +156,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldBeAbleToRequestARefund_multiplePartialAmounts_andRefundShouldBeInFullStatus() {
+    void shouldBeAbleToRequestARefund_multiplePartialAmounts_andRefundShouldBeInFullStatus() {
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 20L;
         String externalChargeId = defaultTestCharge.getExternalChargeId();
@@ -168,7 +167,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
         ValidatableResponse secondValidatableResponse = postRefundFor(externalChargeId, secondRefundAmount, defaultTestCharge.getAmount() - firstRefundAmount);
         String secondRefundId = assertRefundResponseWith(secondRefundAmount, secondValidatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(externalChargeId);
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(externalChargeId);
         assertThat(refundsFoundByChargeExternalId.size(), is(2));
 
         assertThat(refundsFoundByChargeExternalId, hasItems(
@@ -177,7 +176,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
 
         assertRefundsHistoryInOrderInDBForTwoRefunds(defaultTestCharge);
 
-        connectorRestApiClient.withChargeId(externalChargeId)
+        app.getConnectorRestApiClient().withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(200)
                 .body("refund_summary.status", is("full"))
@@ -186,10 +185,10 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldFailRequestingARefund_whenChargeStatusMakesItNotRefundable() {
+    void shouldFailRequestingARefund_whenChargeStatusMakesItNotRefundable() {
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
@@ -204,12 +203,12 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 .body("message", contains(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(0));
     }
 
     @Test
-    public void shouldFailRequestingARefund_whenChargeRefundIsFull() {
+    void shouldFailRequestingARefund_whenChargeRefundIsFull() {
 
         Long refundAmount = defaultTestCharge.getAmount();
         String externalChargeId = defaultTestCharge.getExternalChargeId();
@@ -217,7 +216,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
         postRefundFor(externalChargeId, refundAmount, defaultTestCharge.getAmount())
                 .statusCode(ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(externalChargeId);
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(externalChargeId);
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
 
         postRefundFor(externalChargeId, 1L, defaultTestCharge.getAmount() - refundAmount)
@@ -228,7 +227,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
+    void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
         Long refundAmount = defaultTestCharge.getAmount() + 20;
 
         postRefundFor(defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount())
@@ -237,15 +236,15 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 .body("message", contains("Not sufficient amount available for refund"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(0));
 
-        List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+        List<String> refundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
         assertThat(refundsHistory.size(), is(0));
     }
 
     @Test
-    public void shouldFailRequestingARefund_whenAmountIsBiggerThanAllowedChargeAmount() {
+    void shouldFailRequestingARefund_whenAmountIsBiggerThanAllowedChargeAmount() {
 
         Long refundAmount = 10000001L;
 
@@ -255,15 +254,15 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 .body("message", contains("Not sufficient amount available for refund"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(0));
 
-        List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+        List<String> refundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
         assertThat(refundsHistory.size(), is(0));
     }
 
     @Test
-    public void shouldFailRequestingARefund_whenAmountIsLessThanOnePence() {
+    void shouldFailRequestingARefund_whenAmountIsLessThanOnePence() {
 
         Long refundAmount = 0L;
 
@@ -273,22 +272,22 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 .body("message", contains("Validation error for amount. Minimum amount for a refund is 1"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(0));
 
-        List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+        List<String> refundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
         assertThat(refundsHistory.size(), is(0));
     }
 
     @Test
-    public void shouldFailRequestingARefund_whenAPartialRefundMakesTotalRefundedAmountBiggerThanChargeAmount() {
+    void shouldFailRequestingARefund_whenAPartialRefundMakesTotalRefundedAmountBiggerThanChargeAmount() {
         Long firstRefundAmount = 80L;
         Long secondRefundAmount = 30L; // 10 more than available
 
         ValidatableResponse validatableResponse = postRefundFor(defaultTestCharge.getExternalChargeId(), firstRefundAmount, defaultTestCharge.getAmount());
         String firstRefundId = assertRefundResponseWith(firstRefundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId.size(), is(1));
         assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUNDED")));
 
@@ -298,7 +297,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 .body("message", contains("Not sufficient amount available for refund"))
                 .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
 
-        List<Map<String, Object>> refundsFoundByChargeExternalId1 = databaseTestHelper.getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+        List<Map<String, Object>> refundsFoundByChargeExternalId1 = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(refundsFoundByChargeExternalId1.size(), is(1));
         assertThat(refundsFoundByChargeExternalId1, hasItems(aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUNDED")));
 
@@ -306,7 +305,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldFailRequestingARefundForHistoricCharge_whenPartialRefundAmountGreaterThanRemainingAmount_whenExistingPartialRefundsHaveBeenExpunged() throws Exception {
+    void shouldFailRequestingARefundForHistoricCharge_whenPartialRefundAmountGreaterThanRemainingAmount_whenExistingPartialRefundsHaveBeenExpunged() throws Exception {
         String chargeExternalId = "historic-charge-id";
         
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
@@ -314,27 +313,27 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(credentialParams.getExternalId())
+                .withCredentialExternalId(app.getCredentialParams().getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
-                .withPaymentProvider(getPaymentProvider())
+                .withPaymentProvider(app.getPaymentProvider())
                 .build();
-        ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
+        app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
 
         // add one refund that is still in connector and another that is only in ledger to check
         // that both are used when calculating refundability
-        databaseTestHelper.addRefund("connector-refund-id", 500L, RefundStatus.CREATED, "refund-gateway-id-1", ZonedDateTime.now(), chargeExternalId);
+        app.getDatabaseTestHelper().addRefund("connector-refund-id", 500L, RefundStatus.CREATED, "refund-gateway-id-1", ZonedDateTime.now(), chargeExternalId);
 
         LedgerTransaction expungedRefund = aValidLedgerTransaction()
                 .withExternalId("ledger-refund-id")
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
-                .withCredentialExternalId(credentialParams.getExternalId())
+                .withCredentialExternalId(app.getCredentialParams().getExternalId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
-                .withPaymentProvider(getPaymentProvider())
+                .withPaymentProvider(app.getPaymentProvider())
                 .build();
-        ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
+        app.getLedgerStub().returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 
         Long refundAmount = 201L;
         postRefundFor(chargeExternalId, refundAmount, 200L)
@@ -345,7 +344,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldSucceedRequestingARefundForHistoricCharge_whenExistingPartialRefundsHaveBeenExpunged() throws Exception {
+    void shouldSucceedRequestingARefundForHistoricCharge_whenExistingPartialRefundsHaveBeenExpunged() throws Exception {
         String chargeExternalId = "historic-charge-id";
 
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
@@ -353,27 +352,27 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(credentialParams.getExternalId())
+                .withCredentialExternalId(app.getCredentialParams().getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
-                .withPaymentProvider(getPaymentProvider())
+                .withPaymentProvider(app.getPaymentProvider())
                 .build();
-        ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
+        app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
 
         // add one refund that is still in connector and another that is only in ledger to check
         // that both are used when calculating refundability
-        databaseTestHelper.addRefund("connector-refund-id", 500L, RefundStatus.CREATED, "refund-gateway-id-1", ZonedDateTime.now(), chargeExternalId);
+        app.getDatabaseTestHelper().addRefund("connector-refund-id", 500L, RefundStatus.CREATED, "refund-gateway-id-1", ZonedDateTime.now(), chargeExternalId);
 
         LedgerTransaction expungedRefund = aValidLedgerTransaction()
                 .withExternalId("ledger-refund-id")
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(credentialParams.getExternalId())
+                .withCredentialExternalId(app.getCredentialParams().getExternalId())
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
-                .withPaymentProvider(getPaymentProvider())
+                .withPaymentProvider(app.getPaymentProvider())
                 .build();
-        ledgerStub.returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
+        app.getLedgerStub().returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 
         Long refundAmount = 200L;
         postRefundFor(chargeExternalId, refundAmount, 200L)
@@ -381,7 +380,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldErrorRequestingARefundForHistoricCharge_whenErrorReturnedByLedger() throws Exception {
+    void shouldErrorRequestingARefundForHistoricCharge_whenErrorReturnedByLedger() throws Exception {
         String chargeExternalId = "historic-charge-id";
 
         ChargeResponse.RefundSummary refundSummary = new ChargeResponse.RefundSummary();
@@ -389,18 +388,18 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(credentialParams.getExternalId())
+                .withCredentialExternalId(app.getCredentialParams().getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
                 .build();
-        ledgerStub.returnLedgerTransaction(chargeExternalId, charge);
+        app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
 
-        ledgerStub.returnErrorForFindRefundsForPayment(chargeExternalId);
+        app.getLedgerStub().returnErrorForFindRefundsForPayment(chargeExternalId);
 
         postRefundFor(chargeExternalId, 200L, 200L)
                 .statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
 
-        List<Map<String, Object>> refunds = databaseTestHelper.getRefundsByChargeExternalId(chargeExternalId);
+        List<Map<String, Object>> refunds = app.getDatabaseTestHelper().getRefundsByChargeExternalId(chargeExternalId);
         assertThat(refunds, hasSize(0));
     }
 
@@ -422,12 +421,12 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
 
         String refundPayload = new Gson().toJson(refundData);
 
-        return givenSetup()
+        return app.givenSetup()
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
-                        .replace("{accountId}", accountId)
+                        .replace("{accountId}", app.getAccountId())
                         .replace("{chargeId}", chargeId))
                 .then();
     }
@@ -442,7 +441,7 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
                 .body("created_date", isWithin(10, SECONDS));
 
         String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                connectorApp.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
+                app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
 
         String refundId = response.extract().path("refund_id");
         response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))
@@ -452,13 +451,13 @@ public class SandboxRefundsResourceIT extends NewChargingITestBase {
     }
 
     private void assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(DatabaseFixtures.TestCharge defaultTestCharge) {
-        List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+        List<String> refundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
         assertThat(refundsHistory.size(), is(3));
         assertThat(refundsHistory, contains("REFUNDED", "REFUND SUBMITTED", "CREATED"));
     }
 
     private void assertRefundsHistoryInOrderInDBForTwoRefunds(DatabaseFixtures.TestCharge defaultTestCharge) {
-        List<String> refundsHistory = databaseTestHelper.getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+        List<String> refundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
         assertThat(refundsHistory.size(), is(6));
         assertThat(refundsHistory, contains("REFUNDED", "REFUND SUBMITTED", "CREATED", "REFUNDED", "REFUND SUBMITTED", "CREATED"));
     }

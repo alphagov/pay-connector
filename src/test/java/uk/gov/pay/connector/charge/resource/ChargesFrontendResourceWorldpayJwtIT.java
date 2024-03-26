@@ -1,21 +1,13 @@
 package uk.gov.pay.connector.charge.resource;
 
 import org.apache.http.HttpStatus;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
-import uk.gov.pay.connector.it.resources.NewGatewayAccountResourceTestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.util.List;
 import java.util.Map;
@@ -30,19 +22,13 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
+public class ChargesFrontendResourceWorldpayJwtIT {
 
-    public ChargesFrontendResourceWorldpayJwtIT() {
-        super("worldpay");
-    }
-
-    @After
-    public void tearDown() {
-        databaseTestHelper.truncateAllData();
-    }
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
 
     @Test
-    public void shouldGetCorrectDdcToken() {
+    void shouldGetCorrectDdcToken() {
         var chargeExternalId = "myFirstChargeId";
         var gatewayAccountId = "101";
         var validCredentials = Map.of(
@@ -52,7 +38,7 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
         );
         setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, nextLong(), chargeExternalId, ChargeStatus.CREATED);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_OK)
@@ -60,13 +46,13 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturn409WhenCredentialsAreMissingForGatewayAccount() {
+    void shouldReturn409WhenCredentialsAreMissingForGatewayAccount() {
         var chargeExternalId = "mySecondChargeId";
         var gatewayAccountId = "202";
         setUpChargeAndAccount(gatewayAccountId, WORLDPAY, null, nextLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_CONFLICT)
@@ -74,7 +60,7 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturn409WhenThePaymentProviderIsNotWorldpayForDdcToken() {
+    void shouldReturn409WhenThePaymentProviderIsNotWorldpayForDdcToken() {
         var chargeExternalId = "myThirdChargeId";
         var gatewayAccountId = "303";
         var validCredentials = Map.of(
@@ -85,7 +71,7 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
         setUpChargeAndAccount(gatewayAccountId, STRIPE, validCredentials, nextLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_CONFLICT)
@@ -93,7 +79,7 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturnChallengeJwt() {
+    void shouldReturnChallengeJwt() {
         long chargeId = nextLong();
         var chargeExternalId = "myFirstChargeId";
         var gatewayAccountId = "101";
@@ -104,14 +90,14 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
         );
         setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, chargeId, chargeExternalId,
                 ChargeStatus.AUTHORISATION_3DS_REQUIRED);
-        
-        databaseTestHelper.updateCharge3dsFlexChallengeDetails(chargeId,
+
+        app.getDatabaseTestHelper().updateCharge3dsFlexChallengeDetails(chargeId,
                 "http://example.com",
                 "a-transaction-id", 
                 "a-payload", 
                 "2.1.0");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(gatewayAccountId)
                 .withChargeId(chargeExternalId)
                 .getFrontendCharge()
@@ -121,7 +107,7 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldOmitChallengeJwtWhenChargeNotInAppropriateState() {
+    void shouldOmitChallengeJwtWhenChargeNotInAppropriateState() {
         long chargeId = nextLong();
         var chargeExternalId = "myFirstChargeId";
         var gatewayAccountId = "101";
@@ -133,13 +119,13 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
         setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, chargeId, chargeExternalId,
                 ChargeStatus.CREATED);
 
-        databaseTestHelper.updateCharge3dsFlexChallengeDetails(chargeId,
+        app.getDatabaseTestHelper().updateCharge3dsFlexChallengeDetails(chargeId,
                 "http://example.com",
                 "a-transaction-id",
                 "a-payload",
                 "2.1.0");
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .withAccountId(gatewayAccountId)
                 .withChargeId(chargeExternalId)
                 .getFrontendCharge()
@@ -154,13 +140,13 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
                                        Long chargeId,
                                        String chargeExternalId,
                                        ChargeStatus chargeStatus) {
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(gatewayAccountId)
                 .withPaymentGateway(paymentProvider.getName())
                 .build());
 
         if (credentials != null) {
-            databaseTestHelper.insertWorldpay3dsFlexCredential(
+            app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(
                     Long.valueOf(gatewayAccountId),
                     credentials.get("jwt_mac_id"),
                     credentials.get("issuer"),
@@ -168,7 +154,7 @@ public class ChargesFrontendResourceWorldpayJwtIT extends NewChargingITestBase {
                     2L);
         }
 
-        databaseTestHelper.addCharge(
+        app.getDatabaseTestHelper().addCharge(
                 anAddChargeParams()
                         .withChargeId(chargeId)
                         .withGatewayAccountId(gatewayAccountId)

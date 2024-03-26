@@ -3,12 +3,13 @@ package uk.gov.pay.connector.it.resources.stripe;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.Response;
 import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationUtilTest;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -37,7 +38,9 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class StripeNotificationResourceIT extends NewChargingITestBase {
+public class StripeNotificationResourceIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe");
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/stripe";
     private static final String RESPONSE_EXPECTED_BY_STRIPE = "[OK]";
@@ -55,17 +58,13 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
     private StripeMockClient stripeMockClient;
 
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
-
-    public StripeNotificationResourceIT() {
-        super("stripe");
-    }
-
-    @Before
-    public void setup() {
+    
+    @BeforeEach
+    void setup() {
         accountId = String.valueOf(RandomUtils.nextInt());
 
-        databaseTestHelper = connectorApp.getDatabaseTestHelper();
-        wireMockServer = connectorApp.getWireMockServer();
+        databaseTestHelper = app.getDatabaseTestHelper();
+        wireMockServer = app.getWireMockServer();
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(STRIPE.getName())
                 .withGatewayAccountId(Long.valueOf(accountId))
@@ -78,13 +77,13 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
                 .withGatewayAccountCredentials(List.of(accountCredentialsParams))
                 .build();
         databaseTestHelper.addGatewayAccount(gatewayAccountParams);
-        connectorRestApiClient = new RestAssuredClient(connectorApp.getLocalPort(), accountId);
+        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
 
         stripeMockClient = new StripeMockClient(wireMockServer);
     }
 
     @Test
-    public void shouldHandleAPaymentIntentAmountCapturableUpdatedNotification() {
+    void shouldHandleAPaymentIntentAmountCapturableUpdatedNotification() {
         String transactionId = "pi_123" + nextInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
@@ -102,7 +101,7 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAPaymentIntentPaymentFailedNotification() {
+    void shouldHandleAPaymentIntentPaymentFailedNotification() {
         String transactionId = "pi_123" + nextInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
@@ -120,12 +119,12 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldFailAStripeNotificationWithAnUnexpectedContentType() {
+    void shouldFailAStripeNotificationWithAnUnexpectedContentType() {
         String transactionId = randomId();
         createNewChargeWith(AUTHORISATION_SUCCESS, transactionId);
 
         given()
-                .port(connectorApp.getLocalPort())
+                .port(app.getLocalPort())
                 .body("")
                 .contentType(TEXT_XML)
                 .post(NOTIFICATION_PATH)
@@ -134,7 +133,7 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldFailAStripeNotification_whenSignatureIsInvalid() {
+    void shouldFailAStripeNotification_whenSignatureIsInvalid() {
         String transactionId = "transaction-id" + nextInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
@@ -150,7 +149,7 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturnForbiddenIfRequestComesFromUnexpectedIpAddress() {
+    void shouldReturnForbiddenIfRequestComesFromUnexpectedIpAddress() {
         String transactionId = "transaction-id" + nextInt();
         createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
         stripeMockClient.mockCreatePaymentIntent();
@@ -164,7 +163,7 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldHandleAPaymentIntent3DSVersion() {
+    void shouldHandleAPaymentIntent3DSVersion() {
         String transactionId = "pi_123" + nextInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
@@ -182,7 +181,7 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
 
     private Response notifyConnectorWithHeader(String payload, String header) {
         return given()
-                .port(connectorApp.getLocalPort())
+                .port(app.getLocalPort())
                 .body(payload)
                 .header("Stripe-Signature", header)
                 .header("X-Forwarded-For", STRIPE_IP_ADDRESS)
@@ -192,7 +191,7 @@ public class StripeNotificationResourceIT extends NewChargingITestBase {
 
     private Response notifyConnectorWithHeader(String payload, String stripeSignature, String forwardedIpAddresses) {
         return given()
-                .port(connectorApp.getLocalPort())
+                .port(app.getLocalPort())
                 .body(payload)
                 .header("Stripe-Signature", stripeSignature)
                 .header("X-Forwarded-For", forwardedIpAddresses)

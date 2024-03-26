@@ -1,23 +1,28 @@
 package uk.gov.pay.connector.it.base;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.JsonObject;
+import io.dropwizard.testing.ConfigOverride;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
@@ -70,53 +75,61 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
-public class NewChargingITestBase extends IntegrationTest{
-    protected static final String ADDRESS_LINE_1 = "The Money Pool";
-    protected static final String ADDRESS_CITY = "London";
-    protected static final String ADDRESS_POSTCODE = "DO11 4RS";
-    protected static final String ADDRESS_COUNTRY_GB = "GB";
-    protected static final String CVC = "123";
+public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
+    public static final String ADDRESS_LINE_1 = "The Money Pool";
+    public static final String ADDRESS_CITY = "London";
+    public static final String ADDRESS_POSTCODE = "DO11 4RS";
+    public static final String ADDRESS_COUNTRY_GB = "GB";
+    public static final String CVC = "123";
 
-    protected static final String RETURN_URL = "http://service.local/success-page/";
-    protected static final String EMAIL = randomAlphabetic(242) + "@example.com";
-    protected static final long AMOUNT = 6234L;
-    protected static final String JSON_REFERENCE_VALUE = "Test reference";
-    protected static final String JSON_DESCRIPTION_VALUE = "Test description";
+    public static final String RETURN_URL = "http://service.local/success-page/";
+    public static final String EMAIL = randomAlphabetic(242) + "@example.com";
+    public static final long AMOUNT = 6234L;
+    public static final String JSON_REFERENCE_VALUE = "Test reference";
+    public static final String JSON_DESCRIPTION_VALUE = "Test description";
 
-    protected static final String SERVICE_ID = "external-service-id";
-    protected static final String JSON_PROVIDER_KEY = "payment_provider";
-    protected static final String JSON_CREDENTIAL_ID_KEY = "credential_id";
-    protected static final String PROVIDER_NAME = "sandbox";
-    protected static final String JSON_CHARGE_KEY = "charge_id";
-    protected static final String JSON_MESSAGE_KEY = "message";
-    protected static final String JSON_AMOUNT_KEY = "amount";
-    protected static final String JSON_REFERENCE_KEY = "reference";
-    protected static final String JSON_DESCRIPTION_KEY = "description";
-    protected static final String JSON_RETURN_URL_KEY = "return_url";
-    protected static final String JSON_LANGUAGE_KEY = "language";
-    protected static final String JSON_EMAIL_KEY = "email";
-    protected static final String JSON_MOTO_KEY = "moto";
-    protected static final String JSON_METADATA_KEY = "metadata";
-    protected static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
-    protected static final String JSON_AUTH_MODE_MOTO_API = "moto_api";
-    protected static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
-    protected static final String JSON_SOURCE_KEY = "source";
+    public static final String SERVICE_ID = "external-service-id";
+    public static final String JSON_PROVIDER_KEY = "payment_provider";
+    public static final String JSON_CREDENTIAL_ID_KEY = "credential_id";
+    public static final String PROVIDER_NAME = "sandbox";
+    public static final String JSON_CHARGE_KEY = "charge_id";
+    public static final String JSON_MESSAGE_KEY = "message";
+    public static final String JSON_AMOUNT_KEY = "amount";
+    public static final String JSON_REFERENCE_KEY = "reference";
+    public static final String JSON_DESCRIPTION_KEY = "description";
+    public static final String JSON_RETURN_URL_KEY = "return_url";
+    public static final String JSON_LANGUAGE_KEY = "language";
+    public static final String JSON_EMAIL_KEY = "email";
+    public static final String JSON_MOTO_KEY = "moto";
+    public static final String JSON_METADATA_KEY = "metadata";
+    public static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
+    public static final String JSON_AUTH_MODE_MOTO_API = "moto_api";
+    public static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
+    public static final String JSON_SOURCE_KEY = "source";
 
     private String paymentProvider;
-    protected RestAssuredClient connectorRestApiClient;
-    protected String accountId = String.valueOf(RandomUtils.nextInt());
-    protected int gatewayAccountCredentialsId  = RandomUtils.nextInt();
-    protected Map<String, Object> credentials;
-    protected DatabaseFixtures.TestAccount testAccount;
 
-    protected static AddGatewayAccountCredentialsParams credentialParams;
 
-    public NewChargingITestBase(String paymentProvider) {
+    private int gatewayAccountCredentialsId  = RandomUtils.nextInt();
+    private Map<String, Object> credentials;
+    private DatabaseFixtures.TestAccount testAccount;
+
+    private static CardidStub cardidStub;
+
+    private static AddGatewayAccountCredentialsParams credentialParams;
+
+    public ChargingITestBaseExtension(String paymentProvider) {
+        super();
         this.paymentProvider = paymentProvider;
     }
 
-    @Before
-    public void setUpBase() {
+    public ChargingITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
+        super(configOverrides);
+        this.paymentProvider = paymentProvider;
+    }
+
+    private void setUpBase() {
+        resetDatabase(); // tests will break if setUpBase is called twice without this
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
@@ -143,7 +156,7 @@ public class NewChargingITestBase extends IntegrationTest{
                     CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
             );
         }
-        ledgerStub.acceptPostEvent();
+        
 
         credentialParams = anAddGatewayAccountCredentialsParams()
                 .withId(gatewayAccountCredentialsId)
@@ -152,7 +165,44 @@ public class NewChargingITestBase extends IntegrationTest{
                 .withState(ACTIVE)
                 .withCredentials(credentials)
                 .build();
+        
+        createConnectorRestApiClient();
+        
+        createTestAccount();
+        resetWireMockServer();
+        
+        createCardIdStub();
+        ledgerStub.acceptPostEvent();
+        
+    }
+    
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        setUpBase();
+    }
+    
+    @Override
+    public void afterEach(ExtensionContext context) {
+        resetDatabase();
+    }
+    
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        super.beforeAll(context);
+        resetDatabase();
+    }
 
+    @Override
+    public void afterAll(ExtensionContext context) {
+        super.afterAll(context);
+        resetDatabase();
+    }
+
+    public void createConnectorRestApiClient() {
+        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
+    }
+    
+    public void createTestAccount() {
         CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
         testAccount = withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
@@ -163,20 +213,26 @@ public class NewChargingITestBase extends IntegrationTest{
                 .withAllowAuthApi(true)
                 .withCardTypeEntities(List.of(visaCreditCard))
                 .insert();
-
-        connectorRestApiClient = new RestAssuredClient(connectorApp.getLocalPort(), accountId);
+    }
+    
+    public void resetDatabase() {
+        databaseTestHelper.truncateAllData();
     }
 
-    @After
-    public void tearDown() {
-        databaseTestHelper.truncateAllData();
+    private void purgeEventQueue() {
+        AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
+        sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
+    }
+    
+    public void createCardIdStub() {
+        cardidStub = new CardidStub(getWireMockServer());
     }
 
     public Map<String, Object> getCredentials() {
         return credentials;
     }
 
-    protected static String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand, String cardType) {
+    public static String authorisationDetailsWithMinimalAddress(String cardNumber, String cardBrand, String cardType) {
         JsonObject addressObject = new JsonObject();
 
         addressObject.addProperty("line1", ADDRESS_LINE_1);
@@ -197,27 +253,27 @@ public class NewChargingITestBase extends IntegrationTest{
         return toJson(authorisationDetails);
     }
 
-    protected static String buildJsonWithPaResponse() {
+    public static String buildJsonWithPaResponse() {
         JsonObject auth3dsDetails = new JsonObject();
         auth3dsDetails.addProperty("pa_response", "this-is-a-test-pa-response");
 
         return auth3dsDetails.toString();
     }
 
-    protected ValidatableResponse getCharge(String chargeId) {
+    public ValidatableResponse getCharge(String chargeId) {
         return connectorRestApiClient
                 .withChargeId(chargeId)
                 .getCharge();
     }
 
-    protected void assertFrontendChargeStatusIs(String chargeId, String status) {
+    public void assertFrontendChargeStatusIs(String chargeId, String status) {
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", is(status));
     }
 
-    protected void assertFrontendChargeCorporateSurchargeAmount(String chargeId, String status, Long corporateSurcharge) {
+    public void assertFrontendChargeCorporateSurchargeAmount(String chargeId, String status, Long corporateSurcharge) {
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
@@ -225,7 +281,7 @@ public class NewChargingITestBase extends IntegrationTest{
                 .body("corporate_card_surcharge", is(corporateSurcharge.intValue()));
     }
 
-    protected void assertFrontendChargeStatusAndTransactionId(String chargeId, String status) {
+    public void assertFrontendChargeStatusAndTransactionId(String chargeId, String status) {
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .getFrontendCharge()
@@ -233,7 +289,7 @@ public class NewChargingITestBase extends IntegrationTest{
                 .body("gateway_transaction_id", is(notNullValue()));
     }
 
-    protected void assertRefundStatus(String chargeId, String refundId, String status, Integer amount) {
+    public void assertRefundStatus(String chargeId, String refundId, String status, Integer amount) {
         connectorRestApiClient.withChargeId(chargeId)
                 .withRefundId(refundId)
                 .getRefund()
@@ -241,11 +297,11 @@ public class NewChargingITestBase extends IntegrationTest{
                 .body("amount", is(amount));
     }
 
-    protected void assertApiStateIs(String chargeId, String stateString) {
+    public void assertApiStateIs(String chargeId, String stateString) {
         getCharge(chargeId).body("state.status", is(stateString));
     }
 
-    protected String authoriseNewCharge() {
+    public String authoriseNewCharge() {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
         databaseTestHelper.updateChargeCardDetails(
                 Long.parseLong(externalChargeId.replace("charge-", "")),
@@ -253,40 +309,36 @@ public class NewChargingITestBase extends IntegrationTest{
         return externalChargeId;
     }
 
-    protected String createNewCharge() {
+    public String createNewCharge() {
         return createNewChargeWith(CREATED, "");
     }
 
-    protected String createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ChargeStatus status) {
+    public String createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ChargeStatus status) {
         return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null, paymentProvider).toString();
     }
 
-    protected String createNewChargeWithDescriptionAndNoGatewayTransactionIdOrEmailAddress(ChargeStatus status, String description) {
+    public String createNewChargeWithDescriptionAndNoGatewayTransactionIdOrEmailAddress(ChargeStatus status, String description) {
         return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null, paymentProvider, description).toString();
     }
 
-    protected String createNewChargeWithNoTransactionId(ChargeStatus status) {
+    public String createNewChargeWithNoTransactionId(ChargeStatus status) {
         return createNewChargeWith(status, null);
     }
 
-    protected String createNewCharge(ChargeStatus status) {
+    public String createNewCharge(ChargeStatus status) {
         return createNewChargeWith(status, randomId());
     }
 
-    protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
+    public String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
         return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, paymentProvider, credentialParams.getId()).toString();
     }
 
-    protected RequestSpecification givenSetup() {
-        return given().port(connectorApp.getLocalPort())
+    public RequestSpecification givenSetup() {
+        return given().port(getLocalPort())
                 .contentType(JSON);
     }
 
-    public <T> T getInstanceFromGuiceContainer(Class<T> clazz) {
-        return injector.getInstance(clazz);
-    }
-
-    protected void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) {
+    public void shouldReturnErrorForAuthorisationDetailsWithMessage(String authorisationDetails, String errorMessage, String status) {
 
         String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
@@ -322,15 +374,15 @@ public class NewChargingITestBase extends IntegrationTest{
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
 
-    protected static String authorise3dsChargeUrlFor(String chargeId) {
+    public static String authorise3dsChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/3ds".replace("{chargeId}", chargeId);
     }
 
-    protected static String captureChargeUrlFor(String chargeId) {
+    public static String captureChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
 
-    protected static String captureUrlForAwaitingCaptureCharge(String accountId, String chargeId) {
+    public static String captureUrlForAwaitingCaptureCharge(String accountId, String chargeId) {
         return "/v1/api/accounts/{accountId}/charges/{chargeId}/capture"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
@@ -340,7 +392,7 @@ public class NewChargingITestBase extends IntegrationTest{
         return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 
-    protected Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
+    public Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
         return new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(List<Map<String, Object>> chargeEvents) {
@@ -357,8 +409,7 @@ public class NewChargingITestBase extends IntegrationTest{
         };
     }
 
-    protected String cancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int targetHttpStatus) {
-
+    public String cancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int targetHttpStatus) {
         connectorRestApiClient
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -392,24 +443,24 @@ public class NewChargingITestBase extends IntegrationTest{
         return chargeId;
     }
 
-    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate) {
+    public String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate) {
         return addChargeAndCardDetails(status, reference, fromDate, "");
 
     }
 
-    protected String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
+    public String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
         return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
     }
 
-    protected String addCharge(ChargeStatus status) {
+    public String addCharge(ChargeStatus status) {
         return addCharge(status, "ref", Instant.now(), RandomIdGenerator.newId());
     }
 
-    protected String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId) {
+    public String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId) {
         return addCharge(status, reference, createdDate, transactionId, "tokenId", WEB);
     }
 
-    protected String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId, String tokenId, AuthorisationMode authorisationMode) {
+    public String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId, String tokenId, AuthorisationMode authorisationMode) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
@@ -445,7 +496,7 @@ public class NewChargingITestBase extends IntegrationTest{
                 .build());
     }
 
-    protected String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
+    public String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null, paymentProvider, WEB);
@@ -457,16 +508,16 @@ public class NewChargingITestBase extends IntegrationTest{
         return externalChargeId;
     }
 
-    protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {
+    public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {
         String agreementExternalId = addAgreement();
         return addChargeForSetUpAgreement(status, agreementExternalId);
     }
 
-    protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId) {
+    public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId) {
         return addChargeForSetUpAgreement(status, agreementExternalId, null);
     }
 
-    protected ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
+    public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
         long chargeId = RandomUtils.nextInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
@@ -485,7 +536,7 @@ public class NewChargingITestBase extends IntegrationTest{
         return externalChargeId;
     }
 
-    protected String addAgreement() {
+    public String addAgreement() {
         String agreementExternalId = String.valueOf(nextLong());
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(accountId)
@@ -495,7 +546,7 @@ public class NewChargingITestBase extends IntegrationTest{
         return agreementExternalId;
     }
 
-    protected Long addPaymentInstrument(String agreementExternalId, PaymentInstrumentStatus status) {
+    public Long addPaymentInstrument(String agreementExternalId, PaymentInstrumentStatus status) {
         Long paymentInstrumentId = nextLong();
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
@@ -506,11 +557,11 @@ public class NewChargingITestBase extends IntegrationTest{
         return paymentInstrumentId;
     }
 
-    protected ChargeUtils.ExternalChargeId addChargeWithAuthorisationModeAgreement(Map<String, String> recurringAuthToken) {
+    public ChargeUtils.ExternalChargeId addChargeWithAuthorisationModeAgreement(Map<String, String> recurringAuthToken) {
         return addChargeWithAuthorisationModeAgreement(null, null, recurringAuthToken);
     }
 
-    protected ChargeUtils.ExternalChargeId addChargeWithAuthorisationModeAgreement(
+    public ChargeUtils.ExternalChargeId addChargeWithAuthorisationModeAgreement(
             FirstDigitsCardNumber first6DigitsCardNumber,
             LastDigitsCardNumber last4DigitsCardNumber,
             Map<String, String> recurringAuthToken
@@ -548,11 +599,36 @@ public class NewChargingITestBase extends IntegrationTest{
         return externalChargeId;
     }
 
-    protected String getPaymentProvider() {
+    public String getPaymentProvider() {
         return paymentProvider;
     }
 
-    protected DatabaseFixtures.TestAccount getTestAccount() {
+    public DatabaseFixtures.TestAccount getTestAccount() {
         return testAccount;
+    }
+
+    public RestAssuredClient getConnectorRestApiClient() {
+        return connectorRestApiClient;
+    }
+
+    public String getAccountId() {
+        return accountId;
+    }
+
+
+    public WireMockServer getWiremockserver() {
+        return wireMockServer;
+    }
+
+    public CardidStub getCardidStub() {
+        return cardidStub;
+    }
+
+    public int getGatewayAccountCredentialsId() {
+        return gatewayAccountCredentialsId;
+    }
+
+    public AddGatewayAccountCredentialsParams getCredentialParams() {
+        return credentialParams;
     }
 }

@@ -5,16 +5,12 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.ConfigOverride;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -32,40 +28,33 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAP
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml",
-        configOverrides = {@ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "false")},
-        withDockerSQS = true
-)
-public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
+public class CardResourceCaptureWithSqsQueueIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension(
+            "sandbox",
+            io.dropwizard.testing.ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
     private String captureApproveUrl;
-
-    public CardResourceCaptureWithSqsQueueIT() {
-        super("sandbox");
-    }
-
-    @Override
-    @Before
-    public void setUp() {
-        super.setUp();
+    
+    @BeforeEach
+    void setUpLogger() {
         Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
 
     @Test
-    public void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasPreviouslyAuthorised() {
-        String chargeId = authoriseNewCharge();
-        givenSetup()
-                .post(captureChargeUrlFor(chargeId))
+    void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasPreviouslyAuthorised() {
+        String chargeId = app.authoriseNewCharge();
+        app.givenSetup()
+                .post(app.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        app.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
@@ -74,18 +63,18 @@ public class CardResourceCaptureWithSqsQueueIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture() {
-        String chargeId = addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+    void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture() {
+        String chargeId = app.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
 
-        captureApproveUrl = captureUrlForAwaitingCaptureCharge(accountId, chargeId);
+        captureApproveUrl = app.captureUrlForAwaitingCaptureCharge(app.getAccountId(), chargeId);
 
-        givenSetup()
+        app.givenSetup()
                 .post(captureApproveUrl)
                 .then()
                 .statusCode(204);
 
-        assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        app.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();

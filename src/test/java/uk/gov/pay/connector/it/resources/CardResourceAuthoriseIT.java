@@ -4,9 +4,10 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.it.base.NewChargingITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -59,11 +60,11 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
-public class CardResourceAuthoriseIT extends NewChargingITestBase {
+public class CardResourceAuthoriseIT {
 
-    public CardResourceAuthoriseIT() {
-        super("sandbox");
-    }
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+
 
     private static final String[] VALID_SANDBOX_CARD_LIST = new String[]{
             "4444333322221111",
@@ -80,36 +81,36 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
     @Test
-    public void exemption_3ds_should_be_null_for_a_non_worldpay_authorisation() {
+    void exemption_3ds_should_be_null_for_a_non_worldpay_authorisation() {
         String externalChargeId = shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", "visa"));
-        assertNull(databaseTestHelper.getExemption3ds(getLongChargeId(externalChargeId)));
+        assertNull(app.getDatabaseTestHelper().getExemption3ds(getLongChargeId(externalChargeId)));
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForValidCards() {
+    void shouldAuthoriseCharge_ForValidCards() {
         for (String cardNo : VALID_SANDBOX_CARD_LIST) {
             shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor(cardNo, "visa"));
         }
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForAValidAmericanExpress() {
+    void shouldAuthoriseCharge_ForAValidAmericanExpress() {
         shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("371449635398431", "1234", "11/99", "american-express"));
     }
 
     @Test
-    public void shouldStoreCardDetailsForAuthorisedCharge() {
+    void shouldStoreCardDetailsForAuthorisedCharge() {
         String cardBrand = "visa";
         String externalChargeId = shouldAuthoriseChargeFor(buildJsonAuthorisationDetailsFor("4444333322221111", cardBrand));
         Long chargeId = getLongChargeId(externalChargeId);
-        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
-        assertThat(databaseTestHelper.getChargeCardBrand(chargeId), is(cardBrand));
+        assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
     }
 
     @Test
-    public void shouldStoreAddressStateProvinceForAuthorisedChargeFromUnitedStates() {
+    void shouldStoreAddressStateProvinceForAuthorisedChargeFromUnitedStates() {
         String cardBrand = "visa";
         String validUsCardDetails = buildJsonAuthorisationDetailsFor(
                 "Mr. Name",
@@ -127,13 +128,13 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
         );
         String externalChargeId = shouldAuthoriseChargeFor(validUsCardDetails);
         Long chargeId = getLongChargeId(externalChargeId);
-        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("address_state_province", "DC"));
-        assertThat(databaseTestHelper.getChargeCardBrand(chargeId), is(cardBrand));
+        assertThat(app.getDatabaseTestHelper().getChargeCardBrand(chargeId), is(cardBrand));
     }
 
     @Test
-    public void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() {
+    void sanitizeCardDetails_shouldStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingMoreThan10Numbers() {
         String sanitizedValue = "r-**-**-*  Ju&^****-**";
         String valueWithMoreThan10CharactersAsNumbers = "r-12-34-5  Ju&^6501-76";
 
@@ -145,7 +146,7 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
                 valueWithMoreThan10CharactersAsNumbers, valueWithMoreThan10CharactersAsNumbers));
 
         Long chargeId = getLongChargeId(externalChargeId);
-        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
         assertThat(chargeCardDetails, hasEntry("address_county", sanitizedValue));
@@ -159,7 +160,7 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     }
 
     @Test
-    public void sanitizeCardDetails_shouldNotStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingRight10Numbers() {
+    void sanitizeCardDetails_shouldNotStoreSanitizedCardDetailsForAuthorisedCharge_forFieldsWithValuesContainingRight10Numbers() {
 
         String valueWith10CharactersAsNumbers = "r-12-34-5  Ju&^6501-7m";
 
@@ -170,7 +171,7 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
                 valueWith10CharactersAsNumbers, valueWith10CharactersAsNumbers));
 
         Long chargeId = getLongChargeId(externalChargeId);
-        Map<String, Object> chargeCardDetails = databaseTestHelper.getChargeCardDetailsByChargeId(chargeId);
+        Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails, hasEntry("last_digits_card_number", "1111"));
         assertThat(chargeCardDetails, hasEntry("first_digits_card_number", "444433"));
         assertThat(chargeCardDetails, hasEntry("address_county", valueWith10CharactersAsNumbers));
@@ -184,127 +185,127 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldNotAuthoriseCard_ForSpecificCardNumber1() {
+    void shouldNotAuthoriseCard_ForSpecificCardNumber1() {
         String cardDetailsToReject = buildJsonAuthorisationDetailsFor("4000000000000002", "visa");
 
         String expectedErrorMessage = "This transaction was declined.";
         String expectedChargeStatus = AUTHORISATION_REJECTED.getValue();
-        shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+        app.shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
     @Test
-    public void shouldNotAuthoriseCard_ForSpecificCardNumber2() {
+    void shouldNotAuthoriseCard_ForSpecificCardNumber2() {
         String cardDetailsToReject = buildJsonAuthorisationDetailsFor("4000000000000119", "visa");
 
         String expectedErrorMessage = "This transaction could be not be processed.";
         String expectedChargeStatus = AUTHORISATION_ERROR.getValue();
-        shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
+        app.shouldReturnErrorForAuthorisationDetailsWithMessage(cardDetailsToReject, expectedErrorMessage, expectedChargeStatus);
     }
 
     @Test
-    public void shouldAuthoriseCharge_WithMinimalAddress() {
-        String cardDetails = authorisationDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa", "CREDIT");
+    void shouldAuthoriseCharge_WithMinimalAddress() {
+        String cardDetails = app.authorisationDetailsWithMinimalAddress(VALID_SANDBOX_CARD_LIST[0], "visa", "CREDIT");
         shouldAuthoriseChargeFor(cardDetails);
     }
 
     @Test
-    public void shouldAuthoriseCharge_ForValidCardWithFullAddress() {
+    void shouldAuthoriseCharge_ForValidCardWithFullAddress() {
         String validCardDetails = buildJsonAuthorisationDetailsWithFullAddress();
         shouldAuthoriseChargeFor(validCardDetails);
     }
 
     @Test
-    public void shouldRejectRandomCardNumber() {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+    void shouldRejectRandomCardNumber() {
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("1111111111111119234", "visa");
 
         shouldReturn_unsupportedCardDetails_errorFor(chargeId, randomCardNumberDetails);
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_ERROR.getValue());
     }
 
     @Test
-    public void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+    void shouldReturnError_WhenCardNumberLongerThanMaximumExpected() {
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111111192345", "visa");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
-        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
     @Test
-    public void shouldReturnError_WhenCvcIsMoreThan4Digits() {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+    void shouldReturnError_WhenCvcIsMoreThan4Digits() {
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12345", "11/99", "visa");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
-        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
     @Test
-    public void shouldReturnError_WhenCvcIsLessThan3Digits() {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+    void shouldReturnError_WhenCvcIsLessThan3Digits() {
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "12", "11/99", "visa");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
-        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
     @Test
-    public void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+    void shouldReturnError_WhenCardNumberShorterThanMinimumExpected() {
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("11111111111", "visa");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, randomCardNumberDetails);
-        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
     @Test
-    public void shouldReturnError_WhenCardExpiryDateIsInvalid() {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+    void shouldReturnError_WhenCardExpiryDateIsInvalid() {
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String randomCardNumberDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "123", "99/99", "visa");
 
         shouldReturnGenericError(chargeId, randomCardNumberDetails, "CardExpiryDate");
-        assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, ENTERING_CARD_DETAILS.getValue());
     }
 
     @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreInvalid() {
-        String chargeId = createNewCharge();
+    void shouldReturnErrorAndDoNotUpdateChargeStatus_IfCardDetailsAreInvalid() {
+        String chargeId = app.createNewCharge();
         String detailsWithInvalidExpiryDate = buildJsonAuthorisationDetailsFor("4242424242424242", "123", "1299");
 
         shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(chargeId, detailsWithInvalidExpiryDate);
 
-        assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
     }
 
     private String shouldAuthoriseChargeFor(String cardDetails) {
-        String chargeId = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
-        givenSetup()
+        app.givenSetup()
                 .body(cardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(200);
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         return chargeId;
     }
 
     @Test
-    public void shouldAuthoriseChargeWithSavePaymentInstrumentToAgreement() {
-        ChargeUtils.ExternalChargeId externalChargeId = addChargeForSetUpAgreement(ENTERING_CARD_DETAILS);
+    void shouldAuthoriseChargeWithSavePaymentInstrumentToAgreement() {
+        ChargeUtils.ExternalChargeId externalChargeId = app.addChargeForSetUpAgreement(ENTERING_CARD_DETAILS);
 
-        givenSetup()
+        app.givenSetup()
                 .body(buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT_OR_DEBIT))
-                .post(authoriseChargeUrlFor(externalChargeId.toString()))
+                .post(app.authoriseChargeUrlFor(externalChargeId.toString()))
                 .then()
                 .statusCode(200);
 
-        assertFrontendChargeStatusIs(externalChargeId.toString(), AUTHORISATION_SUCCESS.getValue());
+        app.assertFrontendChargeStatusIs(externalChargeId.toString(), AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
-    public void shouldPersistCorporateSurcharge() {
+    void shouldPersistCorporateSurcharge() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         long corporateCreditCardSurchargeAmount = 2222L;
         var gatewayAccountParams = anAddGatewayAccountParams()
@@ -315,40 +316,40 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
                 .withCorporateCreditCardSurchargeAmount(corporateCreditCardSurchargeAmount)
                 .withServiceName("a cool service")
                 .build();
-        databaseTestHelper.addGatewayAccount(gatewayAccountParams);
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
 
-        String externalChargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId, databaseTestHelper, getPaymentProvider()).toString();
+        String externalChargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, randomId(), accountId, app.getDatabaseTestHelper(), app.getPaymentProvider()).toString();
         String cardDetails = buildCorporateJsonAuthorisationDetailsFor(PayersCardType.CREDIT);
 
-        givenSetup()
+        app.givenSetup()
                 .body(cardDetails)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(200);
 
-        assertFrontendChargeCorporateSurchargeAmount(externalChargeId, AUTHORISATION_SUCCESS.getValue(), corporateCreditCardSurchargeAmount);
+        app.assertFrontendChargeCorporateSurchargeAmount(externalChargeId, AUTHORISATION_SUCCESS.getValue(), corporateCreditCardSurchargeAmount);
     }
 
     @Test
-    public void shouldReturnAuthError_IfChargeExpired() {
-        String chargeId = createNewChargeWithNoTransactionId(EXPIRED);
-        givenSetup()
+    void shouldReturnAuthError_IfChargeExpired() {
+        String chargeId = app.createNewChargeWithNoTransactionId(EXPIRED);
+        app.givenSetup()
                 .body(validCardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
                 .body("message", contains(format("Charge not in correct state to be processed, %s", chargeId)))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-        assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
     @Test
-    public void shouldReturn404IfChargeDoesNotExist_ForAuthorise() {
+    void shouldReturn404IfChargeDoesNotExist_ForAuthorise() {
         String unknownId = "61234569847520367";
-        givenSetup()
+        app.givenSetup()
                 .body(validCardDetails)
-                .post(authoriseChargeUrlFor(unknownId))
+                .post(app.authoriseChargeUrlFor(unknownId))
                 .then()
                 .statusCode(404)
                 .contentType(JSON)
@@ -357,46 +358,46 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() {
-        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
+    void shouldReturnErrorWithoutChangingChargeState_IfOriginalStateIsNotEnteringCardDetails() {
+        String chargeId = app.createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
 
         String msg = format("Charge not in correct state to be processed, %s", chargeId);
-        givenSetup()
+        app.givenSetup()
                 .body(validCardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
                 .body("message", contains(msg))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
     }
 
     @Test
-    public void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() {
-        String chargeId = createNewChargeWithNoTransactionId(AUTHORISATION_READY);
+    void shouldReturnErrorAndDoNotUpdateChargeStatus_IfAuthorisationAlreadyInProgress() {
+        String chargeId = app.createNewChargeWithNoTransactionId(AUTHORISATION_READY);
         String message = format("Authorisation for charge already in progress, %s", chargeId);
-        givenSetup()
+        app.givenSetup()
                 .body(validCardDetails)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(202)
                 .contentType(JSON)
                 .body("message", contains(message))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
+        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_READY.getValue());
     }
 
     @Test
-    public void shouldSaveExpectedCardDetailsFromMultipleRequests() throws InterruptedException {
+    void shouldSaveExpectedCardDetailsFromMultipleRequests() throws InterruptedException {
 
-        String charge1 = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        String charge2 = createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String charge1 = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String charge2 = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
 
-        RequestSpecification firstChargeAuthorize = givenSetup()
+        RequestSpecification firstChargeAuthorize = app.givenSetup()
                 .body(buildJsonAuthorisationDetailsFor(
                         "Charge1 Name",
                         "4242424242424242",
@@ -412,7 +413,7 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
                         "GB"
                 ));
 
-        RequestSpecification secondChargeAuthorize = givenSetup()
+        RequestSpecification secondChargeAuthorize = app.givenSetup()
                 .body(buildJsonAuthorisationDetailsFor(
                         "Charge2 Name",
                         "4444333322221111",
@@ -430,15 +431,15 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
 
 
         List<Callable<ValidatableResponse>> authoriseTasks = Arrays.asList(
-                () -> firstChargeAuthorize.post(authoriseChargeUrlFor(charge1)).then(),
-                () -> secondChargeAuthorize.post(authoriseChargeUrlFor(charge2)).then());
+                () -> firstChargeAuthorize.post(app.authoriseChargeUrlFor(charge1)).then(),
+                () -> secondChargeAuthorize.post(app.authoriseChargeUrlFor(charge2)).then());
 
         invokeAll(authoriseTasks);
 
-        assertFrontendChargeStatusIs(charge1, AUTHORISATION_SUCCESS.getValue());
-        assertFrontendChargeStatusIs(charge2, AUTHORISATION_SUCCESS.getValue());
+        app.assertFrontendChargeStatusIs(charge1, AUTHORISATION_SUCCESS.getValue());
+        app.assertFrontendChargeStatusIs(charge2, AUTHORISATION_SUCCESS.getValue());
 
-        givenSetup()
+        app.givenSetup()
                 .get("/v1/frontend/charges/{chargeId}".replace("{chargeId}", charge1))
                 .then()
                 .statusCode(200)
@@ -455,7 +456,7 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
                 .body("card_details.billing_address.county.", is("Charge1 County"))
                 .body("card_details.billing_address.country.", is("GB"));
 
-        givenSetup()
+        app.givenSetup()
                 .get("/v1/frontend/charges/{chargeId}".replace("{chargeId}", charge2))
                 .then()
                 .statusCode(200)
@@ -474,7 +475,7 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     }
 
     @Test
-    public void shouldUseActivePaymentProviderWhenMultipleCredentials() {
+    void shouldUseActivePaymentProviderWhenMultipleCredentials() {
         long accountId = RandomUtils.nextInt();
         AddGatewayAccountCredentialsParams stripeCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(STRIPE.getName())
@@ -491,25 +492,25 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
                                 CREDENTIALS_USERNAME, "a-username",
                                 CREDENTIALS_PASSWORD, "a-password")))
                 .build();
-        withDatabaseTestHelper(databaseTestHelper)
+        withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .withAccountId(accountId)
                 .withGatewayAccountCredentials(List.of(stripeCredentialsParams, worldpayCredentialsParams))
                 .insert();
 
         ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(ENTERING_CARD_DETAILS, null,
-                String.valueOf(accountId), databaseTestHelper, WORLDPAY.getName(), worldpayCredentialsParams.getId());
+                String.valueOf(accountId), app.getDatabaseTestHelper(), WORLDPAY.getName(), worldpayCredentialsParams.getId());
 
-        worldpayMockClient.mockAuthorisationSuccess();
+        app.getWorldpayMockClient().mockAuthorisationSuccess();
 
-        givenSetup()
+        app.givenSetup()
                 .body(buildJsonAuthorisationDetailsFor("4444333322221111", "visa"))
-                .post(authoriseChargeUrlFor(chargeId.toString()))
+                .post(app.authoriseChargeUrlFor(chargeId.toString()))
                 .then()
                 .statusCode(200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
 
-        wireMockServer.verify(postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
+        app.getWorldpayWireMockServer().verify(postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
     }
 
     private List<ValidatableResponse> invokeAll(List<Callable<ValidatableResponse>> tasks) throws InterruptedException {
@@ -528,9 +529,9 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     }
 
     private void shouldReturnGenericError(String chargeId, String randomCardNumber, String substringExpectedInMessage) {
-        givenSetup()
+        app.givenSetup()
                 .body(randomCardNumber)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
@@ -539,9 +540,9 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     }
 
     private void shouldReturn_unsupportedCardDetails_errorFor(String chargeId, String randomCardNumber) {
-        givenSetup()
+        app.givenSetup()
                 .body(randomCardNumber)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(400)
                 .contentType(JSON)
@@ -550,9 +551,9 @@ public class CardResourceAuthoriseIT extends NewChargingITestBase {
     }
 
     private void shouldContain_valuesDoNotMatchExpectedFormat_errorMessageFor(String chargeId, String randomCardNumber) {
-        givenSetup()
+        app.givenSetup()
                 .body(randomCardNumber)
-                .post(authoriseChargeUrlFor(chargeId))
+                .post(app.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(422)
                 .contentType(JSON)

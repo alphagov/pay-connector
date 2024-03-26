@@ -2,23 +2,16 @@ package uk.gov.pay.connector.it.resources.stripe;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.collection.IsIn;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
-import uk.gov.pay.connector.rules.LedgerStub;
-import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
@@ -64,17 +57,14 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthori
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsFor;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDetailsWithoutAddress;
 import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonGooglePayAuthorisationDetails;
-import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlFor;
-import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForApplePay;
-import static uk.gov.pay.connector.it.base.ChargingITestBase.authoriseChargeUrlForGooglePay;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
 public class StripeCardResourceAuthoriseIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe");
     private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
     private static final String CVC = "123";
     private static final CardExpiryDate EXPIRY = CardExpiryDate.valueOf("11/99");
@@ -100,28 +90,16 @@ public class StripeCardResourceAuthoriseIT {
     private final String paymentProvider = PaymentGatewayName.STRIPE.getName();
     private final ObjectMapper mapper = new ObjectMapper();
     private String accountId;
-    private StripeMockClient stripeMockClient;
     private DatabaseTestHelper databaseTestHelper;
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
-
-    @DropwizardTestContext
-    private TestContext testContext;
-
-    private WireMockServer wireMockServer;
-
-    @Before
-    public void setup() {
-        wireMockServer = testContext.getWireMockServer();
-        stripeMockClient = new StripeMockClient(wireMockServer);
-
-        var ledgerStub = new LedgerStub(wireMockServer);
-        ledgerStub.acceptPostEvent();
-
+    
+    @BeforeEach
+    void setup() {
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
-        databaseTestHelper = testContext.getDatabaseTestHelper();
+        databaseTestHelper = app.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
 
-        connectorRestApiClient = new RestAssuredClient(testContext.getPort(), accountId);
+        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
 
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(paymentProvider)
@@ -132,17 +110,17 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void cardAuthorisationWithPaymentIntentsFailureShouldReturnBadRequest() {
-        stripeMockClient.mockCreatePaymentMethodAuthorisationRejected();
+    void cardAuthorisationWithPaymentIntentsFailureShouldReturnBadRequest() {
+        app.getStripeMockClient().mockCreatePaymentMethodAuthorisationRejected();
 
         addGatewayAccountWith3DS2Enabled();
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(BAD_REQUEST_400)
                 .body("message", contains("This transaction was declined."))
@@ -152,18 +130,18 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldReturn402_whenStripeReturnsANonDeclineErrorCode() {
-        stripeMockClient.mockCreatePaymentMethod();
-        stripeMockClient.mockCreatePaymentIntentAuthorisationError();
+    void shouldReturn402_whenStripeReturnsANonDeclineErrorCode() {
+        app.getStripeMockClient().mockCreatePaymentMethod();
+        app.getStripeMockClient().mockCreatePaymentIntentAuthorisationError();
 
         addGatewayAccountWith3DS2Enabled();
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(402)
                 .body("message", contains("There was an error authorising the transaction."))
@@ -173,24 +151,24 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void authoriseCharge() {
-        stripeMockClient.mockCreatePaymentMethod();
-        stripeMockClient.mockCreatePaymentIntent();
+    void authoriseCharge() {
+        app.getStripeMockClient().mockCreatePaymentMethod();
+        app.getStripeMockClient().mockCreatePaymentIntent();
         addGatewayAccountWith3DS2Enabled();
 
         String externalChargeId = addCharge();
 
-        ValidatableResponse validatableResponse = given().port(testContext.getPort())
+        ValidatableResponse validatableResponse = given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then();
 
         validatableResponse
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         verifyPaymentMethodRequest();
@@ -198,50 +176,50 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldAuthoriseChargeWithoutBillingAddress() {
-        stripeMockClient.mockCreatePaymentMethod();
-        stripeMockClient.mockCreatePaymentIntent();
+    void shouldAuthoriseChargeWithoutBillingAddress() {
+        app.getStripeMockClient().mockCreatePaymentMethod();
+        app.getStripeMockClient().mockCreatePaymentIntent();
         addGatewayAccount();
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetailsWithoutBillingAddress)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
     }
 
     @Test
-    public void authoriseChargeToSetUpRecurringPaymentAgreement() throws Exception {
-        stripeMockClient.mockCreatePaymentMethod();
-        stripeMockClient.mockCreateCustomer();
-        stripeMockClient.mockCreatePaymentIntentWithCustomer();
+    void authoriseChargeToSetUpRecurringPaymentAgreement() throws Exception {
+        app.getStripeMockClient().mockCreatePaymentMethod();
+        app.getStripeMockClient().mockCreateCustomer();
+        app.getStripeMockClient().mockCreatePaymentIntentWithCustomer();
         addGatewayAccountWith3DS2Enabled();
 
         String agreementId = addAgreement();
         String externalChargeId = addChargeWithAgreement(ENTERING_CARD_DETAILS, agreementId);
 
-        ValidatableResponse validatableResponse = given().port(testContext.getPort())
+        ValidatableResponse validatableResponse = given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then();
 
         validatableResponse
                 .statusCode(OK_200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         verifyPaymentMethodRequest();
@@ -256,16 +234,16 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldRespondAs3dsRequired_whenAuthorisationRequires3ds() {
+    void shouldRespondAs3dsRequired_whenAuthorisationRequires3ds() {
         addGatewayAccount();
-        stripeMockClient.mockCreatePaymentMethod();
-        stripeMockClient.mockCreatePaymentIntentRequiring3DS();
+        app.getStripeMockClient().mockCreatePaymentMethod();
+        app.getStripeMockClient().mockCreatePaymentIntentRequiring3DS();
 
         String externalChargeId = addCharge();
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
                 .statusCode(OK_200);
@@ -274,15 +252,15 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldReturnInternalServerResponseWhenGatewayAccountHasNoStripeAccountId() {
+    void shouldReturnInternalServerResponseWhenGatewayAccountHasNoStripeAccountId() {
         addGatewayAccountWithEmptyCredentials();
 
         String externalChargeId = addCharge();
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(authoriseChargeUrlFor(externalChargeId))
+                .post(app.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(500)
                 .body("message", contains(containsString("Exception occurred while doing authorisation")))
@@ -290,18 +268,18 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldAuthoriseApplePayPayment() {
-        stripeMockClient.mockCreateToken();
-        stripeMockClient.mockCreatePaymentIntent();
+    void shouldAuthoriseApplePayPayment() {
+        app.getStripeMockClient().mockCreateToken();
+        app.getStripeMockClient().mockCreatePaymentIntent();
 
         addGatewayAccount();
         String chargeId = addCharge();
         String applePayAuthorisationRequest = buildJsonApplePayAuthorisationDetails("Someone", "foo@example.com");
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(applePayAuthorisationRequest)
-                .post(authoriseChargeUrlForApplePay(chargeId))
+                .post(app.authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
@@ -319,18 +297,18 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldRejectApplePayPayment_andSaveCardDetails() {
-        stripeMockClient.mockCreateToken();
-        stripeMockClient.mockCreatePaymentIntentAuthorisationRejected();
+    void shouldRejectApplePayPayment_andSaveCardDetails() {
+        app.getStripeMockClient().mockCreateToken();
+        app.getStripeMockClient().mockCreatePaymentIntentAuthorisationRejected();
 
         addGatewayAccount();
         String chargeId = addCharge();
         String applePayAuthorisationRequest = buildJsonApplePayAuthorisationDetails("Someone", "foo@example.com");
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(applePayAuthorisationRequest)
-                .post(authoriseChargeUrlForApplePay(chargeId))
+                .post(app.authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(400);
 
@@ -347,17 +325,17 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldAuthoriseGooglePayPayment() {
-        stripeMockClient.mockCreatePaymentIntent();
+    void shouldAuthoriseGooglePayPayment() {
+        app.getStripeMockClient().mockCreatePaymentIntent();
 
         addGatewayAccount();
         String chargeId = addCharge();
         String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .post(app.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
@@ -375,17 +353,17 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldRejectGooglePayPayment_andSaveCardDetails() {
-        stripeMockClient.mockCreatePaymentIntentAuthorisationRejected();
+    void shouldRejectGooglePayPayment_andSaveCardDetails() {
+        app.getStripeMockClient().mockCreatePaymentIntentAuthorisationRejected();
 
         addGatewayAccount();
         String chargeId = addCharge();
         String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .post(app.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(400);
 
@@ -402,17 +380,17 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldReturnStatusAsRequires3dsForGooglePay() {
-        stripeMockClient.mockCreatePaymentIntentRequiring3DS();
+    void shouldReturnStatusAsRequires3dsForGooglePay() {
+        app.getStripeMockClient().mockCreatePaymentIntentRequiring3DS();
 
         addGatewayAccount();
         String chargeId = addCharge();
         String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .post(app.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200);
 
@@ -429,17 +407,17 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     @Test
-    public void shouldReturnStatusAsAuthorisationErrorForGooglePay() {
-        stripeMockClient.mockCreatePaymentIntentAuthorisationError();
+    void shouldReturnStatusAsAuthorisationErrorForGooglePay() {
+        app.getStripeMockClient().mockCreatePaymentIntentAuthorisationError();
 
         addGatewayAccount();
         String chargeId = addCharge();
         String googlePayAuthorisationRequest = buildJsonGooglePayAuthorisationDetails("Someone", "foo@example.com");
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(authoriseChargeUrlForGooglePay(chargeId))
+                .post(app.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(402);
 
@@ -456,13 +434,13 @@ public class StripeCardResourceAuthoriseIT {
     }
     
     @Test
-    public void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
+    void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
 
         addGatewayAccount();
 
         String externalChargeId = addChargeWithStatus(AUTHORISATION_SUCCESS);
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(StringUtils.EMPTY)
                 .post(captureChargeUrlFor(externalChargeId))
@@ -537,7 +515,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private void verifyCustomerRequest() {
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/customers"))
+        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/customers"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("name", CARD_HOLDER_NAME)))
@@ -545,7 +523,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private void verifyPaymentIntentRequest(String externalChargeId, String stripeAccountId) {
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("amount", "6234")))
@@ -563,7 +541,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private void verifyPaymentMethodRequest() {
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("billing_details[name]", "Scrooge McDuck")))
