@@ -44,19 +44,13 @@ public class StripeResourceCancelIT {
 
     private String stripeAccountId;
     private String accountId;
-    private StripeMockClient stripeMockClient;
     private String paymentProvider = PaymentGatewayName.STRIPE.getName();
 
     private DatabaseTestHelper databaseTestHelper;
-    
-    private WireMockServer wireMockServer;
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
 
     @BeforeEach
     void setup() {
-        wireMockServer = app.getWireMockServer();
-        stripeMockClient = new StripeMockClient(wireMockServer);
-        
         stripeAccountId = String.valueOf(RandomUtils.nextInt());
         databaseTestHelper = app.getDatabaseTestHelper();
         accountId = String.valueOf(RandomUtils.nextInt());
@@ -75,7 +69,7 @@ public class StripeResourceCancelIT {
         addGatewayAccount();
 
         String transactionId = "stripe-" + RandomUtils.nextInt();
-        stripeMockClient.mockCancelPaymentIntent(transactionId);
+        app.getStripeMockClient().mockCancelPaymentIntent(transactionId);
         
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
@@ -85,7 +79,7 @@ public class StripeResourceCancelIT {
                 .then()
                 .statusCode(NO_CONTENT_204);
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + transactionId + "/cancel"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + transactionId + "/cancel"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         Long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);
@@ -98,7 +92,7 @@ public class StripeResourceCancelIT {
         addGatewayAccount();
 
         String transactionId = "stripe-" + RandomUtils.nextInt();
-        stripeMockClient.mockCancelPaymentIntent(transactionId);
+        app.getStripeMockClient().mockCancelPaymentIntent(transactionId);
 
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
@@ -108,7 +102,7 @@ public class StripeResourceCancelIT {
                 .then()
                 .statusCode(NO_CONTENT_204);
 
-        wireMockServer.verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + transactionId + "/cancel"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_intents/" + transactionId + "/cancel"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         Long chargeId = databaseTestHelper.getChargeIdByExternalId(externalChargeId);

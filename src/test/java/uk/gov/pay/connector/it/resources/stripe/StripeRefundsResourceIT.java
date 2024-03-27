@@ -38,13 +38,11 @@ public class StripeRefundsResourceIT {
     private String stripeAccountId = "stripe_account_id";
     private String accountId = String.valueOf(nextLong());
 
-    private StripeMockClient stripeMockClient;
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
     
     @BeforeEach
     void setUpStripe() {
-        stripeMockClient = new StripeMockClient(app.getWiremockserver());
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
@@ -63,7 +61,7 @@ public class StripeRefundsResourceIT {
                 .withPaymentProvider(STRIPE.getName())
                 .insert();
 
-        stripeMockClient.mockGetPaymentIntent(defaultTestCharge.getTransactionId());
+        app.getStripeMockClient().mockGetPaymentIntent(defaultTestCharge.getTransactionId());
     }
 
     @Test
@@ -80,8 +78,8 @@ public class StripeRefundsResourceIT {
         String platformAccountId = "stripe_platform_account_id";
         String externalChargeId = testChargeCreatedWithStripeChargeAPI.getExternalChargeId();
         long amount = 10L;
-        stripeMockClient.mockTransferSuccess();
-        stripeMockClient.mockRefund();
+        app.getStripeMockClient().mockTransferSuccess();
+        app.getStripeMockClient().mockRefund();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", testChargeCreatedWithStripeChargeAPI.getAmount());
         String refundPayload = new Gson().toJson(refundData);
@@ -102,11 +100,11 @@ public class StripeRefundsResourceIT {
         assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", "re_1DRiccHj08j21DRiccHj08j2_test"));
         String refundId = response.extract().path("refund_id");
         
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=ch_123"))
                 .withRequestBody(containing("amount=" + amount)));
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                 .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
                 .withHeader("Stripe-Account", equalTo(stripeAccountId))
                 .withRequestBody(containing("transfer_group=" + testChargeCreatedWithStripeChargeAPI.getExternalChargeId()))
@@ -118,9 +116,9 @@ public class StripeRefundsResourceIT {
         String platformAccountId = "stripe_platform_account_id";
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
-        stripeMockClient.mockGetPaymentIntent(defaultTestCharge.getTransactionId());
-        stripeMockClient.mockTransferSuccess();
-        stripeMockClient.mockRefund();
+        app.getStripeMockClient().mockGetPaymentIntent(defaultTestCharge.getTransactionId());
+        app.getStripeMockClient().mockTransferSuccess();
+        app.getStripeMockClient().mockRefund();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
@@ -139,12 +137,12 @@ public class StripeRefundsResourceIT {
         assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
         String refundId = response.extract().path("refund_id");
         String paymentIntentUrl = "/v1/payment_intents/" + defaultTestCharge.getTransactionId() + "?expand%5B%5D=charges.data.balance_transaction";
-        app.getWiremockserver().verify(getRequestedFor(urlEqualTo(paymentIntentUrl)));
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/refunds"))
+        app.getStripeWireMockServer().verify(getRequestedFor(urlEqualTo(paymentIntentUrl)));
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/refunds"))
                 .withHeader("Idempotency-Key", equalTo("refund" + refundId))
                 .withRequestBody(containing("charge=ch_123456"))
                 .withRequestBody(containing("amount=" + amount)));
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/transfers"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                 .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
                 .withHeader("Stripe-Account", equalTo(stripeAccountId))
                 .withRequestBody(containing("transfer_group=" + defaultTestCharge.getExternalChargeId()))
@@ -155,7 +153,7 @@ public class StripeRefundsResourceIT {
     void stripeRefund_shouldResultInRefundErrorIfRefundFails() {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
-        stripeMockClient.mockRefundError();
+        app.getStripeMockClient().mockRefundError();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);
@@ -178,9 +176,9 @@ public class StripeRefundsResourceIT {
     void stripeRefund_shouldResultInRefundErrorIfTransferFails() {
         String externalChargeId = defaultTestCharge.getExternalChargeId();
         long amount = 10L;
-        
-        stripeMockClient.mockRefund();
-        stripeMockClient.mockTransferFailure();
+
+        app.getStripeMockClient().mockRefund();
+        app.getStripeMockClient().mockTransferFailure();
 
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", amount, "refund_amount_available", defaultTestCharge.getAmount());
         String refundPayload = new Gson().toJson(refundData);

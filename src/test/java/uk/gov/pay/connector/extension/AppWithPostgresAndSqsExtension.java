@@ -110,6 +110,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         worldpayWireMockServer = new WireMockServer(wireMockConfig().port(worldpayWireMockPort));
         worldpayWireMockServer.start();
         stripeWireMockServer = new WireMockServer(wireMockConfig().port(stripeWireMockPort));
+        stripeWireMockServer.start();
         
         databaseTestHelper = new DatabaseTestHelper(jdbi);
 
@@ -226,6 +227,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
     public static WireMockServer getWireMockServer() {
         return wireMockServer;
+    }
+    
+    public static WireMockServer getStripeWireMockServer() {
+        return stripeWireMockServer;
     }
 
     public DatabaseTestHelper getDatabaseTestHelper() {
