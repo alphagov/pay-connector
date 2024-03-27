@@ -123,8 +123,18 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
         this.paymentProvider = paymentProvider;
     }
 
+    public ChargingITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
+        super(CustomConnectorClass);
+        this.paymentProvider = paymentProvider;
+    }
+
     public ChargingITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
         super(configOverrides);
+        this.paymentProvider = paymentProvider;
+    }
+
+    public ChargingITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
+        super(CustomConnectorClass, configOverrides);
         this.paymentProvider = paymentProvider;
     }
 

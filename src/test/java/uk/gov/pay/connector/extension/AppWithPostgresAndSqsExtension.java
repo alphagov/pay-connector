@@ -54,11 +54,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final int wireMockPort = PortFactory.findFreePort();
     private final int worldpayWireMockPort = PortFactory.findFreePort();
     private final int ledgerWireMockPort = PortFactory.findFreePort();
+    private final int stripeWireMockPort = PortFactory.findFreePort();
 
     protected static DatabaseTestHelper databaseTestHelper;
     protected static WireMockServer wireMockServer;
     protected static WireMockServer worldpayWireMockServer;
     protected static WireMockServer ledgerWireMockServer;
+    protected static WireMockServer stripeWireMockServer;
     protected static WorldpayMockClient worldpayMockClient;
     protected static StripeMockClient stripeMockClient;
     protected static LedgerStub ledgerStub;
@@ -68,10 +70,18 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     protected DatabaseFixtures databaseFixtures;
 
     public AppWithPostgresAndSqsExtension() {
-        this(new ConfigOverride[0]);
+        this(ConnectorApp.class, new ConfigOverride[0]);
+    }
+    
+    public AppWithPostgresAndSqsExtension(Class CustomConnectorClass) {
+        this(CustomConnectorClass, new ConfigOverride[0]);
+    }
+    
+    public AppWithPostgresAndSqsExtension(ConfigOverride... configOverrides) {
+        this(ConnectorApp.class, configOverrides);
     }
 
-    public AppWithPostgresAndSqsExtension(ConfigOverride... configOverrides) {
+    public AppWithPostgresAndSqsExtension(Class CustomConnectorClass, ConfigOverride... configOverrides) {
         getOrCreate();
 
         sqsClient = SqsTestDocker.initialise(List.of("capture-queue", "event-queue", "tasks-queue", "reconcile-queue"));
@@ -80,7 +90,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         newConfigOverrides = overrideEndpointConfig(newConfigOverrides);
         newConfigOverrides = overrideSqsConfig(newConfigOverrides);
 
-        dropwizardAppExtension = new DropwizardAppExtension<>(ConnectorApp.class,
+        dropwizardAppExtension = new DropwizardAppExtension<>(CustomConnectorClass,
                 CONFIG_PATH, newConfigOverrides);
 
         try {
@@ -99,13 +109,14 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         wireMockServer.start();
         worldpayWireMockServer = new WireMockServer(wireMockConfig().port(worldpayWireMockPort));
         worldpayWireMockServer.start();
+        stripeWireMockServer = new WireMockServer(wireMockConfig().port(stripeWireMockPort));
         
         databaseTestHelper = new DatabaseTestHelper(jdbi);
 
         connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
 
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
-        stripeMockClient = new StripeMockClient(wireMockServer);
+        stripeMockClient = new StripeMockClient(stripeWireMockServer);
 
         ledgerWireMockServer = new WireMockServer(wireMockConfig().port(ledgerWireMockPort));
         ledgerWireMockServer.start();
@@ -120,6 +131,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         wireMockServer.resetAll();
         worldpayWireMockServer.resetAll();
         ledgerWireMockServer.resetAll();
+        stripeWireMockServer.resetAll();
         ledgerStub.acceptPostEvent();
     }
        
@@ -160,7 +172,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
         newConfigOverride.add(config("worldpay.urls.test", "http://localhost:" + worldpayWireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
         newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + worldpayWireMockPort + "/shopper/3ds/ddc.html"));
-        newConfigOverride.add(config("stripe.url", "http://localhost:" + wireMockPort));
+        newConfigOverride.add(config("stripe.url", "http://localhost:" + stripeWireMockPort));
         newConfigOverride.add(config("ledgerBaseURL", "http://localhost:" + ledgerWireMockPort));
         newConfigOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));
         return newConfigOverride.toArray(new ConfigOverride[0]);
