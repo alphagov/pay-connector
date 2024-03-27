@@ -1,24 +1,17 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.Gson;
-import io.restassured.specification.RequestSpecification;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import uk.gov.pay.connector.app.ConnectorApp;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
-import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,8 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
@@ -41,44 +32,26 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountCredentialsResourceWorldpayIT {
+    @RegisterExtension
+    static AppWithPostgresAndSqsExtension app = new ChargingITestBaseExtension("worldpay");
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
     private static final String VALIDATE_WORLDPAY_CREDENTIALS_URL = "/v1/api/accounts/%s/worldpay/check-credentials";
-
-    @DropwizardTestContext
-    protected TestContext testContext;
-
-    private DatabaseTestHelper databaseTestHelper;
-    private WireMockServer wireMockServer;
-    private WorldpayMockClient worldpayMockClient;
-    private DatabaseFixtures databaseFixtures;
     private Long credentialsId;
     private Long accountId;
 
-    @Before
-    public void setUp() {
-        databaseTestHelper = testContext.getDatabaseTestHelper();
-        wireMockServer = testContext.getWireMockServer();
-        worldpayMockClient = new WorldpayMockClient(wireMockServer);
-        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
-
+    @BeforeEach
+    void setup() {
         testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST);
         accountId = testAccount.getAccountId();
-
         credentialsId = testAccount.getCredentials().get(0).getId();
     }
-
-    protected RequestSpecification givenSetup() {
-        return given().port(testContext.getPort()).contentType(JSON);
-    }
-
+    
     @Test
-    public void existingOneOffCredentialsCanBeReplaced() {
-        givenSetup()
+    void existingOneOffCredentialsCanBeReplaced() {
+        app.givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials/worldpay/one_off_customer_initiated",
@@ -94,7 +67,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
                 .body("credentials.one_off_customer_initiated", hasEntry("username", "new-username"))
                 .body("credentials.one_off_customer_initiated", not(hasKey("password")));
 
-        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
@@ -105,7 +78,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
         assertThat(updatedOneOffCustomerInitiated, hasEntry("username", "new-username"));
         assertThat(updatedOneOffCustomerInitiated, hasEntry("password", "new-password"));
 
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials/worldpay/one_off_customer_initiated",
@@ -121,7 +94,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
                 .body("credentials.one_off_customer_initiated", hasEntry("username", "newer-username"))
                 .body("credentials.one_off_customer_initiated", not(hasKey("password")));
 
-        Map<String, Object> moreUpdatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, Object> moreUpdatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> moreUpdatedCredentials = new Gson().fromJson(((PGobject) moreUpdatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
@@ -134,8 +107,8 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
     }
 
     @Test
-    public void addingRecurringCredentialsCanBeDoneInStages() {
-        givenSetup()
+    void addingRecurringCredentialsCanBeDoneInStages() {
+        app.givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials/worldpay/recurring_customer_initiated",
@@ -151,7 +124,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
                 .body("credentials.recurring_customer_initiated", hasEntry("username", "new-recurring-cit-username"))
                 .body("credentials.recurring_customer_initiated", not(hasKey("password")));
 
-        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
@@ -164,7 +137,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
 
         assertThat(updatedCredentials, not(hasKey("recurring_merchant_initiated")));
 
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials/worldpay/recurring_merchant_initiated",
@@ -180,7 +153,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
                 .body("credentials.recurring_merchant_initiated", hasEntry("username", "new-recurring-mit-username"))
                 .body("credentials.recurring_merchant_initiated", not(hasKey("password")));
 
-        Map<String, Object> moreUpdatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, Object> moreUpdatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> moreUpdatedCredentials = new Gson().fromJson(((PGobject) moreUpdatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
@@ -199,12 +172,12 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
     }
 
     @Test
-    public void checkWorldpayCredentials_returns500WhenWorldpayReturnsUnexpectedResponse() throws JsonProcessingException {
-        worldpayMockClient.mockCredentialsValidationUnexpectedResponse();
+    void checkWorldpayCredentials_returns500WhenWorldpayReturnsUnexpectedResponse() throws JsonProcessingException {
+        app.getWorldpayMockClient().mockCredentialsValidationUnexpectedResponse();
 
         long accountId = nextLong(2, 10000);
-        databaseFixtures.aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
-        givenSetup()
+        app.getDatabaseFixtures().aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
+        app.givenSetup()
                 .body(Map.of(
                         "username", "valid-user-name",
                         "password", "valid-password",
@@ -236,7 +209,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
                         "password", "a-password"))
                 .build();
 
-        return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
+        return app.getDatabaseFixtures().aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
                 .withType(gatewayAccountType)
