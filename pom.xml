@@ -24,8 +24,8 @@
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <jjwt.version>0.12.3</jjwt.version>
         <pact.version>3.6.15</pact.version>
-        <mockito.version>4.8.0</mockito.version>
-        <junit.jupiter.version>5.9.3</junit.jupiter.version>
+        <mockito.version>5.10.0</mockito.version>
+        <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <swaggger-version>2.2.21</swaggger-version>
         <prometheus.version>0.16.0</prometheus.version>
         <PACT_BROKER_URL/>
@@ -374,18 +374,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-commons</artifactId>
-            <version>1.9.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path-assert</artifactId>
             <version>2.9.0</version>
@@ -538,6 +526,7 @@
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -124,7 +124,7 @@ class StripeCaptureHandlerTest {
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
         ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
-        verify(gatewayClient, times(2)).postRequestFor(transferRequestCaptor.capture());
+        verify(gatewayClient, times(1)).postRequestFor(transferRequestCaptor.capture());
 
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9937"));
 
@@ -359,7 +359,7 @@ class StripeCaptureHandlerTest {
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
         ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
-        verify(gatewayClient, times(2)).postRequestFor(transferRequestCaptor.capture());
+        verify(gatewayClient, times(1)).postRequestFor(transferRequestCaptor.capture());
 
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9885"));
 
@@ -401,7 +401,7 @@ class StripeCaptureHandlerTest {
         CaptureResponse captureResponse = stripeCaptureHandler.capture(captureGatewayRequest);
 
         ArgumentCaptor<StripeTransferOutRequest> transferRequestCaptor = ArgumentCaptor.forClass(StripeTransferOutRequest.class);
-        verify(gatewayClient, times(2)).postRequestFor(transferRequestCaptor.capture());
+        verify(gatewayClient, times(1)).postRequestFor(transferRequestCaptor.capture());
 
         assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9895"));
 
