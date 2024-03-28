@@ -2,16 +2,13 @@ package uk.gov.pay.connector.it.events;
 
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.ConfigOverride;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
 import java.sql.Timestamp;
@@ -20,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,47 +25,37 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(
-        app = EmittedEventResourceIT.ConnectorAppWithCustomStateTransitionQueue.class,
-        config = "config/test-it-config.yaml",
-        withDockerSQS = true,
-        configOverrides = {
-                @ConfigOverride(key = "emittedEventSweepConfig.notEmittedEventMaxAgeInSeconds", value = "0")
-        }
-)
-public class EmittedEventResourceIT extends ChargingITestBase {
+public class EmittedEventResourceIT {
 
     private static StateTransitionQueue stateTransitionQueue = new StateTransitionQueue();
+    
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox",
+            EmittedEventResourceIT.ConnectorAppWithCustomStateTransitionQueue.class,
+            config("emittedEventSweepConfig.notEmittedEventMaxAgeInSeconds", "0")
+    );
     private String externalChargeId;
-
-    public EmittedEventResourceIT() {
-        super("sandbox");
-    }
-
-    @Override
-    @Before
-    public void setUp() {
-        super.setUp();
-        databaseTestHelper.truncateEmittedEvents();
+    
+    @BeforeEach
+    void setUp() {
         stateTransitionQueue.clear();
     }
 
     @Test
-    public void shouldSweepEmittedEventsIfDoNotRetryEmitUntilIsNull() {
+    void shouldSweepEmittedEventsIfDoNotRetryEmitUntilIsNull() {
         long chargeId = addCharge();
-        databaseTestHelper.addEvent(chargeId, CREATED.toString());
+        app.getDatabaseTestHelper().addEvent(chargeId, CREATED.toString());
 
-        databaseTestHelper.addEmittedEvent("payment", externalChargeId, Instant.now(),
+        app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, null);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postEmittedEventsSweepTask()
                 .statusCode(OK.getStatusCode());
 
         assertThat(stateTransitionQueue.size(), is(1));
 
-        List<Map<String, Object>> emittedEvents = databaseTestHelper.readEmittedEvents();
+        List<Map<String, Object>> emittedEvents = app.getDatabaseTestHelper().readEmittedEvents();
 
         // emitted events sweeper adds duplicate event to table (and doesn't remove existing event)
         assertThat(emittedEvents.size(), is(2));
@@ -76,21 +64,21 @@ public class EmittedEventResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldSweepEmittedEventsIfDoNotRetryEmitUntilValueIsInThePast() {
+    void shouldSweepEmittedEventsIfDoNotRetryEmitUntilValueIsInThePast() {
         long chargeId = addCharge();
-        databaseTestHelper.addEvent(chargeId, CREATED.toString());
+        app.getDatabaseTestHelper().addEvent(chargeId, CREATED.toString());
 
         Instant doNotRetryEmitUntil = Instant.now().minusSeconds(60);
-        databaseTestHelper.addEmittedEvent("payment", externalChargeId, Instant.now(),
+        app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, doNotRetryEmitUntil);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postEmittedEventsSweepTask()
                 .statusCode(OK.getStatusCode());
 
         assertThat(stateTransitionQueue.size(), is(1));
 
-        List<Map<String, Object>> emittedEvents = databaseTestHelper.readEmittedEvents();
+        List<Map<String, Object>> emittedEvents = app.getDatabaseTestHelper().readEmittedEvents();
 
         // emitted events sweeper adds duplicate event to table (and doesn't remove existing event)
         assertThat(emittedEvents.size(), is(2));
@@ -100,21 +88,21 @@ public class EmittedEventResourceIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldNotSweepEmittedEventsIfDoNotRetryEmitUntilValueIsInTheFuture() {
+    void shouldNotSweepEmittedEventsIfDoNotRetryEmitUntilValueIsInTheFuture() {
         long chargeId = addCharge();
-        databaseTestHelper.addEvent(chargeId, CREATED.toString());
+        app.getDatabaseTestHelper().addEvent(chargeId, CREATED.toString());
 
         Instant doNotRetryEmitUntil = Instant.now().plusSeconds(60);
-        databaseTestHelper.addEmittedEvent("payment", externalChargeId, Instant.now(),
+        app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, doNotRetryEmitUntil);
 
-        connectorRestApiClient
+        app.getConnectorRestApiClient()
                 .postEmittedEventsSweepTask()
                 .statusCode(OK.getStatusCode());
 
         assertThat(stateTransitionQueue.size(), is(0));
 
-        List<Map<String, Object>> emittedEvents = databaseTestHelper.readEmittedEvents();
+        List<Map<String, Object>> emittedEvents = app.getDatabaseTestHelper().readEmittedEvents();
 
         assertThat(emittedEvents.size(), is(1));
         assertEmittedEvent(emittedEvents.get(0), doNotRetryEmitUntil);
@@ -123,10 +111,10 @@ public class EmittedEventResourceIT extends ChargingITestBase {
     private long addCharge() {
         long chargeId = RandomUtils.nextInt();
         externalChargeId = "charge" + chargeId;
-        databaseTestHelper.addCharge(anAddChargeParams()
+        app.getDatabaseTestHelper().addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
-                .withGatewayAccountId(accountId)
+                .withGatewayAccountId(app.getAccountId())
                 .withAmount(100)
                 .withStatus(CREATED)
                 .build());
