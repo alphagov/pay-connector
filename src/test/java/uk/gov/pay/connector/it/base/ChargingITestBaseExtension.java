@@ -229,7 +229,7 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
         databaseTestHelper.truncateAllData();
     }
 
-    private void purgeEventQueue() {
+    public void purgeEventQueue() {
         AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
         sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
     }

@@ -1,41 +1,33 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.CREDIT;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardTypeDaoJpaIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    private static CardTypeDao cardTypeDao;
 
-    private CardTypeDao cardTypeDao;
-
-    @DropwizardTestContext
-    protected TestContext testContext;
-
-    @Before
-    public void setup() {
-        cardTypeDao = testContext.getInstanceFromGuiceContainer(CardTypeDao.class);
+    @BeforeAll
+    public static void setup() {
+        cardTypeDao = app.getInstanceFromGuiceContainer(CardTypeDao.class);
     }
 
     @Test
-    public void findByBrand_shouldFindCardTypes() {
+    void findByBrand_shouldFindCardTypes() {
         List<CardTypeEntity> cardTypes = cardTypeDao.findByBrand("master-card");
 
         assertThat(cardTypes.size(), is(2));
@@ -63,13 +55,13 @@ public class CardTypeDaoJpaIT {
     }
 
     @Test
-    public void findByBrand_shouldNotFindCardType() {
+    void findByBrand_shouldNotFindCardType() {
         String noExistingExternalId = "unknown-card-brand";
         assertThat(cardTypeDao.findByBrand(noExistingExternalId).size(), is(0));
     }
 
     @Test
-    public void findAllNon3ds_shouldFindCardTypes() {
+    void findAllNon3ds_shouldFindCardTypes() {
 
         List<CardTypeEntity> cardTypes = cardTypeDao.findAllNon3ds();
 
@@ -79,7 +71,7 @@ public class CardTypeDaoJpaIT {
     }
 
     @Test
-    public void findAll_shouldFindCardTypes_includingTypesRequiring3ds() {
+    void findAll_shouldFindCardTypes_includingTypesRequiring3ds() {
 
         List<CardTypeEntity> cardTypes = cardTypeDao.findAll();
 

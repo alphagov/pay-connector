@@ -6,17 +6,14 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
@@ -41,13 +38,20 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_FAILED_REJECTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml", withDockerSQS = true)
-public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase {
+public class AuthoriseWithUserNotPresentTaskHandlerIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
@@ -55,23 +59,17 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
-    public AuthoriseWithUserNotPresentTaskHandlerIT() {
-        super(PROVIDER_NAME);
-    }
-
-    @Override
-    @Before
+    @BeforeEach
     public void setUp() {
-        super.setUp();
         Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
-        databaseTestHelper.enableRecurring(Long.valueOf(accountId));
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(app.getAccountId()));
     }
 
     @Test
-    public void shouldProcess_ACorrectlyConfiguredAuthorisationModeAgreementCharge_AndMarkForCapture() {
-        AuthoriseWithUserNotPresentHandler taskHandler = testContext.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+    void shouldProcess_ACorrectlyConfiguredAuthorisationModeAgreementCharge_AndMarkForCapture() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
         String SUCCESS_LAST_FOUR_DIGITS = "4242";
         String SUCCESS_FIRST_SIX_DIGITS = "424242";
 
@@ -79,8 +77,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
 
         taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
 
-        assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_QUEUED.getValue());
-        assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_SUCCESS.getStatus());
+        app.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_QUEUED.getValue());
+        app.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         assertThat(
@@ -90,8 +88,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
     }
 
     @Test
-    public void shouldProcess_AndMarkComplete_AnAuthorisationModeAgreementChargeThatWillDecline_AndNotMarkForCapture() {
-        AuthoriseWithUserNotPresentHandler taskHandler = testContext.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+    void shouldProcess_AndMarkComplete_AnAuthorisationModeAgreementChargeThatWillDecline_AndNotMarkForCapture() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
         String DECLINE_LAST_FOUR_DIGITS = "0002";
         String DECLINE_FIRST_SIX_DIGITS = "400000";
 
@@ -99,14 +97,14 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
 
         taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
 
-        assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_REJECTED.getValue());
-        assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_FAILED_REJECTED.getStatus());
+        app.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_REJECTED.getValue());
+        app.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_FAILED_REJECTED.getStatus());
         verifyNoInteractions(mockAppender);
     }
 
     @Test
-    public void shouldProcess_AndMarkComplete_AnAuthorisationModeAgreementChargeThatWillGatewayError_AndNotMarkForCapture() {
-        AuthoriseWithUserNotPresentHandler taskHandler = testContext.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+    void shouldProcess_AndMarkComplete_AnAuthorisationModeAgreementChargeThatWillGatewayError_AndNotMarkForCapture() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
         String GATEWAY_ERROR_LAST_FOUR_DIGITS = "0119";
         String GATEWAY_ERROR_FIRST_SIX_DIGITS = "400000";
 
@@ -114,8 +112,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
 
         taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
 
-        assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_ERROR.getValue());
-        assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
+        app.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_ERROR.getValue());
+        app.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
         verifyNoInteractions(mockAppender);
     }
     
@@ -127,14 +125,14 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
                 .withFirstDigitsCardNumber(FirstDigitsCardNumber.of(first6Digits))
                 .withLastDigitsCardNumber(LastDigitsCardNumber.of(last4Digits))
                 .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
-        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
+        app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
 
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(accountId)
+                .withGatewayAccountId(app.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build();
-        databaseTestHelper.addAgreement(agreementParams);
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -144,15 +142,15 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT extends ChargingITestBase 
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
-        String chargeId = connectorRestApiClient
+        String chargeId = app.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(SC_CREATED)
                 .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
                 .contentType(JSON)
                 .extract().path("charge_id");
 
-        assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
-        assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
+        app.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
         return chargeId;
     }
 }

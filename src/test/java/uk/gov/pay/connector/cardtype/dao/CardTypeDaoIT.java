@@ -1,15 +1,11 @@
 package uk.gov.pay.connector.cardtype.dao;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,21 +16,19 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isA;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class CardTypeDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
-    @DropwizardTestContext
-    protected TestContext testContext;
-    private CardTypeDao cardTypeDao;
+    private static CardTypeDao cardTypeDao;
 
-    @Before
-    public void setup() {
-        cardTypeDao = testContext.getInstanceFromGuiceContainer(CardTypeDao.class);
+    @BeforeAll
+    static void setup() {
+        cardTypeDao = app.getInstanceFromGuiceContainer(CardTypeDao.class);
     }
 
     @Test
-    public void findById() {
+    void findById() {
         List<CardTypeEntity> allCardTypes = cardTypeDao.findAll();
         CardTypeEntity aCard = allCardTypes.get(0);
         Optional<CardTypeEntity> maybeCardTypeEntity = cardTypeDao.findById(aCard.getId());
@@ -42,7 +36,7 @@ public class CardTypeDaoIT {
     }
 
     @Test
-    public void findAll() {
+    void findAll() {
         List<CardTypeEntity> allCardTypes = cardTypeDao.findAll();
         assertThat(allCardTypes, hasSize(10));
         Optional<CardTypeEntity> maybeCard = allCardTypes.stream()
@@ -55,13 +49,13 @@ public class CardTypeDaoIT {
     }
 
     @Test
-    public void findByBrand() {
+    void findByBrand() {
         final List<CardTypeEntity> cards = cardTypeDao.findByBrand("master-card");
         assertThat(cards, hasSize(2));
     }
 
     @Test
-    public void findAllNon3ds() {
+    void findAllNon3ds() {
         final List<CardTypeEntity> allNon3ds = cardTypeDao.findAllNon3ds();
         assertThat(allNon3ds, hasSize(9));
     }
