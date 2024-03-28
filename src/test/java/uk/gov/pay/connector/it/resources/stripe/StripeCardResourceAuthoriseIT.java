@@ -168,7 +168,7 @@ public class StripeCardResourceAuthoriseIT {
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
 
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         verifyPaymentMethodRequest();
@@ -191,10 +191,10 @@ public class StripeCardResourceAuthoriseIT {
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
 
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
     }
@@ -219,7 +219,7 @@ public class StripeCardResourceAuthoriseIT {
                 .statusCode(OK_200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
 
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
 
         verifyPaymentMethodRequest();
@@ -515,7 +515,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private void verifyCustomerRequest() {
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/customers"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/customers"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("name", CARD_HOLDER_NAME)))
@@ -523,7 +523,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private void verifyPaymentIntentRequest(String externalChargeId, String stripeAccountId) {
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("amount", "6234")))
@@ -541,7 +541,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private void verifyPaymentMethodRequest() {
-        app.getWiremockserver().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
                 .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED))
                 .withHeader("Authorization", equalTo("Bearer sk_test"))
                 .withRequestBody(containing(queryParamWithValue("billing_details[name]", "Scrooge McDuck")))
