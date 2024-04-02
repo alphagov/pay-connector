@@ -63,6 +63,10 @@ public class PostgresTestDocker {
         return DB_USERNAME;
     }
 
+    public static String getDbDriverClass() {
+        return POSTGRES_CONTAINER.getDriverClassName();
+    }
+
     public static PostgreSQLContainer getPostgresContainer() {
         return POSTGRES_CONTAINER;
     }

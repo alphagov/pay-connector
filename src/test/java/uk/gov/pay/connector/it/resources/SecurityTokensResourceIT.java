@@ -14,7 +14,7 @@ import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class SecurityTokensResourceIT {

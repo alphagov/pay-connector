@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.it.dao;
 
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.fee.dao.FeeDao;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.time.Instant;
 import java.util.List;
@@ -18,39 +19,34 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 
-public class FeeDaoIT extends DaoITestBase {
+public class FeeDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private FeeDao feeDao;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
-    @Before
-    public void setUp() {
-        feeDao = env.getInstance(FeeDao.class);
-        DatabaseFixtures.TestAccount defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    @BeforeEach
+    void setUp() {
+        feeDao = app.getInstanceFromGuiceContainer(FeeDao.class);
+        DatabaseFixtures.TestAccount defaultTestAccount = app.getDatabaseFixtures()
                 .aTestAccount()
                 .insert();
 
-        defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        defaultTestCharge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
     }
-
-    @After
-    public void truncate() {
-        databaseTestHelper.truncateAllData();
-    }
     
     @Test
-    public void persist_shouldCreateAFeeWithNullableType() {
+    void persist_shouldCreateAFeeWithNullableType() {
         ChargeEntityFixture chargeEntityFixture = new ChargeEntityFixture();
         ChargeEntity defaultChargeTestEntity = chargeEntityFixture.build();
         long chargeId = defaultTestCharge.getChargeId();
         defaultChargeTestEntity.setId(chargeId);
         FeeEntity feeEntity = new FeeEntity(defaultChargeTestEntity, Instant.now(), 100L, null);
         feeDao.persist(feeEntity);
-        List<Map<String, Object>> feesForCharge = databaseTestHelper.getFeesByChargeId(chargeId);
+        List<Map<String, Object>> feesForCharge = app.getDatabaseTestHelper().getFeesByChargeId(chargeId);
 
         assertThat(feesForCharge.size(), is(1));
         assertThat(feesForCharge.get(0).get("charge_id"), is(chargeId));
@@ -58,14 +54,14 @@ public class FeeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void persist_shouldCreateAFeeWithTransactionType() {
+    void persist_shouldCreateAFeeWithTransactionType() {
         ChargeEntityFixture chargeEntityFixture = new ChargeEntityFixture();
         ChargeEntity defaultChargeTestEntity = chargeEntityFixture.build();
         long chargeId = defaultTestCharge.getChargeId();
         defaultChargeTestEntity.setId(chargeId);
         FeeEntity feeEntity = new FeeEntity(defaultChargeTestEntity, Instant.now(), 100L, FeeType.TRANSACTION);
         feeDao.persist(feeEntity);
-        List<Map<String, Object>> feesForCharge = databaseTestHelper.getFeesByChargeId(chargeId);
+        List<Map<String, Object>> feesForCharge = app.getDatabaseTestHelper().getFeesByChargeId(chargeId);
 
         assertThat(feesForCharge.size(), is(1));
         assertThat(feesForCharge.get(0).get("charge_id"), is(chargeId));

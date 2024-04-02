@@ -4,14 +4,15 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
-import uk.gov.pay.connector.it.dao.DaoITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -32,10 +33,10 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAP
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
-import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 
-public class ChargeEventDaoIT extends DaoITestBase {
-
+public class ChargeEventDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private static final String TRANSACTION_ID = "345654";
     private static final String TRANSACTION_ID_2 = "345655";
     private static final String TRANSACTION_ID_3 = "345656";
@@ -44,21 +45,19 @@ public class ChargeEventDaoIT extends DaoITestBase {
     private ChargeEventDao chargeEventDao;
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
-    @Before
-    public void setUp() {
-        chargeDao = env.getInstance(ChargeDao.class);
-        chargeEventDao = env.getInstance(ChargeEventDao.class);
-        this.defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    @BeforeEach
+    void setUp() {
+        chargeDao = app.getInstanceFromGuiceContainer(ChargeDao.class);
+        chargeEventDao = app.getInstanceFromGuiceContainer(ChargeEventDao.class);
+        this.defaultTestAccount = app.getDatabaseFixtures()
                 .aTestAccount()
                 .insert();
     }
 
     @Test
-    public void persistChargeEventOfChargeEntity_succeeds() {
+    void persistChargeEventOfChargeEntity_succeeds() {
 
-        Long chargeId = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        Long chargeId = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -94,10 +93,9 @@ public class ChargeEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldPersistEventForStatus_awaitingCaptureRequest() {
+    void shouldPersistEventForStatus_awaitingCaptureRequest() {
 
-        Long chargeId = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        Long chargeId = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -134,7 +132,7 @@ public class ChargeEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findChargeEventsByDateRangeShouldReturnResultCorrectly() {
+    void findChargeEventsByDateRangeShouldReturnResultCorrectly() {
         ZonedDateTime eventDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
         DatabaseFixtures.TestCharge testCharge = createTestCharge();
@@ -154,9 +152,9 @@ public class ChargeEventDaoIT extends DaoITestBase {
     }
 
     private DatabaseFixtures.TestCharge createTestCharge() {
-        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                 .aTestAccount().insert();
-        return withDatabaseTestHelper(databaseTestHelper)
+        return app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(testAccount)
                 .insert();
@@ -164,7 +162,7 @@ public class ChargeEventDaoIT extends DaoITestBase {
 
     private void createTestChargeEvent(DatabaseFixtures.TestCharge testCharge,
                                        ChargeStatus status, ZonedDateTime eventDate) {
-        withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestChargeEvent()
                 .withChargeStatus(status)
                 .withDate(eventDate)

@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
@@ -17,23 +18,20 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-public class PaymentInstrumentDaoIT extends DaoITestBase {
-
+public class PaymentInstrumentDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private PaymentInstrumentDao paymentInstrumentDao;
-    private DatabaseFixtures.TestAccount defaultTestAccount;
-    private DatabaseFixtures.TestCardDetails defaultTestCardDetails;
     
     private static final String PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE = "12345678901234567890123456";
-    private static final String PAYMENT_INSTRUMENT_EXTERNAL_ID_TWO= "99912345678901234567890123";
    
-    @Before
-    public void setUp() {
-        paymentInstrumentDao = env.getInstance(PaymentInstrumentDao.class);
-
+    @BeforeEach
+    void setUp() {
+        paymentInstrumentDao = app.getInstanceFromGuiceContainer(PaymentInstrumentDao.class);
     }
 
     @Test
-    public void findByExternalId_shouldFindAPaymentInstrumentEntity() {
+    void findByExternalId_shouldFindAPaymentInstrumentEntity() {
         insertTestPaymentInstrument(PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE);
         Optional<PaymentInstrumentEntity> paymentInstrument = paymentInstrumentDao.findByExternalId(PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE);
         assertThat(paymentInstrument.isPresent(), is(true));
@@ -41,13 +39,13 @@ public class PaymentInstrumentDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findByExternalId_shouldNotFindAPaymentInstrumentEntity() {
+    void findByExternalId_shouldNotFindAPaymentInstrumentEntity() {
         Optional<PaymentInstrumentEntity> paymentInstrument = paymentInstrumentDao.findByExternalId(PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE);
         assertThat(paymentInstrument.isPresent(), is(false));
     }
 
     @Test
-    public void shouldFindByAgreementIdAndStatus() {
+    void shouldFindByAgreementIdAndStatus() {
         String agreementExternalId = "an-agreement-id";
         String otherAgreementExternalId = "other-agreement-id";
         insertAgreement(agreementExternalId);
@@ -69,15 +67,9 @@ public class PaymentInstrumentDaoIT extends DaoITestBase {
                 .map(PaymentInstrumentEntity::getExternalId).collect(Collectors.toList());
         assertThat(returnedPaymentInstrumentExternalIds, containsInAnyOrder("payment-instrument-1", "payment-instrument-2"));
     }
-
-    @After
-    public void clear() {
-        databaseTestHelper.truncateAllData();
-    }
     
     private void insertTestPaymentInstrument(String paymentInstrumentExternalId) {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestPaymentInstrument()
                 .withPaymentInstrumentId(nextLong())
                 .withExternalId(paymentInstrumentExternalId)
@@ -85,7 +77,7 @@ public class PaymentInstrumentDaoIT extends DaoITestBase {
     }
     
     private void insertTestPaymentInstrument(String externalId, String agreementExternalId, PaymentInstrumentStatus status) {
-        DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestPaymentInstrument()
                 .withExternalId(externalId)
                 .withAgreementExternalId(agreementExternalId)
@@ -94,10 +86,10 @@ public class PaymentInstrumentDaoIT extends DaoITestBase {
     }
 
     private static void insertAgreement(String agreementExternalId) {
-        DatabaseFixtures.TestAccount testAccount = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                 .aTestAccount()
                 .insert();
-        DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestAgreement()
                 .withExternalId(agreementExternalId)
                 .withGatewayAccountId(testAccount.getAccountId())

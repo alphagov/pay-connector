@@ -1,12 +1,13 @@
 package uk.gov.pay.connector.events.dao;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.events.EmittedEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
-import uk.gov.pay.connector.it.dao.DaoITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -21,17 +22,18 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-public class EmittedEventDaoIT extends DaoITestBase {
+public class EmittedEventDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private EmittedEventDao emittedEventDao;
 
-    @Before
-    public void setUp() {
-        emittedEventDao = env.getInstance(EmittedEventDao.class);
-        databaseTestHelper.truncateAllData();
+    @BeforeEach
+    void setUp() {
+        emittedEventDao = app.getInstanceFromGuiceContainer(EmittedEventDao.class);
     }
 
     @Test
-    public void persistEmittedEvent_succeeds() {
+    void persistEmittedEvent_succeeds() {
         final Instant eventDate = Instant.parse("2019-01-01T11:00:00Z");
 
         EmittedEventEntity emittedEvent = new EmittedEventEntity(
@@ -46,7 +48,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
         emittedEventDao.persist(emittedEvent);
         assertThat(emittedEvent.getId(), is(notNullValue()));
 
-        final Map<String, Object> persisted = databaseTestHelper.readEmittedEvent(emittedEvent.getId());
+        final Map<String, Object> persisted = app.getDatabaseTestHelper().readEmittedEvent(emittedEvent.getId());
 
         assertThat(persisted.get("resource_type"), is("resource-type"));
         assertThat(persisted.get("resource_external_id"), is("external-id"));
@@ -58,12 +60,12 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void recordEmission_shouldRecordEmission() {
+    void recordEmission_shouldRecordEmission() {
         final PaymentCreated eventThatHasBeenEmitted = aPaymentCreatedEvent();
         ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.parse("2019-01-02T13:00:00Z");
         emittedEventDao.recordEmission(eventThatHasBeenEmitted, doNotRetryEmitUntilDate);
 
-        final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        final List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
 
         assertThat(events.size(), is(1));
         final Map<String, Object> event = events.get(0);
@@ -72,17 +74,17 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void hasBeenEmittedBefore_shouldReturnFalseIfNoRecord() {
+    void hasBeenEmittedBefore_shouldReturnFalseIfNoRecord() {
         final boolean b = emittedEventDao.hasBeenEmittedBefore(aPaymentCreatedEvent());
 
-        final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        final List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
         assertThat(events.size(), is(0));
 
         assertThat(b, is(false));
     }
 
     @Test
-    public void hasBeenEmittedBefore_shouldReturnTrueIfRecordedBefore() {
+    void hasBeenEmittedBefore_shouldReturnTrueIfRecordedBefore() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
 
         emittedEventDao.recordEmission(paymentCreatedEvent, null);
@@ -91,13 +93,13 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void recordEmissionWithParameters_shouldRecordEmission() {
+    void recordEmissionWithParameters_shouldRecordEmission() {
         final PaymentCreated eventToRecord = aPaymentCreatedEvent();
         ZonedDateTime doNotRetryEmitUntilDate = ZonedDateTime.parse("2019-01-02T13:00:00Z");
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
                 eventToRecord.getEventType(), eventToRecord.getTimestamp(), doNotRetryEmitUntilDate);
 
-        final List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        final List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
 
         assertThat(events.size(), is(1));
         final Map<String, Object> event = events.get(0);
@@ -109,44 +111,44 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void markEventAsEmitted_shouldRecordEventAndEmittedDate() {
+    void markEventAsEmitted_shouldRecordEventAndEmittedDate() {
         final RefundSubmitted eventToRecord = aRefundSubmittedEvent(Instant.parse("2018-01-01T12:00:00Z"));
 
         emittedEventDao.recordEmission(eventToRecord.getResourceType(), eventToRecord.getResourceExternalId(),
                 eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
 
-        List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
         Map<String, Object> event = events.get(0);
         assertThat(event.get("emitted_date"), is(nullValue()));
         assertThat(event.get("event_date").toString(), is("2018-01-01 12:00:00.0"));
 
         final RefundSubmitted eventToUpdate = aRefundSubmittedEvent(Instant.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.markEventAsEmitted(eventToUpdate);
-        events = databaseTestHelper.readEmittedEvents();
+        events = app.getDatabaseTestHelper().readEmittedEvents();
         event = events.get(0);
         assertThat(event.get("emitted_date"), is(notNullValue()));
         assertThat(event.get("event_date").toString(), is("2019-01-01 14:00:00.0"));
     }
 
     @Test
-    public void markEventAsEmitted_shouldNotUpdateIfNoRecordIsFoundWithNullEmittedDate() {
+    void markEventAsEmitted_shouldNotUpdateIfNoRecordIsFoundWithNullEmittedDate() {
         final PaymentCreated eventToRecord = aPaymentCreatedEvent();
         emittedEventDao.recordEmission(eventToRecord, null);
 
-        List<Map<String, Object>> events = databaseTestHelper.readEmittedEvents();
+        List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
 
         Map<String, Object> event = events.get(0);
         assertThat(event.get("emitted_date"), is(notNullValue()));
         String emittedDateBeforeUpdate = event.get("emitted_date").toString();
 
         emittedEventDao.markEventAsEmitted(eventToRecord);
-        events = databaseTestHelper.readEmittedEvents();
+        events = app.getDatabaseTestHelper().readEmittedEvents();
         event = events.get(0);
         assertThat(event.get("emitted_date").toString(), is(emittedDateBeforeUpdate));
     }
 
     @Test
-    public void findNotEmittedEventsOlderThan_shouldReturnEventsWithEmptyEmittedDate() {
+    void findNotEmittedEventsOlderThan_shouldReturnEventsWithEmptyEmittedDate() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
                 paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
@@ -166,7 +168,7 @@ public class EmittedEventDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findNotEmittedEventsOlderThan_shouldNotReturnRecordsWithDoNotRetryEmitUntilValueInFuture() {
+    void findNotEmittedEventsOlderThan_shouldNotReturnRecordsWithDoNotRetryEmitUntilValueInFuture() {
         final PaymentCreated paymentCreatedEvent = aPaymentCreatedEvent();
         final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(Instant.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),

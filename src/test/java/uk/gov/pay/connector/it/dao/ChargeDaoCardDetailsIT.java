@@ -1,7 +1,8 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.AddressEntity;
@@ -17,6 +18,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.model.domain.AddressFixture;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
@@ -33,26 +35,25 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-public class ChargeDaoCardDetailsIT extends DaoITestBase {
-
+public class ChargeDaoCardDetailsIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
 
-    @Before
-    public void setUp() {
-        chargeDao = env.getInstance(ChargeDao.class);
-        gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
-        gatewayAccountCredentialsDao = env.getInstance(GatewayAccountCredentialsDao.class);
+    @BeforeEach
+    void setUp() {
+        chargeDao = app.getInstanceFromGuiceContainer(ChargeDao.class);
+        gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
+        gatewayAccountCredentialsDao = app.getInstanceFromGuiceContainer(GatewayAccountCredentialsDao.class);
     }
 
     private void createChargeWithIdAndDetails(long chargeId, DatabaseFixtures.TestCardDetails testCardDetails) {
-        DatabaseFixtures.TestAccount testAccountFixture = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestAccount testAccountFixture = app.getDatabaseFixtures()
                 .aTestAccount()
                 .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withChargeId(chargeId)
                 .withCardDetails(testCardDetails)
@@ -63,8 +64,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     }
 
     private DatabaseFixtures.TestCardDetails createCardDetailsForChargeWithId(long chargeId) {
-        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
                 .aTestCardDetails()
                 .withChargeId(chargeId);
         createChargeWithIdAndDetails(chargeId, testCardDetails);
@@ -72,7 +72,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindCardDetails() {
+    void findById_shouldFindCardDetails() {
         long chargeId = nextLong();
         DatabaseFixtures.TestCardDetails testCardDetails = createCardDetailsForChargeWithId(chargeId);
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
@@ -95,10 +95,9 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindCardDetailsIfCardDigitsAreNotPresent() {
+    void findById_shouldFindCardDetailsIfCardDigitsAreNotPresent() {
         long chargeId = nextLong();
-        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
                 .aTestCardDetails()
                 .withFirstDigitsOfCardNumber(null)
                 .withLastDigitsOfCardNumber(null)
@@ -123,7 +122,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
     }
 
     @Test
-    public void persist_shouldStoreCardDetails() {
+    void persist_shouldStoreCardDetails() {
         GatewayAccountEntity testAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
@@ -146,12 +145,12 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
 
-        Map<String, Object> cardDetailsSaved = databaseTestHelper.getChargeCardDetails(chargeEntity.getId());
+        Map<String, Object> cardDetailsSaved = app.getDatabaseTestHelper().getChargeCardDetails(chargeEntity.getId());
         assertThat(cardDetailsSaved, hasEntry("card_type", "DEBIT"));
     }
 
     @Test
-    public void persist_shouldStoreNullCardTypeDetails() {
+    void persist_shouldStoreNullCardTypeDetails() {
         GatewayAccountEntity testAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
         testAccount.setExternalId(randomUuid());
         gatewayAccountDao.persist(testAccount);
@@ -177,7 +176,7 @@ public class ChargeDaoCardDetailsIT extends DaoITestBase {
         chargeEntity.setCardDetails(cardDetailsEntity);
         chargeDao.persist(chargeEntity);
 
-        Map<String, Object> cardDetailsSaved = databaseTestHelper.getChargeCardDetails(chargeEntity.getId());
+        Map<String, Object> cardDetailsSaved = app.getDatabaseTestHelper().getChargeCardDetails(chargeEntity.getId());
         assertThat(cardDetailsSaved, hasEntry("card_type",null));
     }
 }

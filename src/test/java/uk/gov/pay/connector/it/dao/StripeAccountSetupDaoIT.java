@@ -1,10 +1,11 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.util.List;
 
@@ -18,38 +19,35 @@ import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.B
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.RESPONSIBLE_PERSON;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-public class StripeAccountSetupDaoIT extends DaoITestBase {
+public class StripeAccountSetupDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private StripeAccountSetupDao stripeAccountSetupDao;
 
-    @Before
-    public void setUp() {
-        stripeAccountSetupDao = env.getInstance(StripeAccountSetupDao.class);
-    }
-
-    @After
-    public void truncate() {
-        databaseTestHelper.truncateAllData();
+    @BeforeEach
+    void setUp() {
+        stripeAccountSetupDao = app.getInstanceFromGuiceContainer(StripeAccountSetupDao.class);
     }
 
     @Test
-    public void shouldFindTasksByGatewayAccountId() {
+    void shouldFindTasksByGatewayAccountId() {
         long gatewayAccountId = 42;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
         long anotherGatewayAccountId = 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(anotherGatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
 
         List<StripeAccountSetupTaskEntity> tasks = stripeAccountSetupDao.findByGatewayAccountId(gatewayAccountId);
         assertThat(tasks, hasSize(2));
@@ -64,15 +62,15 @@ public class StripeAccountSetupDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldReturnTrueIfGatewayAccountHasCompletedTask() {
+    void shouldReturnTrueIfGatewayAccountHasCompletedTask() {
         long gatewayAccountId = 42;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
 
         boolean result = stripeAccountSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
         
@@ -80,23 +78,23 @@ public class StripeAccountSetupDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldReturnFalseIfGatewayAccountHasCompletedTask() {
+    void shouldReturnFalseIfGatewayAccountHasCompletedTask() {
         long gatewayAccountId = 42;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
         long anotherGatewayAccountId = 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(anotherGatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, BANK_ACCOUNT);
 
         boolean result = stripeAccountSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, BANK_ACCOUNT);
 
@@ -104,16 +102,16 @@ public class StripeAccountSetupDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldReturnTrueIfGatewayAccountHasCompletedTaskRecordedMoreThanOnce() {
+    void shouldReturnTrueIfGatewayAccountHasCompletedTaskRecordedMoreThanOnce() {
         long gatewayAccountId = 42;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
         
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
 
         boolean result = stripeAccountSetupDao.isTaskCompletedForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
 
@@ -121,24 +119,24 @@ public class StripeAccountSetupDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldRemoveCompletedTaskForGatewayAccount() {
+    void shouldRemoveCompletedTaskForGatewayAccount() {
         long gatewayAccountId = 42;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
         long anotherGatewayAccountId = 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(anotherGatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(anotherGatewayAccountId, RESPONSIBLE_PERSON);
         
         stripeAccountSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
 
@@ -152,17 +150,17 @@ public class StripeAccountSetupDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldRemoveCompletedTaskForGatewayAccountWhenHasCompletedTaskMoreThanOnce() {
+    void shouldRemoveCompletedTaskForGatewayAccountWhenHasCompletedTaskMoreThanOnce() {
         long gatewayAccountId = 42;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
 
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
-        databaseTestHelper.addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, RESPONSIBLE_PERSON);
+        app.getDatabaseTestHelper().addGatewayAccountsStripeSetupTask(gatewayAccountId, BANK_ACCOUNT);
 
         stripeAccountSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, RESPONSIBLE_PERSON);
 
