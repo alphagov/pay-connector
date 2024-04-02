@@ -1,15 +1,12 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.List;
@@ -27,24 +24,20 @@ import static uk.gov.pay.connector.charge.model.domain.FeeType.TRANSACTION;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
-public class CardCaptureServiceIT extends ChargingITestBase {
+public class CardCaptureServiceIT {
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
 
-    public CardCaptureServiceIT() {
-        super("stripe");
-    }
-    
     @Test
-    public void shouldPersistFeesForStripeV2Charge() {
+    void shouldPersistFeesForStripeV2Charge() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
 
-        databaseTestHelper.addCharge(anAddChargeParams()
+        app.getDatabaseTestHelper().addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withPaymentProvider(STRIPE.getName())
-                .withGatewayAccountId(accountId)
+                .withGatewayAccountId(app.getAccountId())
                 .withAmount(10000)
                 .withStatus(ChargeStatus.CAPTURE_READY)
                 .build());
@@ -55,9 +48,9 @@ public class CardCaptureServiceIT extends ChargingITestBase {
         CaptureResponse captureResponse = new CaptureResponse(transactionId, CaptureResponse.ChargeState.COMPLETE, feeList);
 
         // Trigger the post gateway capture response programmatically which normally would be invoked by the scheduler.
-        testContext.getInstanceFromGuiceContainer(CardCaptureService.class).processGatewayCaptureResponse(externalChargeId, oldChargeStatus, captureResponse);
+        app.getInstanceFromGuiceContainer(CardCaptureService.class).processGatewayCaptureResponse(externalChargeId, oldChargeStatus, captureResponse);
 
-        List<Map<String, Object>> listOfFees = databaseTestHelper.getFeesByChargeId(chargeId);
+        List<Map<String, Object>> listOfFees = app.getDatabaseTestHelper().getFeesByChargeId(chargeId);
 
         assertThat(listOfFees, hasSize(3));
         assertThat(listOfFees, containsInAnyOrder(

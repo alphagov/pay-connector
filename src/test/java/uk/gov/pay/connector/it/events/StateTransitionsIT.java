@@ -11,20 +11,17 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.it.base.ChargingITestBase;
-import uk.gov.pay.connector.junit.ConfigOverride;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -32,35 +29,26 @@ import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(
-        app = ConnectorApp.class,
-        config = "config/test-it-config.yaml",
-        withDockerSQS = true,
-        configOverrides = {
-                @ConfigOverride(key = "captureProcessConfig.backgroundProcessingEnabled", value = "true"),
-                @ConfigOverride(key = "eventQueue.eventQueueEnabled", value = "true")
-        }
-)
-public class StateTransitionsIT extends ChargingITestBase {
+public class StateTransitionsIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension(
+            "sandbox",
+            config("captureProcessConfig.backgroundProcessingEnabled", "true"),
+            config("eventQueue.eventQueueEnabled", "true")
+    );
 
-    public StateTransitionsIT() {
-        super("sandbox");
-    }
-
-    @Override
-    @Before
-    public void setUp() {
-        super.setUp();
-        purgeEventQueue();
+    @BeforeEach
+    void setUp() {
+        app.purgeEventQueue();
     }
 
     @Test
-    public void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthCancel() throws InterruptedException {
-        String chargeId = addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
+    void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthCancel() throws InterruptedException {
+        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
 
-        cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
+        app.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
         Thread.sleep(200);
 
@@ -87,19 +75,19 @@ public class StateTransitionsIT extends ChargingITestBase {
     }
 
     @Test
-    public void shouldEmitCorrectRefundEvents() throws Exception{
-        String chargeId = addCharge(CAPTURED, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
+    void shouldEmitCorrectRefundEvents() throws Exception{
+        String chargeId = app.addCharge(CAPTURED, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
         Long refundAmount = 50L;
         Long refundAmountAvailable = AMOUNT;
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvailable);
         String refundPayload = new Gson().toJson(refundData);
 
-        ValidatableResponse response = givenSetup()
+        ValidatableResponse response = app.givenSetup()
                 .body(refundPayload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
-                        .replace("{accountId}", accountId)
+                        .replace("{accountId}", app.getAccountId())
                         .replace("{chargeId}", chargeId))
                 .then()
                 .statusCode(202);
@@ -160,9 +148,9 @@ public class StateTransitionsIT extends ChargingITestBase {
     }
 
     private List<Message> readMessagesFromEventQueue() {
-        AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
+        AmazonSQS sqsClient = app.getInstanceFromGuiceContainer(AmazonSQS.class);
 
-        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(testContext.getEventQueueUrl());
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(app.getEventQueueUrl());
         receiveMessageRequest
                 .withMessageAttributeNames()
                 .withWaitTimeSeconds(1)
@@ -171,10 +159,5 @@ public class StateTransitionsIT extends ChargingITestBase {
         ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
         return receiveMessageResult.getMessages();
-    }
-
-    private void purgeEventQueue() {
-        AmazonSQS sqsClient = testContext.getInstanceFromGuiceContainer(AmazonSQS.class);
-        sqsClient.purgeQueue(new PurgeQueueRequest(testContext.getEventQueueUrl()));
     }
 }

@@ -1,22 +1,15 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import com.google.gson.Gson;
-import io.restassured.specification.RequestSpecification;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
-import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,8 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -42,25 +33,16 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, config = "config/test-it-config.yaml")
 public class GatewayAccountCredentialsResourceIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private DatabaseFixtures.TestAccount testAccount;
     private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
-
-    @DropwizardTestContext
-    protected TestContext testContext;
-
-    private DatabaseTestHelper databaseTestHelper;
-    private DatabaseFixtures databaseFixtures;
     private Long credentialsId;
     private Long accountId;
 
-    @Before
-    public void setUp() {
-        databaseTestHelper = testContext.getDatabaseTestHelper();
-        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
-
+    @BeforeEach
+    void setUp() {
         Map<String, Object> credentials = Map.of(
                 "one_off_customer_initiated", Map.of(
                         "merchant_code", "a-merchant-code",
@@ -71,26 +53,17 @@ public class GatewayAccountCredentialsResourceIT {
 
         credentialsId = testAccount.getCredentials().get(0).getId();
     }
-
-    @After
-    public void tearDown() throws Exception {
-        databaseTestHelper.truncateAllData();
-    }
-
-    protected RequestSpecification givenSetup() {
-        return given().port(testContext.getPort()).contentType(JSON);
-    }
-
+    
     @Test
-    public void createGatewayAccountsCredentialsWithCredentials_responseShouldBe200_Ok() {
+    void createGatewayAccountsCredentialsWithCredentials_responseShouldBe200_Ok() {
         Map<String, String> credentials = Map.of("stripe_account_id", "some-account-id");
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
                 .post("/v1/api/accounts/" + accountId + "/credentials")
                 .then()
                 .statusCode(OK.getStatusCode());
 
-        givenSetup()
+        app.givenSetup()
                 .get("/v1/api/accounts/" + accountId)
                 .then()
                 .statusCode(OK.getStatusCode())
@@ -101,8 +74,8 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void createGatewayAccountsCredentialsValidatesRequestBusinessLogic_responseShouldBe400() {
-        givenSetup()
+    void createGatewayAccountsCredentialsValidatesRequestBusinessLogic_responseShouldBe400() {
+        app.givenSetup()
                 .body(toJson(Map.of("payment_provider", "epdq")))
                 .post("/v1/api/accounts/10000/credentials")
                 .then()
@@ -110,14 +83,14 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void patchGatewayAccountCredentialsValidRequest_responseShouldBe200() {
+    void patchGatewayAccountCredentialsValidRequest_responseShouldBe200() {
         DatabaseFixtures.TestAccount stripeTestAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST,
                 Map.of("stripe_account_id", "some-account-id"));
         long stripeCredentialsId = stripeTestAccount.getCredentials().get(0).getId();
         String stripeCredentialsExternalId = stripeTestAccount.getCredentials().get(0).getExternalId();
 
         Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials",
@@ -142,15 +115,15 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("external_id", is(stripeCredentialsExternalId))
                 .body("payment_provider", is("stripe"));
 
-        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(stripeCredentialsId);
+        Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(stripeCredentialsId);
         assertThat(updatedGatewayAccountCredentials, hasEntry("last_updated_by_user_external_id", "a-new-user-external-id"));
     }
 
     @Test
-    public void patchGatewayAccountCredentialsInvalidRequestBody_shouldReturn400() {
-        Long credentialsId = (Long) databaseTestHelper.getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
+    void patchGatewayAccountCredentialsInvalidRequestBody_shouldReturn400() {
+        Long credentialsId = (Long) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
 
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(singletonList(
                         Map.of("op", "replace",
                                 "path", "credentials"))))
@@ -161,11 +134,11 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void patchGatewayAccountCredentialsGatewayAccountCredentialsNotFound_shouldReturn404() {
+    void patchGatewayAccountCredentialsGatewayAccountCredentialsNotFound_shouldReturn404() {
         Map<String, String> newCredentials = Map.of("username", "new-username",
                 "password", "new-password",
                 "merchant_id", "new-merchant-id");
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(singletonList(
                         Map.of("op", "replace",
                                 "path", "credentials",
@@ -177,8 +150,8 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void patchGatewayAccountCredentialsGatewayMerchantId() {
-        givenSetup()
+    void patchGatewayAccountCredentialsGatewayMerchantId() {
+        app.givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials/gateway_merchant_id",
@@ -193,18 +166,18 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("credentials", hasKey("gateway_merchant_id"))
                 .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
-        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
 
         Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
         assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
     }
 
     @Test
-    public void patchGatewayAccountCredentialsForGatewayMerchantIdShouldReturn400ForUnsupportedGateway() {
+    void patchGatewayAccountCredentialsForGatewayMerchantIdShouldReturn400ForUnsupportedGateway() {
         DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST, Map.of());
         AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
 
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(singletonList(
                         Map.of("op", "replace",
                                 "path", "credentials/gateway_merchant_id",
@@ -216,8 +189,8 @@ public class GatewayAccountCredentialsResourceIT {
     }
 
     @Test
-    public void patchGatewayAccountCredentialsShouldNotOverWriteOtherExistingCredentials() {
-        givenSetup()
+    void patchGatewayAccountCredentialsShouldNotOverWriteOtherExistingCredentials() {
+        app.givenSetup()
                 .body(toJson(List.of(
                         Map.of("op", "replace",
                                 "path", "credentials/gateway_merchant_id",
@@ -238,7 +211,7 @@ public class GatewayAccountCredentialsResourceIT {
                         "password", "new-password",
                         "merchant_code", "new-merchant-code"));
 
-        givenSetup()
+        app.givenSetup()
                 .body(toJson(List.of(newCredentials)))
                 .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
                 .then()
@@ -253,7 +226,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .body("credentials", hasKey("gateway_merchant_id"))
                 .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
-        Map<String, Object> updatedGatewayAccountCredentials = databaseTestHelper.getGatewayAccountCredentialsById(credentialsId);
+        Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
 
         Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
         assertThat(updatedCredentials, hasKey("one_off_customer_initiated"));
@@ -285,7 +258,7 @@ public class GatewayAccountCredentialsResourceIT {
                 .withCredentials(credentials)
                 .build();
 
-        return databaseFixtures.aTestAccount().withPaymentProvider(paymentProvider)
+        return app.getDatabaseFixtures().aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
                 .withType(gatewayAccountType)
