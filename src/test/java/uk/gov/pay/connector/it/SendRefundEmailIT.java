@@ -3,26 +3,21 @@ package uk.gov.pay.connector.it;
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang.math.RandomUtils;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
-import uk.gov.pay.connector.junit.ConfigOverride;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.TestContext;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.notify.NotificationClient;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -43,54 +38,44 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMI
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = SendRefundEmailIT.ConnectorAppWithCustomInjector.class, config = "config/test-it-config.yaml", 
-        configOverrides = {
-        @ConfigOverride(key = "notifyConfig.emailNotifyEnabled", value = "true"),
-        @ConfigOverride(key = "worldpay.secureNotificationEnabled", value = "false")
-})
 public class SendRefundEmailIT {
     private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
-
-    @DropwizardTestContext
-    protected TestContext testContext;
-    
     private static NotifyClientFactory notifyClientFactory = mock(NotifyClientFactory.class);
     private static NotificationClient notificationClient = mock(NotificationClient.class);
-    private static DatabaseTestHelper databaseTestHelper;
-    private static Map<String, Object> credentials = ImmutableMap.of(
+    
+    @RegisterExtension
+    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay",
+            SendRefundEmailIT.ConnectorAppWithCustomInjector.class,
+            config("notifyConfig.emailNotifyEnabled", "true"),
+            config("worldpay.secureNotificationEnabled", "false")
+    );
+    private static final Map<String, Object> credentials = ImmutableMap.of(
             CREDENTIALS_MERCHANT_ID, "merchant-id",
             CREDENTIALS_USERNAME, "test-user",
             CREDENTIALS_PASSWORD, "test-password",
             CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
             CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
     );
-    private String accountId;
+    private final String accountId = String.valueOf(RandomUtils.nextInt());
 
-    @BeforeClass
-    public static void before() {
+    @BeforeAll
+    static void before() {
         when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
-    }
-    
-    @Before
-    public void setup() {
-        databaseTestHelper = testContext.getDatabaseTestHelper();
-        accountId = String.valueOf(RandomUtils.nextInt());
     }
 
     @Test
-    public void shouldSendEmailFollowingASuccessfulRefund() throws Exception {
+    void shouldSendEmailFollowingASuccessfulRefund() throws Exception {
         addGatewayAccount();
 
         String transactionId = String.valueOf(RandomUtils.nextInt());
         String payIdSub = "2";
         String refundExternalId = "999999";
 
-        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, databaseTestHelper, "worldpay");
-        databaseTestHelper.addRefund(refundExternalId,100,  REFUND_SUBMITTED, refundExternalId,
+        ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, app.getDatabaseTestHelper(), "worldpay");
+        app.getDatabaseTestHelper().addRefund(refundExternalId,100,  REFUND_SUBMITTED, refundExternalId,
                 ZonedDateTime.now(), chargeId.toString());
 
-        given().port(testContext.getPort())
+        given().port(app.getLocalPort())
                 .header("X-Forwarded-For", WORLDPAY_IP_ADDRESS)
                 .body(worldpayRefundNotificationPayload(transactionId, "REFUNDED", refundExternalId))
                 .contentType(TEXT_XML)
@@ -102,16 +87,15 @@ public class SendRefundEmailIT {
     }
 
     private void addGatewayAccount() {
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(accountId)
                 .withPaymentGateway("worldpay")
                 .withCredentials(credentials)
                 .build());
-        databaseTestHelper.addEmailNotification(Long.valueOf(accountId), "a template", true, REFUND_ISSUED);
+        app.getDatabaseTestHelper().addEmailNotification(Long.valueOf(accountId), "a template", true, REFUND_ISSUED);
     }
 
     public static class ConnectorAppWithCustomInjector extends ConnectorApp {
-
         @Override
         protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
             return new ConnectorModuleWithOverrides(configuration, environment);
@@ -119,7 +103,6 @@ public class SendRefundEmailIT {
     }
 
     private static class ConnectorModuleWithOverrides extends ConnectorModule {
-
         public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
             super(configuration, environment);
         }
