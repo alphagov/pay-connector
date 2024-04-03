@@ -1,14 +1,12 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
-import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -37,7 +35,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 public class StripeResourceCancelIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe");
+    public static ITestBaseExtension app = new ITestBaseExtension("stripe");
 
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";

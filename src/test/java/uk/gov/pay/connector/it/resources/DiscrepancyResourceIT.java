@@ -2,11 +2,10 @@ package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
@@ -37,7 +36,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 public class DiscrepancyResourceIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
 
     @Test
     void shouldReturnAllCharges_whenRequestDiscrepancyReport() {

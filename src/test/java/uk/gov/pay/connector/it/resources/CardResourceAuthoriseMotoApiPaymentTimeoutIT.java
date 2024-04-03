@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -21,7 +21,7 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class CardResourceAuthoriseMotoApiPaymentTimeoutIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe",
+    public static ITestBaseExtension app = new ITestBaseExtension("stripe",
             io.dropwizard.testing.ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "true"));
 
     private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";

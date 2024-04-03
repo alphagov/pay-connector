@@ -12,7 +12,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.core.Response.Status;
@@ -48,25 +48,25 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.EMAIL;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_MOTO_API;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_CHARGE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_EMAIL_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_LANGUAGE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_MESSAGE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_MOTO_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_PROVIDER_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_SOURCE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.PROVIDER_NAME;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.EMAIL;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_MOTO_API;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_CHARGE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_EMAIL_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_LANGUAGE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_MESSAGE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_MOTO_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_PROVIDER_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_SOURCE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.PROVIDER_NAME;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -77,7 +77,7 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class ChargesApiResourceCreateIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox",
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox",
                     config("eventQueue.eventQueueEnabled", "true"),
                     config("captureProcessConfig.backgroundProcessingEnabled", "true"));
 

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.HashMap;
@@ -29,7 +29,7 @@ import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHO
 public class ChargesApiResourceTelephonePaymentsIT {
 
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
     private static final HashMap<String, Object> postBody = new HashMap<>();
     private static final String stringOf51Characters = StringUtils.repeat("*", 51);
     private static final String stringOf50Characters = StringUtils.repeat("*", 50);

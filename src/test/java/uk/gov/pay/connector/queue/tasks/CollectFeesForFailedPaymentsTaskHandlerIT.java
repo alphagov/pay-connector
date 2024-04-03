@@ -3,7 +3,7 @@ package uk.gov.pay.connector.queue.tasks;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -22,7 +22,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 
 public class CollectFeesForFailedPaymentsTaskHandlerIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe");
+    static ITestBaseExtension app = new ITestBaseExtension("stripe");
 
     private String paymentIntentId = "stripe-payment-intent-id";
 

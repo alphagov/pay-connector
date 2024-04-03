@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.service.notify.NotificationClient;
@@ -44,7 +44,7 @@ public class SendRefundEmailIT {
     private static NotificationClient notificationClient = mock(NotificationClient.class);
     
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay",
+    public static ITestBaseExtension app = new ITestBaseExtension("worldpay",
             SendRefundEmailIT.ConnectorAppWithCustomInjector.class,
             config("notifyConfig.emailNotifyEnabled", "true"),
             config("worldpay.secureNotificationEnabled", "false")

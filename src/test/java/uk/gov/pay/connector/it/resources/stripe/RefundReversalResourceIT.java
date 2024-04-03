@@ -19,7 +19,7 @@ import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import javax.ws.rs.core.Response;
 
@@ -35,7 +35,7 @@ public class RefundReversalResourceIT {
     private static final StripeSdkClient mockStripeSdkClient = mock(StripeSdkClient.class);
     
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe", RefundReversalResourceIT.ConnectorAppWithCustomInjector.class);
+    public static ITestBaseExtension app = new ITestBaseExtension("stripe", RefundReversalResourceIT.ConnectorAppWithCustomInjector.class);
     private static final String CHARGE_EXTERNAL_ID = "charge-external-id";
     private static final String REFUND_EXTERNAL_ID = "refund-external-id";
     private static final String STRIPE_REFUND_ID = "stripe-refund-id";

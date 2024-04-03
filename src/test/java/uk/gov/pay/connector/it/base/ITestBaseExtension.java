@@ -75,7 +75,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
-public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
+public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     public static final String ADDRESS_LINE_1 = "The Money Pool";
     public static final String ADDRESS_CITY = "London";
     public static final String ADDRESS_POSTCODE = "DO11 4RS";
@@ -118,22 +118,22 @@ public class ChargingITestBaseExtension extends AppWithPostgresAndSqsExtension {
 
     private static AddGatewayAccountCredentialsParams credentialParams;
 
-    public ChargingITestBaseExtension(String paymentProvider) {
+    public ITestBaseExtension(String paymentProvider) {
         super();
         this.paymentProvider = paymentProvider;
     }
 
-    public ChargingITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
+    public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
         super(CustomConnectorClass);
         this.paymentProvider = paymentProvider;
     }
 
-    public ChargingITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
+    public ITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
         super(configOverrides);
         this.paymentProvider = paymentProvider;
     }
 
-    public ChargingITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
+    public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
         super(CustomConnectorClass, configOverrides);
         this.paymentProvider = paymentProvider;
     }

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
 import java.sql.Timestamp;
@@ -30,7 +30,7 @@ public class EmittedEventResourceIT {
     private static StateTransitionQueue stateTransitionQueue = new StateTransitionQueue();
     
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox",
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox",
             EmittedEventResourceIT.ConnectorAppWithCustomStateTransitionQueue.class,
             config("emittedEventSweepConfig.notEmittedEventMaxAgeInSeconds", "0")
     );

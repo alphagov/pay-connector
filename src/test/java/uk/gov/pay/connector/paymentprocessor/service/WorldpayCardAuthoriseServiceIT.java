@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 
 import java.util.Map;
@@ -19,7 +19,7 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.
 
 public class WorldpayCardAuthoriseServiceIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension(WORLDPAY.getName());
+    static ITestBaseExtension app = new ITestBaseExtension(WORLDPAY.getName());
     
     @Test
     void shouldSuccessfullyAuthoriseUserNotPresentPayment() {

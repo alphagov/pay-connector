@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.DnsPointerResourceRecord;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -40,7 +40,7 @@ public class WorldpayNotificationResourceIT {
     private static final ReverseDnsLookup reverseDnsLookup = mock(ReverseDnsLookup.class);
     
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay",
+    public static ITestBaseExtension app = new ITestBaseExtension("worldpay",
             WorldpayNotificationResourceIT.ConnectorAppWithCustomInjector.class,
             config("worldpay.notificationDomain", ".worldpay.com")
     );

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationType;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationUtilTest;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -40,7 +40,7 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class StripeNotificationResourceIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe");
+    static ITestBaseExtension app = new ITestBaseExtension("stripe");
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/stripe";
     private static final String RESPONSE_EXPECTED_BY_STRIPE = "[OK]";

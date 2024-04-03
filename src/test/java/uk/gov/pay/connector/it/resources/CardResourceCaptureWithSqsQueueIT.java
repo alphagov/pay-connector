@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -30,7 +30,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 
 public class CardResourceCaptureWithSqsQueueIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension(
+    public static ITestBaseExtension app = new ITestBaseExtension(
             "sandbox",
             io.dropwizard.testing.ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
 
