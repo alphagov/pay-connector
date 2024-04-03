@@ -24,7 +24,7 @@
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <jjwt.version>0.12.3</jjwt.version>
         <pact.version>3.6.15</pact.version>
-        <mockito.version>5.10.0</mockito.version>
+        <mockito.version>5.11.0</mockito.version>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <swaggger-version>2.2.21</swaggger-version>
         <prometheus.version>0.16.0</prometheus.version>
