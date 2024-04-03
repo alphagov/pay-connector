@@ -15,6 +15,7 @@ import uk.gov.pay.connector.usernotification.model.domain.NotificationCredential
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +26,6 @@ import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -157,17 +157,21 @@ public class GatewayAccountDaoIT {
         assertThat(account.isSendReferenceToGateway(), is(true));
 
         List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(account.getId());
+        assertThat(acceptedCardTypesByAccountId.size(), is(2));
 
-        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
-                allOf(
-                        hasEntry("label", masterCardCredit.getLabel()),
-                        hasEntry("type", masterCardCredit.getType().toString()),
-                        hasEntry("brand", masterCardCredit.getBrand())
-                ), allOf(
-                        hasEntry("label", visaCardDebit.getLabel()),
-                        hasEntry("type", visaCardDebit.getType().toString()),
-                        hasEntry("brand", visaCardDebit.getBrand())
-                )));
+        List<Map<String, Object>> sortedCardTypes = acceptedCardTypesByAccountId
+                .stream()
+                .sorted(Comparator.comparing(m -> m.get("label").toString()))
+                .collect(Collectors.toUnmodifiableList());
+
+
+        assertThat(sortedCardTypes.get(0).get("label"), is(masterCardCredit.getLabel()));
+        assertThat(sortedCardTypes.get(0).get("type"), is(masterCardCredit.getType().toString()));
+        assertThat(sortedCardTypes.get(0).get("brand"), is(masterCardCredit.getBrand()));
+
+        assertThat(sortedCardTypes.get(1).get("label"), is(visaCardDebit.getLabel()));
+        assertThat(sortedCardTypes.get(1).get("type"), is(visaCardDebit.getType().toString()));
+        assertThat(sortedCardTypes.get(1).get("brand"), is(visaCardDebit.getBrand()));
     }
 
     @Test
@@ -251,17 +255,21 @@ public class GatewayAccountDaoIT {
         gatewayAccountDao.merge(gatewayAccount);
 
         List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+        assertThat(acceptedCardTypesByAccountId.size(), is(2));
 
-        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
-                allOf(
-                        hasEntry("label", masterCardCredit.getLabel()),
-                        hasEntry("type", masterCardCredit.getType().toString()),
-                        hasEntry("brand", masterCardCredit.getBrand())
-                ), allOf(
-                        hasEntry("label", visaCardDebit.getLabel()),
-                        hasEntry("type", visaCardDebit.getType().toString()),
-                        hasEntry("brand", visaCardDebit.getBrand())
-                )));
+        List<Map<String, Object>> sortedCardTypes = acceptedCardTypesByAccountId
+                .stream()
+                .sorted(Comparator.comparing(m -> m.get("label").toString()))
+                .collect(Collectors.toUnmodifiableList());
+
+
+        assertThat(sortedCardTypes.get(0).get("label"), is(masterCardCredit.getLabel()));
+        assertThat(sortedCardTypes.get(0).get("type"), is(masterCardCredit.getType().toString()));
+        assertThat(sortedCardTypes.get(0).get("brand"), is(masterCardCredit.getBrand()));
+
+        assertThat(sortedCardTypes.get(1).get("label"), is(visaCardDebit.getLabel()));
+        assertThat(sortedCardTypes.get(1).get("type"), is(visaCardDebit.getType().toString()));
+        assertThat(sortedCardTypes.get(1).get("brand"), is(visaCardDebit.getBrand()));
     }
 
     @Test
