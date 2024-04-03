@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.lang.reflect.Field;
@@ -18,7 +18,7 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 
 public class CardAuthorizeDelayedGatewayResponseIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
     
     private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 

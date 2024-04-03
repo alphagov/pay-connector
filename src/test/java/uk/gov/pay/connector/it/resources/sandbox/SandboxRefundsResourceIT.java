@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -45,7 +45,7 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternal
 
 public class SandboxRefundsResourceIT  {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;

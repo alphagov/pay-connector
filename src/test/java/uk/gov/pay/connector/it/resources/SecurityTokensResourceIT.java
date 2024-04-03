@@ -4,7 +4,7 @@ import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestToken;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -19,7 +19,7 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class SecurityTokensResourceIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;

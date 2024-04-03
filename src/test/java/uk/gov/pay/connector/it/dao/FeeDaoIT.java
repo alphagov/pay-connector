@@ -9,7 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.fee.dao.FeeDao;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,7 +21,7 @@ import static org.hamcrest.core.Is.is;
 
 public class FeeDaoIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
     private FeeDao feeDao;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 

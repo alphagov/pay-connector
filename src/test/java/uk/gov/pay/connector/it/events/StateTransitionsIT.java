@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.events;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.google.common.collect.ImmutableMap;
@@ -14,7 +13,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -29,11 +28,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
 
 public class StateTransitionsIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension(
+    static ITestBaseExtension app = new ITestBaseExtension(
             "sandbox",
             config("captureProcessConfig.backgroundProcessingEnabled", "true"),
             config("eventQueue.eventQueueEnabled", "true")

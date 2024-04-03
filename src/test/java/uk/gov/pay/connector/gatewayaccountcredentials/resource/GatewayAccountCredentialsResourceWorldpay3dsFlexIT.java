@@ -9,7 +9,7 @@ import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingExcept
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -42,7 +42,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 
 public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+    static ITestBaseExtension app = new ITestBaseExtension("worldpay");
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String UPDATE_3DS_FLEX_CREDENTIALS_URL = "/v1/api/accounts/%s/3ds-flex-credentials";

@@ -2,14 +2,14 @@ package uk.gov.pay.connector.it.resources.epdq;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
 public class EpdqChargeApiResourceIT  {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("epdq");
+    public static ITestBaseExtension app = new ITestBaseExtension("epdq");
 
     @Test
     public void getChargeRefundStatusShouldBeUnavailable() {

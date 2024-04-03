@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueue;
 import uk.gov.pay.connector.util.AddAgreementParams;
@@ -40,23 +40,23 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_CHARGE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DELAYED_CAPTURE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_EMAIL_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_LANGUAGE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_METADATA_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_MOTO_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_PROVIDER_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_SOURCE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.RETURN_URL;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_CHARGE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DELAYED_CAPTURE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_EMAIL_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_LANGUAGE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_METADATA_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_MOTO_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_PROVIDER_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_SOURCE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
@@ -64,7 +64,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceCreateAgreementIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
     
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);

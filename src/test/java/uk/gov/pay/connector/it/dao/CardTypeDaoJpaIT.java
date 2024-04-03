@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +18,7 @@ import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 
 public class CardTypeDaoJpaIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
     private static CardTypeDao cardTypeDao;
 
     @BeforeAll

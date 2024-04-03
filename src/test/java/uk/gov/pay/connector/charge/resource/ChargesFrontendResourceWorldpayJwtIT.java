@@ -1,13 +1,11 @@
 package uk.gov.pay.connector.charge.resource;
 
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +23,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 public class ChargesFrontendResourceWorldpayJwtIT {
 
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
 
     @Test
     void shouldGetCorrectDdcToken() {

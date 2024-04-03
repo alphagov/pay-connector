@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
@@ -10,23 +10,23 @@ import java.util.Map;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.AMOUNT;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.EMAIL;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AMOUNT_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_AUTH_MODE_MOTO_API;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_DESCRIPTION_VALUE;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_EMAIL_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_KEY;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_REFERENCE_VALUE;
-import static uk.gov.pay.connector.it.base.ChargingITestBaseExtension.JSON_RETURN_URL_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.EMAIL;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_MOTO_API;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_EMAIL_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VALUE;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_RETURN_URL_KEY;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceCreateReturnUrlIT {
 
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
     
     @Test
     void shouldReturn422WhenReturnUrlIsMissing() {

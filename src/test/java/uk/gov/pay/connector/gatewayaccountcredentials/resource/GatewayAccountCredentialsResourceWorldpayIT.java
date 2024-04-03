@@ -6,10 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -34,7 +33,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountCredentialsResourceWorldpayIT {
     @RegisterExtension
-    static AppWithPostgresAndSqsExtension app = new ChargingITestBaseExtension("worldpay");
+    static ITestBaseExtension app = new ITestBaseExtension("worldpay");
     private DatabaseFixtures.TestAccount testAccount;
 
     private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";

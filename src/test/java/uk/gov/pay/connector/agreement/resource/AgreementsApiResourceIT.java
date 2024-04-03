@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.util.AddAgreementParams;
@@ -33,7 +33,7 @@ import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentIns
 
 public class AgreementsApiResourceIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
 
     private static final String REFERENCE_ID = "1234";
     private static final String DESCRIPTION = "a valid description";

@@ -7,9 +7,8 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
@@ -33,7 +32,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
 public class StripeRefundsResourceIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("stripe");
+    public static ITestBaseExtension app = new ITestBaseExtension("stripe");
 
     private String stripeAccountId = "stripe_account_id";
     private String accountId = String.valueOf(nextLong());

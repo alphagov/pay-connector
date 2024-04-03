@@ -9,7 +9,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Collections;
@@ -44,7 +44,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountCredentialsDaoIT {
     @RegisterExtension
-    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
+    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private ObjectMapper objectMapper = new ObjectMapper();
     private GatewayAccountDao gatewayAccountDao;

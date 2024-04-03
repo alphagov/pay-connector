@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.Instant;
@@ -30,7 +30,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 public class ChargeCancelResourceIT {
 
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
 
     @Test
     public void shouldPreserveCardDetailsIfCancelled() {

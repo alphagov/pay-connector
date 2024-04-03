@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
-import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -47,7 +47,7 @@ import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 
 public class WorldpayCardResourceIT {
     @RegisterExtension
-    public static ChargingITestBaseExtension app = new ChargingITestBaseExtension("worldpay");
+    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
 
     private String validAuthorisationDetails = buildJsonAuthorisationDetailsFor("4444333322221111", "visa");
     private String validApplePayAuthorisationDetails = buildJsonApplePayAuthorisationDetails("mr payment", "mr@payment.test");
