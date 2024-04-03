@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
@@ -17,38 +17,34 @@ import java.util.Optional;
 import static com.github.npathai.hamcrestopt.OptionalMatchers.isEmpty;
 import static com.github.npathai.hamcrestopt.OptionalMatchers.isPresent;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
-public class TokenDaoJpaIT extends DaoITestBase {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
+public class TokenDaoJpaIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private TokenDao tokenDao;
     private ChargeDao chargeDao;
 
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
-    @Before
-    public void setUp() {
-        databaseTestHelper.truncateAllData();
-        tokenDao = env.getInstance(TokenDao.class);
-        chargeDao = env.getInstance(ChargeDao.class);
-        DatabaseFixtures.TestAccount defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    @BeforeEach
+    void setUp() {
+        app.getDatabaseTestHelper().truncateAllData();
+        tokenDao = app.getInstanceFromGuiceContainer(TokenDao.class);
+        chargeDao = app.getInstanceFromGuiceContainer(ChargeDao.class);
+        DatabaseFixtures.TestAccount defaultTestAccount = app.getDatabaseFixtures()
                 .aTestAccount()
                 .insert();
 
-        defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        defaultTestCharge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
     }
 
     @Test
-    public void persist_shouldInsertAToken() {
-
+    void persist_shouldInsertAToken() {
         ChargeEntityFixture chargeEntityFixture = new ChargeEntityFixture();
         ChargeEntity defaultChargeTestEntity = chargeEntityFixture.build();
         defaultChargeTestEntity.setId(defaultTestCharge.getChargeId());
@@ -57,14 +53,13 @@ public class TokenDaoJpaIT extends DaoITestBase {
 
         tokenDao.persist(tokenEntity);
 
-        assertThat(databaseTestHelper.getChargeTokenId(defaultChargeTestEntity.getId()), is(tokenEntity.getToken()));
+        assertThat(app.getDatabaseTestHelper().getChargeTokenId(defaultChargeTestEntity.getId()), is(tokenEntity.getToken()));
     }
 
     @Test
-    public void findByTokenId_shouldFindUnusedToken() {
-
+    void findByTokenId_shouldFindUnusedToken() {
         String tokenId = "qwerty";
-        databaseTestHelper.addToken(defaultTestCharge.getChargeId(), tokenId);
+        app.getDatabaseTestHelper().addToken(defaultTestCharge.getChargeId(), tokenId);
 
         TokenEntity entity = tokenDao.findByTokenId(tokenId).get();
 
@@ -75,10 +70,9 @@ public class TokenDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByTokenId_shouldFindUsedToken() {
-
+    void findByTokenId_shouldFindUsedToken() {
         String tokenId = "qwerty";
-        databaseTestHelper.addToken(defaultTestCharge.getChargeId(), tokenId, true);
+        app.getDatabaseTestHelper().addToken(defaultTestCharge.getChargeId(), tokenId, true);
 
         TokenEntity entity = tokenDao.findByTokenId(tokenId).get();
 
@@ -89,15 +83,14 @@ public class TokenDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByTokenId_shouldNotFindToken() {
-
+    void findByTokenId_shouldNotFindToken() {
         String tokenId = "non_existing_tokenId";
 
         assertThat(tokenDao.findByTokenId(tokenId), is(Optional.empty()));
     }
     
     @Test
-    public void deleteByCutOffDate_shouldDeleteOlderTokens() {
+    void deleteByCutOffDate_shouldDeleteOlderTokens() {
         ZonedDateTime today = ZonedDateTime.now(ZoneId.of("UTC"));
 
         ChargeEntityFixture chargeEntityFixture = new ChargeEntityFixture();

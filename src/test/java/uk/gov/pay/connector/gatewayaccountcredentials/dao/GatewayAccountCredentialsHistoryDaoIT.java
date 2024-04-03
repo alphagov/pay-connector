@@ -1,19 +1,19 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.dao;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
-import uk.gov.pay.connector.it.dao.DaoITestBase;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 
 import java.util.Map;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -25,43 +25,47 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-public class GatewayAccountCredentialsHistoryDaoIT extends DaoITestBase {
-
+public class GatewayAccountCredentialsHistoryDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao;
     private GatewayAccountDao gatewayAccountDao;
 
-    @Before
-    public void setUp() {
-        gatewayAccountCredentialsDao = env.getInstance(GatewayAccountCredentialsDao.class);
-        gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
-        gatewayAccountCredentialsHistoryDao = env.getInstance(GatewayAccountCredentialsHistoryDao.class);
+    @BeforeEach
+    void setUp() {
+        gatewayAccountCredentialsDao = app.getInstanceFromGuiceContainer(GatewayAccountCredentialsDao.class);
+        gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
+        gatewayAccountCredentialsHistoryDao = app.getInstanceFromGuiceContainer(GatewayAccountCredentialsHistoryDao.class);
     }
     
     @Test
-    public void deleteGatewayAccountCredentialsHistory() {
+    void deleteGatewayAccountCredentialsHistory() {
         String serviceId = "archived-service-id";
         var gatewayAccountEntity = createAGatewayAccount(serviceId);
-        persistTwoGatewayAccountCredentialsHistoryRows(gatewayAccountEntity);
+        // delete credentials history as DatabaseTestHelper creates some by default
+        gatewayAccountCredentialsHistoryDao.delete(serviceId);
+        persistTwoGatewayAccountCredentialsHistoryRows(gatewayAccountEntity, serviceId);
         
         var anotherGatewayAccountEntity = createAGatewayAccount(serviceId);
-        persistTwoGatewayAccountCredentialsHistoryRows(anotherGatewayAccountEntity);
+        persistTwoGatewayAccountCredentialsHistoryRows(anotherGatewayAccountEntity, serviceId);
 
         assertThat(gatewayAccountCredentialsHistoryDao.delete(serviceId), is(4));
-        assertTrue(databaseTestHelper.getGatewayAccountCredentialsHistoryForAccount(gatewayAccountEntity.getId()).isEmpty());
-        assertTrue(databaseTestHelper.getGatewayAccountCredentialsHistoryForAccount(anotherGatewayAccountEntity.getId()).isEmpty());
+        assertThat(app.getDatabaseTestHelper().getGatewayAccountCredentialsHistoryForAccount(gatewayAccountEntity.getId()).isEmpty(), is(true));
+        assertThat(app.getDatabaseTestHelper().getGatewayAccountCredentialsHistoryForAccount(anotherGatewayAccountEntity.getId()).isEmpty(), is(true));
     }
     
     private GatewayAccountEntity createAGatewayAccount(String serviceId) {
         long gatewayAccountId = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper()
+                .addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withServiceId(serviceId)
                 .build());
         return gatewayAccountDao.findById(gatewayAccountId).get();
     }
 
-    private void persistTwoGatewayAccountCredentialsHistoryRows(GatewayAccountEntity gatewayAccountEntity) {
+    private void persistTwoGatewayAccountCredentialsHistoryRows(GatewayAccountEntity gatewayAccountEntity, String serviceId) {
         Map<String, Object> credentials = Map.of(ONE_OFF_CUSTOMER_INITIATED, 
                 Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, "a-merchant-code-1", CREDENTIALS_PASSWORD, "passw0rd1"));
         String externalCredentialId = randomUuid();

@@ -1,15 +1,16 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -31,14 +32,13 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -48,28 +48,24 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-public class GatewayAccountDaoIT extends DaoITestBase {
-
+public class GatewayAccountDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private GatewayAccountDao gatewayAccountDao;
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private DatabaseFixtures databaseFixtures;
     private long gatewayAccountId;
 
-    @Before
-    public void setUp() {
-        gatewayAccountDao = env.getInstance(GatewayAccountDao.class);
-        gatewayAccountCredentialsDao = env.getInstance(GatewayAccountCredentialsDao.class);
-        databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
+    @BeforeEach
+    void setUp() {
+        gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
+        gatewayAccountCredentialsDao = app.getInstanceFromGuiceContainer(GatewayAccountCredentialsDao.class);
+        databaseFixtures = app.getDatabaseFixtures();
         gatewayAccountId = nextLong();
     }
 
-    @After
-    public void truncate() {
-        databaseTestHelper.truncateAllData();
-    }
-
     @Test
-    public void shouldFindGatewayAccountsForServiceId() {
+    void shouldFindGatewayAccountsForServiceId() {
         String serviceId = "a-service-id";
         
         GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
@@ -89,7 +85,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldFindNoGatewayAccountForServiceId() {
+    void shouldFindNoGatewayAccountForServiceId() {
         GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
         account1.setExternalId(randomUuid());
         account1.setServiceId("a-service-id");
@@ -99,7 +95,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
     
     @Test
-    public void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
+    void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
         GatewayAccountEntity account = new GatewayAccountEntity(TEST);
         account.setExternalId(randomUuid());
         GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity()
@@ -135,9 +131,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
     
     @Test
-    public void persist_shouldCreateAnAccount() {
-        final CardTypeEntity masterCardCredit = databaseTestHelper.getMastercardCreditCard();
-        final CardTypeEntity visaCardDebit = databaseTestHelper.getVisaCreditCard();
+    void persist_shouldCreateAnAccount() {
+        final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
+        final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaCreditCard();
 
         GatewayAccountEntity account = new GatewayAccountEntity(TEST);
 
@@ -160,7 +156,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         assertThat(account.isProviderSwitchEnabled(), is(false));
         assertThat(account.isSendReferenceToGateway(), is(true));
 
-        List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(account.getId());
+        List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(account.getId());
 
         assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
                 allOf(
@@ -175,14 +171,14 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldNotFindANonexistentGatewayAccount() {
+    void findById_shouldNotFindANonexistentGatewayAccount() {
         assertThat(gatewayAccountDao.findById(GatewayAccountEntity.class, 1234L).isPresent(), is(false));
     }
 
     @Test
-    public void findById_shouldFindGatewayAccount() {
-        final CardTypeEntity masterCardCredit = databaseTestHelper.getMastercardCreditCard();
-        final CardTypeEntity visaCardDebit = databaseTestHelper.getVisaCreditCard();
+    void findById_shouldFindGatewayAccount() {
+        final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
+        final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaCreditCard();
         DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(masterCardCredit, visaCardDebit);
 
         Optional<GatewayAccountEntity> gatewayAccountOpt =
@@ -215,7 +211,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindGatewayAccountWithCorporateSurcharges() {
+    void findById_shouldFindGatewayAccountWithCorporateSurcharges() {
         DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCorporateSurcharges();
 
         Optional<GatewayAccountEntity> gatewayAccountOpt =
@@ -235,10 +231,10 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldUpdateAccountCardTypes() {
-        final CardTypeEntity masterCardCredit = databaseTestHelper.getMastercardCreditCard();
-        final CardTypeEntity visaCardCredit = databaseTestHelper.getVisaCreditCard();
-        final CardTypeEntity visaCardDebit = databaseTestHelper.getVisaDebitCard();
+    void findById_shouldUpdateAccountCardTypes() {
+        final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
+        final CardTypeEntity visaCardCredit = app.getDatabaseTestHelper().getVisaCreditCard();
+        final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaDebitCard();
         DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(masterCardCredit, visaCardCredit);
 
         Optional<GatewayAccountEntity> gatewayAccountOpt =
@@ -254,9 +250,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
 
         gatewayAccountDao.merge(gatewayAccount);
 
-        List<Map<String, Object>> acceptedCardTypesByAccountId = databaseTestHelper.getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+        List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
 
-        assertThat(acceptedCardTypesByAccountId, contains(
+        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
                 allOf(
                         hasEntry("label", masterCardCredit.getLabel()),
                         hasEntry("type", masterCardCredit.getType().toString()),
@@ -269,9 +265,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() {
+    void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() {
         String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway(paymentProvider)
                 .withServiceName("a cool service")
@@ -285,9 +281,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSaveNotificationCredentials() {
+    void shouldSaveNotificationCredentials() {
         String paymentProvider = "test provider";
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway(paymentProvider)
                 .withServiceName("a cool service")
@@ -314,40 +310,41 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldReturnAllAccountsWhenNoSearchParamaters() {
+    void shouldReturnAllAccountsWhenNoSearchParameters() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .build());
 
         var params = new GatewayAccountSearchParams();
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(2));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
-        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
+        assertThat(gatewayAccounts, hasSize(3));
+        assertThat(gatewayAccounts.get(0).getId(), is(Long.valueOf(app.getAccountId())));
+        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(2).getId(), is(gatewayAccountId_2));
     }
 
     @Test
-    public void shouldSearchForAccountsById() {
+    void shouldSearchForAccountsById() {
         long gatewayAccountId_1 = nextLong();
         String externalId_1 = randomUuid();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withExternalId(externalId_1)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
         String externalId_2 = randomUuid();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .withExternalId(externalId_2)
                 .build());
         long gatewayAccountId_3 = gatewayAccountId_2 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_3))
                 .build());
 
@@ -363,14 +360,14 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByMotoEnabled() {
+    void shouldSearchForAccountsByMotoEnabled() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withAllowMoto(false)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .withAllowMoto(true)
                 .build());
@@ -384,14 +381,14 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByApplePayEnabled() {
+    void shouldSearchForAccountsByApplePayEnabled() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withAllowApplePay(false)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .withAllowApplePay(true)
                 .build());
@@ -405,14 +402,14 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByGooglePayEnabled() {
+    void shouldSearchForAccountsByGooglePayEnabled() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withAllowGooglePay(false)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .withAllowGooglePay(true)
                 .build());
@@ -426,14 +423,14 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByRequires3ds() {
+    void shouldSearchForAccountsByRequires3ds() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withRequires3ds(false)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .withRequires3ds(true)
                 .build());
@@ -447,14 +444,14 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByType() {
+    void shouldSearchForAccountsByType() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withType(TEST)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .withType(LIVE)
                 .build());
@@ -468,7 +465,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByPaymentProvider() {
+    void shouldSearchForAccountsByPaymentProvider() {
         long gatewayAccountId1 = nextLong();
         long gatewayAccountId2 = nextLong();
         long gatewayAccountId3 = nextLong();
@@ -492,15 +489,15 @@ public class GatewayAccountDaoIT extends DaoITestBase {
                 .withState(CREATED)
                 .withGatewayAccountId(gatewayAccountId3)
                 .build();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId1))
                 .withGatewayAccountCredentials(List.of(account1_credentials1, account1_credentials2))
                 .build());
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId2))
                 .withGatewayAccountCredentials(List.of(account2_credentials))
                 .build());
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId3))
                 .withGatewayAccountCredentials(List.of(account3_credentials))
                 .build());
@@ -517,15 +514,15 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByProviderSwitchEnabled() {
+    void shouldSearchForAccountsByProviderSwitchEnabled() {
         long gatewayAccountId_1 = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_1))
                 .withPaymentGateway("sandbox")
                 .withProviderSwitchEnabled(true)
                 .build());
         long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId_2))
                 .withProviderSwitchEnabled(false)
                 .withPaymentGateway("sandbox")
@@ -540,9 +537,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }    
     
     @Test
-    public void shouldSearchForAccountsByPaymentProviderAccountId() {
+    void shouldSearchForAccountsByPaymentProviderAccountId() {
         long gatewayAccountId = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("sandbox")
                 .withCredentials(Map.of("stripe_account_id", "acc123"))
@@ -557,9 +554,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }    
     
     @Test
-    public void shouldSearchForAccountsByWorldpayMerchantCodeInOneOffPaymentCredentials() {
+    void shouldSearchForAccountsByWorldpayMerchantCodeInOneOffPaymentCredentials() {
         long gatewayAccountId = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("worldpay")
                 .withCredentials(Map.of("one_off_customer_initiated", Map.of("merchant_code", "acc123")))
@@ -574,9 +571,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
+    void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
         long gatewayAccountId = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("worldpay")
                 .withCredentials(Map.of("recurring_customer_initiated", Map.of("merchant_code", "acc123")))
@@ -591,9 +588,9 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringMerchantInitiatedCredentials() {
+    void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringMerchantInitiatedCredentials() {
         long gatewayAccountId = nextLong();
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("worldpay")
                 .withCredentials(Map.of("recurring_merchant_initiated", Map.of("merchant_code", "acc123")))
@@ -608,12 +605,12 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSaveNotifySettings() {
+    void shouldSaveNotifySettings() {
         String fuser = "fuser";
         String notifyAPIToken = "a_token";
         String notifyTemplateId = "a_template_id";
 
-        databaseTestHelper.addGatewayAccount(anAddGatewayAccountParams()
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("provider-1")
                 .withCredentials(Map.of("user", fuser, "password", "word"))
@@ -629,7 +626,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
         gatewayAccountEntity.setNotifySettings(notifySettings);
         gatewayAccountDao.merge(gatewayAccountEntity);
 
-        Map<String, String> storedNotifySettings = databaseTestHelper.getNotifySettings(gatewayAccountId);
+        Map<String, String> storedNotifySettings = app.getDatabaseTestHelper().getNotifySettings(gatewayAccountId);
 
         assertThat(storedNotifySettings.size(), is(2));
         assertThat(storedNotifySettings.get("notify_api_token"), is(notifyAPIToken));
@@ -637,7 +634,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findByExternalId_shouldFindGatewayAccount() {
+    void findByExternalId_shouldFindGatewayAccount() {
         Long id = nextLong();
         String externalId = randomUuid();
         databaseFixtures
@@ -652,7 +649,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void isATelephonePaymentNotificationAccount_shouldReturnTrueIfTelephonePaymentNotificationsAreEnabled() {
+    void isATelephonePaymentNotificationAccount_shouldReturnTrueIfTelephonePaymentNotificationsAreEnabled() {
         long id = nextLong();
         String externalId = randomUuid();
         Map<String, Object> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");
@@ -677,7 +674,7 @@ public class GatewayAccountDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void isATelephonePaymentNotificationAccount_shouldReturnFalseIfTelephonePaymentNotificationsAreNotEnabled() {
+    void isATelephonePaymentNotificationAccount_shouldReturnFalseIfTelephonePaymentNotificationsAreNotEnabled() {
         long id = nextLong();
         String externalId = randomUuid();
         Map<String, Object> credentials = Map.of(CREDENTIALS_MERCHANT_ID, "merchant-id");

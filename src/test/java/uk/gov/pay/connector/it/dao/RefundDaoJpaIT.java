@@ -2,11 +2,13 @@ package uk.gov.pay.connector.it.dao;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
@@ -27,11 +29,10 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.oneOf;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
 import static uk.gov.pay.connector.events.EmittedEventFixture.anEmittedEventEntity;
-import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.it.resources.ChargeEventsResourceIT.SUBMITTED_BY;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
@@ -41,34 +42,30 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
-public class RefundDaoJpaIT extends DaoITestBase {
-
+public class RefundDaoJpaIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private RefundDao refundDao;
-    private DatabaseFixtures.TestAccount sandboxAccount;
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;
     private String refundGatewayTransactionId;
     private EmittedEventDao emittedEventDao;
+    private DatabaseFixtures.TestAccount sandboxAccount;
 
-    @Before
-    public void setUp() throws Exception {
-        setup();
-        refundDao = env.getInstance(RefundDao.class);
-        emittedEventDao = env.getInstance(EmittedEventDao.class);
-        databaseTestHelper.deleteAllCardTypes();
+    @BeforeEach
+    void setUp() throws Exception {
+        refundDao = app.getInstanceFromGuiceContainer(RefundDao.class);
+        emittedEventDao = app.getInstanceFromGuiceContainer(EmittedEventDao.class);
 
-        DatabaseFixtures.TestAccount testAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                 .aTestAccount();
 
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(testAccount)
                 .withChargeStatus(ChargeStatus.CAPTURED);
 
-        DatabaseFixtures.TestRefund testRefund = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestRefund testRefund = app.getDatabaseFixtures()
                 .aTestRefund()
                 .withGatewayTransactionId(randomAlphanumeric(10))
                 .withChargeExternalId(testCharge.getExternalChargeId())
@@ -81,7 +78,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldFindRefund() {
+    void findById_shouldFindRefund() {
         Optional<RefundEntity> refundEntityOptional = refundDao.findById(RefundEntity.class, refundTestRecord.getId());
 
         assertThat(refundEntityOptional.isPresent(), is(true));
@@ -97,13 +94,13 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findById_shouldNotFindRefund() {
+    void findById_shouldNotFindRefund() {
         long noExistingRefundId = 0L;
         assertThat(refundDao.findById(RefundEntity.class, noExistingRefundId).isPresent(), is(false));
     }
 
     @Test
-    public void findByChargeExternalIdAndGatewayTransactionId_shouldFindRefund() {
+    void findByChargeExternalIdAndGatewayTransactionId_shouldFindRefund() {
         Optional<RefundEntity> refundEntityOptional = refundDao.findByChargeExternalIdAndGatewayTransactionId(chargeTestRecord.getExternalChargeId(), refundTestRecord.getGatewayTransactionId());
 
         assertThat(refundEntityOptional.isPresent(), is(true));
@@ -120,7 +117,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByChargeExternalIdAndGatewayTransactionId_shouldNotFindRefundIfChargeExternalIdDoesNotMatch() {
+    void findByChargeExternalIdAndGatewayTransactionId_shouldNotFindRefundIfChargeExternalIdDoesNotMatch() {
 
         Optional<RefundEntity> refundEntityOptional = refundDao.findByChargeExternalIdAndGatewayTransactionId("charge-externalid-00", refundTestRecord.getGatewayTransactionId());
 
@@ -128,14 +125,14 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByChargeExternalIdAndGatewayTransactionId_shouldNotFindRefundIfGatewayTransactionIdDoesNotMatch() {
+    void findByChargeExternalIdAndGatewayTransactionId_shouldNotFindRefundIfGatewayTransactionIdDoesNotMatch() {
         String noExistingRefundTransactionId = "refund_0";
         assertThat(refundDao.findByChargeExternalIdAndGatewayTransactionId(chargeTestRecord.getExternalChargeId(),
                 noExistingRefundTransactionId).isPresent(), is(false));
     }
 
     @Test
-    public void persist_shouldCreateARefund() {
+    void persist_shouldCreateARefund() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity.setStatus(REFUND_SUBMITTED);
         refundEntity.setGatewayTransactionId(refundGatewayTransactionId);
@@ -145,7 +142,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
 
         assertNotNull(refundEntity.getId());
 
-        List<Map<String, Object>> refundByIdFound = databaseTestHelper.getRefund(refundEntity.getId());
+        List<Map<String, Object>> refundByIdFound = app.getDatabaseTestHelper().getRefund(refundEntity.getId());
 
         assertThat(refundByIdFound.size(), is(1));
         assertThat(refundByIdFound, hasItems(aRefundMatching(refundEntity.getExternalId(), is(refundGatewayTransactionId),
@@ -157,7 +154,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void persist_shouldSearchHistoryByChargeExternalId() {
+    void persist_shouldSearchHistoryByChargeExternalId() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity.setStatus(REFUND_SUBMITTED);
         refundEntity.setGatewayTransactionId(refundGatewayTransactionId);
@@ -183,7 +180,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSearchAllHistoryStatusTypesByChargeId() {
+    void shouldSearchAllHistoryStatusTypesByChargeId() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
 
         refundEntity.setGatewayTransactionId(refundGatewayTransactionId);
@@ -202,7 +199,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     // Causing issues since gateway transaction id is not populated for CREATED is also being removed as is detected as
     // duplicated.
     @Test
-    public void persist_shouldSearchHistoryByChargeId_IgnoringRefundStatusWithStateCreated() {
+    void persist_shouldSearchHistoryByChargeId_IgnoringRefundStatusWithStateCreated() {
         RefundEntity refundEntity1 = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity1.setStatus(CREATED);
         refundDao.persist(refundEntity1);
@@ -230,7 +227,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void getRefundHistoryByRefundExternalIdAndRefundStatus_shouldReturnResultCorrectly() {
+    void getRefundHistoryByRefundExternalIdAndRefundStatus_shouldReturnResultCorrectly() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity.setStatus(CREATED);
         refundEntity.setGatewayTransactionId(refundGatewayTransactionId);
@@ -252,13 +249,13 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void getRefundHistoryByDateRangeShouldReturnResultCorrectly() {
+    void getRefundHistoryByDateRangeShouldReturnResultCorrectly() {
 
         ZonedDateTime historyDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
-        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(databaseTestHelper).aTestAccount().insert();
-        DatabaseFixtures.TestCharge testCharge = withDatabaseTestHelper(databaseTestHelper).aTestCharge().withTestAccount(testAccount).insert();
-        DatabaseFixtures.TestRefund testRefund = withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures().aTestAccount().insert();
+        DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures().aTestCharge().withTestAccount(testAccount).insert();
+        DatabaseFixtures.TestRefund testRefund = app.getDatabaseFixtures()
                 .aTestRefund()
                 .withTestCharge(testCharge)
                 .withType(REFUNDED)
@@ -267,7 +264,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
                 .withChargeExternalId(testCharge.getExternalChargeId())
                 .insert();
 
-        withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestRefundHistory(testRefund)
                 .insert(REFUND_SUBMITTED, "ref-2", historyDate.plusMinutes(10), historyDate.plusMinutes(10), SUBMITTED_BY, userEmail)
                 .insert(CREATED, "ref-1", historyDate, historyDate, SUBMITTED_BY, userEmail)
@@ -292,9 +289,8 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findByChargeExternalIdShouldReturnAListOfRefunds() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void findByChargeExternalIdShouldReturnAListOfRefunds() {
+        app.getDatabaseFixtures()
                 .aTestRefund()
                 .withGatewayTransactionId(refundGatewayTransactionId)
                 .withChargeExternalId(chargeTestRecord.getExternalChargeId())
@@ -307,7 +303,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findMaxId_returnsTheMaximumId() {
+    void findMaxId_returnsTheMaximumId() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity.setId(nextLong());
         refundEntity.setStatus(REFUND_SUBMITTED.getValue());
@@ -322,7 +318,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findRefundToExpunge_shouldReturnRefundReadyForExpunging() {
+    void findRefundToExpunge_shouldReturnRefundReadyForExpunging() {
         String chargeExternalId = randomAlphanumeric(26);
         RefundEntity refundToExpunge = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
         refundToExpunge.setStatus(REFUNDED);
@@ -352,7 +348,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findRefundToExpunge_shouldReturnParityCheckedRefundIfEligible() {
+    void findRefundToExpunge_shouldReturnParityCheckedRefundIfEligible() {
         String chargeExternalId = randomAlphanumeric(26);
         RefundEntity refundParityCheckedRecentlyAndNotEligibleForExpunging = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
         refundParityCheckedRecentlyAndNotEligibleForExpunging.setStatus(REFUNDED);
@@ -379,7 +375,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void expungeRefund_shouldExpungeRefundRelatedRecordsCorrectly() {
+    void expungeRefund_shouldExpungeRefundRelatedRecordsCorrectly() {
         RefundEntity refundToExpunge = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundToExpunge.setStatus(REFUNDED);
         refundDao.persist(refundToExpunge);
@@ -397,7 +393,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
         // assert data is as expected
         Optional<RefundEntity> mayBeRefundEntity = refundDao.findByExternalId(refundToExpunge.getExternalId());
         List<RefundHistory> refundHistoryList = refundDao.searchHistoryByChargeExternalId(chargeTestRecord.getExternalChargeId());
-        boolean containsEmittedEventForRefundExternalId = databaseTestHelper.containsEmittedEventWithExternalId(refundToExpunge.getExternalId());
+        boolean containsEmittedEventForRefundExternalId = app.getDatabaseTestHelper().containsEmittedEventWithExternalId(refundToExpunge.getExternalId());
 
         assertThat(containsEmittedEventForRefundExternalId, is(true));
         assertThat(mayBeRefundEntity.isPresent(), Matchers.is(true));
@@ -408,7 +404,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
 
         mayBeRefundEntity = refundDao.findByExternalId(refundToExpunge.getExternalId());
         refundHistoryList = refundDao.searchHistoryByChargeExternalId(chargeTestRecord.getExternalChargeId());
-        containsEmittedEventForRefundExternalId = databaseTestHelper.containsEmittedEventWithExternalId(refundToExpunge.getExternalId());
+        containsEmittedEventForRefundExternalId = app.getDatabaseTestHelper().containsEmittedEventWithExternalId(refundToExpunge.getExternalId());
 
         assertThat(mayBeRefundEntity.isPresent(), Matchers.is(false));
         assertThat(refundHistoryList.size(), Matchers.is(1));
@@ -416,7 +412,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void getRefundHistoryByRefundExternalId_shouldReturnResultsCorrectly() {
+    void getRefundHistoryByRefundExternalId_shouldReturnResultsCorrectly() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity.setStatus(CREATED);
         refundDao.persist(refundEntity);
@@ -438,7 +434,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void updateParityCheckStatus_shouldUpdateParityCheckColumnsOnRefundCorrectly() {
+    void updateParityCheckStatus_shouldUpdateParityCheckColumnsOnRefundCorrectly() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity.setStatus(CREATED);
         refundDao.persist(refundEntity);
@@ -460,7 +456,7 @@ public class RefundDaoJpaIT extends DaoITestBase {
     }
 
     @Test
-    public void findRefundsByParityCheckStatus() {
+    void findRefundsByParityCheckStatus() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
         refundEntity.setStatus(CREATED);
         refundEntity.setParityCheckStatus(MISSING_IN_LEDGER);

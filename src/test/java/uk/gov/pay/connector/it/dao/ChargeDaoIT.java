@@ -2,11 +2,10 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -14,6 +13,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.it.base.ChargingITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -43,9 +43,10 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -64,12 +65,10 @@ import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anA
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
-public class ChargeDaoIT extends DaoITestBase {
-
+public class ChargeDaoIT {
+    @RegisterExtension
+    static ChargingITestBaseExtension app = new ChargingITestBaseExtension("sandbox");
     private static final String DESCRIPTION = "Test description";
-
-    @Rule
-    public ExpectedException expectedEx = ExpectedException.none();
 
     private ChargeDao chargeDao;
     private DatabaseFixtures.TestAccount defaultTestAccount;
@@ -79,11 +78,11 @@ public class ChargeDaoIT extends DaoITestBase {
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
-    @Before
-    public void setUp() {
-        chargeDao = env.getInstance(ChargeDao.class);
+    @BeforeEach
+    void setUp() {
+        chargeDao = app.getInstanceFromGuiceContainer(ChargeDao.class);
 
-        defaultTestCardDetails = new DatabaseFixtures(databaseTestHelper).validTestCardDetails();
+        defaultTestCardDetails = app.getDatabaseFixtures().validTestCardDetails();
         insertTestAccount();
 
         gatewayAccount = new GatewayAccountEntity(TEST);
@@ -98,20 +97,19 @@ public class ChargeDaoIT extends DaoITestBase {
         gatewayAccountCredentialsEntity.setId(defaultTestAccount.getCredentials().get(0).getId());
     }
 
-    @After
-    public void clear() {
-        databaseTestHelper.truncateAllData();
+    @AfterEach
+    void clear() {
+        app.getDatabaseTestHelper().truncateAllData();
     }
 
     @Test
-    public void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() {
+    void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() {
         Long chargeId = 56735L;
         String externalChargeId = "charge456";
 
         String transactionId = "345654";
 
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
@@ -126,16 +124,17 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void invalidSizeOfReference() {
-        expectedEx.expect(RuntimeException.class);
-
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
-        gatewayAccount.setId(defaultTestAccount.getAccountId());
-        chargeDao.persist(aValidChargeEntity().withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255))).build());
+    void invalidSizeOfReference() {
+        assertThrows(RuntimeException.class,  () -> {
+            chargeDao.persist(aValidChargeEntity()
+                    .withGatewayAccountEntity(gatewayAccount)
+                    .withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255)))
+                    .build());
+        });
     }
 
     @Test
-    public void shouldCreateANewCharge() {
+    void shouldCreateANewCharge() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withId(null)
                 .withGatewayAccountEntity(gatewayAccount)
@@ -154,7 +153,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateANewChargeWith3dsDetails() {
+    void shouldCreateANewChargeWith3dsDetails() {
         String paRequest = "3dsPaRequest";
         String issuerUrl = "https://issuer.example.com/3ds";
         String htmlOut = "<body><div>Some HTML</div></body>";
@@ -198,7 +197,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateANewChargeWithProviderSessionId() {
+    void shouldCreateANewChargeWithProviderSessionId() {
         String providerSessionId = "provider-session-id-value";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withId(null)
@@ -217,7 +216,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateANewChargeWithServiceId() {
+    void shouldCreateANewChargeWithServiceId() {
         var serviceId = "a-valid-external-service-id";
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withId(null)
@@ -236,7 +235,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldSetUpdatedDateOnChargeCorrectly() {
+    void shouldSetUpdatedDateOnChargeCorrectly() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withId(null)
                 .withGatewayAccountEntity(gatewayAccount)
@@ -254,7 +253,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateANewChargeWithExternalMetadata() {
+    void shouldCreateANewChargeWithExternalMetadata() {
         ExternalMetadata expectedExternalMetadata = new ExternalMetadata(
                 Map.of("key1", "String1",
                         "key2", 123,
@@ -274,7 +273,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateANewChargeWithSource() {
+    void shouldCreateANewChargeWithSource() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
@@ -289,7 +288,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldNotSaveChargeWithInvalidExternalMetadata() {
+    void shouldNotSaveChargeWithInvalidExternalMetadata() {
         var metaDataWithAnObject = new ExternalMetadata(
                 Map.of("key_1", Map.of("key_1_a", "some value")));
 
@@ -306,7 +305,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void should_update_charge_with_exemption_3ds() {
+    void should_update_charge_with_exemption_3ds() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
@@ -323,7 +322,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldCreateNewChargeWithParityCheckStatus() {
+    void shouldCreateNewChargeWithParityCheckStatus() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
@@ -339,7 +338,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
     
     @Test
-    public void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
+    void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
 
         Optional<ChargeEntity> charge = chargeDao.findById(5686541L);
 
@@ -347,7 +346,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldFindChargeEntityByProviderAndTransactionId() {
+    void shouldFindChargeEntityByProviderAndTransactionId() {
 
         // given
         String transactionId = "7826782163";
@@ -355,8 +354,7 @@ public class ChargeDaoIT extends DaoITestBase {
         Long chargeId = 9999L;
         String externalChargeId = "charge9999";
 
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
@@ -365,7 +363,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
                 .insert();
-        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestCardDetails testCardDetails =app.getDatabaseFixtures()
                 .validTestCardDetails()
                 .withChargeId(chargeId)
                 .update();
@@ -391,12 +389,11 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldGetGatewayAccountWhenFindingChargeEntityByProviderAndTransactionId() {
+    void shouldGetGatewayAccountWhenFindingChargeEntityByProviderAndTransactionId() {
 
         String transactionId = "7826782163";
 
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(8888L)
@@ -416,14 +413,13 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
+    void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
         String transactionId = "7826782163";
         Instant createdDate = Instant.now();
         Long chargeId = 876786L;
         String externalChargeId = "charge876786";
 
-        DatabaseFixtures.TestCharge testCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
@@ -432,7 +428,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
                 .insert();
-        DatabaseFixtures.TestCardDetails testCardDetails = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
                 .validTestCardDetails()
                 .withChargeId(chargeId)
                 .update();
@@ -453,18 +449,17 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldGetChargeByChargeIdAsNullWhenAccountIdDoesNotMatch() {
+    void shouldGetChargeByChargeIdAsNullWhenAccountIdDoesNotMatch() {
         insertTestCharge();
         Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalIdAndGatewayAccount(defaultTestCharge.getExternalChargeId(), 456781L);
         assertThat(chargeForAccount.isPresent(), is(false));
     }
 
     @Test
-    public void findById_shouldFindChargeEntity() {
+    void findById_shouldFindChargeEntity() {
 
         // given
-        this.defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        this.defaultTestCharge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
@@ -494,22 +489,21 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findByExternalId_shouldFindAChargeEntity() {
+    void findByExternalId_shouldFindAChargeEntity() {
         insertTestCharge();
         Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalId(defaultTestCharge.getExternalChargeId());
         assertThat(chargeForAccount.isPresent(), is(true));
     }
 
     @Test
-    public void findByExternalId_shouldNotFindAChargeEntity() {
+    void findByExternalId_shouldNotFindAChargeEntity() {
         Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalId("abcdefg123");
         assertThat(chargeForAccount.isPresent(), is(false));
     }
 
     @Test
-    public void testFindByDate_status_findsValidChargeForStatus() {
-        TestCharge charge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void testFindByDate_status_findsValidChargeForStatus() {
+        TestCharge charge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -526,9 +520,8 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void testFindByDateStatus_findsNoneForValidStatus() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void testFindByDateStatus_findsNoneForValidStatus() {
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -544,9 +537,8 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void testFindByDateStatus_findsNoneForExpiredDate() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void testFindByDateStatus_findsNoneForExpiredDate() {
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -562,7 +554,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findChargesByCreatedUpdatedDatesAndWithStatusIn_shouldReturnChargesCorrectly() {
+    void findChargesByCreatedUpdatedDatesAndWithStatusIn_shouldReturnChargesCorrectly() {
         TestCharge chargeCreatedBeforeDateAndUpdateDateNullShouldReturn = createCharge(Instant.now().minus(ofMinutes(40)), null, CREATED);
         TestCharge chargeUpdatedBeforeDateShouldReturn = createCharge(Instant.now().minus(ofMinutes(40)), Instant.now().minus(ofMinutes(15)), CREATED);
         TestCharge chargeCreatedWithInLast20MinutesShouldExclude = createCharge(Instant.now().minus(ofMinutes(20)), Instant.now().minus(ofMinutes(15)), ENTERING_CARD_DETAILS);
@@ -585,8 +577,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     private TestCharge createCharge(Instant createdDate, Instant updatedDate, ChargeStatus status) {
-        return DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        return app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -598,9 +589,8 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void testFindChargeByUnusedTokenId() {
-        TestCharge charge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void testFindChargeByUnusedTokenId() {
+        TestCharge charge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -609,7 +599,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withAmount(300L)
                 .insert();
 
-        databaseTestHelper.addToken(charge.getChargeId(), "some-token-id");
+        app.getDatabaseTestHelper().addToken(charge.getChargeId(), "some-token-id");
 
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId("some-token-id");
         assertTrue(chargeOpt.isPresent());
@@ -620,23 +610,21 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void testFindChargeByUsedTokenId() {
-        TestCharge charge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void testFindChargeByUsedTokenId() {
+        TestCharge charge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .insert();
 
-        databaseTestHelper.addToken(charge.getChargeId(), "used-token-id", true);
+        app.getDatabaseTestHelper().addToken(charge.getChargeId(), "used-token-id", true);
 
         Optional<ChargeEntity> chargeOpt = chargeDao.findByTokenId("used-token-id");
         assertTrue(chargeOpt.isEmpty());
     }
 
     @Test
-    public void countChargesForCapture_shouldReturnNumberOfChargesInCaptureApprovedState() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void countChargesForCapture_shouldReturnNumberOfChargesInCaptureApprovedState() {
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -644,8 +632,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -653,8 +640,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
-        TestCharge charge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        TestCharge charge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -662,8 +648,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withCreatedDate(Instant.now())
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
                 .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestChargeEvent()
                 .withChargeId(charge.getChargeId())
                 .withDate(now())
@@ -674,12 +659,11 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void countCaptureRetriesForChargeExternalId_shouldReturnNumberOfRetries() {
+    void countCaptureRetriesForChargeExternalId_shouldReturnNumberOfRetries() {
         long chargeId = nextLong();
         String externalChargeId = RandomIdGenerator.newId();
 
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
@@ -690,14 +674,12 @@ public class ChargeDaoIT extends DaoITestBase {
 
         assertThat(chargeDao.countCaptureRetriesForChargeExternalId(externalChargeId), is(0));
 
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestChargeEvent()
                 .withChargeId(chargeId)
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestChargeEvent()
                 .withChargeId(chargeId)
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
@@ -707,12 +689,11 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void count3dsRequiredEventsForChargeExternalId() {
+    void count3dsRequiredEventsForChargeExternalId() {
         long chargeId = nextLong();
         String externalChargeId = RandomIdGenerator.newId();
 
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(chargeId)
@@ -721,14 +702,12 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withChargeStatus(AUTHORISATION_3DS_READY)
                 .insert();
 
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestChargeEvent()
                 .withChargeId(chargeId)
                 .withChargeStatus(AUTHORISATION_3DS_REQUIRED)
                 .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestChargeEvent()
                 .withChargeId(chargeId)
                 .withChargeStatus(AUTHORISATION_3DS_REQUIRED)
@@ -738,9 +717,8 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findByIdAndLimit() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void findByIdAndLimit() {
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -748,8 +726,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED)
                 .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withChargeId(nextLong())
@@ -762,9 +739,8 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findByGatewayTransactionId() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void findByGatewayTransactionId() {
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("some-external-id")
@@ -779,22 +755,19 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findByGatewayTransactionIdAndAccount() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void findByGatewayTransactionIdAndAccount() {
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withExternalChargeId("some-external-id")
                 .withTransactionId("gateway-transaction-id")
                 .insert();
 
-        DatabaseFixtures.TestAccount anotherGatewayAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        DatabaseFixtures.TestAccount anotherGatewayAccount = app.getDatabaseFixtures()
                 .aTestAccount()
                 .withAccountId(nextLong())
                 .insert();
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(anotherGatewayAccount)
                 .withExternalChargeId("some-external-id2")
@@ -809,11 +782,10 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void getChargeWithAFee_shouldReturnFeeOnCharge() {
+    void getChargeWithAFee_shouldReturnFeeOnCharge() {
         insertTestCharge();
 
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestFee()
                 .withFeeDue(100L)
                 .withFeeCollected(10L)
@@ -829,16 +801,15 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findMaxId_returnsTheMaximumId() {
+    void findMaxId_returnsTheMaximumId() {
         insertTestCharge();
 
         assertThat(chargeDao.findMaxId(), is(defaultTestCharge.getChargeId()));
     }
 
     @Test
-    public void findChargesByParityCheckStatus() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void findChargesByParityCheckStatus() {
+        app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
@@ -851,17 +822,15 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findChargeToExpunge_shouldReturnChargeReadyForExpunging() {
-        TestCharge chargeToExpunge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void findChargeToExpunge_shouldReturnChargeReadyForExpunging() {
+        TestCharge chargeToExpunge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .insert();
 
-        TestCharge chargeEligibleButParityCheckedWithInWeek = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        TestCharge chargeEligibleButParityCheckedWithInWeek = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
@@ -869,8 +838,7 @@ public class ChargeDaoIT extends DaoITestBase {
                 .withParityCheckDate(now(ZoneId.of("UTC")).minusDays(6))
                 .insert();
 
-        TestCharge chargeToExclude = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        TestCharge chargeToExclude = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(4)))
@@ -888,9 +856,8 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findChargeToExpunge_shouldReturnParityCheckedChargeIfFallsWithinExcludeChargesParityCheckedWithinDaysParameter() {
-        TestCharge chargeToExpunge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+    void findChargeToExpunge_shouldReturnParityCheckedChargeIfFallsWithinExcludeChargesParityCheckedWithinDaysParameter() {
+        TestCharge chargeToExpunge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
@@ -908,7 +875,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldFindChargesWithPaymentProviderAndStatuses() {
+    void shouldFindChargesWithPaymentProviderAndStatuses() {
         DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
         DatabaseFixtures.TestAccount worldpayAccount = insertTestAccountWithProvider("worldpay");
 
@@ -928,7 +895,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldFindChargesWithPaymentProviderAndStatusesWithLimit() {
+    void shouldFindChargesWithPaymentProviderAndStatusesWithLimit() {
         DatabaseFixtures.TestAccount testAccount = insertTestAccountWithProvider("epdq");
         insertTestChargeWithStatus(testAccount, CREATED);
         insertTestChargeWithStatus(testAccount, CREATED);
@@ -939,7 +906,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldFindChargesWithPaymentProvidersAndStatuses() {
+    void shouldFindChargesWithPaymentProvidersAndStatuses() {
         DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
         DatabaseFixtures.TestAccount worldpayAccount = insertTestAccountWithProvider("worldpay");
         DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
@@ -968,7 +935,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void shouldFindChargesWithPaymentProvidersAndStatusesWithLimit() {
+    void shouldFindChargesWithPaymentProvidersAndStatusesWithLimit() {
         DatabaseFixtures.TestAccount epdqAccount = insertTestAccountWithProvider("epdq");
         DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
         DatabaseFixtures.TestAccount worldpayAccount = insertTestAccountWithProvider("worldpay");
@@ -986,7 +953,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     @Test
-    public void findWithPaymentProvidersStatusesAndAuthorisationModesIn_shouldFindChargesWithAuthorisationModeCorrectly() {
+    void findWithPaymentProvidersStatusesAndAuthorisationModesIn_shouldFindChargesWithAuthorisationModeCorrectly() {
         DatabaseFixtures.TestAccount stripeAccount = insertTestAccountWithProvider("stripe");
         TestCharge chargeWithAuthorisationModeWeb = createTestCharge(stripeAccount, AUTHORISATION_TIMEOUT).withAuthorisationMode(WEB).insert();
         createTestCharge(stripeAccount, AUTHORISATION_TIMEOUT).withAuthorisationMode(EXTERNAL).insert();
@@ -1001,16 +968,14 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     private void insertTestAccount() {
-        this.defaultTestAccount = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        this.defaultTestAccount = app.getDatabaseFixtures()
                 .aTestAccount()
                 .withAccountId(nextLong())
                 .insert();
     }
 
     private DatabaseFixtures.TestAccount insertTestAccountWithProvider(String provider) {
-        return DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        return app.getDatabaseFixtures()
                 .aTestAccount()
                 .withAccountId(nextLong())
                 .withPaymentProvider(provider)
@@ -1018,8 +983,7 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     private void insertTestCharge() {
-        this.defaultTestCharge = DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        this.defaultTestCharge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
@@ -1035,29 +999,17 @@ public class ChargeDaoIT extends DaoITestBase {
     }
 
     private TestCharge createTestCharge(DatabaseFixtures.TestAccount testAccount, ChargeStatus created) {
-        return DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper).aTestCharge()
+        return app.getDatabaseFixtures()
+                .aTestCharge()
                 .withTestAccount(testAccount)
                 .withChargeStatus(created)
                 .withPaymentProvider(testAccount.getPaymentProvider());
     }
 
     private void insertTestRefund() {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
+        app.getDatabaseFixtures()
                 .aTestRefund()
                 .withTestCharge(defaultTestCharge)
-                .insert();
-    }
-
-    private void insertTestAgreement(String agreementExternalId, long gatewayAccountId) {
-        DatabaseFixtures
-                .withDatabaseTestHelper(databaseTestHelper)
-                .aTestAgreement()
-                .withAgreementId(nextLong())
-                .withExternalId(agreementExternalId)
-                .withReference("ref9876")
-                .withGatewayAccountId(gatewayAccountId)
                 .insert();
     }
 }
