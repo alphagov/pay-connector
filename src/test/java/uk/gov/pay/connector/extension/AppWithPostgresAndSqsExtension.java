@@ -105,11 +105,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         jdbi = Jdbi.create(getConnectionUrl(), getDbUsername(), getDbPassword());
         jdbi.installPlugin(new SqlObjectPlugin());
         
-        wireMockServer = new WireMockServer(wireMockConfig().port(wireMockPort));
+        wireMockServer = new WireMockServer(wireMockConfig().port(wireMockPort).bindAddress("localhost"));
         wireMockServer.start();
-        worldpayWireMockServer = new WireMockServer(wireMockConfig().port(worldpayWireMockPort));
+        worldpayWireMockServer = new WireMockServer(wireMockConfig().port(worldpayWireMockPort).bindAddress("localhost"));
         worldpayWireMockServer.start();
-        stripeWireMockServer = new WireMockServer(wireMockConfig().port(stripeWireMockPort));
+        stripeWireMockServer = new WireMockServer(wireMockConfig().port(stripeWireMockPort).bindAddress("localhost"));
         stripeWireMockServer.start();
         
         databaseTestHelper = new DatabaseTestHelper(jdbi);
@@ -119,7 +119,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
         stripeMockClient = new StripeMockClient(stripeWireMockServer);
 
-        ledgerWireMockServer = new WireMockServer(wireMockConfig().port(ledgerWireMockPort));
+        ledgerWireMockServer = new WireMockServer(wireMockConfig().port(ledgerWireMockPort).bindAddress("localhost"));
         ledgerWireMockServer.start();
         ledgerStub = new LedgerStub(ledgerWireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
