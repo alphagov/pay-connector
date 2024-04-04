@@ -29,7 +29,6 @@ import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
-import uk.gov.service.payments.commons.testing.port.PortFactory;
 
 import java.util.List;
 import java.util.Properties;
@@ -51,10 +50,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final AmazonSQS sqsClient;
     private final DropwizardAppExtension<ConnectorConfiguration> dropwizardAppExtension;
     private Injector injector;
-    private final int wireMockPort = PortFactory.findFreePort();
-    private final int worldpayWireMockPort = PortFactory.findFreePort();
-    private final int ledgerWireMockPort = PortFactory.findFreePort();
-    private final int stripeWireMockPort = PortFactory.findFreePort();
+    private final int wireMockPort;
+    private final int worldpayWireMockPort;
+    private final int ledgerWireMockPort;
+    private final int stripeWireMockPort;
 
     protected static DatabaseTestHelper databaseTestHelper;
     protected static WireMockServer wireMockServer;
@@ -84,6 +83,21 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public AppWithPostgresAndSqsExtension(Class CustomConnectorClass, ConfigOverride... configOverrides) {
         getOrCreate();
 
+        wireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
+        worldpayWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
+        stripeWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
+        ledgerWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
+        
+        wireMockServer.start();
+        worldpayWireMockServer.start();
+        stripeWireMockServer.start();
+        ledgerWireMockServer.start();
+        
+        wireMockPort = wireMockServer.port();
+        worldpayWireMockPort = worldpayWireMockServer.port();
+        stripeWireMockPort = stripeWireMockServer.port();
+        ledgerWireMockPort = ledgerWireMockServer.port();
+
         sqsClient = SqsTestDocker.initialise(List.of("capture-queue", "event-queue", "tasks-queue", "reconcile-queue"));
 
         ConfigOverride[] newConfigOverrides = overrideDatabaseConfig(configOverrides);
@@ -105,13 +119,6 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         jdbi = Jdbi.create(getConnectionUrl(), getDbUsername(), getDbPassword());
         jdbi.installPlugin(new SqlObjectPlugin());
         
-        wireMockServer = new WireMockServer(wireMockConfig().port(wireMockPort));
-        wireMockServer.start();
-        worldpayWireMockServer = new WireMockServer(wireMockConfig().port(worldpayWireMockPort));
-        worldpayWireMockServer.start();
-        stripeWireMockServer = new WireMockServer(wireMockConfig().port(stripeWireMockPort));
-        stripeWireMockServer.start();
-        
         databaseTestHelper = new DatabaseTestHelper(jdbi);
 
         connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
@@ -119,8 +126,6 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
         stripeMockClient = new StripeMockClient(stripeWireMockServer);
 
-        ledgerWireMockServer = new WireMockServer(wireMockConfig().port(ledgerWireMockPort));
-        ledgerWireMockServer.start();
         ledgerStub = new LedgerStub(ledgerWireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         mapper = new ObjectMapper();
@@ -152,6 +157,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         databaseTestHelper.truncateAllData();
         wireMockServer.stop();
         worldpayWireMockServer.stop();
+        stripeWireMockServer.stop();
         ledgerWireMockServer.stop();
         dropwizardAppExtension.after();
     }
