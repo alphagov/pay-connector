@@ -65,14 +65,11 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 @ExtendWith(MockitoExtension.class)
 class EpdqPaymentProviderTest {
 
-    private static final String VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS1_BY_EPDQ = "4000000000000002";
-    private static final String VISA_CARD_NUMBER_RECOGNISED_AS_REQUIRING_3DS2_BY_EPDQ = "4874970686672022";
     private static final String ADDRESS_LINE_1 = "The Money Pool";
     private static final String ADDRESS_LINE_2 = "1 Gold Way";
     private static final String ADDRESS_CITY = "London";
     private static final String ADDRESS_POSTCODE = "DO11 4RS";
     private static final String ADDRESS_COUNTRY = "GB";
-    private static final String IP_ADDRESS = "8.8.8.8";
 
     private String url = "https://mdepayments.epdq.co.uk/ncol/test";
     private String merchantId = envOrThrow("GDS_CONNECTOR_EPDQ_MERCHANT_ID");
