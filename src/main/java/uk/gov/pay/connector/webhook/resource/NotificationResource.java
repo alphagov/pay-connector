@@ -85,7 +85,7 @@ public class NotificationResource {
     @Produces({TEXT_XML, APPLICATION_JSON})
     @Operation(
             summary = "Handle Worldpay notifications",
-            description = "See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/epdq/capture-notification.txt for example notification",
+            description = "See https://github.com/alphagov/pay-connector/blob/master/src/test/resources/templates/worldpay/notification.txt for example notification",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected")
