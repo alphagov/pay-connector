@@ -98,17 +98,8 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_AUTHORISATION_WAITING_EXTERNAL_RESPONSE = EPDQ_BASE_NAME + "/authorisation-waiting-external-response.xml";
     public static final String EPDQ_AUTHORISATION_WAITING_RESPONSE = EPDQ_BASE_NAME + "/authorisation-waiting-response.xml";
     public static final String EPDQ_AUTHORISATION_OTHER_RESPONSE = EPDQ_BASE_NAME + "/authorisation-other-response.xml";
-    public static final String EPDQ_AUTHORISATION_REQUEST = EPDQ_BASE_NAME + "/authorisation-request.txt";
     public static final String EPDQ_AUTHORISATION_3DS_REQUEST = EPDQ_BASE_NAME + "/authorisation-3ds-request.txt";
-    public static final String EPDQ_AUTHORISATION_3DS2_REQUEST = EPDQ_BASE_NAME + "/authorisation-3ds2-request.txt";
-    public static final String EPDQ_AUTHORISATION_3DS2_REQUEST_WITH_PROVIDED_PARAMETERS = EPDQ_BASE_NAME + "/authorisation-3ds2-request-with-provided-parameters.txt";
-    public static final String EPDQ_AUTHORISATION_STATUS_REQUEST = EPDQ_BASE_NAME + "/authorisation-status-request.txt";
-    public static final String EPDQ_AUTHORISATION_STATUS_DECLINED_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-declined-response.xml";
-    public static final String EPDQ_AUTHORISATION_STATUS_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-status-error-response.xml";
-    public static final String EPDQ_UNKNOWN_RESPONSE = EPDQ_BASE_NAME + "/unknown-status-response.xml";
 
-
-    public static final String EPDQ_CAPTURE_REQUEST = EPDQ_BASE_NAME + "/capture-request.txt";
     public static final String EPDQ_CAPTURE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/capture-success-response.xml";
     public static final String EPDQ_CAPTURE_ERROR_RESPONSE = EPDQ_BASE_NAME + "/capture-error-response.xml";
 
@@ -119,15 +110,6 @@ public class TestTemplateResourceLoader {
     public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";
 
     public static final String EPDQ_REFUND_REQUEST = EPDQ_BASE_NAME + "/refund-request.txt";
-    public static final String EPDQ_REFUND_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/refund-success-response.xml";
-    public static final String EPDQ_REFUND_ERROR_RESPONSE = EPDQ_BASE_NAME + "/refund-error-response.xml";
-
-    public static final String EPDQ_DELETE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/delete-success-response.xml";
-    
-    public static final String EPDQ_QUERY_PAYMENT_STATUS_AUTHORISED_RESPONSE = EPDQ_BASE_NAME + "/query-payment-status-authorised-response.xml";
-    public static final String EPDQ_QUERY_PAYMENT_STATUS_ERROR_RESPONSE = EPDQ_BASE_NAME + "/query-payment-status-error-response.xml";
-
-    public static final String EPDQ_NOTIFICATION_TEMPLATE = EPDQ_BASE_NAME + "/notification-template.txt";
 
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_failed_response.json";
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE =
