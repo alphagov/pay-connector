@@ -1,26 +1,24 @@
 package uk.gov.pay.connector.pact.event;
 
+import au.com.dius.pact.consumer.junit5.PactTestFor;
+import au.com.dius.pact.consumer.junit5.ProviderType;
+import au.com.dius.pact.core.model.messaging.Message;
+import au.com.dius.pact.core.model.messaging.MessagePact;
 import au.com.dius.pact.consumer.MessagePactBuilder;
-import au.com.dius.pact.consumer.MessagePactProviderRule;
-import au.com.dius.pact.consumer.Pact;
-import au.com.dius.pact.consumer.PactVerification;
+import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
+import au.com.dius.pact.core.model.annotations.Pact;
 import au.com.dius.pact.consumer.dsl.DslPart;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.model.v3.messaging.MessagePact;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.SqsTestDocker;
-import uk.gov.pay.connector.junit.TestContext;
+import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.queue.tasks.TaskQueueMessageHandler;
 import uk.gov.pay.connector.queue.tasks.TaskType;
 import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
@@ -29,29 +27,24 @@ import uk.gov.pay.connector.queue.tasks.model.Task;
 import java.util.List;
 import java.util.Map;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, withDockerSQS = true, config = "config/test-it-config.yaml")
+@ExtendWith(PactConsumerTestExt.class)
+@PactTestFor(providerName = "adminusers", providerType = ProviderType.ASYNCH)
 public class ServiceArchivedEventIT {
+    @RegisterExtension
+    public static ITestBaseExtension app = new ITestBaseExtension("worldpay",
+            config("taskQueue.taskQueueEnabled", "true"));
 
     static ObjectMapper objectMapper = new ObjectMapper();
-    
-    @Rule
-    public MessagePactProviderRule mockProvider = new MessagePactProviderRule(this);
 
-    @DropwizardTestContext
-    private TestContext testContext;
-
-    private byte[] currentMessage;
-    
-    private String serviceExternalId = "service-external-id";
+    private final String serviceExternalId = "service-external-id";
 
     @Pact(provider = "adminusers", consumer = "connector")
     public MessagePact createServiceArchivedEventPact(MessagePactBuilder builder) throws Exception {
@@ -72,10 +65,17 @@ public class ServiceArchivedEventIT {
         return eventDetails;
     }
 
+    @BeforeEach
+    void setUp() {
+        app.purgeEventQueue();
+    }
+
     @Test
-    @PactVerification({"adminusers"})
-    public void test() throws Exception {
-        var gatewayAccountDao = testContext.getInstanceFromGuiceContainer(GatewayAccountDao.class);
+    @PactTestFor(pactMethod = "createServiceArchivedEventPact")
+    public void test(List<Message> messages) throws Exception {
+        System.out.println("Message received -> " + messages.get(0).contentsAsString());
+        
+        var gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
 
         GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
         gatewayAccount.setDisabled(false);
@@ -86,16 +86,11 @@ public class ServiceArchivedEventIT {
         gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentials));
         gatewayAccountDao.persist(gatewayAccount);
         
-        testContext.getAmazonSQS().sendMessage(SqsTestDocker.getQueueUrl("tasks-queue"), new String(currentMessage));
-
-        testContext.getInstanceFromGuiceContainer(TaskQueueMessageHandler.class).processMessages();
+        app.getSqsClient().sendMessage(app.getTasksQueueUrl(), messages.get(0).contentsAsString());
+        app.getInstanceFromGuiceContainer(TaskQueueMessageHandler.class).processMessages();
 
         var updatedGatewayAccount = gatewayAccountDao.findByExternalId(gatewayAccount.getExternalId()).get();
-        assertTrue(updatedGatewayAccount.isDisabled());
+        assertThat(updatedGatewayAccount.isDisabled(), is(true));
         assertThat(updatedGatewayAccount.getGatewayAccountCredentials().get(0).getState(), is(GatewayAccountCredentialState.RETIRED));
-    }
-
-    public void setMessage(byte[] messageContents) {
-        currentMessage = messageContents;
     }
 }

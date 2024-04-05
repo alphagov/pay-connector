@@ -261,4 +261,8 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 //        return sqsClient.getQueueUrl("event-queue").getQueueUrl();
         return SqsTestDocker.getQueueUrl("event-queue");
     }
+    
+    public String getTasksQueueUrl() {
+        return SqsTestDocker.getQueueUrl("tasks-queue");
+    }
 }
