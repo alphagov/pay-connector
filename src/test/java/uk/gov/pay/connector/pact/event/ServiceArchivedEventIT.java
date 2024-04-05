@@ -10,44 +10,34 @@ import au.com.dius.pact.model.v3.messaging.MessagePact;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.junit.DropwizardConfig;
-import uk.gov.pay.connector.junit.DropwizardJUnitRunner;
-import uk.gov.pay.connector.junit.DropwizardTestContext;
-import uk.gov.pay.connector.junit.SqsTestDocker;
-import uk.gov.pay.connector.junit.TestContext;
-import uk.gov.pay.connector.queue.tasks.TaskQueueMessageHandler;
 import uk.gov.pay.connector.queue.tasks.TaskType;
 import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
+import uk.gov.pay.connector.rules.AppWithPostgresAndSqsRule;
+import uk.gov.pay.connector.rules.SqsTestDocker;
 
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
+import static io.dropwizard.testing.ConfigOverride.config;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
-@RunWith(DropwizardJUnitRunner.class)
-@DropwizardConfig(app = ConnectorApp.class, withDockerSQS = true, config = "config/test-it-config.yaml")
 public class ServiceArchivedEventIT {
 
     static ObjectMapper objectMapper = new ObjectMapper();
-    
     @Rule
     public MessagePactProviderRule mockProvider = new MessagePactProviderRule(this);
+    @Rule
+    public AppWithPostgresAndSqsRule app = new AppWithPostgresAndSqsRule(
+            config("taskQueue.taskQueueEnabled", "true")
+    );
 
-    @DropwizardTestContext
-    private TestContext testContext;
 
     private byte[] currentMessage;
     
@@ -75,24 +65,31 @@ public class ServiceArchivedEventIT {
     @Test
     @PactVerification({"adminusers"})
     public void test() throws Exception {
-        var gatewayAccountDao = testContext.getInstanceFromGuiceContainer(GatewayAccountDao.class);
+        long gatewayAccountId = nextLong();
+        String externalId = randomUuid();
+        Map<String, Object> credMap = Map.of("some_payment_provider_account_id", String.valueOf(gatewayAccountId));
+        app.getDatabaseTestHelper().addGatewayAccount(
+                anAddGatewayAccountParams()
+                        .withAccountId(String.valueOf(gatewayAccountId))
+                        .withPaymentGateway("sandbox")
+                        .withServiceName("service name")
+                        .withCredentials(credMap)
+                        .withDisabled(false)
+                        .withExternalId(externalId)
+                        .withServiceId(serviceExternalId)
+                        .build()
+        );
 
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
-        gatewayAccount.setDisabled(false);
-        gatewayAccount.setExternalId(randomUuid());
-        gatewayAccount.setServiceId(serviceExternalId);
-        var gatewayAccountCredentials = new GatewayAccountCredentialsEntity(gatewayAccount, WORLDPAY.getName(), Map.of(), ACTIVE);
-        gatewayAccountCredentials.setExternalId(randomUuid());
-        gatewayAccount.setGatewayAccountCredentials(List.of(gatewayAccountCredentials));
-        gatewayAccountDao.persist(gatewayAccount);
-        
-        testContext.getAmazonSQS().sendMessage(SqsTestDocker.getQueueUrl("tasks-queue"), new String(currentMessage));
+        app.getSqsClient().sendMessage(SqsTestDocker.getQueueUrl("tasks-queue"), new String(currentMessage));
 
-        testContext.getInstanceFromGuiceContainer(TaskQueueMessageHandler.class).processMessages();
+        await().atMost(2, TimeUnit.SECONDS).until(() ->
+                Boolean.valueOf(app.getDatabaseTestHelper().getGatewayAccount(gatewayAccountId).get("disabled").toString())
+        );
 
-        var updatedGatewayAccount = gatewayAccountDao.findByExternalId(gatewayAccount.getExternalId()).get();
-        assertTrue(updatedGatewayAccount.isDisabled());
-        assertThat(updatedGatewayAccount.getGatewayAccountCredentials().get(0).getState(), is(GatewayAccountCredentialState.RETIRED));
+        var updatedGatewayAccount = app.getDatabaseTestHelper().getGatewayAccount(gatewayAccountId);
+        assertThat(updatedGatewayAccount.get("disabled").toString(), is("true"));
+        var credentialsMap = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountId).get(0);
+        assertThat(GatewayAccountCredentialState.valueOf(credentialsMap.get("state").toString()), is(GatewayAccountCredentialState.RETIRED));
     }
 
     public void setMessage(byte[] messageContents) {
