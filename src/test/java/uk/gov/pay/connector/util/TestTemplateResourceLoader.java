@@ -109,8 +109,6 @@ public class TestTemplateResourceLoader {
     static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
     public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";
 
-    public static final String EPDQ_REFUND_REQUEST = EPDQ_BASE_NAME + "/refund-request.txt";
-
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_failed_response.json";
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE =
             TEMPLATE_BASE_NAME + "/stripe/create_payment_method_failed_and_non_retriable_for_recurring_payment.json";

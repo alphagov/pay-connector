@@ -1,1 +1,0 @@
-orderID=7256785436&currency=GBP&amount=5&PM=CreditCard&ACCEPTANCE=testoff&STATUS={{status}}&CARDNO=XXXXXXXXXXXX4242&ED=0919&CN={{cardHolderName}}&TRXDATE=05%2F23%2F17&PAYID={{payId}}&PAYIDSUB={{payIdSub}}&NCERROR=&BRAND=VISA&IP=&SHASIGN={{shaSign}}
