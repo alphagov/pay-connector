@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.junit;
+package uk.gov.pay.connector.rules;
 
 public class PostgresTestDockerException extends RuntimeException {
 
