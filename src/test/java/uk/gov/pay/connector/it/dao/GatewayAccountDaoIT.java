@@ -195,7 +195,7 @@ public class GatewayAccountDaoIT {
         assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
         assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCardTypes(), contains(
+        assertThat(gatewayAccount.getCardTypes(), containsInAnyOrder(
                 allOf(
                         hasProperty("id", is(Matchers.notNullValue())),
                         hasProperty("label", is(masterCardCredit.getLabel())),

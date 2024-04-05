@@ -20,7 +20,6 @@ import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.epdq.EpdqSha512SignatureGenerator;
 import uk.gov.pay.connector.gateway.epdq.SignatureGenerator;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkWrapper;
@@ -121,11 +120,6 @@ public class ConnectorModule extends AbstractModule {
 
     protected ReverseDnsLookup getReverseDnsLookup() {
         return new ReverseDnsLookup();
-    }
-
-    @Provides
-    public SignatureGenerator signatureGenerator() {
-        return new EpdqSha512SignatureGenerator();
     }
 
     @Provides
