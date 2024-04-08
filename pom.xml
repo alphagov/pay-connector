@@ -482,7 +482,7 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
-            <version>1.19.3</version>
+            <version>1.19.7</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
