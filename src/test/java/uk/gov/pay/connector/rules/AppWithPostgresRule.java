@@ -15,7 +15,6 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.junit.PostgresTestDockerException;
 import uk.gov.service.payments.commons.testing.db.PostgresDockerRule;
 import uk.gov.service.payments.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
