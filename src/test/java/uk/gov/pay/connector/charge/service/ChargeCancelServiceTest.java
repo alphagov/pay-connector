@@ -17,9 +17,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqCancelResponse;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
@@ -32,7 +30,6 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.ignoreStubs;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -296,31 +293,6 @@ class ChargeCancelServiceTest {
         WorldpayCancelResponse worldpayResponse = new WorldpayCancelResponse();
         GatewayResponse.GatewayResponseBuilder<WorldpayCancelResponse> gatewayResponseBuilder = responseBuilder();
         GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(worldpayResponse).build();
-
-        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
-        when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);
-        when(mockPaymentProvider.cancel(argThat(aCancelGatewayRequestMatching(chargeEntity)))).thenReturn(cancelResponse);
-
-        chargeCancelService.doSystemCancel(externalChargeId, gatewayAccountId);
-
-        verify(chargeService).transitionChargeState(externalChargeId, SYSTEM_CANCELLED);
-        verifyNoMoreInteractions(ignoreStubs(mockChargeDao));
-    }
-
-    @Test
-    void doSystemCancel_shouldCancelEPDQCharge_withStatus_awaitingCaptureRequest() throws Exception {
-        String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = nextLong();
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withExternalId(externalChargeId)
-                .withTransactionId("transaction-id")
-                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
-                .build();
-
-        EpdqCancelResponse epdqCancelResponse = mock(EpdqCancelResponse.class);
-        when(epdqCancelResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.CANCELLED);
-        GatewayResponse.GatewayResponseBuilder<EpdqCancelResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse cancelResponse = gatewayResponseBuilder.withResponse(epdqCancelResponse).build();
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         when(mockPaymentProviders.byName(chargeEntity.getPaymentGatewayName())).thenReturn(mockPaymentProvider);

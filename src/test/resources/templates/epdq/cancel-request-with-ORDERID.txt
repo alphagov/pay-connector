@@ -1,1 +1,0 @@
-OPERATION=DES&ORDERID=Order-Id&PSPID=merchant-id&PSWD=password&USERID=username&SHASIGN=4f3692df7e92fcfde5f26da3251fb739f89bcbee5b233020a696a4ae6af61dfea71c0de63dd94ddebc9ceba344fbe4edcc5bdd665e67170459959466c35f5dbf

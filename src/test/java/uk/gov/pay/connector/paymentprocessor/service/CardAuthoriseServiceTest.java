@@ -50,7 +50,6 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.epdq.model.response.EpdqAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
@@ -111,7 +110,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ABORTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
@@ -506,25 +504,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(nullValue()));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
     }
-
-    @Test
-    void doAuthoriseWeb_shouldRespondWith3dsResponseForEpdq3dsOrders() throws Exception {
-        epdqProviderWillRequire3ds();
-        mockRecordAuthorisationResult();
-        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
-
-        AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
-        AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
-
-        assertTrue(response.getAuthoriseStatus().isPresent());
-        assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.REQUIRES_3DS));
-
-        assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
-        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
-        assertThat(charge.get3dsRequiredDetails().getHtmlOut(), is(notNullValue()));
-        assertThat(charge.getWalletType(), is(nullValue()));
-    }
-
+    
     @Test
     void doAuthoriseWeb_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() throws Exception {
 
@@ -1261,23 +1241,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED);
         providerWillRespondToAuthoriseUserNotPresentWith(authResponse, paymentGatewayName);
     }
-
-    private void epdqProviderWillRequire3ds() throws Exception {
-        mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        EpdqAuthorisationResponse epdqResponse = new EpdqAuthorisationResponse();
-        epdqResponse.setHtmlAnswer("Base64encodedHtmlForm");
-        epdqResponse.setStatus("46");
-
-        GatewayResponseBuilder<EpdqAuthorisationResponse> gatewayResponseBuilder = responseBuilder();
-        GatewayResponse epdq3dsResponse = gatewayResponseBuilder
-                .withResponse(epdqResponse)
-                .build();
-        when(mockedPaymentProvider.authorise(any(), any())).thenReturn(epdq3dsResponse);
-
-        when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
-        when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
-    }
-
+    
     private void providerWillReject(PaymentGatewayName paymentGatewayName) throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, REJECTED);
