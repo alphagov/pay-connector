@@ -89,22 +89,6 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_INVALID_MERCHANT_ID_RESPONSE = WORLDPAY_BASE_NAME + "/check-credentials/invalid-merchant-id.xml";
     public static final String WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_UNEXPECTED_ERROR_CODE = WORLDPAY_BASE_NAME + "/check-credentials/unexpected-error-code.xml";
 
-    // EPDQ
-    private static final String EPDQ_BASE_NAME = TEMPLATE_BASE_NAME + "/epdq";
-    public static final String EPDQ_AUTHORISATION_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/authorisation-success-response.xml";
-    public static final String EPDQ_AUTHORISATION_ERROR_RESPONSE = EPDQ_BASE_NAME + "/authorisation-error-response.xml";
-    public static final String EPDQ_AUTHORISATION_FAILED_RESPONSE = EPDQ_BASE_NAME + "/authorisation-failed-response.xml";
-    public static final String EPDQ_AUTHORISATION_WAITING_EXTERNAL_RESPONSE = EPDQ_BASE_NAME + "/authorisation-waiting-external-response.xml";
-    public static final String EPDQ_AUTHORISATION_WAITING_RESPONSE = EPDQ_BASE_NAME + "/authorisation-waiting-response.xml";
-    public static final String EPDQ_AUTHORISATION_OTHER_RESPONSE = EPDQ_BASE_NAME + "/authorisation-other-response.xml";
-
-    public static final String EPDQ_CAPTURE_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/capture-success-response.xml";
-    public static final String EPDQ_CAPTURE_ERROR_RESPONSE = EPDQ_BASE_NAME + "/capture-error-response.xml";
-
-    public static final String EPDQ_CANCEL_SUCCESS_RESPONSE = EPDQ_BASE_NAME + "/cancel-success-response.xml";
-    static final String EPDQ_CANCEL_WAITING_RESPONSE = EPDQ_BASE_NAME + "/cancel-waiting-response.xml";
-    public static final String EPDQ_CANCEL_ERROR_RESPONSE = EPDQ_BASE_NAME + "/cancel-error-response.xml";
-
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/authorisation_failed_response.json";
     public static final String STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE =
             TEMPLATE_BASE_NAME + "/stripe/create_payment_method_failed_and_non_retriable_for_recurring_payment.json";
