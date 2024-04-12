@@ -2,7 +2,7 @@ package uk.gov.pay.connector.usernotification.service;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
