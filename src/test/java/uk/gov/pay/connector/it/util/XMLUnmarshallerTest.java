@@ -14,10 +14,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 class XMLUnmarshallerTest {
     @BeforeEach
@@ -32,7 +32,7 @@ class XMLUnmarshallerTest {
     @Test
     void shouldUnmarshallXmlIgnoringDTD() throws XMLUnmarshallerException {
 
-        String successPayload = fixture("templates/it/worldpay-cancel-notfication-example-it-dtd-validation-disabled.xml")
+        String successPayload = load("templates/it/worldpay-cancel-notfication-example-it-dtd-validation-disabled.xml")
                 .replace("{{port}}", String.valueOf(wireMockServer.port()));
 
         wireMockServer.stubFor(get(urlPathEqualTo("/paymentService_v1.dtd")).willReturn(aResponse().withStatus(200)));
