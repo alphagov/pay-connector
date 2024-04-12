@@ -1,18 +1,17 @@
 package uk.gov.pay.connector.gateway;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.httpclient5.InstrumentedHttpClientConnectionManager;
+import com.codahale.metrics.httpclient.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import io.dropwizard.util.Duration;
-import org.apache.hc.client5.http.SystemDefaultDnsResolver;
-import org.apache.hc.client5.http.impl.io.ManagedHttpClientConnectionFactory;
-import org.apache.hc.client5.http.io.HttpClientConnectionManager;
-import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
-import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.core5.http.config.RegistryBuilder;
-import org.apache.hc.core5.util.TimeValue;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -25,6 +24,7 @@ import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static org.glassfish.jersey.apache.connector.ApacheClientProperties.CONNECTION_MANAGER;
@@ -96,20 +96,25 @@ public class ClientFactory {
                     SSLContext.getDefault(),
                     new String[]{"TLSv1.2"},
                     null,
-                    null
+                    (HostnameVerifier) null
             );
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to create SSL connection socket factory", e);
         }
 
-       return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
-                .socketFactoryRegistry(RegistryBuilder.<ConnectionSocketFactory>create()
+        return new InstrumentedHttpClientConnectionManager(
+                metricRegistry,
+                RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("http", PlainConnectionSocketFactory.getSocketFactory())
                         .register("https", sslConnectionSocketFactory)
-                        .build())
-                .connFactory(new ManagedHttpClientConnectionFactory())
-                .dnsResolver(SystemDefaultDnsResolver.INSTANCE)
-                .timeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
-                .name(format("%s.%s", gatewayName, operation)).build();
+                        .build(),
+                new ManagedHttpClientConnectionFactory(),
+                null,
+                SystemDefaultDnsResolver.INSTANCE,
+                connectionTimeToLive.toMilliseconds(),
+                TimeUnit.MILLISECONDS,
+                format("%s.%s", gatewayName, operation)
+        );
     }
 }
+

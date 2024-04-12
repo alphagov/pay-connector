@@ -3,7 +3,7 @@ package uk.gov.pay.connector.queue;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import io.prometheus.client.CollectorRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

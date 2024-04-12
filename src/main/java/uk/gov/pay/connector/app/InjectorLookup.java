@@ -3,7 +3,7 @@ package uk.gov.pay.connector.app;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
-import io.dropwizard.core.Application;
+import io.dropwizard.Application;
 import io.dropwizard.lifecycle.Managed;
 
 import java.util.Map;

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.rules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -30,7 +31,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_REFUND
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_SEARCH_PAYMENT_INTENTS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TOKEN_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 public class StripeMockClient {
 
@@ -51,32 +51,32 @@ public class StripeMockClient {
     }
 
     public void mockRefundError() {
-        String payload = load(STRIPE_ERROR_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_ERROR_RESPONSE);
         setupResponse(payload, "/v1/refunds", 402);
     }
 
     public void mockCreatePaymentMethodAuthorisationRejected() {
-        String payload = load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
         setupResponse(payload, "/v1/payment_methods", 400);
     }
     
     public void mockCreatePaymentIntentAuthorisationRejected() {
-        String payload = load(STRIPE_PAYMENT_INTENT_AUTHORISATION_REJECTED_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_AUTHORISATION_REJECTED_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 402);
     }
 
     public void mockCreatePaymentIntentAuthorisationError() {
-        String payload = load(STRIPE_PAYMENT_INTENT_ERROR_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_ERROR_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 402);
     }
 
     public void mockAuthorisationFailedPaymentIntentAndRetriableForUserNotPresentPayment() {
-        String payload = load(STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_RETRIABLE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_RETRIABLE);
         setupResponse(payload, "/v1/payment_intents", 400);
     }
 
     public void mockAuthorisationFailedPaymentIntentAndNonRetriableForUserNotPresentPayment() {
-        String payload = load(STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE_USER_NOT_PRESENT_PAYMENT_NOT_RETRIABLE);
         setupResponse(payload, "/v1/payment_intents", 400);
     }
 
@@ -85,17 +85,17 @@ public class StripeMockClient {
     }
 
     public void mockCancelPaymentIntent(String paymentIntentId) {
-        String payload = load(STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE);
         setupResponse(payload, "/v1/payment_intents/" + paymentIntentId + "/cancel", 200);
     }
 
     public void mockRefund() {
-        String payload = load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
         setupResponse(payload, "/v1/refunds", 200);
     }
 
     public void mockTransferSuccess() {
-        String payload = load(STRIPE_TRANSFER_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_TRANSFER_RESPONSE);
         MappingBuilder builder = post(urlPathEqualTo("/v1/transfers"))
                 .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
                 .withHeader("Idempotency-Key", matching(".*"));
@@ -105,52 +105,52 @@ public class StripeMockClient {
     }
 
     public void mockTransferFailure() {
-        String payload = load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_AUTHORISATION_FAILED_RESPONSE);
         setupResponse(payload, "/v1/transfers", 400);
     }
 
     public void mockGetPaymentIntent(String paymentIntentId) {
-        String payload = load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE);
         setupGetResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
     }
     
     public void mockGet3DSAuthenticatedPaymentIntent(String paymentIntentId) {
-        String payload = load(STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE);
         setupGetResponse(payload, "/v1/payment_intents/" + paymentIntentId, 200);
     }
 
     public void mockCreatePaymentIntent() {
-        String payload = load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 200);
     }
 
     public void mockCreatePaymentIntentWithCustomer() {
-        String payload = load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE_WITH_CUSTOMER);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE_WITH_CUSTOMER);
         setupResponse(payload, "/v1/payment_intents", 200);
     }
 
     public void mockCreatePaymentIntentRequiring3DS() {
-        String payload = load(STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_REQUIRES_3DS_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 200);
     }
 
     public void mockCreatePaymentMethod() {
-        String payload = load(STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_METHOD_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/payment_methods", 200);
     }
     
     public void mockCreateCustomer() {
-        String payload = load(STRIPE_CUSTOMER_SUCCESS_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_CUSTOMER_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/customers", 200);
     }
     
     public void mockCreateToken() {
-        String payload = load(STRIPE_TOKEN_SUCCESS_RESPONSE);
+        String payload = TestTemplateResourceLoader.load(STRIPE_TOKEN_SUCCESS_RESPONSE);
         setupResponse(payload, "/v1/tokens", 200);
     }
 
     public void mockCreatePaymentIntentDelayedResponse() {
-        String responseBody = load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
+        String responseBody = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_SUCCESS_RESPONSE);
         String path = "/v1/payment_intents";
         wireMockServer.stubFor(post(urlPathEqualTo(path))
                 .withHeader(CONTENT_TYPE, matching(APPLICATION_FORM_URLENCODED))
@@ -161,7 +161,7 @@ public class StripeMockClient {
     }
     
     public void mockSearchPaymentIntentsByMetadata(String chargeExternalId) {
-        String responsePayload = load((STRIPE_SEARCH_PAYMENT_INTENTS_RESPONSE));
+        String responsePayload = TestTemplateResourceLoader.load((STRIPE_SEARCH_PAYMENT_INTENTS_RESPONSE));
         wireMockServer.stubFor(get(urlPathEqualTo("/v1/payment_intents/search"))
                 .withQueryParam("query", equalTo(String.format("metadata['govuk_pay_transaction_external_id']:'%s'", chargeExternalId)))
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)

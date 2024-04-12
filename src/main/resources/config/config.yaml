@@ -24,7 +24,7 @@ logging:
       customFields:
         container: "connector"
         environment: ${ENVIRONMENT}
-    - type: pay-dropwizard-3-sentry
+    - type: sentry
       threshold: ERROR
       dsn: ${SENTRY_DSN:-https://example.com@dummy/1}
       environment: ${ENVIRONMENT}
