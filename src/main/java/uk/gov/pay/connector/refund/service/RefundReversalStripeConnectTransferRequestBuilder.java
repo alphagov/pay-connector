@@ -3,8 +3,10 @@ package uk.gov.pay.connector.refund.service;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.json.JSONObject;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Singleton
 public class RefundReversalStripeConnectTransferRequestBuilder {
@@ -14,28 +16,27 @@ public class RefundReversalStripeConnectTransferRequestBuilder {
     public RefundReversalStripeConnectTransferRequestBuilder(RandomIdGenerator randomIdGenerator) {
         this.randomIdGenerator = randomIdGenerator;
     }
-    
-    public JSONObject createRequest(com.stripe.model.Refund refundFromStripe) {
-        
-        String stripeChargeId = refundFromStripe.getChargeObject().getId(); 
-        String destination = refundFromStripe.getChargeObject().getOnBehalfOfObject().getId(); 
-        String transferGroup = refundFromStripe.getChargeObject().getTransferGroup(); 
+
+    public Map<String, Object> createRequest(com.stripe.model.Refund refundFromStripe) {
+        String stripeChargeId = refundFromStripe.getChargeObject().getId();
+        String destination = refundFromStripe.getChargeObject().getOnBehalfOfObject().getId();
+        String transferGroup = refundFromStripe.getChargeObject().getTransferGroup();
         long amount = refundFromStripe.getAmount();
         String currency = refundFromStripe.getCurrency();
         String correctionPaymentId = randomIdGenerator.random13ByteHexGenerator();
-        
-        JSONObject metadata = new JSONObject();
+
+        Map<String, Object> metadata = new HashMap<>();
         metadata.put("stripeChargeId", stripeChargeId);
         metadata.put("correctionPaymentId", correctionPaymentId);
-        
-        JSONObject requestJson = new JSONObject();
-        requestJson.put("destination", destination);
-        requestJson.put("amount", amount);
-        requestJson.put("metadata", metadata);
-        requestJson.put("currency", currency);
-        requestJson.put("transferGroup", transferGroup);
-        requestJson.put("expand", new String[]{"balance_transaction", "destination_payment"});
-        
-        return requestJson;
+
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("destination", destination);
+        requestMap.put("amount", amount);
+        requestMap.put("metadata", metadata);
+        requestMap.put("currency", currency);
+        requestMap.put("transferGroup", transferGroup);
+        requestMap.put("expand", new String[]{"balance_transaction", "destination_payment"});
+
+        return requestMap;
     }
 }

@@ -2,10 +2,7 @@ package uk.gov.pay.connector.service;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.exception.StripeException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +10,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.refund.service.RefundReversalStripeConnectTransferRequestBuilder;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -37,7 +36,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
     }
     
     @Test
-    public void testCreateRequest() throws StripeException, JsonProcessingException {
+    void testCreateRequest() throws StripeException, JsonProcessingException {
 
         when(mockStripeRefund.getChargeObject()).thenReturn(mockStripeCharge);
         when(mockStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
@@ -48,21 +47,24 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
         when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("randomId123");
 
-        JSONObject builderRequest = builder.createRequest(mockStripeRefund);
-
-        JsonNode convertedBuilderRequest = new ObjectMapper().readTree(builder.createRequest(mockStripeRefund).toString());
+        Map<String, Object> builderRequest = builder.createRequest(mockStripeRefund);
         
-        JsonNode expandArray = convertedBuilderRequest.get("expand");
-        assertEquals(2, expandArray.size());
-        assertEquals("\"balance_transaction\"", expandArray.get(0).toString());
-        assertEquals("\"destination_payment\"", expandArray.get(1).toString());
+        Object[] expandArray = (Object[]) builderRequest.get("expand");
+      
+        assertEquals(2, expandArray.length);
+        assertEquals("balance_transaction", expandArray[0]);
+        assertEquals("destination_payment", expandArray[1]);
 
-        assertEquals("acct_jdsa7789d", builderRequest.getString("destination"));
-        assertEquals(100, builderRequest.getInt("amount"));
-        assertEquals("GBP", builderRequest.getString("currency"));
-        assertEquals("abc", builderRequest.getString("transferGroup"));
-        assertEquals("ch_sdkhdg887s", builderRequest.getJSONObject("metadata").getString("stripeChargeId"));
-        assertEquals("randomId123", builderRequest.getJSONObject("metadata").getString("correctionPaymentId"));
+        Map<String, Object> metadataMap = (Map<String, Object>) builderRequest.get("metadata");
+
+        assertEquals("ch_sdkhdg887s", metadataMap.get("stripeChargeId"));
+        assertEquals("randomId123", metadataMap.get("correctionPaymentId"));
+
+        assertEquals("acct_jdsa7789d", builderRequest.get("destination"));
+        assertEquals(100L, builderRequest.get("amount"));
+        assertEquals("GBP", builderRequest.get("currency"));
+        assertEquals("abc", builderRequest.get("transferGroup"));
+        assertEquals("ch_sdkhdg887s", ((Map<String, Object>) builderRequest.get("metadata")).get("stripeChargeId"));
+        assertEquals("randomId123", ((Map<String, Object>) builderRequest.get("metadata")).get("correctionPaymentId"));
     }
 }
-
