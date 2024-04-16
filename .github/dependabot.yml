@@ -1,6 +1,6 @@
 ---
-  version: 2
-  updates:
+version: 2
+updates:
   - package-ecosystem: maven
     directory: "/"
     schedule:
@@ -25,9 +25,9 @@
           - ">= 6"
     open-pull-requests-limit: 10
     labels:
-    - dependencies
-    - govuk-pay
-    - java
+      - dependencies
+      - govuk-pay
+      - java
   - package-ecosystem: docker
     directory: "/"
     schedule:
@@ -36,7 +36,7 @@
     ignore:
       - dependency-name: "eclipse-temurin"
         versions:
-        - "> 11"
+          - "> 11"
     open-pull-requests-limit: 10
     labels:
       - dependencies
