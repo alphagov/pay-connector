@@ -20,21 +20,21 @@ import static org.mockito.Mockito.when;
 public class RefundReversalStripeConnectTransferRequestBuilderTest {
     @Mock
     private RandomIdGenerator mockRandomIdGenerator;
-    
+
     @Mock
     private com.stripe.model.Refund mockStripeRefund;
     @Mock
     private com.stripe.model.Charge mockStripeCharge;
     @Mock
     private com.stripe.model.Account mockStripeAccount;
-    private  RefundReversalStripeConnectTransferRequestBuilder builder;
-    
+    private RefundReversalStripeConnectTransferRequestBuilder builder;
+
 
     @BeforeEach
     public void setUp() {
         builder = new RefundReversalStripeConnectTransferRequestBuilder(mockRandomIdGenerator);
     }
-    
+
     @Test
     void testCreateRequest() throws StripeException, JsonProcessingException {
 
@@ -48,23 +48,22 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("randomId123");
 
         Map<String, Object> builderRequest = builder.createRequest(mockStripeRefund);
-        
-        Object[] expandArray = (Object[]) builderRequest.get("expand");
-      
+
+        String[] expandArray = (String[]) builderRequest.get("expand");
+
         assertEquals(2, expandArray.length);
         assertEquals("balance_transaction", expandArray[0]);
         assertEquals("destination_payment", expandArray[1]);
-
-        Map<String, Object> metadataMap = (Map<String, Object>) builderRequest.get("metadata");
-
-        assertEquals("ch_sdkhdg887s", metadataMap.get("stripeChargeId"));
-        assertEquals("randomId123", metadataMap.get("correctionPaymentId"));
-
+        assertEquals(6, builderRequest.size());
+        
         assertEquals("acct_jdsa7789d", builderRequest.get("destination"));
         assertEquals(100L, builderRequest.get("amount"));
         assertEquals("GBP", builderRequest.get("currency"));
+        
+        Map<String, Object> metadataMap = (Map<String, Object>) builderRequest.get("metadata");
+        assertEquals(2, metadataMap.size());
         assertEquals("abc", builderRequest.get("transferGroup"));
-        assertEquals("ch_sdkhdg887s", ((Map<String, Object>) builderRequest.get("metadata")).get("stripeChargeId"));
-        assertEquals("randomId123", ((Map<String, Object>) builderRequest.get("metadata")).get("correctionPaymentId"));
+        assertEquals("ch_sdkhdg887s", (metadataMap.get("stripeChargeId")));
+        assertEquals("randomId123", (metadataMap.get("correctionPaymentId")));
     }
 }

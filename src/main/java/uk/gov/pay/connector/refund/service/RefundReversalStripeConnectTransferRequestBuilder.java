@@ -24,19 +24,19 @@ public class RefundReversalStripeConnectTransferRequestBuilder {
         long amount = refundFromStripe.getAmount();
         String currency = refundFromStripe.getCurrency();
         String correctionPaymentId = randomIdGenerator.random13ByteHexGenerator();
+        
 
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("stripeChargeId", stripeChargeId);
-        metadata.put("correctionPaymentId", correctionPaymentId);
+        return Map.of(
+                "destination", destination,
+                "amount", amount,
+                "metadata", Map.of(
+                        "stripeChargeId", stripeChargeId,
+                        "correctionPaymentId", correctionPaymentId
+                ),
+                "currency", currency,
+                "transferGroup", transferGroup,
+                "expand", new String[]{"balance_transaction", "destination_payment"}
+        );
 
-        Map<String, Object> requestMap = new HashMap<>();
-        requestMap.put("destination", destination);
-        requestMap.put("amount", amount);
-        requestMap.put("metadata", metadata);
-        requestMap.put("currency", currency);
-        requestMap.put("transferGroup", transferGroup);
-        requestMap.put("expand", new String[]{"balance_transaction", "destination_payment"});
-
-        return requestMap;
     }
 }
