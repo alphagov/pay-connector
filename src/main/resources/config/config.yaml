@@ -17,6 +17,9 @@ server:
 
 logging:
   level: INFO
+  loggers:
+    org.apache.http.impl: ${APACHE_HTTP_LOGGING:-INFO}
+    org.apache.http.headers: ${APACHE_HTTP_LOGGING:-INFO}
   appenders:
     - type: logstash-console
       threshold: ALL
@@ -34,7 +37,7 @@ links:
 
 worldpay:
   urls:
-    test: ${GDS_CONNECTOR_WORLDPAY_TEST_URL}
+    test: https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp
     live: ${GDS_CONNECTOR_WORLDPAY_LIVE_URL}
   threeDsFlexDdcUrls:
     test: ${WORLDPAY_3DS_FLEX_DDC_TEST_URL}
