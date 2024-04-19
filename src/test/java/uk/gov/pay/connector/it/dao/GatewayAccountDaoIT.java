@@ -9,6 +9,7 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
@@ -641,6 +642,23 @@ public class GatewayAccountDaoIT {
                 .withExternalId(externalId)
                 .insert();
         Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByExternalId(externalId);
+        assertThat(gatewayAccountOptional.isPresent(), is(true));
+        assertThat(gatewayAccountOptional.get().getId(), is(id));
+        assertThat(gatewayAccountOptional.get().getExternalId(), is(externalId));
+    }
+
+    @Test
+    void findByServiceIdAndAccountType_shouldFindGatewayAccount() {
+        Long id = nextLong();
+        String externalId = randomUuid();
+        String serviceExternalId = randomUuid();
+        databaseFixtures
+                .aTestAccount()
+                .withAccountId(id)
+                .withExternalId(externalId)
+                .withServiceId(serviceExternalId)
+                .insert();
+        Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByServiceIdAndAccountType(serviceExternalId, TEST);
         assertThat(gatewayAccountOptional.isPresent(), is(true));
         assertThat(gatewayAccountOptional.get().getId(), is(id));
         assertThat(gatewayAccountOptional.get().getExternalId(), is(externalId));

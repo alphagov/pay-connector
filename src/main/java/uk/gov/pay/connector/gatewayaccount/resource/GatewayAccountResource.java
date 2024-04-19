@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -48,7 +49,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -70,9 +70,6 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
-
-    private static final String DESCRIPTION_FIELD_NAME = "description";
-    private static final String ANALYTICS_ID_FIELD_NAME = "analytics_id";
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
@@ -120,6 +117,26 @@ public class GatewayAccountResource {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(GatewayAccountWithCredentialsResponse::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
+    }
+
+    @GET
+    @Path("/v1/api/service/{serviceId}/{accountType}/account")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Find gateway account by service external ID and account type (test|live)",
+            description = "Get gateway account by service external ID and account type (test|live). Returns notifications credentials, gateway account credentials (without password). Doesn't include card_types or gateway_merchant_id",
+            tags = {"Gateway accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = GatewayAccountWithCredentialsResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public GatewayAccountWithCredentialsResponse getGatewayAccountByServiceIdAndAccountType(@PathParam("serviceId") String serviceId, @PathParam("accountType") GatewayAccountType accountType) {
+        GatewayAccountWithCredentialsResponse response = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(GatewayAccountWithCredentialsResponse::new)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));
+        return response;
     }
 
     @GET
@@ -210,6 +227,36 @@ public class GatewayAccountResource {
                 .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
     }
 
+    @GET
+    @Path("/v1/frontend/service/{serviceId}/{accountType}/card-types")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Get card types for gateway account by service external ID and account type",
+            tags = {"Gateway accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(example = "{" +
+                                    "    \"card_types\": [" +
+                                    "        {" +
+                                    "            \"id\": \"ab8a3abd-bcfd-4fa6-8905-321ce913e7f5\"," +
+                                    "            \"brand\": \"visa\"," +
+                                    "            \"label\": \"Visa\"," +
+                                    "            \"type\": \"DEBIT\"," +
+                                    "            \"requires3ds\": false" +
+                                    "        }" +
+                                    "    ]" +
+                                    "}"))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response getAcceptedCardTypesByServiceIdAndAccountType(@PathParam("serviceId") String serviceId, @PathParam("accountType") GatewayAccountType accountType) {
+        logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
+        System.out.println("Account type: " + accountType);
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccount -> successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
+                .orElseGet(() -> notFoundResponse(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));
+    }
+    
     @POST
     @Path("/v1/api/accounts")
     @Consumes(APPLICATION_JSON)

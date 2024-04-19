@@ -1264,6 +1264,38 @@ paths:
       summary: Handle Worldpay notifications
       tags:
       - Notifications
+  /v1/api/service/{serviceId}/{accountType}/account:
+    get:
+      description: "Get gateway account by service external ID and account type (test|live).\
+        \ Returns notifications credentials, gateway account credentials (without\
+        \ password). Doesn't include card_types or gateway_merchant_id"
+      operationId: getGatewayAccountByServiceIdAndAccountType
+      parameters:
+      - in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
+          description: OK
+        "404":
+          description: Not found
+      summary: Find gateway account by service external ID and account type (test|live)
+      tags:
+      - Gateway accounts
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\
@@ -1788,6 +1820,43 @@ paths:
       summary: Get Worldpay 3DS Flex DDC JWT
       tags:
       - Charges - Frontend
+  /v1/frontend/service/{serviceId}/{accountType}/card-types:
+    get:
+      operationId: getAcceptedCardTypesByServiceIdAndAccountType
+      parameters:
+      - in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  card_types:
+                  - id: ab8a3abd-bcfd-4fa6-8905-321ce913e7f5
+                    brand: visa
+                    label: Visa
+                    type: DEBIT
+                    requires3ds: false
+          description: OK
+        "404":
+          description: Not found
+      summary: Get card types for gateway account by service external ID and account
+        type
+      tags:
+      - Gateway accounts
   /v1/frontend/tokens/{chargeTokenId}:
     delete:
       operationId: deleteToken

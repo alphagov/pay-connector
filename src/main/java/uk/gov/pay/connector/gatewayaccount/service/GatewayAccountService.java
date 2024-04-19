@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
@@ -132,6 +133,10 @@ public class GatewayAccountService {
 
     public Optional<GatewayAccountEntity> getGatewayAccountByExternal(String gatewayAccountExternalId) {
         return gatewayAccountDao.findByExternalId(gatewayAccountExternalId);
+    }
+
+    public Optional<GatewayAccountEntity> getGatewayAccountByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
+        return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType);
     }
 
     public boolean isATelephonePaymentNotificationAccount(String merchantCode) {
