@@ -72,12 +72,12 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
 
     public Optional<GatewayAccountEntity> findByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
         // TODO: review this query, decide what to do about multiple records
-        String query = "SELECT g FROM GatewayAccountEntity g where g.serviceId = :serviceId and g.cardTypes = :accountType order by g.id DESC limit 1";
+        String query = "SELECT g FROM GatewayAccountEntity g where g.serviceId = :serviceId and g.type = :accountType order by g.id DESC";
 
         return entityManager.get()
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("serviceId", serviceId)
-                .setParameter("accountType", accountType.toString())
+                .setParameter("accountType", accountType)
                 .getResultList().stream().findFirst();
     }
 

@@ -36,6 +36,7 @@ import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_FRONTEND_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNT_FRONTEND_SERVICE_ID_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.GatewayAccountPayload.createDefault;
 
 public class GatewayAccountFrontendResourceIT {
@@ -62,6 +63,49 @@ public class GatewayAccountFrontendResourceIT {
 
         app.givenSetup().accept(JSON)
                 .get(ACCOUNT_FRONTEND_EXTERNAL_ID_URL + gatewayAccount.getExternalId())
+                .then()
+                .statusCode(200)
+                .body("payment_provider", is("worldpay"))
+                .body("gateway_account_id", is((int) accountId))
+                .body("gateway_account_id", is(notNullValue()))
+                .body("email_collection_mode", is("OPTIONAL"))
+                .body("email_notifications.PAYMENT_CONFIRMED.template_body", not(nullValue()))
+                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
+                .body("email_notifications.REFUND_ISSUED.template_body", not(nullValue()))
+                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
+                .body("description", is(gatewayAccount.getDescription()))
+                .body("analytics_id", is(gatewayAccount.getAnalyticsId()))
+                .body("service_name", is(gatewayAccountOptions.getServiceName()))
+                .body("corporate_credit_card_surcharge_amount", is(250))
+                .body("corporate_debit_card_surcharge_amount", is(50))
+                .body("allow_apple_pay", is(false))
+                .body("allow_google_pay", is(false))
+                .body("allow_zero_amount", is(false))
+                .body("integration_version_3ds", is(1))
+                .body("block_prepaid_cards", is(false))
+                .body("allow_moto", is(false))
+                .body("allow_telephone_payment_notifications", is(false))
+                .body("worldpay_3ds_flex", nullValue());
+    }
+
+    @Test
+    void shouldGetGatewayAccountByServiceIdAndAccountType() {
+        var gatewayAccountOptions = createDefault();
+        DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
+                .withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .aTestAccount()
+                .withServiceId("service-external-id")
+                .withPaymentProvider("worldpay")
+                .withCredentials(gatewayAccountOptions.getCredentials())
+                .withServiceName(gatewayAccountOptions.getServiceName())
+                .withCorporateCreditCardSurchargeAmount(250L)
+                .withCorporateDebitCardSurchargeAmount(50L)
+                .withIntegrationVersion3ds(1)
+                .insert();
+        long accountId = gatewayAccount.getAccountId();
+
+        app.givenSetup().accept(JSON)
+                .get(ACCOUNT_FRONTEND_SERVICE_ID_URL + gatewayAccount.getServiceId() + "/TEST/account")
                 .then()
                 .statusCode(200)
                 .body("payment_provider", is("worldpay"))

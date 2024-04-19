@@ -30,6 +30,7 @@ public class GatewayAccountResourceITBaseExtensions extends AppWithPostgresAndSq
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
     public static final String ACCOUNTS_EXTERNAL_ID_URL = ACCOUNTS_API_URL + "external-id/";
     public static final String ACCOUNT_FRONTEND_EXTERNAL_ID_URL = "/v1/frontend/accounts/external-id/";
+    public static final String ACCOUNT_FRONTEND_SERVICE_ID_URL = "/v1/frontend/service/";
 
     @AfterAll
     public static void tearDown() {
