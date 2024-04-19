@@ -5,6 +5,7 @@ import com.google.inject.persist.Transactional;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -66,6 +67,17 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
         return entityManager.get()
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("externalId", externalId)
+                .getResultList().stream().findFirst();
+    }
+
+    public Optional<GatewayAccountEntity> findByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
+        // TODO: review this query, decide what to do about multiple records
+        String query = "SELECT g FROM GatewayAccountEntity g where g.serviceId = :serviceId and g.cardTypes = :accountType order by g.id DESC limit 1";
+
+        return entityManager.get()
+                .createQuery(query, GatewayAccountEntity.class)
+                .setParameter("serviceId", serviceId)
+                .setParameter("accountType", accountType.toString())
                 .getResultList().stream().findFirst();
     }
 

@@ -9,16 +9,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
-import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
-import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
-import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.*;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsHistoryDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -31,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.util.Map.entry;
@@ -132,6 +124,10 @@ public class GatewayAccountService {
 
     public Optional<GatewayAccountEntity> getGatewayAccountByExternal(String gatewayAccountExternalId) {
         return gatewayAccountDao.findByExternalId(gatewayAccountExternalId);
+    }
+
+    public Optional<GatewayAccountEntity> getGatewayAccountByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
+        return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType);
     }
 
     public boolean isATelephonePaymentNotificationAccount(String merchantCode) {
