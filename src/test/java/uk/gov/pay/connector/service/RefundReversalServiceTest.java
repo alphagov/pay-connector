@@ -19,9 +19,11 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundReversalService;
+import uk.gov.pay.connector.refund.service.RefundReversalStripeConnectTransferRequestBuilder;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -51,10 +53,12 @@ public class RefundReversalServiceTest {
     private StripeSdkClient mockStripeSDKClient;
     @Mock
     private StripeSdkClientFactory mockStripeSDKClientFactory;
+    @Mock
+    private RefundReversalStripeConnectTransferRequestBuilder mockBuilder;
 
     @BeforeEach
     void setUp() {
-        refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao, mockStripeSDKClientFactory);
+        refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao, mockStripeSDKClientFactory, mockBuilder);
     }
 
     @Test
@@ -97,7 +101,7 @@ public class RefundReversalServiceTest {
     }
 
     @Test
-    void shouldNotThrowExceptionWhenRefundIsInFailedState() throws StripeException {
+    void shouldCreateTransferWhenRefundIsInFailedState() throws StripeException {
 
         when(mockStripeSDKClientFactory.getInstance()).thenReturn(mockStripeSDKClient);
 
@@ -114,7 +118,22 @@ public class RefundReversalServiceTest {
         when(mockStripeSDKClient.getRefund(stripeRefundId, isLiveGatewayAccount)).thenReturn(mockedStripeRefund);
         when(mockedStripeRefund.getStatus()).thenReturn("failed");
 
+        Map<String, Object> transferRequest = Map.of(
+                "destination", "acct_jdsa7789d",
+                "amount", 100L,
+                "metadata", Map.of(
+                        "stripeChargeId", "ch_sdkhdg887s",
+                        "correctionPaymentId", "random123"
+                ),
+                "currency", "GBP",
+                "transferGroup", "abc",
+                "expand", new String[]{"balance_transaction", "destination_payment"}
+        );
+        when(mockBuilder.createRequest(mockedStripeRefund)).thenReturn(transferRequest);
+
         assertDoesNotThrow(() -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
+
+        verify(mockStripeSDKClient).createTransfer(transferRequest, true);
     }
 
     @Test

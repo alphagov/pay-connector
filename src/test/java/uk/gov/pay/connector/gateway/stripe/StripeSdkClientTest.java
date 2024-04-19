@@ -49,6 +49,9 @@ class StripeSdkClientTest {
     public static final String STRIPE_CONNECT_ACCOUNT_ID = "stripe-account-id";
     public static final String CUSTOMER_ID = "customer-id";
     public static final String STRIPE_REFUND_ID = "a-stripe-refund-id";
+    public static final Map<String, Object> transferRequest = Map.of(
+            "destination", "destination",
+            "amount", "amount");
 
     @BeforeEach
     public void setUp() {
@@ -58,7 +61,7 @@ class StripeSdkClientTest {
     @Test
     void getBalanceTransactionsForPayout_shouldUseTestApiKey() throws Exception {
         when(stripeAuthTokens.getTest()).thenReturn(TEST_API_KEY);
-        
+
         stripeSDKClient.getBalanceTransactionsForPayout(PAYOUT_ID, STRIPE_CONNECT_ACCOUNT_ID, false);
 
         verify(stripeSDKWrapper).listBalanceTransactions(paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
@@ -72,7 +75,7 @@ class StripeSdkClientTest {
     @Test
     void getBalanceTransactionsForPayout_shouldUseLiveApiKey() throws Exception {
         when(stripeAuthTokens.getLive()).thenReturn(LIVE_API_KEY);
-        
+
         stripeSDKClient.getBalanceTransactionsForPayout(PAYOUT_ID, STRIPE_CONNECT_ACCOUNT_ID, true);
 
         verify(stripeSDKWrapper).listBalanceTransactions(paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
@@ -96,6 +99,7 @@ class StripeSdkClientTest {
     @Test
     void deleteCustomer_shouldUseLiveApiKey() throws Exception {
         when(stripeAuthTokens.getLive()).thenReturn(LIVE_API_KEY);
+
         stripeSDKClient.deleteCustomer(CUSTOMER_ID, true);
 
         verify(stripeSDKWrapper).deleteCustomer(eq(CUSTOMER_ID), requestOptionsArgumentCaptor.capture());
@@ -105,8 +109,9 @@ class StripeSdkClientTest {
     @Test
     void getRefund_shouldUseLiveApiKey() throws Exception {
         when(stripeAuthTokens.getLive()).thenReturn(LIVE_API_KEY);
+
         stripeSDKClient.getRefund(STRIPE_REFUND_ID, true);
-        
+
         verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
 
         Map<String, Object> params = paramsArgumentCaptor.getValue();
@@ -117,12 +122,39 @@ class StripeSdkClientTest {
     @Test
     void getRefund_shouldUseTestApiKey() throws Exception {
         when(stripeAuthTokens.getTest()).thenReturn(TEST_API_KEY);
+
         stripeSDKClient.getRefund(STRIPE_REFUND_ID, false);
 
         verify(stripeSDKWrapper).getRefund(eq(STRIPE_REFUND_ID), paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
-        
+
         Map<String, Object> params = paramsArgumentCaptor.getValue();
         assertThat(params, hasEntry("expand", List.of("charge")));
         assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(TEST_API_KEY));
+    }
+
+    @Test
+    void createTransfer_shouldUseLiveAPIKey() throws Exception {
+        when(stripeAuthTokens.getLive()).thenReturn(LIVE_API_KEY);
+
+        stripeSDKClient.createTransfer(transferRequest, true);
+
+        verify(stripeSDKWrapper).createTransfer(paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
+
+        assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(LIVE_API_KEY));
+        assertThat(paramsArgumentCaptor.getValue(), is(transferRequest));
+
+    }
+
+    @Test
+    void createTransfer_shouldUseTestAPIKey() throws Exception {
+        when(stripeAuthTokens.getTest()).thenReturn(TEST_API_KEY);
+
+        stripeSDKClient.createTransfer(transferRequest, false);
+
+        verify(stripeSDKWrapper).createTransfer(paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
+
+        assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(TEST_API_KEY));
+
+        assertThat(paramsArgumentCaptor.getValue(), is(transferRequest));
     }
 }
