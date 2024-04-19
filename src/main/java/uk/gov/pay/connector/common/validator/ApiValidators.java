@@ -1,9 +1,7 @@
 package uk.gov.pay.connector.common.validator;
 
-import fj.data.Either;
-import org.apache.commons.lang3.tuple.Pair;
-import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
+import uk.gov.service.payments.commons.model.SupportedLanguage;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
@@ -14,9 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static fj.data.Either.left;
-import static fj.data.Either.right;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.AMOUNT_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.DELAYED_CAPTURE_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
@@ -108,33 +103,6 @@ public class ApiValidators {
                 .orElse(false);
 
         return !invalid;
-    }
-
-    public static Either<List<String>, Pair<ZonedDateTime, ZonedDateTime>> validateFromDateIsBeforeToDate(
-            String fromDateParamName, String fromDate, String toDateParamName, String toDate) {
-        List<String> errors = newArrayList();
-
-        Optional<ZonedDateTime> fromOptional = parseZonedDateTime(fromDate);
-        if (fromOptional.isEmpty()) {
-            errors.add("query param '" + fromDateParamName + "' not in correct format");
-        }
-
-        Optional<ZonedDateTime> toOptional = parseZonedDateTime(toDate);
-        if (toOptional.isEmpty()) {
-            errors.add("query param '" + toDateParamName + "' not in correct format");
-        }
-
-        if (fromOptional.isPresent() && toOptional.isPresent()) {
-            ZonedDateTime from = fromOptional.get();
-            ZonedDateTime to = toOptional.get();
-            if (to.isBefore(from)) {
-                errors.add("query param '" + toDateParamName + "' must be later than '" + fromDateParamName + "'");
-            } else {
-                return right(Pair.of(from, to));
-            }
-        }
-
-        return left(errors);
     }
 
     public static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {
