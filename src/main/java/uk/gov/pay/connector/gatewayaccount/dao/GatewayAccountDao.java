@@ -74,12 +74,35 @@ public class GatewayAccountDao extends JpaDao<GatewayAccountEntity> {
         // TODO: review this query, decide what to do about multiple records
         String query = "SELECT g FROM GatewayAccountEntity g where g.serviceId = :serviceId and g.type = :accountType order by g.id DESC";
 
-        return entityManager.get()
+        List<GatewayAccountEntity> gatewayAccounts = entityManager.get()
                 .createQuery(query, GatewayAccountEntity.class)
                 .setParameter("serviceId", serviceId)
                 .setParameter("accountType", accountType)
-                .getResultList().stream().findFirst();
+                .getResultList();
+    
+        if (gatewayAccounts.isEmpty()) {
+            return Optional.empty();
+        }
+        if (gatewayAccounts.size() == 1) {
+            return Optional.of(gatewayAccounts.get(0));
+        }
+        else {
+            return resolveMultipleGatewayAccounts(gatewayAccounts);
+        }
     }
+    
+    private Optional<GatewayAccountEntity> resolveMultipleGatewayAccounts(List<GatewayAccountEntity> gatewayAccounts) {
+        Optional<GatewayAccountEntity> stripeAccount = gatewayAccounts.stream().filter(account -> account.getGatewayName().equals("stripe")).findFirst();
+        if (stripeAccount.isPresent()) {
+            return stripeAccount;
+        }
+        Optional<GatewayAccountEntity> worldpayAccount = gatewayAccounts.stream().filter(account -> account.getGatewayName().equals("worldpay")).findFirst();
+        if (worldpayAccount.isPresent()) {
+            return worldpayAccount;
+        }
+        return gatewayAccounts.stream().filter(account -> account.getGatewayName().equals("sandbox")).findFirst();
+    }
+    
 
     public List<GatewayAccountEntity> findByServiceId(String serviceId) {
         String query = "SELECT g FROM GatewayAccountEntity g where g.serviceId = :serviceId";

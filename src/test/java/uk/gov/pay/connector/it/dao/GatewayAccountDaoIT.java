@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.it.dao;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -15,7 +17,10 @@ import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
@@ -664,6 +670,42 @@ public class GatewayAccountDaoIT {
         assertThat(gatewayAccountOptional.isPresent(), is(true));
         assertThat(gatewayAccountOptional.get().getId(), is(id));
         assertThat(gatewayAccountOptional.get().getExternalId(), is(externalId));
+    }
+
+    @Test
+    void findByServiceIdAndAccountType_shouldReturnStripeAccountFromMultipleGatewayAccounts() {
+        long stripeGatewayAccountId = nextLong();
+        String serviceExternalId = "a-service-id";
+        
+        AddGatewayAccountCredentialsParams stripeCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withState(ACTIVE)
+                .withPaymentProvider("stripe")
+                .withGatewayAccountId(stripeGatewayAccountId)
+                .build();
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(stripeGatewayAccountId))
+                .withPaymentGateway("stripe")
+                .withServiceId(serviceExternalId)
+                .withGatewayAccountCredentials(Collections.singletonList(stripeCredentialsParams))
+                .build());
+
+        long sandboxGatewayAccountId = nextLong();
+        AddGatewayAccountCredentialsParams sandboxCredentialsParams = anAddGatewayAccountCredentialsParams()
+                .withState(ACTIVE)
+                .withPaymentProvider("sandbox")
+                .withGatewayAccountId(sandboxGatewayAccountId)
+                .build();
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(sandboxGatewayAccountId))
+                .withPaymentGateway("sandbox")
+                .withServiceId(serviceExternalId)
+                .withGatewayAccountCredentials(Collections.singletonList(sandboxCredentialsParams))
+                .build());
+        
+        Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByServiceIdAndAccountType(serviceExternalId, TEST);
+        assertThat(gatewayAccountOptional.isPresent(), is(true));
+        assertThat(gatewayAccountOptional.get().getId(), is(stripeGatewayAccountId));
+        assertThat(gatewayAccountOptional.get().getGatewayName(), is(STRIPE.getName()));
     }
 
     @Test
