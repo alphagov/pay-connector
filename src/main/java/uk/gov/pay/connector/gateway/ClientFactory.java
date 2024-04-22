@@ -110,7 +110,6 @@ public class ClientFactory {
                         .build())
                 .connFactory(new ManagedHttpClientConnectionFactory())
                 .dnsResolver(SystemDefaultDnsResolver.INSTANCE)
-                .poolReusePolicy(PoolReusePolicy.FIFO)
                 .timeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
                 .name(format("%s.%s", gatewayName, operation)).build();
     }
