@@ -12,6 +12,7 @@ import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.pool.PoolReusePolicy;
 import org.apache.hc.core5.util.TimeValue;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
@@ -109,6 +110,7 @@ public class ClientFactory {
                         .build())
                 .connFactory(new ManagedHttpClientConnectionFactory())
                 .dnsResolver(SystemDefaultDnsResolver.INSTANCE)
+                .poolReusePolicy(PoolReusePolicy.FIFO)
                 .timeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
                 .name(format("%s.%s", gatewayName, operation)).build();
     }
