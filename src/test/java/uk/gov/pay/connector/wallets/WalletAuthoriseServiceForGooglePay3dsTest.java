@@ -3,7 +3,7 @@ package uk.gov.pay.connector.wallets;
 import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +29,7 @@ import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
@@ -37,6 +38,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,7 +54,6 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
 class WalletAuthoriseServiceForGooglePay3dsTest {
@@ -128,12 +129,12 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
 
     @Test
     void the_charge_service_should_be_called_with_auth3dsRequiredDetails_when_3ds_is_required_for_a_google_payment() throws Exception {
-        String successPayload = load(WORLDPAY_3DS_RESPONSE);
+        String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);
 
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+                Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         walletAuthoriseService.authorise(chargeEntity.getExternalId(), authorisationData);
 

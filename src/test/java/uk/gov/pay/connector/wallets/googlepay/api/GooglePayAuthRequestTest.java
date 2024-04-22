@@ -1,23 +1,24 @@
 package uk.gov.pay.connector.wallets.googlepay.api;
 
 import com.amazonaws.util.json.Jackson;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 class GooglePayAuthRequestTest {
 
     @Test
-    void shouldDeserializeFromJsonCorrectly() throws JsonProcessingException {
+    void shouldDeserializeFromJsonCorrectly() throws IOException {
         ObjectMapper objectMapper = Jackson.getObjectMapper();
-        JsonNode expected = objectMapper.readTree(load("googlepay/example-3ds-auth-request.json"));
+        JsonNode expected = objectMapper.readTree(fixture("googlepay/example-3ds-auth-request.json"));
         GooglePayAuthRequest actual = objectMapper.readValue(
-                load("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
+                fixture("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
 
         JsonNode paymentInfo = expected.get("payment_info");
         assertThat(actual.getPaymentInfo().getCardholderName(), is(paymentInfo.get("cardholder_name").asText()));

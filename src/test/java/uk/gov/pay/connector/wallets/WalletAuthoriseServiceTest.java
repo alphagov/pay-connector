@@ -8,7 +8,7 @@ import ch.qos.logback.core.Appender;
 import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,6 +68,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -102,7 +103,6 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture.anApplePayAuthRequest;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.IN_PROGRESS;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
 class WalletAuthoriseServiceTest extends CardServiceTest {
@@ -273,7 +273,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+                Jackson.getObjectMapper().readValue(fixture("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 
@@ -306,7 +306,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
+                Jackson.getObjectMapper().readValue(fixture("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 
