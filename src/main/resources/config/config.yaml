@@ -156,7 +156,7 @@ jerseyClient:
   cookiesEnabled: false
   maxConnections: 1024
   maxConnectionsPerRoute: 1024
-  keepAlive: 0ms
+  keepAlive: 60s
   retries: 0
   userAgent: connector
   gzipEnabledForRequests: false
