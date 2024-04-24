@@ -17,9 +17,6 @@ server:
 
 logging:
   level: INFO
-  loggers:
-    org.apache.http.impl: ${APACHE_HTTP_LOGGING:-INFO}
-    org.apache.http.headers: ${APACHE_HTTP_LOGGING:-INFO}
   appenders:
     - type: logstash-console
       threshold: ALL
@@ -27,7 +24,7 @@ logging:
       customFields:
         container: "connector"
         environment: ${ENVIRONMENT}
-    - type: pay-dropwizard-3-sentry
+    - type: sentry
       threshold: ERROR
       dsn: ${SENTRY_DSN:-https://example.com@dummy/1}
       environment: ${ENVIRONMENT}

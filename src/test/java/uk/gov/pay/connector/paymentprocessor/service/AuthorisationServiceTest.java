@@ -1,12 +1,13 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 
