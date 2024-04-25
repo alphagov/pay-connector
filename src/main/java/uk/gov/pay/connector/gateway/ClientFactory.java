@@ -6,6 +6,7 @@ import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.io.ManagedHttpClientConnectionFactory;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
@@ -48,17 +49,17 @@ public class ClientFactory {
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, MetricRegistry metricRegistry) {
-        return createWithDropwizardClient(gateway, conf.getCustomJerseyClient().getReadTimeout(), "all", metricRegistry);
+        return createWithDropwizardClient(gateway, conf.getCustomJerseyClientConfiguration().getReadTimeout(), "all", metricRegistry);
     }
 
     private Client createWithDropwizardClient(PaymentGatewayName gateway, Duration readTimeout, String metricName, MetricRegistry metricRegistry) {
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
-                .using(conf.getClientConfiguration())
+                .using(conf.getJerseyClientConfiguration())
                 .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
                 .withProperty(DISABLE_COOKIES, true)
                 .withProperty(CONNECTION_MANAGER,
-                        createConnectionManager(gateway.getName(), metricName, metricRegistry, conf.getCustomJerseyClient().getConnectionTTL()));
+                        createConnectionManager(gateway.getName(), metricName, metricRegistry, conf.getCustomJerseyClientConfiguration().getConnectionTTL()));
 
         if (System.getProperty(PROXY_HOST_PROPERTY) != null && System.getProperty(PROXY_PORT_PROPERTY) != null) {
             defaultClientBuilder.withProperty(ClientProperties.PROXY_URI, format("http://%s:%s",
@@ -75,7 +76,7 @@ public class ClientFactory {
     private Duration getReadTimeout(GatewayOperation operation, PaymentGatewayName gateway) {
         return getOverridesFor(operation, gateway)
                 .map(OperationOverrides::getReadTimeout)
-                .orElse(conf.getCustomJerseyClient().getReadTimeout());
+                .orElse(conf.getCustomJerseyClientConfiguration().getReadTimeout());
     }
 
     private Optional<OperationOverrides> getOverridesFor(GatewayOperation operation, PaymentGatewayName gateway) {
@@ -101,15 +102,22 @@ public class ClientFactory {
             throw new RuntimeException("Unable to create SSL connection socket factory", e);
         }
 
-       return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
+        InstrumentedHttpClientConnectionManager instrumentedHttpClientConnectionManager = InstrumentedHttpClientConnectionManager.builder(metricRegistry)
                 .socketFactoryRegistry(RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("http", PlainConnectionSocketFactory.getSocketFactory())
                         .register("https", sslConnectionSocketFactory)
                         .build())
                 .connFactory(new ManagedHttpClientConnectionFactory())
                 .dnsResolver(SystemDefaultDnsResolver.INSTANCE)
-                .timeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
                 .name(format("%s.%s", gatewayName, operation)).build();
+
+        instrumentedHttpClientConnectionManager.setDefaultConnectionConfig(ConnectionConfig
+                .custom()
+                .setValidateAfterInactivity(TimeValue.ofSeconds(1))
+                .setTimeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
+                .build());
+
+        return instrumentedHttpClientConnectionManager;
     }
 }
 

@@ -212,11 +212,11 @@ public class ConnectorConfiguration extends Configuration {
         return notifyConfig;
     }
 
-    public JerseyClientConfiguration getClientConfiguration() {
+    public JerseyClientConfiguration getJerseyClientConfiguration() {
         return jerseyClientConfig;
     }
 
-    public CustomJerseyClientConfiguration getCustomJerseyClient() {
+    public CustomJerseyClientConfiguration getCustomJerseyClientConfiguration() {
         return customJerseyClient;
     }
 
