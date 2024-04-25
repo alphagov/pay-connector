@@ -55,7 +55,6 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ofPattern;
 import static java.time.temporal.ChronoUnit.MONTHS;
@@ -77,6 +76,7 @@ import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.SUBMITTED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AUTHORISATION_ERROR;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AUTHORISATION_REJECTED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_REJECTED;
@@ -412,7 +412,7 @@ class CardResourceTest {
     
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
-        String payloadStr = fixture("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
+        String payloadStr = load("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -424,7 +424,7 @@ class CardResourceTest {
 
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
-        String payloadStr = fixture("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
+        String payloadStr = load("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -436,7 +436,7 @@ class CardResourceTest {
 
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfSignedMessageIsEmpty() throws JsonProcessingException {
-        String payloadStr = fixture("googlepay/example-auth-request.json").replace("aSignedMessage", "");
+        String payloadStr = load("googlepay/example-auth-request.json").replace("aSignedMessage", "");
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -448,7 +448,7 @@ class CardResourceTest {
 
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfSignatureIsEmpty() throws JsonProcessingException {
-        String payloadStr = fixture("googlepay/example-auth-request.json").replace("MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl", "");
+        String payloadStr = load("googlepay/example-auth-request.json").replace("MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl", "");
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -460,7 +460,7 @@ class CardResourceTest {
 
     @Test
     void authoriseGooglePayStripeShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
-        String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("Example Name", "A".repeat(256));
+        String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("Example Name", "A".repeat(256));
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -472,7 +472,7 @@ class CardResourceTest {
 
     @Test
     void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
-        String payloadStr = fixture("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
+        String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
         JsonNode payload = Jackson.getObjectMapper().readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.app;
 
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
