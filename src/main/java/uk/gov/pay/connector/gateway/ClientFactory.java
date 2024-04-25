@@ -20,7 +20,6 @@ import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.service.payments.logging.RestClientLoggingFilter;
 
 import javax.inject.Inject;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
 import java.security.NoSuchAlgorithmException;
