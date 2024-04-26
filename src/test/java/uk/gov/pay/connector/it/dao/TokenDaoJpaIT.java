@@ -14,8 +14,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import static com.github.npathai.hamcrestopt.OptionalMatchers.isEmpty;
-import static com.github.npathai.hamcrestopt.OptionalMatchers.isPresent;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -110,7 +108,7 @@ public class TokenDaoJpaIT {
         final ZonedDateTime expiryThreshold = today.minusDays(7);
         tokenDao.deleteTokensOlderThanSpecifiedDate(expiryThreshold);
 
-        assertThat(tokenDao.findByTokenId("old-token"), isEmpty());
-        assertThat(tokenDao.findByTokenId("present-day-token"), isPresent());
+        assertThat(tokenDao.findByTokenId("old-token").isEmpty(), is(true));
+        assertThat(tokenDao.findByTokenId("present-day-token").isPresent(), is(true));
     }
 }

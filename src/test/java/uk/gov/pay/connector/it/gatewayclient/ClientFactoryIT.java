@@ -151,7 +151,7 @@ public class ClientFactoryIT {
             the overhead.
             */
             final long connectionOverheadInMillis = 1000;
-            long expectedTimeout = app.getConfiguration().getCustomJerseyClient().getReadTimeout().toMilliseconds()
+            long expectedTimeout = app.getConfiguration().getCustomJerseyClientConfiguration().getReadTimeout().toMilliseconds()
                     + connectionOverheadInMillis;
 
             long actualDuration = endTime - startTime;
