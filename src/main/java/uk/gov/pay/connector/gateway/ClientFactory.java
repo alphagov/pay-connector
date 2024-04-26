@@ -1,19 +1,17 @@
 package uk.gov.pay.connector.gateway;
 
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.httpclient5.InstrumentedHttpClientConnectionManager;
+import com.codahale.metrics.httpclient.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import io.dropwizard.util.Duration;
-import org.apache.hc.client5.http.SystemDefaultDnsResolver;
-import org.apache.hc.client5.http.config.ConnectionConfig;
-import org.apache.hc.client5.http.impl.io.ManagedHttpClientConnectionFactory;
-import org.apache.hc.client5.http.io.HttpClientConnectionManager;
-import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
-import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.core5.http.config.RegistryBuilder;
-import org.apache.hc.core5.util.TimeValue;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
+import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -21,10 +19,12 @@ import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.service.payments.logging.RestClientLoggingFilter;
 
 import javax.inject.Inject;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static org.glassfish.jersey.apache.connector.ApacheClientProperties.CONNECTION_MANAGER;
@@ -49,17 +49,17 @@ public class ClientFactory {
     }
 
     public Client createWithDropwizardClient(PaymentGatewayName gateway, MetricRegistry metricRegistry) {
-        return createWithDropwizardClient(gateway, conf.getCustomJerseyClientConfiguration().getReadTimeout(), "all", metricRegistry);
+        return createWithDropwizardClient(gateway, conf.getCustomJerseyClient().getReadTimeout(), "all", metricRegistry);
     }
 
     private Client createWithDropwizardClient(PaymentGatewayName gateway, Duration readTimeout, String metricName, MetricRegistry metricRegistry) {
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
-                .using(conf.getJerseyClientConfiguration())
+                .using(conf.getClientConfiguration())
                 .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
                 .withProperty(DISABLE_COOKIES, true)
                 .withProperty(CONNECTION_MANAGER,
-                        createConnectionManager(gateway.getName(), metricName, metricRegistry, conf.getCustomJerseyClientConfiguration().getConnectionTTL()));
+                        createConnectionManager(gateway.getName(), metricName, metricRegistry, conf.getCustomJerseyClient().getConnectionTTL()));
 
         if (System.getProperty(PROXY_HOST_PROPERTY) != null && System.getProperty(PROXY_PORT_PROPERTY) != null) {
             defaultClientBuilder.withProperty(ClientProperties.PROXY_URI, format("http://%s:%s",
@@ -76,7 +76,7 @@ public class ClientFactory {
     private Duration getReadTimeout(GatewayOperation operation, PaymentGatewayName gateway) {
         return getOverridesFor(operation, gateway)
                 .map(OperationOverrides::getReadTimeout)
-                .orElse(conf.getCustomJerseyClientConfiguration().getReadTimeout());
+                .orElse(conf.getCustomJerseyClient().getReadTimeout());
     }
 
     private Optional<OperationOverrides> getOverridesFor(GatewayOperation operation, PaymentGatewayName gateway) {
@@ -96,28 +96,25 @@ public class ClientFactory {
                     SSLContext.getDefault(),
                     new String[]{"TLSv1.2"},
                     null,
-                    null
+                    (HostnameVerifier) null
             );
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Unable to create SSL connection socket factory", e);
         }
 
-        InstrumentedHttpClientConnectionManager instrumentedHttpClientConnectionManager = InstrumentedHttpClientConnectionManager.builder(metricRegistry)
-                .socketFactoryRegistry(RegistryBuilder.<ConnectionSocketFactory>create()
+        return new InstrumentedHttpClientConnectionManager(
+                metricRegistry,
+                RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("http", PlainConnectionSocketFactory.getSocketFactory())
                         .register("https", sslConnectionSocketFactory)
-                        .build())
-                .connFactory(new ManagedHttpClientConnectionFactory())
-                .dnsResolver(SystemDefaultDnsResolver.INSTANCE)
-                .name(format("%s.%s", gatewayName, operation)).build();
-
-        instrumentedHttpClientConnectionManager.setDefaultConnectionConfig(ConnectionConfig
-                .custom()
-                .setValidateAfterInactivity(TimeValue.ofSeconds(1))
-                .setTimeToLive(TimeValue.ofMilliseconds(connectionTimeToLive.toMilliseconds()))
-                .build());
-
-        return instrumentedHttpClientConnectionManager;
+                        .build(),
+                new ManagedHttpClientConnectionFactory(),
+                null,
+                SystemDefaultDnsResolver.INSTANCE,
+                connectionTimeToLive.toMilliseconds(),
+                TimeUnit.MILLISECONDS,
+                format("%s.%s", gatewayName, operation)
+        );
     }
 }
 

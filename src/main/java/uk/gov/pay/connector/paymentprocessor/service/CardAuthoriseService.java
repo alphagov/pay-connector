@@ -2,7 +2,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import io.prometheus.client.Counter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;

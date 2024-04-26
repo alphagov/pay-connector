@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import io.restassured.response.ValidatableResponse;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -13,6 +13,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.DnsPointerResourceRecord;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.ReverseDnsLookup;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -34,7 +35,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 public class WorldpayNotificationResourceIT {
     private static final ReverseDnsLookup reverseDnsLookup = mock(ReverseDnsLookup.class);
@@ -232,7 +232,7 @@ public class WorldpayNotificationResourceIT {
     }
 
     private String notificationPayloadForTransaction(String transactionId, String status) {
-        return load(WORLDPAY_NOTIFICATION)
+        return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{status}}", status)
                 .replace("{{bookingDateDay}}", "10")

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.util;
 
-import io.dropwizard.core.cli.ConfiguredCommand;
-import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.cli.ConfiguredCommand;
+import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import uk.gov.pay.connector.app.ConnectorConfiguration;

@@ -2,7 +2,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
