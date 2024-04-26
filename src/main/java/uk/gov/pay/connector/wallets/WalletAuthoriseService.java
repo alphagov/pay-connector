@@ -109,7 +109,7 @@ public class WalletAuthoriseService {
                     operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::extractAuth3dsRequiredDetails);
             CardExpiryDate cardExpiryDate = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getCardExpiryDate).orElse(null);
 
-            logMetrics(charge, operationResponse, requestStatus, walletAuthorisationRequest.getWalletType());
+            logMetrics(charge, operationResponse, requestStatus, chargeStatus, walletAuthorisationRequest.getWalletType());
 
             processGatewayAuthorisationResponse(
                     charge.getExternalId(),
@@ -136,10 +136,11 @@ public class WalletAuthoriseService {
     private void logMetrics(ChargeEntity chargeEntity,
                             GatewayResponse<BaseAuthoriseResponse> operationResponse,
                             String successOrFailure,
+                            ChargeStatus chargeStatus,
                             WalletType walletType) {
 
-        LOGGER.info("{} authorisation {} - charge_external_id={}, payment provider response={}",
-                walletType.toString(), successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
+        LOGGER.info("{} authorisation - charge status={}, request status={}, charge_external_id={}, payment provider response={}",
+                walletType.toString(), chargeStatus, successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
         metricRegistry.counter(format("gateway-operations.%s.%s.authorise.%s.result.%s",
                 chargeEntity.getPaymentProvider(),
                 chargeEntity.getGatewayAccount().getType(),
