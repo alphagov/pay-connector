@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.stripe;
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.exception.StripeException;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

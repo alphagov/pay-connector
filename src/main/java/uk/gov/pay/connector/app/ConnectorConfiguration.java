@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.core.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import uk.gov.pay.connector.app.config.Authorisation3dsConfig;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
@@ -212,11 +212,11 @@ public class ConnectorConfiguration extends Configuration {
         return notifyConfig;
     }
 
-    public JerseyClientConfiguration getJerseyClientConfiguration() {
+    public JerseyClientConfiguration getClientConfiguration() {
         return jerseyClientConfig;
     }
 
-    public CustomJerseyClientConfiguration getCustomJerseyClientConfiguration() {
+    public CustomJerseyClientConfiguration getCustomJerseyClient() {
         return customJerseyClient;
     }
 
