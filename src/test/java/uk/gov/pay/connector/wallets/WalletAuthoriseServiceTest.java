@@ -232,7 +232,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains(
-                format("APPLE_PAY authorisation success - charge_external_id=%s, payment provider response=%s", charge.getExternalId(), gatewayResponse.toString()))
+                format("APPLE_PAY authorisation - charge status=AUTHORISATION SUCCESS, request status=success, charge_external_id=%s, payment provider response=%s", charge.getExternalId(), gatewayResponse.toString()))
         ), is(true));
     }
 
