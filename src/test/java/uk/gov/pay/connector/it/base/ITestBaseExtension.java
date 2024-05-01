@@ -11,7 +11,8 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.*;
+import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -23,16 +24,16 @@ import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.rules.CardidStub;
-import uk.gov.pay.connector.util.AddAgreementParams;
-import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
-import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
-import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.pay.connector.rules.LedgerStub;
+import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
+import uk.gov.pay.connector.util.*;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
+import javax.xml.crypto.Data;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
-public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
+public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     public static final String ADDRESS_LINE_1 = "The Money Pool";
     public static final String ADDRESS_CITY = "London";
     public static final String ADDRESS_POSTCODE = "DO11 4RS";
@@ -109,7 +110,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
 
     private String paymentProvider;
 
-
+    protected static String accountId = String.valueOf(RandomUtils.nextInt());
     private int gatewayAccountCredentialsId  = RandomUtils.nextInt();
     private Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
@@ -117,71 +118,80 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     private static CardidStub cardidStub;
 
     private static AddGatewayAccountCredentialsParams credentialParams;
+    public RestAssuredClient connectorRestApiClient;
+    private AppWithPostgresAndSqsExtension app;
+//    private RestAssuredClient connectorRestApiClient;
 
-    public ITestBaseExtension(String paymentProvider) {
-        super();
+    public ITestBaseExtension(String paymentProvider, AppWithPostgresAndSqsExtension app) {
+//        super();
         this.paymentProvider = paymentProvider;
+        this.app = app;
         createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
-        super(CustomConnectorClass);
+//        super(CustomConnectorClass);
         this.paymentProvider = paymentProvider;
         createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
-        super(configOverrides);
+//        super(configOverrides);
         this.paymentProvider = paymentProvider;
         createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
-        super(CustomConnectorClass, configOverrides);
+//        super(CustomConnectorClass, configOverrides);
         this.paymentProvider = paymentProvider;
         createCredentialParams();
     }
+    
+    public ITestBaseExtension withApp(AppWithPostgresAndSqsExtension app) {
+        this.app = app;
+        return this;
+    }
 
     private void setUpBase() {
-        resetDatabase(); // tests will break if setUpBase is called twice without this
+//        resetDatabase(); // tests will break if setUpBase is called twice without this
         
         createConnectorRestApiClient();
         
         createTestAccount();
         
-        createCardIdStub();
-        ledgerStub.acceptPostEvent();
+//        createCardIdStub();
+//        ledgerStub.acceptPostEvent();
         
     }
     
     @Override
     public void beforeEach(ExtensionContext context) {
-        super.beforeEach(context);
+//        super.beforeEach(context);
         setUpBase();
     }
     
     @Override
     public void afterEach(ExtensionContext context) {
-        super.afterEach(context);
+//        super.afterEach(context);
     }
     
     @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
-        super.beforeAll(context);
+    public void beforeAll(ExtensionContext context) {
+//        super.beforeAll(context);
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        super.afterAll(context);
+//        super.afterAll(context);
     }
 
     public void createConnectorRestApiClient() {
-        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
+        connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
     }
     
     public void createTestAccount() {
-        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
-        testAccount = withDatabaseTestHelper(databaseTestHelper)
+        CardTypeEntity visaCreditCard = app.getDatabaseTestHelper().getVisaCreditCard();
+        testAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .withAccountId(Long.parseLong(accountId))
                 .withPaymentProvider(getPaymentProvider())
@@ -231,13 +241,13 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     }
 
     public void purgeEventQueue() {
-        AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
-        sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
+        AmazonSQS sqsClient = app.getInstanceFromGuiceContainer(AmazonSQS.class);
+        sqsClient.purgeQueue(new PurgeQueueRequest(app.getEventQueueUrl()));
     }
     
-    public void createCardIdStub() {
-        cardidStub = new CardidStub(getWireMockServer());
-    }
+//    public void createCardIdStub() {
+//        cardidStub = new CardidStub(app.getWireMockServer());
+//    }
 
     public Map<String, Object> getCredentials() {
         return credentials;
@@ -314,7 +324,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
 
     public String authoriseNewCharge() {
         String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
-        databaseTestHelper.updateChargeCardDetails(
+        app.getDatabaseTestHelper().updateChargeCardDetails(
                 Long.parseLong(externalChargeId.replace("charge-", "")),
                 AuthCardDetailsFixture.anAuthCardDetails().build());
         return externalChargeId;
@@ -325,11 +335,11 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     }
 
     public String createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ChargeStatus status) {
-        return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null, paymentProvider).toString();
+        return createNewChargeWithAccountId(status, null, accountId, app.getDatabaseTestHelper(), null, paymentProvider).toString();
     }
 
     public String createNewChargeWithDescriptionAndNoGatewayTransactionIdOrEmailAddress(ChargeStatus status, String description) {
-        return createNewChargeWithAccountId(status, null, accountId, databaseTestHelper, null, paymentProvider, description).toString();
+        return createNewChargeWithAccountId(status, null, accountId, app.getDatabaseTestHelper(), null, paymentProvider, description).toString();
     }
 
     public String createNewChargeWithNoTransactionId(ChargeStatus status) {
@@ -341,11 +351,11 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     }
 
     public String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, paymentProvider, credentialParams.getId()).toString();
+        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, app.getDatabaseTestHelper(), paymentProvider, credentialParams.getId()).toString();
     }
 
     public RequestSpecification givenSetup() {
-        return given().port(getLocalPort())
+        return given().port(app.getLocalPort())
                 .contentType(JSON);
     }
 
@@ -476,9 +486,9 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), createdDate, transactionId, paymentProvider, authorisationMode);
-        databaseTestHelper.addToken(chargeId, tokenId);
-        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-        databaseTestHelper.updateChargeCardDetails(
+        app.getDatabaseTestHelper().addToken(chargeId, tokenId);
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        app.getDatabaseTestHelper().updateChargeCardDetails(
                 chargeId,
                 AuthCardDetailsFixture.anAuthCardDetails().build());
         return externalChargeId;
@@ -487,7 +497,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
                            ServicePaymentReference reference, Instant createdDate, String transactionId,
                            String paymentProvider, AuthorisationMode authorisationMode) {
-        databaseTestHelper.addCharge(anAddChargeParams()
+        app.getDatabaseTestHelper().addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withGatewayAccountId(accountId)
@@ -511,9 +521,9 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
         String externalChargeId = "charge" + chargeId;
         ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
         addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null, paymentProvider, WEB);
-        databaseTestHelper.addToken(chargeId, "tokenId");
-        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment",
+        app.getDatabaseTestHelper().addToken(chargeId, "tokenId");
+        app.getDatabaseTestHelper().addEvent(chargeId, chargeStatus.getValue());
+        app.getDatabaseTestHelper().updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment",
                 CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
 
         return externalChargeId;
@@ -531,7 +541,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
         long chargeId = RandomUtils.nextInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
-        databaseTestHelper.addCharge(anAddChargeParams()
+        app.getDatabaseTestHelper().addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId.toString())
                 .withGatewayAccountId(accountId)
@@ -553,7 +563,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withGatewayAccountId(accountId)
                 .withExternalAgreementId(agreementExternalId)
                 .build();
-        databaseTestHelper.addAgreement(agreementParams);
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
         return agreementExternalId;
     }
 
@@ -564,7 +574,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withAgreementExternalId(agreementExternalId)
                 .withPaymentInstrumentStatus(status)
                 .build();
-        databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
+        app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
         return paymentInstrumentId;
     }
 
@@ -589,8 +599,8 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
         Optional.ofNullable(first6DigitsCardNumber).ifPresent(paymentInstrumentParamsBuilder::withFirstDigitsCardNumber);
         Optional.ofNullable(last4DigitsCardNumber).ifPresent(paymentInstrumentParamsBuilder::withLastDigitsCardNumber);
 
-        databaseTestHelper.addPaymentInstrument(paymentInstrumentParamsBuilder.build());
-        databaseTestHelper.updateAgreementPaymentInstrumentId(agreementExternalId, paymentInstrumentId);
+        app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParamsBuilder.build());
+        app.getDatabaseTestHelper().updateAgreementPaymentInstrumentId(agreementExternalId, paymentInstrumentId);
 
         long chargeId = RandomUtils.nextInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
@@ -605,7 +615,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withStatus(ChargeStatus.CREATED)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .withPaymentInstrumentId(paymentInstrumentId);
-        databaseTestHelper.addCharge(chargeParams.build());
+        app.getDatabaseTestHelper().addCharge(chargeParams.build());
 
         return externalChargeId;
     }
@@ -627,13 +637,13 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     }
 
 
-    public WireMockServer getWiremockserver() {
-        return wireMockServer;
-    }
+//    public WireMockServer getWiremockserver() {
+//        return wireMockServer;
+//    }
 
-    public CardidStub getCardidStub() {
-        return cardidStub;
-    }
+//    public CardidStub getCardidStub() {
+//        return cardidStub;
+//    }
 
     public int getGatewayAccountCredentialsId() {
         return gatewayAccountCredentialsId;
@@ -642,4 +652,21 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     public AddGatewayAccountCredentialsParams getCredentialParams() {
         return credentialParams;
     }
+    
+    // TO delete -- just so build works
+    public int getLocalPort() { return app.getLocalPort(); }
+    public DatabaseTestHelper getDatabaseTestHelper() { return app.getDatabaseTestHelper(); }
+    public LedgerStub getLedgerStub() { return app.getLedgerStub(); }
+    public StripeMockClient getStripeMockClient() { return app.getStripeMockClient(); }
+    public <T> T getInstanceFromGuiceContainer(Class<T> klazz) { return app.getInstanceFromGuiceContainer(klazz); }
+    public AuthorisationConfig getAuthorisationConfig() { return app.getAuthorisationConfig(); }
+    public static WireMockServer getWireMockServer() { return AppWithPostgresAndSqsExtension.getWireMockServer(); }
+    public static WireMockServer getStripeWireMockServer() { return AppWithPostgresAndSqsExtension.getStripeWireMockServer(); }
+    public WireMockServer getWorldpayWireMockServer() { return app.getWorldpayWireMockServer(); }
+    public String getEventQueueUrl() { return app.getEventQueueUrl(); }
+    public CardidStub getCardidStub() { return app.getCardidStub(); }
+    public DatabaseFixtures getDatabaseFixtures() { return app.getDatabaseFixtures(); }
+    public WorldpayMockClient getWorldpayMockClient() { return app.getWorldpayMockClient(); } 
+    
+    
 }
