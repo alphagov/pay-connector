@@ -42,7 +42,6 @@ import static io.restassured.http.ContentType.JSON;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.*;
 
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
-
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
     private static final String JPA_UNIT = "ConnectorUnit";
     private static String CONFIG_PATH = resourceFilePath("config/test-it-config.yaml");
@@ -129,7 +128,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         ledgerStub = new LedgerStub(ledgerWireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         mapper = new ObjectMapper();
-        
+
         injector = InjectorLookup.getInjector(dropwizardAppExtension.getApplication()).get();
     }
     
@@ -140,8 +139,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         stripeWireMockServer.resetAll();
         ledgerStub.acceptPostEvent();
     }
-       
-
+    public void resetDatabase() {
+        databaseTestHelper.truncateAllData();
+    }
+    
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
@@ -150,11 +151,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     @Override
     public void beforeEach(ExtensionContext context) {}
     @Override
-    public void afterEach(ExtensionContext context) {}
+    public void afterEach(ExtensionContext context) {
+        resetWireMockServer();
+        resetDatabase();
+    }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        databaseTestHelper.truncateAllData();
         wireMockServer.stop();
         worldpayWireMockServer.stop();
         stripeWireMockServer.stop();

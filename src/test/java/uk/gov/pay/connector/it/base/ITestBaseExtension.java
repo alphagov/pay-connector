@@ -121,25 +121,78 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     public ITestBaseExtension(String paymentProvider) {
         super();
         this.paymentProvider = paymentProvider;
+        createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
         super(CustomConnectorClass);
         this.paymentProvider = paymentProvider;
+        createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
         super(configOverrides);
         this.paymentProvider = paymentProvider;
+        createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
         super(CustomConnectorClass, configOverrides);
         this.paymentProvider = paymentProvider;
+        createCredentialParams();
     }
 
     private void setUpBase() {
         resetDatabase(); // tests will break if setUpBase is called twice without this
+        
+        createConnectorRestApiClient();
+        
+        createTestAccount();
+        
+        createCardIdStub();
+        ledgerStub.acceptPostEvent();
+        
+    }
+    
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        super.beforeEach(context);
+        setUpBase();
+    }
+    
+    @Override
+    public void afterEach(ExtensionContext context) {
+        super.afterEach(context);
+    }
+    
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        super.beforeAll(context);
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) {
+        super.afterAll(context);
+    }
+
+    public void createConnectorRestApiClient() {
+        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
+    }
+    
+    public void createTestAccount() {
+        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
+        testAccount = withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(Long.parseLong(accountId))
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(credentialParams))
+                .withServiceId(SERVICE_ID)
+                .withAllowAuthApi(true)
+                .withCardTypeEntities(List.of(visaCreditCard))
+                .insert();
+    }
+    
+    public void createCredentialParams() {
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
@@ -166,7 +219,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
                     CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
             );
         }
-        
+
 
         credentialParams = anAddGatewayAccountCredentialsParams()
                 .withId(gatewayAccountCredentialsId)
@@ -175,58 +228,6 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withState(ACTIVE)
                 .withCredentials(credentials)
                 .build();
-        
-        createConnectorRestApiClient();
-        
-        createTestAccount();
-        resetWireMockServer();
-        
-        createCardIdStub();
-        ledgerStub.acceptPostEvent();
-        
-    }
-    
-    @Override
-    public void beforeEach(ExtensionContext context) {
-        setUpBase();
-    }
-    
-    @Override
-    public void afterEach(ExtensionContext context) {
-        resetDatabase();
-    }
-    
-    @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
-        super.beforeAll(context);
-        resetDatabase();
-    }
-
-    @Override
-    public void afterAll(ExtensionContext context) {
-        super.afterAll(context);
-        resetDatabase();
-    }
-
-    public void createConnectorRestApiClient() {
-        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
-    }
-    
-    public void createTestAccount() {
-        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
-        testAccount = withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(Long.parseLong(accountId))
-                .withPaymentProvider(getPaymentProvider())
-                .withGatewayAccountCredentials(List.of(credentialParams))
-                .withServiceId(SERVICE_ID)
-                .withAllowAuthApi(true)
-                .withCardTypeEntities(List.of(visaCreditCard))
-                .insert();
-    }
-    
-    public void resetDatabase() {
-        databaseTestHelper.truncateAllData();
     }
 
     public void purgeEventQueue() {
