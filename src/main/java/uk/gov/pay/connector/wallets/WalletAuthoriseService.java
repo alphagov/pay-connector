@@ -31,6 +31,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.*;
 
 public class WalletAuthoriseService {
     
@@ -135,12 +136,14 @@ public class WalletAuthoriseService {
 
     private void logMetrics(ChargeEntity chargeEntity,
                             GatewayResponse<BaseAuthoriseResponse> operationResponse,
-                            String successOrFailure,
+                            String requestStatus,
                             ChargeStatus chargeStatus,
                             WalletType walletType) {
-
+        String successOrFailure = chargeStatus == AUTHORISATION_SUCCESS
+                ? "success"
+                : "failure";
         LOGGER.info("{} authorisation - charge status={}, request status={}, charge_external_id={}, payment provider response={}",
-                walletType.toString(), chargeStatus, successOrFailure, chargeEntity.getExternalId(), operationResponse.toString());
+                walletType.toString(), chargeStatus, requestStatus, chargeEntity.getExternalId(), operationResponse.toString());
         metricRegistry.counter(format("gateway-operations.%s.%s.authorise.%s.result.%s",
                 chargeEntity.getPaymentProvider(),
                 chargeEntity.getGatewayAccount().getType(),
