@@ -10,7 +10,6 @@ import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.fee.dao.FeeDao;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.time.Instant;
 import java.util.List;

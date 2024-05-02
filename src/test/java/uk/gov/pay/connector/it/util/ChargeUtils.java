@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.it.util;
 
-import java.util.Map;
-
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.math.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+
+import java.util.Map;
 
 import static uk.gov.pay.connector.it.resources.ChargesFrontendResourceIT.AGREEMENT_ID;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;

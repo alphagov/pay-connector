@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.util.List;
 

@@ -6,7 +6,6 @@ import io.restassured.http.ContentType;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;

@@ -11,7 +11,6 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Map;
 
-import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -23,9 +23,12 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
-import uk.gov.pay.connector.gateway.stripe.json.Card;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.*;
+import uk.gov.pay.connector.rules.CardidStub;
+import uk.gov.pay.connector.rules.LedgerStub;
+import uk.gov.pay.connector.rules.SqsTestDocker;
+import uk.gov.pay.connector.rules.StripeMockClient;
+import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
 
@@ -38,7 +41,10 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static uk.gov.pay.connector.rules.PostgresTestDocker.*;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getConnectionUrl;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
 
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
