@@ -131,7 +131,6 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         this.databaseTestHelper = databaseTestHelper;
         this.appLocalPort = appLocalPort;
         createCredentialParams();
-        
     }
 
     private void setUpBase() {

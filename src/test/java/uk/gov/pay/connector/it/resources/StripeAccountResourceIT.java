@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
 import java.util.Collections;
@@ -10,7 +11,7 @@ import static org.hamcrest.Matchers.is;
 
 public class StripeAccountResourceIT {
     @RegisterExtension
-    public static GatewayAccountResourceITBaseExtensions app = new GatewayAccountResourceITBaseExtensions("stripe");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private static final String STRIPE_ACCOUNT_ID = "acct_123example123";
 
     @Test

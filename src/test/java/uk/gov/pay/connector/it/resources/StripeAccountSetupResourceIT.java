@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -15,11 +16,12 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class StripeAccountSetupResourceIT {
     @RegisterExtension
-    public static GatewayAccountResourceITBaseExtensions app = new GatewayAccountResourceITBaseExtensions("stripe");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
 
     @Test
     public void getStripeSetupWithNoTasksCompletedReturnsFalseFlags() {
-        String gatewayAccountId = app.createAGatewayAccountFor("stripe");
+        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
 
         app.givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -36,7 +38,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void getStripeSetupWithSomeTasksCompletedReturnsAppropriateFlags() {
-        long gatewayAccountId = Long.parseLong(app.createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER);
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
@@ -65,7 +67,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void getStripeSetupGatewayAccountIsNotAStripeAccount() {
-        long gatewayAccountId = Long.parseLong(app.createAGatewayAccountFor("worldpay"));
+        long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("worldpay"));
         app.givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                 .then()
@@ -74,7 +76,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void patchStripeSetupWithSingleUpdate() {
-        long gatewayAccountId = Long.parseLong(app.createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
         app.givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
                         "op", "replace",
@@ -98,7 +100,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void patchStripeSetupWithMultipleUpdates() {
-        long gatewayAccountId = Long.parseLong(app.createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
         app.givenSetup()
                 .body(toJson(Arrays.asList(
                         ImmutableMap.of(
@@ -149,7 +151,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void patchStripeSetupValidationError() {
-        long gatewayAccountId = Long.parseLong(app.createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
         app.givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
                         "op", "remove",
@@ -176,7 +178,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void patchStripeSetupGatewayAccountNotStripe() {
-        long gatewayAccountId = Long.valueOf(app.createAGatewayAccountFor("worldpay"));
+        long gatewayAccountId = Long.valueOf(testBaseExtension.createAGatewayAccountFor("worldpay"));
         app.givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
                         "op", "replace",
@@ -189,7 +191,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void patchStripeSetupDirectorWithFalse() {
-        long gatewayAccountId = Long.valueOf(app.createAGatewayAccountFor("stripe"));
+        long gatewayAccountId = Long.valueOf(testBaseExtension.createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
 
         app.givenSetup()

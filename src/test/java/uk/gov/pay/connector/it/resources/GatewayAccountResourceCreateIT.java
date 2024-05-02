@@ -4,6 +4,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -31,7 +32,8 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceCreateIT {
     @RegisterExtension
-    public static GatewayAccountResourceITBaseExtensions app = new GatewayAccountResourceITBaseExtensions("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
     GatewayAccountDao gatewayAccountDao;
 
     @BeforeEach
@@ -41,20 +43,20 @@ public class GatewayAccountResourceCreateIT {
 
     @Test
     public void createASandboxGatewayAccount() {
-        ValidatableResponse response = app.createAGatewayAccountFor(app.getLocalPort(), "sandbox", "my test service", "analytics");
-        app.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+        ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "sandbox", "my test service", "analytics");
+        GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
     }
 
     @Test
     public void createAWorldpaySandboxGatewayAccount() {
-        ValidatableResponse response = app.createAGatewayAccountFor(app.getLocalPort(), "worldpay", "my test service", "analytics");
-        app.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+        ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "worldpay", "my test service", "analytics");
+        GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
     }
 
     @Test
     public void createAWorldpayStripeGatewayAccount() {
-        ValidatableResponse response = app.createAGatewayAccountFor(app.getLocalPort(), "stripe", "my test service", "analytics");
-        app.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+        ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "stripe", "my test service", "analytics");
+        GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
     }
 
     @Test
@@ -201,7 +203,7 @@ public class GatewayAccountResourceCreateIT {
                 .statusCode(201);
 
         assertCorrectCreateResponse(response, TEST);
-        app.assertGettingAccountReturnsProviderName(app.getLocalPort(), response, "sandbox", TEST);
+        GatewayAccountResourceITBaseExtensions.assertGettingAccountReturnsProviderName(app.getLocalPort(), response, "sandbox", TEST);
 
         String gatewayAccountId = response.extract()
                 .body()
@@ -218,7 +220,7 @@ public class GatewayAccountResourceCreateIT {
     }
     
     private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
-        app.assertCorrectCreateResponse(response, type, null, null, null);
+        GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, type, null, null, null);
     }
 
 }
