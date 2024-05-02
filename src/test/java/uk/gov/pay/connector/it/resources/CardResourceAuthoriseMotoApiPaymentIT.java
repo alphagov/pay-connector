@@ -4,10 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
@@ -24,8 +26,9 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.INVALID_ATTR
 
 public class CardResourceAuthoriseMotoApiPaymentIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox",
-            io.dropwizard.testing.ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(config("captureProcessConfig.backgroundProcessingEnabled", "false"));
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
     
     private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";
     private static final String VALID_CARD_NUMBER = "4242424242424242";
@@ -41,7 +44,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT {
                 .aTestCharge()
                 .withChargeStatus(CREATED)
                 .withAuthorisationMode(MOTO_API)
-                .withTestAccount(app.getTestAccount())
+                .withTestAccount(testBaseExtension.getTestAccount())
                 .insert();
 
         token = DatabaseFixtures
@@ -123,7 +126,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT {
                         "The card_number is not a valid card number"))
                 .body("error_identifier", is(ErrorIdentifier.CARD_NUMBER_REJECTED.toString()));
 
-        app.assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_REJECTED.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_REJECTED.getValue());
     }
 
     @Test
@@ -143,7 +146,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT {
                 .body("message", hasItems("The payment was rejected"))
                 .body("error_identifier", is(ErrorIdentifier.AUTHORISATION_REJECTED.toString()));
 
-        app.assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_REJECTED.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_REJECTED.getValue());
     }
 
     @Test
@@ -163,6 +166,6 @@ public class CardResourceAuthoriseMotoApiPaymentIT {
                 .body("message", hasItems("There was an error authorising the payment"))
                 .body("error_identifier", is(ErrorIdentifier.AUTHORISATION_ERROR.toString()));
 
-        app.assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_ERROR.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(charge.getExternalChargeId(), AUTHORISATION_ERROR.getValue());
     }
 }

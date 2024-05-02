@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.util.List;
@@ -25,14 +26,16 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 
 public class GatewayCleanupResourceIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
 
     @Test
     public void shouldCleanUpChargesInAuthorisationErrorStates() {
-        String chargeId1 = app.addCharge(AUTHORISATION_REJECTED);
-        String chargeId2 = app.addCharge(AUTHORISATION_ERROR);
-        String chargeId3 = app.addCharge(AUTHORISATION_UNEXPECTED_ERROR);
-        String chargeId4 = app.addCharge(AUTHORISATION_TIMEOUT);
+        String chargeId1 = testBaseExtension.addCharge(AUTHORISATION_REJECTED);
+        String chargeId2 = testBaseExtension.addCharge(AUTHORISATION_ERROR);
+        String chargeId3 = testBaseExtension.addCharge(AUTHORISATION_UNEXPECTED_ERROR);
+        String chargeId4 = testBaseExtension.addCharge(AUTHORISATION_TIMEOUT);
 
         // add a non-Worldpay charge that shouldn't be picked up
         var sandboxAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -45,7 +48,7 @@ public class GatewayCleanupResourceIT {
                 .withGatewayAccountId(String.valueOf(sandboxAccount.getAccountId()))
                 .withPaymentProvider("sandbox")
                 .withStatus(AUTHORISATION_ERROR)
-                .withGatewayCredentialId(app.getCredentialParams().getId())
+                .withGatewayCredentialId(testBaseExtension.getCredentialParams().getId())
                 .build());
 
         app.getWorldpayMockClient().mockCancelSuccess();
@@ -82,9 +85,9 @@ public class GatewayCleanupResourceIT {
 
     @Test
     public void shouldLimitChargesCleanedUp() {
-        app.addCharge(AUTHORISATION_ERROR);
-        app.addCharge(AUTHORISATION_ERROR);
-        app.addCharge(AUTHORISATION_ERROR);
+        testBaseExtension.addCharge(AUTHORISATION_ERROR);
+        testBaseExtension.addCharge(AUTHORISATION_ERROR);
+        testBaseExtension.addCharge(AUTHORISATION_ERROR);
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();

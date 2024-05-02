@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
@@ -33,9 +34,10 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceCreateProviderCredentialsIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
 
     @Test
     void shouldCreateChargeForCredentialIdProvided() {
@@ -64,7 +66,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
                 JSON_CREDENTIAL_ID_KEY, credentialsToUse.getExternalId()
         ));
 
-        String chargeId = app.getConnectorRestApiClient()
+        String chargeId = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
@@ -97,7 +99,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
                 JSON_CREDENTIAL_ID_KEY, "random-credential-id"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -128,7 +130,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
                 JSON_CREDENTIAL_ID_KEY, credentials.getExternalId()
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -158,7 +160,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode())
                 .contentType(JSON)

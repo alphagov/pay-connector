@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
@@ -51,7 +52,9 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class AuthoriseWithUserNotPresentTaskHandlerIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
@@ -64,7 +67,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
         Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
     }
 
     @Test
@@ -77,8 +80,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
 
         taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
 
-        app.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_QUEUED.getValue());
-        app.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_SUCCESS.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_QUEUED.getValue());
+        testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         assertThat(
@@ -97,8 +100,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
 
         taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
 
-        app.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_REJECTED.getValue());
-        app.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_FAILED_REJECTED.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_REJECTED.getValue());
+        testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_FAILED_REJECTED.getStatus());
         verifyNoInteractions(mockAppender);
     }
 
@@ -112,8 +115,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
 
         taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
 
-        app.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_ERROR.getValue());
-        app.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_ERROR.getValue());
+        testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
         verifyNoInteractions(mockAppender);
     }
     
@@ -128,7 +131,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
         app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
 
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build();
@@ -142,15 +145,15 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
-        String chargeId = app.getConnectorRestApiClient()
+        String chargeId = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(SC_CREATED)
                 .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
                 .contentType(JSON)
                 .extract().path("charge_id");
 
-        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
-        app.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
         return chargeId;
     }
 }

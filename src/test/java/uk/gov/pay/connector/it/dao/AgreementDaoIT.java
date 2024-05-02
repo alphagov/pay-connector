@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
@@ -17,7 +18,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public class AgreementDaoIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private AgreementDao agreementDao;
     private GatewayAccountEntity gatewayAccount1, gatewayAccount2;
     private static final String AGREEMENT_EXTERNAL_ID_ONE = "12345678901234567890123456";

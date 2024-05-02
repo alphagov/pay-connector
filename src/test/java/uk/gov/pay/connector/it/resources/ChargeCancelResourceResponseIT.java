@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -23,7 +24,9 @@ import static org.hamcrest.Matchers.is;
 
 public class ChargeCancelResourceResponseIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
 
     public static Stream<Arguments> statusCode400() {
         return Stream.of(
@@ -48,7 +51,7 @@ public class ChargeCancelResourceResponseIT {
     public void respondWith400_whenNotCancellableState(ChargeStatus status, int statusCode) {
         String chargeId = createNewInPastChargeWithStatus(status);
         String expectedMessage = "Charge not in correct state to be processed, " + chargeId;
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(statusCode)
@@ -68,8 +71,8 @@ public class ChargeCancelResourceResponseIT {
     @ParameterizedTest()
     @MethodSource("statusCode204")
     public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth(ChargeStatus status, int statuscode) {
-        String chargeId = app.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelevant");
-        app.cancelChargeAndCheckApiStatus(chargeId, ChargeStatus.SYSTEM_CANCELLED, statuscode);
+        String chargeId = testBaseExtension.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, ChargeStatus.SYSTEM_CANCELLED, statuscode);
 
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -77,6 +80,6 @@ public class ChargeCancelResourceResponseIT {
     }
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
-        return app.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        return testBaseExtension.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
     }
 }

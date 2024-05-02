@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -45,7 +46,7 @@ import static uk.gov.service.payments.commons.model.SupportedLanguage.ENGLISH;
 
 public class ExpungeResourceIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     EmittedEventDao emittedEventDao;
     private DatabaseFixtures.TestCharge expungeableCharge1;
     private DatabaseTestHelper databaseTestHelper;

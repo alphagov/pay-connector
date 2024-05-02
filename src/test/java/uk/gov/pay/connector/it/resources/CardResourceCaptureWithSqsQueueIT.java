@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -17,6 +18,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.time.Instant;
 import java.util.List;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.hamcrest.CoreMatchers.is;
@@ -30,9 +32,9 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 
 public class CardResourceCaptureWithSqsQueueIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension(
-            "sandbox",
-            io.dropwizard.testing.ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(config("captureProcessConfig.backgroundProcessingEnabled", "false"));
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
@@ -47,14 +49,14 @@ public class CardResourceCaptureWithSqsQueueIT {
 
     @Test
     void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasPreviouslyAuthorised() {
-        String chargeId = app.authoriseNewCharge();
+        String chargeId = testBaseExtension.authoriseNewCharge();
         app.givenSetup()
-                .post(app.captureChargeUrlFor(chargeId))
+                .post(ITestBaseExtension.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        app.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
@@ -64,17 +66,17 @@ public class CardResourceCaptureWithSqsQueueIT {
 
     @Test
     void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture() {
-        String chargeId = app.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+        String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
 
-        captureApproveUrl = app.captureUrlForAwaitingCaptureCharge(app.getAccountId(), chargeId);
+        captureApproveUrl = ITestBaseExtension.captureUrlForAwaitingCaptureCharge(testBaseExtension.getAccountId(), chargeId);
 
         app.givenSetup()
                 .post(captureApproveUrl)
                 .then()
                 .statusCode(204);
 
-        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        app.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();

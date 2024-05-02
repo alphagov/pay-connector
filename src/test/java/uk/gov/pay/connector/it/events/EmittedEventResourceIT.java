@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
@@ -28,12 +29,14 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 public class EmittedEventResourceIT {
 
     private static StateTransitionQueue stateTransitionQueue = new StateTransitionQueue();
-    
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox",
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             EmittedEventResourceIT.ConnectorAppWithCustomStateTransitionQueue.class,
             config("emittedEventSweepConfig.notEmittedEventMaxAgeInSeconds", "0")
     );
+    
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
     private String externalChargeId;
     
     @BeforeEach
@@ -49,7 +52,7 @@ public class EmittedEventResourceIT {
         app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, null);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postEmittedEventsSweepTask()
                 .statusCode(OK.getStatusCode());
 
@@ -72,7 +75,7 @@ public class EmittedEventResourceIT {
         app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, doNotRetryEmitUntil);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postEmittedEventsSweepTask()
                 .statusCode(OK.getStatusCode());
 
@@ -96,7 +99,7 @@ public class EmittedEventResourceIT {
         app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, doNotRetryEmitUntil);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postEmittedEventsSweepTask()
                 .statusCode(OK.getStatusCode());
 
@@ -114,7 +117,7 @@ public class EmittedEventResourceIT {
         app.getDatabaseTestHelper().addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withAmount(100)
                 .withStatus(CREATED)
                 .build());

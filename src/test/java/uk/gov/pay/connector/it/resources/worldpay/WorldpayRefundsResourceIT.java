@@ -8,6 +8,7 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -59,7 +60,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 
 public class WorldpayRefundsResourceIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
@@ -69,9 +72,9 @@ public class WorldpayRefundsResourceIT {
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
-                .withAccountId(Long.parseLong(app.getAccountId()))
-                .withGatewayAccountCredentials(List.of(app.getCredentialParams()))
-                .withCredentials(app.getCredentials());
+                .withAccountId(Long.parseLong(testBaseExtension.getAccountId()))
+                .withGatewayAccountCredentials(List.of(testBaseExtension.getCredentialParams()))
+                .withCredentials(testBaseExtension.getCredentials());
 
         defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -80,8 +83,8 @@ public class WorldpayRefundsResourceIT {
                 .withTransactionId("MyUniqueTransactionId!")
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
-                .withPaymentProvider(app.getPaymentProvider())
-                .withGatewayCredentialId(app.getCredentialParams().getId())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
+                .withGatewayCredentialId(testBaseExtension.getCredentialParams().getId())
                 .insert();
     }
 
@@ -196,7 +199,7 @@ public class WorldpayRefundsResourceIT {
                 aRefundMatching(secondRefundId, is(notNullValue()), externalChargeId, secondRefundAmount, "REFUND SUBMITTED"),
                 aRefundMatching(firstRefundId, is(notNullValue()), externalChargeId, firstRefundAmount, "REFUND SUBMITTED")));
 
-        app.getConnectorRestApiClient().withChargeId(externalChargeId)
+        testBaseExtension.getConnectorRestApiClient().withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(200)
                 .body("refund_summary.status", is("full"))
@@ -213,8 +216,8 @@ public class WorldpayRefundsResourceIT {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURE_SUBMITTED)
-                .withPaymentProvider(app.getPaymentProvider())
-                .withGatewayCredentialId(app.getCredentialParams().getId())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
+                .withGatewayCredentialId(testBaseExtension.getCredentialParams().getId())
                 .insert();
 
         Long refundAmount = 20L;
@@ -475,7 +478,7 @@ public class WorldpayRefundsResourceIT {
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
-                        .replace("{accountId}", app.getAccountId())
+                        .replace("{accountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", chargeId))
                 .then();
     }

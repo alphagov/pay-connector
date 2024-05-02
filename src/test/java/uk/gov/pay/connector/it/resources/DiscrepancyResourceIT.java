@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -36,15 +37,17 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 public class DiscrepancyResourceIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
 
     @Test
     void shouldReturnAllCharges_whenRequestDiscrepancyReport() {
-        String chargeId = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(1, HOURS), "irrelevant");
-        String chargeId2 = app.addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        String chargeId = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        String chargeId2 = testBaseExtension.addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelevant");
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
-        List<JsonNode> results = app.getConnectorRestApiClient()
+        List<JsonNode> results = testBaseExtension.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(Arrays.asList(chargeId, chargeId2)))
                 .statusCode(200)
                 .contentType(JSON)
@@ -71,7 +74,7 @@ public class DiscrepancyResourceIT {
     void shouldReturnDiscrepencyReportForExpungedCharges() throws JsonProcessingException {
         DatabaseFixtures.TestCharge charge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
-                .withTestAccount(app.getTestAccount())
+                .withTestAccount(testBaseExtension.getTestAccount())
                 .withExternalChargeId("external_charge_id_10")
                 .withTransactionId("gateway_transaction_id_")
                 .withChargeStatus(ChargeStatus.AUTHORISATION_SUCCESS)
@@ -80,7 +83,7 @@ public class DiscrepancyResourceIT {
         app.getLedgerStub().returnLedgerTransaction(charge.getExternalChargeId(), charge, null);
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
-        List<JsonNode> results = app.getConnectorRestApiClient()
+        List<JsonNode> results = testBaseExtension.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(singletonList(charge.getExternalChargeId())))
                 .statusCode(200)
                 .contentType(JSON)
@@ -98,10 +101,10 @@ public class DiscrepancyResourceIT {
 
     @Test
     void shouldReportOnChargesThatAreInErrorStatesInGatewayAccount() {
-        String chargeId = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+        String chargeId = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE));
 
-        List<JsonNode> results = app.getConnectorRestApiClient()
+        List<JsonNode> results = testBaseExtension.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(Arrays.asList(chargeId)))
                 .statusCode(200)
                 .contentType(JSON)
@@ -124,18 +127,18 @@ public class DiscrepancyResourceIT {
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
         app.getLedgerStub().returnTransactionNotFound("nonExistentId");
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .getDiscrepancyReport(toJson(singletonList("nonExistentId")))
                 .statusCode(404);
     }
 
     @Test
     void shouldProcessDiscrepanciesWherePayStateIsExpiredAndGatewayStateIsAuthorised() {
-        String chargeId = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
-        String chargeId2 = app.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+        String chargeId = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+        String chargeId2 = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
-        List<JsonNode> results = app.getConnectorRestApiClient()
+        List<JsonNode> results = testBaseExtension.getConnectorRestApiClient()
                 .resolveDiscrepancies(toJson(Arrays.asList(chargeId, chargeId2)))
                 .statusCode(200)
                 .contentType(JSON)

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
@@ -35,7 +36,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 public class StripeResourceCancelIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("stripe");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
     private static final String AMOUNT = "6234";
     private static final String DESCRIPTION = "Test description";

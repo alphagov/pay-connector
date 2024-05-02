@@ -12,6 +12,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -77,9 +78,12 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class ChargesApiResourceCreateIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox",
-                    config("eventQueue.eventQueueEnabled", "true"),
-                    config("captureProcessConfig.backgroundProcessingEnabled", "true"));
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
+            config("eventQueue.eventQueueEnabled", "true"),
+            config("captureProcessConfig.backgroundProcessingEnabled", "true")
+    );
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
 
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
@@ -100,7 +104,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_LANGUAGE_KEY, "cy"
         ));
 
-        ValidatableResponse response = app.getConnectorRestApiClient()
+        ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -126,7 +130,7 @@ public class ChargesApiResourceCreateIT {
                 .contentType(JSON);
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
-        String documentLocation = expectedChargeLocationFor(app.getAccountId(), externalChargeId);
+        String documentLocation = expectedChargeLocationFor(testBaseExtension.getAccountId(), externalChargeId);
         String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
 
         String hrefNextUrl = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
@@ -141,8 +145,8 @@ public class ChargesApiResourceCreateIT {
                     put("chargeTokenId", chargeTokenId);
                 }}));
 
-        ValidatableResponse getChargeResponse = app.getConnectorRestApiClient()
-                .withAccountId(app.getAccountId())
+        ValidatableResponse getChargeResponse = testBaseExtension.getConnectorRestApiClient()
+                .withAccountId(testBaseExtension.getAccountId())
                 .withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
@@ -182,7 +186,7 @@ public class ChargesApiResourceCreateIT {
                     put("chargeTokenId", newChargeTokenId);
                 }}));
 
-        String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(app.getTestAccount().getAccountId()).get(0).get("id").toString();
+        String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(testBaseExtension.getTestAccount().getAccountId()).get(0).get("id").toString();
         String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(externalChargeId).get("gateway_account_credential_id").toString();
 
         assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
@@ -198,7 +202,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
         ));
 
-        ValidatableResponse createResponse = app.getConnectorRestApiClient()
+        ValidatableResponse createResponse = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_LANGUAGE_KEY, is("en"))
@@ -206,8 +210,8 @@ public class ChargesApiResourceCreateIT {
 
         String externalChargeId = createResponse.extract().path(JSON_CHARGE_KEY);
 
-        ValidatableResponse findResponse = app.getConnectorRestApiClient()
-                .withAccountId(app.getAccountId())
+        ValidatableResponse findResponse = testBaseExtension.getConnectorRestApiClient()
+                .withAccountId(testBaseExtension.getAccountId())
                 .withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
@@ -234,7 +238,7 @@ public class ChargesApiResourceCreateIT {
         ));
 
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -264,7 +268,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_SOURCE_KEY, CARD_API
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Status.CREATED.getStatusCode())
                 .body(JSON_REFERENCE_KEY, is(VALID_CARD_NUMBER))
@@ -280,7 +284,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId("invalidAccountId")
                 .postCreateCharge(postBody)
                 .contentType(JSON)
@@ -302,8 +306,8 @@ public class ChargesApiResourceCreateIT {
                 JSON_SOURCE_KEY, CARD_PAYMENT_LINK
         ));
 
-        app.getConnectorRestApiClient()
-                .withAccountId(app.getAccountId())
+        testBaseExtension.getConnectorRestApiClient()
+                .withAccountId(testBaseExtension.getAccountId())
                 .postCreateCharge(postBody)
                 .contentType(JSON)
                 .statusCode(BAD_REQUEST.getStatusCode())
@@ -322,7 +326,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId(missingGatewayAccount)
                 .postCreateCharge(postBody)
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -343,7 +347,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        app.getConnectorRestApiClient().postCreateCharge(postBody)
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
@@ -357,7 +361,7 @@ public class ChargesApiResourceCreateIT {
 
     @Test
     void cannotMakeChargeForMissingFields() {
-        app.getConnectorRestApiClient().postCreateCharge("{}")
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge("{}")
                 .statusCode(422)
                 .contentType(JSON)
                 .header("Location", is(nullValue()))
@@ -384,7 +388,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        final ValidatableResponse response = app.getConnectorRestApiClient()
+        final ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(201);
 
@@ -414,7 +418,7 @@ public class ChargesApiResourceCreateIT {
 
     @Test
     void shouldReturn403WhenGatewayAccountIsDisabled() {
-        app.getDatabaseTestHelper().setDisabled(Long.parseLong(app.getAccountId()));
+        app.getDatabaseTestHelper().setDisabled(Long.parseLong(testBaseExtension.getAccountId()));
         
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -423,7 +427,7 @@ public class ChargesApiResourceCreateIT {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(FORBIDDEN_403)
                 .contentType(JSON)

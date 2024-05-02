@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
@@ -19,14 +20,16 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.
 
 public class WorldpayCardAuthoriseServiceIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension(WORLDPAY.getName());
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
     
     @Test
     void shouldSuccessfullyAuthoriseUserNotPresentPayment() {
         var recurringAuthToken = Map.of(
                 WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "a-token-id",
                 WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "transaction-identifier");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var successCharge = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 
@@ -42,7 +45,7 @@ public class WorldpayCardAuthoriseServiceIT {
         var recurringAuthToken = Map.of(
                 WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "a-token-id",
                 WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "transaction-identifier");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var chargeEntity = app.getInstanceFromGuiceContainer(ChargeService.class)
                 .findChargeByExternalId(userNotPresentChargeId.toString());
@@ -64,7 +67,7 @@ public class WorldpayCardAuthoriseServiceIT {
         var recurringAuthToken = Map.of(
                 WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "a-token-id",
                 WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "transaction-identifier");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var chargeEntity = app.getInstanceFromGuiceContainer(ChargeService.class)
                 .findChargeByExternalId(userNotPresentChargeId.toString());
@@ -86,7 +89,7 @@ public class WorldpayCardAuthoriseServiceIT {
         var recurringAuthToken = Map.of(
                 WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "a-token-id",
                 WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "transaction-identifier");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var chargeEntity = app.getInstanceFromGuiceContainer(ChargeService.class)
                 .findChargeByExternalId(userNotPresentChargeId.toString());

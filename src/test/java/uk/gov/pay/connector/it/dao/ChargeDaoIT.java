@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
@@ -67,7 +68,7 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class ChargeDaoIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private static final String DESCRIPTION = "Test description";
 
     private ChargeDao chargeDao;

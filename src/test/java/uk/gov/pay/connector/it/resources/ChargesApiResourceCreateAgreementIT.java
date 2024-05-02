@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueue;
@@ -64,7 +65,9 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceCreateAgreementIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
     
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
@@ -85,9 +88,9 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldCreatePaymentWithAgreementIdAndSavePaymentInstrumentToAgreementTrue() {
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(String.valueOf(app.getAccountId()))
+                .withGatewayAccountId(String.valueOf(testBaseExtension.getAccountId()))
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
@@ -101,20 +104,20 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true"
         ));
 
-        String chargeId = app.getConnectorRestApiClient()
+        String chargeId = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(SC_CREATED)
                 .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
                 .contentType(JSON)
                 .extract().path("charge_id");
 
-        app.assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
-        app.assertApiStateIs(chargeId, EXTERNAL_CREATED.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_CREATED.getStatus());
     }
 
     @Test
     void shouldCreatePaymentWithAgreementIdAndAuthorisationModeAgreement() {
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -123,7 +126,7 @@ public class ChargesApiResourceCreateAgreementIT {
         app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
 
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build();
@@ -137,15 +140,15 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
-        String chargeId = app.getConnectorRestApiClient()
+        String chargeId = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(SC_CREATED)
                 .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
                 .contentType(JSON)
                 .extract().path("charge_id");
 
-        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
-        app.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
@@ -160,7 +163,7 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldReturn200_whenChargeAlreadyCreatedForIdempotencyKeyWithMatchingRequestBody_whenRequestBodyHasMinimalValues() {
         String idempotencyKey = "an-idempotency-key";
 
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -169,13 +172,13 @@ public class ChargesApiResourceCreateAgreementIT {
         app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
 
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = app.addCharge(CREATED);
+        String existingChargeExternalId = testBaseExtension.addCharge(CREATED);
 
         // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
         // create charge request, changes to the business code should be made in a way that a request stored in the 
@@ -190,9 +193,9 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         );
 
-        app.getDatabaseTestHelper().insertIdempotency(idempotencyKey, Long.valueOf(app.getAccountId()), existingChargeExternalId, requestBodyMap);
+        app.getDatabaseTestHelper().insertIdempotency(idempotencyKey, Long.valueOf(testBaseExtension.getAccountId()), existingChargeExternalId, requestBodyMap);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withHeader("Idempotency-Key", idempotencyKey)
                 .postCreateCharge(toJson(requestBodyMap))
                 .statusCode(SC_OK)
@@ -204,7 +207,7 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldReturn200_whenChargeAlreadyCreatedForIdempotencyKeyWithMatchingRequestBody_whenRequestBodyHasValuesForAllProperties() {
         String idempotencyKey = "an-idempotency-key";
 
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -213,13 +216,13 @@ public class ChargesApiResourceCreateAgreementIT {
         app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
 
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = app.addCharge(CREATED);
+        String existingChargeExternalId = testBaseExtension.addCharge(CREATED);
 
         // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
         // create charge request, changes to the business code should be made in a way that a request stored in the 
@@ -239,9 +242,9 @@ public class ChargesApiResourceCreateAgreementIT {
                 Map.entry(JSON_PROVIDER_KEY, "sandbox"),
                 Map.entry(JSON_METADATA_KEY, Map.of("foo", "bar")));
 
-        app.getDatabaseTestHelper().insertIdempotency(idempotencyKey, Long.valueOf(app.getAccountId()), existingChargeExternalId, requestBodyMap);
+        app.getDatabaseTestHelper().insertIdempotency(idempotencyKey, Long.valueOf(testBaseExtension.getAccountId()), existingChargeExternalId, requestBodyMap);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withHeader("Idempotency-Key", idempotencyKey)
                 .postCreateCharge(toJson(requestBodyMap))
                 .statusCode(SC_OK)
@@ -253,7 +256,7 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldReturn409_whenChargeAlreadyCreatedForIdempotencyKey_andRequestBodyDoesNotMatch() {
         String idempotencyKey = "an-idempotency-key";
 
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -262,13 +265,13 @@ public class ChargesApiResourceCreateAgreementIT {
         app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
 
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = app.addCharge(CREATED);
+        String existingChargeExternalId = testBaseExtension.addCharge(CREATED);
         
         Map<String, Object> previousRequestBodyMap = Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
@@ -285,9 +288,9 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         );
 
-        app.getDatabaseTestHelper().insertIdempotency(idempotencyKey, Long.valueOf(app.getAccountId()), existingChargeExternalId, previousRequestBodyMap);
+        app.getDatabaseTestHelper().insertIdempotency(idempotencyKey, Long.valueOf(testBaseExtension.getAccountId()), existingChargeExternalId, previousRequestBodyMap);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withHeader("Idempotency-Key", idempotencyKey)
                 .postCreateCharge(toJson(newRequestBodyMap))
                 .statusCode(SC_CONFLICT)
@@ -314,7 +317,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 "true"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_BAD_REQUEST)
                 .contentType(JSON)
@@ -341,7 +344,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_BAD_REQUEST)
                 .contentType(JSON)
@@ -365,7 +368,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -391,7 +394,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -419,7 +422,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_MOTO_KEY, true
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -446,7 +449,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_EMAIL_KEY, "test@test.test"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -482,7 +485,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 )
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody,accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -508,7 +511,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 "authorisation_mode", "agreement"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_BAD_REQUEST)
                 .body("message", contains("Agreement with ID [" + JSON_VALID_AGREEMENT_ID_VALUE + "] not found."))
@@ -539,7 +542,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 "authorisation_mode", "agreement"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_BAD_REQUEST)
                 .body("message", contains("Agreement with ID [" + JSON_VALID_AGREEMENT_ID_VALUE + "] does not have a payment instrument"))
@@ -578,7 +581,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 "authorisation_mode", "agreement"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_BAD_REQUEST)
                 .body("message", contains("Agreement with ID [" + JSON_VALID_AGREEMENT_ID_VALUE + "] has payment instrument with ID ["
@@ -606,7 +609,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AUTH_MODE_KEY, "moto_api"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -633,7 +636,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_BAD_REQUEST)
                 .contentType(JSON)
@@ -658,7 +661,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -684,7 +687,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, false
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
@@ -701,7 +704,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 .build();
         app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_TOO_LONG_AGREEMENT_ID_VALUE)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
@@ -716,7 +719,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 "true"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON);
@@ -745,7 +748,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 "true"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON);
@@ -754,7 +757,7 @@ public class ChargesApiResourceCreateAgreementIT {
     @Test
     void shouldReturn422OnSavePaymentToInstrumentRequestWhenRecurringNotEnabledForGatewayAccount() {
         AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
@@ -768,7 +771,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)

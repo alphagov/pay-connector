@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
@@ -50,7 +51,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountDaoIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private GatewayAccountDao gatewayAccountDao;
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private DatabaseFixtures databaseFixtures;
@@ -323,10 +324,9 @@ public class GatewayAccountDaoIT {
         var params = new GatewayAccountSearchParams();
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(3));
-        assertThat(gatewayAccounts.get(0).getId(), is(Long.valueOf(app.getAccountId())));
-        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_1));
-        assertThat(gatewayAccounts.get(2).getId(), is(gatewayAccountId_2));
+        assertThat(gatewayAccounts, hasSize(2));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
     }
 
     @Test

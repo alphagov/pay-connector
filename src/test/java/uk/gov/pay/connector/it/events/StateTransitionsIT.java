@@ -13,6 +13,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.time.Instant;
@@ -32,11 +33,12 @@ import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
 
 public class StateTransitionsIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension(
-            "sandbox",
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             config("captureProcessConfig.backgroundProcessingEnabled", "true"),
             config("eventQueue.eventQueueEnabled", "true")
     );
+    @RegisterExtension
+    static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
 
     @BeforeEach
     void setUp() {
@@ -45,9 +47,9 @@ public class StateTransitionsIT {
 
     @Test
     void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthCancel() throws InterruptedException {
-        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
+        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
 
-        app.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
+        testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
         Thread.sleep(200);
 
@@ -75,7 +77,7 @@ public class StateTransitionsIT {
 
     @Test
     void shouldEmitCorrectRefundEvents() throws Exception{
-        String chargeId = app.addCharge(CAPTURED, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
+        String chargeId = testBaseExtension.addCharge(CAPTURED, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
         Long refundAmount = 50L;
         Long refundAmountAvailable = AMOUNT;
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvailable);
@@ -86,7 +88,7 @@ public class StateTransitionsIT {
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
-                        .replace("{accountId}", app.getAccountId())
+                        .replace("{accountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", chargeId))
                 .then()
                 .statusCode(202);

@@ -10,6 +10,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
@@ -33,10 +34,13 @@ public class ChargesApiResourceResendConfirmationEmailIT {
     private static final NotificationClient notificationClient = mock(NotificationClient.class);
     
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox",
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             ChargesApiResourceResendConfirmationEmailIT.ConnectorAppWithCustomInjector.class,
             config("notifyConfig.emailNotifyEnabled", "true")
     );
+    
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
     private final String emailAddress = "a@b.com";
 
     @BeforeAll
@@ -46,14 +50,14 @@ public class ChargesApiResourceResendConfirmationEmailIT {
 
     @BeforeEach
     void setup() {
-        app.getDatabaseTestHelper().addEmailNotification(Long.valueOf(app.getAccountId()), "a template", true, PAYMENT_CONFIRMED);
+        app.getDatabaseTestHelper().addEmailNotification(Long.valueOf(testBaseExtension.getAccountId()), "a template", true, PAYMENT_CONFIRMED);
     }   
 
     @Test
     void shouldReturn204WhenEmailSuccessfullySent() throws Exception {
         String transactionId = String.valueOf(RandomUtils.nextInt());
 
-        ChargeUtils.ExternalChargeId chargeId = createNewCharge(transactionId, app.getPaymentProvider());
+        ChargeUtils.ExternalChargeId chargeId = createNewCharge(transactionId, testBaseExtension.getPaymentProvider());
 
         var notificationId = UUID.randomUUID();
         var mockResponse = mock(SendEmailResponse.class);
@@ -63,7 +67,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
         given().port(app.getLocalPort())
                 .body("")
                 .contentType(APPLICATION_JSON)
-                .post(String.format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", app.getAccountId(), chargeId))
+                .post(String.format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", testBaseExtension.getAccountId(), chargeId))
                 .then()
                 .statusCode(204);
     }
@@ -72,7 +76,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
         return ChargeUtils.createNewChargeWithAccountId(
                 ChargeStatus.CREATED,
                 transactionId,
-                app.getAccountId(),
+                testBaseExtension.getAccountId(),
                 app.getDatabaseTestHelper(),
                 emailAddress,
                 paymentProvider);

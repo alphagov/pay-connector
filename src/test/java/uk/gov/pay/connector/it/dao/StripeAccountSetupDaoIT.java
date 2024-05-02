@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.dao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
@@ -21,7 +22,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 public class StripeAccountSetupDaoIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private StripeAccountSetupDao stripeAccountSetupDao;
 
     @BeforeEach

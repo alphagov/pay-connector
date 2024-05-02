@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import javax.ws.rs.core.Response;
@@ -27,6 +28,10 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
+    @RegisterExtension
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
 
     private static final String JSON_PREFILLED_CARDHOLDER_DETAILS_KEY = "prefilled_cardholder_details";
     private static final String JSON_BILLING_ADDRESS_KEY = "billing_address";
@@ -36,9 +41,6 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
     private static final String JSON_CARDHOLDER_NAME_KEY = "cardholder_name";
     private static final String JSON_ADDRESS_LINE_CITY = "city";
     private static final String JSON_ADDRESS_LINE_COUNTRY_CODE = "country";
-
-    @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
 
     @Test
     void shouldReturn201WhenPrefilledCardHolderDetailsFieldsAreMaximum() {
@@ -63,7 +65,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
                 )
         ));
 
-        app.getConnectorRestApiClient().postCreateCharge(postBody)
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -98,7 +100,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
                 )
         ));
 
-        app.getConnectorRestApiClient().postCreateCharge(postBody)
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -135,7 +137,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
                 )
         ));
 
-        app.getConnectorRestApiClient().postCreateCharge(postBody)
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -174,7 +176,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
                 )
         ));
 
-        app.getConnectorRestApiClient().postCreateCharge(postBody)
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -200,7 +202,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
                 JSON_RETURN_URL_KEY, RETURN_URL
         ));
 
-        app.getConnectorRestApiClient().postCreateCharge(postBody)
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))
@@ -225,7 +227,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
                 )
         ));
 
-        app.getConnectorRestApiClient().postCreateCharge(postBody)
+        testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body(JSON_CHARGE_KEY, is(notNullValue()))

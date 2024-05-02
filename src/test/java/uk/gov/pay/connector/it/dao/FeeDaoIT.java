@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.fee.dao.FeeDao;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
@@ -21,7 +22,7 @@ import static org.hamcrest.core.Is.is;
 
 public class FeeDaoIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private FeeDao feeDao;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 

@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -18,7 +19,9 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonAuthorisationDe
 
 public class CardAuthorizeDelayedGatewayResponseIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
     
     private String validCardDetails = buildJsonAuthorisationDetailsFor(VALID_SANDBOX_CARD_LIST[0], "visa");
 
@@ -41,11 +44,11 @@ public class CardAuthorizeDelayedGatewayResponseIT {
         timeoutInSeconds.setAccessible(true);
         timeoutInSeconds.setInt(conf, 0);
 
-        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validCardDetails)
-                .post(app.authoriseChargeUrlFor(chargeId))
+                .post(ITestBaseExtension.authoriseChargeUrlFor(chargeId))
                 .then()
                 .statusCode(202)
                 .contentType(JSON)

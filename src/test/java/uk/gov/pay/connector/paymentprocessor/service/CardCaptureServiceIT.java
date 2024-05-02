@@ -4,6 +4,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
@@ -26,7 +27,9 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 
 public class CardCaptureServiceIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app);
 
     @Test
     void shouldPersistFeesForStripeV2Charge() {
@@ -37,7 +40,7 @@ public class CardCaptureServiceIT {
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId)
                 .withPaymentProvider(STRIPE.getName())
-                .withGatewayAccountId(app.getAccountId())
+                .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withAmount(10000)
                 .withStatus(ChargeStatus.CAPTURE_READY)
                 .build());

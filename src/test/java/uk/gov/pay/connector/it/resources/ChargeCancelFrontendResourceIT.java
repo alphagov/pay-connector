@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -41,7 +42,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 
 public class ChargeCancelFrontendResourceIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
     
     private static final List<ChargeStatus> NON_USER_CANCELLABLE_STATUSES = ImmutableList.of(
             AUTHORISATION_REJECTED,
@@ -63,7 +66,7 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith204WithNoLockingState_whenCancellationBeforeAuth() {
 
-        String chargeId = app.addCharge(ENTERING_CARD_DETAILS, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(ENTERING_CARD_DETAILS, "ref", Instant.now().minus(1, HOURS), "irrelvant");
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -72,7 +75,7 @@ public class ChargeCancelFrontendResourceIT {
 
     @Test
     void respondWith204WithLockingState_whenCancellationAfterAuth() {
-        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
+        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
         app.getWorldpayMockClient().mockCancelSuccess();
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
@@ -87,7 +90,7 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith204_whenCancellationDuringAuthReady() {
 
-        String chargeId = app.addCharge(AUTHORISATION_READY, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(AUTHORISATION_READY, "ref", Instant.now().minus(1, HOURS), "irrelvant");
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -96,9 +99,9 @@ public class ChargeCancelFrontendResourceIT {
 
     @Test
     void respondWith202_whenCancelAlreadyInProgress() {
-        String chargeId = app.addCharge(USER_CANCEL_READY, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(USER_CANCEL_READY, "ref", Instant.now().minus(1, HOURS), "irrelvant");
         String expectedMessage = "User Cancellation for charge already in progress, " + chargeId;
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
                 .statusCode(ACCEPTED.getStatusCode())
@@ -113,7 +116,7 @@ public class ChargeCancelFrontendResourceIT {
 
         String gatewayTransactionId = "gatewayTransactionId";
         app.getWorldpayMockClient().mockCancelError();
-        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), gatewayTransactionId);
+        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), gatewayTransactionId);
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
@@ -125,7 +128,7 @@ public class ChargeCancelFrontendResourceIT {
 
     @Test
     void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
-        String chargeId = app.addCharge(AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(1, HOURS), "irrelvant");
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -133,18 +136,18 @@ public class ChargeCancelFrontendResourceIT {
     }
     
     private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
                 .statusCode(httpStatusCode);
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .getCharge()
                 .body("state.status", is("failed"))
                 .body("state.message", is("Payment was cancelled by the user"))
                 .body("state.code", is("P0030"));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", is(targetState.getValue()));
@@ -154,9 +157,9 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith404_whenPaymentNotFound() {
         String unknownChargeId = "2344363244";
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(unknownChargeId)
-                .withAccountId(app.getAccountId())
+                .withAccountId(testBaseExtension.getAccountId())
                 .postFrontendChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
                 .and()
@@ -169,10 +172,10 @@ public class ChargeCancelFrontendResourceIT {
     void respondWith400_whenNotCancellableState() {
         NON_USER_CANCELLABLE_STATUSES
                 .forEach(status -> {
-                    String chargeId = app.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+                    String chargeId = testBaseExtension.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
                     String incorrectStateMessage = "Charge not in correct state to be processed, " + chargeId;
 
-                    app.getConnectorRestApiClient()
+                    testBaseExtension.getConnectorRestApiClient()
                             .withChargeId(chargeId)
                             .postFrontendChargeCancellation()
                             .statusCode(BAD_REQUEST.getStatusCode())
