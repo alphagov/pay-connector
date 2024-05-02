@@ -18,8 +18,8 @@ server:
 logging:
   level: INFO
   loggers:
-    org.apache.http.impl: ${APACHE_HTTP_LOGGING:-INFO}
-    org.apache.http.headers: ${APACHE_HTTP_LOGGING:-INFO}
+    org.apache.http.impl: TRACE
+    org.apache.http.headers: TRACE
   appenders:
     - type: logstash-console
       threshold: ALL
