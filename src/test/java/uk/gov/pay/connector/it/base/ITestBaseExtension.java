@@ -33,7 +33,6 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
-import javax.xml.crypto.Data;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -120,30 +119,41 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     private static AddGatewayAccountCredentialsParams credentialParams;
     public RestAssuredClient connectorRestApiClient;
     private AppWithPostgresAndSqsExtension app;
+    private boolean isAppExternal = false;
 //    private RestAssuredClient connectorRestApiClient;
+    
+    public ITestBaseExtension(String paymentProvider) {
+        this.paymentProvider = paymentProvider;
+        this.app = new AppWithPostgresAndSqsExtension(); // to delete - just for compatibility
+        createCredentialParams();
+    }
 
     public ITestBaseExtension(String paymentProvider, AppWithPostgresAndSqsExtension app) {
 //        super();
         this.paymentProvider = paymentProvider;
         this.app = app;
+        this.isAppExternal = true;
         createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
 //        super(CustomConnectorClass);
         this.paymentProvider = paymentProvider;
+        this.app = new AppWithPostgresAndSqsExtension(CustomConnectorClass); // to delete - just for compatibility
         createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
 //        super(configOverrides);
         this.paymentProvider = paymentProvider;
+        this.app = new AppWithPostgresAndSqsExtension(configOverrides); // to delete - just for compatibility
         createCredentialParams();
     }
 
     public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
 //        super(CustomConnectorClass, configOverrides);
         this.paymentProvider = paymentProvider;
+        this.app = new AppWithPostgresAndSqsExtension(CustomConnectorClass, configOverrides); // to delete - just for compatibility
         createCredentialParams();
     }
     
@@ -167,22 +177,26 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     @Override
     public void beforeEach(ExtensionContext context) {
 //        super.beforeEach(context);
+        if (!isAppExternal) { app.beforeEach(context); } 
         setUpBase();
     }
     
     @Override
     public void afterEach(ExtensionContext context) {
 //        super.afterEach(context);
+        if (!isAppExternal) { app.afterEach(context); }
     }
     
     @Override
-    public void beforeAll(ExtensionContext context) {
+    public void beforeAll(ExtensionContext context) throws Exception {
 //        super.beforeAll(context);
+        if (!isAppExternal) { app.beforeAll(context); }
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
 //        super.afterAll(context);
+        if (!isAppExternal) { app.afterAll(context); }
     }
 
     public void createConnectorRestApiClient() {
