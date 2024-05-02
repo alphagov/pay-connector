@@ -1,10 +1,6 @@
 package uk.gov.pay.connector.it.base;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.PurgeQueueRequest;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.JsonObject;
-import io.dropwizard.testing.ConfigOverride;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
@@ -12,7 +8,6 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.extension.*;
-import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
@@ -23,10 +18,6 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
-import uk.gov.pay.connector.rules.CardidStub;
-import uk.gov.pay.connector.rules.LedgerStub;
-import uk.gov.pay.connector.rules.StripeMockClient;
-import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.*;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
@@ -113,91 +104,34 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     private int gatewayAccountCredentialsId  = RandomUtils.nextInt();
     private Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
-
-    private static CardidStub cardidStub;
-
     private static AddGatewayAccountCredentialsParams credentialParams;
     public RestAssuredClient connectorRestApiClient;
     private AppWithPostgresAndSqsExtension app;
-    private boolean isAppExternal = false;
-//    private RestAssuredClient connectorRestApiClient;
-    
-    public ITestBaseExtension(String paymentProvider) {
-        this.paymentProvider = paymentProvider;
-        this.app = new AppWithPostgresAndSqsExtension(); // to delete - just for compatibility
-        createCredentialParams();
-    }
 
     public ITestBaseExtension(String paymentProvider, AppWithPostgresAndSqsExtension app) {
-//        super();
         this.paymentProvider = paymentProvider;
         this.app = app;
-        this.isAppExternal = true;
         createCredentialParams();
-    }
-
-    public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
-//        super(CustomConnectorClass);
-        this.paymentProvider = paymentProvider;
-        this.app = new AppWithPostgresAndSqsExtension(CustomConnectorClass); // to delete - just for compatibility
-        createCredentialParams();
-    }
-
-    public ITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
-//        super(configOverrides);
-        this.paymentProvider = paymentProvider;
-        this.app = new AppWithPostgresAndSqsExtension(configOverrides); // to delete - just for compatibility
-        createCredentialParams();
-    }
-
-    public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
-//        super(CustomConnectorClass, configOverrides);
-        this.paymentProvider = paymentProvider;
-        this.app = new AppWithPostgresAndSqsExtension(CustomConnectorClass, configOverrides); // to delete - just for compatibility
-        createCredentialParams();
-    }
-    
-    public ITestBaseExtension withApp(AppWithPostgresAndSqsExtension app) {
-        this.app = app;
-        return this;
     }
 
     private void setUpBase() {
-//        resetDatabase(); // tests will break if setUpBase is called twice without this
-        
         createConnectorRestApiClient();
-        
         createTestAccount();
-        
-//        createCardIdStub();
-//        ledgerStub.acceptPostEvent();
-        
     }
     
     @Override
     public void beforeEach(ExtensionContext context) {
-//        super.beforeEach(context);
-        if (!isAppExternal) { app.beforeEach(context); } 
         setUpBase();
     }
     
     @Override
-    public void afterEach(ExtensionContext context) {
-//        super.afterEach(context);
-        if (!isAppExternal) { app.afterEach(context); }
-    }
+    public void afterEach(ExtensionContext context) {}
     
     @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
-//        super.beforeAll(context);
-        if (!isAppExternal) { app.beforeAll(context); }
-    }
+    public void beforeAll(ExtensionContext context) {}
 
     @Override
-    public void afterAll(ExtensionContext context) {
-//        super.afterAll(context);
-        if (!isAppExternal) { app.afterAll(context); }
-    }
+    public void afterAll(ExtensionContext context) {}
 
     public void createConnectorRestApiClient() {
         connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
@@ -253,16 +187,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withCredentials(credentials)
                 .build();
     }
-
-    public void purgeEventQueue() {
-        AmazonSQS sqsClient = app.getInstanceFromGuiceContainer(AmazonSQS.class);
-        sqsClient.purgeQueue(new PurgeQueueRequest(app.getEventQueueUrl()));
-    }
     
-//    public void createCardIdStub() {
-//        cardidStub = new CardidStub(app.getWireMockServer());
-//    }
-
     public Map<String, Object> getCredentials() {
         return credentials;
     }
@@ -649,16 +574,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public String getAccountId() {
         return accountId;
     }
-
-
-//    public WireMockServer getWiremockserver() {
-//        return wireMockServer;
-//    }
-
-//    public CardidStub getCardidStub() {
-//        return cardidStub;
-//    }
-
+    
     public int getGatewayAccountCredentialsId() {
         return gatewayAccountCredentialsId;
     }
@@ -666,21 +582,4 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public AddGatewayAccountCredentialsParams getCredentialParams() {
         return credentialParams;
     }
-    
-    // TO delete -- just so build works
-    public int getLocalPort() { return app.getLocalPort(); }
-    public DatabaseTestHelper getDatabaseTestHelper() { return app.getDatabaseTestHelper(); }
-    public LedgerStub getLedgerStub() { return app.getLedgerStub(); }
-    public StripeMockClient getStripeMockClient() { return app.getStripeMockClient(); }
-    public <T> T getInstanceFromGuiceContainer(Class<T> klazz) { return app.getInstanceFromGuiceContainer(klazz); }
-    public AuthorisationConfig getAuthorisationConfig() { return app.getAuthorisationConfig(); }
-    public static WireMockServer getWireMockServer() { return AppWithPostgresAndSqsExtension.getWireMockServer(); }
-    public static WireMockServer getStripeWireMockServer() { return AppWithPostgresAndSqsExtension.getStripeWireMockServer(); }
-    public WireMockServer getWorldpayWireMockServer() { return app.getWorldpayWireMockServer(); }
-    public String getEventQueueUrl() { return app.getEventQueueUrl(); }
-    public CardidStub getCardidStub() { return app.getCardidStub(); }
-    public DatabaseFixtures getDatabaseFixtures() { return app.getDatabaseFixtures(); }
-    public WorldpayMockClient getWorldpayMockClient() { return app.getWorldpayMockClient(); } 
-    
-    
 }
