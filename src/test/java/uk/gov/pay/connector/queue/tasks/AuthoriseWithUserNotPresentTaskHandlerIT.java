@@ -54,7 +54,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";

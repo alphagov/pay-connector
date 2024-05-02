@@ -44,7 +44,7 @@ public class ChargeCancelFrontendResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
     
     private static final List<ChargeStatus> NON_USER_CANCELLABLE_STATUSES = ImmutableList.of(
             AUTHORISATION_REJECTED,

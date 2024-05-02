@@ -38,7 +38,7 @@ public class StateTransitionsIT {
             config("eventQueue.eventQueueEnabled", "true")
     );
     @RegisterExtension
-    static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @BeforeEach
     void setUp() {

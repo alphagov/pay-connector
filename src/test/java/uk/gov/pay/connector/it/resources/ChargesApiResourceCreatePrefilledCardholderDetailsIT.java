@@ -31,7 +31,7 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final String JSON_PREFILLED_CARDHOLDER_DETAILS_KEY = "prefilled_cardholder_details";
     private static final String JSON_BILLING_ADDRESS_KEY = "billing_address";

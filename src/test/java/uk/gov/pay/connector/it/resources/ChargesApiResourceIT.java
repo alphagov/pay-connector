@@ -62,7 +62,7 @@ public class ChargesApiResourceIT {
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";

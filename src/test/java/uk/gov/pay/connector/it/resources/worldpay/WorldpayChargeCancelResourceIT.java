@@ -19,7 +19,7 @@ public class WorldpayChargeCancelResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     void cancelCharge_inWorldpaySystem() {

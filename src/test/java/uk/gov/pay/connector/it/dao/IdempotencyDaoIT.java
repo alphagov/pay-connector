@@ -25,7 +25,7 @@ public class IdempotencyDaoIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private IdempotencyDao idempotencyDao;
     private GatewayAccountDao gatewayAccountDao;
     private String key = "idempotency-key";

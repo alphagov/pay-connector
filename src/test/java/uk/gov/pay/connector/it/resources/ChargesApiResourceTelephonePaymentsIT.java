@@ -31,7 +31,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final HashMap<String, Object> postBody = new HashMap<>();
     private static final String stringOf51Characters = StringUtils.repeat("*", 51);
     private static final String stringOf50Characters = StringUtils.repeat("*", 50);

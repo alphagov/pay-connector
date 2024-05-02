@@ -67,7 +67,7 @@ public class StripeCardResourceAuthoriseIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
     private static final String CVC = "123";
     private static final CardExpiryDate EXPIRY = CardExpiryDate.valueOf("11/99");

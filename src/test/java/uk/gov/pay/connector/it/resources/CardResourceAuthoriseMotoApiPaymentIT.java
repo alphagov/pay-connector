@@ -28,7 +28,7 @@ public class CardResourceAuthoriseMotoApiPaymentIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(config("captureProcessConfig.backgroundProcessingEnabled", "false"));
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     
     private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";
     private static final String VALID_CARD_NUMBER = "4242424242424242";

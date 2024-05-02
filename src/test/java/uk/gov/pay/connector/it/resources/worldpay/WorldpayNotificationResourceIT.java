@@ -44,7 +44,7 @@ public class WorldpayNotificationResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(WorldpayNotificationResourceIT.ConnectorAppWithCustomInjector.class, config("worldpay.notificationDomain", ".worldpay.com"));
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";

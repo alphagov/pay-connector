@@ -83,7 +83,7 @@ public class ChargesApiResourceCreateIT {
             config("captureProcessConfig.backgroundProcessingEnabled", "true")
     );
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
 
     private static final String FRONTEND_CARD_DETAILS_URL = "/secure";

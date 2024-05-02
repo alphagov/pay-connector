@@ -19,7 +19,7 @@ public class EpdqRefundsResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("epdq", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("epdq", app.getLocalPort(), app.getDatabaseTestHelper());
     private DatabaseFixtures.TestCharge charge;
 
     @BeforeEach

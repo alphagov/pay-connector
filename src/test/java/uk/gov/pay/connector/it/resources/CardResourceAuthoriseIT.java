@@ -66,7 +66,7 @@ public class CardResourceAuthoriseIT {
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
 
     private static final String[] VALID_SANDBOX_CARD_LIST = new String[]{

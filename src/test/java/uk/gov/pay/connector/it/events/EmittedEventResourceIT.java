@@ -36,7 +36,7 @@ public class EmittedEventResourceIT {
     );
     
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private String externalChargeId;
     
     @BeforeEach

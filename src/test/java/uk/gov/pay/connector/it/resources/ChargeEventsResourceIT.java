@@ -37,7 +37,7 @@ public class ChargeEventsResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     public static final String USER_EMAIL = "test@test.com";

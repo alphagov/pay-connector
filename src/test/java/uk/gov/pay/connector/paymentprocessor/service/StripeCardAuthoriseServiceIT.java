@@ -22,7 +22,7 @@ public class StripeCardAuthoriseServiceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     
     @Test
     void shouldSuccessfullyAuthoriseUserNotPresentPayment() {

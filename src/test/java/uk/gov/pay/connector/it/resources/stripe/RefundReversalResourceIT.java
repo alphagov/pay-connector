@@ -38,7 +38,7 @@ public class RefundReversalResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(RefundReversalResourceIT.ConnectorAppWithCustomInjector.class);
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final StripeSdkClient mockStripeSdkClient = mock(StripeSdkClient.class);
     
     private static final String CHARGE_EXTERNAL_ID = "charge-external-id";

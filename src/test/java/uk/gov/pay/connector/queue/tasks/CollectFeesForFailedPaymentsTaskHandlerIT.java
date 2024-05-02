@@ -25,7 +25,7 @@ public class CollectFeesForFailedPaymentsTaskHandlerIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private String paymentIntentId = "stripe-payment-intent-id";
 

@@ -23,7 +23,7 @@ public class CardAuthoriseServiceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app);
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final LastDigitsCardNumber SANDBOX_SUCCESS_LAST_FOUR_DIGITS = LastDigitsCardNumber.of("4242");
     private static final FirstDigitsCardNumber SANDBOX_SUCCESS_FIRST_SIX_DIGITS = FirstDigitsCardNumber.of("424242");
