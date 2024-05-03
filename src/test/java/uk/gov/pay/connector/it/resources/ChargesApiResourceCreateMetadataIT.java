@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.charge.util.ExternalMetadataConverter;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -41,9 +42,10 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 
 public class ChargesApiResourceCreateMetadataIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     void shouldReturnChargeWithNoMetadataField_whenCreatedWithEmptyMetadata() {
@@ -56,14 +58,14 @@ public class ChargesApiResourceCreateMetadataIT {
                 JSON_METADATA_KEY, Map.of()
         ));
 
-        ValidatableResponse response = app.getConnectorRestApiClient()
+        ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
                 .body("$", not(hasKey("metadata")));
 
         String chargeExternalId = response.extract().path(JSON_CHARGE_KEY);
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getCharge()
                 .body("$", not(hasKey("metadata")));
@@ -89,7 +91,7 @@ public class ChargesApiResourceCreateMetadataIT {
                 JSON_METADATA_KEY, metadata
         ));
 
-        ValidatableResponse response = app.getConnectorRestApiClient()
+        ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON)
@@ -124,7 +126,7 @@ public class ChargesApiResourceCreateMetadataIT {
                 JSON_METADATA_KEY, metadata
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -148,7 +150,7 @@ public class ChargesApiResourceCreateMetadataIT {
 
         String postBody = toJsonWithNulls(payload);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(201)
                 .contentType(JSON);
@@ -165,7 +167,7 @@ public class ChargesApiResourceCreateMetadataIT {
                 JSON_METADATA_KEY, "metadata cannot be a string"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)
@@ -184,7 +186,7 @@ public class ChargesApiResourceCreateMetadataIT {
                 JSON_METADATA_KEY, new Object[1]
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)

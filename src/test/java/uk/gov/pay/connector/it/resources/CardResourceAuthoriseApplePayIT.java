@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -37,7 +38,9 @@ import static uk.gov.pay.connector.it.JsonRequestHelper.buildJsonApplePayAuthori
 
 public class CardResourceAuthoriseApplePayIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
@@ -52,11 +55,11 @@ public class CardResourceAuthoriseApplePayIT {
 
     @Test
     void shouldAuthoriseCharge_ForApplePay() {
-        var chargeId = app.createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
+        var chargeId = testBaseExtension.createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
         var email = "mr@payment.test";
         shouldAuthoriseChargeForApplePay(chargeId, "mr payment", email)
                 .statusCode(200);
-        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(chargeId);
         assertThat(charge.get("email"), is(email));
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
@@ -66,10 +69,10 @@ public class CardResourceAuthoriseApplePayIT {
 
     @Test
     void shouldAuthoriseCharge_ForApplePay_withMinData() {
-        var chargeId = app.createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
+        var chargeId = testBaseExtension.createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
         shouldAuthoriseChargeForApplePay(chargeId, null, null)
                 .statusCode(200);
-        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(chargeId);
         assertThat(charge.get("email"), is(nullValue()));
     }
@@ -80,26 +83,26 @@ public class CardResourceAuthoriseApplePayIT {
             var desc = arguments.getLeft();
             var expectedCode = arguments.getMiddle();
             var expectedStatus = arguments.getRight();
-            var chargeId = app.createNewChargeWithDescriptionAndNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS, desc);
+            var chargeId = testBaseExtension.createNewChargeWithDescriptionAndNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS, desc);
             shouldAuthoriseChargeForApplePay(chargeId, null, null)
                     .statusCode(expectedCode);
-            app.assertFrontendChargeStatusIs(chargeId, expectedStatus.getValue());
+            testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus.getValue());
         });
     }
 
     @Test
     void shouldAuthoriseCharge_ForApplePay_andAddFakeExpiry_forSandboxProvider() {
-        var chargeId = app.createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
+        var chargeId = testBaseExtension.createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
         shouldAuthoriseChargeForApplePay(chargeId, null, null)
                 .statusCode(200);
-        app.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_SUCCESS.getValue());
         Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(chargeId);
         assertThat(charge.get("expiry_date"), is("12/50"));
     }
 
     @Test
     void tooLongCardHolderName_shouldResultInBadRequest() {
-        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String payload = buildJsonApplePayAuthorisationDetails(
                 "tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars " +
                         "12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12",
@@ -107,7 +110,7 @@ public class CardResourceAuthoriseApplePayIT {
 
         app.givenSetup()
                 .body(payload)
-                .post(app.authoriseChargeUrlForApplePay(chargeId))
+                .post(ITestBaseExtension.authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
                 .body("message", contains("Card holder name must be a maximum of 255 chars"))
@@ -120,14 +123,14 @@ public class CardResourceAuthoriseApplePayIT {
 
     @Test
     void tooLongEmail_shouldResultInBadRequest() {
-        String chargeId = app.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
+        String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
         String payload = buildJsonApplePayAuthorisationDetails("Example Name",
                 "tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars@" +
                         "12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12tenchars12");
 
         app.givenSetup()
                 .body(payload)
-                .post(app.authoriseChargeUrlForApplePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
                 .body("message", contains("Email must be a maximum of 254 chars"))
@@ -142,7 +145,7 @@ public class CardResourceAuthoriseApplePayIT {
 
         return app.givenSetup()
                 .body(buildJsonApplePayAuthorisationDetails(cardHolderName, email))
-                .post(app.authoriseChargeUrlForApplePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForApplePay(chargeId))
                 .then();
     }
 

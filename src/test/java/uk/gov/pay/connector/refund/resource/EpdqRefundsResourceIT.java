@@ -5,6 +5,7 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.JsonEncoder;
@@ -16,7 +17,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
 public class EpdqRefundsResourceIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("epdq");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("epdq", app.getLocalPort(), app.getDatabaseTestHelper());
     private DatabaseFixtures.TestCharge charge;
 
     @BeforeEach
@@ -26,10 +29,10 @@ public class EpdqRefundsResourceIT {
                 .aTestCharge()
                 .withAmount(100L)
                 .withTransactionId("MyUniqueTransactionId!")
-                .withTestAccount(app.getTestAccount())
+                .withTestAccount(testBaseExtension.getTestAccount())
                 .withChargeStatus(CAPTURED)
-                .withPaymentProvider(app.getPaymentProvider())
-                .withGatewayCredentialId(app.getCredentialParams().getId())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
+                .withGatewayCredentialId(testBaseExtension.getCredentialParams().getId())
                 .insert();
     }
 
@@ -43,7 +46,7 @@ public class EpdqRefundsResourceIT {
                 .body(payload)
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
-                .post(format("/v1/api/accounts/%s/charges/%s/refunds", app.getAccountId(), charge.getExternalChargeId()))
+                .post(format("/v1/api/accounts/%s/charges/%s/refunds", testBaseExtension.getAccountId(), charge.getExternalChargeId()))
                 .then()
                 .statusCode(HttpStatus.SC_NOT_FOUND);
     }

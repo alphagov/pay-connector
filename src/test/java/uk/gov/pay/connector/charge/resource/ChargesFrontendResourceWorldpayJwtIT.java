@@ -4,6 +4,7 @@ import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
@@ -21,9 +22,11 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 public class ChargesFrontendResourceWorldpayJwtIT {
+    @RegisterExtension
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     void shouldGetCorrectDdcToken() {
@@ -36,7 +39,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
         );
         setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, nextLong(), chargeExternalId, ChargeStatus.CREATED);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_OK)
@@ -50,7 +53,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
         setUpChargeAndAccount(gatewayAccountId, WORLDPAY, null, nextLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_CONFLICT)
@@ -69,7 +72,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
         setUpChargeAndAccount(gatewayAccountId, STRIPE, validCredentials, nextLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
                 .getWorldpay3dsFlexDdcJwt()
                 .statusCode(HttpStatus.SC_CONFLICT)
@@ -95,7 +98,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 "a-payload", 
                 "2.1.0");
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId(gatewayAccountId)
                 .withChargeId(chargeExternalId)
                 .getFrontendCharge()
@@ -123,7 +126,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 "a-payload",
                 "2.1.0");
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId(gatewayAccountId)
                 .withChargeId(chargeExternalId)
                 .getFrontendCharge()

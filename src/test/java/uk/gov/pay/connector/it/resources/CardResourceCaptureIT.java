@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
@@ -25,26 +26,27 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
 
 public class CardResourceCaptureIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     void shouldFailPayment_IfCaptureStatusIsUnknown() {
-        String failedChargeId = app.createNewCharge(CAPTURE_ERROR);
-        app.assertApiStateIs(failedChargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
+        String failedChargeId = testBaseExtension.createNewCharge(CAPTURE_ERROR);
+        testBaseExtension.assertApiStateIs(failedChargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
     }
 
     @Test
     void shouldSubmitForCaptureTheCardPayment_IfChargeWasPreviouslyAuthorised() {
-        String chargeId = app.authoriseNewCharge();
+        String chargeId = testBaseExtension.authoriseNewCharge();
         app.givenSetup()
-                .post(app.captureChargeUrlFor(chargeId))
+                .post(ITestBaseExtension.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
-        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        app.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
     }
 
     @Test
@@ -57,31 +59,31 @@ public class CardResourceCaptureIT {
 
     @Test
     void shouldReturnErrorWithoutChangingChargeState_IfChargeIsCaptureReady() {
-        String chargeId = app.createNewChargeWithNoTransactionId(CAPTURE_READY);
+        String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(CAPTURE_READY);
         String message = "Charge not in correct state to be processed, " + chargeId;
         captureAndVerifyFor(chargeId, 400, message);
 
-        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_READY.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_READY.getValue());
     }
 
     @Test
     void shouldReturnErrorWithoutChangingChargeState_IfChargeIsExpired() {
-        String chargeId = app.createNewChargeWithNoTransactionId(EXPIRED);
+        String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(EXPIRED);
         String message = format("Charge not in correct state to be processed, %s", chargeId);
         captureAndVerifyFor(chargeId, 400, message);
-        app.assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, EXPIRED.getValue());
     }
 
     @Test
     void shouldPreserveCardDetails_IfCaptureReady() {
-        String externalChargeId = app.authoriseNewCharge();
+        String externalChargeId = testBaseExtension.authoriseNewCharge();
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
 
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
 
         app.givenSetup()
-                .post(app.captureChargeUrlFor(externalChargeId))
+                .post(ITestBaseExtension.captureChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(204);
 
@@ -100,13 +102,13 @@ public class CardResourceCaptureIT {
 
     @Test
     void shouldSetPaymentInstrumentOnAgreementAndCancelPreviousPaymentInstruments_forSetUpAgreementCharge() {
-        String agreementExternalId = app.addAgreement();
-        Long previousPaymentInstrumentId = app.addPaymentInstrument(agreementExternalId, PaymentInstrumentStatus.ACTIVE);
-        Long newPaymentInstrumentId = app.addPaymentInstrument(null, PaymentInstrumentStatus.CREATED);
-        ChargeUtils.ExternalChargeId externalChargeId = app.addChargeForSetUpAgreement(AUTHORISATION_SUCCESS, agreementExternalId, newPaymentInstrumentId);
+        String agreementExternalId = testBaseExtension.addAgreement();
+        Long previousPaymentInstrumentId = testBaseExtension.addPaymentInstrument(agreementExternalId, PaymentInstrumentStatus.ACTIVE);
+        Long newPaymentInstrumentId = testBaseExtension.addPaymentInstrument(null, PaymentInstrumentStatus.CREATED);
+        ChargeUtils.ExternalChargeId externalChargeId = testBaseExtension.addChargeForSetUpAgreement(AUTHORISATION_SUCCESS, agreementExternalId, newPaymentInstrumentId);
 
         app.givenSetup()
-                .post(app.captureChargeUrlFor(externalChargeId.toString()))
+                .post(ITestBaseExtension.captureChargeUrlFor(externalChargeId.toString()))
                 .then()
                 .statusCode(204);
 
@@ -123,7 +125,7 @@ public class CardResourceCaptureIT {
 
     private void captureAndVerifyFor(String chargeId, int expectedStatusCode, String message) {
         app.givenSetup()
-                .post(app.captureChargeUrlFor(chargeId))
+                .post(ITestBaseExtension.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(expectedStatusCode)
                 .contentType(JSON)

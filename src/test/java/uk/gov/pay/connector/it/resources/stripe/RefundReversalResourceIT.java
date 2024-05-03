@@ -7,8 +7,8 @@ import io.dropwizard.setup.Environment;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -16,6 +16,7 @@ import uk.gov.pay.connector.app.ConnectorModule;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
@@ -32,10 +33,14 @@ import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidL
 
 public class RefundReversalResourceIT {
     private static final StripeSdkClientFactory mockStripeSdkClientFactory = mock(StripeSdkClientFactory.class);
+    
+    // App must be instantiated after mock is set
+    @RegisterExtension
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(RefundReversalResourceIT.ConnectorAppWithCustomInjector.class);
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final StripeSdkClient mockStripeSdkClient = mock(StripeSdkClient.class);
     
-    @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("stripe", RefundReversalResourceIT.ConnectorAppWithCustomInjector.class);
     private static final String CHARGE_EXTERNAL_ID = "charge-external-id";
     private static final String REFUND_EXTERNAL_ID = "refund-external-id";
     private static final String STRIPE_REFUND_ID = "stripe-refund-id";
@@ -53,7 +58,7 @@ public class RefundReversalResourceIT {
     public void setUp() {
         charge = aValidLedgerTransaction()
                 .withExternalId(CHARGE_EXTERNAL_ID)
-                .withGatewayAccountId(Long.parseLong(app.getAccountId()))
+                .withGatewayAccountId(Long.parseLong(testBaseExtension.getAccountId()))
                 .withAmount(1000L)
                 .withRefundSummary(new ChargeResponse.RefundSummary())
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
@@ -61,7 +66,7 @@ public class RefundReversalResourceIT {
 
         refund = aValidLedgerTransaction()
                 .withExternalId(REFUND_EXTERNAL_ID)
-                .withGatewayAccountId(Long.parseLong(app.getAccountId()))
+                .withGatewayAccountId(Long.parseLong(testBaseExtension.getAccountId()))
                 .withParentTransactionId(CHARGE_EXTERNAL_ID)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
@@ -83,7 +88,7 @@ public class RefundReversalResourceIT {
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
-                        .replace("{gatewayAccountId}", app.getAccountId())
+                        .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then();
@@ -103,7 +108,7 @@ public class RefundReversalResourceIT {
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
-                        .replace("{gatewayAccountId}", app.getAccountId())
+                        .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()

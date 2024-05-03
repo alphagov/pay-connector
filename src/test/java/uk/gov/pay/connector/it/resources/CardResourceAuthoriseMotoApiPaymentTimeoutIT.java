@@ -5,12 +5,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.lang.reflect.Field;
 
+import static io.dropwizard.testing.ConfigOverride.config;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
@@ -21,8 +23,9 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class CardResourceAuthoriseMotoApiPaymentTimeoutIT {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("stripe",
-            io.dropwizard.testing.ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "true"));
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(config("captureProcessConfig.backgroundProcessingEnabled", "false"));
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final String AUTHORISE_MOTO_API_URL = "/v1/api/charges/authorise";
     private static final String VALID_CARD_NUMBER = "4242424242424242";
@@ -38,8 +41,8 @@ public class CardResourceAuthoriseMotoApiPaymentTimeoutIT {
                 .aTestCharge()
                 .withChargeStatus(CREATED)
                 .withAuthorisationMode(MOTO_API)
-                .withTestAccount(app.getTestAccount())
-                .withGatewayCredentialId((long) app.getGatewayAccountCredentialsId())
+                .withTestAccount(testBaseExtension.getTestAccount())
+                .withGatewayCredentialId((long) testBaseExtension.getGatewayAccountCredentialsId())
                 .withPaymentProvider("stripe")
                 .insert();
 
@@ -75,7 +78,7 @@ public class CardResourceAuthoriseMotoApiPaymentTimeoutIT {
                 .body("message", hasItems("Authorising the payment timed out"))
                 .body("error_identifier", is(ErrorIdentifier.AUTHORISATION_TIMEOUT.toString()));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(charge.getExternalChargeId())
                 .getFrontendCharge()
                 .body("status", is(AUTHORISATION_TIMEOUT.getValue()))

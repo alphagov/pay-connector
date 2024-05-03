@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -22,9 +23,10 @@ import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceCreateZeroAmountIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     public void shouldReturn422WhenAmountIsZeroIfAccountDoesNotAllowIt() {
@@ -36,7 +38,7 @@ public class ChargesApiResourceCreateZeroAmountIT {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -46,7 +48,7 @@ public class ChargesApiResourceCreateZeroAmountIT {
 
     @Test
     public void shouldMakeChargeWhenAmountIsZeroIfAccountAllowsIt() {
-        app.getDatabaseTestHelper().allowZeroAmount(Long.parseLong(app.getAccountId()));
+        app.getDatabaseTestHelper().allowZeroAmount(Long.parseLong(testBaseExtension.getAccountId()));
 
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, 0,
@@ -56,7 +58,7 @@ public class ChargesApiResourceCreateZeroAmountIT {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(201)
                 .contentType(JSON)

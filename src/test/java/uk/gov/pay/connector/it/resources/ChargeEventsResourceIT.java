@@ -4,6 +4,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
@@ -32,8 +33,11 @@ import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 
 public class ChargeEventsResourceIT {
+
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     public static final String USER_EMAIL = "test@test.com";
@@ -77,7 +81,7 @@ public class ChargeEventsResourceIT {
 
         var result = app.getDatabaseTestHelper().getChargeEvents(testCharge.getChargeId());
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))
@@ -148,7 +152,7 @@ public class ChargeEventsResourceIT {
         List<Map<String, Object>> charges = app.getDatabaseTestHelper().getChargeEvents(testCharge.getChargeId());
         List<Map<String, Object>> refunds = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(testCharge.getExternalChargeId());
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId(accountId)
                 .getEvents(testCharge.getExternalChargeId())
                 .body("charge_id", is(testCharge.getExternalChargeId()))
@@ -164,7 +168,7 @@ public class ChargeEventsResourceIT {
 
     @Test
     public void shouldReturn404WhenAccountIdIsNonNumeric() {
-        app.getConnectorRestApiClient().withAccountId("invalidAccountId")
+        testBaseExtension.getConnectorRestApiClient().withAccountId("invalidAccountId")
                 .getEvents("123charge")
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -174,7 +178,7 @@ public class ChargeEventsResourceIT {
 
     @Test
     public void shouldReturn404WhenIsChargeIdNotExists() {
-        app.getConnectorRestApiClient().withAccountId(accountId)
+        testBaseExtension.getConnectorRestApiClient().withAccountId(accountId)
                 .getEvents("non-existent-charge")
                 .contentType(JSON)
                 .statusCode(NOT_FOUND.getStatusCode())

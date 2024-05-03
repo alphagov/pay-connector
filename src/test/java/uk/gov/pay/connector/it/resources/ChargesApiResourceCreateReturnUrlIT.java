@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -24,9 +25,10 @@ import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_RETURN_URL_KE
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceCreateReturnUrlIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     
     @Test
     void shouldReturn422WhenReturnUrlIsMissing() {
@@ -38,7 +40,7 @@ public class ChargesApiResourceCreateReturnUrlIT {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -59,7 +61,7 @@ public class ChargesApiResourceCreateReturnUrlIT {
                 JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -79,7 +81,7 @@ public class ChargesApiResourceCreateReturnUrlIT {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)
@@ -98,7 +100,7 @@ public class ChargesApiResourceCreateReturnUrlIT {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(422)
                 .contentType(JSON)

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
@@ -45,7 +46,9 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternal
 
 public class SandboxRefundsResourceIT  {
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
@@ -55,10 +58,10 @@ public class SandboxRefundsResourceIT  {
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
-                .withAccountId(Long.parseLong(app.getAccountId()))
-                .withPaymentProvider(app.getPaymentProvider())
-                .withGatewayAccountCredentials(List.of(app.getCredentialParams()))
-                .withCredentials(app.getCredentials());
+                .withAccountId(Long.parseLong(testBaseExtension.getAccountId()))
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(testBaseExtension.getCredentialParams()))
+                .withCredentials(testBaseExtension.getCredentials());
 
         defaultTestCharge = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -66,8 +69,8 @@ public class SandboxRefundsResourceIT  {
                 .withAmount(100L)
                 .withTestAccount(defaultTestAccount)
                 .withChargeStatus(CAPTURED)
-                .withPaymentProvider(app.getPaymentProvider())
-                .withGatewayCredentialId(app.getCredentialParams().getId())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
+                .withGatewayCredentialId(testBaseExtension.getCredentialParams().getId())
                 .insert();
     }
 
@@ -176,7 +179,7 @@ public class SandboxRefundsResourceIT  {
 
         assertRefundsHistoryInOrderInDBForTwoRefunds(defaultTestCharge);
 
-        app.getConnectorRestApiClient().withChargeId(externalChargeId)
+        testBaseExtension.getConnectorRestApiClient().withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(200)
                 .body("refund_summary.status", is("full"))
@@ -313,10 +316,10 @@ public class SandboxRefundsResourceIT  {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(app.getCredentialParams().getExternalId())
+                .withCredentialExternalId(testBaseExtension.getCredentialParams().getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
-                .withPaymentProvider(app.getPaymentProvider())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
                 .build();
         app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
 
@@ -328,10 +331,10 @@ public class SandboxRefundsResourceIT  {
                 .withExternalId("ledger-refund-id")
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
-                .withCredentialExternalId(app.getCredentialParams().getExternalId())
+                .withCredentialExternalId(testBaseExtension.getCredentialParams().getExternalId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
-                .withPaymentProvider(app.getPaymentProvider())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
                 .build();
         app.getLedgerStub().returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 
@@ -352,10 +355,10 @@ public class SandboxRefundsResourceIT  {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(app.getCredentialParams().getExternalId())
+                .withCredentialExternalId(testBaseExtension.getCredentialParams().getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
-                .withPaymentProvider(app.getPaymentProvider())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
                 .build();
         app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
 
@@ -366,11 +369,11 @@ public class SandboxRefundsResourceIT  {
         LedgerTransaction expungedRefund = aValidLedgerTransaction()
                 .withExternalId("ledger-refund-id")
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(app.getCredentialParams().getExternalId())
+                .withCredentialExternalId(testBaseExtension.getCredentialParams().getExternalId())
                 .withParentTransactionId(defaultTestCharge.getExternalChargeId())
                 .withAmount(300L)
                 .withStatus(ExternalRefundStatus.EXTERNAL_SUCCESS.getStatus())
-                .withPaymentProvider(app.getPaymentProvider())
+                .withPaymentProvider(testBaseExtension.getPaymentProvider())
                 .build();
         app.getLedgerStub().returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
 
@@ -388,7 +391,7 @@ public class SandboxRefundsResourceIT  {
         LedgerTransaction charge = aValidLedgerTransaction()
                 .withExternalId(chargeExternalId)
                 .withGatewayAccountId(defaultTestAccount.getAccountId())
-                .withCredentialExternalId(app.getCredentialParams().getExternalId())
+                .withCredentialExternalId(testBaseExtension.getCredentialParams().getExternalId())
                 .withAmount(1000L)
                 .withRefundSummary(refundSummary)
                 .build();
@@ -426,7 +429,7 @@ public class SandboxRefundsResourceIT  {
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
                 .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
-                        .replace("{accountId}", app.getAccountId())
+                        .replace("{accountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", chargeId))
                 .then();
     }

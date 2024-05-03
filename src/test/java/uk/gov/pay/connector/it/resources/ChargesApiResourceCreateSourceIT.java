@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import javax.ws.rs.core.Response;
@@ -29,9 +30,10 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJsonWithNulls;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 
 public class ChargesApiResourceCreateSourceIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final String JSON_SOURCE_KEY = "source";
 
@@ -46,7 +48,7 @@ public class ChargesApiResourceCreateSourceIT {
                 JSON_SOURCE_KEY, CARD_API
         ));
 
-        ValidatableResponse response = app.getConnectorRestApiClient()
+        ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .contentType(JSON);
@@ -68,7 +70,7 @@ public class ChargesApiResourceCreateSourceIT {
                 JSON_SOURCE_KEY, "invalid-source0key"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)
@@ -87,7 +89,7 @@ public class ChargesApiResourceCreateSourceIT {
                 JSON_SOURCE_KEY, true
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(400)
                 .contentType(JSON)

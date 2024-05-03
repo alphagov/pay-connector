@@ -2,12 +2,13 @@ package uk.gov.pay.connector.it.resources.worldpay;
 
 import io.dropwizard.setup.Environment;
 import io.restassured.response.ValidatableResponse;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.DnsPointerResourceRecord;
@@ -39,11 +40,11 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTI
 public class WorldpayNotificationResourceIT {
     private static final ReverseDnsLookup reverseDnsLookup = mock(ReverseDnsLookup.class);
     
+    // App must be instantiated after mock is set
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay",
-            WorldpayNotificationResourceIT.ConnectorAppWithCustomInjector.class,
-            config("worldpay.notificationDomain", ".worldpay.com")
-    );
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(WorldpayNotificationResourceIT.ConnectorAppWithCustomInjector.class, config("worldpay.notificationDomain", ".worldpay.com"));
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final String RESPONSE_EXPECTED_BY_WORLDPAY = "[OK]";
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
@@ -59,7 +60,7 @@ public class WorldpayNotificationResourceIT {
     @Test
     void shouldHandleAChargeNotification() {
         String transactionId = RandomIdGenerator.newId();
-        String chargeId = app.createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
+        String chargeId = testBaseExtension.createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         String response = notifyConnector(transactionId, "CAPTURED")
                 .statusCode(200)
@@ -68,7 +69,7 @@ public class WorldpayNotificationResourceIT {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
-        app.assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
     @Test
@@ -85,8 +86,8 @@ public class WorldpayNotificationResourceIT {
                 .asString();
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
-        app.assertFrontendChargeStatusIs(externalChargeId, CAPTURED.getValue());
-        app.assertRefundStatus(externalChargeId, refundExternalId, "success", refundAmount);
+        testBaseExtension.assertFrontendChargeStatusIs(externalChargeId, CAPTURED.getValue());
+        testBaseExtension.assertRefundStatus(externalChargeId, refundExternalId, "success", refundAmount);
     }
 
     @Test
@@ -97,11 +98,11 @@ public class WorldpayNotificationResourceIT {
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
-                .withTestAccount(app.getTestAccount())
+                .withTestAccount(testBaseExtension.getTestAccount())
                 .withExternalChargeId(chargeExternalId)
                 .withTransactionId(gatewayTransactionId);
 
-        app.getLedgerStub().returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, app.getPaymentProvider());
+        app.getLedgerStub().returnLedgerTransactionForProviderAndGatewayTransactionId(testCharge, testBaseExtension.getPaymentProvider());
 
         app.getDatabaseTestHelper().addRefund(refundExternalId, 1000,
                 REFUND_SUBMITTED, refundExternalId, ZonedDateTime.now(),
@@ -132,11 +133,11 @@ public class WorldpayNotificationResourceIT {
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
-                .withTestAccount(app.getTestAccount())
+                .withTestAccount(testBaseExtension.getTestAccount())
                 .withExternalChargeId(chargeExternalId)
                 .withTransactionId(gatewayTransactionId);
 
-        app.getLedgerStub().return500ForFindByProviderAndGatewayTransactionId(app.getPaymentProvider(), testCharge.getTransactionId());
+        app.getLedgerStub().return500ForFindByProviderAndGatewayTransactionId(testBaseExtension.getPaymentProvider(), testCharge.getTransactionId());
 
         notifyConnector(gatewayTransactionId, "REFUNDED", refundExternalId)
                 .statusCode(500);
@@ -146,7 +147,7 @@ public class WorldpayNotificationResourceIT {
     void shouldIgnoreAuthorisedNotification() {
 
         String transactionId = RandomIdGenerator.newId();
-        String chargeId = app.createNewChargeWith(CAPTURED, transactionId);
+        String chargeId = testBaseExtension.createNewChargeWith(CAPTURED, transactionId);
 
         String response = notifyConnector(transactionId, "AUTHORISED")
                 .statusCode(200)
@@ -155,13 +156,13 @@ public class WorldpayNotificationResourceIT {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
-        app.assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURED.getValue());
     }
 
     @Test
     void shouldNotAddUnknownStatusToDatabaseFromANotification() {
         String transactionId = RandomIdGenerator.newId();
-        String chargeId = app.createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
+        String chargeId = testBaseExtension.createNewChargeWith(CAPTURE_SUBMITTED, transactionId);
 
         String response = notifyConnector(transactionId, "GARBAGE")
                 .statusCode(200)
@@ -170,7 +171,7 @@ public class WorldpayNotificationResourceIT {
 
         assertThat(response, is(RESPONSE_EXPECTED_BY_WORLDPAY));
 
-        app.assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_SUBMITTED.getValue());
     }
 
     @Test
@@ -246,7 +247,7 @@ public class WorldpayNotificationResourceIT {
     }
 
     private String createNewChargeWithRefund(String transactionId, String refundExternalId, long refundAmount) {
-        String externalChargeId = app.createNewChargeWith(CAPTURED, transactionId);
+        String externalChargeId = testBaseExtension.createNewChargeWith(CAPTURED, transactionId);
         app.getDatabaseTestHelper().addRefund(refundExternalId, refundAmount, REFUND_SUBMITTED,
                 refundExternalId, ZonedDateTime.now(), externalChargeId);
         return externalChargeId;

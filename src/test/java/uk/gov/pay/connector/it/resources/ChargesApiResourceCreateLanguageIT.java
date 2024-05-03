@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import javax.ws.rs.core.Response;
@@ -26,9 +27,10 @@ import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceCreateLanguageIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     void makeChargeWithNoExplicitLanguageDefaultsToEnglish() {
@@ -40,7 +42,7 @@ public class ChargesApiResourceCreateLanguageIT {
                 JSON_EMAIL_KEY, EMAIL
         ));
 
-        ValidatableResponse response = app.getConnectorRestApiClient()
+        ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Response.Status.CREATED.getStatusCode())
                 .body(JSON_LANGUAGE_KEY, is("en"))
@@ -48,8 +50,8 @@ public class ChargesApiResourceCreateLanguageIT {
 
         String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
 
-        app.getConnectorRestApiClient()
-                .withAccountId(app.getAccountId())
+        testBaseExtension.getConnectorRestApiClient()
+                .withAccountId(testBaseExtension.getAccountId())
                 .withChargeId(externalChargeId)
                 .getCharge()
                 .statusCode(OK.getStatusCode())
@@ -68,7 +70,7 @@ public class ChargesApiResourceCreateLanguageIT {
                 JSON_LANGUAGE_KEY, "not a supported language"
         ));
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
 

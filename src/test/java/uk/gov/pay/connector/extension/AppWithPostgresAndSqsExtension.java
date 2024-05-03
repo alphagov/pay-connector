@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.extension;
 
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.inject.Injector;
@@ -23,12 +24,12 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.SqsTestDocker;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.util.List;
 import java.util.Properties;
@@ -39,10 +40,12 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static io.dropwizard.testing.ResourceHelpers.resourceFilePath;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static uk.gov.pay.connector.rules.PostgresTestDocker.*;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getConnectionUrl;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
+import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
 
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
-
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
     private static final String JPA_UNIT = "ConnectorUnit";
     private static String CONFIG_PATH = resourceFilePath("config/test-it-config.yaml");
@@ -63,8 +66,8 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     protected static WorldpayMockClient worldpayMockClient;
     protected static StripeMockClient stripeMockClient;
     protected static LedgerStub ledgerStub;
+    private static CardidStub cardidStub;
     protected static String accountId = String.valueOf(RandomUtils.nextInt());
-    protected RestAssuredClient connectorRestApiClient;
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
 
@@ -121,15 +124,14 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         
         databaseTestHelper = new DatabaseTestHelper(jdbi);
 
-        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
-
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
         stripeMockClient = new StripeMockClient(stripeWireMockServer);
 
         ledgerStub = new LedgerStub(ledgerWireMockServer);
+        cardidStub = new CardidStub(wireMockServer);
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         mapper = new ObjectMapper();
-        
+
         injector = InjectorLookup.getInjector(dropwizardAppExtension.getApplication()).get();
     }
     
@@ -140,21 +142,27 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         stripeWireMockServer.resetAll();
         ledgerStub.acceptPostEvent();
     }
-       
-
+    public void resetDatabase() {
+        databaseTestHelper.truncateAllData();
+    }
+    
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
     }
 
     @Override
-    public void beforeEach(ExtensionContext context) {}
+    public void beforeEach(ExtensionContext context) {
+        ledgerStub.acceptPostEvent();
+    }
     @Override
-    public void afterEach(ExtensionContext context) {}
+    public void afterEach(ExtensionContext context) {
+        resetWireMockServer();
+        resetDatabase();
+    }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        databaseTestHelper.truncateAllData();
         wireMockServer.stop();
         worldpayWireMockServer.stop();
         stripeWireMockServer.stop();
@@ -258,13 +266,21 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public LedgerStub getLedgerStub() {
         return ledgerStub;
     }
+    
+    public CardidStub getCardidStub() {
+        return cardidStub;
+    }
 
     public DatabaseFixtures getDatabaseFixtures() {
         return databaseFixtures;
     }
 
     public String getEventQueueUrl() {
-//        return sqsClient.getQueueUrl("event-queue").getQueueUrl();
         return SqsTestDocker.getQueueUrl("event-queue");
+    }
+
+    public void purgeEventQueue() {
+        AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
+        sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
     }
 }

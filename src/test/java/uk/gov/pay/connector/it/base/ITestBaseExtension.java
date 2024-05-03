@@ -1,16 +1,16 @@
 package uk.gov.pay.connector.it.base;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.PurgeQueueRequest;
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.gson.JsonObject;
-import io.dropwizard.testing.ConfigOverride;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import org.apache.commons.lang.math.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -22,10 +22,10 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
-import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
+import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -75,7 +75,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
-public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
+public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     public static final String ADDRESS_LINE_1 = "The Money Pool";
     public static final String ADDRESS_CITY = "London";
     public static final String ADDRESS_POSTCODE = "DO11 4RS";
@@ -109,37 +109,59 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
 
     private String paymentProvider;
 
-
+    protected static String accountId = String.valueOf(RandomUtils.nextInt());
     private int gatewayAccountCredentialsId  = RandomUtils.nextInt();
     private Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
-
-    private static CardidStub cardidStub;
-
     private static AddGatewayAccountCredentialsParams credentialParams;
-
-    public ITestBaseExtension(String paymentProvider) {
-        super();
+    public RestAssuredClient connectorRestApiClient;
+    private final DatabaseTestHelper databaseTestHelper;
+    private final int appLocalPort;
+    
+    public  ITestBaseExtension(String paymentProvider, int appLocalPort, DatabaseTestHelper databaseTestHelper) {
         this.paymentProvider = paymentProvider;
-    }
-
-    public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass) {
-        super(CustomConnectorClass);
-        this.paymentProvider = paymentProvider;
-    }
-
-    public ITestBaseExtension(String paymentProvider, ConfigOverride... configOverrides) {
-        super(configOverrides);
-        this.paymentProvider = paymentProvider;
-    }
-
-    public ITestBaseExtension(String paymentProvider, Class CustomConnectorClass, ConfigOverride... configOverrides) {
-        super(CustomConnectorClass, configOverrides);
-        this.paymentProvider = paymentProvider;
+        this.databaseTestHelper = databaseTestHelper;
+        this.appLocalPort = appLocalPort;
+        createCredentialParams();
     }
 
     private void setUpBase() {
-        resetDatabase(); // tests will break if setUpBase is called twice without this
+        createConnectorRestApiClient();
+        createTestAccount();
+    }
+    
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        setUpBase();
+    }
+    
+    @Override
+    public void afterEach(ExtensionContext context) {}
+    
+    @Override
+    public void beforeAll(ExtensionContext context) {}
+
+    @Override
+    public void afterAll(ExtensionContext context) {}
+
+    public void createConnectorRestApiClient() {
+        connectorRestApiClient = new RestAssuredClient(appLocalPort, accountId);
+    }
+    
+    public void createTestAccount() {
+        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
+        testAccount = withDatabaseTestHelper(databaseTestHelper)
+                .aTestAccount()
+                .withAccountId(Long.parseLong(accountId))
+                .withPaymentProvider(getPaymentProvider())
+                .withGatewayAccountCredentials(List.of(credentialParams))
+                .withServiceId(SERVICE_ID)
+                .withAllowAuthApi(true)
+                .withCardTypeEntities(List.of(visaCreditCard))
+                .insert();
+    }
+    
+    public void createCredentialParams() {
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
@@ -166,7 +188,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
                     CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
             );
         }
-        
+
 
         credentialParams = anAddGatewayAccountCredentialsParams()
                 .withId(gatewayAccountCredentialsId)
@@ -175,69 +197,8 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
                 .withState(ACTIVE)
                 .withCredentials(credentials)
                 .build();
-        
-        createConnectorRestApiClient();
-        
-        createTestAccount();
-        resetWireMockServer();
-        
-        createCardIdStub();
-        ledgerStub.acceptPostEvent();
-        
     }
     
-    @Override
-    public void beforeEach(ExtensionContext context) {
-        setUpBase();
-    }
-    
-    @Override
-    public void afterEach(ExtensionContext context) {
-        resetDatabase();
-    }
-    
-    @Override
-    public void beforeAll(ExtensionContext context) throws Exception {
-        super.beforeAll(context);
-        resetDatabase();
-    }
-
-    @Override
-    public void afterAll(ExtensionContext context) {
-        super.afterAll(context);
-        resetDatabase();
-    }
-
-    public void createConnectorRestApiClient() {
-        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
-    }
-    
-    public void createTestAccount() {
-        CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
-        testAccount = withDatabaseTestHelper(databaseTestHelper)
-                .aTestAccount()
-                .withAccountId(Long.parseLong(accountId))
-                .withPaymentProvider(getPaymentProvider())
-                .withGatewayAccountCredentials(List.of(credentialParams))
-                .withServiceId(SERVICE_ID)
-                .withAllowAuthApi(true)
-                .withCardTypeEntities(List.of(visaCreditCard))
-                .insert();
-    }
-    
-    public void resetDatabase() {
-        databaseTestHelper.truncateAllData();
-    }
-
-    public void purgeEventQueue() {
-        AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
-        sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
-    }
-    
-    public void createCardIdStub() {
-        cardidStub = new CardidStub(getWireMockServer());
-    }
-
     public Map<String, Object> getCredentials() {
         return credentials;
     }
@@ -344,7 +305,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     }
 
     public RequestSpecification givenSetup() {
-        return given().port(getLocalPort())
+        return given().port(appLocalPort)
                 .contentType(JSON);
     }
 
@@ -624,16 +585,7 @@ public class ITestBaseExtension extends AppWithPostgresAndSqsExtension {
     public String getAccountId() {
         return accountId;
     }
-
-
-    public WireMockServer getWiremockserver() {
-        return wireMockServer;
-    }
-
-    public CardidStub getCardidStub() {
-        return cardidStub;
-    }
-
+    
     public int getGatewayAccountCredentialsId() {
         return gatewayAccountCredentialsId;
     }

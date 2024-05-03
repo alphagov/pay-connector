@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
@@ -19,14 +20,16 @@ import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.ST
 
 public class StripeCardAuthoriseServiceIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension(STRIPE.getName());
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     
     @Test
     void shouldSuccessfullyAuthoriseUserNotPresentPayment() {
         var recurringAuthToken = Map.of(
                 STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY, "cus_abc123",
                 STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY, "pm_abc123");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var successCharge = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 
@@ -42,7 +45,7 @@ public class StripeCardAuthoriseServiceIT {
         var recurringAuthToken = Map.of(
                 STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY, "cus_abc123",
                 STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY, "pm_abc123");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var chargeEntity = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 
@@ -62,7 +65,7 @@ public class StripeCardAuthoriseServiceIT {
         var recurringAuthToken = Map.of(
                 STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY, "cus_abc123",
                 STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY, "pm_abc123");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var chargeEntity = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 
@@ -85,7 +88,7 @@ public class StripeCardAuthoriseServiceIT {
         var recurringAuthToken = Map.of(
                 STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY, "cus_abc123",
                 STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY, "pm_abc123");
-        ChargeUtils.ExternalChargeId userNotPresentChargeId = app.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
+        ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(recurringAuthToken);
 
         var chargeEntity = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
 

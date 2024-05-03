@@ -7,6 +7,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -40,7 +41,9 @@ import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExte
 
 public class GatewayAccountFrontendResourceIT {
     @RegisterExtension
-    public static GatewayAccountResourceITBaseExtensions app = new GatewayAccountResourceITBaseExtensions("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    
+    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
 
     private final Gson gson = new Gson();
@@ -118,7 +121,7 @@ public class GatewayAccountFrontendResourceIT {
 
     @Test
     void shouldAcceptAllCardTypesNotRequiring3DSForNewlyCreatedAccountAs3dsIsDisabledByDefault() {
-        String accountId = app.createAGatewayAccountFor("worldpay");
+        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
         String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
         ValidatableResponse response = app.givenSetup().accept(JSON)
                 .get(frontendCardTypeUrl)
@@ -150,7 +153,7 @@ public class GatewayAccountFrontendResourceIT {
 
     @Test
     void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
-        String accountId = app.createAGatewayAccountFor("stripe");
+        String accountId = testBaseExtension.createAGatewayAccountFor("stripe");
 
         var gatewayAccountPayload = createDefault();
 
@@ -166,7 +169,7 @@ public class GatewayAccountFrontendResourceIT {
 
     @Test
     void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
-        String accountId = app.createAGatewayAccountFor("worldpay");
+        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
 
         updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
                 .then()
@@ -177,7 +180,7 @@ public class GatewayAccountFrontendResourceIT {
 
     @Test
     void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
-        String accountId = app.createAGatewayAccountFor("worldpay");
+        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
 
         var gatewayAccountPayload = createDefault()
                 .withServiceName("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
@@ -203,7 +206,7 @@ public class GatewayAccountFrontendResourceIT {
     @Test
     void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
         String nonExistingAccountId = "111111111";
-        app.createAGatewayAccountFor("stripe");
+        testBaseExtension.createAGatewayAccountFor("stripe");
 
         Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
         updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)

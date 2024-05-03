@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -27,9 +28,10 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 public class ChargesApiResourceTelephonePaymentsIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final HashMap<String, Object> postBody = new HashMap<>();
     private static final String stringOf51Characters = StringUtils.repeat("*", 51);
     private static final String stringOf50Characters = StringUtils.repeat("*", 50);
@@ -57,8 +59,8 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void createTelephoneChargeForOnlyRequiredFields() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.parseLong(app.getAccountId()));
-        ValidatableResponse response = app.getConnectorRestApiClient()
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.parseLong(testBaseExtension.getAccountId()));
+        ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
@@ -80,14 +82,14 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
         String chargeExternalId = response.extract().path("charge_id").toString();
         String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(chargeExternalId).get("gateway_account_credential_id").toString();
-        String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(app.getAccountId())).get(0).get("id").toString();
+        String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testBaseExtension.getAccountId())).get(0).get("id").toString();
 
         assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
     }
     
     @Test
     public void createTelephoneChargeForStatusOfSuccessForAllFields() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.put("auth_code", "666");
         postBody.put("created_date", "2018-02-21T16:04:25Z");
         postBody.put("authorised_date", "2018-02-21T16:05:33Z");
@@ -98,8 +100,8 @@ public class ChargesApiResourceTelephonePaymentsIT {
         postBody.put("card_type", "master-card");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
-        
-        app.getConnectorRestApiClient()
+
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
@@ -130,13 +132,13 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
         List<Map<String, Object>> chargeEvents = testHelper.getChargeEvents(chargeId);
 
-        assertThat(chargeEvents, app.hasEvent(PAYMENT_NOTIFICATION_CREATED));
-        assertThat(chargeEvents, app.hasEvent(CAPTURE_SUBMITTED));
+        assertThat(chargeEvents, testBaseExtension.hasEvent(PAYMENT_NOTIFICATION_CREATED));
+        assertThat(chargeEvents, testBaseExtension.hasEvent(CAPTURE_SUBMITTED));
     }
 
     @Test
     public void createTelephoneChargeForFailedStatusP0010() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -148,7 +150,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
                 )
         );
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
@@ -174,7 +176,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void createTelephoneChargeForFailedStatusP0050() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -192,8 +194,8 @@ public class ChargesApiResourceTelephonePaymentsIT {
         postBody.put("email_address", "jane_doe@example.com");
         postBody.put("telephone_number", "+447700900796");
         postBody.put("card_expiry", null);
-        
-        app.getConnectorRestApiClient()
+
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
@@ -219,7 +221,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void createTelephoneChargeForFailedStatusP0030() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -231,7 +233,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
                 )
         );
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
@@ -257,7 +259,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void createTelephoneChargeWithTruncatedMetaData() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -274,7 +276,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
         postBody.put("authorised_date", "2018-02-21T16:05:33Z");
         postBody.put("telephone_number", stringOf51Characters);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON)
@@ -305,11 +307,11 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void createTelephoneChargeWithSource() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome", Map.of("status", "success"));
         postBody.replace("processor_id", stringOf51Characters);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201)
                 .contentType(JSON);
@@ -322,17 +324,17 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturnResponseForAlreadyExistingTelephoneCharge() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.put("card_expiry", "02/19");
         postBody.put("card_type", "master-card");
         postBody.put("last_four_digits", "1234");
         postBody.put("first_six_digits", "123456");
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(201);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(200)
                 .contentType(JSON)
@@ -358,10 +360,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn400ForInvalidCardExpiryDate() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.put("card_expiry", "99/99");
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(400)
                 .body("message", hasItem(containsString("CardExpiryDate")));
@@ -369,10 +371,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForInvalidCardType() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.put("card_type", "invalid-card");
-        
-        app.getConnectorRestApiClient()
+
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [card_type] must be either master-card, visa, maestro, diners-club, american-express or jcb"));
@@ -380,14 +382,14 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeStatus() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "invalid"
                 )
         );
-        
-        app.getConnectorRestApiClient()
+
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [payment_outcome] must include a valid status and error code"));
@@ -395,15 +397,15 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeStatusAndCode() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "success",
                         "code", "P0010"
                 )
         );
-        
-        app.getConnectorRestApiClient()
+
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [payment_outcome] must include a valid status and error code"));
@@ -411,7 +413,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForInvalidPaymentOutcomeErrorCode() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.replace("payment_outcome",
                 Map.of(
                         "status", "failed",
@@ -423,7 +425,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
                 )
         );
         
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [payment_outcome] must include a valid status and error code"));
@@ -431,10 +433,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForInvalidCreatedDate() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.put("created_date", "invalid");
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .contentType(JSON)
@@ -443,10 +445,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForInvalidAuthorisedDate() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.put("authorised_date", "invalid");
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .contentType(JSON)
@@ -455,10 +457,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForMissingAmount() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.remove("amount");
         
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [amount] cannot be null"));
@@ -466,10 +468,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForMissingReference() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.remove("reference");
         
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [reference] cannot be null"));
@@ -477,10 +479,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForMissingDescription() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.remove("description");
         
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [description] cannot be null"));
@@ -488,10 +490,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForMissingProcessorID() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.remove("processor_id");
                 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [processor_id] cannot be null"));
@@ -499,10 +501,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
     
     @Test
     public void shouldReturn422ForMissingProviderID() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.remove("provider_id");
         
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [provider_id] cannot be null"));
@@ -510,10 +512,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForMissingPaymentOutcome() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         postBody.remove("payment_outcome");
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(422)
                 .body("message[0]", is("Field [payment_outcome] cannot be null"));
@@ -521,10 +523,10 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn422ForTelephoneChargeCreateRequestNull() {
-        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(app.getAccountId()));
+        app.getDatabaseTestHelper().allowTelephonePaymentNotifications(Long.valueOf(testBaseExtension.getAccountId()));
         String payload = toJson(null);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(payload)
                 .statusCode(422)
                 .contentType(JSON)
@@ -533,7 +535,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
 
     @Test
     public void shouldReturn403IfTelephoneNotificationsNotAllowedForAccount() {
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .postCreateTelephoneCharge(toJson(postBody))
                 .statusCode(403)
                 .contentType(JSON)

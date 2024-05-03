@@ -4,6 +4,7 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -15,18 +16,19 @@ import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CANCEL_WORLDPAY_REQUEST;
 
 public class WorldpayChargeCancelResourceIT {
-
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     void cancelCharge_inWorldpaySystem() {
-        String chargeId = app.createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, "MyUniqueTransactionId!");
+        String chargeId = testBaseExtension.createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, "MyUniqueTransactionId!");
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.givenSetup()
                 .contentType(ContentType.JSON)
-                .post(app.cancelChargeUrlFor(app.getAccountId(), chargeId))
+                .post(ITestBaseExtension.cancelChargeUrlFor(testBaseExtension.getAccountId(), chargeId))
                 .then()
                 .statusCode(204);
 

@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -28,13 +29,15 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_READY;
 
 public class ChargeCancelResourceIT {
+    @RegisterExtension
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay");
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     @Test
     public void shouldPreserveCardDetailsIfCancelled() {
-        String externalChargeId = app.addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        String externalChargeId = testBaseExtension.addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         app.getWorldpayMockClient().mockCancelSuccess();
@@ -42,7 +45,7 @@ public class ChargeCancelResourceIT {
         Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(cardDetails.isEmpty(), is(false));
 
-        app.cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
+        testBaseExtension.cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
 
         cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(cardDetails, is(notNullValue()));
@@ -60,10 +63,10 @@ public class ChargeCancelResourceIT {
 
     @Test
     public void shouldRespondWith204WithLockingStatus_IfCancelledAfterAuth() {
-        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
+        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
         app.getWorldpayMockClient().mockCancelSuccess();
 
-        app.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
+        testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(3));
@@ -75,10 +78,10 @@ public class ChargeCancelResourceIT {
     @Test
     public void shouldRespondWith204WithLockingStatus_IfCancelFailedAfterAuth() {
 
-        String chargeId = app.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelavant");
         app.getWorldpayMockClient().mockCancelError();
 
-        app.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
+        testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
 
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(3));
@@ -91,7 +94,7 @@ public class ChargeCancelResourceIT {
     public void respondWith202_whenCancelAlreadyInProgress() {
         String chargeId = createNewInPastChargeWithStatus(SYSTEM_CANCEL_READY);
         String expectedMessage = "System Cancellation for charge already in progress, " + chargeId;
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .postChargeCancellation()
                 .statusCode(ACCEPTED.getStatusCode())
@@ -104,7 +107,7 @@ public class ChargeCancelResourceIT {
     @Test
     public void respondWith404_whenPaymentNotFound() {
         String unknownChargeId = "2344363244";
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(unknownChargeId)
                 .postChargeCancellation()
                 .statusCode(NOT_FOUND.getStatusCode())
@@ -119,7 +122,7 @@ public class ChargeCancelResourceIT {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId("")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -134,7 +137,7 @@ public class ChargeCancelResourceIT {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = "HTTP 404 Not Found";
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId("ABSDCEFG")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -149,7 +152,7 @@ public class ChargeCancelResourceIT {
         String chargeId = createNewInPastChargeWithStatus(CREATED);
         String expectedMessage = format("Charge with id [%s] not found.", chargeId);
 
-        app.getConnectorRestApiClient()
+        testBaseExtension.getConnectorRestApiClient()
                 .withAccountId("12345")
                 .withChargeId(chargeId)
                 .postChargeCancellation()
@@ -161,6 +164,6 @@ public class ChargeCancelResourceIT {
     }
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
-        return app.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        return testBaseExtension.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
     }
 }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
@@ -64,7 +65,9 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 public class StripeCardResourceAuthoriseIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("stripe");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    @RegisterExtension
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final String CARD_HOLDER_NAME = "Scrooge McDuck";
     private static final String CVC = "123";
     private static final CardExpiryDate EXPIRY = CardExpiryDate.valueOf("11/99");
@@ -120,7 +123,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(app.authoriseChargeUrlFor(externalChargeId))
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(BAD_REQUEST_400)
                 .body("message", contains("This transaction was declined."))
@@ -141,7 +144,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(app.authoriseChargeUrlFor(externalChargeId))
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(402)
                 .body("message", contains("There was an error authorising the transaction."))
@@ -161,7 +164,7 @@ public class StripeCardResourceAuthoriseIT {
         ValidatableResponse validatableResponse = given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(app.authoriseChargeUrlFor(externalChargeId))
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
                 .then();
 
         validatableResponse
@@ -186,7 +189,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetailsWithoutBillingAddress)
-                .post(app.authoriseChargeUrlFor(externalChargeId))
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .body("status", is(AUTHORISATION_SUCCESS.toString()))
                 .statusCode(OK_200);
@@ -212,7 +215,7 @@ public class StripeCardResourceAuthoriseIT {
         ValidatableResponse validatableResponse = given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(app.authoriseChargeUrlFor(externalChargeId))
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
                 .then();
 
         validatableResponse
@@ -243,7 +246,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(app.authoriseChargeUrlFor(externalChargeId))
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .body("status", is(AUTHORISATION_3DS_REQUIRED.toString()))
                 .statusCode(OK_200);
@@ -260,7 +263,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(validAuthorisationDetails)
-                .post(app.authoriseChargeUrlFor(externalChargeId))
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
                 .then()
                 .statusCode(500)
                 .body("message", contains(containsString("Exception occurred while doing authorisation")))
@@ -279,7 +282,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(applePayAuthorisationRequest)
-                .post(app.authoriseChargeUrlForApplePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
@@ -308,7 +311,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(applePayAuthorisationRequest)
-                .post(app.authoriseChargeUrlForApplePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForApplePay(chargeId))
                 .then()
                 .statusCode(400);
 
@@ -335,7 +338,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(app.authoriseChargeUrlForGooglePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200)
                 .body("status", is(AUTHORISATION_SUCCESS.toString()));
@@ -363,7 +366,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(app.authoriseChargeUrlForGooglePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(400);
 
@@ -390,7 +393,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(app.authoriseChargeUrlForGooglePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200);
 
@@ -417,7 +420,7 @@ public class StripeCardResourceAuthoriseIT {
         given().port(app.getLocalPort())
                 .contentType(JSON)
                 .body(googlePayAuthorisationRequest)
-                .post(app.authoriseChargeUrlForGooglePay(chargeId))
+                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(402);
 

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.service.notify.NotificationClient;
@@ -42,13 +42,13 @@ public class SendRefundEmailIT {
     private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
     private static NotifyClientFactory notifyClientFactory = mock(NotifyClientFactory.class);
     private static NotificationClient notificationClient = mock(NotificationClient.class);
-    
     @RegisterExtension
-    public static ITestBaseExtension app = new ITestBaseExtension("worldpay",
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             SendRefundEmailIT.ConnectorAppWithCustomInjector.class,
             config("notifyConfig.emailNotifyEnabled", "true"),
             config("worldpay.secureNotificationEnabled", "false")
     );
+    
     private static final Map<String, Object> credentials = ImmutableMap.of(
             CREDENTIALS_MERCHANT_ID, "merchant-id",
             CREDENTIALS_USERNAME, "test-user",

@@ -7,6 +7,7 @@ import uk.gov.pay.connector.events.EmittedEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.sql.Timestamp;
@@ -24,7 +25,7 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class EmittedEventDaoIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private EmittedEventDao emittedEventDao;
 
     @BeforeEach

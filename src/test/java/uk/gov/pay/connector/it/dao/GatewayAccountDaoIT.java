@@ -5,12 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import static org.apache.commons.lang.math.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasProperty;
@@ -50,7 +49,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountDaoIT {
     @RegisterExtension
-    static ITestBaseExtension app = new ITestBaseExtension("sandbox");
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private GatewayAccountDao gatewayAccountDao;
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private DatabaseFixtures databaseFixtures;
@@ -323,10 +322,9 @@ public class GatewayAccountDaoIT {
         var params = new GatewayAccountSearchParams();
 
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(3));
-        assertThat(gatewayAccounts.get(0).getId(), is(Long.valueOf(app.getAccountId())));
-        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_1));
-        assertThat(gatewayAccounts.get(2).getId(), is(gatewayAccountId_2));
+        assertThat(gatewayAccounts, hasSize(2));
+        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
     }
 
     @Test
