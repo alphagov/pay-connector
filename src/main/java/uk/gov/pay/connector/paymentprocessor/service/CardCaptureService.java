@@ -2,7 +2,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;

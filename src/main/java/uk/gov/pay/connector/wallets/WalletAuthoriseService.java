@@ -3,7 +3,7 @@ package uk.gov.pay.connector.wallets;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 import com.google.inject.persist.Transactional;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import io.prometheus.client.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,7 +156,7 @@ public class WalletAuthoriseService {
     }
 
     @Transactional
-    private ChargeEntity prepareChargeForAuthorisation(String chargeId) {
+    protected ChargeEntity prepareChargeForAuthorisation(String chargeId) {
         ChargeEntity charge = chargeService.lockChargeForProcessing(chargeId, OperationType.AUTHORISATION);
         getPaymentProviderFor(charge)
                 .generateTransactionId()
