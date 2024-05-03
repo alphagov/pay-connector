@@ -115,16 +115,8 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     private DatabaseFixtures.TestAccount testAccount;
     private static AddGatewayAccountCredentialsParams credentialParams;
     public RestAssuredClient connectorRestApiClient;
-//    private AppWithPostgresAndSqsExtension app;
     private final DatabaseTestHelper databaseTestHelper;
     private final int appLocalPort;
-
-    public ITestBaseExtension(String paymentProvider, AppWithPostgresAndSqsExtension app) {
-        this.paymentProvider = paymentProvider;
-        this.databaseTestHelper = app.getDatabaseTestHelper();
-        this.appLocalPort = app.getLocalPort();
-        createCredentialParams();
-    }
     
     public  ITestBaseExtension(String paymentProvider, int appLocalPort, DatabaseTestHelper databaseTestHelper) {
         this.paymentProvider = paymentProvider;

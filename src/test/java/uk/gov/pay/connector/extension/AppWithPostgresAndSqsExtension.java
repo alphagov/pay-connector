@@ -30,7 +30,6 @@ import uk.gov.pay.connector.rules.SqsTestDocker;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RestAssuredClient;
 
 import java.util.List;
 import java.util.Properties;
@@ -69,7 +68,6 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     protected static LedgerStub ledgerStub;
     private static CardidStub cardidStub;
     protected static String accountId = String.valueOf(RandomUtils.nextInt());
-    protected RestAssuredClient connectorRestApiClient;
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
 
@@ -125,8 +123,6 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         jdbi.installPlugin(new SqlObjectPlugin());
         
         databaseTestHelper = new DatabaseTestHelper(jdbi);
-
-//        connectorRestApiClient = new RestAssuredClient(getLocalPort(), accountId);
 
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
         stripeMockClient = new StripeMockClient(stripeWireMockServer);
@@ -280,7 +276,6 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     }
 
     public String getEventQueueUrl() {
-//        return sqsClient.getQueueUrl("event-queue").getQueueUrl();
         return SqsTestDocker.getQueueUrl("event-queue");
     }
 

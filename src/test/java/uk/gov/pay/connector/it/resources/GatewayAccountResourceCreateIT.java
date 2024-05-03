@@ -33,7 +33,6 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class GatewayAccountResourceCreateIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
     GatewayAccountDao gatewayAccountDao;
 
     @BeforeEach

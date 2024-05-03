@@ -31,12 +31,6 @@ public class GatewayAccountResourceITBaseExtensions {
     public static final String ACCOUNTS_EXTERNAL_ID_URL = ACCOUNTS_API_URL + "external-id/";
     public static final String ACCOUNT_FRONTEND_EXTERNAL_ID_URL = "/v1/frontend/accounts/external-id/";
 
-//    @AfterAll
-//    public static void tearDown() {
-//        databaseTestHelper.truncateAllData();
-//    }
-
-
     protected String createAGatewayAccountFor(String provider) {
         return extractGatewayAccountId(createAGatewayAccountFor(appLocalPort, provider));
     }
