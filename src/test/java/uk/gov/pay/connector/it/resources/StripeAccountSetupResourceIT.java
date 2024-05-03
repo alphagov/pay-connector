@@ -3,6 +3,8 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
+import org.testcontainers.shaded.org.bouncycastle.crypto.prng.RandomGenerator;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -55,7 +57,7 @@ public class StripeAccountSetupResourceIT {
 
     @Test
     public void getStripeSetupGatewayAccountDoesNotExist() {
-        long notFoundGatewayAccountId = 13;
+        long notFoundGatewayAccountId = RandomUtils.nextLong(1000L, 10000L);
 
         app.givenSetup()
                 .get("/v1/api/accounts/" + notFoundGatewayAccountId + "/stripe-setup")

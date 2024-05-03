@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
@@ -171,7 +170,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
     }
 
     @Test
-    void checkWorldpayCredentials_returns500WhenWorldpayReturnsUnexpectedResponse() throws JsonProcessingException {
+    void checkWorldpayCredentials_returns500WhenWorldpayReturnsUnexpectedResponse() {
         app.getWorldpayMockClient().mockCredentialsValidationUnexpectedResponse();
 
         long accountId = nextLong(2, 10000);
