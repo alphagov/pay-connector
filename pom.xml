@@ -16,7 +16,7 @@
         <wiremock.version>2.35.1</wiremock.version>
         <eclipselink.version>2.7.13</eclipselink.version>
         <guice.version>5.1.0</guice.version>
-        <jackson.version>2.17.0</jackson.version>
+        <jackson.version>2.17.1</jackson.version>
         <pay-java-commons.version>1.0.20240423090009</pay-java-commons.version>
         <surefire.version>3.2.5</surefire.version>
         <jooq.version>3.19.7</jooq.version>
