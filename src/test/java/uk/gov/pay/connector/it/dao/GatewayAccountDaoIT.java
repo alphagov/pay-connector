@@ -70,7 +70,7 @@ public class GatewayAccountDaoIT {
     class FindByServiceId {
 
         @Test
-        void shouldFindGatewayAccountsForServiceId() {
+        void shouldFindGatewayAccounts() {
             String serviceId = "a-service-id";
 
             GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
@@ -90,7 +90,7 @@ public class GatewayAccountDaoIT {
         }
 
         @Test
-        void shouldFindNoGatewayAccountForServiceId() {
+        void shouldFindNoGatewayAccount() {
             GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
             account1.setExternalId(randomUuid());
             account1.setServiceId("a-service-id");
@@ -99,93 +99,16 @@ public class GatewayAccountDaoIT {
             assertTrue(gatewayAccountDao.findByServiceId("non-existent").isEmpty());
         }
     }
-    
-    @Test
-    void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
-        GatewayAccountEntity account = new GatewayAccountEntity(TEST);
-        account.setExternalId(randomUuid());
-        GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity()
-                .withGatewayAccountEntity(account)
-                .withPaymentProvider(WORLDPAY.getName())
-                .withCredentials(Map.of())
-                .withState(ACTIVE)
-                .build();
-        account.setGatewayAccountCredentials(List.of(gatewayAccountCredentials));
-
-        NotificationCredentials notificationCredentials = new NotificationCredentials(account);
-        notificationCredentials.setPassword("password");
-        notificationCredentials.setUserName("username");
-        account.setNotificationCredentials(notificationCredentials);
-
-        gatewayAccountDao.persist(account);
-
-        GatewayAccountEntity accountToUpdate = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
-        
-        assertFalse(accountToUpdate.isDisabled());
-        var gatewayAccountCredentialsEntity = accountToUpdate.getGatewayAccountCredentialsEntity(WORLDPAY.getName());
-        assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
-        assertThat(accountToUpdate.getNotificationCredentials(), not(nullValue()));
-
-        accountToUpdate.setDisabled(true);
-        accountToUpdate.setNotificationCredentials(null);
-        
-        gatewayAccountDao.merge(accountToUpdate);
-
-        GatewayAccountEntity updatedAccount = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
-        assertTrue(updatedAccount.isDisabled());
-        assertNull(updatedAccount.getNotificationCredentials());
-    }
-    
-    @Test
-    void persist_shouldCreateAnAccount() {
-        final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
-        final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaCreditCard();
-
-        GatewayAccountEntity account = new GatewayAccountEntity(TEST);
-
-        account.setExternalId(randomUuid());
-        account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));
-        account.setSendReferenceToGateway(true);
-
-        gatewayAccountDao.persist(account);
-
-        assertThat(account.getId(), is(notNullValue()));
-        assertThat(account.getEmailNotifications().isEmpty(), is(true));
-        assertThat(account.getDescription(), is(nullValue()));
-        assertThat(account.getAnalyticsId(), is(nullValue()));
-        assertThat(account.getNotificationCredentials(), is(nullValue()));
-        assertThat(account.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(0L));
-        assertThat(account.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(0L));
-        assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
-        assertThat(account.isSendPayerIpAddressToGateway(), is(false));
-        assertThat(account.isSendPayerEmailToGateway(), is(false));
-        assertThat(account.isProviderSwitchEnabled(), is(false));
-        assertThat(account.isSendReferenceToGateway(), is(true));
-
-        List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(account.getId());
-
-        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
-                allOf(
-                        hasEntry("label", masterCardCredit.getLabel()),
-                        hasEntry("type", masterCardCredit.getType().toString()),
-                        hasEntry("brand", masterCardCredit.getBrand())
-                ), allOf(
-                        hasEntry("label", visaCardDebit.getLabel()),
-                        hasEntry("type", visaCardDebit.getType().toString()),
-                        hasEntry("brand", visaCardDebit.getBrand())
-                )));
-    }
-    
     @Nested
-    class FindById {
+    class FindByGatewayAccountId {
 
         @Test
-        void findById_shouldNotFindANonexistentGatewayAccount() {
+        void shouldNotFindANonexistentGatewayAccount() {
             assertThat(gatewayAccountDao.findById(GatewayAccountEntity.class, 1234L).isPresent(), is(false));
         }
 
         @Test
-        void findById_shouldFindGatewayAccount() {
+        void shouldFindGatewayAccount() {
             final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
             final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaCreditCard();
             DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(masterCardCredit, visaCardDebit);
@@ -220,7 +143,7 @@ public class GatewayAccountDaoIT {
         }
 
         @Test
-        void findById_shouldFindGatewayAccountWithCorporateSurcharges() {
+        void shouldFindGatewayAccountWithCorporateSurcharges() {
             DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCorporateSurcharges();
 
             Optional<GatewayAccountEntity> gatewayAccountOpt =
@@ -240,7 +163,7 @@ public class GatewayAccountDaoIT {
         }
 
         @Test
-        void findById_shouldUpdateAccountCardTypes() {
+        void shouldUpdateAccountCardTypes() {
             final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
             final CardTypeEntity visaCardCredit = app.getDatabaseTestHelper().getVisaCreditCard();
             final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaDebitCard();
@@ -274,7 +197,7 @@ public class GatewayAccountDaoIT {
         }
 
         @Test
-        void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() {
+        void shouldFindAccountInfoById_whenFindingById_returningGatewayAccount() {
             String paymentProvider = "test provider";
             app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                     .withAccountId(String.valueOf(gatewayAccountId))
@@ -289,39 +212,9 @@ public class GatewayAccountDaoIT {
             assertThat(gatewayAccount.getGatewayName(), is(paymentProvider));
         }
     }
-
-    @Test
-    void shouldSaveNotificationCredentials() {
-        String paymentProvider = "test provider";
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway(paymentProvider)
-                .withServiceName("a cool service")
-                .build());
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount.isPresent(), is(true));
-        GatewayAccountEntity gatewayAccount = maybeGatewayAccount.get();
-
-        NotificationCredentials notificationCredentials = new NotificationCredentials(gatewayAccount);
-        notificationCredentials.setPassword("password");
-        notificationCredentials.setUserName("username");
-        gatewayAccount.setNotificationCredentials(notificationCredentials);
-
-        gatewayAccountDao.merge(gatewayAccount);
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount_2 = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount_2.isPresent(), is(true));
-        GatewayAccountEntity retrievedGatewayAccount = maybeGatewayAccount.get();
-
-        assertNotNull(retrievedGatewayAccount.getNotificationCredentials());
-        assertThat(retrievedGatewayAccount.getNotificationCredentials().getUserName(), is("username"));
-        assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
-    }
     
     @Nested
     class Search {
-
         @Test
         void shouldReturnAllAccountsWhenNoSearchParameters() {
             long gatewayAccountId_1 = nextLong();
@@ -615,6 +508,111 @@ public class GatewayAccountDaoIT {
             assertThat(gatewayAccounts, hasSize(1));
             assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
         }
+    }
+
+    @Test
+    void shouldSaveNotificationCredentials() {
+        String paymentProvider = "test provider";
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway(paymentProvider)
+                .withServiceName("a cool service")
+                .build());
+
+        final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
+        assertThat(maybeGatewayAccount.isPresent(), is(true));
+        GatewayAccountEntity gatewayAccount = maybeGatewayAccount.get();
+
+        NotificationCredentials notificationCredentials = new NotificationCredentials(gatewayAccount);
+        notificationCredentials.setPassword("password");
+        notificationCredentials.setUserName("username");
+        gatewayAccount.setNotificationCredentials(notificationCredentials);
+
+        gatewayAccountDao.merge(gatewayAccount);
+
+        final Optional<GatewayAccountEntity> maybeGatewayAccount_2 = gatewayAccountDao.findById(gatewayAccountId);
+        assertThat(maybeGatewayAccount_2.isPresent(), is(true));
+        GatewayAccountEntity retrievedGatewayAccount = maybeGatewayAccount.get();
+
+        assertNotNull(retrievedGatewayAccount.getNotificationCredentials());
+        assertThat(retrievedGatewayAccount.getNotificationCredentials().getUserName(), is("username"));
+        assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
+    }
+
+    @Test
+    void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
+        GatewayAccountEntity account = new GatewayAccountEntity(TEST);
+        account.setExternalId(randomUuid());
+        GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(account)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withCredentials(Map.of())
+                .withState(ACTIVE)
+                .build();
+        account.setGatewayAccountCredentials(List.of(gatewayAccountCredentials));
+
+        NotificationCredentials notificationCredentials = new NotificationCredentials(account);
+        notificationCredentials.setPassword("password");
+        notificationCredentials.setUserName("username");
+        account.setNotificationCredentials(notificationCredentials);
+
+        gatewayAccountDao.persist(account);
+
+        GatewayAccountEntity accountToUpdate = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
+
+        assertFalse(accountToUpdate.isDisabled());
+        var gatewayAccountCredentialsEntity = accountToUpdate.getGatewayAccountCredentialsEntity(WORLDPAY.getName());
+        assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
+        assertThat(accountToUpdate.getNotificationCredentials(), not(nullValue()));
+
+        accountToUpdate.setDisabled(true);
+        accountToUpdate.setNotificationCredentials(null);
+
+        gatewayAccountDao.merge(accountToUpdate);
+
+        GatewayAccountEntity updatedAccount = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
+        assertTrue(updatedAccount.isDisabled());
+        assertNull(updatedAccount.getNotificationCredentials());
+    }
+
+    @Test
+    void persist_shouldCreateAnAccount() {
+        final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
+        final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaCreditCard();
+
+        GatewayAccountEntity account = new GatewayAccountEntity(TEST);
+
+        account.setExternalId(randomUuid());
+        account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));
+        account.setSendReferenceToGateway(true);
+
+        gatewayAccountDao.persist(account);
+
+        assertThat(account.getId(), is(notNullValue()));
+        assertThat(account.getEmailNotifications().isEmpty(), is(true));
+        assertThat(account.getDescription(), is(nullValue()));
+        assertThat(account.getAnalyticsId(), is(nullValue()));
+        assertThat(account.getNotificationCredentials(), is(nullValue()));
+        assertThat(account.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(0L));
+        assertThat(account.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(0L));
+        assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
+        assertThat(account.isSendPayerIpAddressToGateway(), is(false));
+        assertThat(account.isSendPayerEmailToGateway(), is(false));
+        assertThat(account.isProviderSwitchEnabled(), is(false));
+        assertThat(account.isSendReferenceToGateway(), is(true));
+
+        List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(account.getId());
+
+        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
+                allOf(
+                        hasEntry("label", masterCardCredit.getLabel()),
+                        hasEntry("type", masterCardCredit.getType().toString()),
+                        hasEntry("brand", masterCardCredit.getBrand())
+                ), allOf(
+                        hasEntry("label", visaCardDebit.getLabel()),
+                        hasEntry("type", visaCardDebit.getType().toString()),
+                        hasEntry("brand", visaCardDebit.getBrand())
+                )));
     }
 
     @Test
