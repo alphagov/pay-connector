@@ -148,7 +148,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
+        if (context.getRequiredTestClass().getEnclosingClass() == null) {
+            // Only runs if there is no enclosing class, i.e. not in a @Nested block
+            dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
+        }
     }
 
     @Override
@@ -163,11 +166,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
     @Override
     public void afterAll(ExtensionContext context) {
-        wireMockServer.stop();
-        worldpayWireMockServer.stop();
-        stripeWireMockServer.stop();
-        ledgerWireMockServer.stop();
-        dropwizardAppExtension.after();
+        if (context.getRequiredTestClass().getEnclosingClass() == null) {
+            wireMockServer.stop();
+            worldpayWireMockServer.stop();
+            stripeWireMockServer.stop();
+            ledgerWireMockServer.stop();
+            dropwizardAppExtension.after();
+        }
     }
 
     public RequestSpecification givenSetup() {
