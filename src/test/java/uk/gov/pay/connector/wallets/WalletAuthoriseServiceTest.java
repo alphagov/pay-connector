@@ -83,6 +83,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -234,6 +235,14 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains(
                 format("APPLE_PAY authorisation - charge status=AUTHORISATION SUCCESS, request status=success, charge_external_id=%s, payment provider response=%s", charge.getExternalId(), gatewayResponse.toString()))
         ), is(true));
+
+        String expectedMetric = format("gateway-operations.%s.%s.authorise.%s.result.%s",
+                "sandbox",
+                "test",
+                "apple-pay",
+                "success");
+
+        verify(mockMetricRegistry).counter(expectedMetric);
     }
 
     @Test
@@ -344,6 +353,30 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+    }
+
+    @Test
+    void verifyLogging_applePay_shouldLogFailure_WhenAuthorisationIsRejected() throws Exception {
+        providerWillRejectApplePay();
+
+        GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
+
+        assertThat(response.isSuccessful(), is(true));
+        assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, atLeast(1)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains("APPLE_PAY authorisation - charge status=AUTHORISATION REJECTED, request status=success")
+        ), is(true));
+
+        String expectedMetric = format("gateway-operations.%s.%s.authorise.%s.result.%s",
+                "sandbox",
+                "test",
+                "apple-pay",
+                "failure");
+        
+        verify(mockMetricRegistry).counter(expectedMetric);
     }
 
     @Test
