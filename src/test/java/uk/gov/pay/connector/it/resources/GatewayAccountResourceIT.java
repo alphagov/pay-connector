@@ -83,7 +83,7 @@ public class GatewayAccountResourceIT {
     }
 
     @Test
-    void shouldReturnAccountInformation_withWorldpayCredentials_whenGetByServiceIdAndAccountType() {
+    void shouldReturnWorldpayAccountInformation_whenGetByServiceIdAndAccountType() {
         long accountId = RandomUtils.nextInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
@@ -131,8 +131,7 @@ public class GatewayAccountResourceIT {
         app.getDatabaseTestHelper().setDisabled(accountId);
         app.getDatabaseTestHelper().setDisabledReason(accountId, "Disabled because reasons");
         app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(accountId, "macKey", "issuer", "org_unit_id", 2L);
-
-        int accountIdAsInt = Math.toIntExact(accountId);
+        
         String url = ACCOUNTS_API_SERVICE_ID_URL.replace("{serviceId}", "valid-external-service-id").replace("{accountType}", GatewayAccountType.TEST.name());
         app.givenSetup()
                 .get(url)
@@ -171,7 +170,7 @@ public class GatewayAccountResourceIT {
                 .body("gateway_account_credentials.size()", is(1))
                 .body("gateway_account_credentials[0].payment_provider", is("worldpay"))
                 .body("gateway_account_credentials[0].state", is("ACTIVE"))
-                .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt))
+                .body("gateway_account_credentials[0].gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
                 .body("gateway_account_credentials[0].credentials", hasEntry("gateway_merchant_id", "google-pay-merchant-id"))
                 .body("gateway_account_credentials[0].credentials", hasKey("one_off_customer_initiated"))
                 .body("gateway_account_credentials[0].credentials.one_off_customer_initiated", hasEntry("merchant_code", "one-off-merchant-code"))
@@ -195,7 +194,7 @@ public class GatewayAccountResourceIT {
     }
 
     @Test
-    void shouldReturnAccountInformation_withStripeCredentials_whenGetByServiceIdAndAccountType() {
+    void shouldReturnStripeAccountInformation_whenGetByServiceIdAndAccountType() {
         long accountId = RandomUtils.nextInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(STRIPE.getName())
@@ -209,20 +208,62 @@ public class GatewayAccountResourceIT {
                 .aTestAccount()
                 .withAccountId(accountId)
                 .withPaymentProvider(STRIPE.getName())
+                .withAllowTelephonePaymentNotifications(true)
+                .withAllowMoto(true)
+                .withCorporateCreditCardSurchargeAmount(250)
+                .withCorporateDebitCardSurchargeAmount(50)
+                .withAllowAuthApi(true)
+                .withRecurringEnabled(true)
                 .withGatewayAccountCredentials(List.of(credentialsParams))
+                .withRequires3ds(true)
                 .insert();
 
-        int accountIdAsInt = Math.toIntExact(accountId);
+        app.getDatabaseTestHelper().allowApplePay(accountId);
+        app.getDatabaseTestHelper().allowZeroAmount(accountId);
+        app.getDatabaseTestHelper().blockPrepaidCards(accountId);
+        app.getDatabaseTestHelper().enableProviderSwitch(accountId);
+        app.getDatabaseTestHelper().setDisabled(accountId);
+        app.getDatabaseTestHelper().setDisabledReason(accountId, "Disabled because reasons");
+        
         String url = ACCOUNTS_API_SERVICE_ID_URL.replace("{serviceId}", "valid-external-service-id").replace("{accountType}", GatewayAccountType.TEST.name());
         app.givenSetup()
                 .get(url)
                 .then()
                 .statusCode(200)
                 .body("payment_provider", is("stripe"))
+                .body("gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
+                .body("external_id", is(defaultTestAccount.getExternalId()))
+                .body("type", is(TEST.toString()))
+                .body("description", is("a description"))
+                .body("analytics_id", is("an analytics id"))
+                .body("email_collection_mode", is("OPTIONAL"))
+                .body("email_notifications.PAYMENT_CONFIRMED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.PAYMENT_CONFIRMED.enabled", is(true))
+                .body("email_notifications.REFUND_ISSUED.template_body", is("Lorem ipsum dolor sit amet, consectetur adipiscing elit."))
+                .body("email_notifications.REFUND_ISSUED.enabled", is(true))
+                .body("service_name", is("service_name"))
+                .body("corporate_credit_card_surcharge_amount", is(250))
+                .body("corporate_debit_card_surcharge_amount", is(50))
+                .body("allow_google_pay", is(false))
+                .body("allow_apple_pay", is(true))
+                .body("send_payer_ip_address_to_gateway", is(false))
+                .body("send_payer_email_to_gateway", is(false))
+                .body("allow_zero_amount", is(true))
+                .body("integration_version_3ds", is(2))
+                .body("allow_telephone_payment_notifications", is(true))
+                .body("provider_switch_enabled", is(true))
+                .body("service_id", is("valid-external-service-id"))
+                .body("send_reference_to_gateway", is(false))
+                .body("allow_authorisation_api", is(true))
+                .body("recurring_enabled", is(true))
+                .body("requires3ds", is(true))
+                .body("block_prepaid_cards", is(true))
+                .body("disabled", is(true))
+                .body("disabled_reason", is("Disabled because reasons"))
                 .body("gateway_account_credentials.size()", is(1))
                 .body("gateway_account_credentials[0].payment_provider", is("stripe"))
                 .body("gateway_account_credentials[0].state", is("ACTIVE"))
-                .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt))
+                .body("gateway_account_credentials[0].gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
                 .body("gateway_account_credentials[0].credentials", hasEntry("stripe_account_id", "a-stripe-account-id"));
     }
 

@@ -253,7 +253,7 @@ public class GatewayAccountResource {
         logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
         System.out.println("Account type: " + accountType);
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .map(gatewayAccount -> successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
+                .map(gatewayAccount -> successResponseWithEntity(Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
                 .orElseGet(() -> notFoundResponse(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));
     }
     

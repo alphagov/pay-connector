@@ -648,20 +648,31 @@ public class GatewayAccountDaoIT {
     }
 
     @Test
-    void findByServiceIdAndAccountType_shouldFindGatewayAccount() {
-        Long id = nextLong();
-        String externalId = randomUuid();
+    void findByServiceIdAndAccountType_shouldReturnMostRecentlyAddedAccount_whenMultipleAccountsExist() {
+        // TODO: update this test when decision has been made about multiple accounts
+        Long firstAccountId = nextLong();
+        String firstExternalId = randomUuid();
         String serviceExternalId = randomUuid();
         databaseFixtures
                 .aTestAccount()
-                .withAccountId(id)
-                .withExternalId(externalId)
+                .withAccountId(firstAccountId)
+                .withExternalId(firstExternalId)
                 .withServiceId(serviceExternalId)
                 .insert();
+
+        Long secondAccountId = firstAccountId + 1;
+        String secondExternalId = randomUuid();
+        databaseFixtures
+                .aTestAccount()
+                .withAccountId(secondAccountId)
+                .withExternalId(secondExternalId)
+                .withServiceId(serviceExternalId)
+                .insert();
+        
         Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByServiceIdAndAccountType(serviceExternalId, TEST);
         assertThat(gatewayAccountOptional.isPresent(), is(true));
-        assertThat(gatewayAccountOptional.get().getId(), is(id));
-        assertThat(gatewayAccountOptional.get().getExternalId(), is(externalId));
+        assertThat(gatewayAccountOptional.get().getId(), is(secondAccountId));
+        assertThat(gatewayAccountOptional.get().getExternalId(), is(secondExternalId));
     }
 
     @Test
