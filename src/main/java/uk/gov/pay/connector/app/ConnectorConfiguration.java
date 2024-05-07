@@ -70,6 +70,11 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    @JsonProperty("httpClient")
+    private JerseyClientConfiguration httpClientConfig;
+
+    @Valid
+    @NotNull
     @JsonProperty("customJerseyClient")
     private CustomJerseyClientConfiguration customJerseyClient;
 
@@ -290,6 +295,10 @@ public class ConnectorConfiguration extends Configuration {
 
     public Boolean getRejectPaymentLinkPaymentsWithCardNumberInReference() {
         return rejectPaymentLinkPaymentsWithCardNumberInReference;
+    }
+
+    public JerseyClientConfiguration getHttpClientConfig() {
+        return httpClientConfig;
     }
 
     public Optional<URI> getEcsContainerMetadataUriV4() {

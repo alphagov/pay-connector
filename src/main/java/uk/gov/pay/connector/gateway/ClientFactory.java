@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.httpclient5.InstrumentedHttpClientConnectionManager;
+import io.dropwizard.client.HttpClientBuilder;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
@@ -54,7 +55,7 @@ public class ClientFactory {
     private Client createWithDropwizardClient(PaymentGatewayName gateway, Duration readTimeout, String metricName, MetricRegistry metricRegistry) {
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
-                .using(conf.getClientConfiguration())
+                .using(conf.getHttpClientConfig())
                 .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
                 .withProperty(DISABLE_COOKIES, true)
                 .withProperty(CONNECTION_MANAGER,
@@ -68,6 +69,8 @@ public class ClientFactory {
 
         Client client = defaultClientBuilder.build(gateway.getName());
         client.register(RestClientLoggingFilter.class);
+
+        client.getConfiguration().getProperties();
 
         return client;
     }
