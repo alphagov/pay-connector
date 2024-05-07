@@ -54,9 +54,9 @@ public class ClientFactory {
     private Client createWithDropwizardClient(PaymentGatewayName gateway, Duration readTimeout, String metricName, MetricRegistry metricRegistry) {
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
                 .using(new ApacheConnectorProvider())
-                .using(conf.getClientConfiguration())
-                .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
-                .withProperty(DISABLE_COOKIES, true)
+//                .using(conf.getClientConfiguration())
+//                .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
+//                .withProperty(DISABLE_COOKIES, true)
                 .withProperty(CONNECTION_MANAGER,
                         createConnectionManager(gateway.getName(), metricName, metricRegistry, conf.getCustomJerseyClient().getConnectionTTL()));
 

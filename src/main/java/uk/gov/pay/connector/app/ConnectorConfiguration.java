@@ -70,6 +70,11 @@ public class ConnectorConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    @JsonProperty("httpClient")
+    private JerseyClientConfiguration httpClientConfig;
+
+    @Valid
+    @NotNull
     @JsonProperty("customJerseyClient")
     private CustomJerseyClientConfiguration customJerseyClient;
 

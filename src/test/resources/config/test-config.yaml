@@ -100,6 +100,18 @@ taskQueue:
   queueSchedulerShutdownTimeoutInSeconds: ${TASKS_QUEUE_SCHEDULER_SHUTDOWN_TIMEOUT_IN_SECONDS:-40}
   deliveryDelayInSeconds: ${TASK_QUEUE_DELIVERY_DELAY_IN_SECONDS:-2}
 
+httpClient:
+  timeout: 25500ms
+  connectionTimeout: 25500ms
+  timeToLive: ${CONNECTION_TTL:-60s}
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0ms
+  retries: 0
+  userAgent: connector
+  validateAfterInactivityPeriod: 500ms
+
 jerseyClient:
   timeout: 500ms
   connectionTimeout: 500ms

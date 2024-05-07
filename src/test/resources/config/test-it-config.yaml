@@ -96,6 +96,18 @@ sqsConfig:
   messageMaximumBatchSize: ${AWS_SQS_MESSAGE_MAXIMUM_BATCH_SIZE:-10}
   maxAllowedDeliveryDelayInSeconds: 900
 
+httpClient:
+  timeout: 25500ms
+  connectionTimeout: 25500ms
+  timeToLive: ${CONNECTION_TTL:-60s}
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0ms
+  retries: 0
+  userAgent: connector
+  validateAfterInactivityPeriod: 500ms
+
 jerseyClient:
   timeout: 500ms
   connectionTimeout: 500ms

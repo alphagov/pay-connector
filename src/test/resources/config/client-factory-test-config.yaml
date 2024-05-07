@@ -50,6 +50,18 @@ stripe:
   rechargeServicesForLivePaymentDisputesFromDate: ${RECHARGE_SERVICES_FOR_LIVE_PAYMENTS_DISPUTES_FROM_DATE:-1659916800} # 8 August 2022 00:00:00
   rechargeServicesForTestPaymentDisputesFromDate: ${RECHARGE_SERVICES_FOR_TEST_PAYMENTS_DISPUTES_FROM_DATE:-1659916800} # 8 August 2022 00:00:00
 
+httpClient:
+  timeout: 25500ms
+  connectionTimeout: 25500ms
+  timeToLive: ${CONNECTION_TTL:-60s}
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0ms
+  retries: 0
+  userAgent: connector
+  validateAfterInactivityPeriod: 500ms
+
 jerseyClient:
   timeout: 500ms
   connectionTimeout: 500ms
