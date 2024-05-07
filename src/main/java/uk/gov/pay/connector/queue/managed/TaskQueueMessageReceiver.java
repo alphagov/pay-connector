@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.queue.managed;
 
-import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.Managed;
+import io.dropwizard.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;

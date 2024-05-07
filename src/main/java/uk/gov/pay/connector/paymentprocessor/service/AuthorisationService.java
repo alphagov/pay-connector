@@ -2,7 +2,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 
 import com.codahale.metrics.MetricRegistry;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.app;
 
-import io.dropwizard.core.Configuration;
+import io.dropwizard.Configuration;
 
 public class LinksConfig extends Configuration {
 
