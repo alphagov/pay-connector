@@ -155,7 +155,7 @@ jerseyClient:
 
   # Determines the timeout until a connection is established
   connectionTimeout: 25500ms
-  timeToLive: 1h
+  timeToLive: ${CONNECTION_TTL:-60s}
   cookiesEnabled: false
   maxConnections: 1024
   maxConnectionsPerRoute: 1024
