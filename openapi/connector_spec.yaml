@@ -1336,6 +1336,37 @@ paths:
       summary: Find gateway account by service external ID and account type (test|live)
       tags:
       - Gateway accounts
+  /v1/api/service/{serviceId}/{accountType}/stripe-account:
+    get:
+      operationId: getStripeAccountByServiceIdAndAccountType
+      parameters:
+      - in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StripeAccountResponse'
+          description: OK
+        "404":
+          description: Not found - Service does not exist or service does not have
+            a stripe gateway account of this type
+      summary: Retrieves Stripe Connect account information for a given service ID
+        and account type (test|live)
+      tags:
+      - Gateway accounts
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\
