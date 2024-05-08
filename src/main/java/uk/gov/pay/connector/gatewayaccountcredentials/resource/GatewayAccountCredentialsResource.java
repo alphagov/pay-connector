@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
@@ -30,6 +31,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -215,6 +217,38 @@ public class GatewayAccountCredentialsResource {
                         })
                         .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(credentialsId)))
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
+    }
+
+    @PUT
+    @Path("/v1/api/service/{serviceId}/{accountType}/3ds-flex-credentials")
+    @Produces(APPLICATION_JSON)
+    @Consumes(APPLICATION_JSON)
+    @Operation(
+            summary = "Create or update 3DS flex credentials (worldpay accounts)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found or not a Worldpay gateway account")
+            }
+    )
+    public Response createOrUpdateWorldpay3dsCredentialsByServiceIdAndAccountType(
+            @Parameter(example = "1", description = "Gateway account ID")
+            @PathParam("serviceId") String serviceId,
+            @PathParam("accountType") GatewayAccountType accountType,
+            @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .or(() -> {
+                    throw new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType));
+                })
+                .filter(gatewayAccountEntity ->
+                        gatewayAccountEntity.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName()))
+                .map(gatewayAccountEntity -> {
+                    worldpay3dsFlexCredentialsService.setGatewayAccountWorldpay3dsFlexCredentials(worldpay3dsCredentials,
+                            gatewayAccountEntity);
+                    return Response.ok().build();
+                })
+                .orElseGet(() -> notFoundResponse("Not a Worldpay gateway account"));
     }
 
     private final class ValidationResult {
