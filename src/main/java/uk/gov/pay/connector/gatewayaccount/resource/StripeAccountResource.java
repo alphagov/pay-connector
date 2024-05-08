@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.resource.support.StripeAccountUtils;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -49,6 +50,25 @@ public class StripeAccountResource {
             @Parameter(example = "1", description = "Gateway account ID")
             @PathParam("accountId") Long accountId) {
         return gatewayAccountService.getGatewayAccount(accountId)
+                .filter(StripeAccountUtils::isStripeGatewayAccount)
+                .flatMap(stripeAccountService::buildStripeAccountResponse)
+                .orElseThrow(NotFoundException::new);
+    }
+
+    @GET
+    @Path("/v1/api/service/{serviceId}/{accountType}/stripe-account")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Retrieves Stripe Connect account information for a given service ID and account type (test|live)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = StripeAccountResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - Service does not exist or service does not have a stripe gateway account of this type")
+            }
+    )
+    public StripeAccountResponse getStripeAccountByServiceIdAndAccountType(
+            @PathParam("serviceId") String serviceId, @PathParam("accountType") GatewayAccountType accountType) {
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .filter(StripeAccountUtils::isStripeGatewayAccount)
                 .flatMap(stripeAccountService::buildStripeAccountResponse)
                 .orElseThrow(NotFoundException::new);
