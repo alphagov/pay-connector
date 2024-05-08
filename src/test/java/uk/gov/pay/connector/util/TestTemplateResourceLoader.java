@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.util;
 
+import static io.dropwizard.testing.FixtureHelpers.fixture;
+
 public class TestTemplateResourceLoader {
     private static final String TEMPLATE_BASE_NAME = "templates";
 
@@ -127,7 +129,7 @@ public class TestTemplateResourceLoader {
     public static final String SQS_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/error-response.xml";
 
     public static String load(String location) {
-        return TestResourceLoader.loadResource(location);
+        return fixture(location);
     }
 
 }

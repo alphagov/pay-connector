@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.app.config;
 
-import io.dropwizard.core.Configuration;
+import io.dropwizard.Configuration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;

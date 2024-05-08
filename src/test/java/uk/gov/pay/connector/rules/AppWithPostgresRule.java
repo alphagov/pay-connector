@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.Injector;
-import io.dropwizard.core.setup.Environment;
 import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
