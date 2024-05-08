@@ -4,6 +4,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Nested;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -55,6 +56,7 @@ public class GatewayAccountDaoIT {
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private DatabaseFixtures databaseFixtures;
     private long gatewayAccountId;
+        
 
     @BeforeEach
     void setUp() {
@@ -63,37 +65,480 @@ public class GatewayAccountDaoIT {
         databaseFixtures = app.getDatabaseFixtures();
         gatewayAccountId = nextLong();
     }
+    
+    @Nested
+    class FindByServiceId {
 
-    @Test
-    void shouldFindGatewayAccountsForServiceId() {
-        String serviceId = "a-service-id";
-        
-        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
-        account1.setExternalId(randomUuid());
-        account1.setServiceId(serviceId);
-        gatewayAccountDao.persist(account1);
+        @Test
+        void shouldFindGatewayAccounts() {
+            String serviceId = "a-service-id";
 
-        GatewayAccountEntity account2 = new GatewayAccountEntity(TEST);
-        account2.setExternalId(randomUuid());
-        account2.setServiceId(serviceId);
-        gatewayAccountDao.persist(account2);
+            GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
+            account1.setExternalId(randomUuid());
+            account1.setServiceId(serviceId);
+            gatewayAccountDao.persist(account1);
 
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceId(serviceId);
-        assertThat(gatewayAccounts.size(), is(2));
-        assertThat(gatewayAccounts.stream().map(GatewayAccountEntity::getExternalId).collect(Collectors.toList()), 
-                containsInAnyOrder(account1.getExternalId(), account2.getExternalId()));
+            GatewayAccountEntity account2 = new GatewayAccountEntity(TEST);
+            account2.setExternalId(randomUuid());
+            account2.setServiceId(serviceId);
+            gatewayAccountDao.persist(account2);
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceId(serviceId);
+            assertThat(gatewayAccounts.size(), is(2));
+            assertThat(gatewayAccounts.stream().map(GatewayAccountEntity::getExternalId).collect(Collectors.toList()),
+                    containsInAnyOrder(account1.getExternalId(), account2.getExternalId()));
+        }
+
+        @Test
+        void shouldFindNoGatewayAccount() {
+            GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
+            account1.setExternalId(randomUuid());
+            account1.setServiceId("a-service-id");
+            gatewayAccountDao.persist(account1);
+
+            assertTrue(gatewayAccountDao.findByServiceId("non-existent").isEmpty());
+        }
     }
+    @Nested
+    class FindByGatewayAccountId {
 
-    @Test
-    void shouldFindNoGatewayAccountForServiceId() {
-        GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
-        account1.setExternalId(randomUuid());
-        account1.setServiceId("a-service-id");
-        gatewayAccountDao.persist(account1);
-        
-        assertTrue(gatewayAccountDao.findByServiceId("non-existent").isEmpty());
+        @Test
+        void shouldNotFindANonexistentGatewayAccount() {
+            assertThat(gatewayAccountDao.findById(GatewayAccountEntity.class, 1234L).isPresent(), is(false));
+        }
+
+        @Test
+        void shouldFindGatewayAccount() {
+            final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
+            final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaCreditCard();
+            DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(masterCardCredit, visaCardDebit);
+
+            Optional<GatewayAccountEntity> gatewayAccountOpt =
+                    gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
+
+            assertTrue(gatewayAccountOpt.isPresent());
+            GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
+            assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
+            assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
+            assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
+            assertThat(gatewayAccount.getServiceId(), is(accountRecord.getServiceId()));
+            assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
+            assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
+            assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
+            assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
+            assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
+            assertThat(gatewayAccount.getCardTypes(), containsInAnyOrder(
+                    allOf(
+                            hasProperty("id", is(Matchers.notNullValue())),
+                            hasProperty("label", is(masterCardCredit.getLabel())),
+                            hasProperty("type", is(masterCardCredit.getType())),
+                            hasProperty("brand", is(masterCardCredit.getBrand()))
+                    ), allOf(
+                            hasProperty("id", is(Matchers.notNullValue())),
+                            hasProperty("label", is(visaCardDebit.getLabel())),
+                            hasProperty("type", is(visaCardDebit.getType())),
+                            hasProperty("brand", is(visaCardDebit.getBrand()))
+                    )));
+            assertThat(gatewayAccount.isAllowTelephonePaymentNotifications(), is(accountRecord.isAllowTelephonePaymentNotifications()));
+        }
+
+        @Test
+        void shouldFindGatewayAccountWithCorporateSurcharges() {
+            DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCorporateSurcharges();
+
+            Optional<GatewayAccountEntity> gatewayAccountOpt =
+                    gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
+
+            assertTrue(gatewayAccountOpt.isPresent());
+            GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
+            assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
+            assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
+            assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
+            assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
+            assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
+            assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
+            assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
+            assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
+
+        }
+
+        @Test
+        void shouldUpdateAccountCardTypes() {
+            final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
+            final CardTypeEntity visaCardCredit = app.getDatabaseTestHelper().getVisaCreditCard();
+            final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaDebitCard();
+            DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(masterCardCredit, visaCardCredit);
+
+            Optional<GatewayAccountEntity> gatewayAccountOpt =
+                    gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
+
+            assertTrue(gatewayAccountOpt.isPresent());
+            GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
+
+            List<CardTypeEntity> cardTypes = gatewayAccount.getCardTypes();
+
+            cardTypes.removeIf(p -> p.getId().equals(visaCardCredit.getId()));
+            cardTypes.add(visaCardDebit);
+
+            gatewayAccountDao.merge(gatewayAccount);
+
+            List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+
+            assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
+                    allOf(
+                            hasEntry("label", masterCardCredit.getLabel()),
+                            hasEntry("type", masterCardCredit.getType().toString()),
+                            hasEntry("brand", masterCardCredit.getBrand())
+                    ), allOf(
+                            hasEntry("label", visaCardDebit.getLabel()),
+                            hasEntry("type", visaCardDebit.getType().toString()),
+                            hasEntry("brand", visaCardDebit.getBrand())
+                    )));
+        }
+
+        @Test
+        void shouldFindAccountInfoById_whenFindingById_returningGatewayAccount() {
+            String paymentProvider = "test provider";
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId))
+                    .withPaymentGateway(paymentProvider)
+                    .withServiceName("a cool service")
+                    .build());
+
+            Optional<GatewayAccountEntity> gatewayAccountOpt = gatewayAccountDao.findById(gatewayAccountId);
+
+            assertTrue(gatewayAccountOpt.isPresent());
+            GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
+            assertThat(gatewayAccount.getGatewayName(), is(paymentProvider));
+        }
     }
     
+    @Nested
+    class Search {
+        @Test
+        void shouldReturnAllAccountsWhenNoSearchParameters() {
+            long gatewayAccountId_1 = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(2));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+            assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
+        }
+
+        @Test
+        void shouldSearchForAccountsById() {
+            long gatewayAccountId_1 = nextLong();
+            String externalId_1 = randomUuid();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .withExternalId(externalId_1)
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            String externalId_2 = randomUuid();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .withExternalId(externalId_2)
+                    .build());
+            long gatewayAccountId_3 = gatewayAccountId_2 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_3))
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setAccountIds(gatewayAccountId_1 + "," + gatewayAccountId_2);
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(2));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+            assertThat(gatewayAccounts.get(0).getExternalId(), is(externalId_1));
+            assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
+            assertThat(gatewayAccounts.get(1).getExternalId(), is(externalId_2));
+        }
+
+        @Test
+        void shouldSearchForAccountsByMotoEnabled() {
+            long gatewayAccountId_1 = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .withAllowMoto(false)
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .withAllowMoto(true)
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setMotoEnabled("true");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        }
+
+        @Test
+        void shouldSearchForAccountsByApplePayEnabled() {
+            long gatewayAccountId_1 = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .withAllowApplePay(false)
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .withAllowApplePay(true)
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setApplePayEnabled("true");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        }
+
+        @Test
+        void shouldSearchForAccountsByGooglePayEnabled() {
+            long gatewayAccountId_1 = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .withAllowGooglePay(false)
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .withAllowGooglePay(true)
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setGooglePayEnabled("true");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        }
+
+        @Test
+        void shouldSearchForAccountsByRequires3ds() {
+            long gatewayAccountId_1 = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .withRequires3ds(false)
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .withRequires3ds(true)
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setRequires3ds("true");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        }
+
+        @Test
+        void shouldSearchForAccountsByType() {
+            long gatewayAccountId_1 = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .withType(TEST)
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .withType(LIVE)
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setType("live");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+        }
+
+        @Test
+        void shouldSearchForAccountsByPaymentProvider() {
+            long gatewayAccountId1 = nextLong();
+            long gatewayAccountId2 = nextLong();
+            long gatewayAccountId3 = nextLong();
+            AddGatewayAccountCredentialsParams account1_credentials1 = anAddGatewayAccountCredentialsParams()
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withState(CREATED)
+                    .withGatewayAccountId(gatewayAccountId1)
+                    .build();
+            AddGatewayAccountCredentialsParams account1_credentials2 = anAddGatewayAccountCredentialsParams()
+                    .withPaymentProvider(STRIPE.getName())
+                    .withState(ACTIVE)
+                    .withGatewayAccountId(gatewayAccountId1)
+                    .build();
+            AddGatewayAccountCredentialsParams account2_credentials = anAddGatewayAccountCredentialsParams()
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withState(ACTIVE)
+                    .withGatewayAccountId(gatewayAccountId2)
+                    .build();
+            AddGatewayAccountCredentialsParams account3_credentials = anAddGatewayAccountCredentialsParams()
+                    .withPaymentProvider(WORLDPAY.getName())
+                    .withState(CREATED)
+                    .withGatewayAccountId(gatewayAccountId3)
+                    .build();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId1))
+                    .withGatewayAccountCredentials(List.of(account1_credentials1, account1_credentials2))
+                    .build());
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId2))
+                    .withGatewayAccountCredentials(List.of(account2_credentials))
+                    .build());
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId3))
+                    .withGatewayAccountCredentials(List.of(account3_credentials))
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setPaymentProvider("worldpay");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(2));
+            assertThat(gatewayAccounts, containsInAnyOrder(
+                    hasProperty("id", is(gatewayAccountId2)),
+                    hasProperty("id", is(gatewayAccountId3))
+            ));
+        }
+
+        @Test
+        void shouldSearchForAccountsByProviderSwitchEnabled() {
+            long gatewayAccountId_1 = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_1))
+                    .withPaymentGateway("sandbox")
+                    .withProviderSwitchEnabled(true)
+                    .build());
+            long gatewayAccountId_2 = gatewayAccountId_1 + 1;
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId_2))
+                    .withProviderSwitchEnabled(false)
+                    .withPaymentGateway("sandbox")
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setProviderSwitchEnabled("true");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+        }
+
+        @Test
+        void shouldSearchForAccountsByPaymentProviderAccountId() {
+            long gatewayAccountId = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId))
+                    .withPaymentGateway("sandbox")
+                    .withCredentials(Map.of("stripe_account_id", "acc123"))
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setPaymentProviderAccountId("acc123");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+        }
+
+        @Test
+        void shouldSearchForAccountsByWorldpayMerchantCodeInOneOffPaymentCredentials() {
+            long gatewayAccountId = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId))
+                    .withPaymentGateway("worldpay")
+                    .withCredentials(Map.of("one_off_customer_initiated", Map.of("merchant_code", "acc123")))
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setPaymentProviderAccountId("acc123");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+        }
+
+        @Test
+        void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
+            long gatewayAccountId = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId))
+                    .withPaymentGateway("worldpay")
+                    .withCredentials(Map.of("recurring_customer_initiated", Map.of("merchant_code", "acc123")))
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setPaymentProviderAccountId("acc123");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+        }
+
+        @Test
+        void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringMerchantInitiatedCredentials() {
+            long gatewayAccountId = nextLong();
+            app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                    .withAccountId(String.valueOf(gatewayAccountId))
+                    .withPaymentGateway("worldpay")
+                    .withCredentials(Map.of("recurring_merchant_initiated", Map.of("merchant_code", "acc123")))
+                    .build());
+
+            var params = new GatewayAccountSearchParams();
+            params.setPaymentProviderAccountId("acc123");
+
+            List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
+            assertThat(gatewayAccounts, hasSize(1));
+            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+        }
+    }
+
+    @Test
+    void shouldSaveNotificationCredentials() {
+        String paymentProvider = "test provider";
+        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
+                .withAccountId(String.valueOf(gatewayAccountId))
+                .withPaymentGateway(paymentProvider)
+                .withServiceName("a cool service")
+                .build());
+
+        final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
+        assertThat(maybeGatewayAccount.isPresent(), is(true));
+        GatewayAccountEntity gatewayAccount = maybeGatewayAccount.get();
+
+        NotificationCredentials notificationCredentials = new NotificationCredentials(gatewayAccount);
+        notificationCredentials.setPassword("password");
+        notificationCredentials.setUserName("username");
+        gatewayAccount.setNotificationCredentials(notificationCredentials);
+
+        gatewayAccountDao.merge(gatewayAccount);
+
+        final Optional<GatewayAccountEntity> maybeGatewayAccount_2 = gatewayAccountDao.findById(gatewayAccountId);
+        assertThat(maybeGatewayAccount_2.isPresent(), is(true));
+        GatewayAccountEntity retrievedGatewayAccount = maybeGatewayAccount.get();
+
+        assertNotNull(retrievedGatewayAccount.getNotificationCredentials());
+        assertThat(retrievedGatewayAccount.getNotificationCredentials().getUserName(), is("username"));
+        assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
+    }
+
     @Test
     void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
         GatewayAccountEntity account = new GatewayAccountEntity(TEST);
@@ -114,7 +559,7 @@ public class GatewayAccountDaoIT {
         gatewayAccountDao.persist(account);
 
         GatewayAccountEntity accountToUpdate = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
-        
+
         assertFalse(accountToUpdate.isDisabled());
         var gatewayAccountCredentialsEntity = accountToUpdate.getGatewayAccountCredentialsEntity(WORLDPAY.getName());
         assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
@@ -122,14 +567,14 @@ public class GatewayAccountDaoIT {
 
         accountToUpdate.setDisabled(true);
         accountToUpdate.setNotificationCredentials(null);
-        
+
         gatewayAccountDao.merge(accountToUpdate);
 
         GatewayAccountEntity updatedAccount = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
         assertTrue(updatedAccount.isDisabled());
         assertNull(updatedAccount.getNotificationCredentials());
     }
-    
+
     @Test
     void persist_shouldCreateAnAccount() {
         final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
@@ -168,439 +613,6 @@ public class GatewayAccountDaoIT {
                         hasEntry("type", visaCardDebit.getType().toString()),
                         hasEntry("brand", visaCardDebit.getBrand())
                 )));
-    }
-
-    @Test
-    void findById_shouldNotFindANonexistentGatewayAccount() {
-        assertThat(gatewayAccountDao.findById(GatewayAccountEntity.class, 1234L).isPresent(), is(false));
-    }
-
-    @Test
-    void findById_shouldFindGatewayAccount() {
-        final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
-        final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaCreditCard();
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(masterCardCredit, visaCardDebit);
-
-        Optional<GatewayAccountEntity> gatewayAccountOpt =
-                gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
-
-        assertTrue(gatewayAccountOpt.isPresent());
-        GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
-        assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
-        assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
-        assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
-        assertThat(gatewayAccount.getServiceId(), is(accountRecord.getServiceId()));
-        assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
-        assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCardTypes(), containsInAnyOrder(
-                allOf(
-                        hasProperty("id", is(Matchers.notNullValue())),
-                        hasProperty("label", is(masterCardCredit.getLabel())),
-                        hasProperty("type", is(masterCardCredit.getType())),
-                        hasProperty("brand", is(masterCardCredit.getBrand()))
-                ), allOf(
-                        hasProperty("id", is(Matchers.notNullValue())),
-                        hasProperty("label", is(visaCardDebit.getLabel())),
-                        hasProperty("type", is(visaCardDebit.getType())),
-                        hasProperty("brand", is(visaCardDebit.getBrand()))
-                )));
-        assertThat(gatewayAccount.isAllowTelephonePaymentNotifications(), is(accountRecord.isAllowTelephonePaymentNotifications()));
-    }
-
-    @Test
-    void findById_shouldFindGatewayAccountWithCorporateSurcharges() {
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCorporateSurcharges();
-
-        Optional<GatewayAccountEntity> gatewayAccountOpt =
-                gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
-
-        assertTrue(gatewayAccountOpt.isPresent());
-        GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
-        assertThat(gatewayAccount.getGatewayName(), is(accountRecord.getPaymentProvider()));
-        assertThat(gatewayAccount.getExternalId(), is(accountRecord.getExternalId()));
-        assertThat(gatewayAccount.getServiceName(), is(accountRecord.getServiceName()));
-        assertThat(gatewayAccount.getDescription(), is(accountRecord.getDescription()));
-        assertThat(gatewayAccount.getAnalyticsId(), is(accountRecord.getAnalyticsId()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(accountRecord.getCorporateCreditCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporateDebitCardSurchargeAmount()));
-        assertThat(gatewayAccount.getCorporatePrepaidDebitCardSurchargeAmount(), is(accountRecord.getCorporatePrepaidDebitCardSurchargeAmount()));
-
-    }
-
-    @Test
-    void findById_shouldUpdateAccountCardTypes() {
-        final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
-        final CardTypeEntity visaCardCredit = app.getDatabaseTestHelper().getVisaCreditCard();
-        final CardTypeEntity visaCardDebit = app.getDatabaseTestHelper().getVisaDebitCard();
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(masterCardCredit, visaCardCredit);
-
-        Optional<GatewayAccountEntity> gatewayAccountOpt =
-                gatewayAccountDao.findById(GatewayAccountEntity.class, accountRecord.getAccountId());
-
-        assertTrue(gatewayAccountOpt.isPresent());
-        GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
-
-        List<CardTypeEntity> cardTypes = gatewayAccount.getCardTypes();
-
-        cardTypes.removeIf(p -> p.getId().equals(visaCardCredit.getId()));
-        cardTypes.add(visaCardDebit);
-
-        gatewayAccountDao.merge(gatewayAccount);
-
-        List<Map<String, Object>> acceptedCardTypesByAccountId = app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
-
-        assertThat(acceptedCardTypesByAccountId, containsInAnyOrder(
-                allOf(
-                        hasEntry("label", masterCardCredit.getLabel()),
-                        hasEntry("type", masterCardCredit.getType().toString()),
-                        hasEntry("brand", masterCardCredit.getBrand())
-                ), allOf(
-                        hasEntry("label", visaCardDebit.getLabel()),
-                        hasEntry("type", visaCardDebit.getType().toString()),
-                        hasEntry("brand", visaCardDebit.getBrand())
-                )));
-    }
-
-    @Test
-    void findById_shouldFindAccountInfoByIdWhenFindingByIdReturningGatewayAccount() {
-        String paymentProvider = "test provider";
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway(paymentProvider)
-                .withServiceName("a cool service")
-                .build());
-
-        Optional<GatewayAccountEntity> gatewayAccountOpt = gatewayAccountDao.findById(gatewayAccountId);
-
-        assertTrue(gatewayAccountOpt.isPresent());
-        GatewayAccountEntity gatewayAccount = gatewayAccountOpt.get();
-        assertThat(gatewayAccount.getGatewayName(), is(paymentProvider));
-    }
-
-    @Test
-    void shouldSaveNotificationCredentials() {
-        String paymentProvider = "test provider";
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway(paymentProvider)
-                .withServiceName("a cool service")
-                .build());
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount.isPresent(), is(true));
-        GatewayAccountEntity gatewayAccount = maybeGatewayAccount.get();
-
-        NotificationCredentials notificationCredentials = new NotificationCredentials(gatewayAccount);
-        notificationCredentials.setPassword("password");
-        notificationCredentials.setUserName("username");
-        gatewayAccount.setNotificationCredentials(notificationCredentials);
-
-        gatewayAccountDao.merge(gatewayAccount);
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount_2 = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount_2.isPresent(), is(true));
-        GatewayAccountEntity retrievedGatewayAccount = maybeGatewayAccount.get();
-
-        assertNotNull(retrievedGatewayAccount.getNotificationCredentials());
-        assertThat(retrievedGatewayAccount.getNotificationCredentials().getUserName(), is("username"));
-        assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
-    }
-
-    @Test
-    void shouldReturnAllAccountsWhenNoSearchParameters() {
-        long gatewayAccountId_1 = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(2));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
-        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
-    }
-
-    @Test
-    void shouldSearchForAccountsById() {
-        long gatewayAccountId_1 = nextLong();
-        String externalId_1 = randomUuid();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withExternalId(externalId_1)
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        String externalId_2 = randomUuid();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withExternalId(externalId_2)
-                .build());
-        long gatewayAccountId_3 = gatewayAccountId_2 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_3))
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setAccountIds(gatewayAccountId_1 + "," + gatewayAccountId_2);
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(2));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
-        assertThat(gatewayAccounts.get(0).getExternalId(), is(externalId_1));
-        assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
-        assertThat(gatewayAccounts.get(1).getExternalId(), is(externalId_2));
-    }
-
-    @Test
-    void shouldSearchForAccountsByMotoEnabled() {
-        long gatewayAccountId_1 = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withAllowMoto(false)
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withAllowMoto(true)
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setMotoEnabled("true");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
-    }
-
-    @Test
-    void shouldSearchForAccountsByApplePayEnabled() {
-        long gatewayAccountId_1 = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withAllowApplePay(false)
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withAllowApplePay(true)
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setApplePayEnabled("true");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
-    }
-
-    @Test
-    void shouldSearchForAccountsByGooglePayEnabled() {
-        long gatewayAccountId_1 = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withAllowGooglePay(false)
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withAllowGooglePay(true)
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setGooglePayEnabled("true");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
-    }
-
-    @Test
-    void shouldSearchForAccountsByRequires3ds() {
-        long gatewayAccountId_1 = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withRequires3ds(false)
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withRequires3ds(true)
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setRequires3ds("true");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
-    }
-
-    @Test
-    void shouldSearchForAccountsByType() {
-        long gatewayAccountId_1 = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withType(TEST)
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withType(LIVE)
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setType("live");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
-    }
-
-    @Test
-    void shouldSearchForAccountsByPaymentProvider() {
-        long gatewayAccountId1 = nextLong();
-        long gatewayAccountId2 = nextLong();
-        long gatewayAccountId3 = nextLong();
-        AddGatewayAccountCredentialsParams account1_credentials1 = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider(WORLDPAY.getName())
-                .withState(CREATED)
-                .withGatewayAccountId(gatewayAccountId1)
-                .build();
-        AddGatewayAccountCredentialsParams account1_credentials2 = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider(STRIPE.getName())
-                .withState(ACTIVE)
-                .withGatewayAccountId(gatewayAccountId1)
-                .build();
-        AddGatewayAccountCredentialsParams account2_credentials = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider(WORLDPAY.getName())
-                .withState(ACTIVE)
-                .withGatewayAccountId(gatewayAccountId2)
-                .build();
-        AddGatewayAccountCredentialsParams account3_credentials = anAddGatewayAccountCredentialsParams()
-                .withPaymentProvider(WORLDPAY.getName())
-                .withState(CREATED)
-                .withGatewayAccountId(gatewayAccountId3)
-                .build();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId1))
-                .withGatewayAccountCredentials(List.of(account1_credentials1, account1_credentials2))
-                .build());
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId2))
-                .withGatewayAccountCredentials(List.of(account2_credentials))
-                .build());
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId3))
-                .withGatewayAccountCredentials(List.of(account3_credentials))
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setPaymentProvider("worldpay");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(2));
-        assertThat(gatewayAccounts, containsInAnyOrder(
-                hasProperty("id", is(gatewayAccountId2)),
-                hasProperty("id", is(gatewayAccountId3))
-        ));
-    }
-
-    @Test
-    void shouldSearchForAccountsByProviderSwitchEnabled() {
-        long gatewayAccountId_1 = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_1))
-                .withPaymentGateway("sandbox")
-                .withProviderSwitchEnabled(true)
-                .build());
-        long gatewayAccountId_2 = gatewayAccountId_1 + 1;
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId_2))
-                .withProviderSwitchEnabled(false)
-                .withPaymentGateway("sandbox")
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setProviderSwitchEnabled("true");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
-    }    
-    
-    @Test
-    void shouldSearchForAccountsByPaymentProviderAccountId() {
-        long gatewayAccountId = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway("sandbox")
-                .withCredentials(Map.of("stripe_account_id", "acc123"))
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setPaymentProviderAccountId("acc123");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
-    }    
-    
-    @Test
-    void shouldSearchForAccountsByWorldpayMerchantCodeInOneOffPaymentCredentials() {
-        long gatewayAccountId = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway("worldpay")
-                .withCredentials(Map.of("one_off_customer_initiated", Map.of("merchant_code", "acc123")))
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setPaymentProviderAccountId("acc123");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
-    }
-
-    @Test
-    void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
-        long gatewayAccountId = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway("worldpay")
-                .withCredentials(Map.of("recurring_customer_initiated", Map.of("merchant_code", "acc123")))
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setPaymentProviderAccountId("acc123");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
-    }
-
-    @Test
-    void shouldSearchForAccountsByWorldpayMerchantCodeInRecurringMerchantInitiatedCredentials() {
-        long gatewayAccountId = nextLong();
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway("worldpay")
-                .withCredentials(Map.of("recurring_merchant_initiated", Map.of("merchant_code", "acc123")))
-                .build());
-
-        var params = new GatewayAccountSearchParams();
-        params.setPaymentProviderAccountId("acc123");
-
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
-        assertThat(gatewayAccounts, hasSize(1));
-        assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
     }
 
     @Test
