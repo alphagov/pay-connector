@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
@@ -96,6 +97,16 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
         Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccount(GATEWAY_ACCOUNT_ID);
+
+        assertThat(gatewayAccountEntity.get(), is(this.mockGatewayAccountEntity));
+    }
+
+    @Test
+    void shouldGetGatewayAccountByServiceIdAndAccountType() {
+        String serviceId = "a-service-id";
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST);
 
         assertThat(gatewayAccountEntity.get(), is(this.mockGatewayAccountEntity));
     }

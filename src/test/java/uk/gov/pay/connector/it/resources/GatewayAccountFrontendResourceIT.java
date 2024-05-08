@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
@@ -45,6 +46,7 @@ public class GatewayAccountFrontendResourceIT {
     
     public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
+    private static final String ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL = "v1/frontend/service/{serviceId}/{accountType}/card-types";
 
     private final Gson gson = new Gson();
 
@@ -89,7 +91,7 @@ public class GatewayAccountFrontendResourceIT {
                 .body("allow_telephone_payment_notifications", is(false))
                 .body("worldpay_3ds_flex", nullValue());
     }
-
+    
     @Test
     void shouldReturnGatewayAccountByExternalIdWith3dsFlexCredentials_whenGatewayAccountHasCreds() {
         DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
@@ -125,6 +127,28 @@ public class GatewayAccountFrontendResourceIT {
         String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
         ValidatableResponse response = app.givenSetup().accept(JSON)
                 .get(frontendCardTypeUrl)
+                .then()
+                .statusCode(200)
+                .body("containsKey('card_types')", is(true))
+                .body("card_types", hasSize(9));
+
+        validateNon3dsCardType(response, "visa", "Visa", "DEBIT", "CREDIT");
+        validateNon3dsCardType(response, "master-card", "Mastercard", "DEBIT", "CREDIT");
+        validateNon3dsCardType(response, "american-express", "American Express", "CREDIT");
+        validateNon3dsCardType(response, "diners-club", "Diners Club", "CREDIT");
+        validateNon3dsCardType(response, "discover", "Discover", "CREDIT");
+        validateNon3dsCardType(response, "jcb", "Jcb", "CREDIT");
+        validateNon3dsCardType(response, "unionpay", "Union Pay", "CREDIT");
+    }
+
+    @Test
+    void shouldGetCardTypesByServiceIdAndAccountType() {
+        testBaseExtension.createAGatewayAccountWithServiceId("a-service-id");
+        String frontendCardTypeByServiceIdAndAccountTypeUrl = ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL
+                .replace("{serviceId}", "a-service-id")
+                .replace("{accountType}", GatewayAccountType.TEST.name());
+        ValidatableResponse response = app.givenSetup().accept(JSON)
+                .get(frontendCardTypeByServiceIdAndAccountTypeUrl)
                 .then()
                 .statusCode(200)
                 .body("containsKey('card_types')", is(true))
