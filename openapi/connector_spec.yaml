@@ -1264,6 +1264,44 @@ paths:
       summary: Handle Worldpay notifications
       tags:
       - Notifications
+  /v1/api/service/{serviceId}/{accountType}/3ds-flex-credentials:
+    put:
+      operationId: createOrUpdateWorldpay3dsCredentialsByServiceIdAndAccountType
+      parameters:
+      - description: Gateway account ID
+        example: 1
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found - account not found or not a Worldpay gateway account
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid or missing mandatory fields
+      summary: Create or update 3DS flex credentials (worldpay accounts)
+      tags:
+      - Gateway account credentials
   /v1/api/service/{serviceId}/{accountType}/account:
     get:
       description: "Get gateway account by service external ID and account type (test|live).\
