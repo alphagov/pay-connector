@@ -68,7 +68,8 @@ public class StripeAccountResource {
             }
     )
     public StripeAccountResponse getStripeAccountByServiceIdAndAccountType(
-            @PathParam("serviceId") String serviceId, @PathParam("accountType") GatewayAccountType accountType) {
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> {
                     throw new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType));

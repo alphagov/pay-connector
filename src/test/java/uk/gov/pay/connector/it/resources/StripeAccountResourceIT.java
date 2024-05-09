@@ -1,14 +1,15 @@
 package uk.gov.pay.connector.it.resources;
 
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.Nested;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 
 import java.util.Collections;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -95,7 +96,8 @@ public class StripeAccountResourceIT {
             app.givenSetup()
                     .get("/v1/api/service/unknown-service-id/TEST/stripe-account")
                     .then()
-                    .statusCode(404);
+                    .statusCode(404)
+                    .body("message[0]", is(format("Gateway account not found for service ID [unknown-service-id] and account type [test]")));
         }
 
         @Test
@@ -105,7 +107,8 @@ public class StripeAccountResourceIT {
             app.givenSetup()
                     .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
                     .then()
-                    .statusCode(404);
+                    .statusCode(404)
+                    .body("message[0]", is(format("Gateway account for service ID [a-valid-service-id] and account type [test] is not a Stripe account")));
         }
 
         @Test
@@ -115,7 +118,8 @@ public class StripeAccountResourceIT {
             app.givenSetup()
                     .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
                     .then()
-                    .statusCode(404);
+                    .statusCode(404)
+                    .body("message", is(format("Stripe gateway account for service ID [a-valid-service-id] and account type [test] does not have Stripe credentials")));
         }
     }
 }
