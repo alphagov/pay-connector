@@ -9,7 +9,6 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import java.util.Collections;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
