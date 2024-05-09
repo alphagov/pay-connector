@@ -82,7 +82,9 @@ public class StripeAccountResourceIT {
             Map<String, String> credentials = Map.of("stripe_account_id", STRIPE_ACCOUNT_ID);
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
-                    .post("/v1/api/accounts/" + accountId + "/credentials");
+                    .post("/v1/api/accounts/" + accountId + "/credentials")
+                    .then()
+                    .statusCode(200);
 
             app.givenSetup()
                     .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
@@ -97,7 +99,7 @@ public class StripeAccountResourceIT {
                     .get("/v1/api/service/unknown-service-id/TEST/stripe-account")
                     .then()
                     .statusCode(404)
-                    .body("message[0]", is(format("Gateway account not found for service ID [unknown-service-id] and account type [test]")));
+                    .body("message[0]", is("Gateway account not found for service ID [unknown-service-id] and account type [test]"));
         }
 
         @Test
@@ -108,7 +110,7 @@ public class StripeAccountResourceIT {
                     .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
                     .then()
                     .statusCode(404)
-                    .body("message[0]", is(format("Gateway account for service ID [a-valid-service-id] and account type [test] is not a Stripe account")));
+                    .body("message[0]", is("Gateway account for service ID [a-valid-service-id] and account type [test] is not a Stripe account"));
         }
 
         @Test
@@ -119,7 +121,7 @@ public class StripeAccountResourceIT {
                     .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
                     .then()
                     .statusCode(404)
-                    .body("message", is(format("Stripe gateway account for service ID [a-valid-service-id] and account type [test] does not have Stripe credentials")));
+                    .body("message", is("Stripe gateway account for service ID [a-valid-service-id] and account type [test] does not have Stripe credentials"));
         }
     }
 }
