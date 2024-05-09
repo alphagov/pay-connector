@@ -233,8 +233,9 @@ public class GatewayAccountCredentialsResource {
             }
     )
     public Response createOrUpdateWorldpay3dsCredentialsByServiceIdAndAccountType(
-            @Parameter(example = "1", description = "Gateway account ID")
+            @Parameter(example = "1", description = "Service ID")
             @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type")
             @PathParam("accountType") GatewayAccountType accountType,
             @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)

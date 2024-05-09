@@ -121,7 +121,7 @@ public class GatewayAccountCredentialsResourceTest {
                     "organisational_unit_id", "incorrect format",
                     "jwt_mac_key", VALID_JWT_MAC_KEY);
 
-            verifyCheckWordlapy3dsCredentialsValidationError(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
+            verifyCheckWorldpay3dsCredentialsValidationError(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
         }
 
         @Test
@@ -131,7 +131,7 @@ public class GatewayAccountCredentialsResourceTest {
             payload.put("organisational_unit_id", null);
             payload.put("jwt_mac_key", VALID_JWT_MAC_KEY);
 
-            verifyCheckWordlapy3dsCredentialsValidationError(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
+            verifyCheckWorldpay3dsCredentialsValidationError(payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters");
         }
 
         @Test
@@ -140,7 +140,7 @@ public class GatewayAccountCredentialsResourceTest {
                     "organisational_unit_id", VALID_ORG_UNIT_ID,
                     "jwt_mac_key", VALID_JWT_MAC_KEY);
 
-            verifyCheckWordlapy3dsCredentialsValidationError(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
+            verifyCheckWorldpay3dsCredentialsValidationError(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
         }
 
         @Test
@@ -150,7 +150,7 @@ public class GatewayAccountCredentialsResourceTest {
             payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
             payload.put("jwt_mac_key", VALID_JWT_MAC_KEY);
 
-            verifyCheckWordlapy3dsCredentialsValidationError(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
+            verifyCheckWorldpay3dsCredentialsValidationError(payload, "Field [issuer] must be 24 lower-case hexadecimal characters");
         }
 
         @Test
@@ -159,7 +159,7 @@ public class GatewayAccountCredentialsResourceTest {
                     "organisational_unit_id", VALID_ORG_UNIT_ID,
                     "jwt_mac_key", "hihihihi");
 
-            verifyCheckWordlapy3dsCredentialsValidationError(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
+            verifyCheckWorldpay3dsCredentialsValidationError(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
         }
 
         @Test
@@ -169,7 +169,7 @@ public class GatewayAccountCredentialsResourceTest {
             payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
             payload.put("jwt_mac_key", null);
 
-            verifyCheckWordlapy3dsCredentialsValidationError(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
+            verifyCheckWorldpay3dsCredentialsValidationError(payload, "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation");
         }
     }
     
@@ -415,7 +415,7 @@ public class GatewayAccountCredentialsResourceTest {
         }
     }
 
-    private void verifyCheckWordlapy3dsCredentialsValidationError(Map<String, String> payload, String expectedErrorMessage) {
+    private void verifyCheckWorldpay3dsCredentialsValidationError(Map<String, String> payload, String expectedErrorMessage) {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
         Response response = resources
                 .target(format("/v1/api/accounts/%s/worldpay/check-3ds-flex-config", accountId))
