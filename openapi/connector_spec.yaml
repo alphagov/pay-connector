@@ -1269,7 +1269,7 @@ paths:
       operationId: createOrUpdateWorldpay3dsCredentialsByServiceIdAndAccountType
       parameters:
       - description: Service ID
-        example: 1
+        example: 46eb1b601348499196c99de90482ee68 add
         in: path
         name: serviceId
         required: true
