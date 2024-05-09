@@ -59,6 +59,10 @@ public class GatewayAccountResourceITBaseExtensions {
         return extractGatewayAccountId(createAGatewayAccountFor(appLocalPort, "sandbox", "description", "analytics-id", "", "test", serviceId));
     }
 
+    protected String createAGatewayAccountWithServiceId(String serviceId, String testProvider) {
+        return extractGatewayAccountId(createAGatewayAccountFor(appLocalPort, testProvider, "description", "analytics-id", "", "test", serviceId));
+    }
+
     public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires3ds, String type, String serviceId) {
         Map<String, String> payload = Maps.newHashMap();
         payload.put("payment_provider", testProvider);
