@@ -22,7 +22,7 @@ public class StripeAccountResourceIT {
     @Nested
     class GetStripeAccountByGatewayAccountId {
         @Test
-        public void getStripeAccountReturnsSuccessfulResponse() {
+        void returnsSuccessfulResponse() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .withPaymentProvider("stripe")
@@ -37,7 +37,7 @@ public class StripeAccountResourceIT {
         }
     
         @Test
-        public void getStripeAccountReturnsNotFoundResponseWhenGatewayAccountNotFound() {
+        void returnsNotFoundResponseWhenGatewayAccountNotFound() {
             app.givenSetup()
                     .get("/v1/api/accounts/1337/stripe-account")
                     .then()
@@ -45,7 +45,7 @@ public class StripeAccountResourceIT {
         }
     
         @Test
-        public void getStripeAccountReturnsNotFoundResponseWhenGatewayAccountIsNotStripe() {
+        void returnsNotFoundResponseWhenGatewayAccountIsNotStripe() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .withPaymentProvider("sandbox")
@@ -59,7 +59,7 @@ public class StripeAccountResourceIT {
         }
     
         @Test
-        public void getStripeAccountReturnsNotFoundResponseWhenGatewayAccountCredentialsAreEmpty() {
+        void returnsNotFoundResponseWhenGatewayAccountCredentialsAreEmpty() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .withPaymentProvider("stripe")
@@ -76,7 +76,7 @@ public class StripeAccountResourceIT {
     @Nested
     class GetStripeAccountByServiceIdAndAccountType {
         @Test
-        public void getStripeAccountReturnsSuccessfulResponse() {
+        void returnsSuccessfulResponse() {
             String accountId = testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe");
             Map<String, String> credentials = Map.of("stripe_account_id", STRIPE_ACCOUNT_ID);
             app.givenSetup()
@@ -91,7 +91,7 @@ public class StripeAccountResourceIT {
         }
 
         @Test
-        public void getStripeAccountReturnsNotFoundResponseWhenServiceIdNotFound() {
+        void returnsNotFoundResponseWhenServiceIdNotFound() {
             app.givenSetup()
                     .get("/v1/api/service/unknown-service-id/TEST/stripe-account")
                     .then()
@@ -99,7 +99,7 @@ public class StripeAccountResourceIT {
         }
 
         @Test
-        public void getStripeAccountReturnsNotFoundResponseWhenNoStripeAccountExistsForService() {
+        void returnsNotFoundResponseWhenNoStripeAccountExistsForService() {
             testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "sandbox");
 
             app.givenSetup()
@@ -109,7 +109,7 @@ public class StripeAccountResourceIT {
         }
 
         @Test
-        public void getStripeAccountReturnsNotFoundResponseWhenGatewayAccountCredentialsAreEmpty() {
+        void returnsNotFoundResponseWhenGatewayAccountCredentialsAreEmpty() {
             testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe");
 
             app.givenSetup()
