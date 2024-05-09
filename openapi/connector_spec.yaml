@@ -1362,7 +1362,7 @@ paths:
           description: OK
         "404":
           description: Not found - Service does not exist or service does not have
-            a stripe gateway account of this type
+            a Stripe gateway account of this type
       summary: Retrieves Stripe Connect account information for a given service ID
         and account type (test|live)
       tags:
