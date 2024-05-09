@@ -262,7 +262,7 @@ public class GatewayAccountCredentialsResourceIT {
         );
         @Test
         void shouldUpdateCredentialsAndReturn200() {
-            String serviceId = String.valueOf(RandomUtils.nextLong());
+            String serviceId = "a-valid-service-id";
             String gatewayAccountId = app.givenSetup()
                 .body(toJson(Map.of(
                         "payment_provider", "worldpay",
@@ -298,7 +298,7 @@ public class GatewayAccountCredentialsResourceIT {
         
         @Test
         void shouldReturn404_andNotUpdateCredentials_forNonWorldpayGatewayAccount() {
-            String serviceId = String.valueOf(RandomUtils.nextLong());
+            String serviceId = "a-valid-service-id";
             String gatewayAccountId = app.givenSetup()
                     .body(toJson(Map.of(
                             "payment_provider", "stripe",
