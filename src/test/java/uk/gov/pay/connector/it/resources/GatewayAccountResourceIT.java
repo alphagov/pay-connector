@@ -61,7 +61,7 @@ public class GatewayAccountResourceIT {
 
 
     @Nested
-    class getByServiceIdAndAccountType {
+    class GetByServiceIdAndAccountType {
         @Test
         void shouldReturn404IfServiceIdIsUnknown() {
             String unknownServiceId = "unknown-service-id";
@@ -288,7 +288,7 @@ public class GatewayAccountResourceIT {
 
 
     @Nested
-    class getByGatewayAccountId {
+    class GetByGatewayAccountId {
 
         @Test
         void shouldReturn404IfAccountIdIsUnknown() {
