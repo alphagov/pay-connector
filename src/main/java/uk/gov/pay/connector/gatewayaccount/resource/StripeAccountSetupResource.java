@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -62,6 +64,25 @@ public class StripeAccountSetupResource {
         return gatewayAccountService.getGatewayAccount(accountId)
                 .map(gatewayAccountEntity -> stripeAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId()))
                 .orElseThrow(NotFoundException::new);
+    }
+
+    @GET
+    @Path("/v1/api/service/{serviceId}/{accountType}/stripe-setup")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Retrieve Stripe connect account setup tasks for a given service ID and account type",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = StripeAccountSetup.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public StripeAccountSetup getStripeAccountSetupByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, 
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccountEntity -> stripeAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId()))
+                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
     }
 
     @PATCH
