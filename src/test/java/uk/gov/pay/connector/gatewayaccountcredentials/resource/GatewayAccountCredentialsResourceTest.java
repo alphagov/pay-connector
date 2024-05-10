@@ -363,7 +363,7 @@ public class GatewayAccountCredentialsResourceTest {
             assertThat(response.getStatus(), is(422));
         }
     }
-    
+
     @Nested
     class PatchGatewayAccountCredentials {
 
@@ -386,6 +386,19 @@ public class GatewayAccountCredentialsResourceTest {
         }
     }
     
+    @Nested
+    class CreateGatewayAccountCredentials_byServiceIdAndAccountType {
+        @Test
+        void missingBody_shouldReturn422() {
+            Response response = resources
+                    .target("/v1/api/service/a-valid-service-id/test/credentials")
+                    .request()
+                    .post(null);
+
+            assertThat(response.getStatus(), is(422));
+        }
+    }
+
     @Nested
     class Update3dsFlexCredentials_byServiceIdAndAccountType {
         

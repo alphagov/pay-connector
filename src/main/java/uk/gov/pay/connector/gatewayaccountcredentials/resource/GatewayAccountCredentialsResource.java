@@ -219,6 +219,34 @@ public class GatewayAccountCredentialsResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
+    @POST
+    @Path("/v1/api/service/{serviceId}/{accountType}/credentials")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Create credentials for a gateway account",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found")
+            }
+    )
+    public GatewayAccountCredentials createGatewayAccountCredentialsByServiceIdAndAccountType(
+            @Parameter(example = "1", description = "Service external ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
+        gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
+
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccount -> {
+                    Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
+                    return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
+                })
+                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
+    }
+
     @PUT
     @Path("/v1/api/service/{serviceId}/{accountType}/3ds-flex-credentials")
     @Produces(APPLICATION_JSON)
