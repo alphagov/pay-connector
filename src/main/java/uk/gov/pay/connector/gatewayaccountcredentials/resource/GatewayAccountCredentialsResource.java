@@ -234,7 +234,7 @@ public class GatewayAccountCredentialsResource {
             }
     )
     public GatewayAccountCredentials createGatewayAccountCredentialsByServiceIdAndAccountType(
-            @Parameter(example = "1", description = "Service external ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service external ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
         gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
