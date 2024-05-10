@@ -23,7 +23,7 @@ public class StripeAccountSetupResourceIT {
     @Nested
     class getStripeSetupByGatewayAccountId {
         @Test
-        public void withNoTasksCompletedReturnsFalseFlags() {
+        void withNoTasksCompletedReturnsFalseFlags() {
             String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
 
             app.givenSetup()
@@ -40,7 +40,7 @@ public class StripeAccountSetupResourceIT {
         }
 
         @Test
-        public void withSomeTasksCompletedReturnsAppropriateFlags() {
+        void withSomeTasksCompletedReturnsAppropriateFlags() {
             long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
             addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
             addCompletedTask(gatewayAccountId, StripeAccountSetupTask.VAT_NUMBER);
@@ -59,7 +59,7 @@ public class StripeAccountSetupResourceIT {
         }
 
         @Test
-        public void returnsNotFoundResponseWhenGatewayAccountDoesNotExist() {
+        void returnsNotFoundResponseWhenGatewayAccountDoesNotExist() {
             long notFoundGatewayAccountId = 13;
 
             app.givenSetup()
@@ -69,7 +69,7 @@ public class StripeAccountSetupResourceIT {
         }
 
         @Test
-        public void returnsSuccessfulResponseWhenGatewayAccountIsNotAStripeAccount() {
+        void returnsSuccessfulResponseWhenGatewayAccountIsNotAStripeAccount() {
             long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("worldpay"));
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -81,7 +81,7 @@ public class StripeAccountSetupResourceIT {
     @Nested
     class getStripeSetupByServiceIdAndAccountType {
         @Test
-        public void withNoTasksCompletedReturnsFalseFlags() {
+        void withNoTasksCompletedReturnsFalseFlags() {
             testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe");
 
             app.givenSetup()
@@ -98,7 +98,7 @@ public class StripeAccountSetupResourceIT {
         }
 
         @Test
-        public void withSomeTasksCompletedReturnsAppropriateFlags() {
+        void withSomeTasksCompletedReturnsAppropriateFlags() {
             long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe"));
             app.givenSetup()
                     .body(toJson(Arrays.asList(
@@ -132,7 +132,7 @@ public class StripeAccountSetupResourceIT {
         }
 
         @Test
-        public void returnsNotFoundResponseWhenNoGatewayAccountFoundForService() {
+        void returnsNotFoundResponseWhenNoGatewayAccountFoundForService() {
             app.givenSetup()
                     .get("/v1/api/service/unknown-service-id/TEST/stripe-setup")
                     .then()
@@ -141,17 +141,25 @@ public class StripeAccountSetupResourceIT {
         }
 
         @Test
-        public void returnsSuccessfulResponseWhenGatewayAccountIsNotAStripeAccount() {
+        void returnsSuccessfulResponseWhenGatewayAccountIsNotAStripeAccount() {
             testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id","worldpay");
             app.givenSetup()
                     .get("/v1/api/service/a-valid-service-id/TEST/stripe-setup")
                     .then()
-                    .statusCode(200);
+                    .statusCode(200)
+                    .body("bank_account", is(false))
+                    .body("responsible_person", is(false))
+                    .body("vat_number", is(false))
+                    .body("company_number", is(false))
+                    .body("director", is(false))
+                    .body("government_entity_document", is(false))
+                    .body("organisation_details", is(false));
+                    
         }
     }
 
     @Test
-    public void patchStripeSetupWithSingleUpdate() {
+    void patchStripeSetupWithSingleUpdate() {
         long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
         app.givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
@@ -175,7 +183,7 @@ public class StripeAccountSetupResourceIT {
     }
 
     @Test
-    public void patchStripeSetupWithMultipleUpdates() {
+    void patchStripeSetupWithMultipleUpdates() {
         long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
         app.givenSetup()
                 .body(toJson(Arrays.asList(
@@ -226,7 +234,7 @@ public class StripeAccountSetupResourceIT {
     }
 
     @Test
-    public void patchStripeSetupValidationError() {
+    void patchStripeSetupValidationError() {
         long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
         app.givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
@@ -241,7 +249,7 @@ public class StripeAccountSetupResourceIT {
     }
 
     @Test
-    public void patchStripeSetupGatewayAccountDoesNotExist() {
+    void patchStripeSetupGatewayAccountDoesNotExist() {
         app.givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
                         "op", "not_replace",
@@ -253,7 +261,7 @@ public class StripeAccountSetupResourceIT {
     }
 
     @Test
-    public void patchStripeSetupGatewayAccountNotStripe() {
+    void patchStripeSetupGatewayAccountNotStripe() {
         long gatewayAccountId = Long.valueOf(testBaseExtension.createAGatewayAccountFor("worldpay"));
         app.givenSetup()
                 .body(toJson(Collections.singletonList(ImmutableMap.of(
@@ -266,7 +274,7 @@ public class StripeAccountSetupResourceIT {
     }
 
     @Test
-    public void patchStripeSetupDirectorWithFalse() {
+    void patchStripeSetupDirectorWithFalse() {
         long gatewayAccountId = Long.valueOf(testBaseExtension.createAGatewayAccountFor("stripe"));
         addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
 
