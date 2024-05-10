@@ -10,7 +10,6 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
@@ -664,12 +663,12 @@ public class GatewayAccountDaoIT {
         // TODO: update this test when decision has been made about multiple accounts
         Long firstAccountId = nextLong();
         String firstExternalId = randomUuid();
-        String serviceExternalId = randomUuid();
+        String serviceId = randomUuid();
         databaseFixtures
                 .aTestAccount()
                 .withAccountId(firstAccountId)
                 .withExternalId(firstExternalId)
-                .withServiceId(serviceExternalId)
+                .withServiceId(serviceId)
                 .insert();
 
         Long secondAccountId = firstAccountId + 1;
@@ -678,10 +677,10 @@ public class GatewayAccountDaoIT {
                 .aTestAccount()
                 .withAccountId(secondAccountId)
                 .withExternalId(secondExternalId)
-                .withServiceId(serviceExternalId)
+                .withServiceId(serviceId)
                 .insert();
         
-        Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByServiceIdAndAccountType(serviceExternalId, TEST);
+        Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, TEST);
         assertThat(gatewayAccountOptional.isPresent(), is(true));
         assertThat(gatewayAccountOptional.get().getId(), is(secondAccountId));
         assertThat(gatewayAccountOptional.get().getExternalId(), is(secondExternalId));

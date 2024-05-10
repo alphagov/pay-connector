@@ -132,7 +132,9 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public GatewayAccountWithCredentialsResponse getGatewayAccountByServiceIdAndAccountType(@PathParam("serviceId") String serviceId, @PathParam("accountType") GatewayAccountType accountType) {
+    public GatewayAccountWithCredentialsResponse getGatewayAccountByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         GatewayAccountWithCredentialsResponse response = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(GatewayAccountWithCredentialsResponse::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));
@@ -249,9 +251,10 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getAcceptedCardTypesByServiceIdAndAccountType(@PathParam("serviceId") String serviceId, @PathParam("accountType") GatewayAccountType accountType) {
+    public Response getAcceptedCardTypesByServiceIdAndAccountType( 
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
-        System.out.println("Account type: " + accountType);
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount -> successResponseWithEntity(Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
                 .orElseGet(() -> notFoundResponse(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));

@@ -1311,12 +1311,16 @@ paths:
         \ password). Doesn't include card_types or gateway_merchant_id"
       operationId: getGatewayAccountByServiceIdAndAccountType
       parameters:
-      - in: path
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
         name: serviceId
         required: true
         schema:
           type: string
-      - in: path
+      - description: Account type
+        example: test
+        in: path
         name: accountType
         required: true
         schema:
@@ -1933,12 +1937,16 @@ paths:
     get:
       operationId: getAcceptedCardTypesByServiceIdAndAccountType
       parameters:
-      - in: path
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
         name: serviceId
         required: true
         schema:
           type: string
-      - in: path
+      - description: Account type
+        example: test
+        in: path
         name: accountType
         required: true
         schema:
