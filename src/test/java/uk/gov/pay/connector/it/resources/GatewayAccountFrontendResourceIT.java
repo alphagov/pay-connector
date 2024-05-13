@@ -294,39 +294,47 @@ public class GatewayAccountFrontendResourceIT {
             CardTypeEntity visaDebit = getCardTypes(cardTypes, CardType.DEBIT, "visa");
             CardTypeEntity mastercardCredit = getCardTypes(cardTypes, CardType.CREDIT, "master-card");
 
+            String serviceId = "my-service-id";
             var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
-                    "my test service", "analytics", "my-service-id");
-            String gatewayAccountId = createRequest.post(ACCOUNTS_API_URL)
+                    "my test service", "analytics", serviceId);
+            createRequest.post(ACCOUNTS_API_URL)
                     .then()
                     .statusCode(201)
-                    .contentType(JSON)
-                    .extract()
-                    .path("gateway_account_id");
+                    .contentType(JSON);
 
-            String body = buildAcceptedCardTypesBody(visaCredit);
-            updateGatewayAccountCardTypesWith(Long.parseLong(gatewayAccountId), body)
+            String bodyWithJustVisaCredit = buildAcceptedCardTypesBody(visaCredit);
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithJustVisaCredit)
                     .then()
                     .statusCode(200);
             
             given().port(app.getLocalPort())
-                    .get(String.format("/v1/frontend/service/%s/%s/card-types", "my-service-id", "test"))
+                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
                     .then()
                     .body("card_types", hasSize(1))
                     .body("card_types[0].brand", is("visa"))
                     .body("card_types[0].label", is("Visa"))
                     .body("card_types[0].type", is("CREDIT"))
                     .body("card_types[0].requires3ds", is(false));
-                    
+
+            String bodyWithAllThreeCardTypes = buildAcceptedCardTypesBody(visaCredit, visaDebit, mastercardCredit);
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithAllThreeCardTypes)
+                    .then()
+                    .statusCode(200);
             
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
+                    .then()
+                    .body("card_types", hasSize(3));
         }
 
-//        private Response updateGatewayAccountCardTypesWith(String serviceId, String body) {
-//            return app.givenSetup()
-//                    .contentType(ContentType.JSON)
-//                    .accept(JSON)
-//                    .body(body)
-//                    .post(String.format("/v1/frontend/service/%s/test/card-types", serviceId));
-//        }
+        private Response updateGatewayAccountCardTypesWith(String serviceId, GatewayAccountType accountType, String body) {
+            String url = format("/v1/frontend/service/%s/%s/card-types", serviceId, accountType.toString());
+            return app.givenSetup()
+                    .contentType(ContentType.JSON)
+                    .accept(JSON)
+                    .body(body)
+                    .post(url);
+        }
 
         @NotNull
         private CardTypeEntity getCardTypes(Map<String, List<CardTypeEntity>> cardTypes, CardType cardType, String brand) {

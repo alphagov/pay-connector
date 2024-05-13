@@ -99,7 +99,7 @@ public class GatewayAccountResource {
             }
     )
     public GatewayAccountWithCredentialsResponse getGatewayAccount(@Parameter(example = "1", description = "Gateway account ID")
-                                                                                  @PathParam("accountId") Long gatewayAccountId) {
+                                                                   @PathParam("accountId") Long gatewayAccountId) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(GatewayAccountWithCredentialsResponse::new)
@@ -238,7 +238,7 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getAcceptedCardTypesByServiceIdAndAccountType( 
+    public Response getAcceptedCardTypesByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
@@ -246,7 +246,7 @@ public class GatewayAccountResource {
                 .map(gatewayAccount -> successResponseWithEntity(Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
                 .orElseGet(() -> notFoundResponse(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));
     }
-    
+
     @POST
     @Path("/v1/api/accounts")
     @Consumes(APPLICATION_JSON)
@@ -417,8 +417,9 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "409", description = "Conflict - requires3DS is false on gateway account but atleast one card type requires 3DS to be enabled. ")
             }
     )
-    public Response updateGatewayAccountAcceptedCardTypes(@Parameter(example = "1", description = "Gateway account ID")
-                                                          @PathParam("accountId") Long gatewayAccountId, Map<String, List<UUID>> cardTypes) {
+    public Response updateGatewayAccountAcceptedCardTypesPreDegateway(
+            @Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
+            Map<String, List<UUID>> cardTypes) {
 
         if (!cardTypes.containsKey(CARD_TYPES_FIELD_NAME)) {
             return fieldsMissingResponse(Collections.singletonList(CARD_TYPES_FIELD_NAME));
@@ -426,6 +427,50 @@ public class GatewayAccountResource {
 
         List<UUID> cardTypeIds = cardTypes.get(CARD_TYPES_FIELD_NAME);
 
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
+                .map(gatewayAccountEntity -> updateGatewayAccountAcceptedCardTypes(cardTypeIds, gatewayAccountEntity))
+                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
+    @POST
+    @Path("/v1/frontend/service/{serviceId}/{accountType}/card-types")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    @Operation(
+            summary = "Update accepted card types for a gateway account",
+            tags = {"Gateway accounts"},
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "    \"card_types\": [" +
+                    "        \"ab8a3abd-bcfd-4fa6-8905-321ce913e7f5\"," +
+                    "        \"3863fc6a-6425-49cb-b708-af76296bcfc1\"" +
+                    "    ]" +
+                    "}", requiredProperties = {"card_types"}))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "409", description = "Conflict - requires3DS is false on gateway account but atleast one card type requires 3DS to be enabled. ")
+            }
+    )
+    public Response updateGatewayAccountAcceptedCardTypesDegateway(
+            @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            Map<String, List<UUID>> cardTypes) {
+
+        if (!cardTypes.containsKey(CARD_TYPES_FIELD_NAME)) {
+            return fieldsMissingResponse(Collections.singletonList(CARD_TYPES_FIELD_NAME));
+        }
+
+        List<UUID> cardTypeIds = cardTypes.get(CARD_TYPES_FIELD_NAME);
+
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccountEntity -> updateGatewayAccountAcceptedCardTypes(cardTypeIds, gatewayAccountEntity))
+                .orElseGet(() -> notFoundResponse(format("The gateway account for service id '%s' and account type '%s' does not exist", serviceId, accountType)));
+    }
+
+    private Response updateGatewayAccountAcceptedCardTypes(List<UUID> cardTypeIds, GatewayAccountEntity gatewayAccountToEdit) {
         List<CardTypeEntity> cardTypeEntities = cardTypeIds.stream()
                 .map(cardTypeDao::findById)
                 .filter(Optional::isPresent)
@@ -438,16 +483,11 @@ public class GatewayAccountResource {
             return badRequestResponse(errorMessage);
         }
 
-        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccount -> {
-                    if (!gatewayAccount.isRequires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
-                        return Response.status(Status.CONFLICT).build();
-                    }
-                    gatewayAccount.setCardTypes(cardTypeEntities);
-                    return Response.ok().build();
-                })
-                .orElseGet(() ->
-                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+        if (!gatewayAccountToEdit.isRequires3ds() && hasAnyRequired3ds(cardTypeEntities)) {
+            return Response.status(Status.CONFLICT).build();
+        }
+        gatewayAccountToEdit.setCardTypes(cardTypeEntities);
+        return Response.ok().build();
     }
 
     private boolean hasAnyRequired3ds(List<CardTypeEntity> cardTypeEntities) {
