@@ -427,6 +427,95 @@ public class GatewayAccountCredentialsResourceTest {
             assertThat(extractErrorMessagesFromResponse(response).get(0), is(expectedErrorMessage));
         }
     }
+    
+    @Nested
+    class ValidateWorldpay3dsCredentials_byServiceIdAndAccountType {
+        @Test
+        void organisationalUnitIdNotInCorrectFormat_shouldReturn422() {
+            var payload = Map.of(
+                    "issuer", VALID_ISSUER,
+                    "organisational_unit_id", "incorrect format",
+                    "jwt_mac_key", VALID_JWT_MAC_KEY);
+
+            verifyCheckWorldpay3dsCredentialsValidationError_byServiceIdAndAccountType(
+                    payload, 
+                    "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters"
+            );
+        }
+
+        @Test
+        void organisationalUnitIdNull_shouldReturn422() {
+            var payload = new HashMap<String, String>();
+            payload.put("issuer", VALID_ISSUER);
+            payload.put("organisational_unit_id", null);
+            payload.put("jwt_mac_key", VALID_JWT_MAC_KEY);
+
+            verifyCheckWorldpay3dsCredentialsValidationError_byServiceIdAndAccountType(
+                    payload, "Field [organisational_unit_id] must be 24 lower-case hexadecimal characters"
+            );
+        }
+
+        @Test
+        void issuerNotInCorrectFormat_shouldReturn422() {
+            var payload = Map.of("issuer", "44992i087n0v4849895al9i3",
+                    "organisational_unit_id", VALID_ORG_UNIT_ID,
+                    "jwt_mac_key", VALID_JWT_MAC_KEY);
+
+            verifyCheckWorldpay3dsCredentialsValidationError_byServiceIdAndAccountType(
+                    payload, "Field [issuer] must be 24 lower-case hexadecimal characters"
+            );
+        }
+
+        @Test
+        void issuerNull_shouldReturn422() {
+            var payload = new HashMap<String, String>();
+            payload.put("issuer", null);
+            payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
+            payload.put("jwt_mac_key", VALID_JWT_MAC_KEY);
+
+            verifyCheckWorldpay3dsCredentialsValidationError_byServiceIdAndAccountType(
+                    payload, 
+                    "Field [issuer] must be 24 lower-case hexadecimal characters"
+            );
+        }
+
+        @Test
+        void jwtMacKeyNotInCorrectFormat_shouldReturn422() {
+            var payload = Map.of("issuer", VALID_ISSUER,
+                    "organisational_unit_id", VALID_ORG_UNIT_ID,
+                    "jwt_mac_key", "hihihihi");
+
+            verifyCheckWorldpay3dsCredentialsValidationError_byServiceIdAndAccountType(
+                    payload,
+                    "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation"
+            );
+        }
+
+        @Test
+        void jwtMacKeyNull_shouldReturn422() {
+            var payload = new HashMap<String, String>();
+            payload.put("issuer", VALID_ISSUER);
+            payload.put("organisational_unit_id", VALID_ORG_UNIT_ID);
+            payload.put("jwt_mac_key", null);
+
+            verifyCheckWorldpay3dsCredentialsValidationError_byServiceIdAndAccountType(
+                    payload, 
+                    "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation"
+            );
+        }
+    }
+    
+    private void verifyCheckWorldpay3dsCredentialsValidationError_byServiceIdAndAccountType(Map<String, String> payload, String expectedErrorMessage) {
+        when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType("a-valid-service-id", GatewayAccountType.TEST))
+                .thenReturn(Optional.of(gatewayAccountEntity));
+        Response response = resources
+                .target("/v1/api/service/a-valid-service-id/test/worldpay/check-3ds-flex-config")
+                .request()
+                .post(Entity.json(payload));
+
+        assertThat(response.getStatus(), is(422));
+        assertThat(extractErrorMessagesFromResponse(response).get(0), is(expectedErrorMessage));
+    }
 
     private void verifyCheckWorldpay3dsCredentialsValidationError(Map<String, String> payload, String expectedErrorMessage) {
         when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(gatewayAccountEntity));
