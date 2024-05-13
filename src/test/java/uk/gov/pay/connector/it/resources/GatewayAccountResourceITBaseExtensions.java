@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.restassured.response.ValidatableResponse;
+import io.restassured.specification.RequestSpecification;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -55,6 +56,10 @@ public class GatewayAccountResourceITBaseExtensions {
         return createAGatewayAccountFor(port, testProvider, description, analyticsId, null, "test", null);
     }
 
+    public static RequestSpecification createAGatewayAccountRequestSpecificationFor(int port, String testProvider, String description, String analyticsId, String serviceId) {
+        return getRequestSpecification(port, testProvider, description, analyticsId, null, "test", serviceId);
+    }
+
     protected String createAGatewayAccountWithServiceId(String serviceId) {
         return extractGatewayAccountId(createAGatewayAccountFor(appLocalPort, "sandbox", "description", "analytics-id", "", "test", serviceId));
     }
@@ -64,6 +69,15 @@ public class GatewayAccountResourceITBaseExtensions {
     }
 
     public static ValidatableResponse createAGatewayAccountFor(int port, String testProvider, String description, String analyticsId, String requires3ds, String type, String serviceId) {
+        RequestSpecification requestSpecification = getRequestSpecification(port, testProvider, description, analyticsId, requires3ds, type, serviceId);
+        return requestSpecification
+                .post(ACCOUNTS_API_URL)
+                .then()
+                .statusCode(201)
+                .contentType(JSON);
+    }
+
+    private static RequestSpecification getRequestSpecification(int port, String testProvider, String description, String analyticsId, String requires3ds, String type, String serviceId) {
         Map<String, String> payload = Maps.newHashMap();
         payload.put("payment_provider", testProvider);
         if (description != null) {
@@ -81,13 +95,10 @@ public class GatewayAccountResourceITBaseExtensions {
         if (serviceId != null) {
             payload.put("service_id", serviceId);
         }
-        return given().port(port)
+        RequestSpecification requestSpecification = given().port(port)
                 .contentType(JSON)
-                .body(toJson(payload))
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201)
-                .contentType(JSON);
+                .body(toJson(payload));
+        return requestSpecification;
     }
 
     void updateGatewayAccount(String gatewayAccountId, String path, Object value) {
