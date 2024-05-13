@@ -1382,7 +1382,8 @@ paths:
           description: Bad request - Invalid or missing mandatory fields
         "404":
           description: Not found - account not found
-      summary: Create credentials for a gateway account
+      summary: Create credentials for a gateway account by service external ID and
+        account type (test|live)
       tags:
       - Gateway account credentials
   /v1/api/service/{serviceId}/{accountType}/stripe-account:

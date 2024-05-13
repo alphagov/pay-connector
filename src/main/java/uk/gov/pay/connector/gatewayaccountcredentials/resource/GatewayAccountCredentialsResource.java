@@ -224,7 +224,7 @@ public class GatewayAccountCredentialsResource {
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Create credentials for a gateway account",
+            summary = "Create credentials for a gateway account by service external ID and account type (test|live)",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
