@@ -9,11 +9,10 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 
-
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
+import java.util.Map;
 import java.util.Optional;
-
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
@@ -23,13 +22,15 @@ public class RefundReversalService {
     private final LedgerService ledgerService;
     private final RefundDao refundDao;
     private final StripeSdkClientFactory stripeSdkClientFactory;
+    private final RefundReversalStripeConnectTransferRequestBuilder refundRequest;
 
 
     @Inject
-    public RefundReversalService(LedgerService ledgerService, RefundDao refundDao, StripeSdkClientFactory stripeSdkClientFactory) {
+    public RefundReversalService(LedgerService ledgerService, RefundDao refundDao, StripeSdkClientFactory stripeSdkClientFactory, RefundReversalStripeConnectTransferRequestBuilder refundRequest) {
         this.ledgerService = ledgerService;
         this.refundDao = refundDao;
         this.stripeSdkClientFactory = stripeSdkClientFactory;
+        this.refundRequest = refundRequest;
     }
 
 
@@ -53,7 +54,10 @@ public class RefundReversalService {
 
 
             if ("failed".equals(refundStatus)) {
-                // TODO: 04/01/2024  (PP-11555)
+
+                Map<String, Object> refundRequestBody = refundRequest.createRequest(refundFromStripe);
+                stripeClient.createTransfer(refundRequestBody, isLiveGatewayAccount);
+
             } else {
                 throw new WebApplicationException(badRequestResponse(
                         format("Refund with Refund ID: %s and Stripe ID: %s is not in a failed state", refundExternalId, stripeRefundId)));

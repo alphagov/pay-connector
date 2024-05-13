@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.service;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.stripe.exception.StripeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
     }
 
     @Test
-    void testCreateRequest() throws StripeException, JsonProcessingException {
+    void testCreateRequest() throws StripeException {
 
         when(mockStripeRefund.getChargeObject()).thenReturn(mockStripeCharge);
         when(mockStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
@@ -55,7 +54,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         assertEquals("balance_transaction", expandArray[0]);
         assertEquals("destination_payment", expandArray[1]);
         assertEquals(6, builderRequest.size());
-        
+
         assertEquals("acct_jdsa7789d", builderRequest.get("destination"));
         assertEquals(100L, builderRequest.get("amount"));
         assertEquals("GBP", builderRequest.get("currency"));

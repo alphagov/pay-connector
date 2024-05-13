@@ -49,7 +49,7 @@ public class StripeSdkClient {
     private String getStripeApiKey(boolean live) {
         return live ? stripeGatewayConfig.getAuthTokens().getLive() : stripeGatewayConfig.getAuthTokens().getTest();
     }
-    
+
     public Refund getRefund(String stripeRefundId, boolean live) throws StripeException {
         String apiKey = getStripeApiKey(live);
         RequestOptions requestOptions = RequestOptions.builder()
@@ -60,5 +60,13 @@ public class StripeSdkClient {
         params.put("expand", expandList);
 
         return stripeSDKWrapper.getRefund(stripeRefundId, params, requestOptions);
+    }
+
+    public void createTransfer(Map<String, Object> transferRequest, boolean live) throws StripeException {
+        String apiKey = getStripeApiKey(live);
+        RequestOptions requestOptions = RequestOptions.builder()
+                .setApiKey(apiKey)
+                .build();
+        stripeSDKWrapper.createTransfer(transferRequest, requestOptions);
     }
 }

@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.ConnectorModule;
@@ -40,6 +42,10 @@ public class RefundReversalResourceIT {
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final StripeSdkClient mockStripeSdkClient = mock(StripeSdkClient.class);
+    @Mock
+    private com.stripe.model.Charge mockedStripeCharge = Mockito.mock(com.stripe.model.Charge.class);
+    @Mock
+    private com.stripe.model.Account mockedStripeAccount = Mockito.mock(com.stripe.model.Account.class);
     
     private static final String CHARGE_EXTERNAL_ID = "charge-external-id";
     private static final String REFUND_EXTERNAL_ID = "refund-external-id";
@@ -75,7 +81,7 @@ public class RefundReversalResourceIT {
     }
 
     @Test
-    public void shouldSuccessfullyGetRefundFromStripe() throws JsonProcessingException, StripeException {
+    void shouldSuccessfullyDoTransferWhenRefundIsInFailedState() throws JsonProcessingException, StripeException {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
         app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
 
@@ -83,6 +89,16 @@ public class RefundReversalResourceIT {
         app.getStripeMockClient().mockRefund();
         
         when(mockStripeRefund.getStatus()).thenReturn("failed");
+
+        when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
+
+        when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
+        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
+        when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
+        when(mockStripeRefund.getAmount()).thenReturn(100L);
+        when(mockStripeRefund.getCurrency()).thenReturn("GBP");
+        
         
         ValidatableResponse response = given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
@@ -97,7 +113,7 @@ public class RefundReversalResourceIT {
 
 
     @Test
-    public void shouldReturnInternalErrorWhenRefundNotFoundFromStripe() throws JsonProcessingException, StripeException {
+    void shouldReturnInternalErrorWhenRefundNotFoundFromStripe() throws JsonProcessingException, StripeException {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
         app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
 
