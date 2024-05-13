@@ -137,6 +137,11 @@ paths:
       - Gateway accounts
     post:
       operationId: createNewGatewayAccount
+      parameters:
+      - in: query
+        name: degatewayification
+        schema:
+          type: boolean
       requestBody:
         content:
           application/json:

@@ -14,18 +14,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
-import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
+import uk.gov.pay.connector.gatewayaccount.model.*;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
@@ -35,15 +30,7 @@ import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -276,12 +263,21 @@ public class GatewayAccountResource {
             }
     )
     public Response createNewGatewayAccount(@Valid @NotNull GatewayAccountRequest gatewayAccountRequest,
-                                            @Context UriInfo uriInfo) {
+                                            @Context UriInfo uriInfo,
+                                            @QueryParam("degatewayification") boolean degatewayification) {
 
         logger.info("Creating new gateway account using the {} provider pointing to {}",
                 gatewayAccountRequest.getPaymentProvider(),
                 gatewayAccountRequest.getProviderAccountType());
 
+        if (degatewayification) {
+            GatewayAccountType accountType = GatewayAccountType.fromString(gatewayAccountRequest.getProviderAccountType());
+            String serviceId = gatewayAccountRequest.getServiceId();
+            var existingGatewayAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType);
+            if (existingGatewayAccount.isPresent()) {
+                throw new ConflictWebApplicationException(String.format("Gateway account with service id %s and account type '%s' already exists.", serviceId, accountType));
+            }
+        }
         CreateGatewayAccountResponse createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
 
         return Response.created(createGatewayAccountResponse.getLocation()).entity(createGatewayAccountResponse).build();
