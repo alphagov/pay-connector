@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import com.google.gson.Gson;
-import io.restassured.response.ValidatableResponse;
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,7 +9,6 @@ import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -31,7 +28,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -247,6 +243,58 @@ public class GatewayAccountCredentialsResourceIT {
             assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
             assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
             assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
+        }
+    }
+    
+    @Nested
+    class CreateGatewayAccountCredentials_byServiceIdAndAccountType {
+        private final Map<String, String> validCredentials = Map.of("stripe_account_id", "some-account-id");
+        @Test
+        void validRequest_shouldUpdateCredentials_andReturn200() {
+            String gatewayAccountId = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "payment_provider", "stripe",
+                            "service_id", "a-valid-service-id",
+                            "service_name", "a-test-service",
+                            "type", "test"
+                    )))
+                    .post("/v1/api/accounts")
+                    .then().extract().path("gateway_account_id");
+            
+            app.givenSetup()
+                    .body(toJson(Map.of("payment_provider", "stripe", "credentials", validCredentials)))
+                    .post("/v1/api/service/a-valid-service-id/test/credentials")
+                    .then()
+                    .statusCode(OK.getStatusCode());
+            
+            app.givenSetup()
+                    .get("/v1/api/accounts/" + gatewayAccountId)
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("gateway_account_credentials.size()", is(2))
+                    .body("gateway_account_credentials[1].payment_provider", is("stripe"))
+                    .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"))
+                    .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
+        }
+
+        @Test
+        void withNoGatewayAccount_shouldReturn404() {
+            app.givenSetup()
+                    .body(toJson(Map.of("payment_provider", "stripe", "credentials", validCredentials)))
+                    .post("/v1/api/service/a-valid-service-id/test/credentials")
+                    .then()
+                    .statusCode(404)
+                    .body("message[0]", is("Gateway account not found for service ID [a-valid-service-id] and account type [test]"));
+        }
+
+        @Test
+        void withInvalidCredentials_shouldReturn400() {
+            app.givenSetup()
+                    .body(toJson(Map.of("payment_provider", "epdq")))
+                    .post("/v1/api/service/a-valid-service-id/test/credentials")
+                    .then()
+                    .statusCode(400)
+                    .body("message[0]", is("Operation not supported for payment provider 'epdq'"));
         }
     }
     
