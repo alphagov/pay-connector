@@ -280,6 +280,33 @@ public class GatewayAccountCredentialsResource {
                 .orElseGet(() -> notFoundResponse("Not a Worldpay gateway account"));
     }
 
+    @POST
+    @Path("/v1/api/service/{serviceId}/{accountType}/worldpay/check-3ds-flex-config")
+    @Produces(APPLICATION_JSON)
+    @Consumes(APPLICATION_JSON)
+    @Operation(
+            summary = "Validate Worldpay 3DS flex credentials",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ValidationResult.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found or not a Worldpay gateway account"),
+                    @ApiResponse(responseCode = "503", description = "Service unavailable")
+            }
+    )
+    public ValidationResult validateWorldpay3dsCredentialsByServiceIdAndType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service external ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccountEntity ->
+                        worldpay3dsFlexCredentialsValidationService.validateCredentials(gatewayAccountEntity, Worldpay3dsFlexCredentials.from(worldpay3dsCredentials)))
+                .map(ValidationResult::new)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
+    }
+
+
     private final class ValidationResult {
         @Schema(example = "valid", description = "valid/invalid result for Worldpay flex credentials")
         private final String result;

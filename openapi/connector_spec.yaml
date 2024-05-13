@@ -1460,6 +1460,52 @@ paths:
         and account type
       tags:
       - Gateway accounts
+  /v1/api/service/{serviceId}/{accountType}/worldpay/check-3ds-flex-config:
+    post:
+      operationId: validateWorldpay3dsCredentialsByServiceIdAndType
+      parameters:
+      - description: Service external ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: OK
+        "404":
+          description: Not found - account not found or not a Worldpay gateway account
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid or missing mandatory fields
+        "503":
+          description: Service unavailable
+      summary: Validate Worldpay 3DS flex credentials
+      tags:
+      - Gateway account credentials
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\
