@@ -1,11 +1,15 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.gson.Gson;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -19,6 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -36,9 +41,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_FRONTEND_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.GatewayAccountPayload.createDefault;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.createAGatewayAccountRequestSpecificationFor;
 
 public class GatewayAccountFrontendResourceIT {
     @RegisterExtension
@@ -269,52 +276,118 @@ public class GatewayAccountFrontendResourceIT {
                 .body("message", contains(expectedMessage))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
+    
+    @Nested
+    class Degateway {
 
-    @Test
-    void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
-        CardTypeEntity mastercardCreditCard = app.getDatabaseTestHelper().getMastercardCreditCard();
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
+            Map<String, List<CardTypeEntity>> cardTypes = app.givenSetup()
+                    .contentType(JSON)
+                    .accept(JSON)
+                    .get("/v1/api/card-types")
+                    .then()
+                    .extract()
+                    .as(new TypeRef<Map<String, List<CardTypeEntity>>>() {});
 
-        CardTypeEntity visaCreditCard = app.getDatabaseTestHelper().getVisaCreditCard();
+            CardTypeEntity visaCredit = getCardTypes(cardTypes, CardType.CREDIT, "visa");
+            CardTypeEntity visaDebit = getCardTypes(cardTypes, CardType.DEBIT, "visa");
+            CardTypeEntity mastercardCredit = getCardTypes(cardTypes, CardType.CREDIT, "master-card");
 
-        CardTypeEntity visaDebitCard = app.getDatabaseTestHelper().getVisaDebitCard();
+            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
+                    "my test service", "analytics", "my-service-id");
+            String gatewayAccountId = createRequest.post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON)
+                    .extract()
+                    .path("gateway_account_id");
 
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(mastercardCreditCard, visaCreditCard);
-        String body = buildAcceptedCardTypesBody(mastercardCreditCard, visaDebitCard);
-        updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
-                .then()
-                .statusCode(200);
+            String body = buildAcceptedCardTypesBody(visaCredit);
+            updateGatewayAccountCardTypesWith(Long.parseLong(gatewayAccountId), body)
+                    .then()
+                    .statusCode(200);
+            
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/%s/card-types", "my-service-id", "test"))
+                    .then()
+                    .body("card_types", hasSize(1))
+                    .body("card_types[0].brand", is("visa"))
+                    .body("card_types[0].label", is("Visa"))
+                    .body("card_types[0].type", is("CREDIT"))
+                    .body("card_types[0].requires3ds", is(false));
+                    
+            
+        }
 
-        List<Map<String, Object>> acceptedCardTypes =
-                app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+//        private Response updateGatewayAccountCardTypesWith(String serviceId, String body) {
+//            return app.givenSetup()
+//                    .contentType(ContentType.JSON)
+//                    .accept(JSON)
+//                    .body(body)
+//                    .post(String.format("/v1/frontend/service/%s/test/card-types", serviceId));
+//        }
 
-        assertThat(acceptedCardTypes, containsInAnyOrder(
-                allOf(
-                        hasEntry("label", mastercardCreditCard.getLabel()),
-                        hasEntry("type", mastercardCreditCard.getType().toString()),
-                        hasEntry("brand", mastercardCreditCard.getBrand())
-                ), allOf(
-                        hasEntry("label", visaDebitCard.getLabel()),
-                        hasEntry("type", visaDebitCard.getType().toString()),
-                        hasEntry("brand", visaDebitCard.getBrand())
-                )));
+        @NotNull
+        private CardTypeEntity getCardTypes(Map<String, List<CardTypeEntity>> cardTypes, CardType cardType, String brand) {
+            return cardTypes.get("card_types").stream().filter(x -> x.getType() == cardType && x.getBrand().equals(brand)).findFirst().get();
+        }
+
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
+            
+        }
     }
+    
+    @Nested
+    class PreDegateway {
 
-    @Test
-    void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
-        CardTypeEntity mastercardCreditCardTypeRecord = app.getDatabaseTestHelper().getMastercardCreditCard();
-        CardTypeEntity visaCreditCardTypeRecord = app.getDatabaseTestHelper().getVisaCreditCard();
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
+            CardTypeEntity mastercardCreditCard = app.getDatabaseTestHelper().getMastercardCreditCard();
 
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(
-                mastercardCreditCardTypeRecord, visaCreditCardTypeRecord);
+            CardTypeEntity visaCreditCard = app.getDatabaseTestHelper().getVisaCreditCard();
 
-        updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), buildAcceptedCardTypesBody())
-                .then()
-                .statusCode(200);
+            CardTypeEntity visaDebitCard = app.getDatabaseTestHelper().getVisaDebitCard();
 
-        List<Map<String, Object>> acceptedCardTypes =
-                app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+            DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(mastercardCreditCard, visaCreditCard);
+            String body = buildAcceptedCardTypesBody(mastercardCreditCard, visaDebitCard);
+            updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
+                    .then()
+                    .statusCode(200);
 
-        assertEquals(0, acceptedCardTypes.size());
+            List<Map<String, Object>> acceptedCardTypes =
+                    app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+
+            assertThat(acceptedCardTypes, containsInAnyOrder(
+                    allOf(
+                            hasEntry("label", mastercardCreditCard.getLabel()),
+                            hasEntry("type", mastercardCreditCard.getType().toString()),
+                            hasEntry("brand", mastercardCreditCard.getBrand())
+                    ), allOf(
+                            hasEntry("label", visaDebitCard.getLabel()),
+                            hasEntry("type", visaDebitCard.getType().toString()),
+                            hasEntry("brand", visaDebitCard.getBrand())
+                    )));
+        }
+
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
+            CardTypeEntity mastercardCreditCardTypeRecord = app.getDatabaseTestHelper().getMastercardCreditCard();
+            CardTypeEntity visaCreditCardTypeRecord = app.getDatabaseTestHelper().getVisaCreditCard();
+
+            DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(
+                    mastercardCreditCardTypeRecord, visaCreditCardTypeRecord);
+
+            updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), buildAcceptedCardTypesBody())
+                    .then()
+                    .statusCode(200);
+
+            List<Map<String, Object>> acceptedCardTypes =
+                    app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+
+            assertEquals(0, acceptedCardTypes.size());
+        }
     }
 
     @Test

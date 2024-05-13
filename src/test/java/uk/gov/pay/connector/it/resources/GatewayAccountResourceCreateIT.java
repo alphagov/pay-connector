@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
-import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,7 +33,6 @@ import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExte
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.createAGatewayAccountRequestSpecificationFor;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-@Nested
 public class GatewayAccountResourceCreateIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
