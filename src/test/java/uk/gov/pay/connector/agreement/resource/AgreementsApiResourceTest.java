@@ -4,9 +4,12 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Nested;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
 import uk.gov.pay.connector.agreement.service.AgreementService;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 
 import javax.ws.rs.client.Entity;
@@ -28,47 +31,98 @@ import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 @ExtendWith(DropwizardExtensionsSupport.class)
 class AgreementsApiResourceTest {
 
-    private final static String RESOURCE_URL = "/v1/api/accounts/%d/agreements";
-
-    private final static long VALID_ACCOUNT_ID = 123l;
-
-    private final static long NOT_VALID_ACCOUNT_ID = 9876l;
-
+    private static final String RESOURCE_URL = "/v1/api/accounts/%d/agreements";
+    private static final String RESOURCE_BY_SERVICE_ID_URL = "/v1/api/service/%s/%s/agreements";
+    private static final long VALID_ACCOUNT_ID = 123l;
+    private static final long NOT_VALID_ACCOUNT_ID = 9876l;
     private static final String REFERENCE_ID = "1234";
     private static final String VALID_DESCRIPTION = "a valid description";
+    public static final String VALID_SERVICE_ID = "a-valid-service-id";
 
     private AgreementService agreementService = mock(AgreementService.class);
-    
+
     private final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
             .addResource(new AgreementsApiResource(agreementService))
             .build();
 
-    @Test
-    void shouldReturn200_whenPostToAgreement() {
-        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest("1234", VALID_DESCRIPTION, null);
-        AgreementResponse agreementResponse = new AgreementResponseBuilder().withAgreementId("aid").withReference(REFERENCE_ID).withServiceId("serviceid").withCreatedDate(Instant.parse("2022-03-03T12:00:00Z")).withDescription(VALID_DESCRIPTION).build();
-        when(agreementService.create(agreementCreateRequest, VALID_ACCOUNT_ID)).thenReturn(Optional.ofNullable(agreementResponse));
 
-        Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
+    @Nested
+    class CreateAgreementByGatewayAccountId {
+        @Test
+        void returnsSuccessfulResponse_forValidRequest() {
+            when(agreementService.createByGatewayAccountId(aValidAgreementCreateRequest(), VALID_ACCOUNT_ID))
+                    .thenReturn(Optional.ofNullable(aSuccessfulAgreementResponse()));
 
-        Response response = resources.client()
-                .target(format(RESOURCE_URL, VALID_ACCOUNT_ID))
-                .request()
-                .post(Entity.json(payloadMap));
-
-        assertThat(response.getStatus(), is(CREATED_201));
+            Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
+    
+            Response response = resources.client()
+                    .target(format(RESOURCE_URL, VALID_ACCOUNT_ID))
+                    .request()
+                    .post(Entity.json(payloadMap));
+    
+            assertThat(response.getStatus(), is(CREATED_201));
+        }
+    
+        @Test
+        void returnsNotFoundResponse_whenGatewayAccountNotFound() {
+            when(agreementService.createByGatewayAccountId(aValidAgreementCreateRequest(), NOT_VALID_ACCOUNT_ID))
+                    .thenThrow(new GatewayAccountNotFoundException("Gateway account [9876] not found"));
+            Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
+            
+            Response response = resources.client()
+                    .target(format(RESOURCE_URL, NOT_VALID_ACCOUNT_ID))
+                    .request()
+                    .post(Entity.json(payloadMap));
+    
+            assertThat(response.getStatus(), is(NOT_FOUND_404));
+        }
     }
 
-    @Test
-    void shouldReturn404_whenPostWithUnknownAccountId() {
-        Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
+    @Nested
+    class CreateAgreementByServiceIdAndAccountType {
+        @Test
+        void returnsSuccessfulResponse_forValidRequest() {
+            when(agreementService.createByServiceIdAndAccountType(aValidAgreementCreateRequest(), VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .thenReturn(Optional.ofNullable(aSuccessfulAgreementResponse()));
 
-        Response response = resources.client()
-                .target(format(RESOURCE_URL, NOT_VALID_ACCOUNT_ID))
-                .request()
-                .post(Entity.json(payloadMap));
+            Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
 
-        assertThat(response.getStatus(), is(NOT_FOUND_404));
+            Response response = resources.client()
+                    .target(format(RESOURCE_BY_SERVICE_ID_URL, VALID_SERVICE_ID, "test"))
+                    .request()
+                    .post(Entity.json(payloadMap));
+
+            assertThat(response.getStatus(), is(CREATED_201));
+        }
+
+        @Test
+        void returnsNotFoundResponse_whenGatewayAccountNotFound() {
+            when(agreementService.createByServiceIdAndAccountType(aValidAgreementCreateRequest(), VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .thenThrow(new GatewayAccountNotFoundException((String.format("Gateway account not found for service ID [%s] and account type [%s]", VALID_SERVICE_ID, GatewayAccountType.TEST))));
+            Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
+
+            Response response = resources.client()
+                    .target(format(RESOURCE_BY_SERVICE_ID_URL, VALID_SERVICE_ID, "test"))
+                    .request()
+                    .post(Entity.json(payloadMap));
+
+            assertThat(response.getStatus(), is(NOT_FOUND_404));
+        }
+    }
+    
+    private AgreementCreateRequest aValidAgreementCreateRequest() {
+        return new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, null);
+    }
+    
+    private AgreementResponse aSuccessfulAgreementResponse() {
+        return new AgreementResponseBuilder()
+                .withAgreementId("an-agreement-id")
+                .withReference(REFERENCE_ID)
+                .withServiceId(VALID_SERVICE_ID)
+                .withCreatedDate(Instant.parse("2022-03-03T12:00:00Z"))
+                .withDescription(VALID_DESCRIPTION)
+                .build();
     }
 }
+

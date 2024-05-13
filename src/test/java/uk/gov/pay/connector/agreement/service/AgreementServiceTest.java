@@ -2,6 +2,7 @@ package uk.gov.pay.connector.agreement.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -19,8 +20,10 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -65,35 +68,88 @@ public class AgreementServiceTest {
         agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, clock, mockedTaskQueueService);
     }
 
-    @Test
-    public void shouldCreateAnAgreementWhenRecurringEnabled() {
-        var description = "a valid description";
-        var userIdentifier = "a-valid-user-reference";
-        when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
-        when(gatewayAccount.isLive()).thenReturn(false);
-        when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+    @Nested
+    class CreateAgreementByGatewayAccountId {
+        @Test
+        public void shouldBeSuccessful_whenRecurringEnabled() {
+            var description = "a valid description";
+            var userIdentifier = "a-valid-user-reference";
+            when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
+            when(gatewayAccount.isLive()).thenReturn(false);
+            when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
+            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
-        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-        Optional<AgreementResponse> response = agreementService.create(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
+            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
+            Optional<AgreementResponse> response = agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
 
-        assertThat(response.isPresent(), is(true));
-        assertThat(response.get().getReference(), is(REFERENCE_ID));
-        assertThat(response.get().getServiceId(), is(SERVICE_ID));
-        assertThat(response.get().getDescription(), is(description));
-        assertThat(response.get().getUserIdentifier(), is(userIdentifier));
+            assertThat(response.isPresent(), is(true));
+            assertThat(response.get().getReference(), is(REFERENCE_ID));
+            assertThat(response.get().getServiceId(), is(SERVICE_ID));
+            assertThat(response.get().getDescription(), is(description));
+            assertThat(response.get().getUserIdentifier(), is(userIdentifier));
+        }
+
+        @Test
+        public void shouldThrowException_whenGatewayAccountNotFound() {
+            var description = "a valid description";
+            var userIdentifier = "a-valid-user-reference";
+            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
+            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
+            assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
+        }
+        
+        @Test
+        public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
+            var description = "a valid description";
+            var userIdentifier = "a-valid-user-reference";
+            when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
+            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
+            assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
+        }
     }
 
-    @Test
-    public void createAnAgreement_ShouldThrowRecurringCardPaymentsNotAllowedExceptionWhenRecurringDisabled() {
-        var description = "a valid description";
-        var userIdentifier = "a-valid-user-reference";
-        when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
-        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-        AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-        assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.create(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
+    @Nested
+    class CreateAgreementByServiceIdAndAccountType {
+        @Test
+        public void shouldBeSuccessful_whenRecurringEnabled() {
+            var description = "a valid description";
+            var userIdentifier = "a-valid-user-reference";
+            when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
+            when(gatewayAccount.isLive()).thenReturn(false);
+            when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
+            when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
+
+            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
+            Optional<AgreementResponse> response = agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST);
+
+            assertThat(response.isPresent(), is(true));
+            assertThat(response.get().getReference(), is(REFERENCE_ID));
+            assertThat(response.get().getServiceId(), is(SERVICE_ID));
+            assertThat(response.get().getDescription(), is(description));
+            assertThat(response.get().getUserIdentifier(), is(userIdentifier));
+        }
+
+        @Test
+        public void shouldThrowException_whenGatewayAccountNotFound() {
+            var description = "a valid description";
+            var userIdentifier = "a-valid-user-reference";
+            when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.empty());
+            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
+            assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
+        }
+        
+        @Test
+        public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
+            var description = "a valid description";
+            var userIdentifier = "a-valid-user-reference";
+            when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
+            when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
+            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
+            assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
+        }
     }
-    
+        
     @Test
     public void cancelAnAgreement_ThrowsAgreementNotFound() {
         var agreementId = "an-external-id";
