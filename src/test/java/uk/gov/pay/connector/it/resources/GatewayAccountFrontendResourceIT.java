@@ -280,19 +280,19 @@ public class GatewayAccountFrontendResourceIT {
     @Nested
     class Degateway {
 
+        private final Map<String, List<CardTypeEntity>> cardTypes = app.givenSetup()
+                .contentType(JSON)
+                .accept(JSON)
+                .get("/v1/api/card-types")
+                .then()
+                .extract()
+                .as(new TypeRef<Map<String, List<CardTypeEntity>>>() {
+                });
+
         @Test
         void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
-            Map<String, List<CardTypeEntity>> cardTypes = app.givenSetup()
-                    .contentType(JSON)
-                    .accept(JSON)
-                    .get("/v1/api/card-types")
-                    .then()
-                    .extract()
-                    .as(new TypeRef<Map<String, List<CardTypeEntity>>>() {});
 
-            CardTypeEntity visaCredit = getCardTypes(cardTypes, CardType.CREDIT, "visa");
-            CardTypeEntity visaDebit = getCardTypes(cardTypes, CardType.DEBIT, "visa");
-            CardTypeEntity mastercardCredit = getCardTypes(cardTypes, CardType.CREDIT, "master-card");
+            CardTypeEntity visaCredit = getCardTypes(CardType.CREDIT, "visa");
 
             String serviceId = "my-service-id";
             var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
@@ -316,6 +316,9 @@ public class GatewayAccountFrontendResourceIT {
                     .body("card_types[0].type", is("CREDIT"))
                     .body("card_types[0].requires3ds", is(false));
 
+            CardTypeEntity visaDebit = getCardTypes(CardType.DEBIT, "visa");
+            CardTypeEntity mastercardCredit = getCardTypes(CardType.CREDIT, "master-card");
+
             String bodyWithAllThreeCardTypes = buildAcceptedCardTypesBody(visaCredit, visaDebit, mastercardCredit);
             updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithAllThreeCardTypes)
                     .then()
@@ -337,8 +340,38 @@ public class GatewayAccountFrontendResourceIT {
         }
 
         @NotNull
-        private CardTypeEntity getCardTypes(Map<String, List<CardTypeEntity>> cardTypes, CardType cardType, String brand) {
+        private CardTypeEntity getCardTypes(CardType cardType, String brand) {
             return cardTypes.get("card_types").stream().filter(x -> x.getType() == cardType && x.getBrand().equals(brand)).findFirst().get();
+        }
+
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
+            String serviceId = "another-service-id";
+            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
+                    "my test service", "analytics", serviceId);
+            createRequest.post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON);
+
+            String bodyWithJustVisaCredit = buildAcceptedCardTypesBody(getCardTypes(CardType.CREDIT, "visa"));
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithJustVisaCredit)
+                    .then()
+                    .statusCode(200);
+
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
+                    .then()
+                    .body("card_types", hasSize(1));
+
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, buildAcceptedCardTypesBody())
+                    .then()
+                    .statusCode(200);
+
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
+                    .then()
+                    .body("card_types", hasSize(0));
         }
     }
     
