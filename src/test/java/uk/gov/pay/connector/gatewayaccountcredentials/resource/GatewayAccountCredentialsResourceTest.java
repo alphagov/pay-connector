@@ -8,10 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCredentialsValidationService;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
@@ -64,6 +66,7 @@ public class GatewayAccountCredentialsResourceTest {
             .addProvider(ConstraintViolationExceptionMapper.class)
             .addProvider(ValidationExceptionMapper.class)
             .build();
+    private static final String SERVICE_ID = "a-valid-service-id";
 
     private static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
     private static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
@@ -224,7 +227,7 @@ public class GatewayAccountCredentialsResourceTest {
     }
     
     @Nested
-    class ValidateWorldpayCredentials {
+    class ValidateWorldpayCredentials_byAccountId {
         @Test
         void nonExistentGatewayAccountReturns404() {
             when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
@@ -502,6 +505,27 @@ public class GatewayAccountCredentialsResourceTest {
                     payload, 
                     "Field [jwt_mac_key] must be a UUID in its lowercase canonical representation"
             );
+        }
+    }
+
+    @Nested
+    class ValidateWorldpayCredentials_byServiceIdAndAccountType {       
+        @ParameterizedTest
+        @ValueSource(strings = { "username", "password", "merchant_id" })
+        void forMissingField_shouldReturn422(String fieldName) {
+            var payload = new HashMap<String, String>();
+            payload.put("username", "valid-username");
+            payload.put("password", "valid-password");
+            payload.put("merchant_id", "valid-merchant-id");
+            payload.remove(fieldName);
+
+            Response response = resources
+                    .target(format("/v1/api/service/%s/%s/worldpay/check-credentials", SERVICE_ID, GatewayAccountType.TEST))
+                    .request()
+                    .post(Entity.json(payload));
+
+            assertThat(response.getStatus(), is(422));
+            assertThat(extractErrorMessagesFromResponse(response).get(0), is(format("Field [%s] is required", fieldName)));
         }
     }
     

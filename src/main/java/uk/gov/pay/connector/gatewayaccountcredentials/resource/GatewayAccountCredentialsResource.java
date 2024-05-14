@@ -306,6 +306,31 @@ public class GatewayAccountCredentialsResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
     }
 
+    @POST
+    @Path("/v1/api/service/{serviceId}/{accountType}/worldpay/check-credentials")
+    @Produces(APPLICATION_JSON)
+    @Consumes(APPLICATION_JSON)
+    @Operation(
+            summary = "Validate Worldpay credentials by service ID and account type",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ValidationResult.class))),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account not found or not a Worldpay gateway account"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    public ValidationResult validateWorldpayCredentialsByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service external ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @Valid WorldpayValidatableCredentials worldpayValidatableCredentials) {
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccountEntity -> worldpayCredentialsValidationService.validateCredentials(gatewayAccountEntity, worldpayValidatableCredentials))
+                .map(ValidationResult::new)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
+    }
+
 
     private final class ValidationResult {
         @Schema(example = "valid", description = "valid/invalid result for Worldpay flex credentials")

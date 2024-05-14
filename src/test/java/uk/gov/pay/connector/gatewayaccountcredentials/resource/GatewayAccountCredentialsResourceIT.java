@@ -8,17 +8,25 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -30,6 +38,8 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
@@ -42,6 +52,11 @@ public class GatewayAccountCredentialsResourceIT {
     private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
     private Long credentialsId;
     private Long accountId;
+    private static final String SERVICE_ID = "a-valid-service-id";
+    private static final Map<String, String> worldpayCredentials = Map.of(
+            "merchant_id", "a-merchant-id",
+            "username", "a-username",
+            "password", "a-password");
 
     @BeforeEach
     void setUp() {
@@ -295,6 +310,63 @@ public class GatewayAccountCredentialsResourceIT {
                     .then()
                     .statusCode(400)
                     .body("message[0]", is("Operation not supported for payment provider 'epdq'"));
+        }
+    }
+
+    @Nested
+    class ValidateWorldpayCredentials_byServiceIdAndAccountType {
+        @Test
+        void nonExistentGatewayAccountReturns404() {
+            app.givenSetup()
+                    .body(toJson(worldpayCredentials))
+                    .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", SERVICE_ID, TEST))
+                    .then()
+                    .statusCode(404)
+                    .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", SERVICE_ID, TEST)));
+        }
+
+        @Test
+        void forValidCredentials_shouldReturn200_withResultValid() {
+            app.getWorldpayMockClient().mockCredentialsValidationValid();
+            
+            String gatewayAccountId = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "payment_provider", "stripe",
+                            "service_id", "a-valid-service-id",
+                            "service_name", "a-test-service",
+                            "type", "test"
+                    )))
+                    .post("/v1/api/accounts")
+                    .then().extract().path("gateway_account_id");
+            
+            app.givenSetup()
+                    .body(toJson(worldpayCredentials))
+                    .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", SERVICE_ID, TEST))
+                    .then()
+                    .statusCode(200)
+                    .body("result", is("valid"));
+        }
+
+        @Test
+        void forInvalidCredentials_shouldReturn200_withResultInvalid() {
+            app.getWorldpayMockClient().mockCredentialsValidationInvalid();
+            
+            String gatewayAccountId = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "payment_provider", "stripe",
+                            "service_id", "a-valid-service-id",
+                            "service_name", "a-test-service",
+                            "type", "test"
+                    )))
+                    .post("/v1/api/accounts")
+                    .then().extract().path("gateway_account_id");
+
+            app.givenSetup()
+                    .body(toJson(worldpayCredentials))
+                    .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", SERVICE_ID, TEST))
+                    .then()
+                    .statusCode(200)
+                    .body("result", is("invalid"));
         }
     }
 
