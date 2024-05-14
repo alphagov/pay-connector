@@ -32,6 +32,7 @@ import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -161,7 +162,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     @Override
     public void afterEach(ExtensionContext context) {
         resetWireMockServer();
-        resetDatabase();
+        
+        if (!context.getTags().contains("pollutesState")) {
+            resetDatabase();
+        }
     }
 
     @Override
@@ -173,6 +177,15 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
             ledgerWireMockServer.stop();
             dropwizardAppExtension.after();
         }
+
+        // Resets database after all tests in tagged class - ignores tags propagated to inner classes
+        Optional.ofNullable(context.getTags().contains("cleanStateAfterAll") ? true : null)
+                .flatMap(v -> context.getParent())
+                .map(ExtensionContext::getTags)
+                .map(tags -> !tags.contains("cleanStateAfterAll"))
+                .ifPresent(noParentTag -> {
+                    if (noParentTag) resetDatabase();
+                });
     }
 
     public RequestSpecification givenSetup() {

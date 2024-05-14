@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
+import uk.gov.pay.connector.util.PollutesState;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -247,14 +248,16 @@ public class GatewayAccountCredentialsResourceIT {
     }
     
     @Nested
+    @PollutesState
     class CreateGatewayAccountCredentials_byServiceIdAndAccountType {
         private final Map<String, String> validCredentials = Map.of("stripe_account_id", "some-account-id");
         @Test
         void validRequest_shouldUpdateCredentials_andReturn200() {
+            String serviceId = "a-valid-service-id-f1af";
             String gatewayAccountId = app.givenSetup()
                     .body(toJson(Map.of(
                             "payment_provider", "stripe",
-                            "service_id", "a-valid-service-id",
+                            "service_id", serviceId,
                             "service_name", "a-test-service",
                             "type", "test"
                     )))
@@ -263,7 +266,7 @@ public class GatewayAccountCredentialsResourceIT {
             
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "stripe", "credentials", validCredentials)))
-                    .post("/v1/api/service/a-valid-service-id/test/credentials")
+                    .post(format("/v1/api/service/%s/test/credentials", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
             
@@ -279,19 +282,21 @@ public class GatewayAccountCredentialsResourceIT {
 
         @Test
         void withNoGatewayAccount_shouldReturn404() {
+            String serviceId = "a-valid-service-id-4fcb";
+            
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "stripe", "credentials", validCredentials)))
-                    .post("/v1/api/service/a-valid-service-id/test/credentials")
+                    .post(format("/v1/api/service/%s/test/credentials", serviceId))
                     .then()
                     .statusCode(404)
-                    .body("message[0]", is("Gateway account not found for service ID [a-valid-service-id] and account type [test]"));
+                    .body("message[0]", is("Gateway account not found for service ID [a-valid-service-id-4fcb] and account type [test]"));
         }
 
         @Test
         void withInvalidCredentials_shouldReturn400() {
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "epdq")))
-                    .post("/v1/api/service/a-valid-service-id/test/credentials")
+                    .post("/v1/api/service/a-valid-service-id-0574/test/credentials")
                     .then()
                     .statusCode(400)
                     .body("message[0]", is("Operation not supported for payment provider 'epdq'"));
