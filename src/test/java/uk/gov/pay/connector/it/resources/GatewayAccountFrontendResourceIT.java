@@ -340,11 +340,6 @@ public class GatewayAccountFrontendResourceIT {
         private CardTypeEntity getCardTypes(Map<String, List<CardTypeEntity>> cardTypes, CardType cardType, String brand) {
             return cardTypes.get("card_types").stream().filter(x -> x.getType() == cardType && x.getBrand().equals(brand)).findFirst().get();
         }
-
-        @Test
-        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
-            
-        }
     }
     
     @Nested
