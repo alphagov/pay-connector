@@ -11,7 +11,6 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -29,7 +28,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -68,7 +66,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
     @BeforeEach
     public void setUp() {
-        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST);
+        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST, "some-other-service-id");
         accountId = testAccount.getAccountId();
     }
 
@@ -145,7 +143,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
         @Test
         void forLiveAccount_shouldSetGatewayAccountCredentialsStateToActive_andReturn200() throws JsonProcessingException {
-            DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("worldpay", CREATED, LIVE);
+            DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("worldpay", CREATED, LIVE, "a-valid-service-id");
             String payload = objectMapper.writeValueAsString(Map.of(
                     "issuer", VALID_ISSUER,
                     "organisational_unit_id", VALID_ORG_UNIT_ID,
@@ -201,14 +199,14 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     
     @Nested
     class CreateOrUpdateWorldpay3DSCredentials_byServiceIdAndAccountType {
-        private static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
-        private static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
-        private static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
-        private final Map<String, String> valid3dsFlexCredentialsPayload = Map.of(
-                "issuer", VALID_ISSUER,
-                "organisational_unit_id", VALID_ORG_UNIT_ID,
-                "jwt_mac_key", VALID_JWT_MAC_KEY
-        );
+//        private static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
+//        private static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
+//        private static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
+//        private final Map<String, String> valid3dsFlexCredentialsPayload = Map.of(
+//                "issuer", VALID_ISSUER,
+//                "organisational_unit_id", VALID_ORG_UNIT_ID,
+//                "jwt_mac_key", VALID_JWT_MAC_KEY
+//        );
         @Test
         void forNoExistingCredentials_shouldSet3dsFlexCredentials_andReturn200() {
             String serviceId = "a-valid-service-id";
@@ -273,40 +271,21 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
         @Test
         void forLiveAccount_shouldSetGatewayAccountCredentialsStateToActive_andReturn200() throws JsonProcessingException {
-            String gatewayAccountId = app.givenSetup()
-                    .body(toJson(Map.of(
-                            "payment_provider", "worldpay",
-                            "service_id", "a-valid-service-id",
-                            "service_name", "a-test-service",
-                            "type", "live"
-                    )))
-                    .post("/v1/api/accounts")
-                    .then().extract().path("gateway_account_id");
-            
-            app.givenSetup()
-                    .body(objectMapper.writeValueAsString(Map.of("payment_provider", "worldpay", "credentials", Map.of(
-                            ONE_OFF_CUSTOMER_INITIATED, toJson(Map.of(
-                                CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
-                                CREDENTIALS_USERNAME, "a-username",
-                                CREDENTIALS_PASSWORD, "a-password"))))))
-                    .post("/v1/api/service/a-valid-service-id/live/credentials")
-//                    .post(format("/v1/api/accounts/%s/credentials", gatewayAccountId))
-//                    .getBody().asString();
-                    .then()
-                    .statusCode(200);
+            DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("worldpay", CREATED, LIVE, "a-valid-service-id");
             
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
+//                    .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                     .put("/v1/api/service/a-valid-service-id/live/3ds-flex-credentials")
                     .then()
                     .statusCode(200);
 
-            Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getWorldpay3dsFlexCredentials(Long.valueOf(gatewayAccountId));
+            Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getWorldpay3dsFlexCredentials(testAccount.getAccountId());
             assertThat(updatedGatewayAccountCredentials, hasEntry("issuer", VALID_ISSUER));
             assertThat(updatedGatewayAccountCredentials, hasEntry("jwt_mac_key", VALID_JWT_MAC_KEY));
             assertThat(updatedGatewayAccountCredentials, hasEntry("organisational_unit_id", VALID_ORG_UNIT_ID));
 
-            List<Map<String, Object>> gatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.valueOf(gatewayAccountId));
+            List<Map<String, Object>> gatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(testAccount.getAccountId());
             assertThat(gatewayAccountCredentials.get(0).get("state"), is("ACTIVE"));
         }
 
@@ -444,7 +423,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider, GatewayAccountCredentialState state,
-                                                                        GatewayAccountType gatewayAccountType) {
+                                                                        GatewayAccountType gatewayAccountType, String serviceId) {
         long accountId = nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
@@ -469,6 +448,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                 .withAccountId(accountId)
                 .withType(gatewayAccountType)
                 .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
+                .withServiceId(serviceId)
                 .insert();
     }
 
