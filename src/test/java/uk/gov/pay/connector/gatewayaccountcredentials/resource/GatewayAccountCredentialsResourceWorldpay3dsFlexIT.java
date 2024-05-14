@@ -77,7 +77,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     @Nested
     class ValidateWorldpay3dsCredentials_byAccountId {
         @Test
-        void validCredentials_shouldReturn200_withResultValid() throws Exception {
+        void forValidCredentials_shouldReturn200_withResultValid() throws Exception {
             app.getWorldpayWireMockServer().stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
 
             givenSetup()
@@ -89,7 +89,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
 
         @Test
-        void invalidCredentials_shouldReturn200_withResultInvalid() throws Exception {
+        void forInvalidCredentials_shouldReturn200_withResultInvalid() throws Exception {
             app.getWorldpayWireMockServer().stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
 
             var invalidIssuer = "54a0917b10ca4428b69d5ed0"; // pragma: allowlist secret`
@@ -109,7 +109,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
 
         @Test
-        void forErrorCommunicatingWith3dsFlexDdcEndpoint() throws Exception {
+        void forErrorCommunicatingWith3dsFlexDdcEndpoint_shouldReturn503() throws Exception {
             app.getWorldpayWireMockServer().stubFor(post("/shopper/3ds/ddc.html").willReturn(serverError()));
 
             givenSetup()
@@ -225,7 +225,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
         
         @Test
-        void shouldReturn404_forNonExistentGatewayAccount() {
+        void forNonExistentGatewayAccount_shouldReturn404() {
             String serviceId = "a-service-id-with-no-gateway-account";
 
             app.givenSetup()
@@ -237,7 +237,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
 
         @Test
-        void shouldReturn404_andNotUpdateCredentials_forNonWorldpayGatewayAccount() {
+        void forNonWorldpayGatewayAccount_shouldReturn404_andNotUpdateCredentials() {
             String gatewayAccountId = app.givenSetup()
                     .body(toJson(Map.of(
                             "payment_provider", "stripe",
@@ -322,7 +322,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     @Nested
     class ValidateWorldpay3dsCredentials_byServiceIdAndAccountType {
         @Test
-        void credentialsValid_shouldReturn200_withResultValid() {
+        void forValidCredentials_shouldReturn200_withResultValid() {
             app.getWorldpayWireMockServer().stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
             
             String gatewayAccountId = app.givenSetup()
@@ -344,7 +344,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
 
         @Test
-        void gatewayAccountNotFound_shouldReturn404() {
+        void forGatewayAccountNotFound_shouldReturn404() {
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
                     .post("/v1/api/service/a-nonexistent-service-id/test/worldpay/check-3ds-flex-config")
@@ -354,7 +354,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
 
         @Test
-        void invalidCredentials_shouldReturn200_withResultInvalid() {
+        void forInvalidCredentials_shouldReturn200_withResultInvalid() {
             app.getWorldpayWireMockServer().stubFor(post("/shopper/3ds/ddc.html").willReturn(badRequest()));
 
             var invalidIssuer = "54a0917b10ca4428b69d5ed0"; // pragma: allowlist secret`
