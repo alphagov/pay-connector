@@ -73,9 +73,8 @@ public class GatewayAccountCredentialsResourceIT {
     
     @Nested
     class CreateGatewayAccountCredentials {
-
         @Test
-        void withCredentials_responseShouldBe200_Ok() {
+        void forValidCredentials_shouldReturn200_andCreateCredentials() {
             Map<String, String> credentials = Map.of("stripe_account_id", "some-account-id");
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
@@ -94,7 +93,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void validatesRequestBusinessLogic_responseShouldBe400() {
+        void forInvalidPaymentProvider_shouldReturn400() {
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "epdq")))
                     .post("/v1/api/accounts/10000/credentials")
@@ -106,7 +105,7 @@ public class GatewayAccountCredentialsResourceIT {
     @Nested
     class PatchGatewayAccountCredentials {
         @Test
-        void validRequest_responseShouldBe200() {
+        void forValidRequest_shouldReturn200_andUpdateCredentials() {
             DatabaseFixtures.TestAccount stripeTestAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST,
                     Map.of("stripe_account_id", "some-account-id"));
             long stripeCredentialsId = stripeTestAccount.getCredentials().get(0).getId();
@@ -143,7 +142,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void invalidRequestBody_shouldReturn400() {
+        void forInvalidRequestBody_shouldReturn400() {
             Long credentialsId = (Long) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
 
             app.givenSetup()
@@ -157,7 +156,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void gatewayAccountCredentialsNotFound_shouldReturn404() {
+        void forGatewayAccountCredentialsNotFound_shouldReturn404() {
             Map<String, String> newCredentials = Map.of("username", "new-username",
                     "password", "new-password",
                     "merchant_id", "new-merchant-id");
@@ -173,7 +172,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void forGatewayMerchantId_shouldReturn200() {
+        void forGatewayMerchantId_shouldReturn200_andUpdateCredentials() {
             app.givenSetup()
                     .body(toJson(List.of(
                             Map.of("op", "replace",
@@ -196,7 +195,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void forGatewayMerchantId_shouldReturn400ForUnsupportedGateway() {
+        void forGatewayMerchantId_withUnsupportedGateway_shouldReturn400() {
             DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST, Map.of());
             AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
 
@@ -212,7 +211,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void shouldNotOverWriteOtherExistingCredentials() {
+        void forExistingCredentials_shouldNotOverWriteOtherExistingCredentials() {
             app.givenSetup()
                     .body(toJson(List.of(
                             Map.of("op", "replace",
@@ -265,7 +264,7 @@ public class GatewayAccountCredentialsResourceIT {
     class CreateGatewayAccountCredentials_byServiceIdAndAccountType {
         private final Map<String, String> validCredentials = Map.of("stripe_account_id", "some-account-id");
         @Test
-        void validRequest_shouldUpdateCredentials_andReturn200() {
+        void forValidRequest_shouldUpdateCredentials_andReturn200() {
             String gatewayAccountId = app.givenSetup()
                     .body(toJson(Map.of(
                             "payment_provider", "stripe",
@@ -293,7 +292,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void withNoGatewayAccount_shouldReturn404() {
+        void forNoGatewayAccount_shouldReturn404() {
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "stripe", "credentials", validCredentials)))
                     .post("/v1/api/service/a-valid-service-id/test/credentials")
@@ -303,7 +302,7 @@ public class GatewayAccountCredentialsResourceIT {
         }
 
         @Test
-        void withInvalidCredentials_shouldReturn400() {
+        void forInvalidCredentials_shouldReturn400() {
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "epdq")))
                     .post("/v1/api/service/a-valid-service-id/test/credentials")
@@ -316,7 +315,7 @@ public class GatewayAccountCredentialsResourceIT {
     @Nested
     class ValidateWorldpayCredentials_byServiceIdAndAccountType {
         @Test
-        void nonExistentGatewayAccountReturns404() {
+        void forNonExistentGatewayAccount_shouldReturn404() {
             app.givenSetup()
                     .body(toJson(worldpayCredentials))
                     .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", SERVICE_ID, TEST))
