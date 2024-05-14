@@ -281,7 +281,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
 
         @Test
-        void forExistingCredentials_shouldOverrideSetWorldpay3dsCredentials() {
+        void forExistingCredentials_shouldReplaceWorldpay3dsCredentials() {
             String gatewayAccountId = app.givenSetup()
                     .body(toJson(Map.of(
                             "payment_provider", "worldpay",
