@@ -267,7 +267,6 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
             
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-//                    .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, testAccount.getAccountId()))
                     .put("/v1/api/service/a-valid-service-id/live/3ds-flex-credentials")
                     .then()
                     .statusCode(200);
