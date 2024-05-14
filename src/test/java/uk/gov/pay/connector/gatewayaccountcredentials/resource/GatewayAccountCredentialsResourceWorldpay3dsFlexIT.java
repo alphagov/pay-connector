@@ -199,14 +199,6 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     
     @Nested
     class CreateOrUpdateWorldpay3DSCredentials_byServiceIdAndAccountType {
-//        private static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
-//        private static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
-//        private static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
-//        private final Map<String, String> valid3dsFlexCredentialsPayload = Map.of(
-//                "issuer", VALID_ISSUER,
-//                "organisational_unit_id", VALID_ORG_UNIT_ID,
-//                "jwt_mac_key", VALID_JWT_MAC_KEY
-//        );
         @Test
         void forNoExistingCredentials_shouldSet3dsFlexCredentials_andReturn200() {
             String serviceId = "a-valid-service-id";
