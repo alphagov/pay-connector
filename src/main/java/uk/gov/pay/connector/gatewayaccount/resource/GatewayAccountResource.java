@@ -316,6 +316,42 @@ public class GatewayAccountResource {
     }
 
     @PATCH
+    @Path("/v1/frontend/service/{serviceId}/{accountType}/servicename")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    @Operation(
+            summary = "Update service name of a gateway account",
+            tags = {"Gateway accounts"},
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "  \"service_name\": \"a new service name\"" +
+                    "}", requiredProperties = {"service_name"}))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+            }
+    )
+    public Response updateGatewayAccountServiceNameByServiceId(
+            @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            Map<String, String> payload) {
+
+        String serviceName = payload.get(SERVICE_NAME_FIELD_NAME);
+        
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccount ->
+                        {
+                            gatewayAccount.setServiceName(serviceName);
+                            return Response.ok().build();
+                        }
+                )
+                .orElseGet(() ->
+                        notFoundResponse(format("The gateway account for service id '%s' and account type '%s' does not exist", serviceId, accountType)));
+    }
+    
+    @PATCH
     @Path("/v1/frontend/accounts/{accountId}/servicename")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
@@ -333,13 +369,13 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found"),
             }
     )
-    public Response updateGatewayAccountServiceName(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
-                                                    Map<String, String> gatewayAccountPayload) {
-        if (!gatewayAccountPayload.containsKey(SERVICE_NAME_FIELD_NAME)) {
+    public Response updateGatewayAccountServiceNameByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
+                                                    Map<String, String> payload) {
+        if (!payload.containsKey(SERVICE_NAME_FIELD_NAME)) {
             return fieldsMissingResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
-        String serviceName = gatewayAccountPayload.get(SERVICE_NAME_FIELD_NAME);
+        String serviceName = payload.get(SERVICE_NAME_FIELD_NAME);
         if (serviceName.length() > SERVICE_NAME_FIELD_LENGTH) {
             return fieldsInvalidSizeResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
