@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentIns
 
 public class AgreementsApiResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
 
     private static final String REFERENCE_ID = "1234";
     private static final String DESCRIPTION = "a valid description";

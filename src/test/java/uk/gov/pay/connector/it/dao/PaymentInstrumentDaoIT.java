@@ -20,7 +20,8 @@ import static org.hamcrest.Matchers.is;
 
 public class PaymentInstrumentDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private PaymentInstrumentDao paymentInstrumentDao;
     
     private static final String PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE = "12345678901234567890123456";

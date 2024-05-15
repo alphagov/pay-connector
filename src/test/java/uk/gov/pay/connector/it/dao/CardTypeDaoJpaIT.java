@@ -18,7 +18,8 @@ import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 
 public class CardTypeDaoJpaIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private static CardTypeDao cardTypeDao;
 
     @BeforeAll

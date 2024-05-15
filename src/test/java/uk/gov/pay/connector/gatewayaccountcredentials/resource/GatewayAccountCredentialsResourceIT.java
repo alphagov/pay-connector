@@ -37,7 +37,8 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountCredentialsResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private DatabaseFixtures.TestAccount testAccount;
     private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
     private Long credentialsId;

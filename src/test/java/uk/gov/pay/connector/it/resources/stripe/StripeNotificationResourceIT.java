@@ -40,7 +40,8 @@ import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class StripeNotificationResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
 
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/stripe";
     private static final String RESPONSE_EXPECTED_BY_STRIPE = "[OK]";

@@ -37,7 +37,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 
 public class ChargeEventDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private static final String TRANSACTION_ID = "345654";
     private static final String TRANSACTION_ID_2 = "345655";
     private static final String TRANSACTION_ID_3 = "345656";

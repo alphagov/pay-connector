@@ -21,7 +21,9 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 public class StripeAccountSetupDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+//    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private StripeAccountSetupDao stripeAccountSetupDao;
 
     @BeforeEach

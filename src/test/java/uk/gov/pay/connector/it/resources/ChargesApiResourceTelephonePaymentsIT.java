@@ -29,7 +29,8 @@ import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHO
 
 public class ChargesApiResourceTelephonePaymentsIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final HashMap<String, Object> postBody = new HashMap<>();

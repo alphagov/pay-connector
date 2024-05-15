@@ -22,7 +22,8 @@ import static org.hamcrest.core.Is.is;
 
 public class TokenDaoJpaIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private TokenDao tokenDao;
     private ChargeDao chargeDao;
 

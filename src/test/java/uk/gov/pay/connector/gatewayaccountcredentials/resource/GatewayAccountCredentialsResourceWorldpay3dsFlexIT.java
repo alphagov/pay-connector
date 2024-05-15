@@ -46,7 +46,8 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private DatabaseFixtures.TestAccount testAccount;
     private static final String SERVICE_ID = "a-valid-service-id";
     private static final String SERVICE_NAME = "a-test-service";

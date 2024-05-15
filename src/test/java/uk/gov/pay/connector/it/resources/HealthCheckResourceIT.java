@@ -10,7 +10,8 @@ import static org.hamcrest.Matchers.is;
 
 public class HealthCheckResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
 
 
     @Test

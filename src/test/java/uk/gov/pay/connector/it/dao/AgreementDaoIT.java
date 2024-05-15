@@ -17,7 +17,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public class AgreementDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+//    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private AgreementDao agreementDao;
     private GatewayAccountEntity gatewayAccount1, gatewayAccount2;
     private static final String AGREEMENT_EXTERNAL_ID_ONE = "12345678901234567890123456";

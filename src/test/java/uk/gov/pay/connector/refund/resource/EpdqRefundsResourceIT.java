@@ -17,7 +17,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 
 public class EpdqRefundsResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("epdq", app.getLocalPort(), app.getDatabaseTestHelper());
     private DatabaseFixtures.TestCharge charge;

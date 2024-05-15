@@ -37,7 +37,8 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ChargeDaoCardDetailsIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private ChargeDao chargeDao;
     private GatewayAccountDao gatewayAccountDao;
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;

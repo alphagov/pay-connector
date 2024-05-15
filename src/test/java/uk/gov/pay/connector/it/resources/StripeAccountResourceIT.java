@@ -14,7 +14,8 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class StripeAccountResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("stripe", app.getLocalPort());
 
     private static final String STRIPE_ACCOUNT_ID = "acct_123example123";

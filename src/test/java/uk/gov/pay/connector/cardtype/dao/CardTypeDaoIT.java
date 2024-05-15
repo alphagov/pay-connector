@@ -19,7 +19,8 @@ import static org.hamcrest.Matchers.isA;
 
 public class CardTypeDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
 
     private static CardTypeDao cardTypeDao;
 

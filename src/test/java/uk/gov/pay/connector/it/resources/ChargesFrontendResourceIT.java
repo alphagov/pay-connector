@@ -65,7 +65,8 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 
 public class ChargesFrontendResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
 
     public static final String AGREEMENT_ID = "12345678901234567890123456";
 

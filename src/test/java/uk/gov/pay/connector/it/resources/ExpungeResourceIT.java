@@ -45,7 +45,8 @@ import static uk.gov.service.payments.commons.model.SupportedLanguage.ENGLISH;
 
 public class ExpungeResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     EmittedEventDao emittedEventDao;
     private DatabaseFixtures.TestCharge expungeableCharge1;
     private DatabaseTestHelper databaseTestHelper;

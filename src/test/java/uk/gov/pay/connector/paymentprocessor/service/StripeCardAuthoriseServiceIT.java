@@ -20,7 +20,8 @@ import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.ST
 
 public class StripeCardAuthoriseServiceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     

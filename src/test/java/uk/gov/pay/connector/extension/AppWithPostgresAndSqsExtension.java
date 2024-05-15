@@ -45,13 +45,15 @@ import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
 
-public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
+public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback, ExtensionContext.Store.CloseableResource {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
     private static final String JPA_UNIT = "ConnectorUnit";
     private static String CONFIG_PATH = resourceFilePath("config/test-it-config.yaml");
+    private static final boolean ALLOW_PERSISTENT_APP = Boolean.parseBoolean(System.getenv().getOrDefault("ALLOW_PERSISTENT_APP", "true"));
     private final Jdbi jdbi;
     private final AmazonSQS sqsClient;
     private final DropwizardAppExtension<ConnectorConfiguration> dropwizardAppExtension;
+    private static AppWithPostgresAndSqsExtension PERSISTENT_APP;
     private Injector injector;
     private final int wireMockPort;
     private final int worldpayWireMockPort;
@@ -59,17 +61,30 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final int stripeWireMockPort;
 
     protected static DatabaseTestHelper databaseTestHelper;
-    protected static WireMockServer wireMockServer;
-    protected static WireMockServer worldpayWireMockServer;
-    protected static WireMockServer ledgerWireMockServer;
-    protected static WireMockServer stripeWireMockServer;
-    protected static WorldpayMockClient worldpayMockClient;
-    protected static StripeMockClient stripeMockClient;
-    protected static LedgerStub ledgerStub;
-    private static CardidStub cardidStub;
+    protected WireMockServer wireMockServer;
+    protected WireMockServer worldpayWireMockServer;
+    protected WireMockServer ledgerWireMockServer;
+    protected WireMockServer stripeWireMockServer;
+    protected WorldpayMockClient worldpayMockClient;
+    protected StripeMockClient stripeMockClient;
+    protected LedgerStub ledgerStub;
+    private CardidStub cardidStub;
     protected static String accountId = String.valueOf(RandomUtils.nextInt());
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
+    private boolean persistent = false;
+    private static boolean started = false;
+    
+    public static AppWithPostgresAndSqsExtension withPersistence() {
+        if (!ALLOW_PERSISTENT_APP) {
+            return new AppWithPostgresAndSqsExtension();
+        }
+        if (PERSISTENT_APP == null) {
+            PERSISTENT_APP = new AppWithPostgresAndSqsExtension();
+            PERSISTENT_APP.setPersistent();
+        }
+        return PERSISTENT_APP;
+    }
 
     public AppWithPostgresAndSqsExtension() {
         this(ConnectorApp.class, new ConfigOverride[0]);
@@ -84,6 +99,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     }
 
     public AppWithPostgresAndSqsExtension(Class CustomConnectorClass, ConfigOverride... configOverrides) {
+        logger.info(String.format("Using persistent app: %b", ALLOW_PERSISTENT_APP));
         getOrCreate();
 
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
@@ -148,8 +164,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        if (context.getRequiredTestClass().getEnclosingClass() == null) {
+        if (context.getRequiredTestClass().getEnclosingClass() == null && !persistent) {
             // Only runs if there is no enclosing class, i.e. not in a @Nested block
+            dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
+        }
+        
+        if (persistent && !started) {
+            started = true;
             dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
         }
     }
@@ -162,19 +183,29 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public void afterEach(ExtensionContext context) {
         resetWireMockServer();
         resetDatabase();
+//        purgeQueues();
     }
 
     @Override
     public void afterAll(ExtensionContext context) {
-        if (context.getRequiredTestClass().getEnclosingClass() == null) {
-            wireMockServer.stop();
-            worldpayWireMockServer.stop();
-            stripeWireMockServer.stop();
-            ledgerWireMockServer.stop();
-            dropwizardAppExtension.after();
+        if (context.getRequiredTestClass().getEnclosingClass() == null && !persistent) {
+            teardown();
         }
     }
-
+    
+    @Override
+    public void close() {
+        teardown();
+    }
+    
+    private void teardown() {
+        wireMockServer.stop();
+        worldpayWireMockServer.stop();
+        stripeWireMockServer.stop();
+        ledgerWireMockServer.stop();
+        dropwizardAppExtension.after();
+    }
+ 
     public RequestSpecification givenSetup() {
         return given().port(getAppRule().getLocalPort())
                 .contentType(JSON);
@@ -244,11 +275,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         return sqsClient;
     }
 
-    public static WireMockServer getWireMockServer() {
+    public WireMockServer getWireMockServer() {
         return wireMockServer;
     }
     
-    public static WireMockServer getStripeWireMockServer() {
+    public WireMockServer getStripeWireMockServer() {
         return stripeWireMockServer;
     }
 
@@ -287,5 +318,12 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public void purgeEventQueue() {
         AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
         sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
+    }
+    
+    private void setPersistence(boolean persistent) {
+        this.persistent = persistent;
+    }
+    private void setPersistent() {
+        setPersistence(true);
     }
 }

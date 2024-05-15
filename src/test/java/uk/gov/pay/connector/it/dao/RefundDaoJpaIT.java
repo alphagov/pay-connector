@@ -44,7 +44,8 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMI
 
 public class RefundDaoJpaIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private RefundDao refundDao;
     private DatabaseFixtures.TestCharge chargeTestRecord;
     private DatabaseFixtures.TestRefund refundTestRecord;

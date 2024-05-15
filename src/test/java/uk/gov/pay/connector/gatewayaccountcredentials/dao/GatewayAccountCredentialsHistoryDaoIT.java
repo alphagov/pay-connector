@@ -28,7 +28,8 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountCredentialsHistoryDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao;
     private GatewayAccountDao gatewayAccountDao;

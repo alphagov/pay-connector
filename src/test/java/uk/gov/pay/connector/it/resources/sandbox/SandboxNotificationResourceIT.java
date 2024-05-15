@@ -9,7 +9,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 public class SandboxNotificationResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
 
     private static final String SANDBOX_IP_ADDRESS = "1.1.1.1, 3.3.3.3";
     private static final String UNEXPECTED_IP_ADDRESS = "3.4.3.1, 1.1.1.1";

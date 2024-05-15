@@ -20,7 +20,8 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.
 
 public class WorldpayCardAuthoriseServiceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
     

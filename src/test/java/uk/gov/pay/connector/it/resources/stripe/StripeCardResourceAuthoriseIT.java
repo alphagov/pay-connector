@@ -65,7 +65,8 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 public class StripeCardResourceAuthoriseIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("stripe", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final String CARD_HOLDER_NAME = "Scrooge McDuck";

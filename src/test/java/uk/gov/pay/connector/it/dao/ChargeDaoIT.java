@@ -67,7 +67,8 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class ChargeDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private static final String DESCRIPTION = "Test description";
 
     private ChargeDao chargeDao;

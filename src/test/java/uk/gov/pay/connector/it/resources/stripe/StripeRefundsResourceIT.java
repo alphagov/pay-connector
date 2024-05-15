@@ -32,7 +32,9 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
 public class StripeRefundsResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+//    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
 
     private String stripeAccountId = "stripe_account_id";
     private String accountId = String.valueOf(nextLong());

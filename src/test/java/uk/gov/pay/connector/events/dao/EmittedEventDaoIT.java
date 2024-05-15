@@ -25,7 +25,8 @@ import static org.hamcrest.Matchers.nullValue;
 
 public class EmittedEventDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private EmittedEventDao emittedEventDao;
 
     @BeforeEach

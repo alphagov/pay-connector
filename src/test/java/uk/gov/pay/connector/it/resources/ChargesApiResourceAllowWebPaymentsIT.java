@@ -36,7 +36,8 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 
 public class ChargesApiResourceAllowWebPaymentsIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     
     private static ObjectMapper objectMapper = new ObjectMapper();
 

@@ -21,7 +21,8 @@ import static org.hamcrest.core.Is.is;
 
 public class FeeDaoIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = AppWithPostgresAndSqsExtension.withPersistence();
+
     private FeeDao feeDao;
     private DatabaseFixtures.TestCharge defaultTestCharge;
 
