@@ -33,9 +33,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
-import static org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
@@ -62,6 +60,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
+import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayWalletAuthorisationHandlerTest {
@@ -336,7 +336,7 @@ class WorldpayWalletAuthorisationHandlerTest {
 
     private GooglePayAuthorisationGatewayRequest getGooglePayAuthorisationGatewayRequest(boolean withPayerEmail) throws IOException {
         String fixturePath = withPayerEmail ? "googlepay/example-auth-request.json" : "googlepay/example-auth-request-without-email.json";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture(fixturePath), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load(fixturePath), GooglePayAuthRequest.class);
         return new GooglePayAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
 
@@ -346,7 +346,7 @@ class WorldpayWalletAuthorisationHandlerTest {
         String fixturePath = withDDCResult ? "googlepay/example-3ds-auth-request-with-ddc.json" :
                 withPayerEmail ? "googlepay/example-3ds-auth-request.json" :
                         "googlepay/example-3ds-auth-request-without-email.json";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(fixture(fixturePath), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load(fixturePath), GooglePayAuthRequest.class);
         chargeEntity.getGatewayAccount().setRequires3ds(isRequires3ds);
         chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(withIpAddress);
         chargeEntity.setExternalId(GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS);
