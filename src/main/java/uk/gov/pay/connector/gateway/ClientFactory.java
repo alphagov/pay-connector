@@ -13,7 +13,7 @@ import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.core5.http.config.RegistryBuilder;
 import org.apache.hc.core5.util.TimeValue;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.apache5.connector.Apache5ConnectorProvider;
 import org.glassfish.jersey.client.ClientProperties;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
@@ -26,8 +26,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static org.glassfish.jersey.apache.connector.ApacheClientProperties.CONNECTION_MANAGER;
-import static org.glassfish.jersey.apache.connector.ApacheClientProperties.DISABLE_COOKIES;
+
+import static org.glassfish.jersey.apache5.connector.Apache5ClientProperties.CONNECTION_MANAGER;
+import static org.glassfish.jersey.apache5.connector.Apache5ClientProperties.DISABLE_COOKIES;
 import static org.glassfish.jersey.client.ClientProperties.READ_TIMEOUT;
 
 public class ClientFactory {
@@ -53,7 +54,7 @@ public class ClientFactory {
 
     private Client createWithDropwizardClient(PaymentGatewayName gateway, Duration readTimeout, String metricName, MetricRegistry metricRegistry) {
         JerseyClientBuilder defaultClientBuilder = new JerseyClientBuilder(environment)
-                .using(new ApacheConnectorProvider())
+                .using(new Apache5ConnectorProvider())
                 .using(conf.getClientConfiguration())
                 .withProperty(READ_TIMEOUT, (int) readTimeout.toMilliseconds())
                 .withProperty(DISABLE_COOKIES, true)
