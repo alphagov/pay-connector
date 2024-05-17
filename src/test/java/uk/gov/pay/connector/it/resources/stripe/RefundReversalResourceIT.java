@@ -3,7 +3,7 @@ package uk.gov.pay.connector.it.resources.stripe;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeAll;

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import io.dropwizard.core.setup.Environment;
+import io.dropwizard.setup.Environment;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
