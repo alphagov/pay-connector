@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.apache5.connector.Apache5ConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.spi.ConnectorProvider;
@@ -17,7 +18,7 @@ public class TestClientFactory {
 
     public static Client createClientWithApacheConnectorAndTimeout(int readTimeout) {
         ClientConfig clientConfig = new ClientConfig();
-        ConnectorProvider provider = new ApacheConnectorProvider();
+        ConnectorProvider provider = new Apache5ConnectorProvider();
         clientConfig.connectorProvider(provider);
         if (readTimeout > 0) {
             clientConfig.property(ClientProperties.READ_TIMEOUT, readTimeout);
