@@ -2,9 +2,7 @@ package uk.gov.pay.connector.token.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FrontendChargeResponse;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 
 import java.util.Objects;
 

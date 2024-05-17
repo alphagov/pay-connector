@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.epdq;
 
-import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;

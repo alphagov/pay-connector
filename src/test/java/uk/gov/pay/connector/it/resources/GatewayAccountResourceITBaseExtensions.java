@@ -5,7 +5,6 @@ import com.google.common.collect.Maps;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -18,7 +18,6 @@ import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.paymentprocessor.resource.CardResource;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import java.io.IOException;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;

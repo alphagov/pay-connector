@@ -10,7 +10,6 @@ import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_INVALID;
 
 public class OneTimeTokenUsageInvalidForMotoApiExceptionMapper implements ExceptionMapper<OneTimeTokenUsageInvalidForMotoApiException> {

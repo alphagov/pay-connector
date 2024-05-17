@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.gateway.worldpay.exception;
 
-import org.eclipse.jetty.http.HttpStatus;
-
 import javax.ws.rs.WebApplicationException;
 
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
