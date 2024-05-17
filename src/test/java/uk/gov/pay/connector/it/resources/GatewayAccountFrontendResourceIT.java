@@ -184,7 +184,7 @@ public class GatewayAccountFrontendResourceIT {
     }
 
     @Nested
-    class DegatewayedServiceNameEndpoint {
+    class UpdateServiceNameByServiceIdAndAccountType {
         @Test
         void updateGatewayAccountServiceNameSuccessfully() {
             String serviceId = "a-service-id";
@@ -194,8 +194,7 @@ public class GatewayAccountFrontendResourceIT {
                     "service_name", "Service Name",
                     "type", "test"
             );
-            given().port(app.getLocalPort())
-                    .contentType(JSON)
+            app.givenSetup()
                     .body(toJson(payload))        
                     .post(ACCOUNTS_API_URL)
                     .then()
@@ -221,7 +220,7 @@ public class GatewayAccountFrontendResourceIT {
     }
     
     @Nested
-    class PreDegatewayedServiceNameEndpoint {
+    class UpdateServiceNameByAccountId {
         @Test
         void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
             String accountId = testBaseExtension.createAGatewayAccountFor("stripe");
@@ -319,7 +318,7 @@ public class GatewayAccountFrontendResourceIT {
     }
     
     @Nested
-    class DegatewayedCardTypesEndpoint {
+    class UpdateCardTypesByServiceIdAndAccountType {
 
         private final Map<String, List<CardTypeEntity>> cardTypes = app.givenSetup()
                 .contentType(JSON)
@@ -417,7 +416,7 @@ public class GatewayAccountFrontendResourceIT {
     }
     
     @Nested
-    class PreDegatewayedCardTypesEndpoint {
+    class UpdateCardTypesByAccountId {
 
         @Test
         void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
