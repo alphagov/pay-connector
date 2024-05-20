@@ -334,7 +334,7 @@ public class GatewayAccountResource {
             }
     )
     public Response updateGatewayAccountServiceNameByServiceId(
-            @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             Map<String, String> payload) {
 
