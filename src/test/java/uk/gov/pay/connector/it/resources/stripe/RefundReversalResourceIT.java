@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.stripe.exception.ApiException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import io.dropwizard.setup.Environment;
@@ -24,11 +25,17 @@ import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
@@ -118,6 +125,31 @@ public class RefundReversalResourceIT {
         app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
 
         when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(null);
+        app.getStripeMockClient().mockRefund();
+
+        given().port(app.getLocalPort())
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
+                        .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
+                        .replace("{chargeId}", CHARGE_EXTERNAL_ID)
+                        .replace("{refundId}", REFUND_EXTERNAL_ID))
+                .then()
+                .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+    
+    @Test
+    void shouldHandleStripeExceptionThrownWhenCreatingTransfer() throws JsonProcessingException, StripeException {
+        app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
+        app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
+
+        Map<String, Object> emptymap = new HashMap<>();
+
+        when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(null);
+
+        doThrow(new ApiException("An error occurred", "400", null, null, null))
+                .when(mockStripeSdkClient).createTransfer(emptymap, true);
+     
         app.getStripeMockClient().mockRefund();
 
         given().port(app.getLocalPort())
