@@ -233,8 +233,8 @@ public class GatewayAccountFrontendResourceIT {
                     .body(Map.of())
                     .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
                     .then()
-                    .statusCode(400)
-                    .body("message", contains("Field(s) missing: [service_name]"))
+                    .statusCode(422)
+                    .body("message", contains("Field [service_name] cannot be null"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
         
@@ -246,8 +246,8 @@ public class GatewayAccountFrontendResourceIT {
                     .body(Map.of("service_name", "service-name-more-than-fifty-chars-service-name-more-than-fifty-chars"))
                     .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
                     .then()
-                    .statusCode(400)
-                    .body("message", contains("Field(s) are too big: [service_name]"))
+                    .statusCode(422)
+                    .body("message", contains("Field [service_name] can have a size between 1 and 50"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
         

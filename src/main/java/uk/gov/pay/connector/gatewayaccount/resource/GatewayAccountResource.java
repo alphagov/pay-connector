@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
+import uk.gov.pay.connector.gatewayaccount.model.UpdateServiceNameRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
@@ -352,22 +353,12 @@ public class GatewayAccountResource {
     public Response updateGatewayAccountServiceNameByServiceId(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            Map<String, String> payload) {
+            @Valid UpdateServiceNameRequest updateServiceNameRequest) {
 
-        if (missingServiceNameField(payload)) {
-            return fieldsMissingResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
-        }
-        
-        String serviceName = payload.get(SERVICE_NAME_FIELD_NAME);
-
-        if (invalidServiceNameLength(serviceName)) {
-            return fieldsInvalidSizeResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
-        }
-        
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount ->
                         {
-                            gatewayAccount.setServiceName(serviceName);
+                            gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName());
                             return Response.ok().build();
                         }
                 )
@@ -395,13 +386,12 @@ public class GatewayAccountResource {
     )
     public Response updateGatewayAccountServiceNameByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
                                                     Map<String, String> payload) {
-        if (missingServiceNameField(payload)) {
+        if (!payload.containsKey(SERVICE_NAME_FIELD_NAME)) {
             return fieldsMissingResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
         String serviceName = payload.get(SERVICE_NAME_FIELD_NAME);
-        
-        if (invalidServiceNameLength(serviceName)) {
+        if (serviceName.length() > SERVICE_NAME_FIELD_LENGTH) {
             return fieldsInvalidSizeResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
@@ -415,15 +405,7 @@ public class GatewayAccountResource {
                 .orElseGet(() ->
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
-
-    private static boolean invalidServiceNameLength(String serviceName) {
-        return serviceName.length() > SERVICE_NAME_FIELD_LENGTH;
-    }
-
-    private static boolean missingServiceNameField(Map<String, String> payload) {
-        return !payload.containsKey(SERVICE_NAME_FIELD_NAME);
-    }
-
+    
     @PATCH
     @Path("/v1/frontend/accounts/{accountId}/3ds-toggle")
     @Consumes(APPLICATION_JSON)

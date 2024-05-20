@@ -4648,6 +4648,13 @@ components:
         updated:
           type: string
           example: 2022-06-28T10:41:40.460Z
+    UpdateServiceNameRequest:
+      type: object
+      properties:
+        service_name:
+          type: string
+      required:
+      - service_name
     ValidationResult:
       type: object
       properties:
