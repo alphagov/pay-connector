@@ -354,7 +354,15 @@ public class GatewayAccountResource {
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             Map<String, String> payload) {
 
+        if (missingServiceNameField(payload)) {
+            return fieldsMissingResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
+        }
+        
         String serviceName = payload.get(SERVICE_NAME_FIELD_NAME);
+
+        if (invalidServiceNameLength(serviceName)) {
+            return fieldsInvalidSizeResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
+        }
         
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount ->
@@ -364,7 +372,7 @@ public class GatewayAccountResource {
                         }
                 )
                 .orElseGet(() ->
-                        notFoundResponse(format("The gateway account for service id '%s' and account type '%s' does not exist", serviceId, accountType)));
+                        notFoundResponse(format("A service with service id '%s' and account type '%s' does not exist", serviceId, accountType)));
     }
     
     @PATCH
@@ -387,12 +395,13 @@ public class GatewayAccountResource {
     )
     public Response updateGatewayAccountServiceNameByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
                                                     Map<String, String> payload) {
-        if (!payload.containsKey(SERVICE_NAME_FIELD_NAME)) {
+        if (missingServiceNameField(payload)) {
             return fieldsMissingResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
         String serviceName = payload.get(SERVICE_NAME_FIELD_NAME);
-        if (serviceName.length() > SERVICE_NAME_FIELD_LENGTH) {
+        
+        if (invalidServiceNameLength(serviceName)) {
             return fieldsInvalidSizeResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
 
@@ -405,6 +414,14 @@ public class GatewayAccountResource {
                 )
                 .orElseGet(() ->
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+    }
+
+    private static boolean invalidServiceNameLength(String serviceName) {
+        return serviceName.length() > SERVICE_NAME_FIELD_LENGTH;
+    }
+
+    private static boolean missingServiceNameField(Map<String, String> payload) {
+        return !payload.containsKey(SERVICE_NAME_FIELD_NAME);
     }
 
     @PATCH
