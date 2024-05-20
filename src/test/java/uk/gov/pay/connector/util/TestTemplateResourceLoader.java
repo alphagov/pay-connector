@@ -123,8 +123,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_SEARCH_TRANSFERS_EMPTY_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_transfers_empty_response.json";
     
 
-    public static final String SQS_SEND_MESSAGE_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/send-message-response.xml";
-    public static final String SQS_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/error-response.xml";
+    public static final String SQS_SEND_MESSAGE_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/send-message-response.json";
 
     public static String load(String location) {
         return TestResourceLoader.loadResource(location);
