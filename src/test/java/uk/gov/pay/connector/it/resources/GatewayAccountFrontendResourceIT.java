@@ -46,6 +46,7 @@ import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExte
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.GatewayAccountPayload.createDefault;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.createAGatewayAccountRequestSpecificationFor;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountFrontendResourceIT {
     @RegisterExtension
@@ -182,69 +183,108 @@ public class GatewayAccountFrontendResourceIT {
                 .body("message", is("HTTP 404 Not Found"));
     }
 
-    @Test
-    void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
-        String accountId = testBaseExtension.createAGatewayAccountFor("stripe");
+    @Nested
+    class UpdateServiceNameByServiceIdAndAccountType {
+        @Test
+        void updateGatewayAccountServiceNameSuccessfully() {
+            String serviceId = "a-service-id";
+            Map<String, String> payload = Map.of(
+                    "payment_provider", "stripe",
+                    "service_id", serviceId,
+                    "service_name", "Service Name",
+                    "type", "test"
+            );
+            app.givenSetup()
+                    .body(toJson(payload))        
+                    .post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .body("service_name", is("Service Name"));
 
-        var gatewayAccountPayload = createDefault();
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .then()
+                    .statusCode(200);
 
-        app.givenSetup().accept(JSON)
-                .body(gatewayAccountPayload.buildServiceNamePayload())
-                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
-                .then()
-                .statusCode(200);
-
-        String currentServiceName = app.getDatabaseTestHelper().getAccountServiceName(Long.valueOf(accountId));
-        assertThat(currentServiceName, is(gatewayAccountPayload.getServiceName()));
+            given().port(app.getLocalPort())
+                    .contentType(JSON)
+                    .accept(JSON)
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .statusCode(200)
+                    .body("service_name", is("New Service Name"));
+        }
+        
+        //TODO equivalent tests for PreDegatewayedServiceNameEndpoint
     }
+    
+    @Nested
+    class UpdateServiceNameByAccountId {
+        @Test
+        void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
+            String accountId = testBaseExtension.createAGatewayAccountFor("stripe");
 
-    @Test
-    void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
-        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
+            var gatewayAccountPayload = createDefault();
 
-        updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
-                .then()
-                .statusCode(400)
-                .body("message", contains("Field(s) missing: [service_name]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
+            app.givenSetup().accept(JSON)
+                    .body(gatewayAccountPayload.buildServiceNamePayload())
+                    .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
+                    .then()
+                    .statusCode(200);
 
-    @Test
-    void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
-        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
+            String currentServiceName = app.getDatabaseTestHelper().getAccountServiceName(Long.valueOf(accountId));
+            assertThat(currentServiceName, is(gatewayAccountPayload.getServiceName()));
+        }
 
-        var gatewayAccountPayload = createDefault()
-                .withServiceName("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        @Test
+        void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
+            String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
 
-        updateGatewayAccountServiceNameWith(accountId, gatewayAccountPayload.buildServiceNamePayload())
-                .then()
-                .statusCode(400)
-                .body("message", contains("Field(s) are too big: [service_name]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
+            updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
+                    .then()
+                    .statusCode(400)
+                    .body("message", contains("Field(s) missing: [service_name]"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
 
-    @Test
-    void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdIsNotNumeric() {
-        Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
-        updateGatewayAccountServiceNameWith("NO_NUMERIC_ACCOUNT_ID", serviceNamePayload)
-                .then()
-                .contentType(JSON)
-                .statusCode(NOT_FOUND.getStatusCode())
-                .body("code", is(404))
-                .body("message", is("HTTP 404 Not Found"));
-    }
+        @Test
+        void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
+            String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
 
-    @Test
-    void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
-        String nonExistingAccountId = "111111111";
-        testBaseExtension.createAGatewayAccountFor("stripe");
+            var gatewayAccountPayload = createDefault()
+                    .withServiceName("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
-        Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
-        updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)
-                .then()
-                .statusCode(404)
-                .body("message", contains("The gateway account id '111111111' does not exist"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+            updateGatewayAccountServiceNameWith(accountId, gatewayAccountPayload.buildServiceNamePayload())
+                    .then()
+                    .statusCode(400)
+                    .body("message", contains("Field(s) are too big: [service_name]"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+
+        @Test
+        void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdIsNotNumeric() {
+            Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
+            updateGatewayAccountServiceNameWith("NO_NUMERIC_ACCOUNT_ID", serviceNamePayload)
+                    .then()
+                    .contentType(JSON)
+                    .statusCode(NOT_FOUND.getStatusCode())
+                    .body("code", is(404))
+                    .body("message", is("HTTP 404 Not Found"));
+        }
+
+        @Test
+        void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
+            String nonExistingAccountId = "111111111";
+            testBaseExtension.createAGatewayAccountFor("stripe");
+
+            Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
+            updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)
+                    .then()
+                    .statusCode(404)
+                    .body("message", contains("The gateway account id '111111111' does not exist"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
     }
 
     @Test
@@ -278,7 +318,7 @@ public class GatewayAccountFrontendResourceIT {
     }
     
     @Nested
-    class Degateway {
+    class UpdateCardTypesByServiceIdAndAccountType {
 
         private final Map<String, List<CardTypeEntity>> cardTypes = app.givenSetup()
                 .contentType(JSON)
@@ -376,7 +416,7 @@ public class GatewayAccountFrontendResourceIT {
     }
     
     @Nested
-    class PreDegateway {
+    class UpdateCardTypesByAccountId {
 
         @Test
         void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {

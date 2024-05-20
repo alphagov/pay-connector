@@ -1636,7 +1636,7 @@ paths:
       - Gateway accounts
   /v1/frontend/accounts/{accountId}/servicename:
     patch:
-      operationId: updateGatewayAccountServiceName
+      operationId: updateGatewayAccountServiceNameByGatewayAccountId
       parameters:
       - description: Gateway account ID
         example: 1
@@ -2117,6 +2117,50 @@ paths:
           description: 'Conflict - requires3DS is false on gateway account but atleast
             one card type requires 3DS to be enabled. '
       summary: Update accepted card types for a gateway account
+      tags:
+      - Gateway accounts
+  /v1/frontend/service/{serviceId}/{accountType}/servicename:
+    patch:
+      operationId: updateGatewayAccountServiceNameByServiceId
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                service_name: a new service name
+              required:
+              - service_name
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: Update service name of a gateway account
       tags:
       - Gateway accounts
   /v1/frontend/tokens/{chargeTokenId}:
