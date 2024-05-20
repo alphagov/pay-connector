@@ -13,7 +13,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
-import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 import java.net.URI;
 import java.util.List;

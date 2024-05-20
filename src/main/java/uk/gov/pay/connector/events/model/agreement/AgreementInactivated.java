@@ -2,7 +2,6 @@ package uk.gov.pay.connector.events.model.agreement;
 
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
-import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 
 import java.time.Instant;

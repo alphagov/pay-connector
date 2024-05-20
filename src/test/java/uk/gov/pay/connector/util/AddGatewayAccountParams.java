@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.util;
 
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 

@@ -9,7 +9,6 @@ import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_APPLICABLE;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_PRESENT;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;

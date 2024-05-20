@@ -1,14 +1,12 @@
 package uk.gov.pay.connector.refund.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.client.ledger.model.TransactionState;
 import uk.gov.pay.connector.common.model.Status;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static uk.gov.pay.connector.common.model.api.ExternalRefundStatus.EXTERNAL_ERROR;
 import static uk.gov.pay.connector.common.model.api.ExternalRefundStatus.EXTERNAL_SUBMITTED;

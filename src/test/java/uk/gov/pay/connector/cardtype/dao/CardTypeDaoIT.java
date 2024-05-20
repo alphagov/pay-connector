@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.util.List;
 import java.util.Optional;
