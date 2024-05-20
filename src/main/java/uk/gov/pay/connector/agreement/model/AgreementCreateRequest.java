@@ -15,13 +15,13 @@ public class AgreementCreateRequest {
     private static final String USER_IDENTIFIER_FIELD = "user_identifier";
 
     @NotNull(message = "Field [reference] cannot be null")
-    @Length(min = 1, max = 255, message = "Field [reference] can have a size between 0 and 255")
+    @Length(min = 1, max = 255, message = "Field [reference] can have a size between 1 and 255")
     @JsonProperty("reference")
     @Schema(example = "Service agreement reference", required = true)
     private String reference;
 
     @NotNull(message = "Field [" + DESCRIPTION_FIELD + "] cannot be null")
-    @Length(min = 1, max = 255, message = "Field [" + DESCRIPTION_FIELD + "] can have a size between 0 and 255")
+    @Length(min = 1, max = 255, message = "Field [" + DESCRIPTION_FIELD + "] can have a size between 1 and 255")
     @JsonProperty(DESCRIPTION_FIELD)
     @Schema(example = "Description for the paying user describing the purpose of the agreement", required = true)
     private String description;

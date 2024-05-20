@@ -16,6 +16,9 @@ import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
 import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
@@ -53,37 +56,51 @@ public class AgreementService {
     }
 
     @Transactional
-    public Optional<AgreementResponse> create(AgreementCreateRequest agreementCreateRequest, long accountId) {
-        return gatewayAccountDao.findById(accountId).map(gatewayAccountEntity -> {
-            if(!gatewayAccountEntity.isRecurringEnabled()) {
-                throw new RecurringCardPaymentsNotAllowedException(
-                        "Attempt to create an agreement for gateway account " + 
-                        gatewayAccountEntity.getId() + 
-                        ", which does not have recurring card payments enabled");
-            }
-            AgreementEntity agreementEntity = anAgreementEntity(clock.instant())
-                    .withReference(agreementCreateRequest.getReference())
-                    .withDescription(agreementCreateRequest.getDescription())
-                    .withUserIdentifier(agreementCreateRequest.getUserIdentifier())
-                    .withServiceId(gatewayAccountEntity.getServiceId())
-                    .withLive(gatewayAccountEntity.isLive())
-                    .build();
-            agreementEntity.setGatewayAccount(gatewayAccountEntity);
-            
-            agreementDao.persist(agreementEntity);
-            ledgerService.postEvent(AgreementCreated.from(agreementEntity));
-            return agreementEntity;
-        }).map(agreementEntity -> {
-            var agreementResponseBuilder = new AgreementResponseBuilder();
-            agreementResponseBuilder.withAgreementId(agreementEntity.getExternalId());
-            agreementResponseBuilder.withCreatedDate(agreementEntity.getCreatedDate());
-            agreementResponseBuilder.withReference(agreementEntity.getReference());
-            agreementResponseBuilder.withServiceId(agreementEntity.getServiceId());
-            agreementResponseBuilder.withLive(agreementEntity.isLive());
-            agreementResponseBuilder.withDescription(agreementEntity.getDescription());
-            agreementResponseBuilder.withUserIdentifier(agreementEntity.getUserIdentifier());
-            return agreementResponseBuilder.build();
-        });
+    public Optional<AgreementResponse> createByGatewayAccountId(AgreementCreateRequest agreementCreateRequest, long accountId) {
+        return gatewayAccountDao.findById(accountId)
+                .or(() -> {
+                    throw new GatewayAccountNotFoundException(String.format("Gateway account {} not found", accountId));
+                }).map(gatewayAccountEntity -> create(agreementCreateRequest, gatewayAccountEntity));
+    }
+    
+    @Transactional
+    public Optional<AgreementResponse> createByServiceIdAndAccountType(AgreementCreateRequest agreementCreateRequest, String serviceId, GatewayAccountType accountType) {
+        return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
+                .or(() -> {
+                    throw new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType));
+                })
+                .map(gatewayAccountEntity -> create(agreementCreateRequest, gatewayAccountEntity));
+    }
+
+    @Transactional
+    private AgreementResponse create(AgreementCreateRequest agreementCreateRequest, GatewayAccountEntity gatewayAccountEntity) {
+        if(!gatewayAccountEntity.isRecurringEnabled()) {
+            throw new RecurringCardPaymentsNotAllowedException(
+                    "Attempt to create an agreement for gateway account " +
+                            gatewayAccountEntity.getId() +
+                            ", which does not have recurring card payments enabled");
+        }
+        AgreementEntity agreementEntity = anAgreementEntity(clock.instant())
+                .withReference(agreementCreateRequest.getReference())
+                .withDescription(agreementCreateRequest.getDescription())
+                .withUserIdentifier(agreementCreateRequest.getUserIdentifier())
+                .withServiceId(gatewayAccountEntity.getServiceId())
+                .withLive(gatewayAccountEntity.isLive())
+                .build();
+        agreementEntity.setGatewayAccount(gatewayAccountEntity);
+
+        agreementDao.persist(agreementEntity);
+        ledgerService.postEvent(AgreementCreated.from(agreementEntity));
+
+        return new AgreementResponseBuilder()
+                .withAgreementId(agreementEntity.getExternalId())
+                .withCreatedDate(agreementEntity.getCreatedDate())
+                .withReference(agreementEntity.getReference())
+                .withServiceId(agreementEntity.getServiceId())
+                .withLive(agreementEntity.isLive())
+                .withDescription(agreementEntity.getDescription())
+                .withUserIdentifier(agreementEntity.getUserIdentifier())
+                .build();
     }
 
     @Transactional
