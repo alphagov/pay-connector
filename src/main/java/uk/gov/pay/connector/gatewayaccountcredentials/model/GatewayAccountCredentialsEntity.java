@@ -2,8 +2,6 @@ package uk.gov.pay.connector.gatewayaccountcredentials.model;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
@@ -32,8 +30,6 @@ import javax.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
-
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 @Entity
 @Table(name = "gateway_account_credentials")

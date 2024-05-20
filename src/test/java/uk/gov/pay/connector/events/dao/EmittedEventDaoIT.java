@@ -8,7 +8,6 @@ import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetail
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.refund.RefundSubmitted;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.sql.Timestamp;
 import java.time.Instant;

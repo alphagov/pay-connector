@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Singleton
