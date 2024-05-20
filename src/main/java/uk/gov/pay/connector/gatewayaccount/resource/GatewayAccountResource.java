@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
+import uk.gov.pay.connector.gatewayaccount.model.UpdateServiceNameRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
@@ -352,19 +353,17 @@ public class GatewayAccountResource {
     public Response updateGatewayAccountServiceNameByServiceId(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            Map<String, String> payload) {
+            @Valid UpdateServiceNameRequest updateServiceNameRequest) {
 
-        String serviceName = payload.get(SERVICE_NAME_FIELD_NAME);
-        
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount ->
                         {
-                            gatewayAccount.setServiceName(serviceName);
+                            gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName());
                             return Response.ok().build();
                         }
                 )
                 .orElseGet(() ->
-                        notFoundResponse(format("The gateway account for service id '%s' and account type '%s' does not exist", serviceId, accountType)));
+                        notFoundResponse(format("A service with service id '%s' and account type '%s' does not exist", serviceId, accountType)));
     }
     
     @PATCH
@@ -406,7 +405,7 @@ public class GatewayAccountResource {
                 .orElseGet(() ->
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
-
+    
     @PATCH
     @Path("/v1/frontend/accounts/{accountId}/3ds-toggle")
     @Consumes(APPLICATION_JSON)

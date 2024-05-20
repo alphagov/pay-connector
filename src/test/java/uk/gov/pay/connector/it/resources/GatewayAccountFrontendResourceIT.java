@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -14,6 +15,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Arrays;
@@ -185,17 +187,24 @@ public class GatewayAccountFrontendResourceIT {
 
     @Nested
     class UpdateServiceNameByServiceIdAndAccountType {
-        @Test
-        void updateGatewayAccountServiceNameSuccessfully() {
-            String serviceId = "a-service-id";
-            Map<String, String> payload = Map.of(
+        
+        private Map<String, String> gatewayAccountRequest;
+        private String serviceId;
+        
+        @BeforeEach
+        void before() {
+            serviceId = RandomIdGenerator.newId();
+            gatewayAccountRequest = Map.of(
                     "payment_provider", "stripe",
                     "service_id", serviceId,
                     "service_name", "Service Name",
-                    "type", "test"
-            );
+                    "type", "test");
+        }
+        
+        @Test
+        void updateGatewayAccountServiceNameSuccessfully() {
             app.givenSetup()
-                    .body(toJson(payload))        
+                    .body(toJson(gatewayAccountRequest))        
                     .post(ACCOUNTS_API_URL)
                     .then()
                     .statusCode(201)
@@ -215,8 +224,43 @@ public class GatewayAccountFrontendResourceIT {
                     .statusCode(200)
                     .body("service_name", is("New Service Name"));
         }
+
+        @Test
+        void assertBadRequestForMissingServiceNameField() {
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
+
+            app.givenSetup().accept(JSON)
+                    .body(Map.of())
+                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .then()
+                    .statusCode(422)
+                    .body("message", contains("Field [service_name] cannot be null"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
         
-        //TODO equivalent tests for PreDegatewayedServiceNameEndpoint
+        @Test
+        void assertBadRequestForInvalidServiceNameLength() {
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
+
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "service-name-more-than-fifty-chars-service-name-more-than-fifty-chars"))
+                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .then()
+                    .statusCode(422)
+                    .body("message", contains("Field [service_name] can have a size between 1 and 50"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+        
+        @Test
+        void assertNotFoundForNonExistentServiceId() {
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch("/v1/frontend/service/nexiste-pas/test/servicename")
+                    .then()
+                    .statusCode(404)
+                    .body("message", contains("A service with service id 'nexiste-pas' and account type 'test' does not exist"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
     }
     
     @Nested

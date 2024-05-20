@@ -368,15 +368,14 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                     "organisational_unit_id", invalidOrgUnitId,
                     "jwt_mac_key", invalidJwtMacKey));
 
-            String gatewayAccountId = app.givenSetup()
+            app.givenSetup()
                     .body(toJson(Map.of(
                             "payment_provider", "worldpay",
                             "service_id", SERVICE_ID,
                             "service_name", SERVICE_NAME,
                             "type", "test"
                     )))
-                    .post("/v1/api/accounts")
-                    .then().extract().path("gateway_account_id");
+                    .post("/v1/api/accounts");
 
             givenSetup()
                     .body(payload)
