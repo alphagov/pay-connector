@@ -51,9 +51,6 @@ public class AgreementsApiResourceIT {
     private Long accountId;
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    public AgreementsApiResourceIT() {
-    }
-
     @Nested
     class ByGatewayAccountId {
         @BeforeEach
