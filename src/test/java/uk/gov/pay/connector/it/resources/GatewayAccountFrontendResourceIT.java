@@ -255,7 +255,7 @@ public class GatewayAccountFrontendResourceIT {
         void assertNotFoundForNonExistentServiceId() {
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "New Service Name"))
-                    .patch(format("/v1/frontend/service/nexiste-pas/test/servicename", serviceId))
+                    .patch("/v1/frontend/service/nexiste-pas/test/servicename")
                     .then()
                     .statusCode(404)
                     .body("message", contains("A service with service id 'nexiste-pas' and account type 'test' does not exist"))
