@@ -1040,12 +1040,12 @@ public class GatewayAccountResourceIT {
                     "service_id", serviceId,
                     "service_name", "Service Name",
                     "type", "test");
+            
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
         }
         
         @Test
         void updateWorldpayExemptionEngineEnabledFlagSuccessfully() {
-            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
-
             Map<String, String> valid3dsFlexCredentialsPayload = Map.of(
                     "issuer", "53f0917f101a4428b69d5fb0", // pragma: allowlist secret
                     "organisational_unit_id", "57992a087a0c4849895ab8a2", // pragma: allowlist secret
@@ -1087,6 +1087,144 @@ public class GatewayAccountResourceIT {
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
+        }
+        
+        @Test
+        void updateNotifySettingsSuccessfully() {
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("notifySettings", nullValue());
+
+            Map<String, Object> payload = Map.of("op", "replace",
+                    "path", "notify_settings",
+                    "value", Map.of("api_token", "anapitoken",
+                            "template_id", "atemplateid",
+                            "refund_issued_template_id", "anothertemplate"));
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("notifySettings.api_token", is("anapitoken"))
+                    .body("notifySettings.template_id", is("atemplateid"))
+                    .body("notifySettings.refund_issued_template_id", is("anothertemplate"));
+
+            payload = Map.of("op", "remove",
+                    "path", "notify_settings");
+
+            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("notifySettings", nullValue());
+        }
+        
+        @Test
+        void updateBlockPrepaidCardsSuccessfully() {
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("block_prepaid_cards", is(false));
+
+            Map<String, Object> payload = Map.of("op", "replace",
+                    "path", "block_prepaid_cards",
+                    "value", true);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("block_prepaid_cards", is(true));
+        }
+        
+        @Test
+        void updateEmailCollectionModeSuccessfully() {
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("email_collection_mode", is("MANDATORY"));
+
+            Map<String, Object> payload = Map.of("op", "replace",
+                    "path", "email_collection_mode",
+                    "value", "OFF");
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("email_collection_mode", is("OFF"));
+        }
+
+        @Test
+        void updateCorporateCardAmountsSuccessfully() {
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("corporate_credit_card_surcharge_amount", is(0))
+                    .body("corporate_debit_card_surcharge_amount", is(0))
+                    .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+
+            Map<String, Object> payload = Map.of("op", "replace",
+                    "path", "corporate_credit_card_surcharge_amount",
+                    "value", 100);
+
+            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+
+            payload = Map.of("op", "replace",
+                    "path", "corporate_debit_card_surcharge_amount",
+                    "value", 200);
+
+            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+
+            payload = Map.of("op", "replace",
+                    "path", "corporate_prepaid_debit_card_surcharge_amount",
+                    "value", 400);
+
+            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("corporate_credit_card_surcharge_amount", is(100))
+                    .body("corporate_debit_card_surcharge_amount", is(200))
+                    .body("corporate_prepaid_debit_card_surcharge_amount", is(400));
+        }
+        
+        @Test
+        void updateAllowTelephonePaymentNotificationsSuccessfull() {
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then().log().body()
+                    .body("allow_telephone_payment_notifications", is(false));
+
+            Map<String, Object> payload = Map.of("op", "replace",
+                    "path", "allow_telephone_payment_notifications",
+                    "value", true);
+
+            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .then()
+                    .body("allow_telephone_payment_notifications", is(true));
         }
     }
 
@@ -1247,15 +1385,15 @@ public class GatewayAccountResourceIT {
         @Test
         void patchGatewayAccount_forCorporateCreditCardSurcharge() throws JsonProcessingException {
             String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                    "path", "corporate_credit_card_surcharge_amount",
-                    "value", 100));
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
                     .body("corporate_credit_card_surcharge_amount", is(0))
                     .body("corporate_debit_card_surcharge_amount", is(0))
                     .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                    "path", "corporate_credit_card_surcharge_amount",
+                    "value", 100));
             app.givenSetup()
                     .body(payload)
                     .patch("/v1/api/accounts/" + gatewayAccountId)
@@ -1272,15 +1410,15 @@ public class GatewayAccountResourceIT {
         @Test
         void patchGatewayAccount_forCorporateDebitCardSurcharge() throws JsonProcessingException {
             String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                    "path", "corporate_debit_card_surcharge_amount",
-                    "value", 200));
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
                     .body("corporate_credit_card_surcharge_amount", is(0))
                     .body("corporate_debit_card_surcharge_amount", is(0))
                     .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                    "path", "corporate_debit_card_surcharge_amount",
+                    "value", 200));
             app.givenSetup()
                     .body(payload)
                     .patch("/v1/api/accounts/" + gatewayAccountId)
@@ -1297,15 +1435,15 @@ public class GatewayAccountResourceIT {
         @Test
         void patchGatewayAccount_forCorporatePrepaidDebitCardSurcharge() throws JsonProcessingException {
             String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                    "path", "corporate_prepaid_debit_card_surcharge_amount",
-                    "value", 400));
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
                     .body("corporate_credit_card_surcharge_amount", is(0))
                     .body("corporate_debit_card_surcharge_amount", is(0))
                     .body("corporate_prepaid_debit_card_surcharge_amount", is(0));
+            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                    "path", "corporate_prepaid_debit_card_surcharge_amount",
+                    "value", 400));
             app.givenSetup()
                     .body(payload)
                     .patch("/v1/api/accounts/" + gatewayAccountId)
@@ -1322,13 +1460,13 @@ public class GatewayAccountResourceIT {
         @Test
         void patchGatewayAccount_forAllowTelephonePaymentNotifications() throws JsonProcessingException {
             String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("sandbox", "a-description", "analytics-id");
-            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
-                    "path", "allow_telephone_payment_notifications",
-                    "value", true));
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
                     .body("allow_telephone_payment_notifications", is(false));
+            String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
+                    "path", "allow_telephone_payment_notifications",
+                    "value", true));
             app.givenSetup()
                     .body(payload)
                     .patch("/v1/api/accounts/" + gatewayAccountId)
