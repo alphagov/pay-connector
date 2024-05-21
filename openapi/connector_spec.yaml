@@ -1389,6 +1389,44 @@ paths:
       summary: Create an agreement for a service ID and account type (test|live)
       tags:
       - Agreements
+  /v1/api/service/{serviceId}/{accountType}/agreements/{agreementId}/cancel:
+    post:
+      operationId: cancelAgreement_1
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - in: path
+        name: agreementId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementCancelRequest'
+      responses:
+        default:
+          content:
+            '*/*': {}
+          description: default response
+      tags:
+      - Agreements
   /v1/api/service/{serviceId}/{accountType}/credentials:
     post:
       operationId: createGatewayAccountCredentialsByServiceIdAndAccountType

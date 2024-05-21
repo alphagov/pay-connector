@@ -754,7 +754,7 @@ class ChargeServiceCreateTest {
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
-        when(mockedAgreementDao.findByExternalId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementEntity));
+        when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementEntity));
         when(mockExternalTransactionStateFactory.newExternalTransactionState(any(ChargeEntity.class))).thenReturn(externalTransactionState);
         populateChargeEntity();
 

@@ -328,7 +328,7 @@ public class ChargeService {
                     getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
 
             var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
-                    agreementDao.findByExternalId(chargeRequest.getAgreementId(), gatewayAccount.getId())
+                    agreementDao.findByExternalIdAndGatewayAccountId(chargeRequest.getAgreementId(), gatewayAccount.getId())
                             .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.")));
 
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
