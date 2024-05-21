@@ -268,7 +268,7 @@
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
-            <version>3.19.5</version>
+            <version>3.19.8</version>
         </dependency>
         <dependency>
             <groupId>black.door</groupId>
