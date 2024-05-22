@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsWithInternalId;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
@@ -157,13 +158,13 @@ public class GatewayAccountCredentialsResource {
             summary = "Create credentials for a gateway account",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
+                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentialsWithInternalId.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found - account not found")
             }
     )
-    public GatewayAccountCredentials createGatewayAccountCredentials(@Parameter(example = "1", description = "Gateway account ID")
+    public GatewayAccountCredentialsWithInternalId createGatewayAccountCredentials(@Parameter(example = "1", description = "Gateway account ID")
                                                                      @PathParam("accountId") Long gatewayAccountId,
                                                                      @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
         gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
@@ -191,13 +192,13 @@ public class GatewayAccountCredentialsResource {
                     "]"))),
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
+                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentialsWithInternalId.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found - account or credential not found")
             }
     )
-    public GatewayAccountCredentials updateGatewayAccountCredentials(
+    public GatewayAccountCredentialsWithInternalId updateGatewayAccountCredentials(
             @Parameter(example = "1", description = "Gateway account ID")
             @PathParam("accountId") Long gatewayAccountId,
             @Parameter(example = "1", description = "Credential ID")
@@ -229,7 +230,6 @@ public class GatewayAccountCredentialsResource {
     @Operation(
             summary = "Create credentials for a gateway account by service external ID and account type (test|live)",
             responses = {
-                    // TODO Update GatewayAccountCredentials to not return gateway_account_credential_id
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
@@ -248,6 +248,7 @@ public class GatewayAccountCredentialsResource {
                     Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
                     return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
                 })
+                .map(GatewayAccountCredentialsWithInternalId::stripInternalId)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
@@ -358,6 +359,7 @@ public class GatewayAccountCredentialsResource {
                             .collect(Collectors.toList());
                     return gatewayAccountCredentialsService.updateGatewayAccountCredentials(gatewayAccountCredentialsEntity, updateRequests);
                 })
+                .map(GatewayAccountCredentialsWithInternalId::stripInternalId)
                 .orElseThrow(IllegalStateException::new);
     }
 

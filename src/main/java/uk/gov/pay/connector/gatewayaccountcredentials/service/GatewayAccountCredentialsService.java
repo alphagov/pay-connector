@@ -8,7 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsWithInternalId;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
@@ -79,7 +79,7 @@ public class GatewayAccountCredentialsService {
     }
 
     @Transactional
-    public GatewayAccountCredentials createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity,
+    public GatewayAccountCredentialsWithInternalId createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity,
                                                                      String paymentProvider,
                                                                      Map<String, String> credentials) {
         GatewayAccountCredentialState state = calculateStateForNewCredentials(gatewayAccountEntity, paymentProvider, credentials);
@@ -94,7 +94,7 @@ public class GatewayAccountCredentialsService {
         gatewayAccountCredentialsEntity.setExternalId(randomUuid());
 
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
-        return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
+        return new GatewayAccountCredentialsWithInternalId(gatewayAccountCredentialsEntity);
     }
 
     private GatewayAccountCredentialState calculateStateForNewCredentials(GatewayAccountEntity gatewayAccountEntity,
@@ -121,7 +121,7 @@ public class GatewayAccountCredentialsService {
     }
 
     @Transactional
-    public GatewayAccountCredentials updateGatewayAccountCredentials(
+    public GatewayAccountCredentialsWithInternalId updateGatewayAccountCredentials(
             GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
             Iterable<JsonPatchRequest> updateRequests) {
         for (JsonPatchRequest updateRequest : updateRequests) {
@@ -140,7 +140,7 @@ public class GatewayAccountCredentialsService {
                 kv(USER_EXTERNAL_ID, gatewayAccountCredentialsEntity.getLastUpdatedByUserExternalId())
         );
 
-        return new GatewayAccountCredentials(gatewayAccountCredentialsEntity);
+        return new GatewayAccountCredentialsWithInternalId(gatewayAccountCredentialsEntity);
     }
 
     private void updateGatewayAccountCredentialField(JsonPatchRequest patchRequest,

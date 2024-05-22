@@ -26,6 +26,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsWithInternalIdResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
 import uk.gov.pay.connector.gatewayaccount.model.UpdateServiceNameRequest;
@@ -111,15 +112,15 @@ public class GatewayAccountResource {
             tags = {"Gateway accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = GatewayAccountWithCredentialsResponse.class))),
+                            content = @Content(schema = @Schema(implementation = GatewayAccountWithCredentialsWithInternalIdResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public GatewayAccountWithCredentialsResponse getGatewayAccount(@Parameter(example = "1", description = "Gateway account ID")
+    public GatewayAccountWithCredentialsWithInternalIdResponse getGatewayAccount(@Parameter(example = "1", description = "Gateway account ID")
                                                                    @PathParam("accountId") Long gatewayAccountId) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(GatewayAccountWithCredentialsResponse::new)
+                .map(GatewayAccountWithCredentialsWithInternalIdResponse::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
@@ -139,10 +140,9 @@ public class GatewayAccountResource {
     public GatewayAccountWithCredentialsResponse getGatewayAccountByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
-        GatewayAccountWithCredentialsResponse response = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(GatewayAccountWithCredentialsResponse::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
-        return response;
     }
 
     @GET
@@ -192,14 +192,14 @@ public class GatewayAccountResource {
             tags = {"Gateway accounts"},
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountWithCredentialsResponse.class))),
+                            content = @Content(schema = @Schema(name = "accounts", implementation = GatewayAccountWithCredentialsWithInternalIdResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public GatewayAccountWithCredentialsResponse getFrontendGatewayAccountByExternalId(@PathParam("externalId") String externalId) {
+    public GatewayAccountWithCredentialsWithInternalIdResponse getFrontendGatewayAccountByExternalId(@PathParam("externalId") String externalId) {
         return gatewayAccountService
                 .getGatewayAccountByExternal(externalId)
-                .map(GatewayAccountWithCredentialsResponse::new)
+                .map(GatewayAccountWithCredentialsWithInternalIdResponse::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(format("Account with external id %s not found.", externalId)));
     }
 
