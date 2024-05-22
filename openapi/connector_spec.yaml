@@ -200,7 +200,7 @@ paths:
         \ send_payer_ip_address_to_gateway, send_payer_email_to_gateway, integration_version_3ds,\
         \ send_reference_to_gateway, allow_authorisation_api or worldpay_exemption_engine_enabled\
         \ using a JSON Patch-esque message body."
-      operationId: patchGatewayAccount
+      operationId: patchGatewayAccountByGatewayAccountId
       parameters:
       - description: Gateway account ID
         example: 1
@@ -1303,6 +1303,57 @@ paths:
         "404":
           description: Not found
       summary: Find gateway account by service external ID and account type (test|live)
+      tags:
+      - Gateway accounts
+    patch:
+      description: "A generic endpoint that allows the patching of allow_apple_pay,\
+        \ allow_google_pay, block_prepaid_cards, notify_settings, email_collection_mode,\
+        \ corporate_credit_card_surcharge_amount, corporate_debit_card_surcharge_amount,\
+        \ corporate_prepaid_debit_card_surcharge_amount, allow_zero_amount, allow_moto,\
+        \ moto_mask_card_number_input, moto_mask_card_security_code_input, allow_telephone_payment_notifications,\
+        \ send_payer_ip_address_to_gateway, send_payer_email_to_gateway, integration_version_3ds,\
+        \ send_reference_to_gateway, allow_authorisation_api or worldpay_exemption_engine_enabled\
+        \ using a JSON Patch-esque message body."
+      operationId: patchGatewayAccountByServiceIdAndType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                op: replace
+                path: allow_apple_pay
+                value: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: 'Patch a gateway account '
       tags:
       - Gateway accounts
   /v1/api/service/{serviceId}/{accountType}/3ds-flex-credentials:

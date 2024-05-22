@@ -301,6 +301,40 @@ public class GatewayAccountResource {
     }
 
     @PATCH
+    @Path("/v1/api/service/{serviceId}/{accountType}")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    @Operation(
+            summary = "Patch a gateway account ",
+            description = "A generic endpoint that allows the patching of allow_apple_pay, allow_google_pay, block_prepaid_cards, notify_settings, " +
+                    "email_collection_mode, corporate_credit_card_surcharge_amount, corporate_debit_card_surcharge_amount, " +
+                    "corporate_prepaid_debit_card_surcharge_amount, allow_zero_amount, allow_moto, moto_mask_card_number_input, " +
+                    "moto_mask_card_security_code_input, allow_telephone_payment_notifications, send_payer_ip_address_to_gateway, send_payer_email_to_gateway, " +
+                    "integration_version_3ds, send_reference_to_gateway, allow_authorisation_api or worldpay_exemption_engine_enabled using a JSON Patch-esque message body.",
+            tags = {"Gateway accounts"},
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "    \"op\":\"replace\", \"path\":\"allow_apple_pay\", \"value\": true" +
+                    "}"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response patchGatewayAccountByServiceIdAndType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            JsonNode payload) {
+        
+        return gatewayAccountServicesFactory.getUpdateService()
+                .doPatch(serviceId, accountType, JsonPatchRequest.from(payload))
+                .map(gatewayAccount -> Response.ok().build())
+                .orElseGet(() -> Response.status(NOT_FOUND).build());
+    }
+    
+    @PATCH
     @Path("/v1/api/accounts/{accountId}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
@@ -323,7 +357,9 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response patchGatewayAccount(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId, JsonNode payload) {
+    public Response patchGatewayAccountByGatewayAccountId(
+            @Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId, 
+            JsonNode payload) {
         validator.validatePatchRequest(payload);
 
         return gatewayAccountServicesFactory.getUpdateService()
