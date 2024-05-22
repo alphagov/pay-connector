@@ -6,6 +6,7 @@ import com.google.inject.Singleton;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Singleton
@@ -35,7 +36,7 @@ public class RefundReversalStripeConnectTransferRequestBuilder {
                 ),
                 "currency", currency,
                 "transferGroup", transferGroup,
-                "expand", new String[]{"balance_transaction", "destination_payment"}
+                "expand", List.of("balance_transaction", "destination_payment")
         );
 
     }
