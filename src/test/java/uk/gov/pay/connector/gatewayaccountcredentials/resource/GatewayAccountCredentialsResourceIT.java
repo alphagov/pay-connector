@@ -430,14 +430,6 @@ public class GatewayAccountCredentialsResourceIT {
                 long gatewayAccountInternalId = (long) app.getDatabaseTestHelper().getGatewayAccountByExternalId(gatewayAccountId).get("id");
                 app.getDatabaseTestHelper().updateCredentialsFor(gatewayAccountInternalId, toJson(validWorldpayCredentials));
                 String credentialsId = (String) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountInternalId).stream().findFirst().get().get("external_id");
-
-//
-//                String credentialsId = app.givenSetup()
-//                        .body(toJson(Map.of("payment_provider", "worldpay", "credentials", validWorldpayCredentials)))
-//                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
-//                        .then()
-//                        .statusCode(OK.getStatusCode())
-//                        .extract().path("external_id");
                 
                 app.givenSetup()
                         .body(toJson(List.of(

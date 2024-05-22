@@ -394,7 +394,7 @@ public class GatewayAccountCredentialsResourceTest {
     class ByServiceIdAndAccountType {
         final String VALID_SERVICE_ID = "a-valid-service-id";
         @Nested
-        class CreateGatewayAccountCredentials_byServiceIdAndAccountType {
+        class CreateGatewayAccountCredentials {
             @Test
             void missingBody_shouldReturn422() {
                 Response response = resources
@@ -407,7 +407,7 @@ public class GatewayAccountCredentialsResourceTest {
         }
 
         @Nested
-        class Update3dsFlexCredentials_byServiceIdAndAccountType {
+        class Update3dsFlexCredentials {
 
             @ParameterizedTest
             @CsvSource({
@@ -433,7 +433,7 @@ public class GatewayAccountCredentialsResourceTest {
         }
 
         @Nested
-        class ValidateWorldpay3dsCredentials_byServiceIdAndAccountType {
+        class ValidateWorldpay3dsCredentials {
             @Test
             void organisationalUnitIdNotInCorrectFormat_shouldReturn422() {
                 var payload = Map.of(
@@ -510,7 +510,7 @@ public class GatewayAccountCredentialsResourceTest {
         }
 
         @Nested
-        class PatchGatewayAccountCredentials_byServiceIdAndAccountType {
+        class PatchGatewayAccountCredentials {
             @Test
             void gatewayAccountNotFound_shouldReturn404() {
                 when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(VALID_SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.empty());
