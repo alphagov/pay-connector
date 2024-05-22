@@ -193,7 +193,7 @@ public class GatewayAccountCredentialsResourceIT {
                         .patch(format(PATCH_CREDENTIALS_URL, params.getGatewayAccountId(), params.getId()))
                         .then()
                         .statusCode(400)
-                        .body("message[0]", is("Gateway 'stripe' does not support digital wallets."));
+                        .body("message[0]", is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
             }
 
             @Test
@@ -480,7 +480,7 @@ public class GatewayAccountCredentialsResourceIT {
                         .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                         .then()
                         .statusCode(400)
-                        .body("message[0]", is("Gateway 'stripe' does not support digital wallets."));
+                        .body("message[0]", is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
             }
 
             @Test
