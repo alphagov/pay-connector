@@ -47,7 +47,7 @@ public class AgreementService {
     }
 
     public Optional<AgreementResponse> findByExternalId(String externalId, long gatewayAccountId) {
-        return agreementDao.findByExternalId(externalId, gatewayAccountId)
+        return agreementDao.findByExternalIdAndGatewayAccountId(externalId, gatewayAccountId)
                 .map(AgreementResponse::from);
     }
 
@@ -103,12 +103,25 @@ public class AgreementService {
                 .build();
     }
 
+    
     @Transactional
-    public void cancel(String agreementExternalId, long gatewayAccountId, AgreementCancelRequest agreementCancelRequest) {
+    public void cancelByGatewayAccountId(String agreementExternalId, long gatewayAccountId, AgreementCancelRequest agreementCancelRequest) {
         var agreement = agreementDao
-                .findByExternalId(agreementExternalId, gatewayAccountId)
+                .findByExternalIdAndGatewayAccountId(agreementExternalId, gatewayAccountId)
                 .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + agreementExternalId + "] not found."));
+        cancel(agreement, agreementCancelRequest);
+    }
 
+    @Transactional
+    public void cancelByServiceIdAndAccountType(String agreementExternalId, String serviceId, GatewayAccountType accountType, AgreementCancelRequest agreementCancelRequest) {
+        var agreement = agreementDao
+                .findByExternalIdAndServiceIdAndAccountType(agreementExternalId, serviceId, accountType)
+                .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + agreementExternalId + "] not found."));
+        cancel(agreement, agreementCancelRequest);
+    }
+    
+    @Transactional
+    public void cancel(AgreementEntity agreement, AgreementCancelRequest agreementCancelRequest) {
         agreement.getPaymentInstrument()
                 .filter(paymentInstrument -> paymentInstrument.getStatus() == PaymentInstrumentStatus.ACTIVE)
                 .ifPresentOrElse(paymentInstrument -> {

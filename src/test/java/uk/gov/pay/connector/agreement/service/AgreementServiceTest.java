@@ -43,183 +43,246 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class AgreementServiceTest {
 
-    private static final String SERVICE_ID = "TestAgreementServiceID";
-
+    private static final String SERVICE_ID = "a-valid-service-id";
     private static final long GATEWAY_ACCOUNT_ID = 10L;
-
     private static final String REFERENCE_ID = "test";
-
-    private GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
-
-    private AgreementDao mockedAgreementDao = mock(AgreementDao.class);
-
-    private GatewayAccountDao mockedGatewayAccountDao = mock(GatewayAccountDao.class);
-
-    private LedgerService mockedLedgerService = mock(LedgerService.class);
-
+    public static final String VALID_DESCRIPTION = "a valid description";
+    public static final String VALID_USER_REFERENCE = "a-valid-user-reference";
+    public static final String VALID_AGREEMENT_ID = "a-valid-agreement-id";
+    private static final String INSTANT_EXPECTED = "2022-03-03T10:15:30Z";
+    
+    private final GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
+    private final AgreementDao mockedAgreementDao = mock(AgreementDao.class);
+    private final GatewayAccountDao mockedGatewayAccountDao = mock(GatewayAccountDao.class);
+    private final LedgerService mockedLedgerService = mock(LedgerService.class);
+    private final TaskQueueService mockedTaskQueueService = mock(TaskQueueService.class);
     private AgreementService agreementService;
-    private TaskQueueService mockedTaskQueueService = mock(TaskQueueService.class);
-
-    String INSTANT_EXPECTED = "2022-03-03T10:15:30Z";
-
+    
     @BeforeEach
     public void setUp() {
         Clock clock = Clock.fixed(Instant.parse(INSTANT_EXPECTED), ZoneOffset.UTC);
         agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, clock, mockedTaskQueueService);
     }
-
+    
     @Nested
-    class CreateAgreementByGatewayAccountId {
-        @Test
-        public void shouldBeSuccessful_whenRecurringEnabled() {
-            var description = "a valid description";
-            var userIdentifier = "a-valid-user-reference";
-            when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
-            when(gatewayAccount.isLive()).thenReturn(false);
-            when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
-            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-
-            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-            Optional<AgreementResponse> response = agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
-
-            assertThat(response.isPresent(), is(true));
-            assertThat(response.get().getReference(), is(REFERENCE_ID));
-            assertThat(response.get().getServiceId(), is(SERVICE_ID));
-            assertThat(response.get().getDescription(), is(description));
-            assertThat(response.get().getUserIdentifier(), is(userIdentifier));
-        }
-
-        @Test
-        public void shouldThrowException_whenGatewayAccountNotFound() {
-            var description = "a valid description";
-            var userIdentifier = "a-valid-user-reference";
-            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
-            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-            assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
-        }
+    class ByGatewayAccountId {
         
-        @Test
-        public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
-            var description = "a valid description";
-            var userIdentifier = "a-valid-user-reference";
-            when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
-            when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-            assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
+        @Nested
+        class CreateAgreement {
+            
+            @Test
+            public void shouldBeSuccessful_whenRecurringEnabled() {
+                when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
+                when(gatewayAccount.isLive()).thenReturn(false);
+                when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
+                when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+
+                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                Optional<AgreementResponse> response = agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
+
+                assertThat(response.isPresent(), is(true));
+                assertThat(response.get().getReference(), is(REFERENCE_ID));
+                assertThat(response.get().getServiceId(), is(SERVICE_ID));
+                assertThat(response.get().getDescription(), is(VALID_DESCRIPTION));
+                assertThat(response.get().getUserIdentifier(), is(VALID_USER_REFERENCE));
+            }
+
+            @Test
+            public void shouldThrowException_whenGatewayAccountNotFound() {
+                when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
+                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
+            }
+
+            @Test
+            public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
+                when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
+                when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
+            }
+        }
+
+        @Nested
+        class CancelAgreement {
+            @Test
+            public void shouldThrowException_whenGatewayAccountNotFound() {
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
+                assertThrows(AgreementNotFoundException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
+            }
+
+            @Test
+            public void shouldThrowPaymentInstrumentNotActiveWhenNoPaymentInstrument() {
+                var agreementWithoutPaymentInstrument = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(null)
+                        .build();
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementWithoutPaymentInstrument));
+                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
+            }
+
+            @ParameterizedTest()
+            @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "ACTIVE")
+            public void shouldThrowPaymentInstrumentNotActive_WhenNonActiveStates(PaymentInstrumentStatus status) {
+                var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withStatus(status)
+                        .build();
+                var agreement = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(paymentInstrument)
+                        .build();
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
+                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
+            }
+
+            @Test
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsProvided() {
+                var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withStatus(PaymentInstrumentStatus.ACTIVE)
+                        .build();
+                var agreement = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(paymentInstrument)
+                        .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
+                        .build();
+                var cancelRequest = new AgreementCancelRequest("valid-user-external-id", "valid@email.test");
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
+                agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, cancelRequest);
+                verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
+                verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByUser.class));
+                assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
+                assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
+            }
+
+            @Test
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsNotProvided() {
+                var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withStatus(PaymentInstrumentStatus.ACTIVE)
+                        .build();
+                var agreement = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(paymentInstrument)
+                        .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
+                        .build();
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
+                agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest());
+                verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
+                verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
+                assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
+                assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
+            }
         }
     }
-
+    
     @Nested
-    class CreateAgreementByServiceIdAndAccountType {
-        @Test
-        public void shouldBeSuccessful_whenRecurringEnabled() {
-            var description = "a valid description";
-            var userIdentifier = "a-valid-user-reference";
-            when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
-            when(gatewayAccount.isLive()).thenReturn(false);
-            when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
-            when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
+    class ByServiceIdAndAccountType {
 
-            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-            Optional<AgreementResponse> response = agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST);
+        @Nested
+        class CreateAgreement {
+            
+            @Test
+            public void shouldBeSuccessful_whenRecurringEnabled() {
+                when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
+                when(gatewayAccount.isLive()).thenReturn(false);
+                when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
+                when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
 
-            assertThat(response.isPresent(), is(true));
-            assertThat(response.get().getReference(), is(REFERENCE_ID));
-            assertThat(response.get().getServiceId(), is(SERVICE_ID));
-            assertThat(response.get().getDescription(), is(description));
-            assertThat(response.get().getUserIdentifier(), is(userIdentifier));
+                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                Optional<AgreementResponse> response = agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST);
+
+                assertThat(response.isPresent(), is(true));
+                assertThat(response.get().getReference(), is(REFERENCE_ID));
+                assertThat(response.get().getServiceId(), is(SERVICE_ID));
+                assertThat(response.get().getDescription(), is(VALID_DESCRIPTION));
+                assertThat(response.get().getUserIdentifier(), is(VALID_USER_REFERENCE));
+            }
+
+            @Test
+            public void shouldThrowNotFoundException_whenGatewayAccountDoesNotExist() {
+                when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.empty());
+                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
+            }
+
+            @Test
+            public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
+                when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
+                when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
+                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
+            }
         }
 
-        @Test
-        public void shouldThrowException_whenGatewayAccountNotFound() {
-            var description = "a valid description";
-            var userIdentifier = "a-valid-user-reference";
-            when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.empty());
-            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-            assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
+        @Nested
+        class CancelAgreement {
+            @Test
+            public void shouldThrowAgreementNotFoundException() {
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.empty());
+                assertThrows(AgreementNotFoundException.class, () -> agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest()));
+            }
+
+            @Test
+            public void shouldThrowPaymentInstrumentNotActiveWhenNoPaymentInstrument() {
+                var agreementWithoutPaymentInstrument = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(null)
+                        .build();
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(agreementWithoutPaymentInstrument));
+                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest()));
+            }
+
+            @ParameterizedTest()
+            @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "ACTIVE")
+            public void shouldThrowPaymentInstrumentNotActive_WhenNonActiveStates(PaymentInstrumentStatus status) {
+                var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withStatus(status)
+                        .build();
+                var agreement = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(paymentInstrument)
+                        .build();
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(agreement));
+                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest()));
+            }
+
+            @Test
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsProvided() {
+                var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withStatus(PaymentInstrumentStatus.ACTIVE)
+                        .build();
+                var agreement = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(paymentInstrument)
+                        .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
+                        .build();
+                var cancelRequest = new AgreementCancelRequest("valid-user-external-id", "valid@email.test");
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(agreement));
+                agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, cancelRequest);
+                verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
+                verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByUser.class));
+                assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
+                assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
+            }
+
+            @Test
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsNotProvided() {
+                var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                        .withStatus(PaymentInstrumentStatus.ACTIVE)
+                        .build();
+                var agreement = new AgreementEntity.AgreementEntityBuilder()
+                        .withPaymentInstrument(paymentInstrument)
+                        .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
+                        .build();
+                when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
+                when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(agreement));
+                agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST,new AgreementCancelRequest());
+                verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
+                verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
+                assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
+                assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
+            }
         }
-        
-        @Test
-        public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
-            var description = "a valid description";
-            var userIdentifier = "a-valid-user-reference";
-            when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
-            when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
-            AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, description, userIdentifier);
-            assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
-        }
-    }
-        
-    @Test
-    public void cancelAnAgreement_ThrowsAgreementNotFound() {
-        var agreementId = "an-external-id";
-        when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
-        when(mockedAgreementDao.findByExternalId(agreementId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
-        assertThrows(AgreementNotFoundException.class, () -> agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
-    }
-
-    @Test
-    public void cancelAnAgreement_ThrowsPaymentInstrumentNotActiveWhenNoPaymentInstrument() {
-        var agreementId = "an-external-id";
-        var agreementWithoutPaymentInstrument = new AgreementEntity.AgreementEntityBuilder()
-                .withPaymentInstrument(null)
-                .build();
-        when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
-        when(mockedAgreementDao.findByExternalId(agreementId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementWithoutPaymentInstrument));
-        assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
-    }
-
-    @ParameterizedTest()
-    @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "ACTIVE")
-    public void cancelAnAgreement_ThrowsPaymentInstrumentNotActiveWhenNonActiveStates(PaymentInstrumentStatus status) {
-        var agreementId = "an-external-id";
-        var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
-                .withStatus(status)
-                .build();
-        var agreement = new AgreementEntity.AgreementEntityBuilder()
-                .withPaymentInstrument(paymentInstrument)
-                .build();
-        when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
-        when(mockedAgreementDao.findByExternalId(agreementId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
-        assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
-    }
-
-    @Test
-    public void cancelAnAgreementWithUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
-        var agreementId = "an-external-id";
-        var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
-                .withStatus(PaymentInstrumentStatus.ACTIVE)
-                .build();
-        var agreement = new AgreementEntity.AgreementEntityBuilder()
-                .withPaymentInstrument(paymentInstrument)
-                .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
-                .build();
-        var cancelRequest = new AgreementCancelRequest("valid-user-external-id", "valid@email.test");
-        when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
-        when(mockedAgreementDao.findByExternalId(agreementId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
-        agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, cancelRequest);
-        verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
-        verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByUser.class));
-        assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
-        assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
-    }
-
-    @Test
-    public void cancelAnAgreementWithoutUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
-        var agreementId = "an-external-id";
-        var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
-                .withStatus(PaymentInstrumentStatus.ACTIVE)
-                .build();
-        var agreement = new AgreementEntity.AgreementEntityBuilder()
-                .withPaymentInstrument(paymentInstrument)
-                .withGatewayAccount(GatewayAccountEntityFixture.aGatewayAccountEntity().build())
-                .build();
-        when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
-        when(mockedAgreementDao.findByExternalId(agreementId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
-        agreementService.cancel(agreementId, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest());
-        verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
-        verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
-        assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));
-        assertThat(agreement.getCancelledDate(), is(Instant.parse(INSTANT_EXPECTED)));
     }
 }

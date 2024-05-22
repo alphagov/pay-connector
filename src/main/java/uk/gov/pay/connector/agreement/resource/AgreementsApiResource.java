@@ -93,7 +93,20 @@ public class AgreementsApiResource {
             @PathParam("agreementId") String agreementId,
             @Valid AgreementCancelRequest agreementCancelRequest
     ) {
-        agreementService.cancel(agreementId, accountId, agreementCancelRequest);
+        agreementService.cancelByGatewayAccountId(agreementId, accountId, agreementCancelRequest);
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/v1/api/service/{serviceId}/{accountType}/agreements/{agreementId}/cancel")
+    @Consumes("application/json")
+    public Response cancelAgreement(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @PathParam("agreementId") String agreementId,
+            @Valid AgreementCancelRequest agreementCancelRequest
+    ) {
+        agreementService.cancelByServiceIdAndAccountType(agreementId, serviceId, accountType, agreementCancelRequest);
         return Response.noContent().build();
     }
     
