@@ -1269,6 +1269,42 @@ paths:
       summary: Handle Worldpay notifications
       tags:
       - Notifications
+  /v1/api/service/{serviceId}/{accountType}:
+    get:
+      description: "Get gateway account by service external ID and account type (test|live).\
+        \ Returns notifications credentials, gateway account credentials (without\
+        \ password). Doesn't include card_types or gateway_merchant_id"
+      operationId: getGatewayAccountByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
+          description: OK
+        "404":
+          description: Not found
+      summary: Find gateway account by service external ID and account type (test|live)
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/{accountType}/3ds-flex-credentials:
     put:
       operationId: createOrUpdateWorldpay3dsCredentialsByServiceIdAndAccountType
@@ -1309,42 +1345,6 @@ paths:
       summary: Create or update 3DS flex credentials (worldpay accounts)
       tags:
       - Gateway account credentials
-  /v1/api/service/{serviceId}/{accountType}/account:
-    get:
-      description: "Get gateway account by service external ID and account type (test|live).\
-        \ Returns notifications credentials, gateway account credentials (without\
-        \ password). Doesn't include card_types or gateway_merchant_id"
-      operationId: getGatewayAccountByServiceIdAndAccountType
-      parameters:
-      - description: Service ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
-          description: OK
-        "404":
-          description: Not found
-      summary: Find gateway account by service external ID and account type (test|live)
-      tags:
-      - Gateway accounts
   /v1/api/service/{serviceId}/{accountType}/agreements:
     post:
       operationId: createAgreement_1
