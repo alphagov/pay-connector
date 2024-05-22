@@ -353,7 +353,7 @@ public class GatewayAccountCredentialsResourceIT {
                     .body("payment_provider", is("stripe"));
 
                 app.givenSetup()
-                    .get(format("/v1/api/service/%s/%s/account", VALID_SERVICE_ID, TEST))
+                    .get(format("/v1/api/service/%s/%s", VALID_SERVICE_ID, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("gateway_account_credentials[1].last_updated_by_user_external_id", is("a-new-user-external-id"))
@@ -447,7 +447,7 @@ public class GatewayAccountCredentialsResourceIT {
                         .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
 
                 app.givenSetup()
-                        .get(format("/v1/api/service/%s/%s/account", VALID_SERVICE_ID, TEST))
+                        .get(format("/v1/api/service/%s/%s", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(OK.getStatusCode())
                         .body("gateway_account_credentials[0].external_id", is(credentialsId))
