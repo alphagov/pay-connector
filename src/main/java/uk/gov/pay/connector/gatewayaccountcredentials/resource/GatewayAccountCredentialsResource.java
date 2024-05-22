@@ -248,7 +248,7 @@ public class GatewayAccountCredentialsResource {
                     Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
                     return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
                 })
-                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
     @PUT
@@ -272,7 +272,7 @@ public class GatewayAccountCredentialsResource {
             @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> {
-                    throw new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType));
+                    throw new GatewayAccountNotFoundException(serviceId, accountType);
                 })
                 .filter(gatewayAccountEntity ->
                         gatewayAccountEntity.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName()))
@@ -307,7 +307,7 @@ public class GatewayAccountCredentialsResource {
                 .map(gatewayAccountEntity ->
                         worldpay3dsFlexCredentialsValidationService.validateCredentials(gatewayAccountEntity, Worldpay3dsFlexCredentials.from(worldpay3dsCredentials)))
                 .map(ValidationResult::new)
-                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
     
     @PATCH

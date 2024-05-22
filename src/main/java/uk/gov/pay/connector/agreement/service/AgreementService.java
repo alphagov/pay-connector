@@ -67,7 +67,7 @@ public class AgreementService {
     public Optional<AgreementResponse> createByServiceIdAndAccountType(AgreementCreateRequest agreementCreateRequest, String serviceId, GatewayAccountType accountType) {
         return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> {
-                    throw new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType));
+                    throw new GatewayAccountNotFoundException(serviceId, accountType);
                 })
                 .map(gatewayAccountEntity -> create(agreementCreateRequest, gatewayAccountEntity));
     }
