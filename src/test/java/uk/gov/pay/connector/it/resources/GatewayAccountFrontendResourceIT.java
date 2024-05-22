@@ -219,7 +219,7 @@ public class GatewayAccountFrontendResourceIT {
             given().port(app.getLocalPort())
                     .contentType(JSON)
                     .accept(JSON)
-                    .get(format("/v1/api/service/%s/test/account", serviceId))
+                    .get(format("/v1/api/service/%s/test", serviceId))
                     .then()
                     .statusCode(200)
                     .body("service_name", is("New Service Name"));
