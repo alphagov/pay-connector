@@ -1106,6 +1106,15 @@ public class DatabaseTestHelper {
                         .orElse(null));
     }
 
+    public Map<String, Object> getGatewayAccountByExternalId(String externalId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT * FROM gateway_accounts WHERE external_id = :external_id")
+                        .bind("external_id", externalId)
+                        .mapToMap()
+                        .findFirst()
+                        .orElse(null));
+    }
+
     public List<Map<String, Object>> getGatewayAccountCredentialsForAccount(long accountId) {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * FROM gateway_account_credentials where gateway_account_id = :accountId")
@@ -1134,6 +1143,14 @@ public class DatabaseTestHelper {
         return jdbi.withHandle(handle ->
                 handle.createQuery("SELECT * FROM gateway_account_credentials where id = :id")
                         .bind("id", credentialsId)
+                        .mapToMap()
+                        .first());
+    }
+
+    public Map<String, Object> getGatewayAccountCredentialsByExternalId(String externalId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_account_credentials where external_id = :external_id")
+                        .bind("external_id", externalId)
                         .mapToMap()
                         .first());
     }

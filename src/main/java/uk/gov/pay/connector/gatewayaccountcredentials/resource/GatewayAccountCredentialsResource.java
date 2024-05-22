@@ -16,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsRequest;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
@@ -38,7 +39,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -197,7 +200,7 @@ public class GatewayAccountCredentialsResource {
     public GatewayAccountCredentials updateGatewayAccountCredentials(
             @Parameter(example = "1", description = "Gateway account ID")
             @PathParam("accountId") Long gatewayAccountId,
-            @Parameter(example = "1", description = "Credential external ID")
+            @Parameter(example = "1", description = "Credential ID")
             @PathParam("credentialsId") Long credentialsId,
             JsonNode payload) {
 
@@ -226,6 +229,7 @@ public class GatewayAccountCredentialsResource {
     @Operation(
             summary = "Create credentials for a gateway account by service external ID and account type (test|live)",
             responses = {
+                    // TODO Update GatewayAccountCredentials to not return gateway_account_credential_id
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
@@ -304,6 +308,57 @@ public class GatewayAccountCredentialsResource {
                         worldpay3dsFlexCredentialsValidationService.validateCredentials(gatewayAccountEntity, Worldpay3dsFlexCredentials.from(worldpay3dsCredentials)))
                 .map(ValidationResult::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
+    }
+    
+    @PATCH
+    @Path("/v1/api/service/{serviceId}/{accountType}/credentials/{credentialsId}")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Update a gateway account credential by service ID and account Type",
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "[" +
+                    "    {" +
+                    "        \"op\": \"replace\"," +
+                    "        \"path\": \"state\"," +
+                    "        \"value\": \"ACTIVE\"" +
+                    "    }" +
+                    "]"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = GatewayAccountCredentials.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - Invalid or missing mandatory fields",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - account or credential not found")
+            }
+    )
+    public GatewayAccountCredentials updateGatewayAccountCredentialsByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service external ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @Parameter(example = "787460d16d4a4d14b4c94787b8f427db", description = "Credential external ID") @PathParam("credentialsId") String credentialsId,
+            JsonNode payload) {
+
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .or(() -> {
+                    throw new GatewayAccountNotFoundException(serviceId, accountType);
+                })
+                .map(GatewayAccountEntity::getGatewayAccountCredentials)
+                .flatMap(gatewayAccountCredentials -> gatewayAccountCredentials.stream()
+                    .filter(c -> c.getExternalId().equals(credentialsId))
+                    .findFirst())
+                .or(() -> {
+                    throw GatewayAccountCredentialsNotFoundException.forExternalId(credentialsId);
+                })
+                .map(gatewayAccountCredentialsEntity -> {
+                    gatewayAccountCredentialsRequestValidator.validatePatch(payload,
+                        gatewayAccountCredentialsEntity.getPaymentProvider(),
+                        gatewayAccountCredentialsEntity.getCredentialsObject());
+                    
+                    List<JsonPatchRequest> updateRequests = StreamSupport.stream(payload.spliterator(), false)
+                            .map(JsonPatchRequest::from)
+                            .collect(Collectors.toList());
+                    return gatewayAccountCredentialsService.updateGatewayAccountCredentials(gatewayAccountCredentialsEntity, updateRequests);
+                })
+                .orElseThrow(IllegalStateException::new);
     }
 
 
