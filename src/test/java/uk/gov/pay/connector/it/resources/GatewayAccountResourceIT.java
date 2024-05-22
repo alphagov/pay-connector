@@ -1118,7 +1118,11 @@ public class GatewayAccountResourceIT {
             payload = Map.of("op", "remove",
                     "path", "notify_settings");
 
-            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
 
             app.givenSetup()
                     .get(format("/v1/api/service/%s/test/account", serviceId))
@@ -1185,19 +1189,31 @@ public class GatewayAccountResourceIT {
                     "path", "corporate_credit_card_surcharge_amount",
                     "value", 100);
 
-            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
 
             payload = Map.of("op", "replace",
                     "path", "corporate_debit_card_surcharge_amount",
                     "value", 200);
 
-            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
 
             payload = Map.of("op", "replace",
                     "path", "corporate_prepaid_debit_card_surcharge_amount",
                     "value", 400);
 
-            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
 
             app.givenSetup()
                     .get(format("/v1/api/service/%s/test/account", serviceId))
@@ -1218,7 +1234,11 @@ public class GatewayAccountResourceIT {
                     "path", "allow_telephone_payment_notifications",
                     "value", true);
 
-            app.givenSetup().body(toJson(payload)).patch(format("/v1/api/service/%s/test/", serviceId));
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
 
             app.givenSetup()
                     .get(format("/v1/api/service/%s/test/account", serviceId))
