@@ -141,7 +141,7 @@ public class GatewayAccountResource {
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         GatewayAccountWithCredentialsResponse response = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(GatewayAccountWithCredentialsResponse::new)
-                .orElseThrow(() -> new GatewayAccountNotFoundException(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
         return response;
     }
 
@@ -261,7 +261,7 @@ public class GatewayAccountResource {
         logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount -> successResponseWithEntity(Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
-                .orElseGet(() -> notFoundResponse(format("Gateway account for service external id %s and account type %s not found.", serviceId, accountType)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
     @POST
@@ -398,8 +398,7 @@ public class GatewayAccountResource {
                             return Response.ok().build();
                         }
                 )
-                .orElseGet(() ->
-                        notFoundResponse(format("A service with service id '%s' and account type '%s' does not exist", serviceId, accountType)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
     
     @PATCH
@@ -554,7 +553,7 @@ public class GatewayAccountResource {
 
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccountEntity -> updateGatewayAccountAcceptedCardTypes(cardTypeIds, gatewayAccountEntity))
-                .orElseGet(() -> notFoundResponse(format("The gateway account for service id '%s' and account type '%s' does not exist", serviceId, accountType)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
     private Response updateGatewayAccountAcceptedCardTypes(List<UUID> cardTypeIds, GatewayAccountEntity gatewayAccountToEdit) {

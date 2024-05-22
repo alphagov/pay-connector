@@ -258,7 +258,7 @@ public class GatewayAccountFrontendResourceIT {
                     .patch("/v1/frontend/service/nexiste-pas/test/servicename")
                     .then()
                     .statusCode(404)
-                    .body("message", contains("A service with service id 'nexiste-pas' and account type 'test' does not exist"))
+                    .body("message", contains("Gateway account not found for service ID [nexiste-pas] and account type [test]"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
     }

@@ -82,7 +82,7 @@ public class StripeAccountSetupResource {
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccountEntity -> stripeAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId()))
-                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
     @PATCH
