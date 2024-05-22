@@ -1029,13 +1029,12 @@ public class GatewayAccountResourceIT {
     @Nested
     class PatchByServiceIdAndAccountType {
 
-        private Map<String, String> gatewayAccountRequest;
         private String serviceId;
 
         @BeforeEach
         void before() {
             serviceId = RandomIdGenerator.newId();
-            gatewayAccountRequest = Map.of(
+            Map<String, String> gatewayAccountRequest = Map.of(
                     "payment_provider", "worldpay",
                     "service_id", serviceId,
                     "service_name", "Service Name",
@@ -1209,10 +1208,10 @@ public class GatewayAccountResourceIT {
         }
         
         @Test
-        void updateAllowTelephonePaymentNotificationsSuccessfull() {
+        void updateAllowTelephonePaymentNotificationsSuccessfully() {
             app.givenSetup()
                     .get(format("/v1/api/service/%s/test/account", serviceId))
-                    .then().log().body()
+                    .then()
                     .body("allow_telephone_payment_notifications", is(false));
 
             Map<String, Object> payload = Map.of("op", "replace",
