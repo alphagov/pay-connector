@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
@@ -320,28 +321,41 @@ public class AgreementsApiResourceIT {
         @Nested
         class CancelAgreement {
             
-            @BeforeEach
-            void setUp() {
-                testAccount = createTestAccount("worldpay", true);
-                accountId = testAccount.getAccountId();
-            }
-            
             @Test
             void shouldReturn204AndCancelAgreement() {
-                var agreementId = "an-agreement-external-id";
+                String gatewayAccountId = testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
+                testBaseExtension.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
+
+                String createAgreementPayload = toJson(Map.of(
+                        "reference", REFERENCE_ID,
+                        "description", DESCRIPTION,
+                        "user_identifier", USER_IDENTIFIER
+                ));
+
+                String agreementId = app.givenSetup()
+                        .body(createAgreementPayload)
+                        .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, "test"))
+                        .then()
+                        .statusCode(SC_CREATED)
+                        .body("created_date", notNullValue())
+                        .body("created_date", isWithin(10, SECONDS))
+                        .body("cancelled_date", nullValue())
+                        .extract().path("agreement_id");
+
+                Map<String, Object> agreement = app.getDatabaseTestHelper().getAgreementByExternalId(agreementId);
+                assertThat(agreement.get("reference"), is(REFERENCE_ID));
+                assertThat(agreement.get("service_id"), is(VALID_SERVICE_ID));
+                assertThat(agreement.get("description"), is(DESCRIPTION));
+
+                // creating the payment instrument using the database because adding a payment instrument to an agreement via the API is laborious
+                // it would require creating a successful payment to set up the agreement via Charges API
+                long paymentInstrumentId = nextLong();
                 AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
-                        .withPaymentInstrumentId(nextLong())
+                        .withPaymentInstrumentId(paymentInstrumentId)
                         .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
                         .build();
                 app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
-                AddAgreementParams agreementParams = anAddAgreementParams()
-                        .withGatewayAccountId(String.valueOf(accountId))
-                        .withExternalAgreementId(agreementId)
-                        .withPaymentInstrumentId(paymentInstrumentParams.getPaymentInstrumentId())
-                        .withServiceId(VALID_SERVICE_ID)
-                        .withLive(false)
-                        .build();
-                app.getDatabaseTestHelper().addAgreement(agreementParams);
+                app.getDatabaseTestHelper().updateAgreementPaymentInstrumentId(agreementId, paymentInstrumentId);
 
                 app.givenSetup()
                         .post(format(CANCEL_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, "test", agreementId))
@@ -355,6 +369,7 @@ public class AgreementsApiResourceIT {
             }
         }
     }
+    
     private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider, boolean recurringEnabled) {
         long accountId = nextLong(2, 10000);
 

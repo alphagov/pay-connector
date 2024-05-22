@@ -44,9 +44,7 @@ import static org.mockito.Mockito.when;
 public class AgreementServiceTest {
 
     private static final String SERVICE_ID = "a-valid-service-id";
-
     private static final long GATEWAY_ACCOUNT_ID = 10L;
-
     private static final String REFERENCE_ID = "test";
     public static final String VALID_DESCRIPTION = "a valid description";
     public static final String VALID_USER_REFERENCE = "a-valid-user-reference";
@@ -90,7 +88,7 @@ public class AgreementServiceTest {
             }
 
             @Test
-            public void shouldThrowGatewayAccountNotFoundException() {
+            public void shouldThrowException_whenGatewayAccountNotFound() {
                 when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
                 AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
                 assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
@@ -108,7 +106,7 @@ public class AgreementServiceTest {
         @Nested
         class CancelAgreement {
             @Test
-            public void shouldThrowAgreementNotFoundException() {
+            public void shouldThrowException_whenGatewayAccountNotFound() {
                 when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
                 when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
                 assertThrows(AgreementNotFoundException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
@@ -139,7 +137,7 @@ public class AgreementServiceTest {
             }
 
             @Test
-            public void withUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsProvided() {
                 var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                         .withStatus(PaymentInstrumentStatus.ACTIVE)
                         .build();
@@ -158,7 +156,7 @@ public class AgreementServiceTest {
             }
 
             @Test
-            public void withoutUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsNotProvided() {
                 var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                         .withStatus(PaymentInstrumentStatus.ACTIVE)
                         .build();
@@ -201,7 +199,7 @@ public class AgreementServiceTest {
             }
 
             @Test
-            public void shouldThrowGatewayAccountNotFoundException() {
+            public void shouldThrowNotFoundException_whenGatewayAccountDoesNotExist() {
                 when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.empty());
                 AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
                 assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
@@ -250,7 +248,7 @@ public class AgreementServiceTest {
             }
 
             @Test
-            public void withUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsProvided() {
                 var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                         .withStatus(PaymentInstrumentStatus.ACTIVE)
                         .build();
@@ -269,7 +267,7 @@ public class AgreementServiceTest {
             }
 
             @Test
-            public void withoutUserDetails_ShouldMoveToCancelStatusForActivePaymentInstrument() {
+            public void shouldCancelAgreementSuccessfully_whenUserDetailsNotProvided() {
                 var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                         .withStatus(PaymentInstrumentStatus.ACTIVE)
                         .build();

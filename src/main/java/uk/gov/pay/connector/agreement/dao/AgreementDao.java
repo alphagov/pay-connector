@@ -34,18 +34,19 @@ public class AgreementDao extends JpaDao<AgreementEntity> {
     }
 
     public Optional<AgreementEntity> findByExternalIdAndServiceIdAndAccountType(String externalId, String serviceId, GatewayAccountType accountType) {
-
+        boolean live = accountType == GatewayAccountType.LIVE;
         String query = "SELECT ae FROM AgreementEntity ae " +
                 "WHERE ae.externalId = :externalId " +
-                "AND ae.serviceId = :serviceId";
+                "AND ae.serviceId = :serviceId " +
+                "AND ae.live = :live";
 
         return entityManager.get()
                 .createQuery(query, AgreementEntity.class)
                 .setParameter("externalId", externalId)
                 .setParameter("serviceId", serviceId)
+                .setParameter("live", live)
                 .getResultList()
                 .stream()
-                .filter(agreementEntity -> agreementEntity.isLive() ? accountType.equals(GatewayAccountType.LIVE) : accountType.equals(GatewayAccountType.TEST))
                 .findFirst();
     }
 
