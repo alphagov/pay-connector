@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsReques
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsWithInternalId;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsWithInternalIdResponse;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
@@ -174,6 +175,7 @@ public class GatewayAccountCredentialsResource {
                     Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
                     return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
                 })
+                .map(GatewayAccountCredentialsWithInternalId::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
@@ -220,6 +222,7 @@ public class GatewayAccountCredentialsResource {
                             return gatewayAccountCredentialsService.updateGatewayAccountCredentials(gatewayAccountCredentialsEntity, updateRequests);
                         })
                         .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException(credentialsId)))
+                .map(GatewayAccountCredentialsWithInternalId::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
@@ -248,7 +251,7 @@ public class GatewayAccountCredentialsResource {
                     Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
                     return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
                 })
-                .map(GatewayAccountCredentialsWithInternalId::stripInternalId)
+                .map(GatewayAccountCredentials::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
@@ -359,7 +362,7 @@ public class GatewayAccountCredentialsResource {
                             .collect(Collectors.toList());
                     return gatewayAccountCredentialsService.updateGatewayAccountCredentials(gatewayAccountCredentialsEntity, updateRequests);
                 })
-                .map(GatewayAccountCredentialsWithInternalId::stripInternalId)
+                .map(GatewayAccountCredentials::new)
                 .orElseThrow(IllegalStateException::new);
     }
 

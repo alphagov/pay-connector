@@ -79,7 +79,7 @@ public class GatewayAccountCredentialsService {
     }
 
     @Transactional
-    public GatewayAccountCredentialsWithInternalId createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity,
+    public GatewayAccountCredentialsEntity createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity,
                                                                      String paymentProvider,
                                                                      Map<String, String> credentials) {
         GatewayAccountCredentialState state = calculateStateForNewCredentials(gatewayAccountEntity, paymentProvider, credentials);
@@ -94,7 +94,7 @@ public class GatewayAccountCredentialsService {
         gatewayAccountCredentialsEntity.setExternalId(randomUuid());
 
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
-        return new GatewayAccountCredentialsWithInternalId(gatewayAccountCredentialsEntity);
+        return gatewayAccountCredentialsEntity;
     }
 
     private GatewayAccountCredentialState calculateStateForNewCredentials(GatewayAccountEntity gatewayAccountEntity,
@@ -121,7 +121,7 @@ public class GatewayAccountCredentialsService {
     }
 
     @Transactional
-    public GatewayAccountCredentialsWithInternalId updateGatewayAccountCredentials(
+    public GatewayAccountCredentialsEntity updateGatewayAccountCredentials(
             GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
             Iterable<JsonPatchRequest> updateRequests) {
         for (JsonPatchRequest updateRequest : updateRequests) {
@@ -140,7 +140,7 @@ public class GatewayAccountCredentialsService {
                 kv(USER_EXTERNAL_ID, gatewayAccountCredentialsEntity.getLastUpdatedByUserExternalId())
         );
 
-        return new GatewayAccountCredentialsWithInternalId(gatewayAccountCredentialsEntity);
+        return gatewayAccountCredentialsEntity;
     }
 
     private void updateGatewayAccountCredentialField(JsonPatchRequest patchRequest,

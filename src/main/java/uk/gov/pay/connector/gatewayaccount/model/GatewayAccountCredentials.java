@@ -56,18 +56,6 @@ public class GatewayAccountCredentials {
         this.gatewayAccountId = entity.getGatewayAccountEntity().getId();
         this.credentials = entity.getCredentialsObject();
     }
-    
-    public GatewayAccountCredentials(GatewayAccountCredentialsWithInternalId credentialsWithInternalId) {
-        this.externalId = credentialsWithInternalId.getExternalId();
-        this.paymentProvider = credentialsWithInternalId.getPaymentProvider();
-        this.state = credentialsWithInternalId.getState();
-        this.lastUpdatedByUserExternalId = credentialsWithInternalId.getLastUpdatedByUserExternalId();
-        this.createdDate = credentialsWithInternalId.getCreatedDate();
-        this.activeStartDate = credentialsWithInternalId.getActiveStartDate();
-        this.activeEndDate = credentialsWithInternalId.getActiveEndDate();
-        this.gatewayAccountId = credentialsWithInternalId.getGatewayAccountId();
-        this.credentials = credentialsWithInternalId.getCredentials();
-    }
 
     public String getExternalId() {
         return externalId;

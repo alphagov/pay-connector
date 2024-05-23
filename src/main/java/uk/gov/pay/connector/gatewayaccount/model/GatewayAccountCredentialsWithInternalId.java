@@ -16,8 +16,4 @@ public class GatewayAccountCredentialsWithInternalId extends GatewayAccountCrede
     public Long getId() {
         return id;
     }
-    
-    public GatewayAccountCredentials stripInternalId() {
-        return new GatewayAccountCredentials(this);
-    }
 }
