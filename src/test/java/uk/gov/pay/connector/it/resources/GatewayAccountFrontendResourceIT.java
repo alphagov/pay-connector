@@ -99,7 +99,8 @@ public class GatewayAccountFrontendResourceIT {
                 .body("block_prepaid_cards", is(false))
                 .body("allow_moto", is(false))
                 .body("allow_telephone_payment_notifications", is(false))
-                .body("worldpay_3ds_flex", nullValue());
+                .body("worldpay_3ds_flex", nullValue())
+                .body("gateway_account_credentials[0]", hasKey("gateway_account_credential_id"));
     }
     
     @Test
@@ -120,7 +121,8 @@ public class GatewayAccountFrontendResourceIT {
                 .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
                 .body("worldpay_3ds_flex", not(hasKey("version")))
                 .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
-                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
+                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false))
+                .body("gateway_account_credentials[0]", hasKey("gateway_account_credential_id"));
     }
 
     private void validateNon3dsCardType(ValidatableResponse response, String brand, String label, String... type) {
