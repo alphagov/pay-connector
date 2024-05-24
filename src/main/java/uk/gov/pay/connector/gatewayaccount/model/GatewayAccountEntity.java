@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
@@ -536,6 +537,14 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public void setDisabledReason(String disabledReason) {
         this.disabledReason = disabledReason;
+    }
+    
+    public boolean isStripeGatewayAccount() {
+        return PaymentGatewayName.STRIPE.getName().equals(this.getGatewayName());
+    }
+    
+    public boolean isWorldpayGatewayAccount() {
+        return PaymentGatewayName.WORLDPAY.getName().equals(this.getGatewayName());
     }
 
 }

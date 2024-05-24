@@ -23,7 +23,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsWi
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
-import uk.gov.pay.connector.gatewayaccount.resource.support.WorldpayAccountUtils;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.Worldpay3dsFlexCredentialsService;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -390,7 +389,7 @@ public class GatewayAccountCredentialsResource {
                 .or(() -> {
                     throw new GatewayAccountNotFoundException(serviceId, accountType);
                 })
-                .filter(WorldpayAccountUtils::isWorldpayGatewayAccount)
+                .filter(GatewayAccountEntity::isWorldpayGatewayAccount)
                 .or(() -> {
                     throw GatewayAccountNotFoundException.forNonWorldpayAccount(serviceId, accountType);
                 })

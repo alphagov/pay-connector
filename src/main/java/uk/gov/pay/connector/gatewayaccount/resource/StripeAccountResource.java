@@ -7,9 +7,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
-import uk.gov.pay.connector.gatewayaccount.resource.support.StripeAccountUtils;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountService;
 
@@ -51,7 +51,7 @@ public class StripeAccountResource {
             @Parameter(example = "1", description = "Gateway account ID")
             @PathParam("accountId") Long accountId) {
         return gatewayAccountService.getGatewayAccount(accountId)
-                .filter(StripeAccountUtils::isStripeGatewayAccount)
+                .filter(GatewayAccountEntity::isStripeGatewayAccount)
                 .flatMap(stripeAccountService::buildStripeAccountResponse)
                 .orElseThrow(NotFoundException::new);
     }
@@ -74,7 +74,7 @@ public class StripeAccountResource {
                 .or(() -> {
                     throw new GatewayAccountNotFoundException(serviceId, accountType);
                 })
-                .filter(StripeAccountUtils::isStripeGatewayAccount)
+                .filter(GatewayAccountEntity::isStripeGatewayAccount)
                 .or(() -> {
                     throw new GatewayAccountNotFoundException(String.format("Gateway account for service ID [%s] and account type [%s] is not a Stripe account", serviceId, accountType));
                 })
