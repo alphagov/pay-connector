@@ -14,10 +14,6 @@ import java.time.Instant;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class GatewayAccountCredentials {
 
-    @JsonProperty("gateway_account_credential_id")
-    @Schema(example = "1")
-    private Long id;
-
     @Schema(example = "787460d16d4a4d14b4c94787b8f427db")
     private String externalId;
 
@@ -50,7 +46,6 @@ public class GatewayAccountCredentials {
     private Long gatewayAccountId;
 
     public GatewayAccountCredentials(GatewayAccountCredentialsEntity entity) {
-        this.id = entity.getId();
         this.externalId = entity.getExternalId();
         this.paymentProvider = entity.getPaymentProvider();
         this.state = entity.getState();
@@ -60,10 +55,6 @@ public class GatewayAccountCredentials {
         this.activeEndDate = entity.getActiveEndDate();
         this.gatewayAccountId = entity.getGatewayAccountEntity().getId();
         this.credentials = entity.getCredentialsObject();
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getExternalId() {

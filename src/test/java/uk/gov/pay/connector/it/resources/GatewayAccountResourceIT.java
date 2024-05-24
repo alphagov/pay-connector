@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import org.apache.commons.lang.math.RandomUtils;
+import org.hamcrest.Matchers;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -184,6 +185,7 @@ public class GatewayAccountResourceIT {
                     .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", hasEntry("merchant_code", "mit-merchant-code"))
                     .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", hasEntry("username", "mit-username"))
                     .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", not(hasKey("password")))
+                    .body("gateway_account_credentials[0]", not(Matchers.hasKey("gateway_account_credential_id")))
                     .body("$", hasKey("worldpay_3ds_flex"))
                     .body("worldpay_3ds_flex.issuer", is("issuer"))
                     .body("worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
@@ -264,7 +266,8 @@ public class GatewayAccountResourceIT {
                     .body("gateway_account_credentials[0].payment_provider", is("stripe"))
                     .body("gateway_account_credentials[0].state", is("ACTIVE"))
                     .body("gateway_account_credentials[0].gateway_account_id", is(Math.toIntExact(defaultTestAccount.getAccountId())))
-                    .body("gateway_account_credentials[0].credentials", hasEntry("stripe_account_id", "a-stripe-account-id"));
+                    .body("gateway_account_credentials[0].credentials", hasEntry("stripe_account_id", "a-stripe-account-id"))
+                    .body("gateway_account_credentials[0]", not(Matchers.hasKey("gateway_account_credential_id")));
         }
 
         @Test
@@ -472,7 +475,8 @@ public class GatewayAccountResourceIT {
                     .body("gateway_account_credentials[0].credentials", hasKey("recurring_merchant_initiated"))
                     .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", hasEntry("merchant_code", "mit-merchant-code"))
                     .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", hasEntry("username", "mit-username"))
-                    .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", not(hasKey("password")));
+                    .body("gateway_account_credentials[0].credentials.recurring_merchant_initiated", not(hasKey("password")))
+                    .body("gateway_account_credentials[0]", hasKey("gateway_account_credential_id"));
         }
 
         @Test
@@ -503,7 +507,8 @@ public class GatewayAccountResourceIT {
                     .body("gateway_account_credentials[0].payment_provider", is("stripe"))
                     .body("gateway_account_credentials[0].state", is("ACTIVE"))
                     .body("gateway_account_credentials[0].gateway_account_id", is(accountIdAsInt))
-                    .body("gateway_account_credentials[0].credentials", hasEntry("stripe_account_id", "a-stripe-account-id"));
+                    .body("gateway_account_credentials[0].credentials", hasEntry("stripe_account_id", "a-stripe-account-id"))
+                    .body("gateway_account_credentials[0]", hasKey("gateway_account_credential_id"));
         }
 
         @Test

@@ -184,7 +184,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
+                $ref: '#/components/schemas/GatewayAccountWithCredentialsWithInternalIdResponse'
           description: OK
         "404":
           description: Not found
@@ -676,7 +676,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountCredentials'
+                $ref: '#/components/schemas/GatewayAccountCredentialsWithInternalId'
           description: OK
         "400":
           content:
@@ -723,7 +723,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountCredentials'
+                $ref: '#/components/schemas/GatewayAccountCredentialsWithInternalId'
           description: OK
         "400":
           content:
@@ -1710,7 +1710,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
+                $ref: '#/components/schemas/GatewayAccountWithCredentialsWithInternalIdResponse'
           description: OK
         "404":
           description: Not found
@@ -3707,10 +3707,6 @@ components:
         external_id:
           type: string
           example: 787460d16d4a4d14b4c94787b8f427db
-        gateway_account_credential_id:
-          type: integer
-          format: int64
-          example: 1
         gateway_account_id:
           type: integer
           format: int64
@@ -3746,6 +3742,49 @@ components:
           type: string
           description: "Payment provider. Accepted values - stripe, worldpay"
           example: stripe
+    GatewayAccountCredentialsWithInternalId:
+      type: object
+      properties:
+        active_end_date:
+          type: string
+          format: date-time
+        active_start_date:
+          type: string
+          format: date-time
+          example: 2022-06-28T16:40:56.869Z
+        created_date:
+          type: string
+          format: date-time
+          example: 2022-06-30T15:44:19.323Z
+        credentials:
+          $ref: '#/components/schemas/GatewayCredentials'
+        external_id:
+          type: string
+          example: 787460d16d4a4d14b4c94787b8f427db
+        gateway_account_credential_id:
+          type: integer
+          format: int64
+          example: 1
+        gateway_account_id:
+          type: integer
+          format: int64
+          example: 1
+        last_updated_by_user_external_id:
+          type: string
+          description: User external ID
+          example: vdwke0d16d4a4d14b4c94787b8f427d
+        payment_provider:
+          type: string
+          example: stripe
+        state:
+          type: string
+          enum:
+          - CREATED
+          - ENTERED
+          - VERIFIED_WITH_LIVE_PAYMENT
+          - ACTIVE
+          - RETIRED
+          example: ACTIVE
     GatewayAccountRequest:
       type: object
       discriminator:
@@ -4125,6 +4164,216 @@ components:
           description: Array of the credentials configured for this account
           items:
             $ref: '#/components/schemas/GatewayAccountCredentials'
+        gateway_account_id:
+          type: integer
+          format: int64
+          description: The account ID
+          example: 1
+        integration_version_3ds:
+          type: integer
+          format: int32
+          description: 3DS version used for payments for the gateway account
+          example: 2
+        live:
+          type: boolean
+          description: Whether the account is live
+          example: true
+        moto_mask_card_number_input:
+          type: boolean
+          default: false
+          description: Indicates whether the card number is masked when being input
+            for MOTO payments. The default value is false.
+        moto_mask_card_security_code_input:
+          type: boolean
+          default: false
+          description: Indicates whether the card security code is masked when being
+            input for MOTO payments.
+        notificationCredentials:
+          $ref: '#/components/schemas/NotificationCredentials'
+        notifySettings:
+          type: object
+          additionalProperties:
+            type: string
+            description: An object containing the Notify credentials and configuration
+              for sending custom branded emails
+          description: An object containing the Notify credentials and configuration
+            for sending custom branded emails
+        payment_provider:
+          type: string
+          description: The payment provider for which this account is created
+          example: sandbox
+        provider_switch_enabled:
+          type: boolean
+          default: false
+          description: Flag to enable payment provider switching
+          example: false
+        recurring_enabled:
+          type: boolean
+          default: false
+          description: Flag to indicate whether the account is allowed to take recurring
+            card payments
+          example: true
+        requires3ds:
+          type: boolean
+          description: Flag to indicate whether 3DS is enabled
+          example: true
+        send_payer_email_to_gateway:
+          type: boolean
+          default: false
+          description: "If enabled, user email address is included in the authorisation\
+            \ request to gateway"
+          example: true
+        send_payer_ip_address_to_gateway:
+          type: boolean
+          default: false
+          description: "If enabled, user IP address is sent to to gateway"
+          example: true
+        send_reference_to_gateway:
+          type: boolean
+          default: false
+          description: "If enabled, service payment reference is sent to gateway as\
+            \ description. Otherwise payment description is sent to the gateway. Only\
+            \ applicable for Worldpay accounts. Default value is 'false'"
+          example: true
+        service_id:
+          type: string
+          description: Service external ID
+          example: cd1b871207a94a7fa157dee678146acd
+        service_name:
+          type: string
+          description: The service name for the account
+          example: service name
+        type:
+          type: string
+          description: Account type for the payment provider (test/live)
+          example: test
+        worldpay_3ds_flex:
+          $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
+    GatewayAccountWithCredentialsWithInternalIdResponse:
+      type: object
+      properties:
+        _links:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+              format: uri
+              example: "{        {            \"href\": \"https://connector.url/v1/api/accounts/1\"\
+                ,            \"rel\": \"self\",            \"method\": \"GET\"   \
+                \     }    }"
+            example: "{        {            \"href\": \"https://connector.url/v1/api/accounts/1\"\
+              ,            \"rel\": \"self\",            \"method\": \"GET\"     \
+              \   }    }"
+          example: "{        {            \"href\": \"https://connector.url/v1/api/accounts/1\"\
+            ,            \"rel\": \"self\",            \"method\": \"GET\"       \
+            \ }    }"
+        allow_apple_pay:
+          type: boolean
+          default: false
+          description: Set to true to enable Apple Pay
+          example: true
+        allow_authorisation_api:
+          type: boolean
+          default: false
+          description: Flag to indicate whether the account is allowed to initiate
+            MOTO payments that are authorised via an API request rather than the web
+            interface
+          example: true
+        allow_google_pay:
+          type: boolean
+          default: false
+          description: Set to true to enable Google Pay
+          example: true
+        allow_moto:
+          type: boolean
+          default: false
+          description: Indicates whether the Mail Order and Telephone Order (MOTO)
+            payments are allowed
+        allow_telephone_payment_notifications:
+          type: boolean
+          default: false
+          description: Indicates if the account is used for telephone payments reporting
+        allow_zero_amount:
+          type: boolean
+          default: false
+          description: Set to true to support charges with a zero amount
+          example: true
+        analytics_id:
+          type: string
+          description: An identifier used to identify the service in Google Analytics.
+            The default value is null
+        block_prepaid_cards:
+          type: boolean
+          default: false
+          description: Whether pre-paid cards are allowed as a payment method for
+            this gateway account
+          example: true
+        corporate_credit_card_surcharge_amount:
+          type: integer
+          format: int64
+          default: 0
+          description: A corporate credit card surcharge amount in pence
+          example: 250
+        corporate_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+          default: 0
+          description: A corporate debit card surcharge amount in pence
+          example: 250
+        corporate_prepaid_debit_card_surcharge_amount:
+          type: integer
+          format: int64
+          description: A corporate prepaid debit card surcharge amount in pence
+          example: 0
+        description:
+          type: string
+          default: "null"
+          description: An internal description to identify the gateway account. The
+            default value is null.
+          example: Account for service xxx
+        disabled:
+          type: boolean
+          default: false
+          description: Flag to indicate whether the account is allowed to take payments
+            and make refunds
+          example: false
+        disabled_reason:
+          type: string
+          description: "The reason the account is disabled, if applicable"
+          example: No longer required
+        email_collection_mode:
+          type: string
+          description: "Whether email address is required from paying users. Can be\
+            \ MANDATORY, OPTIONAL or OFF"
+          enum:
+          - MANDATORY
+          - OPTIONAL
+          - "OFF"
+        email_notifications:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EmailNotificationEntity'
+          description: The settings for the different emails (payments/refunds) that
+            are sent out
+          example:
+            PAYMENT_CONFIRMED:
+              enabled: true
+              template_body: null
+              version: 1
+            REFUND_ISSUED:
+              enabled: true
+              template_body: null
+              version: 1
+        external_id:
+          type: string
+          description: External ID for the gateway account
+          example: fbf905a3f7ea416c8c252410eb45ddbd
+        gateway_account_credentials:
+          type: array
+          description: Array of the credentials configured for this account
+          items:
+            $ref: '#/components/schemas/GatewayAccountCredentialsWithInternalId'
         gateway_account_id:
           type: integer
           format: int64

@@ -276,7 +276,8 @@ public class GatewayAccountCredentialsResourceIT {
                         .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
                         .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
-                        .statusCode(OK.getStatusCode());
+                        .statusCode(OK.getStatusCode())
+                        .body(not(hasKey("gateway_account_credential_id")));;
 
                 app.givenSetup()
                         .get("/v1/api/accounts/" + gatewayAccountId)
@@ -350,7 +351,8 @@ public class GatewayAccountCredentialsResourceIT {
                     .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
                     .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
                     .body("external_id", is(credentialsId))
-                    .body("payment_provider", is("stripe"));
+                    .body("payment_provider", is("stripe"))
+                    .body(not(hasKey("gateway_account_credential_id")));
 
                 app.givenSetup()
                     .get(format("/v1/api/service/%s/%s", VALID_SERVICE_ID, TEST))
