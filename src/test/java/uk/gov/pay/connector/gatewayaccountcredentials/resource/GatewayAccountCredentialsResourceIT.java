@@ -552,6 +552,87 @@ public class GatewayAccountCredentialsResourceIT {
                 assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
             }
         }
+
+        @Nested
+        class ValidateWorldpayCredentials {
+            private final Map<String, String> worldpayCredentials = Map.of(
+                    "merchant_id", "a-merchant-id",
+                    "username", "a-username",
+                    "password", "a-password");
+            
+            @Test
+            void forNonExistentGatewayAccount_shouldReturn404() {
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(404)
+                        .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", VALID_SERVICE_ID, TEST)));
+            }
+
+            @Test
+            void forValidCredentials_shouldReturn200_withResultValid() {
+                app.getWorldpayMockClient().mockCredentialsValidationValid();
+
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "worldpay",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(200)
+                        .body("result", is("valid"));
+            }
+
+            @Test
+            void forInvalidCredentials_shouldReturn200_withResultInvalid() {
+                app.getWorldpayMockClient().mockCredentialsValidationInvalid();
+
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "worldpay",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(200)
+                        .body("result", is("invalid"));
+            }
+
+            @Test
+            void forNonWorldpayAccount_shouldReturn404() {
+                app.getWorldpayMockClient().mockCredentialsValidationInvalid();
+
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(404)
+                        .body("message[0]", is(format("Gateway account for service ID [%s] and account type [%s] is not a Worldpay account.", VALID_SERVICE_ID, TEST)));
+            }
+        }
     }
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(
