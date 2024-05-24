@@ -559,6 +559,7 @@ public class GatewayAccountCredentialsResourceIT {
                     "merchant_id", "a-merchant-id",
                     "username", "a-username",
                     "password", "a-password");
+            
             @Test
             void forNonExistentGatewayAccount_shouldReturn404() {
                 app.givenSetup()
@@ -576,12 +577,11 @@ public class GatewayAccountCredentialsResourceIT {
                 app.givenSetup()
                         .body(toJson(Map.of(
                                 "payment_provider", "worldpay",
-                                "service_id", "a-valid-service-id",
-                                "service_name", "a-test-service",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
                                 "type", "test"
                         )))
-                        .post("/v1/api/accounts")
-                        .then().extract().path("gateway_account_id");
+                        .post("/v1/api/accounts");
 
                 app.givenSetup()
                         .body(toJson(worldpayCredentials))
@@ -598,12 +598,11 @@ public class GatewayAccountCredentialsResourceIT {
                 app.givenSetup()
                         .body(toJson(Map.of(
                                 "payment_provider", "worldpay",
-                                "service_id", "a-valid-service-id",
-                                "service_name", "a-test-service",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
                                 "type", "test"
                         )))
-                        .post("/v1/api/accounts")
-                        .then().extract().path("gateway_account_id");
+                        .post("/v1/api/accounts");
 
                 app.givenSetup()
                         .body(toJson(worldpayCredentials))
@@ -620,12 +619,11 @@ public class GatewayAccountCredentialsResourceIT {
                 app.givenSetup()
                         .body(toJson(Map.of(
                                 "payment_provider", "stripe",
-                                "service_id", "a-valid-service-id",
-                                "service_name", "a-test-service",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
                                 "type", "test"
                         )))
-                        .post("/v1/api/accounts")
-                        .then().extract().path("gateway_account_id");
+                        .post("/v1/api/accounts");
 
                 app.givenSetup()
                         .body(toJson(worldpayCredentials))
