@@ -301,7 +301,7 @@ public class GatewayAccountResourceUpdateIT {
         }
         
         @Test
-        void returnNonFoundForInvalidServiceIdAndAccountType() {
+        void returnNotFoundForInvalidServiceIdAndAccountType() {
             app.givenSetup()
                     .body(toJson(Map.of("op", "replace",
                             "path", "allow_telephone_payment_notifications",
@@ -312,12 +312,12 @@ public class GatewayAccountResourceUpdateIT {
         }
         
         @Test
-        void returnNonFoundForNonExistentServiceId() {
+        void returnNotFoundForNonExistentServiceId() {
             app.givenSetup()
                     .body(toJson(Map.of("op", "replace",
                             "path", "allow_telephone_payment_notifications",
                             "value", true)))
-                    .patch("/v1/api/nexiste-pas/%s/test/")
+                    .patch("/v1/api/nexiste-pas/test/")
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode());
         }
