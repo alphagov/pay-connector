@@ -19,4 +19,8 @@ public class GatewayAccountNotFoundException extends WebApplicationException {
     public GatewayAccountNotFoundException(String serviceId, GatewayAccountType accountType) {
         this(format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType));
     }
+    
+    public static GatewayAccountNotFoundException forNonWorldpayAccount(String serviceId, GatewayAccountType accountType) {
+        return new GatewayAccountNotFoundException(format("Gateway account for service ID [%s] and account type [%s] is not a Worldpay account.", serviceId, accountType));
+    }
 }

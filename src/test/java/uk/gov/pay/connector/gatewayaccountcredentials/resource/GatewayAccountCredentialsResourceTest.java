@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.gateway.worldpay.Worldpay3dsFlexCredentialsValidationService;
@@ -527,6 +528,28 @@ public class GatewayAccountCredentialsResourceTest {
 
                 assertThat(response.getStatus(), is(404));
                 assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway account not found for service ID [a-valid-service-id] and account type [test]"));
+            }
+        }
+
+
+        @Nested
+        class ValidateWorldpayCredentials {
+            @ParameterizedTest
+            @ValueSource(strings = { "username", "password", "merchant_id" })
+            void forMissingFields_shouldReturn422(String fieldName) {
+                var payload = new HashMap<String, String>();
+                payload.put("username", "valid-username");
+                payload.put("password", "valid-password");
+                payload.put("merchant_id", "valid-merchant-id");
+                payload.remove(fieldName);
+
+                Response response = resources
+                        .target(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .request()
+                        .post(Entity.json(payload));
+
+                assertThat(response.getStatus(), is(422));
+                assertThat(extractErrorMessagesFromResponse(response).get(0), is(format("Field [%s] is required", fieldName)));
             }
         }
     }
