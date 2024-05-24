@@ -63,6 +63,8 @@ public class RefundReversalService {
                         format("Refund with Refund ID: %s and Stripe ID: %s is not in a failed state", refundExternalId, stripeRefundId)));
             }
         } catch (StripeException e) {
+            // Update this message to reflect it can cover more things going wrong
+            // Probably want to do e.getMessage() and incorporate that into WebApplicationException’s message
             throw new WebApplicationException(format("Unexpected error trying to get refund with ID:%s from Stripe", refundExternalId));
         }
     }

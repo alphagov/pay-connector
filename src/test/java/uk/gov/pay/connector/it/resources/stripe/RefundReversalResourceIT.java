@@ -8,6 +8,7 @@ import com.stripe.model.Refund;
 import io.dropwizard.setup.Environment;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 
@@ -96,6 +98,14 @@ public class RefundReversalResourceIT {
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withGatewayTransactionId(STRIPE_REFUND_ID)
                 .build();
+
+        when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
+
+    }
+    
+    @AfterEach
+    void tearDown() {
+        reset(mockStripeSdkClient);
     }
 
     @Test
@@ -116,8 +126,7 @@ public class RefundReversalResourceIT {
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
-        
-        
+
         ValidatableResponse response = given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -135,8 +144,8 @@ public class RefundReversalResourceIT {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
         app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
 
+        // Looks like this might throw an exception rather than returning null
         when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(null);
-        app.getStripeMockClient().mockRefund();
 
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
@@ -182,7 +191,6 @@ public class RefundReversalResourceIT {
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
-        //when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
 
 
         doThrow(new ApiException("An error occurred", "500", null, null, null))
