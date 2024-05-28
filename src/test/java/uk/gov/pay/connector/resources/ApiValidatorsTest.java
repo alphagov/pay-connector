@@ -2,7 +2,6 @@ package uk.gov.pay.connector.resources;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.lang.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 
@@ -15,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.RandomStringUtils.randomAlphanumeric;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.AMOUNT_KEY;
@@ -86,7 +85,7 @@ class ApiValidatorsTest {
     @Test
     void validateChargeParams_shouldRejectEmail_when255Characters() {
         Map<String, String> inputData = new HashMap<>();
-        inputData.put(EMAIL_KEY, RandomStringUtils.randomAlphanumeric(255));
+        inputData.put(EMAIL_KEY, randomAlphanumeric(255));
 
         Optional<List<String>> result = validateChargeParams(inputData);
 
@@ -206,7 +205,7 @@ class ApiValidatorsTest {
     @Test
     void validateChargeParams_shouldRejectEmailAndAmount_whenBothInvalid() {
         Map<String, String> inputData = new HashMap<>();
-        inputData.put(EMAIL_KEY, RandomStringUtils.randomAlphanumeric(255));
+        inputData.put(EMAIL_KEY, randomAlphanumeric(255));
         inputData.put(AMOUNT_KEY, String.valueOf(MAX_AMOUNT + 1));
 
         Optional<List<String>> result = validateChargeParams(inputData);
