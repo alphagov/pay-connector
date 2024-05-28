@@ -151,7 +151,7 @@ public class GatewayAccountResourceUpdateIT {
                     .then().log().body()
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is("GENERIC"))
-                    .body("message", contains("[insert] is not valid for path [notify_settings]"));
+                    .body("message", contains("Operation [insert] is not valid for path [notify_settings]"));
         }
 
         @Test
