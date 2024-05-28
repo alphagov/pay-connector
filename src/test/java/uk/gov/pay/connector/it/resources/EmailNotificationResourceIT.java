@@ -56,7 +56,7 @@ public class EmailNotificationResourceIT {
         }
 
         @Test
-        void patchEnableNotification_shouldUpdateSuccessfullyRefundNotifications() {
+        void updateRefundIssuedEmailToBeEnabledSuccessfully() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .insert();
@@ -74,7 +74,7 @@ public class EmailNotificationResourceIT {
         }
 
         @Test
-        void patchEnableNotification_shouldUpdateSuccessfullyConfirmationNotifications() {
+        void updatePaymentConfirmedEmailToBeDisabledSuccessfully() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .insert();
@@ -92,7 +92,7 @@ public class EmailNotificationResourceIT {
         }
 
         @Test
-        void patchTemplateBodyNotification_shouldUpdateSuccessfullyRefundNotifications() {
+        void updateRefundIssuedTemplateBodySuccessfully() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .insert();
@@ -111,7 +111,7 @@ public class EmailNotificationResourceIT {
         }
 
         @Test
-        void patchTemplateBodyNotification_shouldUpdateSuccessfullyConfirmationNotifications() {
+        void updatePaymentConfirmedTemplateBodySuccessfully() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .insert();
@@ -131,7 +131,7 @@ public class EmailNotificationResourceIT {
         }
 
         @Test
-        void patchTemplateBodyNotification_shouldUpdateSuccessfullyNotificationIfMissing() {
+        void updatePaymentConfirmedTemplateBodySuccessfully_ifAccountHasNoExistingEmailNotificationsSettings() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .withEmailNotifications(new HashMap<>())
@@ -151,7 +151,7 @@ public class EmailNotificationResourceIT {
         }
 
         @Test
-        void patchEnabledNotification_shouldUpdateSuccessfullyNotificationIfMissing() {
+        void updateRefundIssuedTemplateBodySuccessfully_ifAccountHasNoExistingEmailNotificationsSettings() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
                     .aTestAccount()
                     .withEmailNotifications(new HashMap<>())
