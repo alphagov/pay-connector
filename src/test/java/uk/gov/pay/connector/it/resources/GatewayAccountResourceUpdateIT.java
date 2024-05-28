@@ -15,6 +15,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -147,20 +148,26 @@ public class GatewayAccountResourceUpdateIT {
             app.givenSetup()
                     .body(toJson(payload))
                     .patch(format("/v1/api/service/%s/test/", serviceId))
-                    .then()
-                    .statusCode(BAD_REQUEST.getStatusCode());
+                    .then().log().body()
+                    .statusCode(BAD_REQUEST.getStatusCode())
+                    .body("error_identifier", is("GENERIC"))
+                    .body("message", contains("[insert] is not valid for path [notify_settings]"));
         }
 
         @Test
-        void returnBadRequestWhenNotifySettingsIsRemovedWithWrongPath() {
+        void returnBadRequestWhenUpdatingWrongPath() {
             Map<String, Object> payload = Map.of("op", "insert",
-                    "path", "notify_setting");
+                    "path", "wrong_path",
+                    "value", Map.of("api_token", "anapitoken",
+                            "template_id", "atemplateid"));
 
             app.givenSetup()
                     .body(toJson(payload))
                     .patch(format("/v1/api/service/%s/test/", serviceId))
                     .then()
-                    .statusCode(BAD_REQUEST.getStatusCode());
+                    .statusCode(BAD_REQUEST.getStatusCode())
+                    .body("error_identifier", is("GENERIC"))
+                    .body("message", contains("Operation [op] not supported for path [wrong_path]"));
         }
 
         @Test
@@ -223,7 +230,9 @@ public class GatewayAccountResourceUpdateIT {
                     .body(toJson(payload))
                     .patch(format("/v1/api/service/%s/test/", serviceId))
                     .then()
-                    .statusCode(BAD_REQUEST.getStatusCode());
+                    .statusCode(BAD_REQUEST.getStatusCode())
+                    .body("error_identifier", is("GENERIC"))
+                    .body("message", contains("Value [nope] is not valid for [email_collection_mode]"));
         }
         
         @Test
@@ -301,7 +310,7 @@ public class GatewayAccountResourceUpdateIT {
         }
         
         @Test
-        void returnNotFoundForInvalidServiceIdAndAccountType() {
+        void returnNotFoundForNonExistentAccountType() {
             app.givenSetup()
                     .body(toJson(Map.of("op", "replace",
                             "path", "allow_telephone_payment_notifications",
