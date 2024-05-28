@@ -11,7 +11,7 @@ import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;

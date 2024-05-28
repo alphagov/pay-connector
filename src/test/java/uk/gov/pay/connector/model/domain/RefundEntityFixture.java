@@ -6,7 +6,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 
 public class RefundEntityFixture {
 

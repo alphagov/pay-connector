@@ -12,7 +12,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang.math.RandomUtils.nextInt;
+import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;

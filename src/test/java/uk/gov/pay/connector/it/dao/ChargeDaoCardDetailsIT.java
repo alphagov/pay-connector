@@ -25,7 +25,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;

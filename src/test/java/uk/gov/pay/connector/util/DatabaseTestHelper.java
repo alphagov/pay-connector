@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.util;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.postgresql.util.PGobject;

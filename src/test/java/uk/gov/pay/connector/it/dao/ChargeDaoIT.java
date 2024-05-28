@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import java.util.Optional;
 import static java.time.Duration.ofMinutes;
 import static java.time.ZonedDateTime.now;
 import static junit.framework.TestCase.assertTrue;
-import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;

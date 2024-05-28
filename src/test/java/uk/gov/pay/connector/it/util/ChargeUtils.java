@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.util;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 

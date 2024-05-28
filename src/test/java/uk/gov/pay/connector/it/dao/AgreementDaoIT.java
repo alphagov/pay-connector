@@ -12,7 +12,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
 import java.util.Optional;
 
-import static org.apache.commons.lang.math.RandomUtils.nextLong;
+import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;

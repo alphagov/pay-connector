@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it;
 
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.core.setup.Environment;
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
