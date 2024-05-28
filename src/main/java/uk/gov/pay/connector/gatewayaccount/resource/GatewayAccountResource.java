@@ -327,6 +327,8 @@ public class GatewayAccountResource {
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             JsonNode payload) {
+
+        validator.validatePatchRequest(payload);
         
         return gatewayAccountServicesFactory.getUpdateService()
                 .doPatch(serviceId, accountType, JsonPatchRequest.from(payload))

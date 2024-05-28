@@ -15,6 +15,7 @@ import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -136,6 +137,38 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode())
                     .body("notifySettings", nullValue());
         }
+        
+        @Test
+        void returnBadRequestWhenNotifySettingsIsUpdatedWithWrongOp() {
+            Map<String, Object> payload = Map.of("op", "insert",
+                    "path", "notify_settings",
+                    "value", Map.of("api_token", "anapitoken",
+                            "template_id", "atemplateid"));
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then().log().body()
+                    .statusCode(BAD_REQUEST.getStatusCode())
+                    .body("error_identifier", is("GENERIC"))
+                    .body("message", contains("Operation [insert] is not valid for path [notify_settings]"));
+        }
+
+        @Test
+        void returnBadRequestWhenUpdatingWrongPath() {
+            Map<String, Object> payload = Map.of("op", "insert",
+                    "path", "wrong_path",
+                    "value", Map.of("api_token", "anapitoken",
+                            "template_id", "atemplateid"));
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(BAD_REQUEST.getStatusCode())
+                    .body("error_identifier", is("GENERIC"))
+                    .body("message", contains("Operation [op] not supported for path [wrong_path]"));
+        }
 
         @Test
         void updateBlockPrepaidCardsSuccessfully() {
@@ -187,6 +220,21 @@ public class GatewayAccountResourceUpdateIT {
                     .body("email_collection_mode", is("OFF"));
         }
 
+        @Test
+        void returnBadRequestWhenEmailCollectionModeIsUpdatedWithWrongValue() {
+            Map<String, Object> payload = Map.of("op", "replace",
+                    "path", "email_collection_mode",
+                    "value", "nope");
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(BAD_REQUEST.getStatusCode())
+                    .body("error_identifier", is("GENERIC"))
+                    .body("message", contains("Value [nope] is not valid for [email_collection_mode]"));
+        }
+        
         @Test
         void updateCorporateCardAmountsSuccessfully() {
             app.givenSetup()
@@ -259,6 +307,81 @@ public class GatewayAccountResourceUpdateIT {
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("allow_telephone_payment_notifications", is(true));
+        }
+        
+        @Test
+        void returnNotFoundForNonExistentAccountType() {
+            app.givenSetup()
+                    .body(toJson(Map.of("op", "replace",
+                            "path", "allow_telephone_payment_notifications",
+                            "value", true)))
+                    .patch(format("/v1/api/service/%s/live/", serviceId))
+                    .then()
+                    .statusCode(NOT_FOUND.getStatusCode());
+        }
+        
+        @Test
+        void returnNotFoundForNonExistentServiceId() {
+            app.givenSetup()
+                    .body(toJson(Map.of("op", "replace",
+                            "path", "allow_telephone_payment_notifications",
+                            "value", true)))
+                    .patch("/v1/api/nexiste-pas/test/")
+                    .then()
+                    .statusCode(NOT_FOUND.getStatusCode());
+        }
+
+        @Test
+        void updatingDisabledToFalseShouldClearDisabledReason() {
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("disabled", is(false));
+
+            Map<String, Object> payload = Map.of("op", "replace",
+                    "path", "disabled",
+                    "value", true);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            payload = Map.of("op", "replace",
+                    "path", "disabled_reason",
+                    "value", "Disabled because Dolores Umbridge is evil");
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("disabled", is(true))
+                    .body("disabled_reason", is("Disabled because Dolores Umbridge is evil"));
+
+            payload = Map.of("op", "replace",
+                    "path", "disabled",
+                    "value", false);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("disabled", is(false))
+                    .body("disabled_reason", is(nullValue()));
         }
     }
 
