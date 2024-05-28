@@ -15,6 +15,7 @@ import java.util.Map;
 import static io.restassured.http.ContentType.JSON;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
@@ -23,7 +24,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class EmailNotificationResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-
+    
     @Nested
     class PatchByGatewayAccountId {
         @Test
@@ -36,8 +37,8 @@ public class EmailNotificationResourceIT {
                     .body(new HashMap<>())
                     .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                     .then()
-                    .statusCode(400)
-                    .body("message", contains("Bad patch parameters{}"))
+                    .statusCode(422)
+                    .body("message", containsInAnyOrder("The op field must be 'replace'", "The paths field must be one of: [/refund_issued/template_body, /refund_issued/enabled, /payment_confirmed/template_body, /payment_confirmed/enabled]"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
 
@@ -49,7 +50,7 @@ public class EmailNotificationResourceIT {
             app.givenSetup().accept(JSON)
                     .body(getPatchRequestBody("/payment_confirmed/" + EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
                     .patch(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
-                    .then()
+                    .then().log().body()
                     .statusCode(404)
                     .body("message", contains("The gateway account id '111111111' does not exist"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));

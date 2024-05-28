@@ -11,28 +11,25 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.usernotification.model.EmailNotificationPatchRequest;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.common.service.PatchRequestBuilder.aPatchRequestBuilder;
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
@@ -80,21 +77,12 @@ public class EmailNotificationResource {
             }
     )
     public Response enableEmailNotification(@Parameter(example = "1", description = "Gateway account ID")
-                                            @PathParam("accountId") Long gatewayAccountId, Map<String, String> emailPatchMap) {
-        PatchRequestBuilder.PatchRequest emailPatchRequest;
-        try {
-            emailPatchRequest = aPatchRequestBuilder(emailPatchMap)
-                    .withValidOps(Collections.singletonList("replace"))
-                    .withValidPaths(VALID_PATHS)
-                    .build();
-        } catch (IllegalArgumentException e) {
-            logger.error(e.getMessage(), e);
-            return badRequestResponse("Bad patch parameters" + emailPatchMap.toString());
-        }
+                                            @PathParam("accountId") Long gatewayAccountId,
+                                            @Valid EmailNotificationPatchRequest request) {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount -> {
-                    NotificationPatchInfo patchInfo = getNotificationInfoFromPath(emailPatchRequest);
+                    NotificationPatchInfo patchInfo = getNotificationInfoFromPath(request);
                     EmailNotificationType type = patchInfo.getEmailNotificationType();
                     EmailNotificationEntity notificationEntity = Optional.ofNullable(gatewayAccount.getEmailNotifications().get(type))
                             .orElseGet(() -> {
@@ -107,7 +95,7 @@ public class EmailNotificationResource {
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
-    private NotificationPatchInfo getNotificationInfoFromPath(PatchRequestBuilder.PatchRequest emailPatchRequest) {
+    private NotificationPatchInfo getNotificationInfoFromPath(@Valid EmailNotificationPatchRequest emailPatchRequest) {
         List<String> pathTokens = emailPatchRequest.getPathTokens();
         return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.get(0)), pathTokens.get(1), emailPatchRequest.getValue());
     }
