@@ -29,15 +29,20 @@ public class NorthAmericanRegionMapper {
 
         switch (address.getCountry()) {
             case "US":
-                return usZipCodeToStateMapper.getState(getNormalisedPostalCode(address));
+                return getNormalisedPostalCode(address).flatMap(usZipCodeToStateMapper::getState);
             case "CA":
-                return canadaPostalcodeToProvinceOrTerritoryMapper.getProvinceOrTerritory(getNormalisedPostalCode(address));
+                return getNormalisedPostalCode(address).flatMap(canadaPostalcodeToProvinceOrTerritoryMapper::getProvinceOrTerritory);
             default:
                 return Optional.empty();
         }
     }
 
-    private String getNormalisedPostalCode(Address address) {
-        return address.getPostcode().replaceAll("\\s", "").toUpperCase(Locale.ENGLISH);
+    private Optional<String> getNormalisedPostalCode(Address address) {
+        if (address.getPostcode() == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(address.getPostcode().replaceAll("\\s", "").toUpperCase(Locale.ENGLISH));
     }
+
 }
