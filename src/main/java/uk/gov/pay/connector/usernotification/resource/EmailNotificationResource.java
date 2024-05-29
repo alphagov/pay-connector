@@ -96,7 +96,7 @@ public class EmailNotificationResource {
     }
 
     private NotificationPatchInfo getNotificationInfoFromPath(EmailNotificationPatchRequest emailPatchRequest) {
-        List<String> pathTokens = emailPatchRequest.getPathTokens();
+        List<String> pathTokens = emailPatchRequest.pathTokens();
         return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.get(0)), pathTokens.get(1), emailPatchRequest.getValue());
     }
 

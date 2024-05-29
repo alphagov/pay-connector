@@ -2,7 +2,6 @@ package uk.gov.pay.connector.usernotification.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.usernotification.model.validation.AllowedStrings;
 
 import javax.validation.Valid;
@@ -39,7 +38,7 @@ public class EmailNotificationPatchRequest {
         return value;
     }
     
-    public List<String> getPathTokens() {
+    public List<String> pathTokens() {
         return Arrays.stream(path.split("/")).skip(1).collect(Collectors.toList());
     }
 }
