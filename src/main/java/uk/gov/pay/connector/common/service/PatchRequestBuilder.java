@@ -1,11 +1,9 @@
 package uk.gov.pay.connector.common.service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class PatchRequestBuilder {
     private final Map<String, String> patchRequestMap;
@@ -106,10 +104,6 @@ public class PatchRequestBuilder {
             return Optional.of(validPaths)
                     .map(validOps -> validOps.contains(path))
                     .orElse(true);
-        }
-        
-        public List<String> getPathTokens() {
-            return Arrays.stream(path.split("/")).skip(1).collect(Collectors.toList());
         }
     }
 }

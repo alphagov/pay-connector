@@ -3364,6 +3364,15 @@ components:
         version:
           type: integer
           format: int64
+    EmailNotificationPatchRequest:
+      type: object
+      properties:
+        op:
+          type: string
+        path:
+          type: string
+        value:
+          type: string
     EpdqCredentials:
       type: object
       properties:
