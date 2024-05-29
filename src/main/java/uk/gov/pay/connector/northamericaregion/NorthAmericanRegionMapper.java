@@ -7,7 +7,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 public class NorthAmericanRegionMapper {
-    
+
     private final UsZipCodeToStateMapper usZipCodeToStateMapper;
     private final CanadaPostalcodeToProvinceOrTerritoryMapper canadaPostalcodeToProvinceOrTerritoryMapper;
 
@@ -21,8 +21,12 @@ public class NorthAmericanRegionMapper {
         this.usZipCodeToStateMapper = usZipCodeToStateMapper;
         this.canadaPostalcodeToProvinceOrTerritoryMapper = canadaPostalcodeToProvinceOrTerritoryMapper;
     }
-    
+
     public Optional<? extends NorthAmericaRegion> getNorthAmericanRegionForCountry(Address address) {
+        if (address.getCountry() == null) {
+            return Optional.empty();
+        }
+
         switch (address.getCountry()) {
             case "US":
                 return usZipCodeToStateMapper.getState(getNormalisedPostalCode(address));

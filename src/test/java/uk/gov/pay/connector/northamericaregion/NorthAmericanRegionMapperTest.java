@@ -24,7 +24,18 @@ public class NorthAmericanRegionMapperTest {
         address.setLine1("Line 1");
         address.setLine2("Line 2");
     }
-    
+
+    @Test
+    public void shouldNotReturnRegionForNullCountry() {
+        address.setCountry(null);
+        address.setCity("Nowhere");
+        address.setPostcode("20500");
+
+        Optional<? extends NorthAmericaRegion> northAmericaRegion = mapper.getNorthAmericanRegionForCountry(address);
+
+        assertThat(northAmericaRegion.isEmpty(), is (true));
+    }
+
     @Test
     public void shouldNotReturnRegionForCountryOutsideNorthAmerica() {
         address.setCountry("GB");
@@ -59,4 +70,5 @@ public class NorthAmericanRegionMapperTest {
         assertThat(northAmericaRegion.isPresent(), is (true));
         assertThat(northAmericaRegion.get(), is (CanadaProvinceOrTerritory.NUNAVUT));
     }
+
 }
