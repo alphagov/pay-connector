@@ -50,7 +50,7 @@ public class EmailNotificationResourceIT {
             app.givenSetup().accept(JSON)
                     .body(getPatchRequestBody("/payment_confirmed/" + EmailNotificationResource.EMAIL_NOTIFICATION_TEMPLATE_BODY, templateBody))
                     .patch(ACCOUNTS_API_URL + nonExistingAccountId + "/email-notification")
-                    .then().log().body()
+                    .then()
                     .statusCode(404)
                     .body("message", contains("The gateway account id '111111111' does not exist"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));

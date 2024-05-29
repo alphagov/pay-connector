@@ -95,7 +95,7 @@ public class EmailNotificationResource {
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
-    private NotificationPatchInfo getNotificationInfoFromPath(@Valid EmailNotificationPatchRequest emailPatchRequest) {
+    private NotificationPatchInfo getNotificationInfoFromPath(EmailNotificationPatchRequest emailPatchRequest) {
         List<String> pathTokens = emailPatchRequest.getPathTokens();
         return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.get(0)), pathTokens.get(1), emailPatchRequest.getValue());
     }
