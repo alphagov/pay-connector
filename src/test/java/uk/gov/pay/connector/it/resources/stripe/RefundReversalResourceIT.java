@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.stripe.Stripe;
 import com.stripe.exception.ApiException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
@@ -27,23 +26,15 @@ import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static java.lang.String.format;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -144,8 +135,7 @@ public class RefundReversalResourceIT {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
         app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
 
-        // Looks like this might throw an exception rather than returning null
-        when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(null);
+        when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenThrow(WebApplicationException.class);
 
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
@@ -174,12 +164,7 @@ public class RefundReversalResourceIT {
                 "transferGroup", "abc",
                 "expand", List.of("balance_transaction", "destination_payment")
         );
-        //{expand=[Ljava.lang.String;@634dbbb4, 
-// destination=acct_jdsa7789d, 
-// transferGroup=abc, 
-// metadata={stripeChargeId=ch_sdkhdg887s, 
-// correctionPaymentId=09401a336b934754e28c91a77c}, 
-// currency=GBP, amount=100}
+
         when(mockStripeRefund.getStatus()).thenReturn("failed");
 
         when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
@@ -193,11 +178,9 @@ public class RefundReversalResourceIT {
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
 
 
-        doThrow(new ApiException("An error occurred", "500", null, null, null))
+        doThrow(new ApiException(" an error occurred", "500", null, null, null))
                 .when(mockStripeSdkClient).createTransfer(transferRequest, false);
-     
-//        app.getStripeMockClient().mockRefund();
-
+        
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -206,12 +189,8 @@ public class RefundReversalResourceIT {
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()
-//              .body("message", contains((" There was an error processing your request. It has been logged  ID [%s]")))
-//                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()))
-             .body(hasItems("There was an error processing your request"))
+                .body("message", is("There was an error trying to get refund with ID:refund-external-id an error occurred; request-id: 500 from Stripe"))
                 .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-
-        
     }
 
 
