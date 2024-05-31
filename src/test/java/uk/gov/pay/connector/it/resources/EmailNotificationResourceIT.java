@@ -38,7 +38,7 @@ public class EmailNotificationResourceIT {
                     .patch(ACCOUNTS_API_URL + testAccount.getAccountId() + "/email-notification")
                     .then()
                     .statusCode(422)
-                    .body("message", containsInAnyOrder("The op field must be 'replace'", "The paths field must be one of: [/refund_issued/template_body, /refund_issued/enabled, /payment_confirmed/template_body, /payment_confirmed/enabled]"))
+                    .body("message", containsInAnyOrder("The 'op' field must be 'replace'", "The 'paths' field must be one of: [/refund_issued/template_body, /refund_issued/enabled, /payment_confirmed/template_body, /payment_confirmed/enabled]"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
 

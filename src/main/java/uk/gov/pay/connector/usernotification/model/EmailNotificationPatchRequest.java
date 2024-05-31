@@ -2,7 +2,7 @@ package uk.gov.pay.connector.usernotification.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import uk.gov.pay.connector.usernotification.model.validation.AllowedStrings;
+import uk.gov.pay.connector.util.validation.AllowedStrings;
 
 import javax.validation.Valid;
 import java.util.Arrays;
@@ -14,13 +14,13 @@ import java.util.stream.Collectors;
 public class EmailNotificationPatchRequest {
     
     @Valid
-    @AllowedStrings(allowed = {"replace"},  message = "The op field must be 'replace'")
+    @AllowedStrings(allowed = {"replace"},  fieldName = "op")
     private String op;
     
     @Valid
     @AllowedStrings(
             allowed = {"/refund_issued/template_body", "/refund_issued/enabled", "/payment_confirmed/template_body", "/payment_confirmed/enabled"},
-            message = "The paths field must be one of: [/refund_issued/template_body, /refund_issued/enabled, /payment_confirmed/template_body, /payment_confirmed/enabled]"
+            fieldName = "paths"
     )
     private String path;
     
