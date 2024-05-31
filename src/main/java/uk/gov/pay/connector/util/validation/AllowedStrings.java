@@ -1,8 +1,7 @@
-package uk.gov.pay.connector.usernotification.model.validation;
+package uk.gov.pay.connector.util.validation;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import uk.gov.pay.connector.usernotification.model.validation.AllowedStrings.List;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

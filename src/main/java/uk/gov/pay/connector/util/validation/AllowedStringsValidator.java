@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.usernotification.model.validation;
+package uk.gov.pay.connector.util.validation;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
