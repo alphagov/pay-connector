@@ -127,4 +127,47 @@ public class StripeAccountSetupResource {
                 }).orElseThrow(NotFoundException::new);
     }
 
+    @PATCH
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/stripe-setup")
+    @Consumes(APPLICATION_JSON)
+    @Operation(
+            summary = "Update Stripe Connect account setup tasks have been completed for a given service ID and account type",
+            description = "Support patching following paths: <br>" +
+                    "bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details",
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "[" +
+                    "    {" +
+                    "        \"op\": \"replace\"," +
+                    "        \"path\": \"bank_account\"," +
+                    "        \"value\": true" +
+                    "    }," +
+                    "    {" +
+                    "        \"op\": \"replace\"," +
+                    "        \"path\": \"responsible_person\"," +
+                    "        \"value\": false" +
+                    "    }" +
+                    "]"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - operation not allowed"),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response patchStripeAccountSetupByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            JsonNode payload) {
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccountEntity -> {
+                    stripeAccountSetupRequestValidator.validatePatchRequest(payload);
+                    List<StripeAccountSetupUpdateRequest> updateRequests = StreamSupport
+                            .stream(payload.spliterator(), false)
+                            .map(JsonPatchRequest::from)
+                            .map(StripeAccountSetupUpdateRequest::from)
+                            .collect(Collectors.toList());
+
+                    stripeAccountSetupService.update(gatewayAccountEntity, updateRequests);
+                    return Response.ok().build();
+                }).orElseThrow(NotFoundException::new);
+    }
+
 }
