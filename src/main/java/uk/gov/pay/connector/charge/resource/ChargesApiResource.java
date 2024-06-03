@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.charge.resource;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,6 +22,7 @@ import uk.gov.pay.connector.charge.validation.ReturnUrlValidator;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -62,7 +62,7 @@ public class ChargesApiResource {
     public static final String DELAYED_CAPTURE_KEY = "delayed_capture";
     private static final String DESCRIPTION_KEY = "description";
     private static final String REFERENCE_KEY = "reference";
-    public static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = ImmutableMap.of(
+    public static final Map<String, Integer> MAXIMUM_FIELDS_SIZE = Map.of(
             DESCRIPTION_KEY, 255,
             REFERENCE_KEY, 255,
             EMAIL_KEY, 254
@@ -229,6 +229,36 @@ public class ChargesApiResource {
                             .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true)
                             .map((reference) -> noContentResponse())
                             .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email")))
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+    }
+
+    @POST
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/resend-confirmation-email")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Resend confirmation email for a charge",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "402", description = "Could not send email"),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            }
+    )
+    public Response resendConfirmationEmail(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") // pragma: allowlist secret
+            @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") 
+            @PathParam("accountType") GatewayAccountType accountType,
+            @Parameter(example = "spmh0fb7rbi1lebv1j3f7hc3m9", description = "Charge external ID")
+            @PathParam("chargeId") String chargeId) {
+
+        GatewayAccountEntity account = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+
+        return chargeService.findCharge(chargeId, account.getId())
+                .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true)
+                        .map(reference -> noContentResponse())
+                        .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email")))
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
