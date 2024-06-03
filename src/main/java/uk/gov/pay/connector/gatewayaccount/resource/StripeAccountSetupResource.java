@@ -150,7 +150,7 @@ public class StripeAccountSetupResource {
                     "]"))),
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "400", description = "Bad request - operation not allowed"),
+                    @ApiResponse(responseCode = "422", description = "Bad request - operation not allowed"),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
