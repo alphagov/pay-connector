@@ -14,10 +14,12 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
+import uk.gov.pay.connector.gatewayaccount.model.StripeSetupPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountSetupService;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
+import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
@@ -155,14 +157,11 @@ public class StripeAccountSetupResource {
     public Response patchStripeAccountSetupByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            JsonNode payload) {
+            @Valid List<StripeSetupPatchRequest> request) {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccountEntity -> {
-                    stripeAccountSetupRequestValidator.validatePatchRequest(payload);
-                    List<StripeAccountSetupUpdateRequest> updateRequests = StreamSupport
-                            .stream(payload.spliterator(), false)
-                            .map(JsonPatchRequest::from)
-                            .map(StripeAccountSetupUpdateRequest::from)
+                    List<StripeAccountSetupUpdateRequest> updateRequests = request.stream()
+                            .map(StripeAccountSetupUpdateRequest::fromStripeSetupPatch)
                             .collect(Collectors.toList());
 
                     stripeAccountSetupService.update(gatewayAccountEntity, updateRequests);

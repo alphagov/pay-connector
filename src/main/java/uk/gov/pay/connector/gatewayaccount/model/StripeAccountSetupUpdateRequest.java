@@ -16,6 +16,11 @@ public class StripeAccountSetupUpdateRequest {
         return new StripeAccountSetupUpdateRequest(task, jsonPatchRequest.valueAsBoolean());
     }
     
+    public static StripeAccountSetupUpdateRequest fromStripeSetupPatch(StripeSetupPatchRequest patchRequest) {
+        StripeAccountSetupTask task = StripeAccountSetupTask.valueOf(patchRequest.getPath().toUpperCase());
+        return new StripeAccountSetupUpdateRequest(task, Boolean.parseBoolean(patchRequest.getValue()));
+    }
+    
     public StripeAccountSetupTask getTask() {
         return task;
     }

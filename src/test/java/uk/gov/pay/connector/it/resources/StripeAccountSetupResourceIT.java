@@ -414,7 +414,7 @@ public class StripeAccountSetupResourceIT {
             }
 
             @Test
-            void forInvalidOperation_shouldReturn400_withValidationError() {
+            void forInvalidOperation_shouldReturn422_withValidationError() {
                 app.givenSetup()
                         .body(toJson(Map.of(
                                 "service_id", VALID_SERVICE_ID,
@@ -431,8 +431,8 @@ public class StripeAccountSetupResourceIT {
                                 "value", true))))
                         .patch(format("/v1/api/service/%s/account/%s/stripe-setup", VALID_SERVICE_ID, TEST))
                         .then()
-                        .statusCode(400)
-                        .body("message", contains("Operation [remove] not supported for path [bank_account]"))
+                        .statusCode(422)
+                        .body("message", contains("The op field must be 'replace'"))
                         .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
             }
 
@@ -440,7 +440,7 @@ public class StripeAccountSetupResourceIT {
             void forGatewayAccountDoesNotExist_shouldReturn404() {
                 app.givenSetup()
                         .body(toJson(Collections.singletonList(ImmutableMap.of(
-                                "op", "not_replace",
+                                "op", "replace",
                                 "path", "bank_account",
                                 "value", true))))
                         .patch(format("/v1/api/service/%s/account/%s/stripe-setup", "not-a-service-id", TEST))
