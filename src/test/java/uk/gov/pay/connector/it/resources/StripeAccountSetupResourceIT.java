@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -90,7 +89,7 @@ public class StripeAccountSetupResourceIT {
             void withSingleUpdate_shouldUpdateSetup() {
                 long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "replace",
                                 "path", "bank_account",
                                 "value", true))))
@@ -115,31 +114,31 @@ public class StripeAccountSetupResourceIT {
                 long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
                 app.givenSetup()
                         .body(toJson(Arrays.asList(
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "bank_account",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "responsible_person",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "vat_number",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "company_number",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "director",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "government_entity_document",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "organisation_details",
                                         "value", true)
@@ -162,25 +161,25 @@ public class StripeAccountSetupResourceIT {
             }
 
             @Test
-            void forInvalidOperation_shouldReturn400_withValidationError() {
+            void forInvalidOperation_shouldReturn422_withValidationError() {
                 long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("stripe"));
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "remove",
                                 "path", "bank_account",
                                 "value", true))))
                         .patch("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
                         .then()
-                        .statusCode(400)
-                        .body("message", contains("Operation [remove] not supported for path [bank_account]"))
+                        .statusCode(422)
+                        .body("message", contains("The op field must be 'replace'"))
                         .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
             }
 
             @Test
             void forGatewayAccountDoesNotExist_shouldReturn404() {
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
-                                "op", "not_replace",
+                        .body(toJson(Collections.singletonList(Map.of(
+                                "op", "replace",
                                 "path", "bank_account",
                                 "value", true))))
                         .patch("/v1/api/accounts/" + 123 + "/stripe-setup")
@@ -192,7 +191,7 @@ public class StripeAccountSetupResourceIT {
             void forGatewayAccountNotStripe_shouldReturn200() {
                 long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountFor("worldpay"));
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "replace",
                                 "path", "bank_account",
                                 "value", true))))
@@ -217,7 +216,7 @@ public class StripeAccountSetupResourceIT {
                         .body("director", is(true));
 
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "replace",
                                 "path", "director",
                                 "value", false))))
@@ -260,15 +259,15 @@ public class StripeAccountSetupResourceIT {
                 long gatewayAccountId = Long.parseLong(testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe"));
                 app.givenSetup()
                         .body(toJson(Arrays.asList(
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "bank_account",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "vat_number",
                                         "value", true),
-                                ImmutableMap.of(
+                                Map.of(
                                         "op", "replace",
                                         "path", "director",
                                         "value", true)
@@ -333,7 +332,7 @@ public class StripeAccountSetupResourceIT {
                         .then().statusCode(201);
                 
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "replace",
                                 "path", "bank_account",
                                 "value", true))))
@@ -419,13 +418,13 @@ public class StripeAccountSetupResourceIT {
                         .body(toJson(Map.of(
                                 "service_id", VALID_SERVICE_ID,
                                 "type", TEST,
-                                "payment_provider", "stripe",
+                                "payment_provider", "worldpay",
                                 "service_name", VALID_SERVICE_NAME
                         )))
                         .post("/v1/api/accounts");
                 
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "remove",
                                 "path", "bank_account",
                                 "value", true))))
@@ -439,7 +438,7 @@ public class StripeAccountSetupResourceIT {
             @Test
             void forGatewayAccountDoesNotExist_shouldReturn404() {
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "replace",
                                 "path", "bank_account",
                                 "value", true))))
@@ -461,7 +460,7 @@ public class StripeAccountSetupResourceIT {
                         .then().statusCode(201);
                 
                 app.givenSetup()
-                        .body(toJson(Collections.singletonList(ImmutableMap.of(
+                        .body(toJson(Collections.singletonList(Map.of(
                                 "op", "replace",
                                 "path", "bank_account",
                                 "value", true))))
@@ -473,12 +472,12 @@ public class StripeAccountSetupResourceIT {
             @Test
             void forPatchDirectorWithFalse_shouldUpdateSetup() {
                 long gatewayAccountId = Long.parseLong(app.givenSetup()
-                        .body(toJson(Map.of(
+                        .body(Map.of(
                                 "service_id", VALID_SERVICE_ID,
                                 "type", TEST,
                                 "payment_provider", "worldpay",
                                 "service_name", VALID_SERVICE_NAME
-                        )))
+                        ))
                         .post("/v1/api/accounts")
                         .then().extract().path("gateway_account_id"));
                 addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);

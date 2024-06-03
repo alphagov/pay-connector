@@ -114,13 +114,11 @@ public class StripeAccountSetupResource {
     )
     public Response patchStripeAccountSetup(
             @Parameter(example = "1", description = "Gateway account ID")
-            @PathParam("accountId") Long accountId, JsonNode payload) {
+            @PathParam("accountId") Long accountId,
+            @Valid List<StripeSetupPatchRequest> request) {
         return gatewayAccountService.getGatewayAccount(accountId)
                 .map(gatewayAccountEntity -> {
-                    stripeAccountSetupRequestValidator.validatePatchRequest(payload);
-                    List<StripeAccountSetupUpdateRequest> updateRequests = StreamSupport
-                            .stream(payload.spliterator(), false)
-                            .map(JsonPatchRequest::from)
+                    List<StripeAccountSetupUpdateRequest> updateRequests = request.stream()
                             .map(StripeAccountSetupUpdateRequest::from)
                             .collect(Collectors.toList());
 
@@ -161,7 +159,7 @@ public class StripeAccountSetupResource {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccountEntity -> {
                     List<StripeAccountSetupUpdateRequest> updateRequests = request.stream()
-                            .map(StripeAccountSetupUpdateRequest::fromStripeSetupPatch)
+                            .map(StripeAccountSetupUpdateRequest::from)
                             .collect(Collectors.toList());
 
                     stripeAccountSetupService.update(gatewayAccountEntity, updateRequests);

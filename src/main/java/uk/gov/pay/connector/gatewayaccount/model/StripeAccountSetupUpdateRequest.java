@@ -10,13 +10,8 @@ public class StripeAccountSetupUpdateRequest {
         this.task = task;
         this.completed = completed;
     }
-
-    public static StripeAccountSetupUpdateRequest from(JsonPatchRequest jsonPatchRequest) {
-        StripeAccountSetupTask task = StripeAccountSetupTask.valueOf(jsonPatchRequest.getPath().toUpperCase());
-        return new StripeAccountSetupUpdateRequest(task, jsonPatchRequest.valueAsBoolean());
-    }
     
-    public static StripeAccountSetupUpdateRequest fromStripeSetupPatch(StripeSetupPatchRequest patchRequest) {
+    public static StripeAccountSetupUpdateRequest from(StripeSetupPatchRequest patchRequest) {
         StripeAccountSetupTask task = StripeAccountSetupTask.valueOf(patchRequest.getPath().toUpperCase());
         return new StripeAccountSetupUpdateRequest(task, Boolean.parseBoolean(patchRequest.getValue()));
     }
