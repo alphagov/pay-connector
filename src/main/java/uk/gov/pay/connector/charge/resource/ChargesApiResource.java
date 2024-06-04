@@ -6,9 +6,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.validator.constraints.Length;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.TelephonePaymentNotificationsNotAllowedException;
@@ -145,7 +147,7 @@ public class ChargesApiResource {
         } else if (AUTHORISATION_MODES_INCOMPATIBLE_WITH_RETURN_URL.contains(authorisationMode) && chargeRequest.getReturnUrl().isPresent()) {
             throw new UnexpectedAttributeException(RETURN_URL);
         }
-        
+
         if (idempotencyKey != null && chargeRequest.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
             Optional<ChargeResponse> maybeExistingChargeResponse = chargeService.checkForChargeCreatedWithIdempotencyKey(
                     chargeRequest, accountId, idempotencyKey, uriInfo);
@@ -226,9 +228,9 @@ public class ChargesApiResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
 
         return chargeService.findCharge(chargeId, accountId)
-                            .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true)
-                            .map((reference) -> noContentResponse())
-                            .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email")))
+                .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true)
+                        .map((reference) -> noContentResponse())
+                        .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email")))
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
@@ -244,22 +246,30 @@ public class ChargesApiResource {
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             }
     )
-    public Response resendConfirmationEmail(
+    public Response resendConfirmationEmailByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") // pragma: allowlist secret
             @PathParam("serviceId") String serviceId,
-            @Parameter(example = "test", description = "Account type") 
+            @Parameter(example = "test", description = "Account type")
             @PathParam("accountType") GatewayAccountType accountType,
             @Parameter(example = "spmh0fb7rbi1lebv1j3f7hc3m9", description = "Charge external ID")
             @PathParam("chargeId") String chargeId) {
 
-        GatewayAccountEntity account = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
-
-        return chargeService.findCharge(chargeId, account.getId())
-                .map(charge -> userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true)
-                        .map(reference -> noContentResponse())
-                        .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email")))
-                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .or(() -> {
+                    throw new GatewayAccountNotFoundException(serviceId, accountType);
+                })
+                .flatMap(account -> chargeService.findCharge(chargeId, account.getId())
+                        .map(charge -> Pair.of(charge, account))
+                )
+                .or(() -> {
+                    throw new ChargeNotFoundRuntimeException(chargeId);
+                })
+                .flatMap(chargeAccountPair -> userNotificationService.sendPaymentConfirmedEmailSynchronously(
+                        chargeAccountPair.getLeft(),
+                        chargeAccountPair.getRight(),
+                        true))
+                .map(reference -> noContentResponse())
+                .orElseGet(() -> buildErrorResponse(Response.Status.PAYMENT_REQUIRED, "Failed to send email"));
     }
 
     @POST

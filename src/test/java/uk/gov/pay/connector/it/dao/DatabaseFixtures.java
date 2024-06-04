@@ -115,6 +115,7 @@ public class DatabaseFixtures {
         private final long id;
         private final long amount;
         private final ZonedDateTime createdDate;
+        private final String userExternalId;
         private final String chargeExternalId;
 
         TestRefundHistory(TestRefund testRefund) {
@@ -122,7 +123,7 @@ public class DatabaseFixtures {
             this.externalId = testRefund.getExternalRefundId();
             this.amount = testRefund.getAmount();
             this.createdDate = testRefund.getCreatedDate();
-            String userExternalId = testRefund.getSubmittedByUserExternalId();
+            this.userExternalId = testRefund.getSubmittedByUserExternalId();
             this.chargeExternalId = testRefund.chargeExternalId;
         }
 

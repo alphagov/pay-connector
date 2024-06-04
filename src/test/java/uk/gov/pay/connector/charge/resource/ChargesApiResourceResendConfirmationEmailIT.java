@@ -31,7 +31,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static io.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.hamcrest.Matchers.contains;
@@ -44,64 +43,72 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 
 public class ChargesApiResourceResendConfirmationEmailIT {
-    private static final NotifyClientFactory NOTIFY_CLIENT_FACTORY = mock(NotifyClientFactory.class);
-    private static final NotificationClient NOTIFICATION_CLIENT = mock(NotificationClient.class);
-    
+    private static final NotifyClientFactory notifyClientFactory = mock(NotifyClientFactory.class);
+    private static final NotificationClient notificationClient = mock(NotificationClient.class);
+
     @RegisterExtension
-    private static final AppWithPostgresAndSqsExtension APP = new AppWithPostgresAndSqsExtension(
+    private static final AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             ChargesApiResourceResendConfirmationEmailIT.ConnectorAppWithCustomInjector.class,
             config("notifyConfig.emailNotifyEnabled", "true")
     );
-    
+
     @RegisterExtension
-    private static final ITestBaseExtension TEST_BASE_EXTENSION = new ITestBaseExtension("sandbox", APP.getLocalPort(), APP.getDatabaseTestHelper());
+    private static final ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private static final String EMAIL_ADDRESS = "a@b.com";
+    
     private DatabaseFixtures.TestAccount testAccount;
     private ChargeUtils.ExternalChargeId chargeId;
 
     @BeforeAll
     static void before() {
-        when(NOTIFY_CLIENT_FACTORY.getInstance()).thenReturn(NOTIFICATION_CLIENT);
+        when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
     }
 
     @BeforeEach
     void setup() throws NoSuchAlgorithmException, NotificationClientException {
         SecureRandom secureRandom = SecureRandom.getInstanceStrong();
-        testAccount = TEST_BASE_EXTENSION.getTestAccount();
-        chargeId = createNewCharge(String.valueOf(secureRandom.nextInt()), TEST_BASE_EXTENSION.getPaymentProvider());
-        APP.getDatabaseTestHelper().addEmailNotification(Long.valueOf(TEST_BASE_EXTENSION.getAccountId()), "a template", true, PAYMENT_CONFIRMED);
+        testAccount = testBaseExtension.getTestAccount();
+        chargeId = createNewCharge(String.valueOf(secureRandom.nextInt()), testBaseExtension.getPaymentProvider());
+        app.getDatabaseTestHelper().addEmailNotification(Long.valueOf(testBaseExtension.getAccountId()), "a template", true, PAYMENT_CONFIRMED);
         SendEmailResponse mockResponse = mock(SendEmailResponse.class);
         when(mockResponse.getNotificationId()).thenReturn(UUID.randomUUID());
-        when(NOTIFICATION_CLIENT.sendEmail(any(), eq(EMAIL_ADDRESS), anyMap(), eq(null), any())).thenReturn(mockResponse);
+        when(notificationClient.sendEmail(any(), eq(EMAIL_ADDRESS), anyMap(), eq(null), any())).thenReturn(mockResponse);
     }
-    
+
     @Nested
-    @DisplayName("Given a resend confirmation email request")
-    class ResendConfirmationEmail {
+    @DisplayName("Given an account id")
+    class ByAccountId {
+
         @Nested
-        @DisplayName("When account id is provided")
-        class ByAccountId {
+        @DisplayName("Then resend confirmation email")
+        class ResendConfirmationEmail {
+
             @Test
-            @DisplayName("Then 204 is received when successful")
+            @DisplayName("Should return 204 when successful")
             void shouldReturn204WhenEmailSuccessfullySent() {
-                given().port(APP.getLocalPort())
+                app.givenSetup()
                         .body("")
-                        .contentType(APPLICATION_JSON)
-                        .post(format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", TEST_BASE_EXTENSION.getAccountId(), chargeId))
+                        .post(format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", testBaseExtension.getAccountId(), chargeId))
                         .then()
                         .statusCode(204);
             }
         }
+    }
+
+    @Nested
+    @DisplayName("Given a service id and account type")
+    class ByServiceIdAndAccountType {
 
         @TestInstance(PER_CLASS)
         @Nested
-        @DisplayName("When service id and account type are provided")
-        class ByServiceIdAndAccountType {
+        @DisplayName("Then resend confirmation email")
+        class ResendConfirmationEmail {
+
             @Test
-            @DisplayName("Then 204 is received when successful")
+            @DisplayName("Should return 204 when successful")
             void shouldReturn204WhenEmailSuccessfullySent() {
-                given().port(APP.getLocalPort())
+                app.givenSetup()
                         .body("")
                         .contentType(APPLICATION_JSON)
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", testAccount.getServiceId(), testAccount.getGatewayAccountType(), chargeId))
@@ -110,19 +117,18 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             }
 
             @ParameterizedTest
-            @DisplayName("Then 404 is received when gateway account not found")
-            @MethodSource
+            @DisplayName("Should return 404 when gateway account not found")
+            @MethodSource("shouldReturn404_argsProvider")
             void shouldReturn404_WhenServiceIdNotFound_OrAccountTypeNotFound(String serviceId, GatewayAccountType gatewayAccountType, String expectedError) {
-                given().port(APP.getLocalPort())
+                app.givenSetup()
                         .body("")
-                        .contentType(APPLICATION_JSON)
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", serviceId, gatewayAccountType, chargeId))
                         .then()
                         .statusCode(404)
                         .body("message", contains(expectedError));
             }
 
-            private Stream<Arguments> shouldReturn404_WhenServiceIdNotFound_OrAccountTypeNotFound() {
+            private Stream<Arguments> shouldReturn404_argsProvider() {
                 return Stream.of(
                         Arguments.of("not-this-service-id", testAccount.getGatewayAccountType(), "Gateway account not found for service ID [not-this-service-id] and account type [test]"),
                         Arguments.of(testAccount.getServiceId(), GatewayAccountType.LIVE, format("Gateway account not found for service ID [%s] and account type [live]", testAccount.getServiceId()))
@@ -130,17 +136,17 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             }
         }
     }
-    
+
     private ChargeUtils.ExternalChargeId createNewCharge(String transactionId, String paymentProvider) {
         return ChargeUtils.createNewChargeWithAccountId(
                 ChargeStatus.CREATED,
                 transactionId,
-                TEST_BASE_EXTENSION.getAccountId(),
-                APP.getDatabaseTestHelper(),
+                testBaseExtension.getAccountId(),
+                app.getDatabaseTestHelper(),
                 EMAIL_ADDRESS,
                 paymentProvider);
     }
-    
+
     public static class ConnectorAppWithCustomInjector extends ConnectorApp {
 
         @Override
@@ -157,7 +163,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
 
         @Override
         protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
-            return NOTIFY_CLIENT_FACTORY;
+            return notifyClientFactory;
         }
     }
 }
