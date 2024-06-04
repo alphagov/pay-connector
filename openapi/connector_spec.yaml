@@ -763,10 +763,10 @@ paths:
       responses:
         "200":
           description: OK
-        "400":
-          description: Bad request - invalid or missing mandatory fields
         "404":
           description: Not found
+        "422":
+          description: Bad request - invalid or missing mandatory fields
       summary: Enables/disables email notifications for gateway account
       tags:
       - Gateway accounts
@@ -1269,6 +1269,49 @@ paths:
       summary: Handle Worldpay notifications
       tags:
       - Notifications
+  /v1/api/service/{serviceId}/account/{accountType}/email-notification:
+    patch:
+      description: Allowed paths <br> - /payment_confirmed/enabled (values true/false)
+        <br> - /refund_issued/enabled (values true/false) <br> - /payment_confirmed/template_body<br>
+        - /refund_issued/template_body
+      operationId: enableEmailNotificationByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+                op: replace
+                path: /payment_confirmed/enabled
+                value: false
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found
+        "422":
+          description: Bad request - invalid or missing mandatory fields
+      summary: Enables/disables email notifications for gateway account
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/stripe-setup:
     patch:
       description: "Support patching following paths: <br>bank_account, responsible_person,\
