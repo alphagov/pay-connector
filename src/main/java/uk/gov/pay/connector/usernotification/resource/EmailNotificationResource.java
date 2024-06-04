@@ -67,7 +67,7 @@ public class EmailNotificationResource {
                     "}"))),
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "422", description = "Bad request - invalid or missing mandatory fields"),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Content - invalid or missing mandatory fields"),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
@@ -108,7 +108,7 @@ public class EmailNotificationResource {
                     "}"))),
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "422", description = "Bad request - invalid or missing mandatory fields"),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Content - invalid or missing mandatory fields"),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
