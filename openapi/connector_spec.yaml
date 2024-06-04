@@ -886,10 +886,10 @@ paths:
       responses:
         "200":
           description: OK
-        "400":
-          description: Bad request - operation not allowed
         "404":
           description: Not found
+        "422":
+          description: Unprocessable Content - operation not allowed
       summary: Update Stripe Connect account setup tasks have been completed for a
         given accountId
       tags:
@@ -1353,7 +1353,7 @@ paths:
         "404":
           description: Not found
         "422":
-          description: Bad request - operation not allowed
+          description: Unprocessable Content - operation not allowed
       summary: Update Stripe Connect account setup tasks have been completed for a
         given service ID and account type
       tags:
