@@ -766,7 +766,7 @@ paths:
         "404":
           description: Not found
         "422":
-          description: Bad request - invalid or missing mandatory fields
+          description: Unprocessable Content - invalid or missing mandatory fields
       summary: Enables/disables email notifications for gateway account
       tags:
       - Gateway accounts
@@ -1308,7 +1308,7 @@ paths:
         "404":
           description: Not found
         "422":
-          description: Bad request - invalid or missing mandatory fields
+          description: Unprocessable Content - invalid or missing mandatory fields
       summary: Enables/disables email notifications for gateway account
       tags:
       - Gateway accounts
