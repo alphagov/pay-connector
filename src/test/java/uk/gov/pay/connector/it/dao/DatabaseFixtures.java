@@ -411,10 +411,6 @@ public class DatabaseFixtures {
         public Map<EmailNotificationType, TestEmailNotification> getEmailNotifications() {
             return emailNotifications;
         }
-        
-        public GatewayAccountType getGatewayAccountType() {
-            return type;
-        }
 
         public boolean isAllowTelephonePaymentNotifications() {
             return allowTelephonePaymentNotifications;
