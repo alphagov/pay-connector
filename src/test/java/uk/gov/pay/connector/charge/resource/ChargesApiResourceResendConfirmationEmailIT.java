@@ -1,26 +1,17 @@
 package uk.gov.pay.connector.charge.resource;
 
-import io.dropwizard.core.setup.Environment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.ConnectorModule;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
-import uk.gov.service.notify.NotificationClient;
-import uk.gov.service.notify.NotificationClientException;
-import uk.gov.service.notify.SendEmailResponse;
 
 import java.util.Map;
 import java.util.UUID;
@@ -30,23 +21,12 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceResendConfirmationEmailIT {
-    private static final NotifyClientFactory mockNotifyClientFactory = mock(NotifyClientFactory.class);
-    private static final NotificationClient mockNotificationClient = mock(NotificationClient.class);
-    private static final SendEmailResponse mockSendEmailResponse = mock(SendEmailResponse.class);
-
-
     @RegisterExtension
     private static final AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
-            ChargesApiResourceResendConfirmationEmailIT.ConnectorAppWithCustomInjector.class,
             config("notifyConfig.emailNotifyEnabled", "true")
     );
 
@@ -57,15 +37,10 @@ public class ChargesApiResourceResendConfirmationEmailIT {
     private static final PaymentGatewayName PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE;
     
     private static String gatewayAccountId;
-    private static String chargeId; 
-
-    @BeforeAll
-    static void before() {
-        when(mockNotifyClientFactory.getInstance()).thenReturn(mockNotificationClient);
-    }
+    private static String chargeId;
 
     @BeforeEach
-    void setup() throws NotificationClientException {
+    void setup() {
         gatewayAccountId = app.givenSetup()
                 .body(toJson(Map.of(
                         "service_id", SERVICE_ID,
@@ -90,8 +65,8 @@ public class ChargesApiResourceResendConfirmationEmailIT {
                 .body(toJson(Map.of("op", "replace", "path", "/payment_confirmed/template_body", "value", "my cool template")))
                 .patch(format("/v1/api/accounts/%s/email-notification", gatewayAccountId))
                 .then().statusCode(200);
-        when(mockSendEmailResponse.getNotificationId()).thenReturn(UUID.randomUUID());
-        when(mockNotificationClient.sendEmail(any(), eq(EMAIL_ADDRESS), anyMap(), eq(null), any())).thenReturn(mockSendEmailResponse);
+        
+        app.getNotifyStub().returnSuccess();
     }
 
     @Nested
@@ -126,6 +101,8 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             @Test
             @DisplayName("Should return 204 when successful")
             void shouldReturn204WhenEmailSuccessfullySent() {
+//                app.getNotifyStub().returnSuccess();
+                        
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))
@@ -151,26 +128,6 @@ public class ChargesApiResourceResendConfirmationEmailIT {
                         Arguments.of(SERVICE_ID, GatewayAccountType.LIVE, format("Gateway account not found for service ID [%s] and account type [live]", SERVICE_ID))
                 );
             }
-        }
-    }
-
-    public static class ConnectorAppWithCustomInjector extends ConnectorApp {
-
-        @Override
-        protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
-            return new ConnectorModuleWithOverrides(configuration, environment);
-        }
-    }
-
-    private static class ConnectorModuleWithOverrides extends ConnectorModule {
-
-        public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
-            super(configuration, environment);
-        }
-
-        @Override
-        protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
-            return mockNotifyClientFactory;
         }
     }
 }

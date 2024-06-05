@@ -26,6 +26,7 @@ import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.LedgerStub;
+import uk.gov.pay.connector.rules.NotifyStub;
 import uk.gov.pay.connector.rules.SqsTestDocker;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -57,16 +58,19 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final int worldpayWireMockPort;
     private final int ledgerWireMockPort;
     private final int stripeWireMockPort;
+    private final int notifyWireMockPort;
 
     protected static DatabaseTestHelper databaseTestHelper;
     protected static WireMockServer wireMockServer;
     protected static WireMockServer worldpayWireMockServer;
     protected static WireMockServer ledgerWireMockServer;
     protected static WireMockServer stripeWireMockServer;
+    protected static WireMockServer notifyWireMockServer;
     protected static WorldpayMockClient worldpayMockClient;
     protected static StripeMockClient stripeMockClient;
     protected static LedgerStub ledgerStub;
     private static CardidStub cardidStub;
+    private static NotifyStub notifyStub;
     protected static String accountId = String.valueOf(RandomUtils.nextInt());
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
@@ -90,16 +94,19 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         worldpayWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         stripeWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         ledgerWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
+        notifyWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         
         wireMockServer.start();
         worldpayWireMockServer.start();
         stripeWireMockServer.start();
         ledgerWireMockServer.start();
+        notifyWireMockServer.start();
         
         wireMockPort = wireMockServer.port();
         worldpayWireMockPort = worldpayWireMockServer.port();
         stripeWireMockPort = stripeWireMockServer.port();
         ledgerWireMockPort = ledgerWireMockServer.port();
+        notifyWireMockPort = notifyWireMockServer.port();
 
         sqsClient = SqsTestDocker.initialise(List.of("capture-queue", "event-queue", "tasks-queue", "reconcile-queue"));
 
@@ -129,6 +136,8 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
         ledgerStub = new LedgerStub(ledgerWireMockServer);
         cardidStub = new CardidStub(wireMockServer);
+        notifyStub = new NotifyStub(notifyWireMockServer);
+        
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         mapper = new ObjectMapper();
 
@@ -140,6 +149,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         worldpayWireMockServer.resetAll();
         ledgerWireMockServer.resetAll();
         stripeWireMockServer.resetAll();
+        notifyWireMockServer.resetAll();
         ledgerStub.acceptPostEvent();
     }
     public void resetDatabase() {
@@ -171,6 +181,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
             worldpayWireMockServer.stop();
             stripeWireMockServer.stop();
             ledgerWireMockServer.stop();
+            notifyWireMockServer.stop();
             dropwizardAppExtension.after();
         }
     }
@@ -195,6 +206,8 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         newConfigOverride.add(config("stripe.url", "http://localhost:" + stripeWireMockPort));
         newConfigOverride.add(config("ledgerBaseURL", "http://localhost:" + ledgerWireMockPort));
         newConfigOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));
+        newConfigOverride.add(config("notifyConfig.notificationBaseURL", "http://localhost:" + notifyWireMockPort));
+        newConfigOverride.add(config("notifyConfig.apiKey", "BD498A6F75C2E8BD3E4F9BEE97E287BBC5C35D8B7"));  // pragma: allowlist secret
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
 
@@ -264,6 +277,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         return worldpayWireMockServer;
     }
 
+    public WireMockServer getNotifyWireMockServer() {
+        return notifyWireMockServer;
+    }
+
     public StripeMockClient getStripeMockClient() {
         return stripeMockClient;
     }
@@ -274,6 +291,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     
     public CardidStub getCardidStub() {
         return cardidStub;
+    }
+    
+    public NotifyStub getNotifyStub() {
+        return notifyStub;
     }
 
     public DatabaseFixtures getDatabaseFixtures() {
