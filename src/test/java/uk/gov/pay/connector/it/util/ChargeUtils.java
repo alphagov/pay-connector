@@ -17,6 +17,10 @@ public class ChargeUtils {
         return createChargePostBody("description", 100, accountId, "http://nothing", "default@email.invalid");
     }
 
+    public static String createChargePostBody(String accountId, String email) {
+        return createChargePostBody("description", 100, accountId, "http://nothing", email);
+    }
+
     public static String createChargePostBody(String description, long expectedAmount, String accountId, String returnUrl, String email) {
         return toJson(ImmutableMap.builder()
                 .put("reference", "Test reference")
