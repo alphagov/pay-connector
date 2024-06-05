@@ -17,10 +17,13 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
+import static java.time.ZonedDateTime.now;
+import static java.time.ZonedDateTime.parse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 public class EmittedEventDaoIT {
     @RegisterExtension
@@ -173,7 +176,7 @@ public class EmittedEventDaoIT {
         final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(Instant.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
                 paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
-        ZonedDateTime doNotRetryEmitUntil = ZonedDateTime.now(UTC).minusSeconds(120);
+        ZonedDateTime doNotRetryEmitUntil = parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusSeconds(120)));
         emittedEventDao.recordEmission(refundSubmittedEvent.getResourceType(), refundSubmittedEvent.getResourceExternalId(),
                 refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp(), doNotRetryEmitUntil);
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
@@ -196,6 +199,10 @@ public class EmittedEventDaoIT {
         assertThat(notEmittedEvents.get(1).getEventType(), is(refundSubmittedEvent.getEventType()));
         assertThat(notEmittedEvents.get(1).getResourceExternalId(), is(refundSubmittedEvent.getResourceExternalId()));
         assertThat(notEmittedEvents.get(1).getResourceType(), is(refundSubmittedEvent.getResourceType().getLowercase()));
+
+        System.out.println(notEmittedEvents.get(1).getDoNotRetryEmitUntil().toInstant());
+        System.out.println(doNotRetryEmitUntil.toInstant());
+
         assertThat(Timestamp.from(notEmittedEvents.get(1).getDoNotRetryEmitUntil().toInstant()), 
                 is(Timestamp.from(doNotRetryEmitUntil.toInstant())));
     }
