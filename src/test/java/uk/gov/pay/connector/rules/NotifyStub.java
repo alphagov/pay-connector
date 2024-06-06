@@ -22,12 +22,8 @@ public class NotifyStub {
     }
     
     public StubMapping respondWithSuccess() {
-        return respondWithSuccess(UUID.randomUUID().toString());
-    }
-    
-    public StubMapping respondWithSuccess(String notificationId) {
         Map<String, Object> payload = Map.of(
-                "id", notificationId,
+                "id", "60b922b3-c41a-4e7e-8c12-efa7ea9ee7d2",
                 "content", Map.of(
                         "body", "",
                         "subject", ""
