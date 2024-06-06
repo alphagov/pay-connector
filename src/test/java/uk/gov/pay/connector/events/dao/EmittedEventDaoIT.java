@@ -199,10 +199,6 @@ public class EmittedEventDaoIT {
         assertThat(notEmittedEvents.get(1).getEventType(), is(refundSubmittedEvent.getEventType()));
         assertThat(notEmittedEvents.get(1).getResourceExternalId(), is(refundSubmittedEvent.getResourceExternalId()));
         assertThat(notEmittedEvents.get(1).getResourceType(), is(refundSubmittedEvent.getResourceType().getLowercase()));
-
-        System.out.println(notEmittedEvents.get(1).getDoNotRetryEmitUntil().toInstant());
-        System.out.println(doNotRetryEmitUntil.toInstant());
-
         assertThat(Timestamp.from(notEmittedEvents.get(1).getDoNotRetryEmitUntil().toInstant()), 
                 is(Timestamp.from(doNotRetryEmitUntil.toInstant())));
     }
