@@ -65,8 +65,6 @@ public class ChargesApiResourceResendConfirmationEmailIT {
                 .body(toJson(Map.of("op", "replace", "path", "/payment_confirmed/template_body", "value", "my cool template")))
                 .patch(format("/v1/api/accounts/%s/email-notification", gatewayAccountId))
                 .then().statusCode(200);
-        
-        app.getNotifyStub().returnSuccess();
     }
 
     @Nested
@@ -80,6 +78,8 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             @Test
             @DisplayName("Should return 204 when successful")
             void shouldReturn204WhenEmailSuccessfullySent() {
+                app.getNotifyStub().respondWithSuccess();
+                
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", gatewayAccountId, chargeId))
@@ -101,8 +101,8 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             @Test
             @DisplayName("Should return 204 when successful")
             void shouldReturn204WhenEmailSuccessfullySent() {
-//                app.getNotifyStub().returnSuccess();
-                        
+                app.getNotifyStub().respondWithSuccess();
+                
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))
@@ -114,12 +114,27 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             @DisplayName("Should return 404 when gateway account not found")
             @MethodSource("shouldReturn404_argsProvider")
             void shouldReturn404_WhenServiceIdNotFound_OrAccountTypeNotFound(String serviceId, GatewayAccountType gatewayAccountType, String expectedError) {
+                app.getNotifyStub().respondWithSuccess();
+                
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", serviceId, gatewayAccountType, chargeId))
                         .then()
                         .statusCode(404)
                         .body("message", contains(expectedError));
+            }
+            
+            @Test
+            @DisplayName("Should return 402 when notification fails to send")
+            void shouldReturn402_whenNotificationFails() {
+                app.getNotifyStub().respondWithFailure();
+                
+                app.givenSetup()
+                        .body("")
+                        .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))
+                        .then()
+                        .statusCode(402)
+                        .body("message", contains("Failed to send email"));
             }
 
             private Stream<Arguments> shouldReturn404_argsProvider() {

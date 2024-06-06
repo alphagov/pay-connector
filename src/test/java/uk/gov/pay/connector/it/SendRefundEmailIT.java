@@ -45,7 +45,7 @@ public class SendRefundEmailIT {
     private final String accountId = String.valueOf(RandomUtils.nextInt());
     @Test
     void shouldSendEmailFollowingASuccessfulRefund() throws Exception {
-        app.getNotifyStub().returnSuccess();
+        app.getNotifyStub().respondWithSuccess();
         addGatewayAccount();
 
         String transactionId = String.valueOf(RandomUtils.nextInt());

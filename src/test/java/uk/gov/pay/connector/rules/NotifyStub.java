@@ -22,11 +22,11 @@ public class NotifyStub {
         this.wireMockServer = wireMockServer;
     }
     
-    public StubMapping returnSuccess() {
-        return returnSuccess(UUID.randomUUID().toString());
+    public StubMapping respondWithSuccess() {
+        return respondWithSuccess(UUID.randomUUID().toString());
     }
     
-    public StubMapping returnSuccess(String notificationId) {
+    public StubMapping respondWithSuccess(String notificationId) {
         Map<String, Object> payload = Map.of(
                 "id", notificationId,
                 "content", Map.of(
@@ -35,7 +35,7 @@ public class NotifyStub {
                 ),
                 "template", Map.of(
                         "id", "c60e7068-27fc-4551-8ae9-2dbc3a9a080d",
-                        "version", String.valueOf(RandomUtils.nextInt()),
+                        "version", "1",
                         "uri", ""
                 )
         );
@@ -47,6 +47,18 @@ public class NotifyStub {
                                         .withHeader(CONTENT_TYPE, APPLICATION_JSON)
                                         .withStatus(201)
                                         .withBody(toJson(payload))
+                        )
+        );
+    }
+    
+    public StubMapping respondWithFailure() {
+        return wireMockServer.stubFor(
+                post(urlPathEqualTo("/v2/notifications/email"))
+                        .willReturn(
+                                aResponse()
+                                        .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                                        .withStatus(400)
+                                        .withBody(toJson(Map.of()))
                         )
         );
     }
