@@ -263,7 +263,6 @@ public class GatewayAccountCredentialsResourceIT {
 
         @Nested
             class CreateGatewayAccountCredentials {
-//            final String CREATE_CREDENTIALS_BY_SERVICE_ID_URL = GATEWAY_ACCOUNT_BY_SERVICE_ID + "/credentials";
             @Test
             void validRequest_shouldUpdateCredentials_andReturn200() {
                 String gatewayAccountId = app.givenSetup()
