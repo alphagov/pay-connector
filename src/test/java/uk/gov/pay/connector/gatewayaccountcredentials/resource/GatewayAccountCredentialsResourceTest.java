@@ -563,7 +563,7 @@ public class GatewayAccountCredentialsResourceTest {
         when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType("a-valid-service-id", GatewayAccountType.TEST))
                 .thenReturn(Optional.of(gatewayAccountEntity));
         Response response = resources
-                .target(VALIDATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL)
+                .target(format(VALIDATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL, "a-valid-service-id",  GatewayAccountType.TEST))
                 .request()
                 .post(Entity.json(payload));
 
