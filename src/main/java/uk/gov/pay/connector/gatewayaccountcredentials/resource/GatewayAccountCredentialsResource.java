@@ -227,7 +227,7 @@ public class GatewayAccountCredentialsResource {
     }
 
     @POST
-    @Path("/v1/api/service/{serviceId}/{accountType}/credentials")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/credentials")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Operation(
@@ -256,7 +256,7 @@ public class GatewayAccountCredentialsResource {
     }
 
     @PUT
-    @Path("/v1/api/service/{serviceId}/{accountType}/3ds-flex-credentials")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/3ds-flex-credentials")
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
     @Operation(
@@ -289,7 +289,7 @@ public class GatewayAccountCredentialsResource {
     }
 
     @POST
-    @Path("/v1/api/service/{serviceId}/{accountType}/worldpay/check-3ds-flex-config")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/worldpay/check-3ds-flex-config")
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
     @Operation(
@@ -314,8 +314,8 @@ public class GatewayAccountCredentialsResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
     
-    @PATCH
-    @Path("/v1/api/service/{serviceId}/{accountType}/credentials/{credentialsId}")
+    @PATCH/**/
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/credentials/{credentialsId}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Operation(
@@ -367,7 +367,7 @@ public class GatewayAccountCredentialsResource {
     }
 
     @POST
-    @Path("/v1/api/service/{serviceId}/{accountType}/worldpay/check-credentials")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/worldpay/check-credentials")
     @Produces(APPLICATION_JSON)
     @Consumes(APPLICATION_JSON)
     @Operation(

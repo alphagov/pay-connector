@@ -41,6 +41,11 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.util.Paths.CREATE_CREDENTIALS_BY_SERVICE_ID_URL;
+import static uk.gov.pay.connector.util.Paths.PATCH_CREDENTIALS_BY_SERVICE_ID_URL;
+import static uk.gov.pay.connector.util.Paths.UPDATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL;
+import static uk.gov.pay.connector.util.Paths.VALIDATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL;
+import static uk.gov.pay.connector.util.Paths.VALIDATE_CREDENTIALS_BY_SERVICE_ID_URL;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class GatewayAccountCredentialsResourceTest {
@@ -399,7 +404,7 @@ public class GatewayAccountCredentialsResourceTest {
             @Test
             void missingBody_shouldReturn422() {
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format(CREATE_CREDENTIALS_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .request()
                         .post(null);
 
@@ -424,7 +429,7 @@ public class GatewayAccountCredentialsResourceTest {
                 payload.remove(key);
 
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/3ds-flex-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format(UPDATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .request()
                         .put(Entity.json(payload));
 
@@ -522,7 +527,7 @@ public class GatewayAccountCredentialsResourceTest {
                                 "value", "a-user-id")
                 );
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/credentials/222", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format(PATCH_CREDENTIALS_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST, "invalid-credentials-id"))
                         .request()
                         .method("PATCH", Entity.json(payload));
 
@@ -544,7 +549,7 @@ public class GatewayAccountCredentialsResourceTest {
                 payload.remove(fieldName);
 
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format(VALIDATE_CREDENTIALS_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .request()
                         .post(Entity.json(payload));
 
@@ -558,7 +563,7 @@ public class GatewayAccountCredentialsResourceTest {
         when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType("a-valid-service-id", GatewayAccountType.TEST))
                 .thenReturn(Optional.of(gatewayAccountEntity));
         Response response = resources
-                .target("/v1/api/service/a-valid-service-id/test/worldpay/check-3ds-flex-config")
+                .target(VALIDATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL)
                 .request()
                 .post(Entity.json(payload));
 

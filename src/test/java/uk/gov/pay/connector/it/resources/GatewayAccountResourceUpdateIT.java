@@ -19,9 +19,11 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.Paths.CREATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL;
 
 public class GatewayAccountResourceUpdateIT {
 
@@ -57,7 +59,7 @@ public class GatewayAccountResourceUpdateIT {
                     "jwt_mac_key", "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9");
 
             app.givenSetup().body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", serviceId, TEST));
+                    .put(format(CREATE_3DS_FLEX_CREDENTIALS_BY_SERVICE_ID_URL, serviceId, TEST));
 
             Map<String, Object> payload = Map.of(
                     "op", "replace",
@@ -66,12 +68,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("worldpay_3ds_flex.exemption_engine_enabled", is(true));
@@ -83,12 +85,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
@@ -97,7 +99,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateNotifySettingsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("notifySettings", nullValue());
@@ -110,12 +112,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("notifySettings.api_token", is("anapitoken"))
@@ -127,12 +129,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("notifySettings", nullValue());
@@ -147,7 +149,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then().log().body()
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is("GENERIC"))
@@ -163,7 +165,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is("GENERIC"))
@@ -173,7 +175,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateBlockPrepaidCardsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("block_prepaid_cards", is(false));
@@ -184,12 +186,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("block_prepaid_cards", is(true));
@@ -198,7 +200,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateEmailCollectionModeSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("email_collection_mode", is("MANDATORY"));
@@ -209,12 +211,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("email_collection_mode", is("OFF"));
@@ -228,7 +230,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is("GENERIC"))
@@ -238,7 +240,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateCorporateCardAmountsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("corporate_credit_card_surcharge_amount", is(0))
@@ -251,7 +253,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -261,7 +263,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -271,12 +273,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("corporate_credit_card_surcharge_amount", is(100))
@@ -287,7 +289,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateAllowTelephonePaymentNotificationsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("allow_telephone_payment_notifications", is(false));
@@ -298,12 +300,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("allow_telephone_payment_notifications", is(true));
@@ -315,7 +317,7 @@ public class GatewayAccountResourceUpdateIT {
                     .body(toJson(Map.of("op", "replace",
                             "path", "allow_telephone_payment_notifications",
                             "value", true)))
-                    .patch(format("/v1/api/service/%s/live/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, LIVE))
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode());
         }
@@ -334,7 +336,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updatingDisabledToFalseShouldClearDisabledReason() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("disabled", is(false));
@@ -345,7 +347,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -355,12 +357,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("disabled", is(true))
@@ -372,12 +374,12 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/%s", serviceId, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("disabled", is(false))
