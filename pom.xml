@@ -5,12 +5,12 @@
     <version>0.1-SNAPSHOT</version>
     <artifactId>pay-connector</artifactId>
 
-   <properties>
+    <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <pay-java-commons.version>1.0.20240528083746</pay-java-commons.version>
         <surefire.version>3.2.5</surefire.version>
         <jjwt.version>0.12.3</jjwt.version>
-        <pact.version>3.6.15</pact.version>
+        <pact.version>4.6.10</pact.version>
         <eclipselink.version>2.7.13</eclipselink.version>
         <swagger-version>2.2.22</swagger-version>
         <prometheus.version>0.16.0</prometheus.version>
@@ -447,6 +447,30 @@
             <artifactId>testing</artifactId>
             <version>${pay-java-commons.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>au.com.dius</groupId>
+                    <artifactId>pact-jvm-consumer_2.12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>au.com.dius</groupId>
+                    <artifactId>pact-jvm-provider_2.12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>au.com.dius</groupId>
+                    <artifactId>pact-jvm-support</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact.consumer</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.6.0</version>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact</groupId>
+            <artifactId>provider</artifactId>
+            <version>4.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish</groupId>
@@ -458,8 +482,8 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>au.com.dius</groupId>
-                <artifactId>pact-jvm-provider-maven_2.12</artifactId>
+                <groupId>au.com.dius.pact.provider</groupId>
+                <artifactId>maven</artifactId>
                 <version>${pact.version}</version>
                 <configuration>
                     <pactDirectory>target/pacts</pactDirectory>
@@ -478,7 +502,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <release>11</release>
+                    <release>21</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -584,8 +608,10 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>uk.gov.pay.connector.app.ConnectorApp</mainClass>
                                 </transformer>
                             </transformers>
