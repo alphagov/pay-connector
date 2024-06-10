@@ -1386,7 +1386,75 @@ paths:
       summary: Enables/disables email notifications for gateway account
       tags:
       - Gateway accounts
+  /v1/api/service/{serviceId}/account/{accountType}/stripe-account:
+    get:
+      operationId: getStripeAccountByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StripeAccountResponse'
+          description: OK
+        "404":
+          description: Not found - Service does not exist or service does not have
+            a Stripe gateway account of this type
+      summary: Retrieves Stripe Connect account information for a given service ID
+        and account type (test|live)
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/stripe-setup:
+    get:
+      operationId: getStripeAccountSetupByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StripeAccountSetup'
+          description: OK
+        "404":
+          description: Not found
+      summary: Retrieve Stripe connect account setup tasks for a given service ID
+        and account type
+      tags:
+      - Gateway accounts
     patch:
       description: "Support patching following paths: <br>bank_account, responsible_person,\
         \ vat_number, company_number, director, government_entity_document, organisation_details"
@@ -1707,75 +1775,6 @@ paths:
       summary: Update a gateway account credential by service ID and account Type
       tags:
       - Gateway account credentials
-  /v1/api/service/{serviceId}/{accountType}/stripe-account:
-    get:
-      operationId: getStripeAccountByServiceIdAndAccountType
-      parameters:
-      - description: Service ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StripeAccountResponse'
-          description: OK
-        "404":
-          description: Not found - Service does not exist or service does not have
-            a Stripe gateway account of this type
-      summary: Retrieves Stripe Connect account information for a given service ID
-        and account type (test|live)
-      tags:
-      - Gateway accounts
-  /v1/api/service/{serviceId}/{accountType}/stripe-setup:
-    get:
-      operationId: getStripeAccountSetupByServiceIdAndAccountType
-      parameters:
-      - description: Service ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StripeAccountSetup'
-          description: OK
-        "404":
-          description: Not found
-      summary: Retrieve Stripe connect account setup tasks for a given service ID
-        and account type
-      tags:
-      - Gateway accounts
   /v1/api/service/{serviceId}/{accountType}/worldpay/check-3ds-flex-config:
     post:
       operationId: validateWorldpay3dsCredentialsByServiceIdAndType

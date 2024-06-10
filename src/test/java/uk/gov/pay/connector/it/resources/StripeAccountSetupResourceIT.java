@@ -242,7 +242,7 @@ public class StripeAccountSetupResourceIT {
                 testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe");
 
                 app.givenSetup()
-                        .get("/v1/api/service/a-valid-service-id/TEST/stripe-setup")
+                        .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-setup")
                         .then()
                         .statusCode(200)
                         .body("bank_account", is(false))
@@ -277,7 +277,7 @@ public class StripeAccountSetupResourceIT {
                         .statusCode(200);
 
                 app.givenSetup()
-                        .get("/v1/api/service/a-valid-service-id/TEST/stripe-setup")
+                        .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-setup")
                         .then()
                         .statusCode(200)
                         .body("bank_account", is(true))
@@ -291,7 +291,7 @@ public class StripeAccountSetupResourceIT {
             @Test
             void returnsNotFoundResponseWhenNoGatewayAccountFoundForService() {
                 app.givenSetup()
-                        .get("/v1/api/service/unknown-service-id/TEST/stripe-setup")
+                        .get("/v1/api/service/unknown-service-id/account/TEST/stripe-setup")
                         .then()
                         .statusCode(404)
                         .body("message[0]", is("Gateway account not found for service ID [unknown-service-id] and account type [test]"));
@@ -301,7 +301,7 @@ public class StripeAccountSetupResourceIT {
             void returnsSuccessfulResponseWhenGatewayAccountIsNotAStripeAccount() {
                 testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "worldpay");
                 app.givenSetup()
-                        .get("/v1/api/service/a-valid-service-id/TEST/stripe-setup")
+                        .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-setup")
                         .then()
                         .statusCode(200)
                         .body("bank_account", is(false))
@@ -341,7 +341,7 @@ public class StripeAccountSetupResourceIT {
                         .statusCode(200);
 
                 app.givenSetup()
-                        .get(format("/v1/api/service/%s/%s/stripe-setup", VALID_SERVICE_ID, TEST))
+                        .get(format("/v1/api/service/%s/account/%s/stripe-setup", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(200)
                         .body("bank_account", is(true))
@@ -400,7 +400,7 @@ public class StripeAccountSetupResourceIT {
                         .statusCode(200);
 
                 app.givenSetup()
-                        .get(format("/v1/api/service/%s/%s/stripe-setup", VALID_SERVICE_ID, TEST))
+                        .get(format("/v1/api/service/%s/account/%s/stripe-setup", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(200)
                         .body("bank_account", is(true))
@@ -483,7 +483,7 @@ public class StripeAccountSetupResourceIT {
                 addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
 
                 app.givenSetup()
-                        .get(format("/v1/api/service/%s/%s/stripe-setup", VALID_SERVICE_ID, TEST))
+                        .get(format("/v1/api/service/%s/account/%s/stripe-setup", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(200)
                         .body("bank_account", is(false))
@@ -502,7 +502,7 @@ public class StripeAccountSetupResourceIT {
                         .statusCode(200);
 
                 app.givenSetup()
-                        .get(format("/v1/api/service/%s/%s/stripe-setup", VALID_SERVICE_ID, TEST))
+                        .get(format("/v1/api/service/%s/account/%s/stripe-setup", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(200)
                         .body("director", is(false));

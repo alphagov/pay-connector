@@ -86,7 +86,7 @@ public class StripeAccountResourceIT {
                     .statusCode(200);
 
             app.givenSetup()
-                    .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
+                    .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-account")
                     .then()
                     .statusCode(200)
                     .body("stripe_account_id", is(STRIPE_ACCOUNT_ID));
@@ -95,7 +95,7 @@ public class StripeAccountResourceIT {
         @Test
         void returnsNotFoundResponseWhenServiceIdNotFound() {
             app.givenSetup()
-                    .get("/v1/api/service/unknown-service-id/TEST/stripe-account")
+                    .get("/v1/api/service/unknown-service-id/account/TEST/stripe-account")
                     .then()
                     .statusCode(404)
                     .body("message[0]", is("Gateway account not found for service ID [unknown-service-id] and account type [test]"));
@@ -106,7 +106,7 @@ public class StripeAccountResourceIT {
             testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "sandbox");
 
             app.givenSetup()
-                    .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
+                    .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-account")
                     .then()
                     .statusCode(404)
                     .body("message[0]", is("Gateway account for service ID [a-valid-service-id] and account type [test] is not a Stripe account"));
@@ -117,7 +117,7 @@ public class StripeAccountResourceIT {
             testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe");
 
             app.givenSetup()
-                    .get("/v1/api/service/a-valid-service-id/TEST/stripe-account")
+                    .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-account")
                     .then()
                     .statusCode(404)
                     .body("message", is("Stripe gateway account for service ID [a-valid-service-id] and account type [test] does not have Stripe credentials"));
