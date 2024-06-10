@@ -125,7 +125,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path("/v1/api/service/{serviceId}/{accountType}")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Find gateway account by service external ID and account type (test|live)",
@@ -234,7 +234,7 @@ public class GatewayAccountResource {
     }
 
     @GET
-    @Path("/v1/frontend/service/{serviceId}/{accountType}/card-types")
+    @Path("/v1/frontend/service/{serviceId}/account/{accountType}/card-types")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Get card types for gateway account by service external ID and account type",
