@@ -63,7 +63,7 @@ public class StripeAccountSetupResource {
     }
 
     @GET
-    @Path("/v1/api/service/{serviceId}/{accountType}/stripe-setup")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/stripe-setup")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Retrieve Stripe connect account setup tasks for a given service ID and account type",

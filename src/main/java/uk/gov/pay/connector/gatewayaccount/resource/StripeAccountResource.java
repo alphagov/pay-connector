@@ -57,7 +57,7 @@ public class StripeAccountResource {
     }
 
     @GET
-    @Path("/v1/api/service/{serviceId}/{accountType}/stripe-account")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/stripe-account")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Retrieves Stripe Connect account information for a given service ID and account type (test|live)",
