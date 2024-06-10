@@ -71,7 +71,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("worldpay_3ds_flex.exemption_engine_enabled", is(true));
@@ -88,7 +88,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
@@ -97,7 +97,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateNotifySettingsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("notifySettings", nullValue());
@@ -115,7 +115,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("notifySettings.api_token", is("anapitoken"))
@@ -132,7 +132,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("notifySettings", nullValue());
@@ -173,7 +173,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateBlockPrepaidCardsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("block_prepaid_cards", is(false));
@@ -189,7 +189,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("block_prepaid_cards", is(true));
@@ -198,7 +198,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateEmailCollectionModeSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("email_collection_mode", is("MANDATORY"));
@@ -214,7 +214,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("email_collection_mode", is("OFF"));
@@ -238,7 +238,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateCorporateCardAmountsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("corporate_credit_card_surcharge_amount", is(0))
@@ -276,7 +276,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("corporate_credit_card_surcharge_amount", is(100))
@@ -287,7 +287,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updateAllowTelephonePaymentNotificationsSuccessfully() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("allow_telephone_payment_notifications", is(false));
@@ -303,7 +303,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("allow_telephone_payment_notifications", is(true));
@@ -334,7 +334,7 @@ public class GatewayAccountResourceUpdateIT {
         @Test
         void updatingDisabledToFalseShouldClearDisabledReason() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("disabled", is(false));
@@ -360,7 +360,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("disabled", is(true))
@@ -377,7 +377,7 @@ public class GatewayAccountResourceUpdateIT {
                     .statusCode(OK.getStatusCode());
 
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("disabled", is(false))

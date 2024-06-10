@@ -56,7 +56,7 @@ public class GatewayAccountFrontendResourceIT {
     
     public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
-    private static final String ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL = "v1/frontend/service/{serviceId}/{accountType}/card-types";
+    private static final String ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL = "v1/frontend/service/{serviceId}/account/{accountType}/card-types";
 
     private final Gson gson = new Gson();
 
@@ -221,7 +221,7 @@ public class GatewayAccountFrontendResourceIT {
             given().port(app.getLocalPort())
                     .contentType(JSON)
                     .accept(JSON)
-                    .get(format("/v1/api/service/%s/test", serviceId))
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(200)
                     .body("service_name", is("New Service Name"));
@@ -394,7 +394,7 @@ public class GatewayAccountFrontendResourceIT {
                     .statusCode(200);
             
             given().port(app.getLocalPort())
-                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
                     .then()
                     .body("card_types", hasSize(1))
                     .body("card_types[0].brand", is("visa"))
@@ -411,7 +411,7 @@ public class GatewayAccountFrontendResourceIT {
                     .statusCode(200);
             
             given().port(app.getLocalPort())
-                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
                     .then()
                     .body("card_types", hasSize(3));
         }
@@ -446,7 +446,7 @@ public class GatewayAccountFrontendResourceIT {
                     .statusCode(200);
 
             given().port(app.getLocalPort())
-                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
                     .then()
                     .body("card_types", hasSize(1));
 
@@ -455,7 +455,7 @@ public class GatewayAccountFrontendResourceIT {
                     .statusCode(200);
 
             given().port(app.getLocalPort())
-                    .get(String.format("/v1/frontend/service/%s/%s/card-types", serviceId, "test"))
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
                     .then()
                     .body("card_types", hasSize(0));
         }

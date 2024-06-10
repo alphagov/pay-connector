@@ -1269,6 +1269,42 @@ paths:
       summary: Handle Worldpay notifications
       tags:
       - Notifications
+  /v1/api/service/{serviceId}/account/{accountType}:
+    get:
+      description: "Get gateway account by service external ID and account type (test|live).\
+        \ Returns notifications credentials, gateway account credentials (without\
+        \ password). Doesn't include card_types or gateway_merchant_id"
+      operationId: getGatewayAccountByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
+          description: OK
+        "404":
+          description: Not found
+      summary: Find gateway account by service external ID and account type (test|live)
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/resend-confirmation-email:
     post:
       operationId: resendConfirmationEmailByServiceIdAndAccountType
@@ -1397,41 +1433,6 @@ paths:
       tags:
       - Gateway accounts
   /v1/api/service/{serviceId}/{accountType}:
-    get:
-      description: "Get gateway account by service external ID and account type (test|live).\
-        \ Returns notifications credentials, gateway account credentials (without\
-        \ password). Doesn't include card_types or gateway_merchant_id"
-      operationId: getGatewayAccountByServiceIdAndAccountType
-      parameters:
-      - description: Service ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
-          description: OK
-        "404":
-          description: Not found
-      summary: Find gateway account by service external ID and account type (test|live)
-      tags:
-      - Gateway accounts
     patch:
       description: "A generic endpoint that allows the patching of allow_apple_pay,\
         \ allow_google_pay, block_prepaid_cards, notify_settings, email_collection_mode,\
@@ -2391,7 +2392,7 @@ paths:
       summary: Get Worldpay 3DS Flex DDC JWT
       tags:
       - Charges - Frontend
-  /v1/frontend/service/{serviceId}/{accountType}/card-types:
+  /v1/frontend/service/{serviceId}/account/{accountType}/card-types:
     get:
       operationId: getAcceptedCardTypesByServiceIdAndAccountType
       parameters:
@@ -2432,6 +2433,7 @@ paths:
         type
       tags:
       - Gateway accounts
+  /v1/frontend/service/{serviceId}/{accountType}/card-types:
     post:
       operationId: updateGatewayAccountAcceptedCardTypesDegateway
       parameters:
