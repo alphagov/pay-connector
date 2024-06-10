@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources.stripe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.stripe.exception.ApiException;
+import com.stripe.exception.CardException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import io.dropwizard.setup.Environment;
@@ -178,7 +179,7 @@ public class RefundReversalResourceIT {
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
 
 
-        doThrow(new ApiException(" an error occurred", "500", null, null, null))
+        doThrow(new ApiException("error connecting to Stripe", "500", null, null, null))
                 .when(mockStripeSdkClient).createTransfer(transferRequest, false);
         
         given().port(app.getLocalPort())
@@ -189,7 +190,56 @@ public class RefundReversalResourceIT {
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()
-                .body("message", is("There was an error trying to get refund with ID:refund-external-id an error occurred; request-id: 500 from Stripe"))
+                .body("message", is("There was an error trying to create transfer with id: " + REFUND_EXTERNAL_ID + " from Stripe: " + "error connecting to Stripe; request-id: 500"))
+                .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+    }
+
+
+    @Test
+    void shouldHandleInsufficientFunds() throws JsonProcessingException, StripeException {
+        app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
+        app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
+
+        Map<String, Object> transferRequest = Map.of(
+                "destination", "acct_jdsa7789d",
+                "amount", -30L,
+                "metadata", Map.of(
+                        "stripeChargeId", "ch_sdkhdg887s",
+                        "correctionPaymentId", "random123"
+                ),
+                "currency", "GBP",
+                "transferGroup", "abc",
+                "expand", List.of("balance_transaction", "destination_payment")
+        );
+
+        when(mockStripeRefund.getStatus()).thenReturn("failed");
+
+        when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
+        when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(mockStripeRefund);
+
+        when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
+        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
+        when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
+        when(mockStripeRefund.getAmount()).thenReturn(-30L);
+//        when(mockStripeRefund.getBalanceTransactionObject().getAmount()).thenReturn(-30L);
+//        when(mockStripeRefund.getBalanceTransaction()).thenReturn("insufficient funds");
+        when(mockStripeRefund.getCurrency()).thenReturn("GBP");
+
+        doThrow(new CardException("insufficient funds", "500", "internalError", null,"insufficient_funds",null,500,null))
+                        .when(mockStripeSdkClient).createTransfer(transferRequest, false);
+
+
+
+        given().port(app.getLocalPort())
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
+                        .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
+                        .replace("{chargeId}", CHARGE_EXTERNAL_ID)
+                        .replace("{refundId}", REFUND_EXTERNAL_ID))
+                .then()
+                .body("message", is("\"Transfer failed due to insufficient funds for refund %s\", refundExternalId: " + REFUND_EXTERNAL_ID + "from Stripe: " + " error connecting to Stripe; request-id: 500"))
                 .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 

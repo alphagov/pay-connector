@@ -185,7 +185,7 @@ public class RefundReversalServiceTest {
                 () -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
 
         assertThat(thrown.getMessage(),
-                is("There was an error trying to get refund with ID:" + refund.getExternalId() + "null" + " from Stripe"));
+                is("There was an error trying to get refund from Stripe with refund id: " + refund.getExternalId()));
 
         verify(mockStripeSDKClient).getRefund(stripeRefundId, isLiveGatewayAccount);
     }

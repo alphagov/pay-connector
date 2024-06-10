@@ -48,23 +48,33 @@ public class RefundReversalService {
 
         StripeSdkClient stripeClient = stripeSdkClientFactory.getInstance();
 
+        com.stripe.model.Refund refundFromStripe;
         try {
-            com.stripe.model.Refund refundFromStripe = stripeClient.getRefund(stripeRefundId, isLiveGatewayAccount);
-            String refundStatus = refundFromStripe.getStatus();
-
-
-            if ("failed".equals(refundStatus)) {
-
-                Map<String, Object> refundRequestBody = refundRequest.createRequest(refundFromStripe);
-                stripeClient.createTransfer(refundRequestBody, isLiveGatewayAccount);
-
-            } else {
-                throw new WebApplicationException(badRequestResponse(
-                        format("Refund with Refund ID: %s and Stripe ID: %s is not in a failed state", refundExternalId, stripeRefundId)));
-            }
+            refundFromStripe = stripeClient.getRefund(stripeRefundId, isLiveGatewayAccount);
         } catch (StripeException e) {
             throw new WebApplicationException(
-                    format("There was an error trying to get refund with ID:%s from Stripe", refundExternalId + e.getMessage()));
+                    format("There was an error trying to get refund from Stripe with refund id: %s", refundExternalId));
+        }
+
+        String refundStatus = refundFromStripe.getStatus();
+
+        if (!"failed".equals(refundStatus)) {
+            throw new WebApplicationException(badRequestResponse(
+                    format("Refund with Refund ID: %s and Stripe ID: %s is not in a failed state", refundExternalId, stripeRefundId)));
+        }
+
+        Map<String, Object> refundRequestBody = refundRequest.createRequest(refundFromStripe);
+
+        try {
+            stripeClient.createTransfer(refundRequestBody, isLiveGatewayAccount);
+        } catch (StripeException e) {
+            if ( "insufficient_funds".equals(e.getStripeError().getDeclineCode())) {
+                throw new WebApplicationException(badRequestResponse(
+                        format("Transfer failed due to insufficient funds for refund %s", refundExternalId)));
+            } else {
+                throw new WebApplicationException(
+                        format("There was an error trying to create transfer with id: %s from Stripe: %s", refundExternalId, e.getMessage()));
+            }
         }
     }
 }
