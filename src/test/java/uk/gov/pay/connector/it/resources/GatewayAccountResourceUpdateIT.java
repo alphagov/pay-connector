@@ -57,7 +57,7 @@ public class GatewayAccountResourceUpdateIT {
                     "jwt_mac_key", "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9");
 
             app.givenSetup().body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", serviceId, TEST));
+                    .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", serviceId, TEST));
 
             Map<String, Object> payload = Map.of(
                     "op", "replace",

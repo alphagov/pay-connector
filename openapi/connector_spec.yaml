@@ -1356,6 +1356,46 @@ paths:
       summary: 'Patch a gateway account '
       tags:
       - Gateway accounts
+  /v1/api/service/{serviceId}/account/{accountType}/3ds-flex-credentials:
+    put:
+      operationId: createOrUpdateWorldpay3dsCredentialsByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not found - account not found or not a Worldpay gateway account
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid or missing mandatory fields
+      summary: Create or update 3DS flex credentials (worldpay accounts)
+      tags:
+      - Gateway account credentials
   /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/resend-confirmation-email:
     post:
       operationId: resendConfirmationEmailByServiceIdAndAccountType
@@ -1394,6 +1434,107 @@ paths:
         "500":
           description: Internal server error
       summary: Resend confirmation email for a charge
+  /v1/api/service/{serviceId}/account/{accountType}/credentials:
+    post:
+      operationId: createGatewayAccountCredentialsByServiceIdAndAccountType
+      parameters:
+      - description: Service external ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayAccountCredentialsRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountCredentials'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - Invalid or missing mandatory fields
+        "404":
+          description: Not found - account not found
+      summary: Create credentials for a gateway account by service external ID and
+        account type (test|live)
+      tags:
+      - Gateway account credentials
+  /v1/api/service/{serviceId}/account/{accountType}/credentials/{credentialsId}:
+    patch:
+      operationId: updateGatewayAccountCredentialsByServiceIdAndAccountType
+      parameters:
+      - description: Service external ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - description: Credential external ID
+        example: 787460d16d4a4d14b4c94787b8f427db
+        in: path
+        name: credentialsId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example:
+              - op: replace
+                path: state
+                value: ACTIVE
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayAccountCredentials'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - Invalid or missing mandatory fields
+        "404":
+          description: Not found - account or credential not found
+      summary: Update a gateway account credential by service ID and account Type
+      tags:
+      - Gateway account credentials
   /v1/api/service/{serviceId}/account/{accountType}/email-notification:
     patch:
       description: Allowed paths <br> - /payment_confirmed/enabled (values true/false)
@@ -1551,11 +1692,11 @@ paths:
         given service ID and account type
       tags:
       - Gateway accounts
-  /v1/api/service/{serviceId}/{accountType}/3ds-flex-credentials:
-    put:
-      operationId: createOrUpdateWorldpay3dsCredentialsByServiceIdAndAccountType
+  /v1/api/service/{serviceId}/account/{accountType}/worldpay/check-3ds-flex-config:
+    post:
+      operationId: validateWorldpay3dsCredentialsByServiceIdAndType
       parameters:
-      - description: Service ID
+      - description: Service external ID
         example: 46eb1b601348499196c99de90482ee68
         in: path
         name: serviceId
@@ -1579,6 +1720,10 @@ paths:
               $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
           description: OK
         "404":
           description: Not found - account not found or not a Worldpay gateway account
@@ -1588,7 +1733,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Unprocessable Entity - Invalid or missing mandatory fields
-      summary: Create or update 3DS flex credentials (worldpay accounts)
+        "503":
+          description: Service unavailable
+      summary: Validate Worldpay 3DS flex credentials
+      tags:
+      - Gateway account credentials
+  /v1/api/service/{serviceId}/account/{accountType}/worldpay/check-credentials:
+    post:
+      operationId: validateWorldpayCredentialsByServiceIdAndAccountType
+      parameters:
+      - description: Service external ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorldpayValidatableCredentials'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+          description: OK
+        "404":
+          description: Not found - account not found or not a Worldpay gateway account
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unprocessable Entity - Invalid or missing mandatory fields
+        "500":
+          description: Internal server error
+      summary: Validate Worldpay credentials by service ID and account type
       tags:
       - Gateway account credentials
   /v1/api/service/{serviceId}/{accountType}/agreements:
@@ -1673,199 +1866,6 @@ paths:
           description: default response
       tags:
       - Agreements
-  /v1/api/service/{serviceId}/{accountType}/credentials:
-    post:
-      operationId: createGatewayAccountCredentialsByServiceIdAndAccountType
-      parameters:
-      - description: Service external ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GatewayAccountCredentialsRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GatewayAccountCredentials'
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bad request - Invalid or missing mandatory fields
-        "404":
-          description: Not found - account not found
-      summary: Create credentials for a gateway account by service external ID and
-        account type (test|live)
-      tags:
-      - Gateway account credentials
-  /v1/api/service/{serviceId}/{accountType}/credentials/{credentialsId}:
-    patch:
-      operationId: updateGatewayAccountCredentialsByServiceIdAndAccountType
-      parameters:
-      - description: Service external ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      - description: Credential external ID
-        example: 787460d16d4a4d14b4c94787b8f427db
-        in: path
-        name: credentialsId
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-              example:
-              - op: replace
-                path: state
-                value: ACTIVE
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GatewayAccountCredentials'
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bad request - Invalid or missing mandatory fields
-        "404":
-          description: Not found - account or credential not found
-      summary: Update a gateway account credential by service ID and account Type
-      tags:
-      - Gateway account credentials
-  /v1/api/service/{serviceId}/{accountType}/worldpay/check-3ds-flex-config:
-    post:
-      operationId: validateWorldpay3dsCredentialsByServiceIdAndType
-      parameters:
-      - description: Service external ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationResult'
-          description: OK
-        "404":
-          description: Not found - account not found or not a Worldpay gateway account
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Unprocessable Entity - Invalid or missing mandatory fields
-        "503":
-          description: Service unavailable
-      summary: Validate Worldpay 3DS flex credentials
-      tags:
-      - Gateway account credentials
-  /v1/api/service/{serviceId}/{accountType}/worldpay/check-credentials:
-    post:
-      operationId: validateWorldpayCredentialsByServiceIdAndAccountType
-      parameters:
-      - description: Service external ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WorldpayValidatableCredentials'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationResult'
-          description: OK
-        "404":
-          description: Not found - account not found or not a Worldpay gateway account
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Unprocessable Entity - Invalid or missing mandatory fields
-        "500":
-          description: Internal server error
-      summary: Validate Worldpay credentials by service ID and account type
-      tags:
-      - Gateway account credentials
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\

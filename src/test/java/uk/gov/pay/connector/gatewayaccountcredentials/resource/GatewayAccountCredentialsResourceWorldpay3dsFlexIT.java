@@ -201,7 +201,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     }
     
     @Nested
-    class CreateOrUpdateWorldpay3DSCredentials_bySERVICE_IDAndAccountType {
+    class CreateOrUpdateWorldpay3DSCredentials_byServiceIdAndAccountType {
         @Test
         void forNoExistingCredentials_shouldSet3dsFlexCredentials_andReturn200() {
             
@@ -217,7 +217,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", SERVICE_ID, TEST))
+                    .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", SERVICE_ID, TEST))
                     .then()
                     .statusCode(200);
 
@@ -233,7 +233,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", serviceId, TEST))
+                    .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", serviceId, TEST))
                     .then()
                     .statusCode(404)
                     .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, TEST)));
@@ -253,7 +253,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", SERVICE_ID, TEST))
+                    .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", SERVICE_ID, TEST))
                     .then()
                     .statusCode(404)
                     .body("message[0]", is("Not a Worldpay gateway account"));
@@ -270,7 +270,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
             
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", SERVICE_ID, LIVE))
+                    .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", SERVICE_ID, LIVE))
                     .then()
                     .statusCode(200);
 
@@ -297,7 +297,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
             
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", SERVICE_ID, TEST))
+                    .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", SERVICE_ID, TEST))
                     .then()
                     .statusCode(200);
 
@@ -311,7 +311,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
             ));
             app.givenSetup()
                     .body(payload)
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", SERVICE_ID, TEST))
+                    .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", SERVICE_ID, TEST))
                     .then()
                     .statusCode(200);
 
@@ -323,7 +323,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
     }
 
     @Nested
-    class ValidateWorldpay3dsCredentials_bySERVICE_IDAndAccountType {
+    class ValidateWorldpay3dsCredentials_byServiceIdAndAccountType {
         @Test
         void forValidCredentials_shouldReturn200_withResultValid() {
             app.getWorldpayWireMockServer().stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
@@ -340,7 +340,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .post(format("/v1/api/service/%s/%s/worldpay/check-3ds-flex-config", SERVICE_ID, TEST))
+                    .post(format("/v1/api/service/%s/account/%s/worldpay/check-3ds-flex-config", SERVICE_ID, TEST))
                     .then()
                     .statusCode(200)
                     .body("result", is("valid"));
@@ -350,7 +350,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         void forGatewayAccountNotFound_shouldReturn404() {            
             app.givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .post(format("/v1/api/service/%s/%s/worldpay/check-3ds-flex-config", NON_EXISTENT_SERVICE_ID, TEST))
+                    .post(format("/v1/api/service/%s/account/%s/worldpay/check-3ds-flex-config", NON_EXISTENT_SERVICE_ID, TEST))
                     .then()
                     .statusCode(404)
                     .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", NON_EXISTENT_SERVICE_ID, TEST)));
@@ -379,7 +379,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             givenSetup()
                     .body(payload)
-                    .post(format("/v1/api/service/%s/%s/worldpay/check-3ds-flex-config", SERVICE_ID, TEST))
+                    .post(format("/v1/api/service/%s/account/%s/worldpay/check-3ds-flex-config", SERVICE_ID, TEST))
                     .then()
                     .statusCode(200)
                     .body("result", is("invalid"));
@@ -400,7 +400,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             givenSetup()
                     .body(toJson(valid3dsFlexCredentialsPayload))
-                    .post(format("/v1/api/service/%s/%s/worldpay/check-3ds-flex-config", SERVICE_ID, TEST))
+                    .post(format("/v1/api/service/%s/account/%s/worldpay/check-3ds-flex-config", SERVICE_ID, TEST))
                     .then()
                     .statusCode(503);
         }
