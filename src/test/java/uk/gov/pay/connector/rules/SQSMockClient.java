@@ -13,7 +13,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SQS_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SQS_SEND_MESSAGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -39,11 +38,6 @@ public class SQSMockClient {
 
         String sendMessageResponse = load(SQS_SEND_MESSAGE_RESPONSE).replace("{{md5OfMessageBody}}", md5OfBody);
         sqsSuccessResponse(sendMessageResponse);
-    }
-
-    public void mockSendMessageFail() {
-        String errorResponse = load(SQS_ERROR_RESPONSE);
-        sqsErrorResponse(errorResponse);
     }
 
     private void sqsSuccessResponse(String responseBody) {

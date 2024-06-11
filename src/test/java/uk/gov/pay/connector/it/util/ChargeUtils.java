@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.util;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
@@ -15,6 +15,10 @@ public class ChargeUtils {
 
     public static String createChargePostBody(String accountId) {
         return createChargePostBody("description", 100, accountId, "http://nothing", "default@email.invalid");
+    }
+
+    public static String createChargePostBody(String accountId, String email) {
+        return createChargePostBody("description", 100, accountId, "http://nothing", email);
     }
 
     public static String createChargePostBody(String description, long expectedAmount, String accountId, String returnUrl, String email) {

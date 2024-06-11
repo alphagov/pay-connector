@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.resource;
 
 import com.google.gson.Gson;
-import io.restassured.response.ValidatableResponse;
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,7 +9,6 @@ import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -31,9 +28,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.not;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
@@ -42,285 +37,601 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class GatewayAccountCredentialsResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    private DatabaseFixtures.TestAccount testAccount;
     private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
-    private Long credentialsId;
-    private Long accountId;
+    
+    @Nested
+    class ByAccountId {
+        private Long credentialsId;
+        private Long accountId;
+        private DatabaseFixtures.TestAccount testAccount;
+        @BeforeEach
+        void setUp() {
+            Map<String, Object> credentials = Map.of(
+                    "one_off_customer_initiated", Map.of(
+                            "merchant_code", "a-merchant-code",
+                            "username", "a-username",
+                            "password", "a-password"));
+            testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST, credentials);
+            accountId = testAccount.getAccountId();
 
-    @BeforeEach
-    void setUp() {
-        Map<String, Object> credentials = Map.of(
+            credentialsId = testAccount.getCredentials().get(0).getId();
+        }
+
+        @Nested
+        class CreateGatewayAccountCredentials {
+            @Test
+            void withCredentials_responseShouldBe200_Ok() {
+                Map<String, String> credentials = Map.of("stripe_account_id", "some-account-id");
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
+                        .post("/v1/api/accounts/" + accountId + "/credentials")
+                        .then()
+                        .statusCode(OK.getStatusCode());
+
+                app.givenSetup()
+                        .get("/v1/api/accounts/" + accountId)
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body("gateway_account_credentials.size()", is(2))
+                        .body("gateway_account_credentials[1].payment_provider", is("stripe"))
+                        .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"))
+                        .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
+            }
+
+            @Test
+            void validatesRequestBusinessLogic_responseShouldBe400() {
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "epdq")))
+                        .post("/v1/api/accounts/10000/credentials")
+                        .then()
+                        .statusCode(400);
+            }
+        }
+
+        @Nested
+        class PatchGatewayAccountCredentials {
+            @Test
+            void validRequest_responseShouldBe200() {
+                DatabaseFixtures.TestAccount stripeTestAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST,
+                        Map.of("stripe_account_id", "some-account-id"));
+                long stripeCredentialsId = stripeTestAccount.getCredentials().get(0).getId();
+                String stripeCredentialsExternalId = stripeTestAccount.getCredentials().get(0).getExternalId();
+
+                Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
+                app.givenSetup()
+                        .body(toJson(List.of(
+                                Map.of("op", "replace",
+                                        "path", "credentials",
+                                        "value", newCredentials),
+                                Map.of("op", "replace",
+                                        "path", "last_updated_by_user_external_id",
+                                        "value", "a-new-user-external-id"),
+                                Map.of("op", "replace",
+                                        "path", "state",
+                                        "value", "VERIFIED_WITH_LIVE_PAYMENT")
+                        )))
+                        .patch(format(PATCH_CREDENTIALS_URL, stripeTestAccount.getAccountId(), stripeCredentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials.stripe_account_id", is("new-account-id"))
+                        .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
+                        .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
+                        .body("created_date", is("2021-01-01T00:00:00.000Z"))
+                        .body("active_start_date", is("2021-02-01T00:00:00.000Z"))
+                        .body("active_end_date", is("2021-03-01T00:00:00.000Z"))
+                        .body("external_id", is(stripeCredentialsExternalId))
+                        .body("payment_provider", is("stripe"));
+
+                Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(stripeCredentialsId);
+                assertThat(updatedGatewayAccountCredentials, hasEntry("last_updated_by_user_external_id", "a-new-user-external-id"));
+            }
+
+            @Test
+            void invalidRequestBody_shouldReturn400() {
+                Long credentialsId = (Long) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
+
+                app.givenSetup()
+                        .body(toJson(singletonList(
+                                Map.of("op", "replace",
+                                        "path", "credentials"))))
+                        .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                        .then()
+                        .statusCode(400)
+                        .body("message[0]", is("Field [value] is required"));
+            }
+
+            @Test
+            void gatewayAccountCredentialsNotFound_shouldReturn404() {
+                Map<String, String> newCredentials = Map.of("username", "new-username",
+                        "password", "new-password",
+                        "merchant_id", "new-merchant-id");
+                app.givenSetup()
+                        .body(toJson(singletonList(
+                                Map.of("op", "replace",
+                                        "path", "credentials",
+                                        "value", newCredentials))))
+                        .patch(format(PATCH_CREDENTIALS_URL, accountId, 999999))
+                        .then()
+                        .statusCode(404)
+                        .body("message[0]", is("Gateway account credentials with id [999999] not found."));
+            }
+
+            @Test
+            void forGatewayMerchantId_shouldReturn200() {
+                app.givenSetup()
+                        .body(toJson(List.of(
+                                Map.of("op", "replace",
+                                        "path", "credentials/gateway_merchant_id",
+                                        "value", "abcdef123abcdef"))))
+                        .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials", hasKey("one_off_customer_initiated"))
+                        .body("credentials.one_off_customer_initiated", hasKey("username"))
+                        .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
+                        .body("credentials", hasKey("gateway_merchant_id"))
+                        .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+                Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
+
+                Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+                assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
+            }
+
+            @Test
+            void forGatewayMerchantId_shouldReturn400ForUnsupportedGateway() {
+                DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST, Map.of());
+                AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
+
+                app.givenSetup()
+                        .body(toJson(singletonList(
+                                Map.of("op", "replace",
+                                        "path", "credentials/gateway_merchant_id",
+                                        "value", "abcdef123abcdef"))))
+                        .patch(format(PATCH_CREDENTIALS_URL, params.getGatewayAccountId(), params.getId()))
+                        .then()
+                        .statusCode(400)
+                        .body("message[0]", is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
+            }
+
+            @Test
+            void shouldNotOverWriteOtherExistingCredentials() {
+                app.givenSetup()
+                        .body(toJson(List.of(
+                                Map.of("op", "replace",
+                                        "path", "credentials/gateway_merchant_id",
+                                        "value", "abcdef123abcdef"))))
+                        .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials", hasKey("one_off_customer_initiated"))
+                        .body("credentials.one_off_customer_initiated", hasKey("username"))
+                        .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
+                        .body("credentials", hasKey("gateway_merchant_id"))
+                        .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+                Map<String, Object> newCredentials = Map.of("op", "replace",
+                        "path", "credentials/worldpay/one_off_customer_initiated",
+                        "value", Map.of("username", "new-username",
+                                "password", "new-password",
+                                "merchant_code", "new-merchant-code"));
+
+                app.givenSetup()
+                        .body(toJson(List.of(newCredentials)))
+                        .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials", hasKey("one_off_customer_initiated"))
+                        .body("credentials.one_off_customer_initiated", hasKey("username"))
+                        .body("credentials.one_off_customer_initiated.username", is("new-username"))
+                        .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
+                        .body("credentials.one_off_customer_initiated.merchant_code", is("new-merchant-code"))
+                        .body("credentials.one_off_customer_initiated", not(hasKey("password")))
+                        .body("credentials", hasKey("gateway_merchant_id"))
+                        .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+                Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
+
+                Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+                assertThat(updatedCredentials, hasKey("one_off_customer_initiated"));
+                Map<String, String> oneOffCustomerInitiated = (Map<String, String>) updatedCredentials.get("one_off_customer_initiated");
+                assertThat(oneOffCustomerInitiated, hasEntry("username", "new-username"));
+                assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
+                assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
+                assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
+            }
+        }
+    }
+    
+    @Nested
+    class ByServiceIdAndAccountType {
+        private final String VALID_SERVICE_ID = "a-valid-service-id";
+        private final String VALID_SERVICE_NAME = "a-test-service";
+        private final Map<String, String> validStripeCredentials = Map.of("stripe_account_id", "some-account-id");
+        private final Map<String, Object> validWorldpayCredentials = Map.of(
                 "one_off_customer_initiated", Map.of(
                         "merchant_code", "a-merchant-code",
                         "username", "a-username",
                         "password", "a-password"));
-        testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST, credentials);
-        accountId = testAccount.getAccountId();
 
-        credentialsId = testAccount.getCredentials().get(0).getId();
-    }
-    
-    @Nested
-    class CreateGatewayAccountCredentials {
+        @Nested
+        class CreateGatewayAccountCredentials {
+            @Test
+            void validRequest_shouldUpdateCredentials_andReturn200() {
+                String gatewayAccountId = app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts")
+                        .then().extract().path("gateway_account_id");
 
-        @Test
-        void withCredentials_responseShouldBe200_Ok() {
-            Map<String, String> credentials = Map.of("stripe_account_id", "some-account-id");
-            app.givenSetup()
-                    .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
-                    .post("/v1/api/accounts/" + accountId + "/credentials")
-                    .then()
-                    .statusCode(OK.getStatusCode());
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
+                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body(not(hasKey("gateway_account_credential_id")));;
 
-            app.givenSetup()
-                    .get("/v1/api/accounts/" + accountId)
+                app.givenSetup()
+                        .get("/v1/api/accounts/" + gatewayAccountId)
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body("gateway_account_credentials.size()", is(2))
+                        .body("gateway_account_credentials[1].payment_provider", is("stripe"))
+                        .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"))
+                        .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
+            }
+
+            @Test
+            void withNoGatewayAccount_shouldReturn404() {
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
+                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(404)
+                        .body("message[0]", is("Gateway account not found for service ID [a-valid-service-id] and account type [test]"));
+            }
+
+            @Test
+            void withInvalidCredentials_shouldReturn400() {
+                app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "epdq")))
+                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(400)
+                        .body("message[0]", is("Operation not supported for payment provider 'epdq'"));
+            }
+        }
+
+        @Nested
+        class PatchGatewayAccountCredentials {
+            @Test
+            void forValidRequest_shouldUpdateCredentials_andReturn200() {
+                app.givenSetup()
+                    .body(toJson(Map.of(
+                        "payment_provider", "stripe",
+                        "service_id", VALID_SERVICE_ID,
+                        "service_name", VALID_SERVICE_NAME,
+                        "type", "test"
+                    )))
+                    .post("/v1/api/accounts");
+
+                String credentialsId = app.givenSetup()
+                    .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
+                    .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
-                    .body("gateway_account_credentials.size()", is(2))
-                    .body("gateway_account_credentials[1].payment_provider", is("stripe"))
-                    .body("gateway_account_credentials[1].credentials.stripe_account_id", is("some-account-id"))
-                    .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
-        }
+                    .extract().path("external_id");
 
-        @Test
-        void validatesRequestBusinessLogic_responseShouldBe400() {
-            app.givenSetup()
-                    .body(toJson(Map.of("payment_provider", "epdq")))
-                    .post("/v1/api/accounts/10000/credentials")
-                    .then()
-                    .statusCode(400);
-        }
-    }
-    
-    @Nested
-    class PatchGatewayAccountCredentials {
-        @Test
-        void validRequest_responseShouldBe200() {
-            DatabaseFixtures.TestAccount stripeTestAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST,
-                    Map.of("stripe_account_id", "some-account-id"));
-            long stripeCredentialsId = stripeTestAccount.getCredentials().get(0).getId();
-            String stripeCredentialsExternalId = stripeTestAccount.getCredentials().get(0).getExternalId();
-
-            Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
-            app.givenSetup()
+                Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
+                app.givenSetup()
                     .body(toJson(List.of(
-                            Map.of("op", "replace",
-                                    "path", "credentials",
-                                    "value", newCredentials),
-                            Map.of("op", "replace",
-                                    "path", "last_updated_by_user_external_id",
-                                    "value", "a-new-user-external-id"),
-                            Map.of("op", "replace",
-                                    "path", "state",
-                                    "value", "VERIFIED_WITH_LIVE_PAYMENT")
+                        Map.of("op", "replace",
+                                "path", "credentials",
+                                "value", newCredentials),
+                        Map.of("op", "replace",
+                                "path", "last_updated_by_user_external_id",
+                                "value", "a-new-user-external-id"),
+                        Map.of("op", "replace",
+                                "path", "state",
+                                "value", "VERIFIED_WITH_LIVE_PAYMENT")
                     )))
-                    .patch(format(PATCH_CREDENTIALS_URL, stripeTestAccount.getAccountId(), stripeCredentialsId))
+                    .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                     .then()
                     .statusCode(200)
                     .body("$", hasKey("credentials"))
                     .body("credentials.stripe_account_id", is("new-account-id"))
                     .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
                     .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
-                    .body("created_date", is("2021-01-01T00:00:00.000Z"))
-                    .body("active_start_date", is("2021-02-01T00:00:00.000Z"))
-                    .body("active_end_date", is("2021-03-01T00:00:00.000Z"))
-                    .body("external_id", is(stripeCredentialsExternalId))
-                    .body("payment_provider", is("stripe"));
+                    .body("external_id", is(credentialsId))
+                    .body("payment_provider", is("stripe"))
+                    .body(not(hasKey("gateway_account_credential_id")));
 
-            Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(stripeCredentialsId);
-            assertThat(updatedGatewayAccountCredentials, hasEntry("last_updated_by_user_external_id", "a-new-user-external-id"));
-        }
+                app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/%s", VALID_SERVICE_ID, TEST))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("gateway_account_credentials[1].last_updated_by_user_external_id", is("a-new-user-external-id"))
+                    .body("gateway_account_credentials[1].state", is("VERIFIED_WITH_LIVE_PAYMENT"))
+                    .body("gateway_account_credentials[1].credentials.stripe_account_id", is("new-account-id"));
+            }
 
-        @Test
-        void invalidRequestBody_shouldReturn400() {
-            Long credentialsId = (Long) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
+            @Test
+            void forInvalidRequestBody_shouldReturn400() {
+                app.givenSetup()
+                    .body(toJson(Map.of(
+                        "payment_provider", "stripe",
+                        "service_id", VALID_SERVICE_ID,
+                        "service_name", VALID_SERVICE_NAME,
+                        "type", "test"
+                    )))
+                    .post("/v1/api/accounts");
 
-            app.givenSetup()
+                String credentialsId = app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
+                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .extract().path("external_id");
+                
+                app.givenSetup()
                     .body(toJson(singletonList(
-                            Map.of("op", "replace",
-                                    "path", "credentials"))))
-                    .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
+                        Map.of("op", "replace",
+                                "path", "credentials"))))
+                    .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                     .then()
                     .statusCode(400)
                     .body("message[0]", is("Field [value] is required"));
+            }
+
+            @Test
+            void forGatewayAccountCredentialsNotFound_shouldReturn404() {
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+                
+                Map<String, String> newCredentials = Map.of("username", "new-username",
+                        "password", "new-password",
+                        "merchant_id", "new-merchant-id");
+                app.givenSetup()
+                        .body(toJson(singletonList(
+                                Map.of("op", "replace",
+                                        "path", "credentials",
+                                        "value", newCredentials))))
+                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, "an-invalid-credentials-id"))
+                        .then()
+                        .statusCode(404)
+                        .body("message[0]", is("Gateway account credentials with ID [an-invalid-credentials-id] not found."));
+            }
+
+            @Test
+            void forValidCredentials_withGatewayMerchantId_andPaymentProviderWorldpay_shouldUpdateCredentials() {
+                String gatewayAccountId = app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "worldpay",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts")
+                        .then().extract().path("external_id");
+
+                // This is necessary as it is not possible to create credentials with type Map<String, Object> via the API
+                long gatewayAccountInternalId = (long) app.getDatabaseTestHelper().getGatewayAccountByExternalId(gatewayAccountId).get("id");
+                app.getDatabaseTestHelper().updateCredentialsFor(gatewayAccountInternalId, toJson(validWorldpayCredentials));
+                String credentialsId = (String) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountInternalId).stream().findFirst().get().get("external_id");
+                
+                app.givenSetup()
+                        .body(toJson(List.of(
+                                Map.of("op", "replace",
+                                        "path", "credentials/gateway_merchant_id",
+                                        "value", "abcdef123abcdef"))))
+                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials", hasKey("one_off_customer_initiated"))
+                        .body("credentials.one_off_customer_initiated", hasKey("username"))
+                        .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
+                        .body("credentials", hasKey("gateway_merchant_id"))
+                        .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+                app.givenSetup()
+                        .get(format("/v1/api/service/%s/account/%s", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body("gateway_account_credentials[0].external_id", is(credentialsId))
+                        .body("gateway_account_credentials[0].credentials.gateway_merchant_id", is("abcdef123abcdef"));
+            }
+
+            @Test
+            void forValidCredentials_withGatewayMerchantId_andPaymentProviderStripe_shouldReturn400() {
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+
+                String credentialsId = app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
+                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .extract().path("external_id");
+
+                app.givenSetup()
+                        .body(toJson(singletonList(
+                                Map.of("op", "replace",
+                                        "path", "credentials/gateway_merchant_id",
+                                        "value", "abcdef123abcdef"))))
+                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .then()
+                        .statusCode(400)
+                        .body("message[0]", is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
+            }
+
+            @Test
+            void forExistingCredentials_shouldOnlyUpdateSpecifiedFields() {
+                String gatewayAccountId = app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "worldpay",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts")
+                        .then().extract().path("external_id");
+                
+                // This is necessary as it is not possible to create credentials with type Map<String, Object> via the API
+                long gatewayAccountInternalId = (long) app.getDatabaseTestHelper().getGatewayAccountByExternalId(gatewayAccountId).get("id");
+                app.getDatabaseTestHelper().updateCredentialsFor(gatewayAccountInternalId, toJson(validWorldpayCredentials));
+                String credentialsId = (String) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountInternalId).stream().findFirst().get().get("external_id");
+                
+                // Update to gateway_merchant_id should not change one_off_customer_initiated
+                app.givenSetup()
+                        .body(toJson(List.of(
+                                Map.of("op", "replace",
+                                        "path", "credentials/gateway_merchant_id",
+                                        "value", "abcdef123abcdef"))))
+                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials", hasKey("one_off_customer_initiated"))
+                        .body("credentials.one_off_customer_initiated", hasKey("username"))
+                        .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
+                        .body("credentials", hasKey("gateway_merchant_id"))
+                        .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+                Map<String, Object> newCredentials = Map.of("op", "replace",
+                        "path", "credentials/worldpay/one_off_customer_initiated",
+                        "value", Map.of("username", "new-username",
+                                "password", "new-password",
+                                "merchant_code", "new-merchant-code"));
+
+                // Update to one_off_customer_initiated should not change gateway_merchant_id
+                app.givenSetup()
+                        .body(toJson(List.of(newCredentials)))
+                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials", hasKey("one_off_customer_initiated"))
+                        .body("credentials.one_off_customer_initiated", hasKey("username"))
+                        .body("credentials.one_off_customer_initiated.username", is("new-username"))
+                        .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
+                        .body("credentials.one_off_customer_initiated.merchant_code", is("new-merchant-code"))
+                        .body("credentials.one_off_customer_initiated", not(hasKey("password")))
+                        .body("credentials", hasKey("gateway_merchant_id"))
+                        .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
+
+                // This cannot be tested via the API as the API does not return passwords with credentials
+                Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsByExternalId(credentialsId);
+
+                Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
+                assertThat(updatedCredentials, hasKey("one_off_customer_initiated"));
+                Map<String, String> oneOffCustomerInitiated = (Map<String, String>) updatedCredentials.get("one_off_customer_initiated");
+                assertThat(oneOffCustomerInitiated, hasEntry("username", "new-username"));
+                assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
+                assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
+                assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
+            }
         }
 
-        @Test
-        void gatewayAccountCredentialsNotFound_shouldReturn404() {
-            Map<String, String> newCredentials = Map.of("username", "new-username",
-                    "password", "new-password",
-                    "merchant_id", "new-merchant-id");
-            app.givenSetup()
-                    .body(toJson(singletonList(
-                            Map.of("op", "replace",
-                                    "path", "credentials",
-                                    "value", newCredentials))))
-                    .patch(format(PATCH_CREDENTIALS_URL, accountId, 999999))
-                    .then()
-                    .statusCode(404)
-                    .body("message[0]", is("Gateway account credentials with id [999999] not found."));
-        }
-
-        @Test
-        void forGatewayMerchantId_shouldReturn200() {
-            app.givenSetup()
-                    .body(toJson(List.of(
-                            Map.of("op", "replace",
-                                    "path", "credentials/gateway_merchant_id",
-                                    "value", "abcdef123abcdef"))))
-                    .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
-                    .then()
-                    .statusCode(200)
-                    .body("$", hasKey("credentials"))
-                    .body("credentials", hasKey("one_off_customer_initiated"))
-                    .body("credentials.one_off_customer_initiated", hasKey("username"))
-                    .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
-                    .body("credentials", hasKey("gateway_merchant_id"))
-                    .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
-
-            Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
-
-            Map<String, String> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
-            assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
-        }
-
-        @Test
-        void forGatewayMerchantId_shouldReturn400ForUnsupportedGateway() {
-            DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST, Map.of());
-            AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
-
-            app.givenSetup()
-                    .body(toJson(singletonList(
-                            Map.of("op", "replace",
-                                    "path", "credentials/gateway_merchant_id",
-                                    "value", "abcdef123abcdef"))))
-                    .patch(format(PATCH_CREDENTIALS_URL, params.getGatewayAccountId(), params.getId()))
-                    .then()
-                    .statusCode(400)
-                    .body("message[0]", is("Gateway 'stripe' does not support digital wallets."));
-        }
-
-        @Test
-        void shouldNotOverWriteOtherExistingCredentials() {
-            app.givenSetup()
-                    .body(toJson(List.of(
-                            Map.of("op", "replace",
-                                    "path", "credentials/gateway_merchant_id",
-                                    "value", "abcdef123abcdef"))))
-                    .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
-                    .then()
-                    .statusCode(200)
-                    .body("$", hasKey("credentials"))
-                    .body("credentials", hasKey("one_off_customer_initiated"))
-                    .body("credentials.one_off_customer_initiated", hasKey("username"))
-                    .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
-                    .body("credentials", hasKey("gateway_merchant_id"))
-                    .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
-
-            Map<String, Object> newCredentials = Map.of("op", "replace",
-                    "path", "credentials/worldpay/one_off_customer_initiated",
-                    "value", Map.of("username", "new-username",
-                            "password", "new-password",
-                            "merchant_code", "new-merchant-code"));
-
-            app.givenSetup()
-                    .body(toJson(List.of(newCredentials)))
-                    .patch(format(PATCH_CREDENTIALS_URL, accountId, credentialsId))
-                    .then()
-                    .statusCode(200)
-                    .body("$", hasKey("credentials"))
-                    .body("credentials", hasKey("one_off_customer_initiated"))
-                    .body("credentials.one_off_customer_initiated", hasKey("username"))
-                    .body("credentials.one_off_customer_initiated.username", is("new-username"))
-                    .body("credentials.one_off_customer_initiated", hasKey("merchant_code"))
-                    .body("credentials.one_off_customer_initiated.merchant_code", is("new-merchant-code"))
-                    .body("credentials.one_off_customer_initiated", not(hasKey("password")))
-                    .body("credentials", hasKey("gateway_merchant_id"))
-                    .body("credentials.gateway_merchant_id", is("abcdef123abcdef"));
-
-            Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsById(credentialsId);
-
-            Map<String, Object> updatedCredentials = new Gson().fromJson(((PGobject) updatedGatewayAccountCredentials.get("credentials")).getValue(), Map.class);
-            assertThat(updatedCredentials, hasKey("one_off_customer_initiated"));
-            Map<String, String> oneOffCustomerInitiated = (Map<String, String>) updatedCredentials.get("one_off_customer_initiated");
-            assertThat(oneOffCustomerInitiated, hasEntry("username", "new-username"));
-            assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
-            assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
-            assertThat(updatedCredentials, hasEntry("gateway_merchant_id", "abcdef123abcdef"));
-        }
-    }
-    
-    @Nested
-    class CreateOrUpdateWorldpay3DSCredentials_byServiceIdAndAccountType {
-        private static final String VALID_ISSUER = "53f0917f101a4428b69d5fb0"; // pragma: allowlist secret`
-        private static final String VALID_ORG_UNIT_ID = "57992a087a0c4849895ab8a2"; // pragma: allowlist secret`
-        private static final String VALID_JWT_MAC_KEY = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9"; // pragma: allowlist secret`
-        private final Map<String, String> valid3dsFlexCredentialsPayload = Map.of(
-                "issuer", VALID_ISSUER,
-                "organisational_unit_id", VALID_ORG_UNIT_ID,
-                "jwt_mac_key", VALID_JWT_MAC_KEY
-        );
-        @Test
-        void shouldUpdateCredentialsAndReturn200() {
-            String serviceId = "a-valid-service-id";
-            String gatewayAccountId = app.givenSetup()
-                .body(toJson(Map.of(
-                        "payment_provider", "worldpay",
-                        "service_id", serviceId,
-                        "service_name", "a-test-service",
-                        "type", "test"
-                )))
-                .post("/v1/api/accounts")
-                .then().extract().path("gateway_account_id");
+        @Nested
+        class ValidateWorldpayCredentials {
+            private final Map<String, String> worldpayCredentials = Map.of(
+                    "merchant_id", "a-merchant-id",
+                    "username", "a-username",
+                    "password", "a-password");
             
-            app.givenSetup()
-                    .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", serviceId, TEST))
-                    .then()
-                    .statusCode(200);
+            @Test
+            void forNonExistentGatewayAccount_shouldReturn404() {
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(404)
+                        .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", VALID_SERVICE_ID, TEST)));
+            }
 
-            Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getWorldpay3dsFlexCredentials(Long.valueOf(gatewayAccountId));
-            assertThat(updatedGatewayAccountCredentials, hasEntry("issuer", VALID_ISSUER));
-            assertThat(updatedGatewayAccountCredentials, hasEntry("jwt_mac_key", VALID_JWT_MAC_KEY));
-            assertThat(updatedGatewayAccountCredentials, hasEntry("organisational_unit_id", VALID_ORG_UNIT_ID));
-        }
-        @Test
-        void shouldReturn404_forNonExistentGatewayAccount() {
-            String serviceId = "a-service-id-with-no-gateway-account";
-            
-            app.givenSetup()
-                    .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", serviceId, TEST))
-                    .then()
-                    .statusCode(404)
-                    .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, TEST)));
-        }
-        
-        @Test
-        void shouldReturn404_andNotUpdateCredentials_forNonWorldpayGatewayAccount() {
-            String serviceId = "a-valid-service-id";
-            String gatewayAccountId = app.givenSetup()
-                    .body(toJson(Map.of(
-                            "payment_provider", "stripe",
-                            "service_id", serviceId,
-                            "service_name", "a-test-service",
-                            "type", "test"
-                    )))
-                    .post("/v1/api/accounts")
-                    .then().extract().path("gateway_account_id");
+            @Test
+            void forValidCredentials_shouldReturn200_withResultValid() {
+                app.getWorldpayMockClient().mockCredentialsValidationValid();
 
-            app.givenSetup()
-                    .body(toJson(valid3dsFlexCredentialsPayload))
-                    .put(format("/v1/api/service/%s/%s/3ds-flex-credentials", serviceId, TEST))
-                    .then()
-                    .statusCode(404)
-                    .body("message[0]", is("Not a Worldpay gateway account"));
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "worldpay",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
 
-            Exception exception = assertThrows(IllegalStateException.class, () -> 
-                app.getDatabaseTestHelper().getWorldpay3dsFlexCredentials(Long.valueOf(gatewayAccountId))
-            );
-            assertThat(exception.getMessage(), is("Expected at least one element, but found none"));
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(200)
+                        .body("result", is("valid"));
+            }
 
+            @Test
+            void forInvalidCredentials_shouldReturn200_withResultInvalid() {
+                app.getWorldpayMockClient().mockCredentialsValidationInvalid();
+
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "worldpay",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(200)
+                        .body("result", is("invalid"));
+            }
+
+            @Test
+            void forNonWorldpayAccount_shouldReturn404() {
+                app.getWorldpayMockClient().mockCredentialsValidationInvalid();
+
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(404)
+                        .body("message[0]", is(format("Gateway account for service ID [%s] and account type [%s] is not a Worldpay account.", VALID_SERVICE_ID, TEST)));
+            }
         }
     }
 

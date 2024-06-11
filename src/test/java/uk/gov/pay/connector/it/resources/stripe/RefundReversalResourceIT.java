@@ -5,7 +5,7 @@ import com.stripe.exception.ApiException;
 import com.stripe.exception.CardException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.AfterEach;

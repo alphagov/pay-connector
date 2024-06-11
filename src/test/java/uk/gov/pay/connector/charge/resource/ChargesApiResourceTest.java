@@ -2,6 +2,8 @@ package uk.gov.pay.connector.charge.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -11,6 +13,7 @@ import uk.gov.pay.connector.common.exception.ConstraintViolationExceptionMapper;
 import uk.gov.pay.connector.common.exception.ValidationExceptionMapper;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
@@ -22,10 +25,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,8 +40,15 @@ public class ChargesApiResourceTest {
     private static final ChargeExpiryService chargeExpiryService = mock(ChargeExpiryService.class);
     private static final GatewayAccountService gatewayAccountService = mock(GatewayAccountService.class);
     private static final UserNotificationService userNotificationService = mock(UserNotificationService.class);
+    private static final GatewayAccountEntity mockGatewayAccountEntity = mock(GatewayAccountEntity.class);
+    private static final Charge mockCharge = mock(Charge.class);
 
-    public static ResourceExtension resources = ResourceExtension.builder()
+    private static final String A_CHARGE_ID = "charge-id";
+    private static final String A_SERVICE_ID = "a-service-id";
+    private static final Long AN_ACCOUNT_ID = 1234L;
+    private static final GatewayAccountType A_GATEWAY_ACCOUNT_TYPE = GatewayAccountType.TEST;
+
+    public static ResourceExtension chargesApiResource = ResourceExtension.builder()
             .addResource(new ChargesApiResource(chargeService, chargeExpiryService, gatewayAccountService, userNotificationService))
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(ConstraintViolationExceptionMapper.class)
@@ -45,140 +56,229 @@ public class ChargesApiResourceTest {
             .addProvider(ValidationExceptionMapper.class)
             .build();
 
-    @Test
-    void createCharge_invalidAuthorisationMode_shouldReturn400() {
-        var payload = Map.of(
-                "amount", 100,
-                "reference", "ref",
-                "description", "desc",
-                "return_url", "http://service.url/success-page/",
-                "authorisation_mode", "foo"
-        );
+    @Nested
+    @DisplayName("Given an account id")
+    class ByAccountId {
+        
+        @Nested
+        @DisplayName("Then create charge")
+        class CreateCharge {
+            
+            @Test
+            @DisplayName("Should return 400 if authorisation mode is invalid")
+            void invalidAuthorisationMode_shouldReturn400() {
+                var payload = Map.of(
+                        "amount", 100,
+                        "reference", "ref",
+                        "description", "desc",
+                        "return_url", "http://service.url/success-page/",
+                        "authorisation_mode", "foo"
+                );
 
-        Response response = resources
-                .target("/v1/api/accounts/1/charges")
-                .request()
-                .post(Entity.json(payload));
+                try (Response response = chargesApiResource
+                        .target("/v1/api/accounts/1/charges")
+                        .request()
+                        .post(Entity.json(payload))) {
 
-        assertThat(response.getStatus(), is(400));
+                    assertGenericErrorResponse(response, 400, "Cannot deserialize value of type `uk.gov.service.payments.commons.model.AuthorisationMode`");
+                }
+            }
+
+            @DisplayName("Should return 422 if idempotency key is above maximum length")
+            @Test
+            void idempotencyKeyAboveMaxLength_shouldReturn422() {
+                var payload = Map.of(
+                        "amount", 100,
+                        "reference", "ref",
+                        "description", "desc",
+                        "authorisation_mode", "agreement",
+                        "agreement_id", "agreement12345677890123456"
+                );
+
+                try (Response response = chargesApiResource
+                        .target("/v1/api/accounts/1/charges")
+                        .request()
+                        .header("Idempotency-Key", "a".repeat(256))
+                        .post(Entity.json(payload))) {
+
+
+                    assertGenericErrorResponse(response, 422, "Header [Idempotency-Key] can have a size between 1 and 255");
+                }
+            }
+
+            @DisplayName("Should return 422 if idempotency key is empty")
+            @Test
+            void idempotencyKeyEmpty_shouldReturn422() {
+                var payload = Map.of(
+                        "amount", 100,
+                        "reference", "ref",
+                        "description", "desc",
+                        "authorisation_mode", "agreement",
+                        "agreement_id", "agreement12345677890123456"
+                );
+
+                try (Response response = chargesApiResource
+                        .target("/v1/api/accounts/1/charges")
+                        .request()
+                        .header("Idempotency-Key", "")
+                        .post(Entity.json(payload))) {
+
+                    assertGenericErrorResponse(response, 422, "Header [Idempotency-Key] can have a size between 1 and 255");
+                }
+            }
+        }
+
+        @Nested
+        @DisplayName("Then resend confirmation email")
+        class ResendConfirmationEmail {
+
+            @Test
+            @DisplayName("Should return 404 if account is not found")
+            void accountNotFound_shouldReturn404() {
+                when(gatewayAccountService.getGatewayAccount(AN_ACCOUNT_ID)).thenReturn(Optional.empty());
+
+                try (Response response = chargesApiResource
+                        .target(String.format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", AN_ACCOUNT_ID, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertGenericErrorResponse(response, 404, format("Gateway Account with id [%s] not found.", AN_ACCOUNT_ID));
+                }
+            }
+
+            @Test
+            @DisplayName("Should return 404 if charge is not found")
+            void chargeNotFound_shouldReturn404() {
+                when(gatewayAccountService.getGatewayAccount(AN_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+                when(chargeService.findCharge(A_CHARGE_ID, AN_ACCOUNT_ID)).thenReturn(Optional.empty());
+
+                try (Response response = chargesApiResource
+                        .target(String.format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", AN_ACCOUNT_ID, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertGenericErrorResponse(response, 404, format("Charge with id [%s] not found.", A_CHARGE_ID));
+                }
+            }
+
+            @Test
+            @DisplayName("Should return 402 if email is not sent")
+            void emailNotSent_shouldReturn402() {
+                when(gatewayAccountService.getGatewayAccount(AN_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+                when(chargeService.findCharge(A_CHARGE_ID, AN_ACCOUNT_ID)).thenReturn(Optional.of(mockCharge));
+                when(userNotificationService.sendPaymentConfirmedEmailSynchronously(mockCharge, mockGatewayAccountEntity, true))
+                        .thenReturn(Optional.empty());
+
+                try (Response response = chargesApiResource
+                        .target(format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", AN_ACCOUNT_ID, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertGenericErrorResponse(response, 402, "Failed to send email");
+                }
+            }
+
+            @Test
+            @DisplayName("Should return 204 if email is sent successfully")
+            void success_shouldReturn204() {
+                when(gatewayAccountService.getGatewayAccount(AN_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+                when(chargeService.findCharge(A_CHARGE_ID, AN_ACCOUNT_ID)).thenReturn(Optional.of(mockCharge));
+                when(userNotificationService.sendPaymentConfirmedEmailSynchronously(mockCharge, mockGatewayAccountEntity, true))
+                        .thenReturn(Optional.of("Email sent"));
+
+                try (Response response = chargesApiResource
+                        .target(String.format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", AN_ACCOUNT_ID, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertThat(response.getStatus(), is(204));
+                }
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("Given a service id and account type")
+    class ByServiceIdAndAccountType {
+
+        @Nested
+        @DisplayName("Then resend confirmation email")
+        class ResendConfirmationEmail {
+
+            @Test
+            @DisplayName("Should return 404 if account is not found")
+            void accountNotFound_shouldReturn404() {
+                when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE)).thenReturn(Optional.empty());
+
+                try (Response response = chargesApiResource
+                        .target(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertGenericErrorResponse(response, 404, format("Gateway account not found for service ID [%s] and account type [%s]", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE));
+                }
+            }
+
+            @Test
+            @DisplayName("Should return 404 if charge is not found")
+            void chargeNotFound_shouldReturn404() {
+                when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE)).thenReturn(Optional.of(mockGatewayAccountEntity));
+                when(chargeService.findCharge(any(), (Long) any())).thenReturn(Optional.empty());
+
+                try (Response response = chargesApiResource
+                        .target(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertGenericErrorResponse(response, 404, format("Charge with id [%s] not found.", A_CHARGE_ID));
+                }
+            }
+
+            @Test
+            @DisplayName("Should return 402 if email is not sent")
+            void emailNotSent_shouldReturn402() {
+                when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE)).thenReturn(Optional.of(mockGatewayAccountEntity));
+                when(chargeService.findCharge(eq(A_CHARGE_ID), any())).thenReturn(Optional.of(mockCharge));
+                when(userNotificationService.sendPaymentConfirmedEmailSynchronously(mockCharge, mockGatewayAccountEntity, true))
+                        .thenReturn(Optional.empty());
+
+                try (Response response = chargesApiResource
+                        .target(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertGenericErrorResponse(response, 402, "Failed to send email");
+                }
+            }
+
+            @Test
+            @DisplayName("Should return 204 if email is sent successfully")
+            void success_shouldReturn204() {
+                when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE)).thenReturn(Optional.of(mockGatewayAccountEntity));
+                when(chargeService.findCharge(eq(A_CHARGE_ID), any())).thenReturn(Optional.of(mockCharge));
+                when(userNotificationService.sendPaymentConfirmedEmailSynchronously(mockCharge, mockGatewayAccountEntity, true))
+                        .thenReturn(Optional.of("Email sent"));
+
+                try (Response response = chargesApiResource
+                        .target(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE, A_CHARGE_ID))
+                        .request()
+                        .post(Entity.json(Collections.emptyMap()))) {
+
+                    assertThat(response.getStatus(), is(204));
+                }
+            }
+        }
+    }
+
+    private static void assertGenericErrorResponse(Response response, int status, String errorMessage) {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages().get(0), startsWith("Cannot deserialize value of type `uk.gov.service.payments.commons.model.AuthorisationMode`"));
+        assertThat(response.getStatus(), is(status));
         assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
-    }
-
-    @Test
-    void createCharge_idempotencyKeyAboveMaxLength_shouldReturn422() {
-        var payload = Map.of(
-                "amount", 100,
-                "reference", "ref",
-                "description", "desc",
-                "authorisation_mode", "agreement",
-                "agreement_id", "agreement12345677890123456"
-        );
-
-        Response response = resources
-                .target("/v1/api/accounts/1/charges")
-                .request()
-                .header("Idempotency-Key", "a".repeat(256))
-                .post(Entity.json(payload));
-
-        assertThat(response.getStatus(), is(422));
-        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), contains("Header [Idempotency-Key] can have a size between 1 and 255"));
-        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
-    }
-
-    @Test
-    void createCharge_idempotencyKeyEmpty_shouldReturn422() {
-        var payload = Map.of(
-                "amount", 100,
-                "reference", "ref",
-                "description", "desc",
-                "authorisation_mode", "agreement",
-                "agreement_id", "agreement12345677890123456"
-        );
-
-        Response response = resources
-                .target("/v1/api/accounts/1/charges")
-                .request()
-                .header("Idempotency-Key", "")
-                .post(Entity.json(payload));
-
-        assertThat(response.getStatus(), is(422));
-        ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), contains("Header [Idempotency-Key] can have a size between 1 and 255"));
-        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
-    }
-
-    @Test
-    void resendConfirmationEmail_accountNotFound_shouldReturn404() {
-        var accountId = 1234L;
-        var chargeId = "charge-id";
-
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.empty());
-
-        Response response = resources
-                .target(String.format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", accountId, chargeId))
-                .request()
-                .post(Entity.json(Collections.emptyMap()));
-
-        assertThat(response.getStatus(), is(404));
-    }
-
-    @Test
-    void resendConfirmationEmail_chargeNotFound_shouldReturn404() {
-        var accountId = 1234L;
-        var chargeId = "charge-id";
-        var account = mock(GatewayAccountEntity.class);
-
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(account));
-        when(chargeService.findCharge(chargeId, accountId)).thenReturn(Optional.empty());
-
-        Response response = resources
-                .target(String.format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", accountId, chargeId))
-                .request()
-                .post(Entity.json(Collections.emptyMap()));
-
-        assertThat(response.getStatus(), is(404));
-    }
-
-    @Test
-    void resendConfirmationEmail_emailNotSent_shouldReturn402() {
-        var accountId = 1234L;
-        var chargeId = "charge-id";
-        var account = mock(GatewayAccountEntity.class);
-        var charge = mock(Charge.class);
-
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(account));
-        when(chargeService.findCharge(chargeId, accountId)).thenReturn(Optional.of(charge));
-        when(userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true))
-                .thenReturn(Optional.empty());
-
-        Response response = resources
-                .target(String.format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", accountId, chargeId))
-                .request()
-                .post(Entity.json(Collections.emptyMap()));
-
-        assertThat(response.getStatus(), is(402));
-    }
-
-    @Test
-    void resendConfirmationEmail_success_shouldReturn204() {
-        var accountId = 1234L;
-        var chargeId = "charge-id";
-        var account = mock(GatewayAccountEntity.class);
-        var charge = mock(Charge.class);
-
-        when(gatewayAccountService.getGatewayAccount(accountId)).thenReturn(Optional.of(account));
-        when(chargeService.findCharge(chargeId, accountId)).thenReturn(Optional.of(charge));
-        when(userNotificationService.sendPaymentConfirmedEmailSynchronously(charge, account, true))
-                .thenReturn(Optional.of("Email sent"));
-
-        Response response = resources
-                .target(String.format("/v1/api/accounts/%d/charges/%s/resend-confirmation-email", accountId, chargeId))
-                .request()
-                .post(Entity.json(Collections.emptyMap()));
-
-        assertThat(response.getStatus(), is(204));
+        var errorIsPresentInMessages = errorResponse
+                .getMessages()
+                .stream()
+                .anyMatch(message -> message
+                        .contains(errorMessage));
+        assertThat(errorIsPresentInMessages, is(true));
     }
 }

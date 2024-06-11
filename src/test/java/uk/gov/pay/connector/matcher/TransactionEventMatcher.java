@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.matcher;
 
-import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 

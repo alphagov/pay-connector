@@ -248,7 +248,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "123456789012311")
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "stripe", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Gateway 'stripe' does not support digital wallets."));
+        assertThat(thrown.getErrors().get(0), is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
     }
 
     @Test

@@ -111,6 +111,17 @@ public class GatewayAccountService {
     }
 
     @Transactional
+    public Optional<GatewayAccount> doPatch(String serviceId, GatewayAccountType accountType, JsonPatchRequest gatewayAccountRequest) {
+        return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
+                .flatMap(gatewayAccountEntity -> {
+                    attributeUpdater.get(gatewayAccountRequest.getPath())
+                            .accept(gatewayAccountRequest, gatewayAccountEntity);
+                    gatewayAccountDao.merge(gatewayAccountEntity);
+                    return Optional.of(GatewayAccount.valueOf(gatewayAccountEntity));
+                });
+    }
+
+    @Transactional
     public CreateGatewayAccountResponse createGatewayAccount(GatewayAccountRequest gatewayAccountRequest, UriInfo uriInfo) {
 
         GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConverter.createEntityFrom(gatewayAccountRequest);

@@ -12,9 +12,7 @@ import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.service.payments.commons.api.json.ApiResponseInstantWithMicrosecondPrecisionSerializer;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.Objects;
-import java.util.Optional;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)

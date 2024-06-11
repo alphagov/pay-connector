@@ -1,15 +1,21 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.google.gson.Gson;
+import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Arrays;
@@ -19,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -36,9 +43,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_FRONTEND_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.GatewayAccountPayload.createDefault;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.createAGatewayAccountRequestSpecificationFor;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountFrontendResourceIT {
     @RegisterExtension
@@ -46,7 +56,7 @@ public class GatewayAccountFrontendResourceIT {
     
     public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
-    private static final String ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL = "v1/frontend/service/{serviceId}/{accountType}/card-types";
+    private static final String ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL = "v1/frontend/service/{serviceId}/account/{accountType}/card-types";
 
     private final Gson gson = new Gson();
 
@@ -89,7 +99,8 @@ public class GatewayAccountFrontendResourceIT {
                 .body("block_prepaid_cards", is(false))
                 .body("allow_moto", is(false))
                 .body("allow_telephone_payment_notifications", is(false))
-                .body("worldpay_3ds_flex", nullValue());
+                .body("worldpay_3ds_flex", nullValue())
+                .body("gateway_account_credentials[0]", hasKey("gateway_account_credential_id"));
     }
     
     @Test
@@ -110,7 +121,8 @@ public class GatewayAccountFrontendResourceIT {
                 .body("worldpay_3ds_flex", not(hasKey("jwt_mac_key")))
                 .body("worldpay_3ds_flex", not(hasKey("version")))
                 .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
-                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false));
+                .body("worldpay_3ds_flex.exemption_engine_enabled", is(false))
+                .body("gateway_account_credentials[0]", hasKey("gateway_account_credential_id"));
     }
 
     private void validateNon3dsCardType(ValidatableResponse response, String brand, String label, String... type) {
@@ -175,69 +187,150 @@ public class GatewayAccountFrontendResourceIT {
                 .body("message", is("HTTP 404 Not Found"));
     }
 
-    @Test
-    void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
-        String accountId = testBaseExtension.createAGatewayAccountFor("stripe");
+    @Nested
+    class UpdateServiceNameByServiceIdAndAccountType {
+        
+        private Map<String, String> gatewayAccountRequest;
+        private String serviceId;
+        
+        @BeforeEach
+        void before() {
+            serviceId = RandomIdGenerator.newId();
+            gatewayAccountRequest = Map.of(
+                    "payment_provider", "stripe",
+                    "service_id", serviceId,
+                    "service_name", "Service Name",
+                    "type", "test");
+        }
+        
+        @Test
+        void updateGatewayAccountServiceNameSuccessfully() {
+            app.givenSetup()
+                    .body(toJson(gatewayAccountRequest))        
+                    .post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .body("service_name", is("Service Name"));
 
-        var gatewayAccountPayload = createDefault();
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .then()
+                    .statusCode(200);
 
-        app.givenSetup().accept(JSON)
-                .body(gatewayAccountPayload.buildServiceNamePayload())
-                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
-                .then()
-                .statusCode(200);
+            given().port(app.getLocalPort())
+                    .contentType(JSON)
+                    .accept(JSON)
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
+                    .then()
+                    .statusCode(200)
+                    .body("service_name", is("New Service Name"));
+        }
 
-        String currentServiceName = app.getDatabaseTestHelper().getAccountServiceName(Long.valueOf(accountId));
-        assertThat(currentServiceName, is(gatewayAccountPayload.getServiceName()));
+        @Test
+        void assertBadRequestForMissingServiceNameField() {
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
+
+            app.givenSetup().accept(JSON)
+                    .body(Map.of())
+                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .then()
+                    .statusCode(422)
+                    .body("message", contains("Field [service_name] cannot be null"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+        
+        @Test
+        void assertBadRequestForInvalidServiceNameLength() {
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
+
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "service-name-more-than-fifty-chars-service-name-more-than-fifty-chars"))
+                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .then()
+                    .statusCode(422)
+                    .body("message", contains("Field [service_name] can have a size between 1 and 50"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+        
+        @Test
+        void assertNotFoundForNonExistentServiceId() {
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch("/v1/frontend/service/nexiste-pas/test/servicename")
+                    .then()
+                    .statusCode(404)
+                    .body("message", contains("Gateway account not found for service ID [nexiste-pas] and account type [test]"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
     }
+    
+    @Nested
+    class UpdateServiceNameByAccountId {
+        @Test
+        void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
+            String accountId = testBaseExtension.createAGatewayAccountFor("stripe");
 
-    @Test
-    void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
-        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
+            var gatewayAccountPayload = createDefault();
 
-        updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
-                .then()
-                .statusCode(400)
-                .body("message", contains("Field(s) missing: [service_name]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
+            app.givenSetup().accept(JSON)
+                    .body(gatewayAccountPayload.buildServiceNamePayload())
+                    .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
+                    .then()
+                    .statusCode(200);
 
-    @Test
-    void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
-        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
+            String currentServiceName = app.getDatabaseTestHelper().getAccountServiceName(Long.valueOf(accountId));
+            assertThat(currentServiceName, is(gatewayAccountPayload.getServiceName()));
+        }
 
-        var gatewayAccountPayload = createDefault()
-                .withServiceName("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        @Test
+        void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
+            String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
 
-        updateGatewayAccountServiceNameWith(accountId, gatewayAccountPayload.buildServiceNamePayload())
-                .then()
-                .statusCode(400)
-                .body("message", contains("Field(s) are too big: [service_name]"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
+            updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
+                    .then()
+                    .statusCode(400)
+                    .body("message", contains("Field(s) missing: [service_name]"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
 
-    @Test
-    void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdIsNotNumeric() {
-        Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
-        updateGatewayAccountServiceNameWith("NO_NUMERIC_ACCOUNT_ID", serviceNamePayload)
-                .then()
-                .contentType(JSON)
-                .statusCode(NOT_FOUND.getStatusCode())
-                .body("code", is(404))
-                .body("message", is("HTTP 404 Not Found"));
-    }
+        @Test
+        void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
+            String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
 
-    @Test
-    void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
-        String nonExistingAccountId = "111111111";
-        testBaseExtension.createAGatewayAccountFor("stripe");
+            var gatewayAccountPayload = createDefault()
+                    .withServiceName("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
-        Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
-        updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)
-                .then()
-                .statusCode(404)
-                .body("message", contains("The gateway account id '111111111' does not exist"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+            updateGatewayAccountServiceNameWith(accountId, gatewayAccountPayload.buildServiceNamePayload())
+                    .then()
+                    .statusCode(400)
+                    .body("message", contains("Field(s) are too big: [service_name]"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+
+        @Test
+        void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdIsNotNumeric() {
+            Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
+            updateGatewayAccountServiceNameWith("NO_NUMERIC_ACCOUNT_ID", serviceNamePayload)
+                    .then()
+                    .contentType(JSON)
+                    .statusCode(NOT_FOUND.getStatusCode())
+                    .body("code", is(404))
+                    .body("message", is("HTTP 404 Not Found"));
+        }
+
+        @Test
+        void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
+            String nonExistingAccountId = "111111111";
+            testBaseExtension.createAGatewayAccountFor("stripe");
+
+            Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
+            updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)
+                    .then()
+                    .statusCode(404)
+                    .body("message", contains("The gateway account id '111111111' does not exist"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
     }
 
     @Test
@@ -269,52 +362,154 @@ public class GatewayAccountFrontendResourceIT {
                 .body("message", contains(expectedMessage))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
+    
+    @Nested
+    class UpdateCardTypesByServiceIdAndAccountType {
 
-    @Test
-    void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
-        CardTypeEntity mastercardCreditCard = app.getDatabaseTestHelper().getMastercardCreditCard();
-
-        CardTypeEntity visaCreditCard = app.getDatabaseTestHelper().getVisaCreditCard();
-
-        CardTypeEntity visaDebitCard = app.getDatabaseTestHelper().getVisaDebitCard();
-
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(mastercardCreditCard, visaCreditCard);
-        String body = buildAcceptedCardTypesBody(mastercardCreditCard, visaDebitCard);
-        updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
+        private final Map<String, List<CardTypeEntity>> cardTypes = app.givenSetup()
+                .contentType(JSON)
+                .accept(JSON)
+                .get("/v1/api/card-types")
                 .then()
-                .statusCode(200);
+                .extract()
+                .as(new TypeRef<Map<String, List<CardTypeEntity>>>() {
+                });
 
-        List<Map<String, Object>> acceptedCardTypes =
-                app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
 
-        assertThat(acceptedCardTypes, containsInAnyOrder(
-                allOf(
-                        hasEntry("label", mastercardCreditCard.getLabel()),
-                        hasEntry("type", mastercardCreditCard.getType().toString()),
-                        hasEntry("brand", mastercardCreditCard.getBrand())
-                ), allOf(
-                        hasEntry("label", visaDebitCard.getLabel()),
-                        hasEntry("type", visaDebitCard.getType().toString()),
-                        hasEntry("brand", visaDebitCard.getBrand())
-                )));
+            CardTypeEntity visaCredit = getCardTypes(CardType.CREDIT, "visa");
+
+            String serviceId = "my-service-id";
+            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
+                    "my test service", "analytics", serviceId);
+            createRequest.post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON);
+
+            String bodyWithJustVisaCredit = buildAcceptedCardTypesBody(visaCredit);
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithJustVisaCredit)
+                    .then()
+                    .statusCode(200);
+            
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
+                    .then()
+                    .body("card_types", hasSize(1))
+                    .body("card_types[0].brand", is("visa"))
+                    .body("card_types[0].label", is("Visa"))
+                    .body("card_types[0].type", is("CREDIT"))
+                    .body("card_types[0].requires3ds", is(false));
+
+            CardTypeEntity visaDebit = getCardTypes(CardType.DEBIT, "visa");
+            CardTypeEntity mastercardCredit = getCardTypes(CardType.CREDIT, "master-card");
+
+            String bodyWithAllThreeCardTypes = buildAcceptedCardTypesBody(visaCredit, visaDebit, mastercardCredit);
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithAllThreeCardTypes)
+                    .then()
+                    .statusCode(200);
+            
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
+                    .then()
+                    .body("card_types", hasSize(3));
+        }
+
+        private Response updateGatewayAccountCardTypesWith(String serviceId, GatewayAccountType accountType, String body) {
+            String url = format("/v1/frontend/service/%s/%s/card-types", serviceId, accountType.toString());
+            return app.givenSetup()
+                    .contentType(ContentType.JSON)
+                    .accept(JSON)
+                    .body(body)
+                    .post(url);
+        }
+
+        @NotNull
+        private CardTypeEntity getCardTypes(CardType cardType, String brand) {
+            return cardTypes.get("card_types").stream().filter(x -> x.getType() == cardType && x.getBrand().equals(brand)).findFirst().get();
+        }
+
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
+            String serviceId = "another-service-id";
+            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
+                    "my test service", "analytics", serviceId);
+            createRequest.post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON);
+
+            String bodyWithJustVisaCredit = buildAcceptedCardTypesBody(getCardTypes(CardType.CREDIT, "visa"));
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithJustVisaCredit)
+                    .then()
+                    .statusCode(200);
+
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
+                    .then()
+                    .body("card_types", hasSize(1));
+
+            updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, buildAcceptedCardTypesBody())
+                    .then()
+                    .statusCode(200);
+
+            given().port(app.getLocalPort())
+                    .get(String.format("/v1/frontend/service/%s/account/%s/card-types", serviceId, "test"))
+                    .then()
+                    .body("card_types", hasSize(0));
+        }
     }
+    
+    @Nested
+    class UpdateCardTypesByAccountId {
 
-    @Test
-    void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
-        CardTypeEntity mastercardCreditCardTypeRecord = app.getDatabaseTestHelper().getMastercardCreditCard();
-        CardTypeEntity visaCreditCardTypeRecord = app.getDatabaseTestHelper().getVisaCreditCard();
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptCardTypes() {
+            CardTypeEntity mastercardCreditCard = app.getDatabaseTestHelper().getMastercardCreditCard();
 
-        DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(
-                mastercardCreditCardTypeRecord, visaCreditCardTypeRecord);
+            CardTypeEntity visaCreditCard = app.getDatabaseTestHelper().getVisaCreditCard();
 
-        updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), buildAcceptedCardTypesBody())
-                .then()
-                .statusCode(200);
+            CardTypeEntity visaDebitCard = app.getDatabaseTestHelper().getVisaDebitCard();
 
-        List<Map<String, Object>> acceptedCardTypes =
-                app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+            DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(mastercardCreditCard, visaCreditCard);
+            String body = buildAcceptedCardTypesBody(mastercardCreditCard, visaDebitCard);
+            updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), body)
+                    .then()
+                    .statusCode(200);
 
-        assertEquals(0, acceptedCardTypes.size());
+            List<Map<String, Object>> acceptedCardTypes =
+                    app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+
+            assertThat(acceptedCardTypes, containsInAnyOrder(
+                    allOf(
+                            hasEntry("label", mastercardCreditCard.getLabel()),
+                            hasEntry("type", mastercardCreditCard.getType().toString()),
+                            hasEntry("brand", mastercardCreditCard.getBrand())
+                    ), allOf(
+                            hasEntry("label", visaDebitCard.getLabel()),
+                            hasEntry("type", visaDebitCard.getType().toString()),
+                            hasEntry("brand", visaDebitCard.getBrand())
+                    )));
+        }
+
+        @Test
+        void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
+            CardTypeEntity mastercardCreditCardTypeRecord = app.getDatabaseTestHelper().getMastercardCreditCard();
+            CardTypeEntity visaCreditCardTypeRecord = app.getDatabaseTestHelper().getVisaCreditCard();
+
+            DatabaseFixtures.TestAccount accountRecord = createAccountRecordWithCards(
+                    mastercardCreditCardTypeRecord, visaCreditCardTypeRecord);
+
+            updateGatewayAccountCardTypesWith(accountRecord.getAccountId(), buildAcceptedCardTypesBody())
+                    .then()
+                    .statusCode(200);
+
+            List<Map<String, Object>> acceptedCardTypes =
+                    app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(accountRecord.getAccountId());
+
+            assertEquals(0, acceptedCardTypes.size());
+        }
     }
 
     @Test

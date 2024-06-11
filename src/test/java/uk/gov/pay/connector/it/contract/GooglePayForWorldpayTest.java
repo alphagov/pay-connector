@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.contract;
 
-import io.dropwizard.setup.Environment;
-import org.apache.commons.lang.math.RandomUtils;
+import io.dropwizard.core.setup.Environment;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.http.HttpStatus;
 import org.junit.Ignore;
 import org.junit.Rule;

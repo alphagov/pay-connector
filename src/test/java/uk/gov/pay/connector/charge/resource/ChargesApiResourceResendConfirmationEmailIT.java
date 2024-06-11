@@ -1,104 +1,148 @@
 package uk.gov.pay.connector.charge.resource;
 
-import io.dropwizard.setup.Environment;
-import org.apache.commons.lang.math.RandomUtils;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.ConnectorModule;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
-import uk.gov.pay.connector.it.util.ChargeUtils;
-import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
-import uk.gov.service.notify.NotificationClient;
-import uk.gov.service.notify.SendEmailResponse;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static io.restassured.RestAssured.given;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
+import static java.lang.String.format;
+import static org.hamcrest.Matchers.contains;
+import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
+import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargesApiResourceResendConfirmationEmailIT {
-    private static final NotifyClientFactory notifyClientFactory = mock(NotifyClientFactory.class);
-    private static final NotificationClient notificationClient = mock(NotificationClient.class);
-    
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
-            ChargesApiResourceResendConfirmationEmailIT.ConnectorAppWithCustomInjector.class,
+    private static final AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             config("notifyConfig.emailNotifyEnabled", "true")
     );
-    
-    @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
-    private final String emailAddress = "a@b.com";
 
-    @BeforeAll
-    static void before() {
-        when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
-    }
+    private static final String EMAIL_ADDRESS = "redshirt@example.com";
+    private static final String SERVICE_NAME = "USS Cerritos Away Mission Signup";
+    private static final String SERVICE_ID = UUID.randomUUID().toString().replace("-", "");
+    private static final GatewayAccountType GATEWAY_ACCOUNT_TYPE = GatewayAccountType.TEST;
+    private static final PaymentGatewayName PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE;
+    
+    private static String gatewayAccountId;
+    private static String chargeId;
 
     @BeforeEach
     void setup() {
-        app.getDatabaseTestHelper().addEmailNotification(Long.valueOf(testBaseExtension.getAccountId()), "a template", true, PAYMENT_CONFIRMED);
-    }   
+        gatewayAccountId = app.givenSetup()
+                .body(toJson(Map.of(
+                        "service_id", SERVICE_ID,
+                        "type", GATEWAY_ACCOUNT_TYPE,
+                        "payment_provider", PAYMENT_GATEWAY_NAME.getName(),
+                        "service_name", SERVICE_NAME
+                )))
+                .post("/v1/api/accounts")
+                .then().extract().path("gateway_account_id");
 
-    @Test
-    void shouldReturn204WhenEmailSuccessfullySent() throws Exception {
-        String transactionId = String.valueOf(RandomUtils.nextInt());
+        chargeId = app.givenSetup()
+                .body(createChargePostBody(gatewayAccountId, EMAIL_ADDRESS))
+                .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                .then().extract().path("charge_id");
 
-        ChargeUtils.ExternalChargeId chargeId = createNewCharge(transactionId, testBaseExtension.getPaymentProvider());
+        app.givenSetup()
+                .body(toJson(Map.of("op", "replace", "path", "/payment_confirmed/enabled", "value", true)))
+                .patch(format("/v1/api/accounts/%s/email-notification", gatewayAccountId))
+                .then().statusCode(200);
 
-        var notificationId = UUID.randomUUID();
-        var mockResponse = mock(SendEmailResponse.class);
-        when(mockResponse.getNotificationId()).thenReturn(notificationId);
-        when(notificationClient.sendEmail(any(), eq(emailAddress), anyMap(), eq(null), any())).thenReturn(mockResponse);
-
-        given().port(app.getLocalPort())
-                .body("")
-                .contentType(APPLICATION_JSON)
-                .post(String.format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", testBaseExtension.getAccountId(), chargeId))
-                .then()
-                .statusCode(204);
+        app.givenSetup()
+                .body(toJson(Map.of("op", "replace", "path", "/payment_confirmed/template_body", "value", "my cool template")))
+                .patch(format("/v1/api/accounts/%s/email-notification", gatewayAccountId))
+                .then().statusCode(200);
     }
-    
-    private ChargeUtils.ExternalChargeId createNewCharge(String transactionId, String paymentProvider) {
-        return ChargeUtils.createNewChargeWithAccountId(
-                ChargeStatus.CREATED,
-                transactionId,
-                testBaseExtension.getAccountId(),
-                app.getDatabaseTestHelper(),
-                emailAddress,
-                paymentProvider);
-    }
-    
-    public static class ConnectorAppWithCustomInjector extends ConnectorApp {
 
-        @Override
-        protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
-            return new ConnectorModuleWithOverrides(configuration, environment);
+    @Nested
+    @DisplayName("Given an account id")
+    class ByAccountId {
+
+        @Nested
+        @DisplayName("Then resend confirmation email")
+        class ResendConfirmationEmail {
+
+            @Test
+            @DisplayName("Should return 204 when successful")
+            void shouldReturn204WhenEmailSuccessfullySent() {
+                app.getNotifyStub().respondWithSuccess();
+                
+                app.givenSetup()
+                        .body("")
+                        .post(format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", gatewayAccountId, chargeId))
+                        .then()
+                        .statusCode(204);
+            }
         }
     }
 
-    private static class ConnectorModuleWithOverrides extends ConnectorModule {
+    @Nested
+    @DisplayName("Given a service id and account type")
+    class ByServiceIdAndAccountType {
 
-        public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
-            super(configuration, environment);
-        }
+        @TestInstance(PER_CLASS)
+        @Nested
+        @DisplayName("Then resend confirmation email")
+        class ResendConfirmationEmail {
 
-        @Override
-        protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
-            return notifyClientFactory;
+            @Test
+            @DisplayName("Should return 204 when successful")
+            void shouldReturn204WhenEmailSuccessfullySent() {
+                app.getNotifyStub().respondWithSuccess();
+                
+                app.givenSetup()
+                        .body("")
+                        .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))
+                        .then()
+                        .statusCode(204);
+            }
+
+            @ParameterizedTest
+            @DisplayName("Should return 404 when gateway account not found")
+            @MethodSource("shouldReturn404_argsProvider")
+            void shouldReturn404_WhenServiceIdNotFound_OrAccountTypeNotFound(String serviceId, GatewayAccountType gatewayAccountType, String expectedError) {
+                app.getNotifyStub().respondWithSuccess();
+                
+                app.givenSetup()
+                        .body("")
+                        .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", serviceId, gatewayAccountType, chargeId))
+                        .then()
+                        .statusCode(404)
+                        .body("message", contains(expectedError));
+            }
+            
+            @Test
+            @DisplayName("Should return 402 when notification fails to send")
+            void shouldReturn402_whenNotificationFails() {
+                app.getNotifyStub().respondWithFailure();
+                
+                app.givenSetup()
+                        .body("")
+                        .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))
+                        .then()
+                        .statusCode(402)
+                        .body("message", contains("Failed to send email"));
+            }
+
+            private Stream<Arguments> shouldReturn404_argsProvider() {
+                return Stream.of(
+                        Arguments.of("not-this-service-id", GatewayAccountType.TEST, "Gateway account not found for service ID [not-this-service-id] and account type [test]"),
+                        Arguments.of(SERVICE_ID, GatewayAccountType.LIVE, format("Gateway account not found for service ID [%s] and account type [live]", SERVICE_ID))
+                );
+            }
         }
     }
 }

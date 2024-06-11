@@ -10,7 +10,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Collections;

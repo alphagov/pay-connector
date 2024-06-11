@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
@@ -47,7 +46,7 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class DatabaseFixtures {
 
-    private DatabaseTestHelper databaseTestHelper;
+    private final DatabaseTestHelper databaseTestHelper;
 
     public DatabaseFixtures(DatabaseTestHelper databaseTestHelper) {
         this.databaseTestHelper = databaseTestHelper;
@@ -112,12 +111,12 @@ public class DatabaseFixtures {
 
     public class TestRefundHistory {
 
-        private String externalId;
-        private long id;
-        private long amount;
-        private ZonedDateTime createdDate;
-        private String userExternalId;
-        private String chargeExternalId;
+        private final String externalId;
+        private final long id;
+        private final long amount;
+        private final ZonedDateTime createdDate;
+        private final String userExternalId;
+        private final String chargeExternalId;
 
         TestRefundHistory(TestRefund testRefund) {
             this.id = testRefund.getId();
@@ -202,36 +201,30 @@ public class DatabaseFixtures {
         }
     }
 
-    public class TestAddress {
-        private String line1 = "line1";
-        private String line2 = "line2";
-        private String postcode = "postcode";
-        private String city = "city";
-        private String county = "county";
-        private String country = "country";
+    public static class TestAddress {
 
         public String getLine1() {
-            return line1;
+            return "line1";
         }
 
         public String getLine2() {
-            return line2;
+            return "line2";
         }
 
         public String getPostcode() {
-            return postcode;
+            return "postcode";
         }
 
         public String getCity() {
-            return city;
+            return "city";
         }
 
         public String getCounty() {
-            return county;
+            return "county";
         }
 
         public String getCountry() {
-            return country;
+            return "country";
         }
     }
 
@@ -342,9 +335,9 @@ public class DatabaseFixtures {
         private String serviceId = "valid-external-service-id";
         private String description = "a description";
         private String analyticsId = "an analytics id";
-        private EmailCollectionMode emailCollectionMode = EmailCollectionMode.OPTIONAL;
+        private final EmailCollectionMode emailCollectionMode = EmailCollectionMode.OPTIONAL;
         private Map<EmailNotificationType, TestEmailNotification> emailNotifications =
-                ImmutableMap.of(
+                Map.of(
                         EmailNotificationType.PAYMENT_CONFIRMED, new TestEmailNotification(),
                         EmailNotificationType.REFUND_ISSUED, new TestEmailNotification()
                 );

@@ -1,31 +1,20 @@
 package uk.gov.pay.connector.it;
 
 import com.google.common.collect.ImmutableMap;
-import io.dropwizard.setup.Environment;
-import org.apache.commons.lang.math.RandomUtils;
-import org.junit.jupiter.api.BeforeAll;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.ConnectorModule;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
-import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
-import uk.gov.service.notify.NotificationClient;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.MediaType.TEXT_XML;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -40,11 +29,8 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 
 public class SendRefundEmailIT {
     private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
-    private static NotifyClientFactory notifyClientFactory = mock(NotifyClientFactory.class);
-    private static NotificationClient notificationClient = mock(NotificationClient.class);
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
-            SendRefundEmailIT.ConnectorAppWithCustomInjector.class,
             config("notifyConfig.emailNotifyEnabled", "true"),
             config("worldpay.secureNotificationEnabled", "false")
     );
@@ -57,18 +43,12 @@ public class SendRefundEmailIT {
             CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
     );
     private final String accountId = String.valueOf(RandomUtils.nextInt());
-
-    @BeforeAll
-    static void before() {
-        when(notifyClientFactory.getInstance()).thenReturn(notificationClient);
-    }
-
     @Test
     void shouldSendEmailFollowingASuccessfulRefund() throws Exception {
+        app.getNotifyStub().respondWithSuccess();
         addGatewayAccount();
 
         String transactionId = String.valueOf(RandomUtils.nextInt());
-        String payIdSub = "2";
         String refundExternalId = "999999";
 
         ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, app.getDatabaseTestHelper(), "worldpay");
@@ -82,8 +62,10 @@ public class SendRefundEmailIT {
                 .post("/v1/api/notifications/worldpay");
 
         Thread.sleep(500L); // Email sent using ExecutorService task: give it some time to complete
-
-        verify(notificationClient).sendEmail(anyString(), anyString(), anyMap(), isNull(), isNull());
+        
+        app.getNotifyWireMockServer().verify(postRequestedFor(
+                urlEqualTo("/v2/notifications/email"))
+        );
     }
 
     private void addGatewayAccount() {
@@ -93,23 +75,5 @@ public class SendRefundEmailIT {
                 .withCredentials(credentials)
                 .build());
         app.getDatabaseTestHelper().addEmailNotification(Long.valueOf(accountId), "a template", true, REFUND_ISSUED);
-    }
-
-    public static class ConnectorAppWithCustomInjector extends ConnectorApp {
-        @Override
-        protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
-            return new ConnectorModuleWithOverrides(configuration, environment);
-        }
-    }
-
-    private static class ConnectorModuleWithOverrides extends ConnectorModule {
-        public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
-            super(configuration, environment);
-        }
-
-        @Override
-        protected NotifyClientFactory getNotifyClientFactory(ConnectorConfiguration connectorConfiguration) {
-            return notifyClientFactory;
-        }
     }
 }

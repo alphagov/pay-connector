@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.usernotification.resource;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,28 +10,27 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.common.service.PatchRequestBuilder;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.usernotification.model.EmailNotificationPatchRequest;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.pay.connector.common.service.PatchRequestBuilder.aPatchRequestBuilder;
-import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 
 @Path("/")
@@ -44,12 +42,6 @@ public class EmailNotificationResource {
     private static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
 
     private static final String FORMATTER = "/%s/%s";
-    private static final Set<String> VALID_PATHS = ImmutableSet.of(
-            format(FORMATTER, EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
-            format(FORMATTER, EmailNotificationType.PAYMENT_CONFIRMED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED),
-            format(FORMATTER, EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_TEMPLATE_BODY),
-            format(FORMATTER, EmailNotificationType.REFUND_ISSUED.toString().toLowerCase(), EMAIL_NOTIFICATION_ENABLED)
-    );
     private final GatewayAccountDao gatewayDao;
 
     @Inject
@@ -75,26 +67,17 @@ public class EmailNotificationResource {
                     "}"))),
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "400", description = "Bad request - invalid or missing mandatory fields"),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Content - invalid or missing mandatory fields"),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
     public Response enableEmailNotification(@Parameter(example = "1", description = "Gateway account ID")
-                                            @PathParam("accountId") Long gatewayAccountId, Map<String, String> emailPatchMap) {
-        PatchRequestBuilder.PatchRequest emailPatchRequest;
-        try {
-            emailPatchRequest = aPatchRequestBuilder(emailPatchMap)
-                    .withValidOps(Collections.singletonList("replace"))
-                    .withValidPaths(VALID_PATHS)
-                    .build();
-        } catch (IllegalArgumentException e) {
-            logger.error(e.getMessage(), e);
-            return badRequestResponse("Bad patch parameters" + emailPatchMap.toString());
-        }
+                                            @PathParam("accountId") Long gatewayAccountId,
+                                            @Valid EmailNotificationPatchRequest request) {
 
         return gatewayDao.findById(gatewayAccountId)
                 .map(gatewayAccount -> {
-                    NotificationPatchInfo patchInfo = getNotificationInfoFromPath(emailPatchRequest);
+                    NotificationPatchInfo patchInfo = getNotificationInfoFromPath(request);
                     EmailNotificationType type = patchInfo.getEmailNotificationType();
                     EmailNotificationEntity notificationEntity = Optional.ofNullable(gatewayAccount.getEmailNotifications().get(type))
                             .orElseGet(() -> {
@@ -107,8 +90,51 @@ public class EmailNotificationResource {
                 .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
-    private NotificationPatchInfo getNotificationInfoFromPath(PatchRequestBuilder.PatchRequest emailPatchRequest) {
-        List<String> pathTokens = emailPatchRequest.getPathTokens();
+    @PATCH
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/email-notification")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    @Operation(
+            summary = "Enables/disables email notifications for gateway account",
+            description = "Allowed paths <br>" +
+                    " - /payment_confirmed/enabled (values true/false) <br>" +
+                    " - /refund_issued/enabled (values true/false) <br>" +
+                    " - /payment_confirmed/template_body<br>" +
+                    " - /refund_issued/template_body",
+            tags = {"Gateway accounts"},
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "    \"op\":\"replace\", \"path\":\"/payment_confirmed/enabled\", \"value\": false" +
+                    "}"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "422", description = "Unprocessable Content - invalid or missing mandatory fields"),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response enableEmailNotificationByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @Valid EmailNotificationPatchRequest request) {
+
+        return gatewayDao.findByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccount -> {
+                    NotificationPatchInfo patchInfo = getNotificationInfoFromPath(request);
+                    EmailNotificationType notificationType = patchInfo.getEmailNotificationType();
+                    
+                    EmailNotificationEntity notificationEntity = Optional.ofNullable(gatewayAccount.getEmailNotifications().get(notificationType))
+                            .orElseGet(() -> {
+                                //PP-4111 we are not going to backfill and add refund notifications for existing gateway accounts, so this is unfortunately needed
+                                return newDisabledEmailNotificationEntityWithNoTemplate(gatewayAccount, notificationType);
+                            });
+                    patch(notificationEntity, patchInfo);
+                    return Response.ok().build();
+                })
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+    }
+
+    private NotificationPatchInfo getNotificationInfoFromPath(EmailNotificationPatchRequest emailPatchRequest) {
+        List<String> pathTokens = emailPatchRequest.pathTokens();
         return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.get(0)), pathTokens.get(1), emailPatchRequest.getValue());
     }
 

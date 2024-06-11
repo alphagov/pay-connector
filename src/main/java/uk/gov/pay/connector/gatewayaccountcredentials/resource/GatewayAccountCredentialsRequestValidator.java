@@ -145,7 +145,7 @@ public class GatewayAccountCredentialsRequestValidator {
     private void validateGatewayMerchantId(JsonPatchRequest request, String paymentProvider,
                                            GatewayCredentials gatewayCredentials) {
         if (!WORLDPAY.getName().equals(paymentProvider)) {
-            throw new ValidationException(List.of("Gateway '" + paymentProvider + "' does not support digital wallets."));
+            throw new ValidationException(List.of("Gateway Merchant ID is not applicable for payment provider '" + paymentProvider + "'."));
         }
         if (!gatewayCredentials.hasCredentials()) {
             throw new ValidationException(List.of("Account credentials are required to set a Gateway Merchant ID."));

@@ -14,4 +14,8 @@ public class GatewayAccountCredentialsNotFoundException extends WebApplicationEx
     public GatewayAccountCredentialsNotFoundException(String message) {
         super(notFoundResponse(message));
     }
+    
+    public static GatewayAccountCredentialsNotFoundException forExternalId (String externalId) {
+        return new GatewayAccountCredentialsNotFoundException(format("Gateway account credentials with ID [%s] not found.", externalId));
+    }
 }
