@@ -66,7 +66,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -83,7 +83,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -110,7 +110,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -127,7 +127,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -147,7 +147,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then().log().body()
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is("GENERIC"))
@@ -163,7 +163,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is("GENERIC"))
@@ -184,7 +184,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -209,7 +209,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -228,7 +228,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is("GENERIC"))
@@ -251,7 +251,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -261,7 +261,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -271,7 +271,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -298,7 +298,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -345,7 +345,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -355,7 +355,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 
@@ -372,7 +372,7 @@ public class GatewayAccountResourceUpdateIT {
 
             app.givenSetup()
                     .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/test/", serviceId))
+                    .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
                     .statusCode(OK.getStatusCode());
 

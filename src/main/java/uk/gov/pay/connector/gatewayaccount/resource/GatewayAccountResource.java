@@ -301,7 +301,7 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path("/v1/api/service/{serviceId}/{accountType}")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
