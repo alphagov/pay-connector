@@ -371,7 +371,7 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path("/v1/frontend/service/{serviceId}/{accountType}/servicename")
+    @Path("/v1/frontend/service/{serviceId}/account/{accountType}/servicename")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
@@ -521,7 +521,7 @@ public class GatewayAccountResource {
     }
 
     @POST
-    @Path("/v1/frontend/service/{serviceId}/{accountType}/card-types")
+    @Path("/v1/frontend/service/{serviceId}/account/{accountType}/card-types")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional

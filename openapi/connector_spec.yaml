@@ -2431,7 +2431,6 @@ paths:
         type
       tags:
       - Gateway accounts
-  /v1/frontend/service/{serviceId}/{accountType}/card-types:
     post:
       operationId: updateGatewayAccountAcceptedCardTypesDegateway
       parameters:
@@ -2480,7 +2479,7 @@ paths:
       summary: Update accepted card types for a gateway account
       tags:
       - Gateway accounts
-  /v1/frontend/service/{serviceId}/{accountType}/servicename:
+  /v1/frontend/service/{serviceId}/account/{accountType}/servicename:
     patch:
       operationId: updateGatewayAccountServiceNameByServiceId
       parameters:
