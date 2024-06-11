@@ -26,8 +26,10 @@ import javax.persistence.Table;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
+import static java.time.temporal.ChronoUnit.MICROS;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
@@ -100,7 +102,7 @@ public class RefundEntity extends AbstractVersionedEntity {
     public RefundEntity(Long amount, String userExternalId, String userEmail, String chargeExternalId) {
         this.externalId = RandomIdGenerator.newId();
         this.amount = amount;
-        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        this.createdDate = ZonedDateTime.now(ZoneId.of("UTC")).truncatedTo(MICROS);
         this.userExternalId = userExternalId;
         this.userEmail = userEmail;
         this.chargeExternalId = chargeExternalId;

@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
+import static java.time.temporal.ChronoUnit.MICROS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -445,7 +446,7 @@ public class RefundDaoJpaIT {
         assertThat(mayBeRefundEntityFromDB.get().getParityCheckStatus(), is(nullValue()));
         assertThat(refundHistoryList.size(), is(1));
 
-        ZonedDateTime parityCheckDate = ZonedDateTime.now(UTC);
+        ZonedDateTime parityCheckDate = ZonedDateTime.now(UTC).truncatedTo(MICROS);
         refundDao.updateParityCheckStatus(refundEntity.getExternalId(), parityCheckDate, MISSING_IN_LEDGER);
 
         mayBeRefundEntityFromDB = refundDao.findByExternalId(refundEntity.getExternalId());

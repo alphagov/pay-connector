@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.dropwizard.testing.ConfigOverride.config;
+import static java.time.temporal.ChronoUnit.MICROS;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -71,7 +72,7 @@ public class EmittedEventResourceIT {
         long chargeId = addCharge();
         app.getDatabaseTestHelper().addEvent(chargeId, CREATED.toString());
 
-        Instant doNotRetryEmitUntil = Instant.now().minusSeconds(60);
+        Instant doNotRetryEmitUntil = Instant.now().minusSeconds(60).truncatedTo(MICROS);
         app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, doNotRetryEmitUntil);
 
@@ -95,7 +96,7 @@ public class EmittedEventResourceIT {
         long chargeId = addCharge();
         app.getDatabaseTestHelper().addEvent(chargeId, CREATED.toString());
 
-        Instant doNotRetryEmitUntil = Instant.now().plusSeconds(60);
+        Instant doNotRetryEmitUntil = Instant.now().plusSeconds(60).truncatedTo(MICROS);
         app.getDatabaseTestHelper().addEmittedEvent("payment", externalChargeId, Instant.now(),
                 "PAYMENT_CREATED", null, doNotRetryEmitUntil);
 
