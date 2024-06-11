@@ -214,7 +214,7 @@ public class GatewayAccountFrontendResourceIT {
 
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "New Service Name"))
-                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .patch(format("/v1/frontend/service/%s/account/test/servicename", serviceId))
                     .then()
                     .statusCode(200);
 
@@ -233,7 +233,7 @@ public class GatewayAccountFrontendResourceIT {
 
             app.givenSetup().accept(JSON)
                     .body(Map.of())
-                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .patch(format("/v1/frontend/service/%s/account/test/servicename", serviceId))
                     .then()
                     .statusCode(422)
                     .body("message", contains("Field [service_name] cannot be null"))
@@ -246,7 +246,7 @@ public class GatewayAccountFrontendResourceIT {
 
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "service-name-more-than-fifty-chars-service-name-more-than-fifty-chars"))
-                    .patch(format("/v1/frontend/service/%s/test/servicename", serviceId))
+                    .patch(format("/v1/frontend/service/%s/account/test/servicename", serviceId))
                     .then()
                     .statusCode(422)
                     .body("message", contains("Field [service_name] can have a size between 1 and 50"))
@@ -257,7 +257,7 @@ public class GatewayAccountFrontendResourceIT {
         void assertNotFoundForNonExistentServiceId() {
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "New Service Name"))
-                    .patch("/v1/frontend/service/nexiste-pas/test/servicename")
+                    .patch("/v1/frontend/service/nexiste-pas/account/test/servicename")
                     .then()
                     .statusCode(404)
                     .body("message", contains("Gateway account not found for service ID [nexiste-pas] and account type [test]"))
@@ -417,7 +417,7 @@ public class GatewayAccountFrontendResourceIT {
         }
 
         private Response updateGatewayAccountCardTypesWith(String serviceId, GatewayAccountType accountType, String body) {
-            String url = format("/v1/frontend/service/%s/%s/card-types", serviceId, accountType.toString());
+            String url = format("/v1/frontend/service/%s/account/%s/card-types", serviceId, accountType.toString());
             return app.givenSetup()
                     .contentType(ContentType.JSON)
                     .accept(JSON)
