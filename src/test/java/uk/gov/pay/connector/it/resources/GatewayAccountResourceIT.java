@@ -902,22 +902,64 @@ public class GatewayAccountResourceIT {
                 .statusCode(OK.getStatusCode());
     }
 
-    @Test
-    void shouldToggle3dsToTrue() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        app.givenSetup()
-                .body(toJson(Map.of("toggle_3ds", true)))
-                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
-                .then()
-                .statusCode(OK.getStatusCode());
+    @Nested
+    class Update3dsToggleByGatewayAccountId {
 
-        app.givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("requires3ds", is(true));
+        @Test
+        void shouldToggle3dsToTrue() {
+            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", true)))
+                    .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get("/v1/api/accounts/" + gatewayAccountId)
+                    .then()
+                    .body("requires3ds", is(true));
+        }
+
+        @Test
+        void shouldToggle3dsToFalse() {
+            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "old-desc", "old-id");
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", false)))
+                    .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get("/v1/api/accounts/" + gatewayAccountId)
+                    .then()
+                    .body("requires3ds", is(false));
+        }
+
+        @Test
+        void shouldReturn409Conflict_Toggling3dsToFalse_WhenA3dsCardTypeIsAccepted() {
+            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "desc", "id");
+            String maestroCardTypeId = app.getDatabaseTestHelper().getCardTypeId("maestro", "DEBIT");
+
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", true)))
+                    .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup().accept(JSON)
+                    .body("{\"card_types\": [\"" + maestroCardTypeId + "\"]}")
+                    .post(ACCOUNTS_FRONTEND_URL + gatewayAccountId + "/card-types")
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", false)))
+                    .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
+                    .then()
+                    .statusCode(CONFLICT.getStatusCode());
+        }
     }
-
-
+    
     @Test
     void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
         String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
@@ -964,45 +1006,6 @@ public class GatewayAccountResourceIT {
                 .body("worldpay_3ds_flex", nullValue());
     }
 
-    @Test
-    void shouldToggle3dsToFalse() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "old-desc", "old-id");
-        app.givenSetup()
-                .body(toJson(Map.of("toggle_3ds", false)))
-                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
-                .then()
-                .statusCode(OK.getStatusCode());
-
-        app.givenSetup()
-                .get("/v1/api/accounts/" + gatewayAccountId)
-                .then()
-                .body("requires3ds", is(false));
-    }
-
-    @Test
-    void shouldReturn409Conflict_Toggling3dsToFalse_WhenA3dsCardTypeIsAccepted() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "desc", "id");
-        String maestroCardTypeId = app.getDatabaseTestHelper().getCardTypeId("maestro", "DEBIT");
-
-        app.givenSetup()
-                .body(toJson(Map.of("toggle_3ds", true)))
-                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
-                .then()
-                .statusCode(OK.getStatusCode());
-
-        app.givenSetup().accept(JSON)
-                .body("{\"card_types\": [\"" + maestroCardTypeId + "\"]}")
-                .post(ACCOUNTS_FRONTEND_URL + gatewayAccountId + "/card-types")
-                .then()
-                .statusCode(OK.getStatusCode());
-
-        app.givenSetup()
-                .body(toJson(Map.of("toggle_3ds", false)))
-                .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
-                .then()
-                .statusCode(CONFLICT.getStatusCode());
-    }
-    
     @Test
     void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
         String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
