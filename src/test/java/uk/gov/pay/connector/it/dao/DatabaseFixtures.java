@@ -25,12 +25,15 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static java.time.ZonedDateTime.now;
+import static java.time.temporal.ChronoUnit.MICROS;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -161,7 +164,7 @@ public class DatabaseFixtures {
     public class TestChargeEvent {
         private long chargeId;
         private ChargeStatus chargeStatus;
-        private ZonedDateTime updated = ZonedDateTime.now();
+        private ZonedDateTime updated = now();
 
         public TestChargeEvent withTestCharge(TestCharge testCharge) {
             this.chargeId = testCharge.getChargeId();
@@ -721,7 +724,7 @@ public class DatabaseFixtures {
         SupportedLanguage language = SupportedLanguage.ENGLISH;
         boolean delayedCapture = false;
         Long corporateCardSurcharge = null;
-        Instant createdDate = Instant.now();
+        Instant createdDate = Instant.now().truncatedTo(MICROS);
         TestAccount testAccount;
         String paymentProvider = "sandbox";
         TestCardDetails cardDetails;
@@ -984,7 +987,7 @@ public class DatabaseFixtures {
         String externalRefundId = RandomIdGenerator.newId();
         long amount = 101L;
         RefundStatus status = CREATED;
-        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime createdDate = now(ZoneId.of("UTC")).truncatedTo(MICROS);
         TestCharge testCharge;
         String submittedByUserExternalId;
         String gatewayTransactionId;
@@ -1101,7 +1104,7 @@ public class DatabaseFixtures {
 
     public class TestFee {
         String externalId = RandomIdGenerator.newId();
-        ZonedDateTime createdDate = ZonedDateTime.now(ZoneId.of("UTC"));
+        ZonedDateTime createdDate = now(ZoneId.of("UTC"));
         TestCharge testCharge;
         private long feeDue = 100L;
         private long feeCollected = 100L;

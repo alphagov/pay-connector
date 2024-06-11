@@ -25,6 +25,7 @@ import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.Optional;
 
 import static java.time.Duration.ofMinutes;
 import static java.time.ZonedDateTime.now;
+import static java.time.temporal.ChronoUnit.MICROS;
 import static junit.framework.TestCase.assertTrue;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -350,7 +352,7 @@ public class ChargeDaoIT {
 
         // given
         String transactionId = "7826782163";
-        Instant createdDate = Instant.now();
+        Instant createdDate = Instant.now().truncatedTo(MICROS);
         Long chargeId = 9999L;
         String externalChargeId = "charge9999";
 
@@ -415,7 +417,7 @@ public class ChargeDaoIT {
     @Test
     void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
         String transactionId = "7826782163";
-        Instant createdDate = Instant.now();
+        Instant createdDate = Instant.now().truncatedTo(MICROS);
         Long chargeId = 876786L;
         String externalChargeId = "charge876786";
 
@@ -826,7 +828,7 @@ public class ChargeDaoIT {
         TestCharge chargeToExpunge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
+                .withCreatedDate(Instant.now().truncatedTo(MICROS).minus(Duration.ofDays(90)))
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .insert();
 
@@ -860,7 +862,7 @@ public class ChargeDaoIT {
         TestCharge chargeToExpunge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withCreatedDate(Instant.now().minus(Duration.ofDays(90)))
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(90)).truncatedTo(MICROS))
                 .withParityCheckDate(now(ZoneId.of("UTC")))
                 .withParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER)
                 .insert();

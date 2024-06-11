@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.MICROS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -173,7 +174,7 @@ public class EmittedEventDaoIT {
         final RefundSubmitted refundSubmittedEvent = aRefundSubmittedEvent(Instant.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
                 paymentCreatedEvent.getEventType(), paymentCreatedEvent.getTimestamp(), null);
-        ZonedDateTime doNotRetryEmitUntil = ZonedDateTime.now(UTC).minusSeconds(120);
+        ZonedDateTime doNotRetryEmitUntil = ZonedDateTime.now(UTC).minusSeconds(120).truncatedTo(MICROS);
         emittedEventDao.recordEmission(refundSubmittedEvent.getResourceType(), refundSubmittedEvent.getResourceExternalId(),
                 refundSubmittedEvent.getEventType(), refundSubmittedEvent.getTimestamp(), doNotRetryEmitUntil);
         emittedEventDao.recordEmission(paymentCreatedEvent.getResourceType(), paymentCreatedEvent.getResourceExternalId(),
