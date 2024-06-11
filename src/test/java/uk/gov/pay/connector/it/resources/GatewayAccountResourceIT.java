@@ -5,6 +5,7 @@ import io.restassured.http.ContentType;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.Is;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -12,12 +13,14 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -902,6 +905,80 @@ public class GatewayAccountResourceIT {
                 .statusCode(OK.getStatusCode());
     }
 
+    @Nested
+    class Update3dsToggleByServiceIdAndAccountType {
+
+        private String serviceId;
+
+        @BeforeEach
+        void before() {
+            serviceId = RandomIdGenerator.newId();
+            Map<String, String> gatewayAccountRequest = Map.of(
+                    "payment_provider", "worldpay",
+                    "service_id", serviceId,
+                    "service_name", "Service Name",
+                    "type", "test");
+
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
+        }
+        
+        @Test
+        void update3dsToggleSuccessfully() {
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("requires3ds", is(false));
+
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", true)))
+                    .patch(format("/v1/frontend/service/%s/account/test/3ds-toggle", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("requires3ds", is(true));
+            
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", false)))
+                    .patch(format("/v1/frontend/service/%s/account/test/3ds-toggle", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("requires3ds", is(false));
+        }
+        
+        @Test
+        void setting3dsToggleToFalse_WhenA3dsCardTypeIsAccepted_returnsConflict() {
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", true)))
+                    .patch(format("/v1/frontend/service/%s/account/test/3ds-toggle", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            String maestroCardTypeId = app.getDatabaseTestHelper().getCardTypeId("maestro", "DEBIT");
+
+            app.givenSetup().accept(JSON)
+                    .body("{\"card_types\": [\"" + maestroCardTypeId + "\"]}")
+                    .post(format("/v1/frontend/service/%s/account/test/card-types", serviceId))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .body(toJson(Map.of("toggle_3ds", false)))
+                    .patch(format("/v1/frontend/service/%s/account/test/3ds-toggle", serviceId))
+                    .then()
+                    .statusCode(CONFLICT.getStatusCode());
+        }
+    }
+    
     @Nested
     class Update3dsToggleByGatewayAccountId {
 
