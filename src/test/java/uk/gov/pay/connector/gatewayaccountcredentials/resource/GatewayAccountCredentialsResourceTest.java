@@ -399,7 +399,7 @@ public class GatewayAccountCredentialsResourceTest {
             @Test
             void missingBody_shouldReturn422() {
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .request()
                         .post(null);
 
@@ -424,7 +424,7 @@ public class GatewayAccountCredentialsResourceTest {
                 payload.remove(key);
 
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/3ds-flex-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .request()
                         .put(Entity.json(payload));
 
@@ -522,7 +522,7 @@ public class GatewayAccountCredentialsResourceTest {
                                 "value", "a-user-id")
                 );
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/credentials/222", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format("/v1/api/service/%s/account/%s/credentials/222", VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .request()
                         .method("PATCH", Entity.json(payload));
 
@@ -544,7 +544,7 @@ public class GatewayAccountCredentialsResourceTest {
                 payload.remove(fieldName);
 
                 Response response = resources
-                        .target(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .target(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .request()
                         .post(Entity.json(payload));
 
@@ -558,7 +558,7 @@ public class GatewayAccountCredentialsResourceTest {
         when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType("a-valid-service-id", GatewayAccountType.TEST))
                 .thenReturn(Optional.of(gatewayAccountEntity));
         Response response = resources
-                .target("/v1/api/service/a-valid-service-id/test/worldpay/check-3ds-flex-config")
+                .target("/v1/api/service/a-valid-service-id/account/test/worldpay/check-3ds-flex-config")
                 .request()
                 .post(Entity.json(payload));
 

@@ -274,7 +274,7 @@ public class GatewayAccountCredentialsResourceIT {
 
                 app.givenSetup()
                         .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
-                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(OK.getStatusCode())
                         .body(not(hasKey("gateway_account_credential_id")));;
@@ -293,7 +293,7 @@ public class GatewayAccountCredentialsResourceIT {
             void withNoGatewayAccount_shouldReturn404() {
                 app.givenSetup()
                         .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
-                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(404)
                         .body("message[0]", is("Gateway account not found for service ID [a-valid-service-id] and account type [test]"));
@@ -303,7 +303,7 @@ public class GatewayAccountCredentialsResourceIT {
             void withInvalidCredentials_shouldReturn400() {
                 app.givenSetup()
                         .body(toJson(Map.of("payment_provider", "epdq")))
-                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(400)
                         .body("message[0]", is("Operation not supported for payment provider 'epdq'"));
@@ -325,7 +325,7 @@ public class GatewayAccountCredentialsResourceIT {
 
                 String credentialsId = app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
-                    .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                    .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .extract().path("external_id");
@@ -343,7 +343,7 @@ public class GatewayAccountCredentialsResourceIT {
                                 "path", "state",
                                 "value", "VERIFIED_WITH_LIVE_PAYMENT")
                     )))
-                    .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                    .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                     .then()
                     .statusCode(200)
                     .body("$", hasKey("credentials"))
@@ -376,7 +376,7 @@ public class GatewayAccountCredentialsResourceIT {
 
                 String credentialsId = app.givenSetup()
                         .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
-                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(OK.getStatusCode())
                         .extract().path("external_id");
@@ -385,7 +385,7 @@ public class GatewayAccountCredentialsResourceIT {
                     .body(toJson(singletonList(
                         Map.of("op", "replace",
                                 "path", "credentials"))))
-                    .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                    .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                     .then()
                     .statusCode(400)
                     .body("message[0]", is("Field [value] is required"));
@@ -410,7 +410,7 @@ public class GatewayAccountCredentialsResourceIT {
                                 Map.of("op", "replace",
                                         "path", "credentials",
                                         "value", newCredentials))))
-                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, "an-invalid-credentials-id"))
+                        .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, "an-invalid-credentials-id"))
                         .then()
                         .statusCode(404)
                         .body("message[0]", is("Gateway account credentials with ID [an-invalid-credentials-id] not found."));
@@ -438,7 +438,7 @@ public class GatewayAccountCredentialsResourceIT {
                                 Map.of("op", "replace",
                                         "path", "credentials/gateway_merchant_id",
                                         "value", "abcdef123abcdef"))))
-                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                         .then()
                         .statusCode(200)
                         .body("$", hasKey("credentials"))
@@ -469,7 +469,7 @@ public class GatewayAccountCredentialsResourceIT {
 
                 String credentialsId = app.givenSetup()
                         .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
-                        .post(format("/v1/api/service/%s/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(OK.getStatusCode())
                         .extract().path("external_id");
@@ -479,7 +479,7 @@ public class GatewayAccountCredentialsResourceIT {
                                 Map.of("op", "replace",
                                         "path", "credentials/gateway_merchant_id",
                                         "value", "abcdef123abcdef"))))
-                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                         .then()
                         .statusCode(400)
                         .body("message[0]", is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
@@ -508,7 +508,7 @@ public class GatewayAccountCredentialsResourceIT {
                                 Map.of("op", "replace",
                                         "path", "credentials/gateway_merchant_id",
                                         "value", "abcdef123abcdef"))))
-                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                         .then()
                         .statusCode(200)
                         .body("$", hasKey("credentials"))
@@ -527,7 +527,7 @@ public class GatewayAccountCredentialsResourceIT {
                 // Update to one_off_customer_initiated should not change gateway_merchant_id
                 app.givenSetup()
                         .body(toJson(List.of(newCredentials)))
-                        .patch(format("/v1/api/service/%s/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
                         .then()
                         .statusCode(200)
                         .body("$", hasKey("credentials"))
@@ -564,7 +564,7 @@ public class GatewayAccountCredentialsResourceIT {
             void forNonExistentGatewayAccount_shouldReturn404() {
                 app.givenSetup()
                         .body(toJson(worldpayCredentials))
-                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(404)
                         .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", VALID_SERVICE_ID, TEST)));
@@ -585,7 +585,7 @@ public class GatewayAccountCredentialsResourceIT {
 
                 app.givenSetup()
                         .body(toJson(worldpayCredentials))
-                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(200)
                         .body("result", is("valid"));
@@ -606,7 +606,7 @@ public class GatewayAccountCredentialsResourceIT {
 
                 app.givenSetup()
                         .body(toJson(worldpayCredentials))
-                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(200)
                         .body("result", is("invalid"));
@@ -627,7 +627,7 @@ public class GatewayAccountCredentialsResourceIT {
 
                 app.givenSetup()
                         .body(toJson(worldpayCredentials))
-                        .post(format("/v1/api/service/%s/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
+                        .post(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(404)
                         .body("message[0]", is(format("Gateway account for service ID [%s] and account type [%s] is not a Worldpay account.", VALID_SERVICE_ID, TEST)));
