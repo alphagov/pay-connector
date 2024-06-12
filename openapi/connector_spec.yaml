@@ -1396,6 +1396,88 @@ paths:
       summary: Create or update 3DS flex credentials (worldpay accounts)
       tags:
       - Gateway account credentials
+  /v1/api/service/{serviceId}/account/{accountType}/agreements:
+    post:
+      operationId: createAgreement_1
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementCreateRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgreementResponse'
+          description: OK
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Missing required fields
+      summary: Create an agreement for a service ID and account type (test|live)
+      tags:
+      - Agreements
+  /v1/api/service/{serviceId}/account/{accountType}/agreements/{agreementId}/cancel:
+    post:
+      operationId: cancelAgreement_1
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - in: path
+        name: agreementId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreementCancelRequest'
+      responses:
+        default:
+          content:
+            '*/*': {}
+          description: default response
+      tags:
+      - Agreements
   /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/resend-confirmation-email:
     post:
       operationId: resendConfirmationEmailByServiceIdAndAccountType
@@ -1784,88 +1866,6 @@ paths:
       summary: Validate Worldpay credentials by service ID and account type
       tags:
       - Gateway account credentials
-  /v1/api/service/{serviceId}/{accountType}/agreements:
-    post:
-      operationId: createAgreement_1
-      parameters:
-      - description: Service ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgreementCreateRequest'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementResponse'
-          description: OK
-        "404":
-          description: Not found
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Missing required fields
-      summary: Create an agreement for a service ID and account type (test|live)
-      tags:
-      - Agreements
-  /v1/api/service/{serviceId}/{accountType}/agreements/{agreementId}/cancel:
-    post:
-      operationId: cancelAgreement_1
-      parameters:
-      - description: Service ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      - in: path
-        name: agreementId
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgreementCancelRequest'
-      responses:
-        default:
-          content:
-            '*/*': {}
-          description: default response
-      tags:
-      - Agreements
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\

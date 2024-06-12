@@ -32,7 +32,7 @@ import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 class AgreementsApiResourceTest {
 
     private static final String RESOURCE_URL = "/v1/api/accounts/%d/agreements";
-    private static final String RESOURCE_BY_SERVICE_ID_URL = "/v1/api/service/%s/%s/agreements";
+    private static final String RESOURCE_BY_SERVICE_ID_URL = "/v1/api/service/%s/account/%s/agreements";
     private static final long VALID_ACCOUNT_ID = 123l;
     private static final long NOT_VALID_ACCOUNT_ID = 9876l;
     private static final String REFERENCE_ID = "1234";

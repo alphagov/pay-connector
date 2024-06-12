@@ -46,9 +46,9 @@ public class AgreementsApiResourceIT {
     private static final String REFERENCE_ID_TOO_LONG = new String(new char[260]).replace('\0', '1');
     private static final String REFERENCE_ID_EMPTY = "";
     private static final String CREATE_AGREEMENT_URL = "/v1/api/accounts/%s/agreements";
-    private static final String CREATE_AGREEMENT_BY_SERVICE_ID_URL = "/v1/api/service/%s/%s/agreements";
+    private static final String CREATE_AGREEMENT_BY_SERVICE_ID_URL = "/v1/api/service/%s/account/%s/agreements";
     private static final String CANCEL_AGREEMENT_URL = "/v1/api/accounts/%s/agreements/%s/cancel";
-    private static final String CANCEL_AGREEMENT_BY_SERVICE_ID_URL = "/v1/api/service/%s/%s/agreements/%s/cancel";
+    private static final String CANCEL_AGREEMENT_BY_SERVICE_ID_URL = "/v1/api/service/%s/account/%s/agreements/%s/cancel";
     private DatabaseFixtures.TestAccount testAccount;
     private Long accountId;
 
