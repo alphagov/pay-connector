@@ -2394,8 +2394,8 @@ paths:
     patch:
       operationId: updateGatewayAccount3dsToggleByServiceId
       parameters:
-      - description: Gateway account ID
-        example: 1
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
         in: path
         name: serviceId
         required: true
