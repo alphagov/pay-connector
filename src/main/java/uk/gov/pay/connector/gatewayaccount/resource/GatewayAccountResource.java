@@ -29,6 +29,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsWithInternalIdResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
+import uk.gov.pay.connector.gatewayaccount.model.Update3dsToggleRequest;
 import uk.gov.pay.connector.gatewayaccount.model.UpdateServiceNameRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
@@ -442,6 +443,43 @@ public class GatewayAccountResource {
                 .orElseGet(() ->
                         notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
+
+    @PATCH
+    @Path("/v1/frontend/service/{serviceId}/account/{accountType}/3ds-toggle")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Transactional
+    @Operation(
+            summary = "Set requires3ds flag on a gateway account",
+            tags = {"Gateway accounts"},
+            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
+                    "  \"toggle_3ds\": \"true\"" +
+                    "}"))),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "409", description = "Conflict - 3ds cannot be disabled for account")
+            }
+    )
+    public Response updateGatewayAccount3dsToggleByServiceId(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            Update3dsToggleRequest update3dsToggleRequest) {
+        
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccount ->
+                        {
+                            if (!update3dsToggleRequest.isToggle3ds() && gatewayAccount.hasAnyAcceptedCardType3dsRequired()) {
+                                return Response.status(Status.CONFLICT).build();
+                            }
+                            gatewayAccount.setRequires3ds(update3dsToggleRequest.isToggle3ds());
+                            return Response.ok().build();
+                        }
+                )
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+    }
     
     @PATCH
     @Path("/v1/frontend/accounts/{accountId}/3ds-toggle")
@@ -462,8 +500,8 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "409", description = "Conflict - 3ds cannot be disabled for account")
             }
     )
-    public Response updateGatewayAccount3dsToggle(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
-                                                  Map<String, String> gatewayAccountPayload) {
+    public Response updateGatewayAccount3dsToggleByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
+                                                                    Map<String, String> gatewayAccountPayload) {
         if (!gatewayAccountPayload.containsKey(REQUIRES_3DS_FIELD_NAME)) {
             return fieldsMissingResponse(Collections.singletonList(REQUIRES_3DS_FIELD_NAME));
         }
@@ -505,7 +543,7 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "409", description = "Conflict - requires3DS is false on gateway account but atleast one card type requires 3DS to be enabled. ")
             }
     )
-    public Response updateGatewayAccountAcceptedCardTypesPreDegateway(
+    public Response updateGatewayAccountAcceptedCardTypesByGatewayAccountId(
             @Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
             Map<String, List<UUID>> cardTypes) {
 
@@ -542,7 +580,7 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "409", description = "Conflict - requires3DS is false on gateway account but atleast one card type requires 3DS to be enabled. ")
             }
     )
-    public Response updateGatewayAccountAcceptedCardTypesDegateway(
+    public Response updateGatewayAccountAcceptedCardTypesByServiceId(
             @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             Map<String, List<UUID>> cardTypes) {
