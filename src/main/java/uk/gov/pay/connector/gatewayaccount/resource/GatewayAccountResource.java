@@ -463,9 +463,11 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "409", description = "Conflict - 3ds cannot be disabled for account")
             }
     )
-    public Response updateGatewayAccount3dsToggleByServiceId(@Parameter(example = "1", description = "Gateway account ID") @PathParam("serviceId") String serviceId,
-                                                             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-                                                             Update3dsToggleRequest update3dsToggleRequest) {
+    public Response updateGatewayAccount3dsToggleByServiceId(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            Update3dsToggleRequest update3dsToggleRequest) {
+        
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount ->
                         {
