@@ -5,6 +5,7 @@ import com.stripe.exception.ApiException;
 import com.stripe.exception.CardException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
+import com.stripe.model.StripeError;
 import io.dropwizard.core.setup.Environment;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
@@ -57,8 +58,8 @@ public class RefundReversalResourceIT {
     private com.stripe.model.Charge mockedStripeCharge = Mockito.mock(com.stripe.model.Charge.class);
     @Mock
     private com.stripe.model.Account mockedStripeAccount = Mockito.mock(com.stripe.model.Account.class);
-    
-    
+
+
     private static final String CHARGE_EXTERNAL_ID = "charge-external-id";
     private static final String REFUND_EXTERNAL_ID = "refund-external-id";
     private static final String STRIPE_REFUND_ID = "stripe-refund-id";
@@ -71,7 +72,7 @@ public class RefundReversalResourceIT {
     public static void before() {
         when(mockStripeSdkClientFactory.getInstance()).thenReturn(mockStripeSdkClient);
     }
-    
+
     @BeforeEach
     public void setUp() {
         charge = aValidLedgerTransaction()
@@ -94,7 +95,7 @@ public class RefundReversalResourceIT {
         when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
 
     }
-    
+
     @AfterEach
     void tearDown() {
         reset(mockStripeSdkClient);
@@ -107,7 +108,7 @@ public class RefundReversalResourceIT {
 
         when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(mockStripeRefund);
         app.getStripeMockClient().mockRefund();
-        
+
         when(mockStripeRefund.getStatus()).thenReturn("failed");
 
         when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
@@ -148,7 +149,7 @@ public class RefundReversalResourceIT {
                 .then()
                 .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
-    
+
     @Test
     void shouldHandleStripeExceptionThrownWhenCreatingTransfer() throws JsonProcessingException, StripeException {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
@@ -179,9 +180,9 @@ public class RefundReversalResourceIT {
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
 
 
-        doThrow(new ApiException("error connecting to Stripe", "500", null, null, null))
+        doThrow(new ApiException("error connecting to Stripe", "request_123", null, 500, null))
                 .when(mockStripeSdkClient).createTransfer(transferRequest, false);
-        
+
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -190,7 +191,7 @@ public class RefundReversalResourceIT {
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()
-                .body("message", is("There was an error trying to create transfer with id: " + REFUND_EXTERNAL_ID + " from Stripe: " + "error connecting to Stripe; request-id: 500"))
+                .body("message", is("There was an error trying to create transfer with id: " + REFUND_EXTERNAL_ID + " from Stripe: " + "error connecting to Stripe; request-id: request_123"))
                 .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
@@ -202,7 +203,7 @@ public class RefundReversalResourceIT {
 
         Map<String, Object> transferRequest = Map.of(
                 "destination", "acct_jdsa7789d",
-                "amount", -30L,
+                "amount", 100L,
                 "metadata", Map.of(
                         "stripeChargeId", "ch_sdkhdg887s",
                         "correctionPaymentId", "random123"
@@ -221,15 +222,27 @@ public class RefundReversalResourceIT {
         when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
         when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
-        when(mockStripeRefund.getAmount()).thenReturn(-30L);
-//        when(mockStripeRefund.getBalanceTransactionObject().getAmount()).thenReturn(-30L);
-//        when(mockStripeRefund.getBalanceTransaction()).thenReturn("insufficient funds");
+        when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
 
-        doThrow(new CardException("insufficient funds", "500", "internalError", null,"insufficient_funds",null,500,null))
-                        .when(mockStripeSdkClient).createTransfer(transferRequest, false);
+        StripeError stripeError = new StripeError();
+        stripeError.setMessage("insufficient funds");
+        stripeError.setCode("insufficient_funds");
+        stripeError.setDeclineCode("insufficient_funds");
 
+        CardException cardexception = new CardException(
+                "error with stripe because of insufficient funds",
+                "req_12345",
+                "insufficient_funds",
+                "param_value",
+                "insufficient_funds",
+                charge.toString(),
+                400,
+                null);
 
+        cardexception.setStripeError(stripeError);
+            doThrow(cardexception
+        ).when(mockStripeSdkClient).createTransfer(transferRequest, false);
 
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
@@ -239,8 +252,8 @@ public class RefundReversalResourceIT {
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()
-                .body("message", is("\"Transfer failed due to insufficient funds for refund %s\", refundExternalId: " + REFUND_EXTERNAL_ID + "from Stripe: " + " error connecting to Stripe; request-id: 500"))
-                .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+                .body("message[0]", is("Transfer failed due to insufficient funds for refund with " + REFUND_EXTERNAL_ID + " error with stripe because of insufficient funds; code: insufficient_funds; request-id: req_12345"))
+                .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
     }
 
 
@@ -250,7 +263,7 @@ public class RefundReversalResourceIT {
             return new ConnectorModuleWithOverrides(configuration, environment);
         }
     }
-    
+
     private static class ConnectorModuleWithOverrides extends ConnectorModule {
 
         public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
@@ -266,7 +279,7 @@ public class RefundReversalResourceIT {
         protected RandomIdGenerator getRandomIdGenerator() {
             return mockRandomIdGenerator;
         }
-        
+
     }
 }
 

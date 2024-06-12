@@ -68,9 +68,9 @@ public class RefundReversalService {
         try {
             stripeClient.createTransfer(refundRequestBody, isLiveGatewayAccount);
         } catch (StripeException e) {
-            if ( "insufficient_funds".equals(e.getStripeError().getDeclineCode())) {
+            if (e.getStripeError() != null && "insufficient_funds".equals(e.getStripeError().getDeclineCode())) {
                 throw new WebApplicationException(badRequestResponse(
-                        format("Transfer failed due to insufficient funds for refund %s", refundExternalId)));
+                        format("Transfer failed due to insufficient funds for refund with %s %s", refundExternalId, e.getMessage())));
             } else {
                 throw new WebApplicationException(
                         format("There was an error trying to create transfer with id: %s from Stripe: %s", refundExternalId, e.getMessage()));
