@@ -894,17 +894,7 @@ public class GatewayAccountResourceIT {
                 .body("code", Is.is(404))
                 .body("message", Is.is("HTTP 404 Not Found"));
     }
-
-    @Test
-    void createValidNotificationCredentials_responseShouldBe200_Ok() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
-        app.givenSetup()
-                .body(toJson(Map.of("username", "bob", "password", "bobsbigsecret")))
-                .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
-                .then()
-                .statusCode(OK.getStatusCode());
-    }
-
+    
     @Nested
     class Update3dsToggleByServiceIdAndAccountType {
 
@@ -1083,26 +1073,40 @@ public class GatewayAccountResourceIT {
                 .body("worldpay_3ds_flex", nullValue());
     }
 
-    @Test
-    void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
-        app.givenSetup()
-                .body(toJson(Map.of("bob", "bob", "bobby", "bobsbigsecret")))
-                .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
-                .then()
-                .statusCode(BAD_REQUEST.getStatusCode());
-    }
+    @Nested
+    class CreateNotificationCredentialsByGatewayAccountId {
 
-    @Test
-    void whenNotificationCredentialsInvalidValues_shouldReturn400() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
-        app.givenSetup()
-                .body(toJson(Map.of("username", "bob", "password", "tooshort")))
-                .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
-                .then()
-                .contentType(ContentType.JSON)
-                .statusCode(BAD_REQUEST.getStatusCode())
-                .body("message", contains("Credentials update failure: Invalid password length"))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        @Test
+        void createValidNotificationCredentials_responseShouldBe200_Ok() {
+            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
+            app.givenSetup()
+                    .body(toJson(Map.of("username", "bob", "password", "bobsbigsecret")))
+                    .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
+                    .then()
+                    .statusCode(OK.getStatusCode());
+        }
+        
+        @Test
+        void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
+            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
+            app.givenSetup()
+                    .body(toJson(Map.of("bob", "bob", "bobby", "bobsbigsecret")))
+                    .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
+                    .then()
+                    .statusCode(BAD_REQUEST.getStatusCode());
+        }
+
+        @Test
+        void whenNotificationCredentialsInvalidValues_shouldReturn400() {
+            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
+            app.givenSetup()
+                    .body(toJson(Map.of("username", "bob", "password", "tooshort")))
+                    .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
+                    .then()
+                    .contentType(ContentType.JSON)
+                    .statusCode(BAD_REQUEST.getStatusCode())
+                    .body("message", contains("Credentials update failure: Invalid password length"))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
     }
 }
