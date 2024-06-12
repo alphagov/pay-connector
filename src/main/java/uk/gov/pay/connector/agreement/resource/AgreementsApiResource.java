@@ -63,7 +63,7 @@ public class AgreementsApiResource {
     }
 
     @POST
-    @Path("/v1/api/service/{serviceId}/{accountType}/agreements")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/agreements")
     @Produces("application/json")
     @Consumes("application/json")
     @Operation(
@@ -98,7 +98,7 @@ public class AgreementsApiResource {
     }
 
     @POST
-    @Path("/v1/api/service/{serviceId}/{accountType}/agreements/{agreementId}/cancel")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/agreements/{agreementId}/cancel")
     @Consumes("application/json")
     public Response cancelAgreement(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
