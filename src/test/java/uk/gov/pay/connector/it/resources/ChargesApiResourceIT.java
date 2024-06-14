@@ -68,10 +68,11 @@ public class ChargesApiResourceIT {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
+    private static final String CAPTURE_BY_CHARGE_ID_URL = "v1/api/charges/%s/capture";
 
     private final DatabaseTestHelper databaseTestHelper = app.getDatabaseTestHelper();
     private final String accountId = testBaseExtension.getAccountId();
-
+    
     @Test
     void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
         Instant startOfTest = Instant.now();
@@ -715,22 +716,20 @@ public class ChargesApiResourceIT {
     }
     
     @Nested
-    class CaptureByChargeIdOnly {
+    class DelayedCaptureApproveByChargeIdOnly {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
             String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
                     ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(accountId)
-                    .withChargeId(extChargeId)
-                    .postMarkChargeAsCaptureApprovedByChargeId()
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .then()
                     .statusCode(NO_CONTENT.getStatusCode());
-            
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(accountId)
-                    .withChargeId(extChargeId)
-                    .getCharge()
+
+            app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", accountId, extChargeId))
+                    .then()
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
                     .body(JSON_CHARGE_KEY, is(extChargeId))
@@ -742,16 +741,14 @@ public class ChargesApiResourceIT {
             String extChargeId = testBaseExtension.addChargeAndCardDetails(CAPTURE_APPROVED,
                     ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(accountId)
-                    .withChargeId(extChargeId)
-                    .postMarkChargeAsCaptureApprovedByChargeId()
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .then()
                     .statusCode(NO_CONTENT.getStatusCode());
-            
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(accountId)
-                    .withChargeId(extChargeId)
-                    .getCharge()
+
+            app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", accountId, extChargeId))
+                    .then()
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
                     .body(JSON_CHARGE_KEY, is(extChargeId))
@@ -760,13 +757,12 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(accountId)
-                    .withChargeId("i-do-not-exist")
-                    .postMarkChargeAsCaptureApprovedByChargeId()
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, "non-existent-chargeId"))
+                    .then()
                     .statusCode(NOT_FOUND.getStatusCode())
                     .contentType(JSON)
-                    .body(JSON_MESSAGE_KEY, contains("Charge with id [i-do-not-exist] not found."))
+                    .body(JSON_MESSAGE_KEY, contains("Charge with id [non-existent-chargeId] not found."))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
 
@@ -776,10 +772,9 @@ public class ChargesApiResourceIT {
                     ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
 
             final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(accountId)
-                    .withChargeId(extChargeId)
-                    .postMarkChargeAsCaptureApprovedByChargeIdAndAccountId()
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .then()
                     .statusCode(CONFLICT.getStatusCode())
                     .contentType(JSON)
                     .body(JSON_MESSAGE_KEY, contains(expectedErrorMessage))
