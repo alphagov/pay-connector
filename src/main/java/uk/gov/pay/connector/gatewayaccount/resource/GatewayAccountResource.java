@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
-import uk.gov.pay.connector.common.exception.CredentialsException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
@@ -26,15 +25,14 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsWithInternalIdResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsWithInternalIdResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountsListDTO;
 import uk.gov.pay.connector.gatewayaccount.model.Update3dsToggleRequest;
 import uk.gov.pay.connector.gatewayaccount.model.UpdateServiceNameRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
-import uk.gov.pay.connector.usernotification.service.GatewayAccountNotificationCredentialsService;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import javax.inject.Inject;
@@ -84,7 +82,6 @@ public class GatewayAccountResource {
     private static final String PASSWORD_KEY = "password";
     private final GatewayAccountService gatewayAccountService;
     private final CardTypeDao cardTypeDao;
-    private final GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService;
     private final GatewayAccountRequestValidator validator;
     private final GatewayAccountServicesFactory gatewayAccountServicesFactory;
     private final GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService;
@@ -92,13 +89,11 @@ public class GatewayAccountResource {
     @Inject
     public GatewayAccountResource(GatewayAccountService gatewayAccountService,
                                   CardTypeDao cardTypeDao,
-                                  GatewayAccountNotificationCredentialsService gatewayAccountNotificationCredentialsService,
                                   GatewayAccountRequestValidator validator,
                                   GatewayAccountServicesFactory gatewayAccountServicesFactory,
                                   GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService) {
         this.gatewayAccountService = gatewayAccountService;
         this.cardTypeDao = cardTypeDao;
-        this.gatewayAccountNotificationCredentialsService = gatewayAccountNotificationCredentialsService;
         this.validator = validator;
         this.gatewayAccountServicesFactory = gatewayAccountServicesFactory;
         this.gatewayAccountSwitchPaymentProviderService = gatewayAccountSwitchPaymentProviderService;
@@ -629,52 +624,6 @@ public class GatewayAccountResource {
                 .filter(cardTypeId -> !foundIds.contains(cardTypeId))
                 .map(UUID::toString)
                 .collect(Collectors.toList());
-    }
-
-    @POST
-    @Path("/v1/api/accounts/{accountId}/notification-credentials")
-    @Consumes(APPLICATION_JSON)
-    @Produces(APPLICATION_JSON)
-    @Transactional
-    @Operation(
-            summary = "Update notification credentials for a gateway account",
-            tags = {"Gateway accounts"},
-            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
-                    "    \"username\": \"a-user-name\"," +
-                    "    \"password\": \"a-password\"" +
-                    "}", requiredProperties = {"username", "password"}))),
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "400", description = "Bad request",
-                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "Not found")
-            }
-    )
-    public Response createOrUpdateGatewayAccountNotificationCredentials(@Parameter(example = "1", description = "Gateway account ID")
-                                                                        @PathParam("accountId") Long gatewayAccountId,
-                                                                        Map<String, String> notificationCredentials) {
-        if (!notificationCredentials.containsKey(USERNAME_KEY)) {
-            return fieldsMissingResponse(Collections.singletonList(USERNAME_KEY));
-        }
-
-        if (!notificationCredentials.containsKey(PASSWORD_KEY)) {
-            return fieldsMissingResponse(Collections.singletonList(PASSWORD_KEY));
-        }
-
-        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .map(gatewayAccountEntity -> {
-                    try {
-                        gatewayAccountNotificationCredentialsService.setCredentialsForAccount(notificationCredentials,
-                                gatewayAccountEntity);
-                    } catch (CredentialsException e) {
-                        logger.error("Credentials update failure: {}", e.getMessage());
-                        return badRequestResponse("Credentials update failure: " + e.getMessage());
-                    }
-
-                    return Response.ok().build();
-
-                })
-                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
     @POST

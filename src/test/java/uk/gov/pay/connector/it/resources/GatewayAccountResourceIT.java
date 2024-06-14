@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.restassured.http.ContentType;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.Is;
@@ -14,18 +12,15 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -1071,42 +1066,5 @@ public class GatewayAccountResourceIT {
                 .then()
                 .statusCode(200)
                 .body("worldpay_3ds_flex", nullValue());
-    }
-
-    @Nested
-    class CreateNotificationCredentialsByGatewayAccountId {
-
-        @Test
-        void createValidNotificationCredentials_responseShouldBe200_Ok() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
-            app.givenSetup()
-                    .body(toJson(Map.of("username", "bob", "password", "bobsbigsecret")))
-                    .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
-                    .then()
-                    .statusCode(OK.getStatusCode());
-        }
-        
-        @Test
-        void whenNotificationCredentialsInvalidKeys_shouldReturn400() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
-            app.givenSetup()
-                    .body(toJson(Map.of("bob", "bob", "bobby", "bobsbigsecret")))
-                    .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
-                    .then()
-                    .statusCode(BAD_REQUEST.getStatusCode());
-        }
-
-        @Test
-        void whenNotificationCredentialsInvalidValues_shouldReturn400() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe");
-            app.givenSetup()
-                    .body(toJson(Map.of("username", "bob", "password", "tooshort")))
-                    .post("/v1/api/accounts/" + gatewayAccountId + "/notification-credentials")
-                    .then()
-                    .contentType(ContentType.JSON)
-                    .statusCode(BAD_REQUEST.getStatusCode())
-                    .body("message", contains("Credentials update failure: Invalid password length"))
-                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-        }
     }
 }
