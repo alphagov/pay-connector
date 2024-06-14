@@ -445,7 +445,7 @@ paths:
         \ then nothing happens and the response will be a 204. When a charge is in\
         \ a status that cannot transition (eg. none of the above) then 409 response\
         \ is returned. "
-      operationId: markChargeAsCaptureApproved_1
+      operationId: markChargeAsCaptureApproved
       parameters:
       - in: path
         name: accountId
@@ -1101,7 +1101,7 @@ paths:
         \ then nothing happens and the response will be a 204. When a charge is in\
         \ a status that cannot transition (eg. none of the above) then 409 response\
         \ is returned. "
-      operationId: markChargeAsCaptureApproved
+      operationId: markChargeAsCaptureApprovedByChargeId
       parameters:
       - in: path
         name: chargeId
