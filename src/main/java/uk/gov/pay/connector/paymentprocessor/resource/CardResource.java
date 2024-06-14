@@ -270,7 +270,7 @@ public class CardResource {
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             }
     )
-    public Response markChargeAsCaptureApproved(@PathParam("chargeId") String chargeId,
+    public Response markChargeAsCaptureApprovedByChargeId(@PathParam("chargeId") String chargeId,
                                                 @Context UriInfo uriInfo) {
         logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
         delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
