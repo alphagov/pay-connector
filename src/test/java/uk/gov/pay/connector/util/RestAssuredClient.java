@@ -201,9 +201,17 @@ public class RestAssuredClient {
         return this;
     }
 
-    public ValidatableResponse postMarkChargeAsCaptureApproved() {
+    public ValidatableResponse postMarkChargeAsCaptureApprovedByChargeIdAndAccountId() {
         final String path = "/v1/api/accounts/{accountId}/charges/{chargeId}/capture"
                 .replace("{accountId}", accountId)
+                .replace("{chargeId}", chargeId);
+        return buildRequest()
+                .post(path)
+                .then();
+    }
+
+    public ValidatableResponse postMarkChargeAsCaptureApprovedByChargeId() {
+        final String path = "/v1/api/charges/{chargeId}/capture"
                 .replace("{chargeId}", chargeId);
         return buildRequest()
                 .post(path)

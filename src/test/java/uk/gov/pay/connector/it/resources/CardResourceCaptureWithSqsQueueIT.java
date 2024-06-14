@@ -38,7 +38,6 @@ public class CardResourceCaptureWithSqsQueueIT {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-    private String captureApproveUrl;
     
     @BeforeEach
     void setUpLogger() {
@@ -65,13 +64,33 @@ public class CardResourceCaptureWithSqsQueueIT {
     }
 
     @Test
-    void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture() {
+    void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeIdAndAccountId() {
         String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
 
-        captureApproveUrl = ITestBaseExtension.captureUrlForAwaitingCaptureCharge(testBaseExtension.getAccountId(), chargeId);
+        String captureApproveByChargeIdAndAccountIdUrl = ITestBaseExtension.captureUrlByChargeIdAndAccountIdForAwaitingCaptureCharge(testBaseExtension.getAccountId(), chargeId);
 
         app.givenSetup()
-                .post(captureApproveUrl)
+                .post(captureApproveByChargeIdAndAccountIdUrl)
+                .then()
+                .statusCode(204);
+
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+
+        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Charge [" + chargeId + "] added to capture queue. Message ID [")), is(true));
+    }
+
+    @Test
+    void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeId() {
+        String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+
+        String captureApproveByChargeIdUrl = ITestBaseExtension.captureUrlByChargeIdForAwaitingCaptureCharge(chargeId);
+
+        app.givenSetup()
+                .post(captureApproveByChargeIdUrl)
                 .then()
                 .statusCode(204);
 
