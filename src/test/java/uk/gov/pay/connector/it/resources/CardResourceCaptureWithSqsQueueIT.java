@@ -30,7 +30,9 @@ import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.captureUrlByChargeIdAndAccountIdForAwaitingCaptureCharge;
+        
+        
 public class CardResourceCaptureWithSqsQueueIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(config("captureProcessConfig.backgroundProcessingEnabled", "false"));
@@ -72,11 +74,9 @@ public class CardResourceCaptureWithSqsQueueIT {
         @Test
         void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeIdAndAccountId() {
             String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
-
-            String captureApproveByChargeIdAndAccountIdUrl = ITestBaseExtension.captureUrlByChargeIdAndAccountIdForAwaitingCaptureCharge(testBaseExtension.getAccountId(), chargeId);
-
+            
             app.givenSetup()
-                    .post(captureApproveByChargeIdAndAccountIdUrl)
+                    .post(captureUrlByChargeIdAndAccountIdForAwaitingCaptureCharge(testBaseExtension.getAccountId(), chargeId))
                     .then()
                     .statusCode(204);
 
