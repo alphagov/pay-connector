@@ -78,8 +78,6 @@ public class GatewayAccountResource {
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
-    private static final String USERNAME_KEY = "username";
-    private static final String PASSWORD_KEY = "password";
     private final GatewayAccountService gatewayAccountService;
     private final CardTypeDao cardTypeDao;
     private final GatewayAccountRequestValidator validator;
