@@ -46,8 +46,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
-            .addResource(new GatewayAccountResource(gatewayAccountService, null,
-                    null, null, null,
+            .addResource(new GatewayAccountResource(gatewayAccountService, null,null, null,
                     new GatewayAccountSwitchPaymentProviderService(gatewayAccountDao, gatewayAccountCredentialsDao)))
             .build();
 

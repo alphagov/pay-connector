@@ -25,10 +25,8 @@ class GatewayAccountResourceValidationTest {
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
-            .addResource(new GatewayAccountResource(null, null,
-                    null,
-                    new GatewayAccountRequestValidator(new RequestValidator()), null,
-                    null))
+            .addResource(new GatewayAccountResource(null,null,
+                    new GatewayAccountRequestValidator(new RequestValidator()), null,null))
             .build();
 
     @Test

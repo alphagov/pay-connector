@@ -770,43 +770,6 @@ paths:
       summary: Enables/disables email notifications for gateway account
       tags:
       - Gateway accounts
-  /v1/api/accounts/{accountId}/notification-credentials:
-    post:
-      operationId: createOrUpdateGatewayAccountNotificationCredentials
-      parameters:
-      - description: Gateway account ID
-        example: 1
-        in: path
-        name: accountId
-        required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-              example:
-                username: a-user-name
-                password: a-password
-              required:
-              - password
-              - username
-      responses:
-        "200":
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bad request
-        "404":
-          description: Not found
-      summary: Update notification credentials for a gateway account
-      tags:
-      - Gateway accounts
   /v1/api/accounts/{accountId}/stripe-account:
     get:
       operationId: getStripeAccount
