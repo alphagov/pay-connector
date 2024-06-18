@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
@@ -42,7 +43,6 @@ class GatewayAccountResourceSwitchPspValidationTest {
     private static GatewayAccountService gatewayAccountService = mock(GatewayAccountService.class);
 
     private GatewayAccountEntity gatewayAccountEntity;
-    private GatewayAccountSwitchPaymentProviderRequest request;
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
@@ -50,176 +50,178 @@ class GatewayAccountResourceSwitchPspValidationTest {
                     new GatewayAccountSwitchPaymentProviderService(gatewayAccountDao, gatewayAccountCredentialsDao)))
             .build();
 
-    @BeforeEach
-    void setUp() {
-        gatewayAccountEntity = aGatewayAccountEntity().withProviderSwitchEnabled(true).build();
-        request = new GatewayAccountSwitchPaymentProviderRequest(randomUuid(), randomUuid());
-    }
+    @Nested
+    class ByGatewayAccountId {
+        @BeforeEach
+        void setUp() {
+            gatewayAccountEntity = aGatewayAccountEntity().withProviderSwitchEnabled(true).build();
+        }
 
-    @Test
-    void shouldReturn400WhenNoActiveCredentialFound() throws JsonProcessingException {
-        var switchToExtId = randomUuid();
-        var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
-                .withExternalId(randomUuid())
-                .withState(VERIFIED_WITH_LIVE_PAYMENT)
-                .build();
-        var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
-                .withExternalId(switchToExtId)
-                .withState(RETIRED)
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
+        @Test
+        void shouldReturn400WhenNoActiveCredentialFound() throws JsonProcessingException {
+            var switchToExtId = randomUuid();
+            var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
+                    .withExternalId(randomUuid())
+                    .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                    .build();
+            var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
+                    .withExternalId(switchToExtId)
+                    .withState(RETIRED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
 
-        String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
-                "gateway_account_credential_external_id", switchToExtId));
+            String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", switchToExtId));
 
-        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
+            when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
 
-        Response response = resources.client()
-                .target("/v1/api/accounts/1/switch-psp")
-                .request()
-                .post(Entity.json(payload));
+            Response response = resources.client()
+                    .target("/v1/api/accounts/1/switch-psp")
+                    .request()
+                    .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(400));
+            assertThat(response.getStatus(), is(400));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-        assertThat(errorMessage, is("Account credential with ACTIVE state not found."));
-    }
+            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            assertThat(errorMessage, is("Account credential with ACTIVE state not found."));
+        }
 
-    @Test
-    void shouldReturn400WhenCredentialIsMissing() throws JsonProcessingException {
-        var switchToExtId = randomUuid();
-        var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
-                .withExternalId(randomUuid())
-                .withState(VERIFIED_WITH_LIVE_PAYMENT)
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1));
+        @Test
+        void shouldReturn400WhenCredentialIsMissing() throws JsonProcessingException {
+            var switchToExtId = randomUuid();
+            var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
+                    .withExternalId(randomUuid())
+                    .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1));
 
-        String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
-                "gateway_account_credential_external_id", switchToExtId));
+            String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", switchToExtId));
 
-        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
+            when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
 
-        Response response = resources.client()
-                .target("/v1/api/accounts/1/switch-psp")
-                .request()
-                .post(Entity.json(payload));
+            Response response = resources.client()
+                    .target("/v1/api/accounts/1/switch-psp")
+                    .request()
+                    .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(400));
+            assertThat(response.getStatus(), is(400));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-        assertThat(errorMessage, is("Account has no credential to switch to/from"));
-    }
+            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            assertThat(errorMessage, is("Account has no credential to switch to/from"));
+        }
 
-    @Test
-    void shouldReturn400WhenCredentialsNonExistent() throws JsonProcessingException {
-        var switchToExtId = randomUuid();
-        var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
-                .withExternalId(randomUuid())
-                .withState(VERIFIED_WITH_LIVE_PAYMENT)
-                .build();
-        var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
-                .withExternalId(randomUuid())
-                .withState(ACTIVE)
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
+        @Test
+        void shouldReturn400WhenCredentialsNonExistent() throws JsonProcessingException {
+            var switchToExtId = randomUuid();
+            var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
+                    .withExternalId(randomUuid())
+                    .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                    .build();
+            var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
+                    .withExternalId(randomUuid())
+                    .withState(ACTIVE)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
 
-        String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
-                "gateway_account_credential_external_id", switchToExtId));
+            String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", switchToExtId));
 
-        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
+            when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
 
-        Response response = resources.client()
-                .target("/v1/api/accounts/1/switch-psp")
-                .request()
-                .post(Entity.json(payload));
+            Response response = resources.client()
+                    .target("/v1/api/accounts/1/switch-psp")
+                    .request()
+                    .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(404));
+            assertThat(response.getStatus(), is(404));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-        assertThat(errorMessage, is("Account credential with id [" + switchToExtId + "] not found."));
-    }
+            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            assertThat(errorMessage, is("Account credential with id [" + switchToExtId + "] not found."));
+        }
 
-    @Test
-    void shouldReturn400WhenCredentialNotCorrectState() throws JsonProcessingException {
-        var switchToExtId = randomUuid();
-        var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
-                .withExternalId(randomUuid())
-                .withState(ACTIVE)
-                .build();
-        var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
-                .withExternalId(switchToExtId)
-                .withState(RETIRED)
-                .build();
-        gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
+        @Test
+        void shouldReturn400WhenCredentialNotCorrectState() throws JsonProcessingException {
+            var switchToExtId = randomUuid();
+            var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
+                    .withExternalId(randomUuid())
+                    .withState(ACTIVE)
+                    .build();
+            var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
+                    .withExternalId(switchToExtId)
+                    .withState(RETIRED)
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
 
-        String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
-                "gateway_account_credential_external_id", switchToExtId));
+            String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", switchToExtId));
 
-        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
+            when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
 
-        Response response = resources.client()
-                .target("/v1/api/accounts/1/switch-psp")
-                .request()
-                .post(Entity.json(payload));
+            Response response = resources.client()
+                    .target("/v1/api/accounts/1/switch-psp")
+                    .request()
+                    .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(400));
+            assertThat(response.getStatus(), is(400));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-        assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in correct state."));
-    }
+            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in correct state."));
+        }
 
-    @Test
-    void shouldReturn404WhenGatewayAccountIsNonExistent() throws JsonProcessingException {
-        String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
-                "gateway_account_credential_external_id", randomUuid()));
+        @Test
+        void shouldReturn404WhenGatewayAccountIsNonExistent() throws JsonProcessingException {
+            String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", randomUuid()));
 
-        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.empty());
+            when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.empty());
 
-        Response response = resources.client()
-                .target("/v1/api/accounts/1/switch-psp")
-                .request()
-                .post(Entity.json(payload));
+            Response response = resources.client()
+                    .target("/v1/api/accounts/1/switch-psp")
+                    .request()
+                    .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(404));
+            assertThat(response.getStatus(), is(404));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-        assertThat(errorMessage, is("The gateway account id [1] does not exist."));
-    }
+            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            assertThat(errorMessage, is("The gateway account id [1] does not exist."));
+        }
 
-    @Test
-    void shouldReturn400WhenSwitchPaymentProviderIsNotEnabled() throws JsonProcessingException {
-        String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
-                "gateway_account_credential_external_id", randomUuid()));
+        @Test
+        void shouldReturn400WhenSwitchPaymentProviderIsNotEnabled() throws JsonProcessingException {
+            String payload = objectMapper.writeValueAsString(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", randomUuid()));
 
-        gatewayAccountEntity.setProviderSwitchEnabled(false);
-        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
+            gatewayAccountEntity.setProviderSwitchEnabled(false);
+            when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
 
-        Response response = resources.client()
-                .target("/v1/api/accounts/1/switch-psp")
-                .request()
-                .post(Entity.json(payload));
+            Response response = resources.client()
+                    .target("/v1/api/accounts/1/switch-psp")
+                    .request()
+                    .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(400));
+            assertThat(response.getStatus(), is(400));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-        assertThat(errorMessage, is("Account is not configured to switch PSP or already switched PSP."));
-    }
+            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            assertThat(errorMessage, is("Account is not configured to switch PSP or already switched PSP."));
+        }
 
-    @Test
-    void shouldNotThrowNullPointerWhenNoPayloadPresent() throws JsonProcessingException {
-        String payload = "";
+        @Test
+        void shouldNotThrowNullPointerWhenNoPayloadPresent() throws JsonProcessingException {
+            String payload = "";
 
-        gatewayAccountEntity.setProviderSwitchEnabled(true);
-        when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
+            gatewayAccountEntity.setProviderSwitchEnabled(true);
+            when(gatewayAccountService.getGatewayAccount(1)).thenReturn(Optional.of(gatewayAccountEntity));
 
-        Response response = resources.client()
-                .target("/v1/api/accounts/1/switch-psp")
-                .request()
-                .post(Entity.json(payload));
+            Response response = resources.client()
+                    .target("/v1/api/accounts/1/switch-psp")
+                    .request()
+                    .post(Entity.json(payload));
 
-        assertThat(response.getStatus(), is(422));
+            assertThat(response.getStatus(), is(422));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-        assertThat(errorMessage, is("must not be null"));
+            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            assertThat(errorMessage, is("must not be null"));
+        }
     }
 }
