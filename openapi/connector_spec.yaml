@@ -1766,6 +1766,47 @@ paths:
         given service ID and account type
       tags:
       - Gateway accounts
+  /v1/api/service/{serviceId}/account/{accountType}/switch-psp:
+    post:
+      operationId: switchPaymentProvider_1
+      parameters:
+      - description: Service ID
+        example: 1
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayAccountSwitchPaymentProviderRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request
+        "404":
+          description: Not found
+      summary: Switch payment provider of a gateway account
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/worldpay/check-3ds-flex-config:
     post:
       operationId: validateWorldpay3dsCredentialsByServiceIdAndType

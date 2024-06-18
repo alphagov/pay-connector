@@ -625,6 +625,44 @@ public class GatewayAccountResource {
     }
 
     @POST
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/switch-psp")
+    @Consumes(APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Switch payment provider of a gateway account",
+            tags = {"Gateway accounts"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response switchPaymentProvider(
+            @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType, 
+            @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
+
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(gatewayAccountEntity -> {
+                    if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
+                        return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
+                    }
+                    try {
+                        gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
+                    } catch (BadRequestException ex) {
+                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        return badRequestResponse(ex.getMessage());
+                    } catch (NotFoundException ex) {
+                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        return notFoundResponse(ex.getMessage());
+                    }
+                    return Response.ok().build();
+                })
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+    }
+
+    @POST
     @Path("/v1/api/accounts/{accountId}/switch-psp")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
@@ -639,7 +677,8 @@ public class GatewayAccountResource {
             }
     )
     public Response switchPaymentProvider(@Parameter(example = "1", description = "Gateway account ID")
-                                          @PathParam("accountId") Long gatewayAccountId, @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
+                                          @PathParam("accountId") Long gatewayAccountId, 
+                                          @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
         GatewayAccountSwitchPaymentProviderRequestValidator.validate(request);
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
