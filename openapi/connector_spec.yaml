@@ -717,7 +717,7 @@ paths:
               example:
               - op: replace
                 path: state
-                value: ACTIVE
+                value: VERIFIED_WITH_LIVE_PAYMENT
       responses:
         "200":
           content:
@@ -1590,7 +1590,7 @@ paths:
               example:
               - op: replace
                 path: state
-                value: ACTIVE
+                value: VERIFIED_WITH_LIVE_PAYMENT
       responses:
         "200":
           content:
