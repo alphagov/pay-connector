@@ -22,6 +22,9 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
@@ -65,12 +68,14 @@ public class CardResource {
     private final WalletService walletService;
     private final TokenService tokenService;
     private final MotoApiCardNumberValidationService motoApiCardNumberValidationService;
+    private final GatewayAccountService gatewayAccountService;
 
     @Inject
     public CardResource(CardAuthoriseService cardAuthoriseService, Card3dsResponseAuthService card3dsResponseAuthService,
                         ChargeEligibleForCaptureService chargeEligibleForCaptureService, DelayedCaptureService delayedCaptureService,
                         ChargeCancelService chargeCancelService, WalletService walletService,
-                        TokenService tokenService, MotoApiCardNumberValidationService motoApiCardNumberValidationService) {
+                        TokenService tokenService, MotoApiCardNumberValidationService motoApiCardNumberValidationService,
+                        GatewayAccountService gatewayAccountService) {
         this.cardAuthoriseService = cardAuthoriseService;
         this.card3dsResponseAuthService = card3dsResponseAuthService;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
@@ -79,6 +84,7 @@ public class CardResource {
         this.walletService = walletService;
         this.tokenService = tokenService;
         this.motoApiCardNumberValidationService = motoApiCardNumberValidationService;
+        this.gatewayAccountService = gatewayAccountService;
     }
 
     @POST
@@ -101,8 +107,8 @@ public class CardResource {
             }
     )
     public Response authoriseApplePay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
-                                    @PathParam("chargeId") String chargeId,
-                                    @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
+                                      @PathParam("chargeId") String chargeId,
+                                      @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
         logger.info("Received encrypted payload for charge with id {} ", chargeId);
         return walletService.authorise(chargeId, applePayAuthRequest);
     }
@@ -128,12 +134,12 @@ public class CardResource {
             }
     )
     public Response authoriseChargeGooglePay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
-                                                     @PathParam("chargeId") String chargeId,
-                                                     @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
+                                             @PathParam("chargeId") String chargeId,
+                                             @NotNull @Valid GooglePayAuthRequest googlePayAuthRequest) {
         logger.info("Received wallet payment info \n{} \nfor charge with id {}", googlePayAuthRequest.getPaymentInfo().toString(), chargeId);
         return walletService.authorise(chargeId, googlePayAuthRequest);
     }
-    
+
     @POST
     @Path("/v1/frontend/charges/{chargeId}/cards")
     @Consumes(APPLICATION_JSON)
@@ -298,6 +304,31 @@ public class CardResource {
         return chargeCancelService.doSystemCancel(chargeId, accountId)
                 .map(chargeEntity -> Response.noContent().build())
                 .orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
+    }
+
+    @POST
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/cancel")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Cancel charge",
+            responses = {
+                    @ApiResponse(responseCode = "202", description = "Accepted - operation already in progress"),
+                    @ApiResponse(responseCode = "204", description = "No content"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - charge is not in correct state",
+                            content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge not found")
+            }
+    )
+    public Response cancelChargeByServiceIdAndAccountType(@Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") // pragma: allowlist secret
+                                                          @PathParam("serviceId") String serviceId,
+                                                          @Parameter(example = "test", description = "Account type")
+                                                          @PathParam("accountType") GatewayAccountType accountType,
+                                                          @Parameter(example = "spmh0fb7rbi1lebv1j3f7hc3m9", description = "Charge external ID")
+                                                          @PathParam("chargeId") String chargeId) {
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .flatMap(account -> chargeCancelService.doSystemCancel(chargeId, account.getId())
+                        .map(chargeEntity -> Response.noContent().build())
+                ).orElseGet(() -> ResponseUtil.responseWithChargeNotFound(chargeId));
     }
 
     @POST

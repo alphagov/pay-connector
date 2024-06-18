@@ -1470,6 +1470,50 @@ paths:
           description: default response
       tags:
       - Agreements
+  /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/cancel:
+    post:
+      operationId: cancelChargeByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - description: Charge external ID
+        example: spmh0fb7rbi1lebv1j3f7hc3m9
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "202":
+          description: Accepted - operation already in progress
+        "204":
+          description: No content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad request - charge is not in correct state
+        "404":
+          description: Not found - charge not found
+      summary: Cancel charge
+      tags:
+      - Charge operations
   /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/resend-confirmation-email:
     post:
       operationId: resendConfirmationEmailByServiceIdAndAccountType

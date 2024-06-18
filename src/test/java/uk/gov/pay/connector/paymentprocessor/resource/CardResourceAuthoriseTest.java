@@ -38,6 +38,7 @@ import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
@@ -86,7 +87,7 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOK
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOKEN_INVALID;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
-class CardResourceTest {
+class CardResourceAuthoriseTest {
 
     private static final CardAuthoriseService mockCardAuthoriseService = mock(CardAuthoriseService.class);
     private static final Card3dsResponseAuthService mockCard3dsResponseAuthService = mock(Card3dsResponseAuthService.class);
@@ -96,6 +97,7 @@ class CardResourceTest {
     private static final WalletService mockWalletService = mock(WalletService.class);
     private static final TokenService mockTokenService = mock(TokenService.class);
     private static final MotoApiCardNumberValidationService mockMotoApiCardNumberValidationService = mock(MotoApiCardNumberValidationService.class);
+    private static final GatewayAccountService mockGatewayAccountService = mock(GatewayAccountService.class);
 
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
@@ -106,7 +108,8 @@ class CardResourceTest {
                     mockChargeCancelService,
                     mockWalletService,
                     mockTokenService,
-                    mockMotoApiCardNumberValidationService))
+                    mockMotoApiCardNumberValidationService,
+                    mockGatewayAccountService))
             .setRegisterDefaultExceptionMappers(false)
             .addProvider(OneTimeTokenInvalidExceptionMapper.class)
             .addProvider(OneTimeTokenAlreadyUsedExceptionMapper.class)
