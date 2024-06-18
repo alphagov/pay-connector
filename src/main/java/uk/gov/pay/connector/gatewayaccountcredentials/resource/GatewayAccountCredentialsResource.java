@@ -189,7 +189,7 @@ public class GatewayAccountCredentialsResource {
                     "    {" +
                     "        \"op\": \"replace\"," +
                     "        \"path\": \"state\"," +
-                    "        \"value\": \"ACTIVE\"" +
+                    "        \"value\": \"VERIFIED_WITH_LIVE_PAYMENT\"" +
                     "    }" +
                     "]"))),
             responses = {
@@ -324,7 +324,7 @@ public class GatewayAccountCredentialsResource {
                     "    {" +
                     "        \"op\": \"replace\"," +
                     "        \"path\": \"state\"," +
-                    "        \"value\": \"ACTIVE\"" +
+                    "        \"value\": \"VERIFIED_WITH_LIVE_PAYMENT\"" +
                     "    }" +
                     "]"))),
             responses = {
