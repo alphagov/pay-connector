@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.Map;
 import java.util.UUID;
@@ -32,7 +33,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
 
     private static final String EMAIL_ADDRESS = "redshirt@example.com";
     private static final String SERVICE_NAME = "USS Cerritos Away Mission Signup";
-    private static final String SERVICE_ID = UUID.randomUUID().toString().replace("-", "");
+    private static final String SERVICE_ID = RandomIdGenerator.randomUuid();
     private static final GatewayAccountType GATEWAY_ACCOUNT_TYPE = GatewayAccountType.TEST;
     private static final PaymentGatewayName PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE;
     
