@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Nested;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -67,10 +68,11 @@ public class ChargesApiResourceIT {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
+    private static final String CAPTURE_BY_CHARGE_ID_URL = "v1/api/charges/%s/capture";
 
     private final DatabaseTestHelper databaseTestHelper = app.getDatabaseTestHelper();
     private final String accountId = testBaseExtension.getAccountId();
-
+    
     @Test
     void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
         Instant startOfTest = Instant.now();
@@ -449,109 +451,6 @@ public class ChargesApiResourceIT {
     }
 
     @Test
-    void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
-        //create charge
-        String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
-
-        testBaseExtension.getConnectorRestApiClient()
-                .withAccountId(accountId)
-                .withChargeId(extChargeId)
-                .postMarkChargeAsCaptureApproved()
-                .statusCode(NO_CONTENT.getStatusCode());
-
-        // get the charge back and assert its status is expired
-        testBaseExtension.getConnectorRestApiClient()
-                .withAccountId(accountId)
-                .withChargeId(extChargeId)
-                .getCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_CHARGE_KEY, is(extChargeId))
-                .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
-
-    }
-
-    @Test
-    void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
-        //create charge
-        String extChargeId = testBaseExtension.addChargeAndCardDetails(CAPTURE_APPROVED,
-                ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
-
-        testBaseExtension.getConnectorRestApiClient()
-                .withAccountId(accountId)
-                .withChargeId(extChargeId)
-                .postMarkChargeAsCaptureApproved()
-                .statusCode(NO_CONTENT.getStatusCode());
-
-        // get the charge back and assert its status is expired
-        testBaseExtension.getConnectorRestApiClient()
-                .withAccountId(accountId)
-                .withChargeId(extChargeId)
-                .getCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_CHARGE_KEY, is(extChargeId))
-                .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
-
-    }
-
-    @Test
-    void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
-        testBaseExtension.getConnectorRestApiClient()
-                .withAccountId(accountId)
-                .withChargeId("i-do-not-exist")
-                .postMarkChargeAsCaptureApproved()
-                .statusCode(NOT_FOUND.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_MESSAGE_KEY, contains("Charge with id [i-do-not-exist] not found."))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
-    @Test
-    void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
-        //create charge
-        String extChargeId = testBaseExtension.addChargeAndCardDetails(EXPIRED,
-                ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
-
-        final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
-        testBaseExtension.getConnectorRestApiClient()
-                .withAccountId(accountId)
-                .withChargeId(extChargeId)
-                .postMarkChargeAsCaptureApproved()
-                .statusCode(CONFLICT.getStatusCode())
-                .contentType(JSON)
-                .body(JSON_MESSAGE_KEY, contains(expectedErrorMessage))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
-    @Test
-    void shouldReturnDebitCardType_whenCardTypeIsDebit() {
-        long chargeId = nextInt();
-        String externalChargeId = RandomIdGenerator.newId();
-
-        databaseTestHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withGatewayAccountId(accountId)
-                .withAmount(AMOUNT)
-                .withCardType(DEBIT)
-                .withStatus(AUTHORISATION_SUCCESS)
-                .build());
-        databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
-                CardExpiryDate.valueOf("03/18"), DEBIT.toString(), null, null, null, null, null, null);
-        databaseTestHelper.addToken(chargeId, "tokenId");
-
-        testBaseExtension.getConnectorRestApiClient()
-                .withAccountId(accountId)
-                .withChargeId(externalChargeId)
-                .getCharge()
-                .statusCode(OK.getStatusCode())
-                .contentType(JSON)
-                .body("card_details.card_type", is("debit"));
-    }
-
-    @Test
     void shouldReturnNullCardType_whenCardTypeIsNull() {
         long chargeId = nextInt();
         String externalChargeId = RandomIdGenerator.newId();
@@ -713,6 +612,180 @@ public class ChargesApiResourceIT {
                 .body("state.can_retry", is(nullValue()));
     }
 
+
+    @Nested
+    class DelayedCaptureApproveByChargeIdAndAccountId {
+        @Test
+        void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
+            //create charge
+            String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
+                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(extChargeId)
+                    .postMarkChargeAsCaptureApprovedByChargeIdAndAccountId()
+                    .statusCode(NO_CONTENT.getStatusCode());
+
+            // get the charge back and assert its status is expired
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(extChargeId)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_CHARGE_KEY, is(extChargeId))
+                    .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
+
+        }
+
+        @Test
+        void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
+            //create charge
+            String extChargeId = testBaseExtension.addChargeAndCardDetails(CAPTURE_APPROVED,
+                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(extChargeId)
+                    .postMarkChargeAsCaptureApprovedByChargeIdAndAccountId()
+                    .statusCode(NO_CONTENT.getStatusCode());
+
+            // get the charge back and assert its status is expired
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(extChargeId)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_CHARGE_KEY, is(extChargeId))
+                    .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
+
+        }
+
+        @Test
+        void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId("i-do-not-exist")
+                    .postMarkChargeAsCaptureApprovedByChargeIdAndAccountId()
+                    .statusCode(NOT_FOUND.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_MESSAGE_KEY, contains("Charge with id [i-do-not-exist] not found."))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+
+        @Test
+        void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+            //create charge
+            String extChargeId = testBaseExtension.addChargeAndCardDetails(EXPIRED,
+                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+
+            final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(extChargeId)
+                    .postMarkChargeAsCaptureApprovedByChargeIdAndAccountId()
+                    .statusCode(CONFLICT.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_MESSAGE_KEY, contains(expectedErrorMessage))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+    }
+
+    @Nested
+    class DelayedCaptureApproveByChargeIdOnly {
+        @Test
+        void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
+            String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
+                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .then()
+                    .statusCode(NO_CONTENT.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", accountId, extChargeId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_CHARGE_KEY, is(extChargeId))
+                    .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
+        }
+
+        @Test
+        void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
+            String extChargeId = testBaseExtension.addChargeAndCardDetails(CAPTURE_APPROVED,
+                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .then()
+                    .statusCode(NO_CONTENT.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", accountId, extChargeId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_CHARGE_KEY, is(extChargeId))
+                    .body(JSON_STATE_KEY, is(CAPTURE_APPROVED.toExternal().getStatus()));
+        }
+
+        @Test
+        void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, "non-existent-chargeId"))
+                    .then()
+                    .statusCode(NOT_FOUND.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_MESSAGE_KEY, contains("Charge with id [non-existent-chargeId] not found."))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+
+        @Test
+        void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenChargeExpired() {
+            String extChargeId = testBaseExtension.addChargeAndCardDetails(EXPIRED,
+                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+
+            final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
+            app.givenSetup()
+                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .then()
+                    .statusCode(CONFLICT.getStatusCode())
+                    .contentType(JSON)
+                    .body(JSON_MESSAGE_KEY, contains(expectedErrorMessage))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+        }
+    }
+
+    @Test
+    void shouldReturnDebitCardType_whenCardTypeIsDebit() {
+        long chargeId = nextInt();
+        String externalChargeId = RandomIdGenerator.newId();
+
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withGatewayAccountId(accountId)
+                .withAmount(AMOUNT)
+                .withCardType(DEBIT)
+                .withStatus(AUTHORISATION_SUCCESS)
+                .build());
+        databaseTestHelper.updateChargeCardDetails(chargeId, "Visa", "1234", "123456", "Mr. McPayment",
+                CardExpiryDate.valueOf("03/18"), DEBIT.toString(), null, null, null, null, null, null);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+
+        testBaseExtension.getConnectorRestApiClient()
+                .withAccountId(accountId)
+                .withChargeId(externalChargeId)
+                .getCharge()
+                .statusCode(OK.getStatusCode())
+                .contentType(JSON)
+                .body("card_details.card_type", is("debit"));
+    }
+    
     private void createCharge(String externalChargeId, long chargeId) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

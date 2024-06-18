@@ -8,6 +8,7 @@ import ch.qos.logback.core.Appender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Nested;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -29,7 +30,9 @@ import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.captureUrlByChargeIdAndAccountIdForAwaitingCaptureCharge;
+        
+        
 public class CardResourceCaptureWithSqsQueueIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(config("captureProcessConfig.backgroundProcessingEnabled", "false"));
@@ -38,7 +41,6 @@ public class CardResourceCaptureWithSqsQueueIT {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-    private String captureApproveUrl;
     
     @BeforeEach
     void setUpLogger() {
@@ -47,40 +49,67 @@ public class CardResourceCaptureWithSqsQueueIT {
         root.addAppender(mockAppender);
     }
 
-    @Test
-    void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasPreviouslyAuthorised() {
-        String chargeId = testBaseExtension.authoriseNewCharge();
-        app.givenSetup()
-                .post(ITestBaseExtension.captureChargeUrlFor(chargeId))
-                .then()
-                .statusCode(204);
+    @Nested
+    class CaptureApproveByChargeId {
+        @Test
+        void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasPreviouslyAuthorised() {
+            String chargeId = testBaseExtension.authoriseNewCharge();
+            app.givenSetup()
+                    .post(ITestBaseExtension.captureChargeUrlFor(chargeId))
+                    .then()
+                    .statusCode(204);
 
-        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+            testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+            testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+            verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+            List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
 
-        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Charge [" + chargeId + "] added to capture queue. Message ID [")), is(true));
+            assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Charge [" + chargeId + "] added to capture queue. Message ID [")), is(true));
+        }
     }
 
-    @Test
-    void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture() {
-        String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+    @Nested
+    class DelayedCaptureApproveByChargeIdAndAccountId {
+        @Test
+        void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeIdAndAccountId() {
+            String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+            
+            app.givenSetup()
+                    .post(captureUrlByChargeIdAndAccountIdForAwaitingCaptureCharge(testBaseExtension.getAccountId(), chargeId))
+                    .then()
+                    .statusCode(204);
 
-        captureApproveUrl = ITestBaseExtension.captureUrlForAwaitingCaptureCharge(testBaseExtension.getAccountId(), chargeId);
+            testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+            testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
-        app.givenSetup()
-                .post(captureApproveUrl)
-                .then()
-                .statusCode(204);
+            verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+            List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
 
-        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
-        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+            assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Charge [" + chargeId + "] added to capture queue. Message ID [")), is(true));
+        }
+    }
 
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+    @Nested
+    class DelayedCaptureApproveByChargeId {
+        @Test
+        void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeId() {
+            String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
 
-        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Charge [" + chargeId + "] added to capture queue. Message ID [")), is(true));
+            String captureApproveByChargeIdUrl = ITestBaseExtension.captureUrlByChargeIdForAwaitingCaptureCharge(chargeId);
+
+            app.givenSetup()
+                    .post(captureApproveByChargeIdUrl)
+                    .then()
+                    .statusCode(204);
+
+            testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
+            testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
+
+            verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+            List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+
+            assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Charge [" + chargeId + "] added to capture queue. Message ID [")), is(true));
+        }
     }
 }

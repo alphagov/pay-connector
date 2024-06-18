@@ -201,7 +201,7 @@ public class RestAssuredClient {
         return this;
     }
 
-    public ValidatableResponse postMarkChargeAsCaptureApproved() {
+    public ValidatableResponse postMarkChargeAsCaptureApprovedByChargeIdAndAccountId() {
         final String path = "/v1/api/accounts/{accountId}/charges/{chargeId}/capture"
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
@@ -209,7 +209,7 @@ public class RestAssuredClient {
                 .post(path)
                 .then();
     }
-
+    
     public ValidatableResponse getDiscrepancyReport(String chargeIds) {
         return addQueryParams(buildRequest())
                 .contentType(JSON).body(chargeIds)
