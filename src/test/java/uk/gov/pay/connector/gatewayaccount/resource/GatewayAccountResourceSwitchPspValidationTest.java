@@ -279,7 +279,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
         }
 
         @Test
-        void shouldReturn400WhenCredentialsNonExistent() {
+        void shouldReturn404WhenCredentialsNonExistent() {
             var switchToExtId = randomUuid();
             var gatewayAccountCredentialsEntity1 = aGatewayAccountCredentialsEntity()
                     .withExternalId(randomUuid())
