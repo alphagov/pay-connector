@@ -165,7 +165,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(400));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in correct state."));
+            assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in the VERIFIED_WITH_LIVE_PAYMENT state."));
         }
 
         @Test
@@ -329,7 +329,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(400));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in correct state."));
+            assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in the VERIFIED_WITH_LIVE_PAYMENT state."));
         }
 
         @Test

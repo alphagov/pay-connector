@@ -859,7 +859,7 @@ paths:
       - Gateway accounts
   /v1/api/accounts/{accountId}/switch-psp:
     post:
-      operationId: switchPaymentProvider
+      operationId: switchPaymentProviderByGatewayAccountId
       parameters:
       - description: Gateway account ID
         example: 1
@@ -1812,7 +1812,7 @@ paths:
       - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/switch-psp:
     post:
-      operationId: switchPaymentProvider_1
+      operationId: switchPaymentProviderByServiceIdAndAcountType
       parameters:
       - description: Service ID
         example: 1
