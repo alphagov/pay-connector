@@ -30,7 +30,7 @@ public class CardResourceCancelChargeIT {
     private static final AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
     private static final String SERVICE_ID = RandomIdGenerator.randomUuid();
-    private static final String SERVICE_NAME = "";
+    private static final String SERVICE_NAME = "Buy a Civil Servant a Coffee";
     private static final GatewayAccountType GATEWAY_ACCOUNT_TYPE = GatewayAccountType.TEST;
     private static final PaymentGatewayName PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE;
 
