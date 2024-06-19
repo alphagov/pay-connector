@@ -638,10 +638,10 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response switchPaymentProvider(
+    public Response switchPaymentProviderByServiceIdAndAcountType(
             @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType, 
-            @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
+            @NotNull @Valid GatewayAccountSwitchPaymentProviderRequest request) {
 
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccountEntity -> {
@@ -676,11 +676,10 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response switchPaymentProvider(@Parameter(example = "1", description = "Gateway account ID")
-                                          @PathParam("accountId") Long gatewayAccountId, 
-                                          @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
-        GatewayAccountSwitchPaymentProviderRequestValidator.validate(request);
-
+    public Response switchPaymentProviderByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID")
+                                          @PathParam("accountId") Long gatewayAccountId,
+                                                            @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
+        
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {

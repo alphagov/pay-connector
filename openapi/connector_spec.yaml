@@ -859,7 +859,7 @@ paths:
       - Gateway accounts
   /v1/api/accounts/{accountId}/switch-psp:
     post:
-      operationId: switchPaymentProvider
+      operationId: switchPaymentProviderByGatewayAccountId
       parameters:
       - description: Gateway account ID
         example: 1
@@ -1812,7 +1812,7 @@ paths:
       - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/switch-psp:
     post:
-      operationId: switchPaymentProvider_1
+      operationId: switchPaymentProviderByServiceIdAndAcountType
       parameters:
       - description: Service ID
         example: 1
@@ -4335,12 +4335,13 @@ components:
           type: string
           description: Gateway account credential external ID to switch to
           example: dfokpo23ji0213ldsm0123ofsm213kdfg
-          writeOnly: true
         user_external_id:
           type: string
           description: User external ID switching payment service provider
           example: vfrg4245bd0e7453c9b1b0d7e6999f11b
-          writeOnly: true
+      required:
+      - gateway_account_credential_external_id
+      - user_external_id
     GatewayAccountWithCredentialsResponse:
       type: object
       properties:

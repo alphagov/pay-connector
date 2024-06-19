@@ -71,7 +71,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
         var thrown = assertThrows(BadRequestException.class, () -> gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request));
-        assertThat(thrown.getMessage(), is(format("Account credential with ACTIVE state not found.", request.getGACredentialExternalId())));
+        assertThat(thrown.getMessage(), is(format("Account credential with ACTIVE state not found.", request.getGatewayAccountCredentialExternalId())));
     }
 
     @Test
@@ -84,7 +84,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
         var thrown = assertThrows(NotFoundException.class, () -> gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request));
-        assertThat(thrown.getMessage(), is(format("Account credential with id [%s] not found.", request.getGACredentialExternalId())));
+        assertThat(thrown.getMessage(), is(format("Account credential with id [%s] not found.", request.getGatewayAccountCredentialExternalId())));
     }
 
     @Test
@@ -93,12 +93,12 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
                 .withState(ACTIVE)
                 .build();
         var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
-                .withExternalId(request.getGACredentialExternalId())
+                .withExternalId(request.getGatewayAccountCredentialExternalId())
                 .withState(ENTERED)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
         var thrown = assertThrows(BadRequestException.class, () -> gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request));
-        assertThat(thrown.getMessage(), is(format("Credential with id [%s] is not in correct state.", request.getGACredentialExternalId())));
+        assertThat(thrown.getMessage(), is(format("Credential with id [%s] is not in the VERIFIED_WITH_LIVE_PAYMENT state.", request.getGatewayAccountCredentialExternalId())));
     }
 
     @Test
@@ -107,7 +107,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
                 .withState(ACTIVE)
                 .build();
         var gatewayAccountCredentialsEntity2 = aGatewayAccountCredentialsEntity()
-                .withExternalId(request.getGACredentialExternalId())
+                .withExternalId(request.getGatewayAccountCredentialExternalId())
                 .withState(VERIFIED_WITH_LIVE_PAYMENT)
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1, gatewayAccountCredentialsEntity2));
