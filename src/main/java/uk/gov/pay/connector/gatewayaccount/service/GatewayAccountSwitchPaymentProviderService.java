@@ -55,11 +55,11 @@ public class GatewayAccountSwitchPaymentProviderService {
 
         var switchToCredentialsEntity = credentials
                 .stream()
-                .filter(credential -> request.getGACredentialExternalId().equals(credential.getExternalId())).findFirst()
-                .orElseThrow(() -> new NotFoundException(format("Account credential with id [%s] not found.", request.getGACredentialExternalId())));
+                .filter(credential -> request.getGatewayAccountCredentialExternalId().equals(credential.getExternalId())).findFirst()
+                .orElseThrow(() -> new NotFoundException(format("Account credential with id [%s] not found.", request.getGatewayAccountCredentialExternalId())));
 
         if (!switchToCredentialsEntity.getState().equals(VERIFIED_WITH_LIVE_PAYMENT)) {
-            throw new BadRequestException(format("Credential with id [%s] is not in correct state.", request.getGACredentialExternalId()));
+            throw new BadRequestException(format("Credential with id [%s] is not in correct state.", request.getGatewayAccountCredentialExternalId()));
         }
 
         switchToCredentialsEntity.setLastUpdatedByUserExternalId(request.getUserExternalId());
