@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.Map;
 
@@ -45,24 +46,29 @@ public class ChargeUtils {
                 "delayed_capture", true));
     }
 
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId, 
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayAccountId,
                                                                 DatabaseTestHelper databaseTestHelper, String paymentProvider) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, "email@fake.test", paymentProvider);
+        return createNewChargeWithAccountId(status, RandomIdGenerator.newId(), gatewayAccountId, databaseTestHelper, "email@fake.test", paymentProvider);
     }
 
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId,
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId, 
+                                                                DatabaseTestHelper databaseTestHelper, String paymentProvider) {
+        return createNewChargeWithAccountId(status, gatewayTransactionId, gatewayAccountId, databaseTestHelper, "email@fake.test", paymentProvider);
+    }
+
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId,
                                                                 DatabaseTestHelper databaseTestHelper, String emailAddress, String paymentProvider) {
-        return createNewChargeWithAccountId(status, gatewayTransactionId, accountId, databaseTestHelper, emailAddress, paymentProvider, "Test description");
+        return createNewChargeWithAccountId(status, gatewayTransactionId, gatewayAccountId, databaseTestHelper, emailAddress, paymentProvider, "Test description");
     }
 
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String accountId,
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId,
                                                                 DatabaseTestHelper databaseTestHelper, String emailAddress, String paymentProvider, String description) {
         long chargeId = RandomUtils.nextInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId.toString())
-                .withGatewayAccountId(accountId)
+                .withGatewayAccountId(gatewayAccountId)
                 .withPaymentProvider(paymentProvider)
                 .withAmount(6234L)
                 .withStatus(status)
@@ -74,14 +80,14 @@ public class ChargeUtils {
     }
 
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId,
-                                                                String accountId, DatabaseTestHelper databaseTestHelper,
+                                                                String gatewayAccountId, DatabaseTestHelper databaseTestHelper,
                                                                 String paymentProvider, Long gatewayCredentialId) {
         long chargeId = RandomUtils.nextInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(externalChargeId.toString())
-                .withGatewayAccountId(accountId)
+                .withGatewayAccountId(gatewayAccountId)
                 .withPaymentProvider(paymentProvider)
                 .withAmount(6234L)
                 .withStatus(status)
