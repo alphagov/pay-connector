@@ -7,6 +7,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.events.model.ResourceType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
@@ -108,6 +109,21 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .createQuery(query, ChargeEntity.class)
                 .setParameter("externalId", chargeExternalId)
                 .setParameter("accountId", accountId)
+                .getResultList().stream().findFirst();
+    }
+
+    public Optional<ChargeEntity> findByExternalIdAndServiceIdAndAccountType(String chargeExternalId, String serviceId, GatewayAccountType accountType) {
+
+        String query = "SELECT c FROM ChargeEntity c INNER JOIN GatewayAccountEntity g ON c.gatewayAccount.id = g.id " +
+                "WHERE c.externalId = :externalId " +
+                "AND c.serviceId = :serviceId " +
+                "AND g.type = :accountType";
+
+        return entityManager.get()
+                .createQuery(query, ChargeEntity.class)
+                .setParameter("externalId", chargeExternalId)
+                .setParameter("serviceId", serviceId)
+                .setParameter("accountType", accountType)
                 .getResultList().stream().findFirst();
     }
 

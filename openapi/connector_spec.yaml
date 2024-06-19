@@ -1943,6 +1943,44 @@ paths:
       summary: Validate Worldpay credentials by service ID and account type
       tags:
       - Gateway account credentials
+  /v1/api/service/{serviceId}/accountType/{accountType}/charges/{chargeId}/events:
+    get:
+      operationId: getEventsByChargeIdAndServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - description: Charge external ID
+        example: 2c6vtn9pth38ppbmnt20d57t49
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeEventsResponse'
+          description: OK
+      summary: Get transaction history for a charge
+      tags:
+      - Charge events
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\

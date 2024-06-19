@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -13,6 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
@@ -60,6 +62,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READ
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -414,49 +417,107 @@ public class ChargeDaoIT {
         assertThat(gatewayAccount.getGatewayName(), is(defaultTestAccount.getPaymentProvider()));
     }
 
-    @Test
-    void shouldGetChargeByChargeIdWithCorrectAssociatedAccountId() {
-        String transactionId = "7826782163";
-        Instant createdDate = Instant.now().truncatedTo(MICROS);
-        Long chargeId = 876786L;
-        String externalChargeId = "charge876786";
+    @Nested
+    class GetChargeByChargeIdAndGatewayAccountId {
+        @Test
+        void shouldReturnChargeSuccessfully() {
+            String transactionId = "7826782163";
+            Instant createdDate = Instant.now().truncatedTo(MICROS);
+            Long chargeId = 876786L;
+            String externalChargeId = "charge876786";
 
-        DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures()
-                .aTestCharge()
-                .withTestAccount(defaultTestAccount)
-                .withPaymentProvider(defaultTestAccount.getPaymentProvider())
-                .withChargeId(chargeId)
-                .withCreatedDate(createdDate)
-                .withExternalChargeId(externalChargeId)
-                .withTransactionId(transactionId)
-                .insert();
-        DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
-                .validTestCardDetails()
-                .withChargeId(chargeId)
-                .update();
+            DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures()
+                    .aTestCharge()
+                    .withTestAccount(defaultTestAccount)
+                    .withPaymentProvider(defaultTestAccount.getPaymentProvider())
+                    .withChargeId(chargeId)
+                    .withCreatedDate(createdDate)
+                    .withExternalChargeId(externalChargeId)
+                    .withTransactionId(transactionId)
+                    .insert();
+            DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
+                    .validTestCardDetails()
+                    .withChargeId(chargeId)
+                    .update();
 
-        ChargeEntity charge = chargeDao.findByExternalIdAndGatewayAccount(externalChargeId, defaultTestAccount.getAccountId()).get();
+            ChargeEntity charge = chargeDao.findByExternalIdAndGatewayAccount(externalChargeId, defaultTestAccount.getAccountId()).get();
 
-        assertThat(charge.getId(), is(chargeId));
-        assertThat(charge.getGatewayTransactionId(), is(transactionId));
-        assertThat(charge.getReturnUrl(), is(testCharge.getReturnUrl()));
-        assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
-        assertThat(charge.getDescription(), is(DESCRIPTION));
-        assertThat(charge.getCreatedDate(), is(createdDate));
-        assertThat(charge.getReference(), is(testCharge.getReference()));
-        assertThat(charge.getGatewayAccount(), is(notNullValue()));
-        assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
-        assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
-        assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+            assertThat(charge.getId(), is(chargeId));
+            assertThat(charge.getGatewayTransactionId(), is(transactionId));
+            assertThat(charge.getReturnUrl(), is(testCharge.getReturnUrl()));
+            assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
+            assertThat(charge.getDescription(), is(DESCRIPTION));
+            assertThat(charge.getCreatedDate(), is(createdDate));
+            assertThat(charge.getReference(), is(testCharge.getReference()));
+            assertThat(charge.getGatewayAccount(), is(notNullValue()));
+            assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
+            assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
+            assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+        }
+
+        @Test
+        void shouldReturnEmptyOptionalWhenAccountIdDoesNotMatch() {
+            insertTestCharge();
+            Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalIdAndGatewayAccount(defaultTestCharge.getExternalChargeId(), 456781L);
+            assertThat(chargeForAccount.isPresent(), is(false));
+        }
     }
 
-    @Test
-    void shouldGetChargeByChargeIdAsNullWhenAccountIdDoesNotMatch() {
-        insertTestCharge();
-        Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalIdAndGatewayAccount(defaultTestCharge.getExternalChargeId(), 456781L);
-        assertThat(chargeForAccount.isPresent(), is(false));
-    }
+    @Nested
+    class GetChargeByChargeIdAndServiceIdAndAccountType {
+        @Test
+        void shouldReturnChargeSuccessfully() {
+            String transactionId = "7826782163";
+            Instant createdDate = Instant.now().truncatedTo(MICROS);
+            Long chargeId = 876786L;
+            String externalChargeId = "charge876786";
 
+            DatabaseFixtures.TestCharge testCharge = app.getDatabaseFixtures()
+                    .aTestCharge()
+                    .withTestAccount(defaultTestAccount)
+                    .withPaymentProvider(defaultTestAccount.getPaymentProvider())
+                    .withChargeId(chargeId)
+                    .withCreatedDate(createdDate)
+                    .withExternalChargeId(externalChargeId)
+                    .withServiceId(defaultTestAccount.getServiceId())
+                    .withTransactionId(transactionId)
+                    .insert();
+            DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
+                    .validTestCardDetails()
+                    .withChargeId(chargeId)
+                    .update();
+
+            ChargeEntity charge = chargeDao.findByExternalIdAndServiceIdAndAccountType(externalChargeId, defaultTestAccount.getServiceId(), TEST).get();
+
+            assertThat(charge.getId(), is(chargeId));
+            assertThat(charge.getGatewayTransactionId(), is(transactionId));
+            assertThat(charge.getReturnUrl(), is(testCharge.getReturnUrl()));
+            assertThat(charge.getStatus(), is(testCharge.getChargeStatus().toString()));
+            assertThat(charge.getDescription(), is(DESCRIPTION));
+            assertThat(charge.getCreatedDate(), is(createdDate));
+            assertThat(charge.getReference(), is(testCharge.getReference()));
+            assertThat(charge.getGatewayAccount(), is(notNullValue()));
+            assertThat(charge.getPaymentProvider(), is(defaultTestAccount.getPaymentProvider()));
+            assertThat(charge.getGatewayAccount().getId(), is(defaultTestAccount.getAccountId()));
+            assertThat(charge.getCardDetails().getCardBrand(), is(testCardDetails.getCardBrand()));
+            assertThat(charge.getServiceId(), is(defaultTestAccount.getServiceId()));
+        }
+
+        @Test
+        void shouldReturnEmptyOptionalWhenServiceIdDoesNotMatch() {
+            insertTestCharge();
+            Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalIdAndServiceIdAndAccountType(defaultTestCharge.getExternalChargeId(), "incorrect-service-id", TEST);
+            assertThat(chargeForAccount.isPresent(), is(false));
+        }
+
+        @Test
+        void shouldReturnEmptyOptionalWhenAccountTypeDoesNotMatch() {
+            insertTestCharge();
+            Optional<ChargeEntity> chargeForAccount = chargeDao.findByExternalIdAndServiceIdAndAccountType(defaultTestCharge.getExternalChargeId(), defaultTestAccount.getServiceId(), LIVE);
+            assertThat(chargeForAccount.isPresent(), is(false));
+        }
+    }
+    
     @Test
     void findById_shouldFindChargeEntity() {
 
@@ -989,6 +1050,7 @@ public class ChargeDaoIT {
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
+                .withServiceId(defaultTestAccount.getServiceId())
                 .insert();
         defaultTestCardDetails
                 .withChargeId(defaultTestCharge.chargeId)
