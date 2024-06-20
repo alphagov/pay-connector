@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources.stripe;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.stripe.exception.ApiException;
 import com.stripe.exception.CardException;
+import com.stripe.exception.IdempotencyException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import com.stripe.model.StripeError;
@@ -130,8 +131,7 @@ public class RefundReversalResourceIT {
                 .then();
         response.statusCode(Response.Status.OK.getStatusCode());
     }
-
-
+    
     @Test
     void shouldReturnInternalErrorWhenRefundNotFoundFromStripe() throws JsonProcessingException, StripeException {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
@@ -192,10 +192,10 @@ public class RefundReversalResourceIT {
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()
                 .body("message", is("There was an error trying to create transfer with id: " + REFUND_EXTERNAL_ID + " from Stripe: " + "error connecting to Stripe; request-id: request_123"))
-                .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+                .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
+                );
     }
-
-
+    
     @Test
     void shouldHandleInsufficientFunds() throws JsonProcessingException, StripeException {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
@@ -227,13 +227,13 @@ public class RefundReversalResourceIT {
 
         StripeError stripeError = new StripeError();
         stripeError.setMessage("insufficient funds");
-        stripeError.setCode("insufficient_funds");
+        stripeError.setCode("insufficient_funds_error");
         stripeError.setDeclineCode("insufficient_funds");
 
         CardException cardexception = new CardException(
                 "error with stripe because of insufficient funds",
                 "req_12345",
-                "insufficient_funds",
+                "insufficient_funds_error",
                 "param_value",
                 "insufficient_funds",
                 charge.toString(),
@@ -241,7 +241,7 @@ public class RefundReversalResourceIT {
                 null);
 
         cardexception.setStripeError(stripeError);
-            doThrow(cardexception
+        doThrow(cardexception
         ).when(mockStripeSdkClient).createTransfer(transferRequest, false);
 
         given().port(app.getLocalPort())
@@ -252,10 +252,67 @@ public class RefundReversalResourceIT {
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()
-                .body("message[0]", is("Transfer failed due to insufficient funds for refund with " + REFUND_EXTERNAL_ID + " error with stripe because of insufficient funds; code: insufficient_funds; request-id: req_12345"))
+                .body("message[0]", is("Transfer failed due to insufficient funds for refund with " + REFUND_EXTERNAL_ID + " error with stripe because of insufficient funds; code: insufficient_funds_error; request-id: req_12345"))
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
     }
 
+
+    @Test
+    void shouldHandleDuplicateIdepmpotency() throws JsonProcessingException, StripeException {
+        app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
+        app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
+
+        Map<String, Object> transferRequest = Map.of(
+                "destination", "acct_jdsa7789d",
+                "amount", 100L,
+                "metadata", Map.of(
+                        "stripeChargeId", "ch_sdkhdg887s",
+                        "correctionPaymentId", "random123"
+                ),
+                "currency", "GBP",
+                "transferGroup", "abc",
+                "expand", List.of("balance_transaction", "destination_payment")
+        );
+
+        when(mockStripeRefund.getStatus()).thenReturn("failed");
+
+        when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
+        when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(mockStripeRefund);
+
+        when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
+        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
+        when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
+        when(mockStripeRefund.getAmount()).thenReturn(100L);
+        when(mockStripeRefund.getCurrency()).thenReturn("GBP");
+
+
+        StripeError stripeError = new StripeError();
+        stripeError.setMessage("idempotency error");
+        stripeError.setCode("idempotency_error");
+        stripeError.setType("idempotency_error");
+
+
+        IdempotencyException idempotencyException = new IdempotencyException("error because idempotency key already used",
+                "request_123", null, 400
+        );
+        idempotencyException.setStripeError(stripeError);
+
+        doThrow(idempotencyException)
+                .when(mockStripeSdkClient).createTransfer(transferRequest, false);
+
+
+        given().port(app.getLocalPort())
+                .accept(ContentType.JSON)
+                .contentType(ContentType.JSON)
+                .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
+                        .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
+                        .replace("{chargeId}", CHARGE_EXTERNAL_ID)
+                        .replace("{refundId}", REFUND_EXTERNAL_ID))
+                .then()
+                .body("message[0]", is("failed transfer due to idempotency error for refund with " + REFUND_EXTERNAL_ID + " error because idempotency key already used; request-id: request_123"))
+                .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
+    }
 
     public static class ConnectorAppWithCustomInjector extends ConnectorApp {
         @Override
@@ -282,4 +339,3 @@ public class RefundReversalResourceIT {
 
     }
 }
-

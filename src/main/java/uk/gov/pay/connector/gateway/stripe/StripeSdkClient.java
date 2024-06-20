@@ -63,7 +63,6 @@ public class StripeSdkClient {
     }
 
     public void createTransfer(Map<String, Object> transferRequest, boolean live) throws StripeException {
-        System.out.println(transferRequest);
         String apiKey = getStripeApiKey(live);
         RequestOptions requestOptions = RequestOptions.builder()
                 .setApiKey(apiKey)

@@ -71,7 +71,9 @@ public class RefundReversalService {
             if (e.getStripeError() != null && "insufficient_funds".equals(e.getStripeError().getDeclineCode())) {
                 throw new WebApplicationException(badRequestResponse(
                         format("Transfer failed due to insufficient funds for refund with %s %s", refundExternalId, e.getMessage())));
-            } else {
+            } else if (e.getStripeError() != null && "idempotency_error".equals(e.getStripeError().getType()))
+                throw new WebApplicationException(badRequestResponse(format("failed transfer due to idempotency error for refund with %s %s", refundExternalId, e.getMessage())));
+            else {
                 throw new WebApplicationException(
                         format("There was an error trying to create transfer with id: %s from Stripe: %s", refundExternalId, e.getMessage()));
             }
