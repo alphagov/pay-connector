@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.refund.service.RefundReversalStripeConnectTransferRequestBuilder;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,12 +48,11 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("randomId123");
 
         Map<String, Object> builderRequest = builder.createRequest(mockStripeRefund);
-
-        String[] expandArray = (String[]) builderRequest.get("expand");
-
-        assertEquals(2, expandArray.length);
-        assertEquals("balance_transaction", expandArray[0]);
-        assertEquals("destination_payment", expandArray[1]);
+        
+        List expandList = (List) builderRequest.get("expand");
+        assertEquals(2, expandList.size());
+        assertEquals("balance_transaction", expandList.get(0));
+        assertEquals("destination_payment", expandList.get(1));
         assertEquals(6, builderRequest.size());
 
         assertEquals("acct_jdsa7789d", builderRequest.get("destination"));

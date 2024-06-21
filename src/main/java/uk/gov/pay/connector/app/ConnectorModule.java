@@ -31,6 +31,7 @@ import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.HashUtil;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
@@ -273,6 +274,15 @@ public class ConnectorModule extends AbstractModule {
         return new StripeSdkClientFactory(connectorConfiguration, new StripeSdkWrapper());
     }
 
+    @Provides
+    @Singleton
+    public RandomIdGenerator randomIdGenerator() {
+        return getRandomIdGenerator();
+    }
+
+    protected RandomIdGenerator getRandomIdGenerator() {
+        return new RandomIdGenerator();
+    }
     @Provides
     @Singleton
     public StateTransitionQueue stateTransitionQueue() {
