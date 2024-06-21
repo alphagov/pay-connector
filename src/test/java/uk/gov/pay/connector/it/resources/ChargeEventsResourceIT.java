@@ -1,19 +1,23 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -31,7 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
-import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class ChargeEventsResourceIT {
 
@@ -43,129 +47,138 @@ public class ChargeEventsResourceIT {
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     public static final String USER_EMAIL = "test@test.com";
     private static final String SERVICE_ID = "a-valid-service-id";
-    private static final String CHARGE_ID = "external-charge-id";
-    private static final String CHARGE_EVENTS_BY_GATEWAY_ACCOUNT_ID_URL = "/v1/api/accounts/%s/charges/%s/events";
-    private static final String CHARGE_EVENTS_BY_SERVICE_ID_URL = "/v1/api/service/%s/accountType/%s/charges/%s/events";
-    private static final String ACCOUNT_ID = "72332423443245";
+    private static final String CHARGE_EXTERNAL_ID = "external-charge-id";
+    
+    private String gatewayAccountId;
+    private long chargeId;
+    private DatabaseFixtures.TestCharge testCharge;
+
+    @BeforeEach
+    void setup() {
+        //create the gateway account via the API
+        gatewayAccountId = app.givenSetup()
+                .body(toJson(Map.of(
+                        "service_id", SERVICE_ID,
+                        "type", GatewayAccountType.TEST,
+                        "payment_provider", PaymentGatewayName.STRIPE.getName(),
+                        "service_name", "MyTestService"
+                )))
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(201)
+                .extract().path("gateway_account_id");
 
 
-    private AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
-            .withAccountId(ACCOUNT_ID)
-            .withPaymentGateway("sandbox")
-            .withServiceName("a cool service")
-            .withServiceId(SERVICE_ID)
-            .build();
+        //create a £1 payment for that account
+        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .aTestAccount()
+                .withAccountId(Long.parseLong(gatewayAccountId));
+        chargeId = RandomUtils.nextLong();
+        testCharge = withDatabaseTestHelper(app.getDatabaseTestHelper())
+                .aTestCharge()
+                .withChargeId(chargeId)
+                .withExternalChargeId(CHARGE_EXTERNAL_ID)
+                .withAmount(100L)
+                .withServiceId(SERVICE_ID)
+                .withTestAccount(testAccount)
+                .withChargeStatus(CAPTURED)
+                .insert();
+    }
     
     @Nested
     class ByServiceIdAndAccountType {
         @Test
-        public void shouldGetAllEventsForAGivenChargeWithoutRefunds() {
-            ZonedDateTime createdDate = ZonedDateTime.now();
-            app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
-            DatabaseFixtures.TestCharge testCharge = createTestCharge(CHARGE_ID).insert();
-            DatabaseFixtures.TestChargeEvent createdTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CREATED).withDate(createdDate).insert();
-            DatabaseFixtures.TestChargeEvent enteringCardDetailsTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(ENTERING_CARD_DETAILS).withDate(createdDate.plusSeconds(1)).insert();
-            createTestChargeEvent(testCharge)
-                    .withChargeStatus(AUTHORISATION_READY).withDate(createdDate.plusSeconds(2)).insert();
-            DatabaseFixtures.TestChargeEvent captureApprovedTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CAPTURE_APPROVED).withDate(createdDate.plusSeconds(3)).insert();
-            createCaptureEvents(testCharge, createdDate);
+        public void shouldGetCorrectEventsForAGivenChargeWithoutRefunds() {
+            //set up charge events for a successful payment journey that took place yesterday
+            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
+            ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
+            ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
+            createEventsForSuccessfulPayment(chargeId, createdDate, enteringCardDetailsDate, authorisationReadyDate, captureApprovedDate);
 
+            //verify that a get request returns the correct transaction events
+            //each of the charge events added to the database has a distinct internal state but these map to just three external states
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_SERVICE_ID_URL, SERVICE_ID, GatewayAccountType.TEST, CHARGE_ID))
+                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
                     .then()
-                    .statusCode(OK.getStatusCode())
-                    .body("charge_id", is(CHARGE_ID))
+                    .statusCode(200)
+                    .body("charge_id", is(CHARGE_EXTERNAL_ID))
                     .body("events.size()", equalTo(3))
-                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
-                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
-                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()));
+                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdDate))
+                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsDate))
+                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedDate));
         }
 
         @Test
         public void shouldGetAllEventsForAGivenChargeWithRefunds() {
-            ZonedDateTime createdDate = ZonedDateTime.now();
-            app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
-            DatabaseFixtures.TestCharge testCharge = createTestCharge(CHARGE_ID).insert();
-            DatabaseFixtures.TestChargeEvent createdTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CREATED).withDate(createdDate).insert();
-            DatabaseFixtures.TestChargeEvent enteringCardDetailsTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(ENTERING_CARD_DETAILS).withDate(createdDate.plusSeconds(1)).insert();
-            createTestChargeEvent(testCharge)
-                    .withChargeStatus(AUTHORISATION_READY).withDate(createdDate.plusSeconds(2)).insert();
-            DatabaseFixtures.TestChargeEvent captureApprovedTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CAPTURE_APPROVED).withDate(createdDate.plusSeconds(3)).insert();
-            createCaptureEvents(testCharge, createdDate);
-    
-            String gatewayTransactionIdForRefund1 = RandomStringUtils.randomAlphanumeric(30);
-            String gatewayTransactionIdForRefund2 = RandomStringUtils.randomAlphanumeric(10);
-    
-            ZonedDateTime testRefund1CreatedDate = createdDate.plusSeconds(9);
-            DatabaseFixtures.TestRefund testRefund1 = createTestRefund(testCharge)
-                    .withAmount(10L)
-                    .withGatewayTransactionId(gatewayTransactionIdForRefund1)
-                    .withType(RefundStatus.REFUNDED)
-                    .withCreatedDate(testRefund1CreatedDate)
-                    .withSubmittedBy(SUBMITTED_BY)
-                    .withChargeExternalId(CHARGE_ID)
-                    .insert();
-    
-            ZonedDateTime testRefund2CreatedDate = createdDate.plusSeconds(12);
-            DatabaseFixtures.TestRefund testRefund2 = createTestRefund(testCharge)
-                    .withAmount(90L)
-                    .withType(RefundStatus.REFUNDED)
-                    .withGatewayTransactionId(gatewayTransactionIdForRefund2)
-                    .withCreatedDate(testRefund2CreatedDate)
-                    .withChargeExternalId(CHARGE_ID)
-                    .insert();
-    
-            ZonedDateTime historyRefund1SubmittedStartDate = createdDate.plusSeconds(8);
-            createTestRefundHistory(testRefund1)
-                    .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate, SUBMITTED_BY, USER_EMAIL)
-                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForRefund1, historyRefund1SubmittedStartDate, testRefund1CreatedDate, SUBMITTED_BY, USER_EMAIL)
-                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForRefund1, testRefund1CreatedDate, SUBMITTED_BY, testCharge.getExternalChargeId());
-    
-            ZonedDateTime historyRefund2SubmittedStartDate = createdDate.plusSeconds(11);
-            createTestRefundHistory(testRefund2)
-                    .insert(RefundStatus.CREATED, createdDate.plusSeconds(10), historyRefund2SubmittedStartDate)
-                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForRefund2, historyRefund2SubmittedStartDate, testRefund2CreatedDate)
-                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForRefund2, testRefund2CreatedDate);
-    
+            //set up charge events for a successful payment journey that took place yesterday
+            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
+            ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
+            ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
+            createEventsForSuccessfulPayment(chargeId, createdDate, enteringCardDetailsDate, authorisationReadyDate, captureApprovedDate);
+
+            //set up a partial refund
+            ZonedDateTime partialRefundCreatedDate = createdDate.plusMinutes(10);
+            String gatewayTransactionIdForPartialRefund = RandomStringUtils.randomAlphanumeric(30);
+            DatabaseFixtures.TestRefund partialRefund = createTestRefund(testCharge, partialRefundCreatedDate, gatewayTransactionIdForPartialRefund, 10L, SUBMITTED_BY);
+
+            //set up the event history for the partial refund
+            ZonedDateTime partialRefundCreatedEventDate = partialRefundCreatedDate.plus(1L, ChronoUnit.MILLIS);
+            ZonedDateTime partialRefundSubmittedEventDate = partialRefundCreatedDate.plus(2L, ChronoUnit.MILLIS);
+            ZonedDateTime partialRefundRefundedEventDate = partialRefundCreatedDate.plus(3L, ChronoUnit.MILLIS);
+            createTestRefundHistory(partialRefund)
+                    .insert(RefundStatus.CREATED, partialRefundCreatedEventDate, partialRefundSubmittedEventDate, SUBMITTED_BY, USER_EMAIL)
+                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForPartialRefund, partialRefundSubmittedEventDate, partialRefundRefundedEventDate, SUBMITTED_BY, USER_EMAIL)
+                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForPartialRefund, partialRefundRefundedEventDate, SUBMITTED_BY, testCharge.getExternalChargeId());
+
+            //set up a second partial refund
+            ZonedDateTime secondRefundCreatedDate = partialRefundCreatedDate.plusMinutes(1);
+            String gatewayTransactionIdForSecondRefund = RandomStringUtils.randomAlphanumeric(10);
+            DatabaseFixtures.TestRefund secondRefund = createTestRefund(testCharge, secondRefundCreatedDate, gatewayTransactionIdForSecondRefund, 90L, null);
+
+            //set up the event history for the second refund
+            ZonedDateTime secondRefundCreatedEventDate = secondRefundCreatedDate.plus(1L, ChronoUnit.MILLIS);
+            ZonedDateTime secondRefundSubmittedEventDate = secondRefundCreatedDate.plus(2L, ChronoUnit.MILLIS);
+            ZonedDateTime secondRefundRefundedEventDate = secondRefundCreatedDate.plus(3L, ChronoUnit.MILLIS);
+            createTestRefundHistory(secondRefund)
+                    .insert(RefundStatus.CREATED, secondRefundCreatedEventDate, secondRefundSubmittedEventDate)
+                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForSecondRefund, secondRefundSubmittedEventDate, secondRefundRefundedEventDate)
+                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForSecondRefund, secondRefundRefundedEventDate);
+
+            //verify that a get request returns the correct transaction events
+            //each of the charge events added to the database has a distinct internal state but these map to just three external states
+            //each of the refund events added to the database has a distinct internal state but these map to just two external states for each refund
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_SERVICE_ID_URL, SERVICE_ID, GatewayAccountType.TEST, CHARGE_ID))
+                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("charge_id", is(testCharge.getExternalChargeId()))
                     .body("events.size()", equalTo(7))
-                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
-                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
-                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                    .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, gatewayTransactionIdForRefund1, SUBMITTED_BY))
-                    .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", testRefund1CreatedDate, gatewayTransactionIdForRefund1, SUBMITTED_BY))
-                    .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, gatewayTransactionIdForRefund2, null))
-                    .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", testRefund2CreatedDate, gatewayTransactionIdForRefund2, null));
-        }
+                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdDate))
+                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsDate))
+                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedDate))
+                    .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", partialRefundSubmittedEventDate, gatewayTransactionIdForPartialRefund, SUBMITTED_BY))
+                    .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", partialRefundRefundedEventDate, gatewayTransactionIdForPartialRefund, SUBMITTED_BY))
+                    .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", secondRefundSubmittedEventDate, gatewayTransactionIdForSecondRefund, null))
+                    .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", secondRefundRefundedEventDate, gatewayTransactionIdForSecondRefund, null));
+            }
 
         @Test
         public void shouldReturn404WhenServiceIdIsIncorrect() {
-            app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
-            createTestCharge(CHARGE_ID).insert();
-            
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_SERVICE_ID_URL, "incorrect-service-id", GatewayAccountType.TEST, CHARGE_ID))
+                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", "incorrect-service-id", GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
                     .then()
                     .contentType(JSON)
                     .statusCode(NOT_FOUND.getStatusCode())
-                    .body("message", contains(format("Charge with id [%s] not found.", CHARGE_ID)))
+                    .body("message", contains("Charge with id [external-charge-id] not found."))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
-    
+
         @Test
         public void shouldReturn404WhenChargeIdDoesNotExist() {
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_SERVICE_ID_URL, SERVICE_ID, GatewayAccountType.TEST, "non-existent-charge"))
+                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, "non-existent-charge"))
                     .then()
                     .contentType(JSON)
                     .statusCode(NOT_FOUND.getStatusCode())
@@ -174,108 +187,90 @@ public class ChargeEventsResourceIT {
         }
     }
 
+
     @Nested
     class ByGatewayAccountId {
         @Test
-        public void shouldGetAllEventsForAGivenChargeWithoutRefunds() {
-            ZonedDateTime createdDate = ZonedDateTime.now();
+        public void shouldGetCorrectEventsForAGivenChargeWithoutRefunds() {
+            //set up charge events for a successful payment journey that took place yesterday
+            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
+            ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
+            ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
+            createEventsForSuccessfulPayment(chargeId, createdDate, enteringCardDetailsDate, authorisationReadyDate, captureApprovedDate);
 
-            app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
-
-            DatabaseFixtures.TestCharge testCharge = createTestCharge(CHARGE_ID).insert();
-
-            DatabaseFixtures.TestChargeEvent createdTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CREATED).withDate(createdDate).insert();
-            DatabaseFixtures.TestChargeEvent enteringCardDetailsTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(ENTERING_CARD_DETAILS).withDate(createdDate.plusSeconds(1)).insert();
-            createTestChargeEvent(testCharge)
-                    .withChargeStatus(AUTHORISATION_READY).withDate(createdDate.plusSeconds(2)).insert();
-            DatabaseFixtures.TestChargeEvent captureApprovedTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CAPTURE_APPROVED).withDate(createdDate.plusSeconds(3)).insert();
-            createCaptureEvents(testCharge, createdDate);
-
+            //verify that a get request returns the correct transaction events
+            //each of the charge events added to the database has a distinct internal state but these map to just three external states
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_GATEWAY_ACCOUNT_ID_URL, ACCOUNT_ID, CHARGE_ID))
+                    .get(format("/v1/api/accounts/%s/charges/%s/events", gatewayAccountId, CHARGE_EXTERNAL_ID))
                     .then()
-                    .body("charge_id", is(testCharge.getExternalChargeId()))
+                    .statusCode(200)
+                    .body("charge_id", is(CHARGE_EXTERNAL_ID))
                     .body("events.size()", equalTo(3))
-                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
-                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
-                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()));
+                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdDate))
+                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsDate))
+                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedDate));
         }
 
         @Test
         public void shouldGetAllEventsForAGivenChargeWithRefunds() {
-            ZonedDateTime createdDate = ZonedDateTime.now();
+            //set up charge events for a successful payment journey that took place yesterday
+            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
+            ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
+            ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
+            createEventsForSuccessfulPayment(chargeId, createdDate, enteringCardDetailsDate, authorisationReadyDate, captureApprovedDate);
 
-            app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
+            //set up a partial refund
+            ZonedDateTime partialRefundCreatedDate = createdDate.plusMinutes(10);
+            String gatewayTransactionIdForPartialRefund = RandomStringUtils.randomAlphanumeric(30);
+            DatabaseFixtures.TestRefund partialRefund = createTestRefund(testCharge, partialRefundCreatedDate, gatewayTransactionIdForPartialRefund, 10L, SUBMITTED_BY);
 
-            DatabaseFixtures.TestCharge testCharge = createTestCharge(CHARGE_ID).insert();
+            //set up the event history for the partial refund
+            ZonedDateTime partialRefundCreatedEventDate = partialRefundCreatedDate.plus(1L, ChronoUnit.MILLIS);
+            ZonedDateTime partialRefundSubmittedEventDate = partialRefundCreatedDate.plus(2L, ChronoUnit.MILLIS);
+            ZonedDateTime partialRefundRefundedEventDate = partialRefundCreatedDate.plus(3L, ChronoUnit.MILLIS);
+            createTestRefundHistory(partialRefund)
+                    .insert(RefundStatus.CREATED, partialRefundCreatedEventDate, partialRefundSubmittedEventDate, SUBMITTED_BY, USER_EMAIL)
+                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForPartialRefund, partialRefundSubmittedEventDate, partialRefundRefundedEventDate, SUBMITTED_BY, USER_EMAIL)
+                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForPartialRefund, partialRefundRefundedEventDate, SUBMITTED_BY, testCharge.getExternalChargeId());
 
-            DatabaseFixtures.TestChargeEvent createdTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CREATED).withDate(createdDate).insert();
-            DatabaseFixtures.TestChargeEvent enteringCardDetailsTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(ENTERING_CARD_DETAILS).withDate(createdDate.plusSeconds(1)).insert();
+            //set up a second partial refund
+            ZonedDateTime secondRefundCreatedDate = partialRefundCreatedDate.plusMinutes(1);
+            String gatewayTransactionIdForSecondRefund = RandomStringUtils.randomAlphanumeric(10);
+            DatabaseFixtures.TestRefund secondRefund = createTestRefund(testCharge, secondRefundCreatedDate, gatewayTransactionIdForSecondRefund, 90L, null);
 
-            createTestChargeEvent(testCharge)
-                    .withChargeStatus(AUTHORISATION_READY).withDate(createdDate.plusSeconds(2)).insert();
-            DatabaseFixtures.TestChargeEvent captureApprovedTestChargeEvent = createTestChargeEvent(testCharge)
-                    .withChargeStatus(CAPTURE_APPROVED).withDate(createdDate.plusSeconds(3)).insert();
-            createCaptureEvents(testCharge, createdDate);
+            //set up the event history for the second refund
+            ZonedDateTime secondRefundCreatedEventDate = secondRefundCreatedDate.plus(1L, ChronoUnit.MILLIS);
+            ZonedDateTime secondRefundSubmittedEventDate = secondRefundCreatedDate.plus(2L, ChronoUnit.MILLIS);
+            ZonedDateTime secondRefundRefundedEventDate = secondRefundCreatedDate.plus(3L, ChronoUnit.MILLIS);
+            createTestRefundHistory(secondRefund)
+                    .insert(RefundStatus.CREATED, secondRefundCreatedEventDate, secondRefundSubmittedEventDate)
+                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForSecondRefund, secondRefundSubmittedEventDate, secondRefundRefundedEventDate)
+                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForSecondRefund, secondRefundRefundedEventDate);
 
-            String gatewayTransactionIdForRefund1 = RandomStringUtils.randomAlphanumeric(30);
-            String gatewayTransactionIdForRefund2 = RandomStringUtils.randomAlphanumeric(10);
-
-            ZonedDateTime testRefund1CreatedDate = createdDate.plusSeconds(9);
-            DatabaseFixtures.TestRefund testRefund1 = createTestRefund(testCharge)
-                    .withAmount(10L)
-                    .withGatewayTransactionId(gatewayTransactionIdForRefund1)
-                    .withType(RefundStatus.REFUNDED)
-                    .withCreatedDate(testRefund1CreatedDate)
-                    .withSubmittedBy(SUBMITTED_BY)
-                    .withChargeExternalId(CHARGE_ID)
-                    .insert();
-
-            ZonedDateTime testRefund2CreatedDate = createdDate.plusSeconds(12);
-            DatabaseFixtures.TestRefund testRefund2 = createTestRefund(testCharge)
-                    .withAmount(90L)
-                    .withType(RefundStatus.REFUNDED)
-                    .withGatewayTransactionId(gatewayTransactionIdForRefund2)
-                    .withCreatedDate(testRefund2CreatedDate)
-                    .withChargeExternalId(CHARGE_ID)
-                    .insert();
-
-            ZonedDateTime historyRefund1SubmittedStartDate = createdDate.plusSeconds(8);
-            createTestRefundHistory(testRefund1)
-                    .insert(RefundStatus.CREATED, createdDate.plusSeconds(7), historyRefund1SubmittedStartDate, SUBMITTED_BY, USER_EMAIL)
-                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForRefund1, historyRefund1SubmittedStartDate, testRefund1CreatedDate, SUBMITTED_BY, USER_EMAIL)
-                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForRefund1, testRefund1CreatedDate, SUBMITTED_BY, testCharge.getExternalChargeId());
-
-            ZonedDateTime historyRefund2SubmittedStartDate = createdDate.plusSeconds(11);
-            createTestRefundHistory(testRefund2)
-                    .insert(RefundStatus.CREATED, createdDate.plusSeconds(10), historyRefund2SubmittedStartDate)
-                    .insert(RefundStatus.REFUND_SUBMITTED, gatewayTransactionIdForRefund2, historyRefund2SubmittedStartDate, testRefund2CreatedDate)
-                    .insert(RefundStatus.REFUNDED, gatewayTransactionIdForRefund2, testRefund2CreatedDate);
-
+            //verify that a get request returns the correct transaction events
+            //each of the charge events added to the database has a distinct internal state but these map to just three external states
+            //each of the refund events added to the database has a distinct internal state but these map to just two external states for each refund
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_GATEWAY_ACCOUNT_ID_URL, ACCOUNT_ID, CHARGE_ID))
+                    .get(format("/v1/api/accounts/%s/charges/%s/events", gatewayAccountId, CHARGE_EXTERNAL_ID))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("charge_id", is(testCharge.getExternalChargeId()))
                     .body("events.size()", equalTo(7))
-                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdTestChargeEvent.getUpdated()))
-                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsTestChargeEvent.getUpdated()))
-                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedTestChargeEvent.getUpdated()))
-                    .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", historyRefund1SubmittedStartDate, gatewayTransactionIdForRefund1, SUBMITTED_BY))
-                    .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", testRefund1CreatedDate, gatewayTransactionIdForRefund1, SUBMITTED_BY))
-                    .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", historyRefund2SubmittedStartDate, gatewayTransactionIdForRefund2, null))
-                    .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", testRefund2CreatedDate, gatewayTransactionIdForRefund2, null));
+                    .body("events[0]", new TransactionEventMatcher("PAYMENT", withState("created", "false"), "100", createdDate))
+                    .body("events[1]", new TransactionEventMatcher("PAYMENT", withState("started", "false"), "100", enteringCardDetailsDate))
+                    .body("events[2]", new TransactionEventMatcher("PAYMENT", withState("success", "true"), "100", captureApprovedDate))
+                    .body("events[3]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "10", partialRefundSubmittedEventDate, gatewayTransactionIdForPartialRefund, SUBMITTED_BY))
+                    .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", partialRefundRefundedEventDate, gatewayTransactionIdForPartialRefund, SUBMITTED_BY))
+                    .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", secondRefundSubmittedEventDate, gatewayTransactionIdForSecondRefund, null))
+                    .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", secondRefundRefundedEventDate, gatewayTransactionIdForSecondRefund, null));
         }
 
         @Test
         public void shouldReturn404WhenAccountIdIsNonNumeric() {
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_GATEWAY_ACCOUNT_ID_URL, "invalid-account-id", CHARGE_ID))
+                    .get(format("/v1/api/accounts/%s/charges/%s/events", "invalid-account-id", CHARGE_EXTERNAL_ID))
                     .then()
                     .contentType(JSON)
                     .statusCode(NOT_FOUND.getStatusCode())
@@ -286,7 +281,7 @@ public class ChargeEventsResourceIT {
         @Test
         public void shouldReturn404WhenChargeIdDoesNotExist() {
             app.givenSetup()
-                    .get(format(CHARGE_EVENTS_BY_GATEWAY_ACCOUNT_ID_URL, ACCOUNT_ID, "non-existent-charge"))
+                    .get(format("/v1/api/accounts/%s/charges/%s/events", gatewayAccountId, "non-existent-charge"))
                     .then()
                     .contentType(JSON)
                     .statusCode(NOT_FOUND.getStatusCode())
@@ -295,43 +290,37 @@ public class ChargeEventsResourceIT {
         }
     }
 
-    private DatabaseFixtures.TestCharge createTestCharge(String externalChargeId) {
-        DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aTestAccount()
-                .withAccountId(Long.valueOf(ACCOUNT_ID));
-
-        return withDatabaseTestHelper(app.getDatabaseTestHelper())
-                .aTestCharge()
-                .withExternalChargeId(externalChargeId)
-                .withAmount(100L)
-                .withServiceId(SERVICE_ID)
-                .withTestAccount(testAccount)
-                .withChargeStatus(CAPTURED);
+    private void createEventsForSuccessfulPayment(long chargeId, ZonedDateTime createdDate, ZonedDateTime enteringCardDetailsDate, ZonedDateTime authorisationReadyDate, ZonedDateTime captureApprovedDate) {
+        createTestChargeEvent(chargeId).withChargeStatus(CREATED).withDate(createdDate).insert();
+        createTestChargeEvent(chargeId).withChargeStatus(ENTERING_CARD_DETAILS).withDate(enteringCardDetailsDate).insert();
+        createTestChargeEvent(chargeId).withChargeStatus(AUTHORISATION_READY).withDate(authorisationReadyDate).insert();
+        createTestChargeEvent(chargeId).withChargeStatus(CAPTURE_APPROVED).withDate(captureApprovedDate).insert();
+        createTestChargeEvent(chargeId).withChargeStatus(CAPTURE_READY).withDate(captureApprovedDate.plusSeconds(1)).insert();
+        createTestChargeEvent(chargeId).withChargeStatus(CAPTURE_SUBMITTED).withDate(captureApprovedDate.plusSeconds(2)).insert();
+        createTestChargeEvent(chargeId).withChargeStatus(CAPTURED).withDate(captureApprovedDate.plusSeconds(3)).insert();
     }
 
-    private DatabaseFixtures.TestChargeEvent createTestChargeEvent(DatabaseFixtures.TestCharge testCharge) {
+    private DatabaseFixtures.TestChargeEvent createTestChargeEvent(long chargeId) {
         return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestChargeEvent()
-                .withTestCharge(testCharge);
+                .withChargeId(chargeId);
     }
 
     private DatabaseFixtures.TestRefundHistory createTestRefundHistory(DatabaseFixtures.TestRefund testRefund) {
         return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestRefundHistory(testRefund);
     }
-
-    private DatabaseFixtures.TestRefund createTestRefund(DatabaseFixtures.TestCharge testCharge) {
+    
+    private DatabaseFixtures.TestRefund createTestRefund(DatabaseFixtures.TestCharge testCharge, ZonedDateTime createdDate, String gatewayTransactionId, long amountRefunded, String submittedBy) {
         return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestRefund()
-                .withTestCharge(testCharge);
-    }
-
-    private void createCaptureEvents(DatabaseFixtures.TestCharge testCharge, ZonedDateTime createdDate) {
-        createTestChargeEvent(testCharge)
-                .withChargeStatus(CAPTURE_READY).withDate(createdDate.plusSeconds(4)).insert();
-        createTestChargeEvent(testCharge)
-                .withChargeStatus(CAPTURE_SUBMITTED).withDate(createdDate.plusSeconds(5)).insert();
-        createTestChargeEvent(testCharge)
-                .withChargeStatus(CAPTURED).withDate(createdDate.plusSeconds(6)).insert();
+                .withTestCharge(testCharge)
+                .withAmount(amountRefunded)
+                .withGatewayTransactionId(gatewayTransactionId)
+                .withType(RefundStatus.REFUNDED)
+                .withCreatedDate(createdDate)
+                .withSubmittedBy(submittedBy)
+                .withChargeExternalId(CHARGE_EXTERNAL_ID)
+                .insert();
     }
 }
