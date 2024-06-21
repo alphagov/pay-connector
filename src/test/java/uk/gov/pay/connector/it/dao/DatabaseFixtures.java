@@ -736,6 +736,7 @@ public class DatabaseFixtures {
         private AuthorisationMode authorisationMode = WEB;
         private Instant updatedDate;
         private Boolean canRetry;
+        private String serviceId;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -868,6 +869,7 @@ public class DatabaseFixtures {
                     .withAuthorisationMode(authorisationMode)
                     .withCanRetry(canRetry)
                     .withUpdatedDate(updatedDate)
+                    .withServiceId(serviceId)
                     .build());
 
             if (cardDetails != null) {
@@ -883,6 +885,11 @@ public class DatabaseFixtures {
 
         public TestCharge withAuthorisationMode(AuthorisationMode authorisationMode) {
             this.authorisationMode = authorisationMode;
+            return this;
+        }
+        
+        public TestCharge withServiceId(String serviceId) {
+            this.serviceId = serviceId;
             return this;
         }
 
@@ -953,6 +960,8 @@ public class DatabaseFixtures {
         public Boolean getCanRetry() {
             return canRetry;
         }
+        
+        public String getServiceId() { return serviceId; }
     }
 
     public class TestToken {

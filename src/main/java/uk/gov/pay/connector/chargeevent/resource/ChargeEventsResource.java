@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.ChargeEventsResponse;
 import uk.gov.pay.connector.chargeevent.model.TransactionEvent;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
@@ -64,6 +65,30 @@ public class ChargeEventsResource {
                 .map(this::buildEventsResponse)
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
+
+    @GET
+    @Path("/v1/api/service/{serviceId}/accountType/{accountType}/charges/{chargeId}/events")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Get transaction history for a charge",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ChargeEventsResponse.class)))
+            }
+    )
+    public Response getEventsByChargeIdAndServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") // pragma: allowlist secret
+            @PathParam("serviceId") String serviceId,
+            @Parameter(example = "test", description = "Account type")
+            @PathParam("accountType") GatewayAccountType accountType,
+            @Parameter(example = "2c6vtn9pth38ppbmnt20d57t49", description = "Charge external ID")
+            @PathParam("chargeId") String chargeId) {
+
+        return chargeDao.findByExternalIdAndServiceIdAndAccountType(chargeId, serviceId, accountType)
+                .map(this::buildEventsResponse)
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+    }
+
 
     private Response buildEventsResponse(ChargeEntity chargeEntity) {
         List<TransactionEvent> chargeTransactionEvents = normaliseChargeEvents(chargeEntity.getEvents());
