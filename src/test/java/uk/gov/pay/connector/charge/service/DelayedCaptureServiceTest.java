@@ -38,6 +38,8 @@ class DelayedCaptureServiceTest {
 
     private static final String HTTP_409_CONFLICT = "HTTP 409 Conflict";
     
+    private final Long gatewayAccountId = 1L;
+    
     @Mock
     private ChargeService mockChargeService;
 
@@ -57,9 +59,9 @@ class DelayedCaptureServiceTest {
     @Test
     void shouldChangeStateToCaptureApprovedAndAddToCaptureQueueIfChargeInAwaitingCaptureRequestState() throws QueueException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AWAITING_CAPTURE_REQUEST).build();
-        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(chargeEntity.getExternalId(), gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
 
-        ChargeEntity result = delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
+        ChargeEntity result = delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId(), gatewayAccountId);
 
         assertThat(result, sameInstance(chargeEntity));
 
@@ -72,9 +74,9 @@ class DelayedCaptureServiceTest {
     @EnumSource(value = ChargeStatus.class, names = {"CAPTURE_APPROVED", "CAPTURE_APPROVED_RETRY", "CAPTURE_READY", "CAPTURE_SUBMITTED", "CAPTURED"})
     void shouldChangeStateToCaptureApprovedAndAddToCaptureQueueIfChargeInCaptureState(ChargeStatus initialChargeStatus) throws QueueException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(initialChargeStatus).build();
-        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(chargeEntity.getExternalId(), gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
 
-        ChargeEntity result = delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId());
+        ChargeEntity result = delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId(), gatewayAccountId);
 
         assertThat(result, sameInstance(chargeEntity));
 
@@ -85,10 +87,10 @@ class DelayedCaptureServiceTest {
     @Test
     public void shouldThrowExceptionIfChargeIsNotHasIncorrectStatus() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS).build();
-        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(chargeEntity.getExternalId(), gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
 
         var conflictRuntimeException = assertThrows(ConflictRuntimeException.class,
-                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId()));
+                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId(), gatewayAccountId));
 
         assertThat(conflictRuntimeException.getMessage(), containsString(HTTP_409_CONFLICT));
 
@@ -99,12 +101,11 @@ class DelayedCaptureServiceTest {
     @Test
     public void shouldThrowExceptionIfChargeCannotBeTransitioned() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AWAITING_CAPTURE_REQUEST).build();
-        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(chargeEntity.getExternalId(), gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         doThrow(InvalidStateTransitionException.class).when(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_APPROVED);
 
-
         var conflictRuntimeException = assertThrows(ConflictRuntimeException.class,
-                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId()));
+                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId(), gatewayAccountId));
 
         assertThat(conflictRuntimeException.getMessage(), containsString(HTTP_409_CONFLICT));
 
@@ -114,11 +115,11 @@ class DelayedCaptureServiceTest {
     @Test
     void shouldThrowExceptionIfChargeCannotBeAddedToCaptureQueue() throws QueueException {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AWAITING_CAPTURE_REQUEST).build();
-        when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(chargeEntity.getExternalId(), gatewayAccountId)).thenReturn(Optional.of(chargeEntity));
         doThrow(new QueueException()).when(mockCaptureQueue).sendForCapture(chargeEntity);
 
         assertThrows(WebApplicationException.class,
-                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId()));
+                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeEntity.getExternalId(), gatewayAccountId));
 
         var inOrder = inOrder(mockChargeService, mockCaptureQueue);
         inOrder.verify(mockChargeService).transitionChargeState(chargeEntity, CAPTURE_APPROVED);
@@ -128,10 +129,10 @@ class DelayedCaptureServiceTest {
     @Test
     public void shouldThrowExceptionIfChargeNotFound() {
         var externalId = "external-id";
-        when(mockChargeDao.findByExternalId(externalId)).thenReturn(Optional.empty());
+        when(mockChargeDao.findByExternalIdAndGatewayAccount(externalId, gatewayAccountId)).thenReturn(Optional.empty());
 
         assertThrows(ChargeNotFoundRuntimeException.class,
-                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(externalId));
+                () -> delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(externalId, gatewayAccountId));
 
         verifyNoInteractions(mockChargeService);
         verifyNoInteractions(mockCaptureQueue);

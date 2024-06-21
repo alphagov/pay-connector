@@ -34,15 +34,15 @@ public class DelayedCaptureService {
         this.captureQueue = captureQueue;
     }
 
-    public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId) {
-        ChargeEntity charge = updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(externalId);
+    public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId, Long accountId) {
+        ChargeEntity charge = updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(externalId, accountId);
         addChargeToCaptureQueue(charge);
         return charge;
     }
 
     @Transactional
-    public ChargeEntity updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(String externalId) {
-        return chargeDao.findByExternalId(externalId).map(charge -> {
+    public ChargeEntity updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(String externalId, Long accountId) {
+        return chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId).map(charge -> {
             switch (fromString(charge.getStatus())) {
                 case AWAITING_CAPTURE_REQUEST:
                     try {

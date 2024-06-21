@@ -351,13 +351,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public static String captureChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
-
-    public static String captureUrlByChargeIdAndAccountIdForAwaitingCaptureCharge(String accountId, String chargeId) {
-        return "/v1/api/accounts/{accountId}/charges/{chargeId}/capture"
-                .replace("{accountId}", accountId)
-                .replace("{chargeId}", chargeId);
-    }
-
+    
     public static String captureUrlByChargeIdForAwaitingCaptureCharge(String chargeId) {
         return "/v1/api/charges/{chargeId}/capture"
                 .replace("{chargeId}", chargeId);

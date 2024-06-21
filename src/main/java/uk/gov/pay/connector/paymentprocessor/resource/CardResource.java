@@ -22,7 +22,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
-import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
@@ -257,32 +256,9 @@ public class CardResource {
                                                 @PathParam("chargeId") String chargeId,
                                                 @Context UriInfo uriInfo) {
         logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
-        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
+        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId, accountId);
         return ResponseUtil.noContentResponse();
     }
-
-    @POST
-    @Path("/v1/api/charges/{chargeId}/capture")
-    @Produces(APPLICATION_JSON)
-    @Operation(
-            summary = "Mark delayed capture charge as eligible for capture and adds charge to capture queue",
-            description = "This endpoint should be called to capture a delayed capture charge. The charge needs to have been previously marked as AWAITING CAPTURE REQUEST for this call to succeed. " +
-                    "When a charge is in any of the states CAPTURED, CAPTURE APPROVED, CAPTURE APPROVED RETRY, CAPTURE READY, CAPTURE SUBMITTED then nothing happens and the response will be a 204. " +
-                    "When a charge is in a status that cannot transition (eg. none of the above) then 409 response is returned. ",
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "No content"),
-                    @ApiResponse(responseCode = "409", description = "Conflict - if charge is not in correct state"),
-                    @ApiResponse(responseCode = "404", description = "Not found - charge not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error")
-            }
-    )
-    public Response markChargeAsCaptureApprovedByChargeId(@PathParam("chargeId") String chargeId,
-                                                @Context UriInfo uriInfo) {
-        logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
-        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
-        return ResponseUtil.noContentResponse();
-    }
-
 
     @POST
     @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel")
