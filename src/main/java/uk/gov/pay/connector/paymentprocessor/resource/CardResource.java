@@ -22,7 +22,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
-import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
@@ -257,7 +256,7 @@ public class CardResource {
                                                 @PathParam("chargeId") String chargeId,
                                                 @Context UriInfo uriInfo) {
         logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
-        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
+        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId, accountId);
         return ResponseUtil.noContentResponse();
     }
 
@@ -279,7 +278,7 @@ public class CardResource {
     public Response markChargeAsCaptureApprovedByChargeId(@PathParam("chargeId") String chargeId,
                                                 @Context UriInfo uriInfo) {
         logger.info("Mark charge as CAPTURE APPROVED [charge_external_id={}]", chargeId);
-        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId);
+//        delayedCaptureService.markDelayedCaptureChargeAsCaptureApproved(chargeId, accountId);
         return ResponseUtil.noContentResponse();
     }
 

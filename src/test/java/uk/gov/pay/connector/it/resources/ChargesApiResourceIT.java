@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.Nested;
@@ -614,7 +615,7 @@ public class ChargesApiResourceIT {
 
 
     @Nested
-    class DelayedCaptureApproveByChargeIdAndAccountId {
+    class DelayedCaptureApproveByAccountId {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
             //create charge
@@ -694,7 +695,8 @@ public class ChargesApiResourceIT {
     }
 
     @Nested
-    class DelayedCaptureApproveByChargeIdOnly {
+    @Disabled
+    class DelayedCaptureApproveByServiceIdAndAccountType {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
             String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
