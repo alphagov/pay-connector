@@ -20,9 +20,8 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.InstantSource;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -58,7 +57,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
 
     private RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler;
 
-    private Clock clock = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+    private InstantSource instantSource = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
 
     @BeforeEach
     void setup() {
@@ -73,7 +72,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
                 mockUserNotificationService,
                 mockTaskQueueService,
                 mockConnectorConfiguration,
-                clock
+                instantSource
         );
     }
 
@@ -214,7 +213,7 @@ class RetryPaymentOrRefundEmailTaskHandlerTest {
                 mockUserNotificationService,
                 mockTaskQueueService,
                 mockConnectorConfiguration,
-                Clock.fixed(Instant.parse("2020-01-01T10:10:30.100Z"), ZoneOffset.UTC)
+                InstantSource.fixed(Instant.parse("2020-01-01T10:10:30.100Z"))
         );
 
         var data = of(paymentExternalId, PAYMENT_CONFIRMED, Instant.parse("2020-01-01T10:10:25.100Z"));

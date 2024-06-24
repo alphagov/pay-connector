@@ -32,9 +32,9 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
@@ -69,7 +69,7 @@ public class ChargeExpiryService {
     private final PaymentProviders providers;
     private final QueryService queryService;
     private final ChargeSweepConfig chargeSweepConfig;
-    private final Clock clock;
+    private final InstantSource instantSource;
 
     @Inject
     public ChargeExpiryService(ChargeDao chargeDao,
@@ -79,7 +79,7 @@ public class ChargeExpiryService {
                                PaymentProviders providers,
                                QueryService queryService,
                                ConnectorConfiguration config,
-                               Clock clock) {
+                               InstantSource instantSource) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.tokenDao = tokenDao;
@@ -87,7 +87,7 @@ public class ChargeExpiryService {
         this.providers = providers;
         this.chargeSweepConfig = config.getChargeSweepConfig();
         this.queryService = queryService;
-        this.clock = clock;
+        this.instantSource = instantSource;
     }
 
     private enum ExpiryMethod {
@@ -139,7 +139,7 @@ public class ChargeExpiryService {
                 .build();
         Instant tokenExpiryThreshold = getExpiryThresholdForTokens();
         int numberOfTokensDeleted = deleteTokensOlderThanSpecifiedDate(tokenExpiryThreshold);
-        Instant idempotencyExpiryThreshold = clock.instant().minus(chargeSweepConfig.getIdempotencyKeyExpiryThresholdInSeconds());
+        Instant idempotencyExpiryThreshold = instantSource.instant().minus(chargeSweepConfig.getIdempotencyKeyExpiryThresholdInSeconds());
         int numberOfIdempotencyKeysDeleted = idempotencyDao.deleteIdempotencyKeysOlderThanSpecifiedDateTime(idempotencyExpiryThreshold);
         logger.info("Tokens deleted - number_of_tokens={}, since_date={}", numberOfTokensDeleted, tokenExpiryThreshold);
         logger.info("Idempotency keys deleted - number_of_idempotency_keys={}, since_date={}", numberOfIdempotencyKeysDeleted, idempotencyExpiryThreshold);
@@ -329,25 +329,25 @@ public class ChargeExpiryService {
     private Instant getExpiryDateForRegularCharges() {
         Duration chargeExpiryWindowSeconds = chargeSweepConfig.getDefaultChargeExpiryThreshold();
         logger.debug("Charge expiry window size in seconds: [{}]", chargeExpiryWindowSeconds.getSeconds());
-        return clock.instant().minus(chargeExpiryWindowSeconds);
+        return instantSource.instant().minus(chargeExpiryWindowSeconds);
     }
 
     private Instant getDateToExpireChargesUpdatedBefore() {
         Duration chargeUpdatedWindowSeconds = chargeSweepConfig.getSkipExpiringChargesLastUpdatedInSeconds();
         logger.debug("Charge updated window size in seconds: [{}]", chargeUpdatedWindowSeconds.getSeconds());
-        return clock.instant().minus(chargeUpdatedWindowSeconds);
+        return instantSource.instant().minus(chargeUpdatedWindowSeconds);
     }
 
     private Instant getExpiryDateForAwaitingCaptureRequest() {
         Duration chargeExpiryWindowSeconds = chargeSweepConfig.getAwaitingCaptureExpiryThreshold();
         logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: [{}]", chargeExpiryWindowSeconds.getSeconds());
-        return clock.instant().minus(chargeExpiryWindowSeconds);
+        return instantSource.instant().minus(chargeExpiryWindowSeconds);
     }
     
     private Instant getExpiryThresholdForTokens() {
         Duration tokenExpiryWindowSeconds = chargeSweepConfig.getTokenExpiryThresholdInSeconds();
         logger.debug("Token expiry window size in seconds: [{}]", tokenExpiryWindowSeconds.getSeconds());
-        return clock.instant().minus(tokenExpiryWindowSeconds);
+        return instantSource.instant().minus(tokenExpiryWindowSeconds);
     }
 
     private static String getLegalStatusNames(List<ChargeStatus> legalStatuses) {

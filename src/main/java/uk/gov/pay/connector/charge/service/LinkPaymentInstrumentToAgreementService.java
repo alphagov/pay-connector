@@ -14,7 +14,7 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
 import javax.inject.Inject;
-import java.time.Clock;
+import java.time.InstantSource;
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -28,17 +28,17 @@ public class LinkPaymentInstrumentToAgreementService {
     private final PaymentInstrumentDao paymentInstrumentDao;
     private final LedgerService ledgerService;
     private final TaskQueueService taskQueueService;
-    private final Clock clock;
+    private final InstantSource instantSource;
 
     @Inject
     public LinkPaymentInstrumentToAgreementService(PaymentInstrumentDao paymentInstrumentDao,
                                                    LedgerService ledgerService,
                                                    TaskQueueService taskQueueService, 
-                                                   Clock clock) {
+                                                   InstantSource instantSource) {
         this.paymentInstrumentDao = paymentInstrumentDao;
         this.ledgerService = ledgerService;
         this.taskQueueService = taskQueueService;
-        this.clock = clock;
+        this.instantSource = instantSource;
     }
 
     @Transactional
@@ -50,8 +50,8 @@ public class LinkPaymentInstrumentToAgreementService {
                 paymentInstrumentEntity.setAgreementExternalId(agreementEntity.getExternalId());
                 paymentInstrumentEntity.setStatus(PaymentInstrumentStatus.ACTIVE);
                 ledgerService.postEvent(List.of(
-                        AgreementSetUp.from(agreementEntity, clock.instant()),
-                        PaymentInstrumentConfirmed.from(agreementEntity, clock.instant())
+                        AgreementSetUp.from(agreementEntity, instantSource.instant()),
+                        PaymentInstrumentConfirmed.from(agreementEntity, instantSource.instant())
                 ));
                 LOGGER.info("Agreement successfully set up with payment instrument",
                         kv(AGREEMENT_EXTERNAL_ID, agreementEntity.getExternalId()),

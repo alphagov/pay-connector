@@ -29,9 +29,8 @@ import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.InstantSource;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -288,12 +287,12 @@ class TaskQueueServiceTest {
         ArgumentCaptor<Task> taskArgumentCaptor;
         private final String externalId = "external-id-1";
 
-        private Clock clock = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+        private InstantSource instantSource = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
 
         @Test
         void shouldAddRetryFailedPaymentOrRefundEmailTaskToQueue() throws QueueException, JsonProcessingException {
 
-            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(externalId, PAYMENT_CONFIRMED, clock.instant()));
+            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(externalId, PAYMENT_CONFIRMED, instantSource.instant()));
 
             verify(mockTaskQueue).addTaskToQueue(taskArgumentCaptor.capture(), eq(100));
 
@@ -311,7 +310,7 @@ class TaskQueueServiceTest {
         void shouldLogErrorForFailedTaskAddition() throws QueueException, JsonProcessingException {
             doThrow(new QueueException("Something went wrong")).when(mockTaskQueue).addTaskToQueue(any());
 
-            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(externalId, PAYMENT_CONFIRMED, clock.instant()));
+            taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(externalId, PAYMENT_CONFIRMED, instantSource.instant()));
 
             verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
             LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();

@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.agreement.service;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -28,9 +28,8 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.InstantSource;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -60,8 +59,8 @@ public class AgreementServiceTest {
     
     @BeforeEach
     public void setUp() {
-        Clock clock = Clock.fixed(Instant.parse(INSTANT_EXPECTED), ZoneOffset.UTC);
-        agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, clock, mockedTaskQueueService);
+        InstantSource instantSource = InstantSource.fixed(Instant.parse(INSTANT_EXPECTED));
+        agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, instantSource, mockedTaskQueueService);
     }
     
     @Nested

@@ -13,15 +13,14 @@ import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
+import java.time.Instant;
+import java.time.InstantSource;
+import java.util.Map;
+import java.util.Optional;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.Map;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentInstrumentServiceTest {
@@ -40,7 +39,7 @@ class PaymentInstrumentServiceTest {
 
     @BeforeEach
     void setUp() {
-        paymentInstrumentService = new PaymentInstrumentService(mockPaymentInstrumentDao, ledgerService, Clock.fixed(NOW, ZoneOffset.UTC));
+        paymentInstrumentService = new PaymentInstrumentService(mockPaymentInstrumentDao, ledgerService, InstantSource.fixed(NOW));
     }
 
     @Test

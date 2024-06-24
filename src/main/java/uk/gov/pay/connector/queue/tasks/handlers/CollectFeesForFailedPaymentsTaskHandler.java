@@ -15,8 +15,8 @@ import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
 import javax.inject.Inject;
-import java.time.Clock;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -29,17 +29,17 @@ public class CollectFeesForFailedPaymentsTaskHandler {
     private final StripePaymentProvider stripePaymentProvider;
     private final ChargeService chargeService;
     private final EventService eventService;
-    private final Clock clock;
+    private final InstantSource instantSource;
 
     @Inject
     public CollectFeesForFailedPaymentsTaskHandler(StripePaymentProvider stripePaymentProvider,
                                                    ChargeService chargeService,
                                                    EventService eventService,
-                                                   Clock clock) {
+                                                   InstantSource instantSource) {
         this.stripePaymentProvider = stripePaymentProvider;
         this.chargeService = chargeService;
         this.eventService = eventService;
-        this.clock = clock;
+        this.instantSource = instantSource;
     }
     
     @Transactional
@@ -47,7 +47,7 @@ public class CollectFeesForFailedPaymentsTaskHandler {
         ChargeEntity charge = chargeService.findChargeByExternalId(paymentTaskData.getPaymentExternalId());
         List<Fee> fees = stripePaymentProvider.calculateAndTransferFeesForFailedPayments(charge);
 
-        Instant now = clock.instant();
+        Instant now = instantSource.instant();
         fees.stream().map(fee -> new FeeEntity(charge, now, fee)).forEach(charge::addFee);
 
         emitFeeEvent(charge);

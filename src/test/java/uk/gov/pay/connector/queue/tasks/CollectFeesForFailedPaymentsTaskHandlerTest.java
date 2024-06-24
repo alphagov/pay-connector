@@ -18,9 +18,8 @@ import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,7 +50,7 @@ class CollectFeesForFailedPaymentsTaskHandlerTest {
     @Captor
     private ArgumentCaptor<FeeIncurredEvent> feeIncurredEventArgumentCaptor;
 
-    private static final Clock clock = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+    private static final InstantSource instantSource = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
 
     private final String chargeExternalId = "a-charge-external-id";
 
@@ -64,7 +63,7 @@ class CollectFeesForFailedPaymentsTaskHandlerTest {
 
     @BeforeEach
     void setUp() {
-        collectFeesForFailedPaymentsTaskHandler = new CollectFeesForFailedPaymentsTaskHandler(stripePaymentProvider, chargeService, eventService, clock);
+        collectFeesForFailedPaymentsTaskHandler = new CollectFeesForFailedPaymentsTaskHandler(stripePaymentProvider, chargeService, eventService, instantSource);
         when(chargeService.findChargeByExternalId(chargeExternalId)).thenReturn(charge);
     }
 
@@ -85,12 +84,12 @@ class CollectFeesForFailedPaymentsTaskHandlerTest {
                 allOf(
                         hasProperty("amountCollected", is(6L)),
                         hasProperty("feeType", is(RADAR)),
-                        hasProperty("createdDate", is(clock.instant()))
+                        hasProperty("createdDate", is(instantSource.instant()))
                 ),
                 allOf(
                         hasProperty("amountCollected", is(7L)),
                         hasProperty("feeType", is(THREE_D_S)),
-                        hasProperty("createdDate", is(clock.instant()))
+                        hasProperty("createdDate", is(instantSource.instant()))
                 )
         ));
         assertThat(charge.getNetAmount(), is(Optional.of(-13L)));
