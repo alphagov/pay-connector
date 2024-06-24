@@ -23,8 +23,8 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
 import javax.inject.Inject;
-import java.time.Clock;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
@@ -34,15 +34,16 @@ public class AgreementService {
     private final GatewayAccountDao gatewayAccountDao;
     private final AgreementDao agreementDao;
     private final LedgerService ledgerService;
-    private final Clock clock;
+    private final InstantSource instantSource;
     private final TaskQueueService taskQueueService;
 
     @Inject
-    public AgreementService(AgreementDao agreementDao, GatewayAccountDao gatewayAccountDao, LedgerService ledgerService, Clock clock, TaskQueueService taskQueueService) {
+    public AgreementService(AgreementDao agreementDao, GatewayAccountDao gatewayAccountDao, LedgerService ledgerService,
+                            InstantSource instantSource, TaskQueueService taskQueueService) {
         this.agreementDao = agreementDao;
         this.gatewayAccountDao = gatewayAccountDao;
         this.ledgerService = ledgerService;
-        this.clock = clock;
+        this.instantSource = instantSource;
         this.taskQueueService = taskQueueService;
     }
 
@@ -80,7 +81,7 @@ public class AgreementService {
                             gatewayAccountEntity.getId() +
                             ", which does not have recurring card payments enabled");
         }
-        AgreementEntity agreementEntity = anAgreementEntity(clock.instant())
+        AgreementEntity agreementEntity = anAgreementEntity(instantSource.instant())
                 .withReference(agreementCreateRequest.getReference())
                 .withDescription(agreementCreateRequest.getDescription())
                 .withUserIdentifier(agreementCreateRequest.getUserIdentifier())
@@ -125,7 +126,7 @@ public class AgreementService {
         agreement.getPaymentInstrument()
                 .filter(paymentInstrument -> paymentInstrument.getStatus() == PaymentInstrumentStatus.ACTIVE)
                 .ifPresentOrElse(paymentInstrument -> {
-                    Instant now = clock.instant();
+                    Instant now = instantSource.instant();
                     paymentInstrument.setStatus(PaymentInstrumentStatus.CANCELLED);
                     agreement.setCancelledDate(now);
                     taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);

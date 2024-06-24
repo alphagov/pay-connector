@@ -23,9 +23,8 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,7 +63,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
-    private Clock clock;
+    private InstantSource instantSource;
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
@@ -77,8 +76,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         logger.setLevel(Level.ERROR);
         logger.addAppender(mockAppender);
 
-        clock = Clock.fixed(Instant.now(), ZoneOffset.UTC);
-        linkPaymentInstrumentToAgreementService = new LinkPaymentInstrumentToAgreementService(paymentInstrumentDao, ledgerService, taskQueueService, clock);
+        instantSource = InstantSource.fixed(Instant.now());
+        linkPaymentInstrumentToAgreementService = new LinkPaymentInstrumentToAgreementService(paymentInstrumentDao, ledgerService, taskQueueService, instantSource);
     }
 
     @Test
@@ -98,8 +97,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         verify(mockPaymentInstrumentEntity).setAgreementExternalId(agreementExternalId);
         verify(mockPaymentInstrumentEntity).setStatus(PaymentInstrumentStatus.ACTIVE);
         verify(ledgerService).postEvent(List.of(
-                AgreementSetUp.from(mockAgreementEntity, clock.instant()),
-                PaymentInstrumentConfirmed.from(mockAgreementEntity, clock.instant())
+                AgreementSetUp.from(mockAgreementEntity, instantSource.instant()),
+                PaymentInstrumentConfirmed.from(mockAgreementEntity, instantSource.instant())
         ));
     }
 

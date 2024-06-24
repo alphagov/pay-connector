@@ -36,8 +36,8 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 import uk.gov.pay.connector.queue.tasks.util.StripeDisputeCalculator;
 
 import javax.inject.Inject;
-import java.time.Clock;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -73,7 +73,7 @@ public class StripeWebhookTaskHandler {
     private final GatewayAccountService gatewayAccountService;
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final StripeGatewayConfig stripeGatewayConfig;
-    private final Clock clock;
+    private final InstantSource instantSource;
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final List<StripeNotificationType> disputeTypes = List.of(DISPUTE_CREATED, DISPUTE_UPDATED, DISPUTE_CLOSED);
@@ -85,7 +85,7 @@ public class StripeWebhookTaskHandler {
                                     GatewayAccountService gatewayAccountService,
                                     GatewayAccountCredentialsService gatewayAccountCredentialsService,
                                     ConnectorConfiguration configuration,
-                                    Clock clock) {
+                                    InstantSource instantSource) {
         this.ledgerService = ledgerService;
         this.chargeService = chargeService;
         this.eventService = eventService;
@@ -93,7 +93,7 @@ public class StripeWebhookTaskHandler {
         this.gatewayAccountService = gatewayAccountService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.stripeGatewayConfig = configuration.getStripeConfig();
-        this.clock = clock;
+        this.instantSource = instantSource;
     }
 
     public void process(StripeNotification stripeNotification) throws JsonProcessingException, GatewayException {
@@ -129,7 +129,7 @@ public class StripeWebhookTaskHandler {
                         // So this status update will block a refund attempt made VIA the API is made if the charge has been
                         // expunged from connector.
                         RefundAvailabilityUpdated refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                                transaction, EXTERNAL_UNAVAILABLE, clock.instant());
+                                transaction, EXTERNAL_UNAVAILABLE, instantSource.instant());
                         emitEvent(refundAvailabilityUpdated);
 
                         if (isTestStripeTransaction) {

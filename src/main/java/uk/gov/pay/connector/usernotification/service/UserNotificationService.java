@@ -24,7 +24,7 @@ import uk.gov.service.notify.SendEmailResponse;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.time.Clock;
+import java.time.InstantSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -54,7 +54,7 @@ public class UserNotificationService {
 
     private static final Pattern LITERAL_DOLLAR_REFERENCE = Pattern.compile(Pattern.quote("$reference"));
     private final TaskQueueService taskQueueService;
-    private final Clock clock;
+    private final InstantSource instantSource;
 
     private String confirmationEmailTemplateId;
     private String refundIssuedEmailTemplateId;
@@ -66,7 +66,7 @@ public class UserNotificationService {
 
     @Inject
     public UserNotificationService(NotifyClientFactory notifyClientFactory, ConnectorConfiguration configuration,
-                                   Environment environment, TaskQueueService taskQueueService, Clock clock) {
+                                   Environment environment, TaskQueueService taskQueueService, InstantSource instantSource) {
         readEmailConfig(configuration);
         if (emailNotifyGloballyEnabled) {
             this.notifyClientFactory = notifyClientFactory;
@@ -75,7 +75,7 @@ public class UserNotificationService {
         }
         this.metricRegistry = environment.metrics();
         this.taskQueueService = taskQueueService;
-        this.clock = clock;
+        this.instantSource = instantSource;
     }
 
     public Future<Optional<String>> sendRefundIssuedEmail(RefundEntity refundEntity, Charge charge, GatewayAccountEntity gatewayAccountEntity) {
@@ -161,7 +161,7 @@ public class UserNotificationService {
             return Optional.of(response.getNotificationId().toString());
         } catch (NotificationClientException e) {
             if (retryOnFailure) {
-                taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(paymentOrRefundExternalId, emailNotificationType, clock.instant()));
+                taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(paymentOrRefundExternalId, emailNotificationType, instantSource.instant()));
                 logger.info("Failed to send email. Added to task queue for retrying",
                         kv("error", e.getMessage()), e);
             } else {

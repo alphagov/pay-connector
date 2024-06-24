@@ -38,7 +38,7 @@ import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import java.net.URI;
-import java.time.Clock;
+import java.time.InstantSource;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -66,6 +66,7 @@ public class ConnectorModule extends AbstractModule {
     protected void configure() {
         bind(ConnectorConfiguration.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
+        bind(InstantSource.class).toInstance(InstantSource.system());
         bind(CardExecutorService.class).in(Singleton.class);
         bind(ApplePayDecrypter.class).in(Singleton.class);
         bind(PaymentProviders.class).in(Singleton.class);
@@ -245,12 +246,6 @@ public class ConnectorModule extends AbstractModule {
     @Singleton
     public Client provideLedgerClient() {
         return RestClientFactory.buildClient(configuration.getRestClientConfig(), configuration.getLedgerPostEventTimeout());
-    }
-
-    @Provides
-    @Singleton
-    public Clock systemUtcClock() {
-        return Clock.systemUTC();
     }
 
     @Provides

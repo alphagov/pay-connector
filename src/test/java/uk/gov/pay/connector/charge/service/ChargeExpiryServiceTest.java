@@ -39,9 +39,9 @@ import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +77,7 @@ class ChargeExpiryServiceTest {
 
     private ChargeExpiryService chargeExpiryService;
 
-    private final Clock fixedClock = Clock.fixed(Instant.ofEpochSecond(1654732800), ZoneId.of("UTC")); // Thu 9 June 2022 00:00:00
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2022-06-09T00:00:00Z"));
 
     @Mock
     private ChargeDao mockChargeDao;
@@ -139,7 +139,7 @@ class ChargeExpiryServiceTest {
     @BeforeEach
     void setup() {
         when(mockedConfig.getChargeSweepConfig()).thenReturn(mockedChargeSweepConfig);
-        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeService, mockTokenDao, mockIdempotencyDao, mockPaymentProviders, mockQueryService, mockedConfig, fixedClock);
+        chargeExpiryService = new ChargeExpiryService(mockChargeDao, mockChargeService, mockTokenDao, mockIdempotencyDao, mockPaymentProviders, mockQueryService, mockedConfig, fixedInstantSource);
         GatewayResponseBuilder<BaseCancelResponse> gatewayResponseBuilder = responseBuilder();
         gatewayResponse = gatewayResponseBuilder.withResponse(mockWorldpayCancelResponse).build();
         gatewayAccount = ChargeEntityFixture.defaultGatewayAccountEntity();
@@ -400,8 +400,8 @@ class ChargeExpiryServiceTest {
         when(mockedChargeSweepConfig.getIdempotencyKeyExpiryThresholdInSeconds()).thenReturn(IDEMPOTENCY_EXPIRY_WINDOW);
         when(mockedChargeSweepConfig.getSkipExpiringChargesLastUpdatedInSeconds()).thenReturn(Duration.ofSeconds(120L));
         when(mockedChargeSweepConfig.getAwaitingCaptureExpiryThreshold()).thenReturn(AWAITING_DELAY_CAPTURE_EXPIRY_WINDOW);
-        when(mockTokenDao.deleteTokensOlderThanSpecifiedDate(fixedClock.instant().minus(TOKEN_EXPIRY_WINDOW).atZone(ZoneId.of("UTC")))).thenReturn(1);
-        when(mockIdempotencyDao.deleteIdempotencyKeysOlderThanSpecifiedDateTime(fixedClock.instant().minus(IDEMPOTENCY_EXPIRY_WINDOW))).thenReturn(1);
+        when(mockTokenDao.deleteTokensOlderThanSpecifiedDate(fixedInstantSource.instant().minus(TOKEN_EXPIRY_WINDOW).atZone(ZoneId.of("UTC")))).thenReturn(1);
+        when(mockIdempotencyDao.deleteIdempotencyKeysOlderThanSpecifiedDateTime(fixedInstantSource.instant().minus(IDEMPOTENCY_EXPIRY_WINDOW))).thenReturn(1);
 
         ChargeEntity expiredCharge = mockExpiredChargeEntity();
         when(mockChargeService.transitionChargeState(any(String.class), any())).thenReturn(expiredCharge);

@@ -24,7 +24,7 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import javax.inject.Inject;
 import javax.persistence.OptimisticLockException;
-import java.time.Clock;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +48,7 @@ public class CardCaptureService {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     private final EventService eventService;
     protected MetricRegistry metricRegistry;
-    protected Clock clock;
+    protected InstantSource instantSource;
     protected CaptureQueue captureQueue;
 
     @Inject
@@ -56,13 +56,13 @@ public class CardCaptureService {
                               PaymentProviders providers,
                               UserNotificationService userNotificationService,
                               Environment environment,
-                              Clock clock,
+                              InstantSource instantSource,
                               CaptureQueue captureQueue,
                               EventService eventService) {
         this.chargeService = chargeService;
         this.providers = providers;
         this.metricRegistry = environment.metrics();
-        this.clock = clock;
+        this.instantSource = instantSource;
         this.userNotificationService = userNotificationService;
         this.captureQueue = captureQueue;
         this.eventService = eventService;
@@ -107,7 +107,7 @@ public class CardCaptureService {
         ChargeEntity charge = chargeService.findChargeByExternalId(chargeId);
 
         List<Fee> feeList = captureResponse.getFeeList();
-        feeList.stream().map(fee -> new FeeEntity(charge, clock.instant(), fee)).forEach(charge::addFee);
+        feeList.stream().map(fee -> new FeeEntity(charge, instantSource.instant(), fee)).forEach(charge::addFee);
 
         try {
             if (!feeList.isEmpty()) {

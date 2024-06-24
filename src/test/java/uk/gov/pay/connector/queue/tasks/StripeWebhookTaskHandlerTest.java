@@ -48,9 +48,8 @@ import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 
@@ -100,8 +99,8 @@ public class StripeWebhookTaskHandlerTest {
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
 
-    private final String fixedClockDateTime = "2020-01-01T10:10:10.100Z";
-    private final Clock clock = Clock.fixed(Instant.parse(fixedClockDateTime), ZoneOffset.UTC);
+    private final String fixedDateTime = "2020-01-01T10:10:10.100Z";
+    private final InstantSource instantSource = InstantSource.fixed(Instant.parse(fixedDateTime));
 
     private StripeWebhookTaskHandler stripeWebhookTaskHandler;
 
@@ -118,7 +117,7 @@ public class StripeWebhookTaskHandlerTest {
         logger.addAppender(mockLogAppender);
         when(configuration.getStripeConfig()).thenReturn(stripeGatewayConfig);
         stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, chargeService, eventService, stripePaymentProvider,
-                gatewayAccountService, gatewayAccountCredentialsService, configuration, clock);
+                gatewayAccountService, gatewayAccountCredentialsService, configuration, instantSource);
     }
 
     @Test
@@ -140,7 +139,7 @@ public class StripeWebhookTaskHandlerTest {
                 stripeDisputeData.getDisputeCreated().toInstant());
         var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedClockDateTime));
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedDateTime));
 
         verify(eventService).emitEvent(disputeCreated);
         verify(eventService).emitEvent(paymentDisputed);
@@ -618,7 +617,7 @@ public class StripeWebhookTaskHandlerTest {
                 stripeDisputeData.getDisputeCreated().toInstant());
         var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
-                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedClockDateTime));
+                transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedDateTime));
 
         verify(eventService).emitEvent(disputeCreated);
         verify(eventService).emitEvent(paymentDisputed);

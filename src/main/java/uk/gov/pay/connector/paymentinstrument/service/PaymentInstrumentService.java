@@ -10,20 +10,20 @@ import uk.gov.pay.connector.paymentinstrument.dao.PaymentInstrumentDao;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 
-import java.time.Clock;
+import java.time.InstantSource;
 import java.util.Map;
 
 public class PaymentInstrumentService {
 
     private final PaymentInstrumentDao paymentInstrumentDao;
     private final LedgerService ledgerService;
-    private final Clock clock;
+    private final InstantSource instantSource;
     
     @Inject
-    public PaymentInstrumentService(PaymentInstrumentDao paymentInstrumentDao, LedgerService ledgerService, Clock clock) {
+    public PaymentInstrumentService(PaymentInstrumentDao paymentInstrumentDao, LedgerService ledgerService, InstantSource instantSource) {
         this.paymentInstrumentDao = paymentInstrumentDao;
         this.ledgerService = ledgerService;
-        this.clock = clock;
+        this.instantSource = instantSource;
     }
 
     public PaymentInstrumentEntity findByExternalId(String externalId) {
@@ -32,7 +32,7 @@ public class PaymentInstrumentService {
     
     @Transactional
     public PaymentInstrumentEntity createPaymentInstrument(ChargeEntity charge, Map<String, String> recurringAuthToken) {
-        var now = clock.instant();
+        var now = instantSource.instant();
         var paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
                 .withCreatedDate(now)
                 .withRecurringAuthToken(recurringAuthToken)

@@ -50,9 +50,8 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import javax.persistence.OptimisticLockException;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.InstantSource;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -129,7 +128,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
 
-    private static final Clock GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK = Clock.fixed(Instant.parse("2020-01-01T10:10:10.100Z"), ZoneOffset.UTC);
+    private static final InstantSource INSTANT_SOURCE = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
@@ -145,7 +144,7 @@ class CardCaptureServiceTest extends CardServiceTest {
                 mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
-                GREENWICH_MERIDIAN_TIME_OFFSET_CLOCK, mockCaptureQueue, mockEventService);
+                INSTANT_SOURCE, mockCaptureQueue, mockEventService);
 
         Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
         root.setLevel(Level.INFO);

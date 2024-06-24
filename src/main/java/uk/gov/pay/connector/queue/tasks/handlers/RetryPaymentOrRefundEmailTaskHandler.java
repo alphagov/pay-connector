@@ -17,7 +17,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
-import java.time.Clock;
+import java.time.InstantSource;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
@@ -33,7 +33,7 @@ public class RetryPaymentOrRefundEmailTaskHandler {
     private final UserNotificationService userNotificationService;
     private final TaskQueueService taskQueueService;
     private final long retryFailedEmailAfterSeconds;
-    private final Clock clock;
+    private final InstantSource instantSource;
 
     @Inject
     public RetryPaymentOrRefundEmailTaskHandler(ChargeService chargeService,
@@ -42,18 +42,18 @@ public class RetryPaymentOrRefundEmailTaskHandler {
                                                 UserNotificationService userNotificationService,
                                                 TaskQueueService taskQueueService,
                                                 ConnectorConfiguration connectorConfiguration,
-                                                Clock clock) {
+                                                InstantSource instantSource) {
         this.chargeService = chargeService;
         this.refundService = refundService;
         this.gatewayAccountService = gatewayAccountService;
         this.userNotificationService = userNotificationService;
         this.taskQueueService = taskQueueService;
         retryFailedEmailAfterSeconds = connectorConfiguration.getNotifyConfiguration().getRetryFailedEmailAfterSeconds();
-        this.clock = clock;
+        this.instantSource = instantSource;
     }
 
     public void process(RetryPaymentOrRefundEmailTaskData retryPaymentOrRefundEmailTaskData) {
-        long timeElapsedInSeconds = clock.instant().getEpochSecond() -
+        long timeElapsedInSeconds = instantSource.instant().getEpochSecond() -
                 retryPaymentOrRefundEmailTaskData.getFailedAttemptTime().getEpochSecond();
 
         if (timeElapsedInSeconds >= retryFailedEmailAfterSeconds) {
