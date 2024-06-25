@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.stripe.json.StripePaymentIntent;
@@ -18,8 +16,6 @@ public class StripeAuthorisationResponse implements BaseAuthoriseResponse {
 
     public static final String STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY = "customerId";
     public static final String STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY = "paymentMethodId";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StripeAuthorisationResponse.class);
 
     private final String transactionId;
     private final AuthoriseStatus authoriseStatus;
