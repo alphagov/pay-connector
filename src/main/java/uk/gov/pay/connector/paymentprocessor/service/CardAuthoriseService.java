@@ -194,7 +194,10 @@ public class CardAuthoriseService {
         return Pair.of(operationResponse, newStatus);
     }
 
-    private AuthorisationResponse updateChargePostAuthorisation(AuthCardDetails authCardDetails, ChargeEntity charge, GatewayResponse<BaseAuthoriseResponse> operationResponse, ChargeStatus newStatus) {
+    private AuthorisationResponse updateChargePostAuthorisation(AuthCardDetails authCardDetails, 
+                                                                ChargeEntity charge, 
+                                                                GatewayResponse<BaseAuthoriseResponse> operationResponse, 
+                                                                ChargeStatus newStatus) {
         Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
         Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
         Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =

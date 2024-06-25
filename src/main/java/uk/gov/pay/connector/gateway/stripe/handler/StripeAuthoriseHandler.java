@@ -74,20 +74,20 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
         try {
             StripePaymentMethod stripePaymentMethodResponse = createPaymentMethod(request);
 
-            StripePaymentIntent StripePaymentIntent;
+            StripePaymentIntent stripePaymentIntent;
             if (request.isSavePaymentInstrumentToAgreement()) {
                 StripeCustomer stripeCustomerResponse = createCustomer(request, request.getAgreement().orElseThrow(() -> new RuntimeException("Expected charge with isSavePaymentInstrumentToAgreement == true to have a saved agreement")));
                 var customerId = stripeCustomerResponse.getId();
-                StripePaymentIntent = createPaymentIntentForSetUpAgreement(request, stripePaymentMethodResponse.getId(), customerId);
+                stripePaymentIntent = createPaymentIntentForSetUpAgreement(request, stripePaymentMethodResponse.getId(), customerId);
                 logger.info("Created Stripe payment intent and stored payment details for recurring payment agreement",
-                        kv("stripe_payment_intent_id", StripePaymentIntent.getId()));
+                        kv("stripe_payment_intent_id", stripePaymentIntent.getId()));
             } else {
-                StripePaymentIntent = createPaymentIntent(request, stripePaymentMethodResponse.getId());
+                stripePaymentIntent = createPaymentIntent(request, stripePaymentMethodResponse.getId());
                 logger.info("Created Stripe payment intent",
-                        kv("stripe_payment_intent_id", StripePaymentIntent.getId()));
+                        kv("stripe_payment_intent_id", stripePaymentIntent.getId()));
             }
 
-            return responseBuilder.withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();
+            return responseBuilder.withResponse(StripeAuthorisationResponse.of(stripePaymentIntent)).build();
         } catch (GatewayException.GatewayErrorException e) {
             return handleGatewayError(responseBuilder, e);
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
