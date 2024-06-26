@@ -59,19 +59,19 @@ public class MotoApiCardNumberValidationService {
     }
 
     private void checkCardIsAllowedForGatewayAccount(ChargeEntity charge, CardInformation cardInformation) {
-        if (charge.getGatewayAccount().isBlockPrepaidCards() && cardInformation.getPrepaidStatus() == PayersCardPrepaidStatus.PREPAID) {
+        if (charge.getGatewayAccount().isBlockPrepaidCards() && cardInformation.prepaidStatus() == PayersCardPrepaidStatus.PREPAID) {
             logger.info("Card number rejected: Card is prepaid and the gateway account has prepaid cards blocked");
             throw new CardNumberRejectedException("Prepaid cards are not accepted");
         }
 
-        CardType cardType = CardidCardType.toCardType(cardInformation.getType());
+        CardType cardType = CardidCardType.toCardType(cardInformation.type());
         charge.getGatewayAccount().getCardTypes()
                 .stream()
-                .filter(cardTypeEntity -> cardTypeEntity.getBrand().equals(cardInformation.getBrand())
+                .filter(cardTypeEntity -> cardTypeEntity.getBrand().equals(cardInformation.brand())
                         && (cardType == null || cardTypeEntity.getType() == cardType))
                 .findFirst()
                 .orElseThrow(() -> {
-                    String formattedCardType = formatCardTypeForErrorMessage(cardType, cardInformation.getBrand());
+                    String formattedCardType = formatCardTypeForErrorMessage(cardType, cardInformation.brand());
                     logger.info("Card number rejected: The card type is not enabled: {}", formattedCardType);
                     throw new CardNumberRejectedException("The card type is not enabled: " + formattedCardType);
                 });

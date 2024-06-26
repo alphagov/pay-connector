@@ -10,64 +10,23 @@ import java.util.Objects;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class CardInformation {
+public record CardInformation (
     @JsonProperty("brand")
-    private String brand;
+    String brand,
 
-    @JsonProperty("type")
-    private CardidCardType type;
+    @JsonProperty("type") 
+    CardidCardType type,
 
     @JsonProperty("label")
-    private String label;
+    String label,
 
     @JsonProperty("corporate")
-    private boolean corporate;
+    boolean corporate,
 
     @JsonProperty("prepaid")
-    private PayersCardPrepaidStatus prepaidStatus;
-    
-    public CardInformation() {
-        // for Jackson deserialisation
-    }
-
-    public CardInformation(String brand, CardidCardType type, String label, boolean corporate, PayersCardPrepaidStatus prepaidStatus) {
-        this.brand = brand;
-        this.type = type;
-        this.label = label;
-        this.corporate = corporate;
-        this.prepaidStatus = prepaidStatus;
-    }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public CardidCardType getType() {
-        return type;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
+    PayersCardPrepaidStatus prepaidStatus
+){
     public boolean isCorporate() {
         return corporate;
-    }
-
-    public PayersCardPrepaidStatus getPrepaidStatus() {
-        return prepaidStatus;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CardInformation that = (CardInformation) o;
-        return corporate == that.corporate && Objects.equals(brand, that.brand) && Objects.equals(type, that.type) && Objects.equals(label, that.label) && prepaidStatus == that.prepaidStatus;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(brand, type, label, corporate, prepaidStatus);
     }
 }

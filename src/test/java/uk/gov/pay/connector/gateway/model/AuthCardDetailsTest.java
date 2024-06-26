@@ -58,10 +58,10 @@ class AuthCardDetailsTest {
         assertThat(authCardDetails.getCardHolder(), is("Joe"));
         assertThat(authCardDetails.getEndDate().toString(), is("11/99"));
 
-        assertThat(authCardDetails.getCardBrand(), is(cardInformation.getBrand()));
+        assertThat(authCardDetails.getCardBrand(), is(cardInformation.brand()));
         assertThat(authCardDetails.isCorporateCard(), is(cardInformation.isCorporate()));
-        assertThat(authCardDetails.getPayersCardType(), is(CardidCardType.toPayersCardType(cardInformation.getType())));
-        assertThat(authCardDetails.getPayersCardPrepaidStatus(), is(cardInformation.getPrepaidStatus()));
+        assertThat(authCardDetails.getPayersCardType(), is(CardidCardType.toPayersCardType(cardInformation.type())));
+        assertThat(authCardDetails.getPayersCardPrepaidStatus(), is(cardInformation.prepaidStatus()));
     }
 
 }

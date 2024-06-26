@@ -69,10 +69,10 @@ public class AuthCardDetails {
         authCardDetails.setEndDate(CardExpiryDate.valueOf(authoriseRequest.getExpiryDate()));
         authCardDetails.setCvc(authoriseRequest.getCvc());
 
-        authCardDetails.setCardBrand(cardInformation.getBrand());
+        authCardDetails.setCardBrand(cardInformation.brand());
         authCardDetails.setCorporateCard(cardInformation.isCorporate());
-        authCardDetails.setPayersCardType(CardidCardType.toPayersCardType(cardInformation.getType()));
-        authCardDetails.setPayersCardPrepaidStatus(cardInformation.getPrepaidStatus());
+        authCardDetails.setPayersCardType(CardidCardType.toPayersCardType(cardInformation.type()));
+        authCardDetails.setPayersCardPrepaidStatus(cardInformation.prepaidStatus());
 
         Optional.ofNullable(chargeEntity.getCardDetails())
                 .flatMap(CardDetailsEntity::getBillingAddress)

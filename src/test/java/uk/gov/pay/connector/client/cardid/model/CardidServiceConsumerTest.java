@@ -50,10 +50,10 @@ public class CardidServiceConsumerTest {
         
         assertThat(maybeCardInformation.isPresent(), is(true));
         CardInformation cardInformation = maybeCardInformation.get();
-        assertThat(cardInformation.getType(), is(CardidCardType.CREDIT));
-        assertThat(cardInformation.getBrand(), is("master-card"));
-        assertThat(cardInformation.getLabel(), is ("MC"));
-        assertThat(cardInformation.getPrepaidStatus(), is(PayersCardPrepaidStatus.NOT_PREPAID));
+        assertThat(cardInformation.type(), is(CardidCardType.CREDIT));
+        assertThat(cardInformation.brand(), is("master-card"));
+        assertThat(cardInformation.label(), is ("MC"));
+        assertThat(cardInformation.prepaidStatus(), is(PayersCardPrepaidStatus.NOT_PREPAID));
         assertThat(cardInformation.isCorporate(), is(false));
     }
 
