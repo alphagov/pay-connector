@@ -13,43 +13,47 @@ import java.time.Instant;
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonSnakeCase
-public class TransactionEvent implements Comparable<TransactionEvent> {
+public record TransactionEvent (
+        @JsonProperty("type")
+        @Schema(example = "PAYMENT")
+        Type type,
+        
+        @JsonIgnore
+        String extChargeId,
+        
+        @JsonProperty("refund_reference")
+        String refundGatewayTransactionId,
+
+        @JsonProperty("state")
+        State state,
+
+        @JsonProperty("amount")
+        @Schema(example = "100")
+        Long amount,
+
+        @JsonIgnore
+        Instant updated,
+        
+        @JsonProperty("submitted_by")
+        String userExternalId
+) implements Comparable<TransactionEvent> {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonSnakeCase
-    static public class State {
-        @Schema(example = "cancelled")
-        private final String status;
-        @Schema(example = "true")
-        private final boolean finished;
-        @Schema(example = "P0040")
-        private final String code;
-        @Schema(example = "Payment was cancelled by service")
-        private final String message;
-
-        public State(String status, boolean finished, String code, String message) {
-            this.status = status;
-            this.finished = finished;
-            this.code = code;
-            this.message = message;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public boolean isFinished() {
-            return finished;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
+    public record State (
+            @Schema(example = "cancelled")
+            String status,
+            
+            @Schema(example = "true")
+            boolean finished,
+            
+            @Schema(example = "P0040")
+            String code,
+            
+            @Schema(example = "Payment was cancelled by service")
+            String message
+        ) {
+        
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -58,7 +62,6 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
             State state = (State) o;
 
             return !(status != null ? !status.equals(state.status) : state.status != null);
-
         }
 
         @Override
@@ -67,7 +70,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         }
     }
 
-    static public State extractState(ExternalChargeState externalChargeState) {
+    public static State extractState(ExternalChargeState externalChargeState) {
         return new State(
                 externalChargeState.getStatus(),
                 externalChargeState.isFinished(),
@@ -75,7 +78,7 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
                 externalChargeState.getMessage());
     }
 
-    static public State extractState(ExternalRefundStatus externalRefundState) {
+    public static State extractState(ExternalRefundStatus externalRefundState) {
         return new State(
                 externalRefundState.getStatus(),
                 externalRefundState.isFinished(),
@@ -88,69 +91,18 @@ public class TransactionEvent implements Comparable<TransactionEvent> {
         REFUND
     }
 
-    private final Type type;
-    private String extChargeId;
-    private String refundGatewayTransactionId;
-    private String userExternalId;
-    private State state;
-    private Long amount;
-    private Instant updated;
-
     public TransactionEvent(Type type, String extChargeId, State state, Long amount, Instant updated) {
-        this.type = type;
-        this.extChargeId = extChargeId;
-        this.state = state;
-        this.amount = amount;
-        this.updated = updated;
+        this(
+                type,
+                extChargeId,
+                null,
+                state,
+                amount,
+                updated,
+                null
+        );
     }
-
-    public TransactionEvent(Type type, String extChargeId, String refundGatewayTransactionId,
-                            State state,Long amount, Instant updated, String userExternalId) {
-        this.type = type;
-        this.refundGatewayTransactionId = refundGatewayTransactionId;
-        this.extChargeId = extChargeId;
-        this.state = state;
-        this.amount = amount;
-        this.updated = updated;
-        this.userExternalId = userExternalId;
-    }
-
-    @JsonProperty("type")
-    @Schema(example = "PAYMENT")
-    public Type getType() {
-        return type;
-    }
-
-    @JsonProperty("refund_reference")
-    public String getRefundId() {
-        return refundGatewayTransactionId;
-    }
-
-    @JsonProperty("submitted_by")
-    public String getUserExternalId() {
-        return userExternalId;
-    }
-
-    @JsonIgnore
-    public String getChargeId() {
-        return extChargeId;
-    }
-
-    public void setChargeId(String chargeId) {
-        this.extChargeId = chargeId;
-    }
-
-    @JsonProperty("state")
-    public State getState() {
-        return state;
-    }
-
-    @JsonProperty("amount")
-    @Schema(example = "100")
-    public Long getAmount() {
-        return amount;
-    }
-
+    
     @JsonProperty("updated")
     @Schema(example = "2022-06-28T10:41:40.460Z")
     public String getUpdated() {
