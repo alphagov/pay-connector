@@ -80,10 +80,10 @@ public class AgreementServiceTest {
                 Optional<AgreementResponse> response = agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
 
                 assertThat(response.isPresent(), is(true));
-                assertThat(response.get().getReference(), is(REFERENCE_ID));
-                assertThat(response.get().getServiceId(), is(SERVICE_ID));
-                assertThat(response.get().getDescription(), is(VALID_DESCRIPTION));
-                assertThat(response.get().getUserIdentifier(), is(VALID_USER_REFERENCE));
+                assertThat(response.get().reference(), is(REFERENCE_ID));
+                assertThat(response.get().serviceId(), is(SERVICE_ID));
+                assertThat(response.get().description(), is(VALID_DESCRIPTION));
+                assertThat(response.get().userIdentifier(), is(VALID_USER_REFERENCE));
             }
 
             @Test
@@ -191,10 +191,10 @@ public class AgreementServiceTest {
                 Optional<AgreementResponse> response = agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST);
 
                 assertThat(response.isPresent(), is(true));
-                assertThat(response.get().getReference(), is(REFERENCE_ID));
-                assertThat(response.get().getServiceId(), is(SERVICE_ID));
-                assertThat(response.get().getDescription(), is(VALID_DESCRIPTION));
-                assertThat(response.get().getUserIdentifier(), is(VALID_USER_REFERENCE));
+                assertThat(response.get().reference(), is(REFERENCE_ID));
+                assertThat(response.get().serviceId(), is(SERVICE_ID));
+                assertThat(response.get().description(), is(VALID_DESCRIPTION));
+                assertThat(response.get().userIdentifier(), is(VALID_USER_REFERENCE));
             }
 
             @Test
