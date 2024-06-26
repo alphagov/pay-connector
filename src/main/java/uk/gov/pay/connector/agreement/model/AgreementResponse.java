@@ -71,19 +71,6 @@ public record AgreementResponse (
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        AgreementResponse that = (AgreementResponse) o;
-        return live == that.live && agreementId.equals(that.agreementId) && createdDate.equals(that.createdDate) && reference.equals(that.reference) && serviceId.equals(that.serviceId) && Objects.equals(description, that.description) && Objects.equals(userIdentifier, that.userIdentifier);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(agreementId, createdDate, reference, serviceId, live, description, userIdentifier);
-    }
-
-    @Override
     public String toString() {
         // The reference may include personally-identifiable information
         return "AgreementResponse{" +

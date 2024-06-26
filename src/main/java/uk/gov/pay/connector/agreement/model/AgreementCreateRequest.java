@@ -30,19 +30,4 @@ public record AgreementCreateRequest (
 ) {
     private static final String DESCRIPTION_FIELD = "description";
     private static final String USER_IDENTIFIER_FIELD = "user_identifier";
-    
-    @Override
-    public boolean equals(Object o) {   
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        AgreementCreateRequest that = (AgreementCreateRequest) o;
-        return Objects.equals(reference, that.reference) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(userIdentifier, that.userIdentifier);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(reference, description, userIdentifier);
-    }
 }
