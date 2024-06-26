@@ -51,10 +51,6 @@ public abstract class StateTransition implements Delayed {
         return stateTransitionEventClass;
     }
 
-    public Long getReadTime() {
-        return readTime;
-    }
-
     public long getDelayDurationInMilliseconds() {
         return delayDurationInMilliseconds;
     }

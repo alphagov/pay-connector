@@ -32,13 +32,11 @@ import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByUser;
 import uk.gov.pay.connector.events.model.refund.RefundError;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
-import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransition;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
-import uk.gov.pay.connector.refund.service.RefundService;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -51,8 +49,6 @@ import java.util.stream.Stream;
 public class EventFactory {
     private final ChargeService chargeService;
     private final RefundDao refundDao;
-    private final RefundService refundService;
-    private final PaymentProviders paymentProviders;
     private final ChargeEventDao chargeEventDao;
     private static final List<Class<? extends Event>> EVENTS_AFFECTING_REFUNDABILITY = List.of(
             RefundCreatedByUser.class,
@@ -75,24 +71,19 @@ public class EventFactory {
             PaymentGatewayStateTransitions.getAllEventsResultingInTerminalState();
 
     @Inject
-    public EventFactory(ChargeService chargeService, RefundDao refundDao, RefundService refundService, ChargeEventDao chargeEventDao, PaymentProviders paymentProviders) {
+    public EventFactory(ChargeService chargeService, RefundDao refundDao, ChargeEventDao chargeEventDao) {
         this.chargeService = chargeService;
         this.refundDao = refundDao;
-        this.refundService = refundService;
         this.chargeEventDao = chargeEventDao;
-        this.paymentProviders = paymentProviders;
     }
 
     public List<Event> createEvents(StateTransition stateTransition) throws EventCreationException {
-        if (stateTransition instanceof PaymentStateTransition) {
-            PaymentStateTransition paymentStateTransition = (PaymentStateTransition) stateTransition;
-            return createPaymentEvents(paymentStateTransition);
-        } else if (stateTransition instanceof RefundStateTransition) {
-            RefundStateTransition refundStateTransition = (RefundStateTransition) stateTransition;
-            return createRefundEvents(refundStateTransition);
-        } else {
-            throw new EventCreationException(stateTransition.getIdentifier(), "Failed to create StateTransition event because event is not an instance of PaymentStateTransition or RefundStateTransition");
-        }
+        return switch (stateTransition) {
+            case PaymentStateTransition ignored -> createPaymentEvents((PaymentStateTransition) stateTransition);
+            case RefundStateTransition ignored -> createRefundEvents((RefundStateTransition) stateTransition);
+            default -> throw new EventCreationException(stateTransition.getIdentifier(), 
+                    "Failed to create StateTransition event because event is not an instance of PaymentStateTransition or RefundStateTransition");
+        };
     }
 
     private List<Event> createPaymentEvents(PaymentStateTransition paymentStateTransition) throws EventCreationException {
