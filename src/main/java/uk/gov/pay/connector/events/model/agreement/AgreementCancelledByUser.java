@@ -31,8 +31,8 @@ public class AgreementCancelledByUser extends AgreementEvent {
         private final Instant cancelledDate;
 
         public AgreementCancelledByUserEventDetails(AgreementCancelRequest agreementCancelRequest, Instant cancelledDate) {
-            this.userExternalId = agreementCancelRequest.getUserExternalId();
-            this.userEmail = agreementCancelRequest.getUserEmail();
+            this.userExternalId = agreementCancelRequest.userExternalId();
+            this.userEmail = agreementCancelRequest.userEmail();
             this.cancelledDate = cancelledDate;
         }
 

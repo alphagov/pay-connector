@@ -13,51 +13,35 @@ import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
-public class AgreementResponse {
+public record AgreementResponse (
+        @JsonProperty("agreement_id")
+        @Schema(example = "iaouobo39hiv0m2560q45j3p04")
+        String agreementId,
 
-    @JsonProperty("agreement_id")
-    @Schema(example = "iaouobo39hiv0m2560q45j3p04")
-    private String agreementId;
+        @JsonProperty("created_date")
+        @JsonSerialize(using = ApiResponseInstantSerializer.class)
+        @Schema(example = "2022-06-27T13:07:57.580Z")
+        Instant createdDate,
 
-    @JsonProperty("created_date")
-    @JsonSerialize(using = ApiResponseInstantSerializer.class)
-    @Schema(example = "2022-06-27T13:07:57.580Z")
-    private Instant createdDate;
+        @JsonProperty
+        @Schema(example = "Service agreement reference")
+        String reference,
 
-    @JsonProperty
-    @Schema(example = "Service agreement reference")
-    private String reference;
+        @JsonProperty
+        @Schema(example = "Description for the paying user describing the purpose of the agreement")
+        String description,
 
-    @JsonProperty
-    @Schema(example = "Description for the paying user describing the purpose of the agreement")
-    private String description;
+        @JsonProperty("user_identifier")
+        @Schema(example = "reference for the paying user")
+        String userIdentifier,
 
-    @JsonProperty("user_identifier")
-    @Schema(example = "reference for the paying user")
-    private String userIdentifier;
+        @JsonProperty("service_id")
+        @Schema(example = "Service external ID")
+        String serviceId,
 
-    @JsonProperty("service_id")
-    @Schema(example = "Service external ID")
-    private String serviceId;
-
-    @JsonProperty
-    private boolean live;
-
-    private AgreementResponse(String agreementId,
-            Instant createdDate,
-            String reference,
-            String description,
-            String userIdentifier,
-            String serviceId,
-            boolean live) {
-        this.agreementId = agreementId;
-        this.createdDate = createdDate;
-        this.reference = reference;
-        this.description = description;
-        this.userIdentifier = userIdentifier;
-        this.serviceId = serviceId;
-        this.live = live;
-    }
+        @JsonProperty
+        boolean live
+) {
 
     public AgreementResponse(AgreementResponseBuilder agreementResponseBuilder) {
         this(agreementResponseBuilder.getAgreementId(),
@@ -70,32 +54,8 @@ public class AgreementResponse {
         );
     }
     
-    public String getAgreementId() {
-        return agreementId;
-    }
-
-    public Instant getCreatedDate() {
-        return createdDate;
-    }
-
-    public String getReference() {
-        return reference;
-    }
-
-    public String getServiceId() {
-        return serviceId;
-    }
-
     public boolean isLive() {
         return live;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getUserIdentifier() {
-        return userIdentifier;
     }
 
     public static AgreementResponse from(AgreementEntity agreementEntity) {
@@ -111,19 +71,6 @@ public class AgreementResponse {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        AgreementResponse that = (AgreementResponse) o;
-        return live == that.live && agreementId.equals(that.agreementId) && createdDate.equals(that.createdDate) && reference.equals(that.reference) && serviceId.equals(that.serviceId) && Objects.equals(description, that.description) && Objects.equals(userIdentifier, that.userIdentifier);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(agreementId, createdDate, reference, serviceId, live, description, userIdentifier);
-    }
-
-    @Override
     public String toString() {
         // The reference may include personally-identifiable information
         return "AgreementResponse{" +
@@ -133,7 +80,4 @@ public class AgreementResponse {
                 ", live=" + live +
                 '}';
     }
-
-    
-    
 }

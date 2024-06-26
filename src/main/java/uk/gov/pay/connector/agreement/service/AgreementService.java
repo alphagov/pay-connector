@@ -82,9 +82,9 @@ public class AgreementService {
                             ", which does not have recurring card payments enabled");
         }
         AgreementEntity agreementEntity = anAgreementEntity(instantSource.instant())
-                .withReference(agreementCreateRequest.getReference())
-                .withDescription(agreementCreateRequest.getDescription())
-                .withUserIdentifier(agreementCreateRequest.getUserIdentifier())
+                .withReference(agreementCreateRequest.reference())
+                .withDescription(agreementCreateRequest.description())
+                .withUserIdentifier(agreementCreateRequest.userIdentifier())
                 .withServiceId(gatewayAccountEntity.getServiceId())
                 .withLive(gatewayAccountEntity.isLive())
                 .build();
@@ -130,7 +130,7 @@ public class AgreementService {
                     paymentInstrument.setStatus(PaymentInstrumentStatus.CANCELLED);
                     agreement.setCancelledDate(now);
                     taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
-                    if (agreementCancelRequest != null && agreementCancelRequest.getUserEmail() != null && agreementCancelRequest.getUserExternalId() != null) {
+                    if (agreementCancelRequest != null && agreementCancelRequest.userEmail() != null && agreementCancelRequest.userExternalId() != null) {
                         ledgerService.postEvent(AgreementCancelledByUser.from(agreement, agreementCancelRequest, now));
                     } else {
                         ledgerService.postEvent(AgreementCancelledByService.from(agreement, now));
