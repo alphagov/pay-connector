@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.util.List;
 import java.util.Map;
 
 @Singleton
@@ -23,7 +24,7 @@ public class RefundReversalStripeConnectTransferRequestBuilder {
         long amount = refundFromStripe.getAmount();
         String currency = refundFromStripe.getCurrency();
         String correctionPaymentId = randomIdGenerator.random13ByteHexGenerator();
-        
+
 
         return Map.of(
                 "destination", destination,
@@ -34,7 +35,7 @@ public class RefundReversalStripeConnectTransferRequestBuilder {
                 ),
                 "currency", currency,
                 "transferGroup", transferGroup,
-                "expand", new String[]{"balance_transaction", "destination_payment"}
+                "expand", List.of("balance_transaction", "destination_payment")
         );
 
     }
