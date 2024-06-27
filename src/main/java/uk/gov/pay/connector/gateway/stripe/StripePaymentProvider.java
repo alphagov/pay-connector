@@ -199,7 +199,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
     @Override
     public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
-        var customerId = request.getRecurringAuthToken().get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY);
+        var customerId = request.recurringAuthToken().get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY);
         try {
             stripeSDKClient.deleteCustomer(customerId, request.isLive());
         } catch (StripeException e) {

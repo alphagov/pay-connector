@@ -361,11 +361,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
          deleteTokenClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccountType()),
+                gatewayUrlMap.get(request.gatewayAccountType()),
                 WORLDPAY,
-                request.getGatewayAccountType(),
+                request.gatewayAccountType(),
                 buildDeleteTokenOrder(request),
-                getWorldpayAuthHeaderForManagingRecurringAuthTokens(request.getGatewayCredentials()));
+                getWorldpayAuthHeaderForManagingRecurringAuthTokens(request.gatewayCredentials()));
     }
     
     @Override
@@ -397,13 +397,13 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private GatewayOrder buildDeleteTokenOrder(DeleteStoredPaymentDetailsGatewayRequest request) {
-        WorldpayCredentials worldpayCredentials = (WorldpayCredentials) request.getGatewayCredentials();
+        WorldpayCredentials worldpayCredentials = (WorldpayCredentials) request.gatewayCredentials();
         String merchantCode = worldpayCredentials.getRecurringCustomerInitiatedCredentials()
                 .map(WorldpayMerchantCodeCredentials::getMerchantCode)
                 .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
         return aWorldpayDeleteTokenOrderRequestBuilder()
-                .withAgreementId(request.getAgreementExternalId())
-                .withPaymentTokenId(request.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY))
+                .withAgreementId(request.agreementExternalId())
+                .withPaymentTokenId(request.recurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY))
                 .withMerchantCode(merchantCode)
                 .build();
     }
