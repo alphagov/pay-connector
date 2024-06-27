@@ -65,7 +65,7 @@ worldpay:
       readTimeout: 2000ms
     capture:
       # Capture median time is 200ms. We can be quite agressive in the timeout since we have a retry mechanism.
-      readTimeout: 1000ms
+      readTimeout: 2000ms
 
 sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS}
