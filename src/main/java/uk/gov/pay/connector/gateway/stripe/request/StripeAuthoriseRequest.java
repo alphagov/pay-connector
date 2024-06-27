@@ -38,29 +38,29 @@ public class StripeAuthoriseRequest extends StripePostRequest {
 
     public static StripeAuthoriseRequest of(String sourceId, CardAuthorisationGatewayRequest authorisationRequest, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeAuthoriseRequest(
-                authorisationRequest.getAmount(),
-                authorisationRequest.getDescription(),
+                authorisationRequest.amount(),
+                authorisationRequest.description(),
                 sourceId,
-                authorisationRequest.getGovUkPayPaymentId(),
+                authorisationRequest.govUkPayPaymentId(),
                 OrderRequestType.AUTHORISE,
-                authorisationRequest.getGatewayAccount(),
-                authorisationRequest.getGovUkPayPaymentId(),
+                authorisationRequest.gatewayAccount(),
+                authorisationRequest.govUkPayPaymentId(),
                 stripeGatewayConfig,
-                (StripeCredentials) authorisationRequest.getGatewayCredentials()
+                (StripeCredentials) authorisationRequest.gatewayCredentials()
         );
     }
 
     public static StripeAuthoriseRequest of(String sourceId, Auth3dsResponseGatewayRequest authorisationRequest, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeAuthoriseRequest(
-                authorisationRequest.getAmount(),
-                authorisationRequest.getDescription(),
+                authorisationRequest.amount(),
+                authorisationRequest.description(),
                 sourceId,
                 authorisationRequest.getChargeExternalId(),
                 OrderRequestType.AUTHORISE_3DS,
-                authorisationRequest.getGatewayAccount(),
+                authorisationRequest.gatewayAccount(),
                 authorisationRequest.getChargeExternalId(),
                 stripeGatewayConfig,
-                authorisationRequest.getGatewayCredentials()
+                authorisationRequest.gatewayCredentials()
         );
     }
 

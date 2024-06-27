@@ -42,7 +42,7 @@ public class StripeTransferInRequest extends StripeTransferRequest {
                 request.refundExternalId(),
                 stripeGatewayConfig,
                 request.refundExternalId(),
-                request.getGatewayCredentials(),
+                request.gatewayCredentials(),
                 request.chargeExternalId(),
                 StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT
         );

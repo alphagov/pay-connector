@@ -132,7 +132,7 @@ class StripeCaptureHandlerTest {
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(captureResponse.getTransactionId().isPresent(), is(true));
-        assertThat(captureResponse.getTransactionId().get(), is(captureGatewayRequest.getGatewayTransactionId()));
+        assertThat(captureResponse.getTransactionId().get(), is(captureGatewayRequest.gatewayTransactionId()));
         assertThat(captureResponse.getFeeList(), hasSize(2));
         assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(TRANSACTION));
         assertThat(captureResponse.getFeeList().get(0).getAmount(), is(58L));
@@ -236,7 +236,7 @@ class StripeCaptureHandlerTest {
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
         assertThat(response.state(), is(nullValue()));
-        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.getExternalId()));
+        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.externalId()));
         assertThat(response.getError().get().getErrorType(), is(GATEWAY_ERROR));
     }
 
@@ -298,7 +298,7 @@ class StripeCaptureHandlerTest {
         assertThat(response.isSuccessful(), is(false));
         assertThat(response.getError().isPresent(), is(true));
         assertThat(response.state(), is(nullValue()));
-        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.getExternalId()));
+        assertThat(response.getError().get().getMessage(), containsString("An internal server error occurred when capturing charge_external_id: " + captureGatewayRequest.externalId()));
         assertThat(response.getError().get().getErrorType(), is(GATEWAY_ERROR));
     }
 

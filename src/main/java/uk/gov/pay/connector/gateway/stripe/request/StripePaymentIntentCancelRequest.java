@@ -18,11 +18,11 @@ public class StripePaymentIntentCancelRequest extends StripePostRequest {
 
     public static StripePaymentIntentCancelRequest of(CancelGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
         return new StripePaymentIntentCancelRequest(
-                request.getGatewayAccount(),
-                request.getTransactionId(),
-                request.getExternalChargeId(),
+                request.gatewayAccount(),
+                request.transactionId(),
+                request.externalChargeId(),
                 stripeGatewayConfig,
-                request.getGatewayCredentials()
+                request.gatewayCredentials()
         );
     }
 

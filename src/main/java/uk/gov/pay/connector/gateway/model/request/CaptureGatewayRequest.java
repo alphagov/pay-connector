@@ -19,23 +19,23 @@ public record CaptureGatewayRequest (
         return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
     }
     
-    public Long getAmount() {
+    public Long amount() {
         return charge.getAmount();
     }
     
-    public String getGatewayTransactionId() {
+    public String gatewayTransactionId() {
         return charge.getGatewayTransactionId();
     }
     
-    public String getExternalId() {
+    public String externalId() {
         return charge.getExternalId();
     }
 
-    public Instant getCreatedDate() {
+    public Instant createdDate() {
         return charge.getCreatedDate();
     }
 
-    public List<ChargeEventEntity> getEvents() {
+    public List<ChargeEventEntity> events() {
         return charge.getEvents();
     }
     
@@ -44,24 +44,36 @@ public record CaptureGatewayRequest (
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
+    public GatewayAccountEntity gatewayAccount() {
         return charge.getGatewayAccount();
     }
+//    public GatewayAccountEntity getGatewayAccount() {
+//        return charge.getGatewayAccount();
+//    }
 
     @Override
-    public GatewayOperation getRequestType() {
+    public GatewayOperation requestType() {
         return GatewayOperation.CAPTURE;
     }
+//    public GatewayOperation getRequestType() {
+//        return GatewayOperation.CAPTURE;
+//    }
 
     @Override
-    public GatewayCredentials getGatewayCredentials() {
+    public GatewayCredentials gatewayCredentials() {
         return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
     }
+//    public GatewayCredentials getGatewayCredentials() {
+//        return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
+//    }
 
     @Override
-    public AuthorisationMode getAuthorisationMode() {
+    public AuthorisationMode authorisationMode() {
         return charge.getAuthorisationMode();
     }
+//    public AuthorisationMode getAuthorisationMode() {
+//        return charge.getAuthorisationMode();
+//    }
 
     @Override
     public boolean isForRecurringPayment() {

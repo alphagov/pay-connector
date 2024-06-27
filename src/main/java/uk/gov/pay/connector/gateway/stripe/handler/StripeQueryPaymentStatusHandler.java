@@ -38,7 +38,7 @@ public class StripeQueryPaymentStatusHandler {
 
     public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) throws GatewayException {
         LOGGER.info(format("Querying Stripe payment status for [%s]", chargeQueryGatewayRequest.chargeExternalId()));
-        StripeQueryPaymentStatusRequest request = StripeQueryPaymentStatusRequest.of(chargeQueryGatewayRequest.getGatewayAccount(),
+        StripeQueryPaymentStatusRequest request = StripeQueryPaymentStatusRequest.of(chargeQueryGatewayRequest.gatewayAccount(),
                 stripeGatewayConfig, chargeQueryGatewayRequest.chargeExternalId());
         try {
             String rawResponse = client.getRequestFor(request).getEntity();

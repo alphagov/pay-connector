@@ -37,11 +37,11 @@ public class WorldpayCaptureHandler implements CaptureHandler {
     public CaptureResponse capture(CaptureGatewayRequest request) {
         try {
             GatewayClient.Response response = client.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    gatewayUrlMap.get(request.gatewayAccount().getType()),
                     WORLDPAY,
-                    request.getGatewayAccount().getType(),
+                    request.gatewayAccount().getType(),
                     buildCaptureOrder(request),
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                    getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
             return CaptureResponse.fromBaseCaptureResponse(unmarshallResponse(response, WorldpayCaptureResponse.class), PENDING);
         } catch (GatewayException e) {
             return CaptureResponse.fromGatewayError(e.toGatewayError());
@@ -51,9 +51,9 @@ public class WorldpayCaptureHandler implements CaptureHandler {
     private GatewayOrder buildCaptureOrder(CaptureGatewayRequest request) {
         return aWorldpayCaptureOrderRequestBuilder()
                 .withDate(LocalDate.now(ZoneOffset.UTC))
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
                 .withAmount(request.getAmountAsString())
-                .withTransactionId(request.getGatewayTransactionId())
+                .withTransactionId(request.gatewayTransactionId())
                 .build();
     }
 

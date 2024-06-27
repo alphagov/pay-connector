@@ -32,7 +32,7 @@ public class StripeRefundRequest extends StripePostRequest {
                 request.refundExternalId(),
                 stripeChargeId,
                 stripeGatewayConfig,
-                request.getGatewayCredentials()
+                request.gatewayCredentials()
         );
     }
 

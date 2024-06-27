@@ -17,7 +17,7 @@ public class StripeFeeCalculator {
     }
 
     public static Long getTotalAmountForConnectFee(Long stripeFee, CaptureGatewayRequest request, Double feePercentage) {
-        Double platformFee = getPlatformFee(feePercentage, request.getAmount());
+        Double platformFee = getPlatformFee(feePercentage, request.amount());
         return stripeFee + platformFee.longValue();
     }
 
@@ -41,7 +41,7 @@ public class StripeFeeCalculator {
     }
 
     private static boolean is3dsUsed(CaptureGatewayRequest request) {
-        return request.getEvents()
+        return request.events()
                 .stream()
                 .anyMatch(chargeEventEntity -> chargeEventEntity.getStatus().equals(AUTHORISATION_3DS_REQUIRED));
     }

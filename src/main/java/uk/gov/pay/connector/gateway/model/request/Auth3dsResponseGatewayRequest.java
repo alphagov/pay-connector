@@ -28,24 +28,16 @@ public record Auth3dsResponseGatewayRequest (
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
-        return charge.getGatewayAccount();
-    }
+    public GatewayAccountEntity gatewayAccount() { return charge.getGatewayAccount(); }
 
     @Override
-    public GatewayOperation getRequestType() {
-        return GatewayOperation.AUTHORISE;
-    }
+    public GatewayOperation requestType() { return GatewayOperation.AUTHORISE; }
 
     @Override
-    public GatewayCredentials getGatewayCredentials() {
-        return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
-    }
+    public GatewayCredentials gatewayCredentials() { return charge.getGatewayAccountCredentialsEntity().getCredentialsObject(); }
 
     @Override
-    public AuthorisationMode getAuthorisationMode() {
-        return charge.getAuthorisationMode();
-    }
+    public AuthorisationMode authorisationMode() { return charge.getAuthorisationMode(); }
 
     @Override
     public boolean isForRecurringPayment() {
@@ -55,12 +47,8 @@ public record Auth3dsResponseGatewayRequest (
     public static Auth3dsResponseGatewayRequest valueOf(ChargeEntity charge, Auth3dsResult auth3DsResult) {
         return new Auth3dsResponseGatewayRequest(charge, auth3DsResult);
     }
-
-    public String getAmount() {
-        return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
-    }
-
-    public String getDescription() {
-        return charge.getDescription();
-    }
+    
+    public String amount() { return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)); }
+    
+    public String description() { return charge.getDescription(); }
 }

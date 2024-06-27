@@ -39,7 +39,7 @@ public class WorldpayRefundHandler implements RefundHandler {
                     WORLDPAY,
                     request.gatewayAccount().getType(),
                     buildRefundOrder(request), 
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
+                    getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, WorldpayRefundResponse.class), PENDING);
         } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
@@ -49,7 +49,7 @@ public class WorldpayRefundHandler implements RefundHandler {
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         return aWorldpayRefundOrderRequestBuilder()
                 .withReference(request.refundExternalId())
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
                 .withAmount(request.amount())
                 .withTransactionId(request.transactionId())
                 .build();

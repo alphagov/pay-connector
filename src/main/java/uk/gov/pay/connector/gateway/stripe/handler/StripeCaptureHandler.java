@@ -50,7 +50,7 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-        String transactionId = request.getGatewayTransactionId();
+        String transactionId = request.gatewayTransactionId();
 
         try {
             List<Fee> feeList = doCaptureAndTransferIfNotPreviouslySucceeded(request);
@@ -63,20 +63,20 @@ public class StripeCaptureHandler implements CaptureHandler {
                 String errorMessage = stripeErrorResponse.getError().getMessage();
                 LOGGER.warn("Capture failed for transaction id {}. Failure code from Stripe: {}, failure message from " +
                                 "Stripe: {}. External Charge id: {}. Response code from Stripe: {}",
-                        transactionId, errorCode, errorMessage, request.getExternalId(), e.getStatus());
+                        transactionId, errorCode, errorMessage, request.externalId(), e.getStatus());
 
                 return fromBaseCaptureResponse(new StripeCaptureResponse(transactionId, errorCode, errorMessage), null);
             }
 
             if (e.getFamily() == SERVER_ERROR) {
                 LOGGER.warn("Capture failed for transaction id {}. Reason: {}. Status code from Stripe: {}. Charge External Id: {}",
-                        transactionId, e.getMessage(), e.getStatus(), request.getExternalId());
-                GatewayError gatewayError = gatewayConnectionError("An internal server error occurred when capturing charge_external_id: " + request.getExternalId());
+                        transactionId, e.getMessage(), e.getStatus(), request.externalId());
+                GatewayError gatewayError = gatewayConnectionError("An internal server error occurred when capturing charge_external_id: " + request.externalId());
                 return CaptureResponse.fromGatewayError(gatewayError);
             }
 
             LOGGER.error("Unrecognised response status during capture. charge_external_id={}, status={}, response={}",
-                    request.getExternalId(), e.getStatus(), e.getResponseFromGateway());
+                    request.externalId(), e.getStatus(), e.getResponseFromGateway());
             throw new RuntimeException("Unrecognised response status during capture.");
 
         } catch (GatewayException e) {
@@ -99,7 +99,7 @@ public class StripeCaptureHandler implements CaptureHandler {
     }
 
     private StripeCharge queryStripeCharge(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayErrorException {
-        var getPaymentIntentRequest = new StripeGetPaymentIntentRequest(request.getGatewayAccount(), stripeGatewayConfig, request.getGatewayTransactionId());
+        var getPaymentIntentRequest = new StripeGetPaymentIntentRequest(request.gatewayAccount(), stripeGatewayConfig, request.gatewayTransactionId());
         String rawResponse = client.getRequestFor(getPaymentIntentRequest).getEntity();
         StripePaymentIntent paymentIntent = jsonObjectMapper.getObject(rawResponse, StripePaymentIntent.class);
 
@@ -123,11 +123,11 @@ public class StripeCaptureHandler implements CaptureHandler {
                 String.format("Fee not found on Stripe charge %s when attempting to capture payment", capturedCharge.getId())));
         List<Fee> feeList = generateFeeList(request, stripeFee);
         Long processingFee = StripeFeeCalculator.getTotalFeeAmount(feeList);
-        Long netTransferAmount = request.getAmount() - processingFee;
+        Long netTransferAmount = request.amount() - processingFee;
 
         if (checkForExistingTransfer) {
             StripeSearchTransfersRequest searchTransfersRequest = new StripeSearchTransfersRequest(
-                    request.getGatewayAccount(), stripeGatewayConfig, request.getExternalId());
+                    request.gatewayAccount(), stripeGatewayConfig, request.externalId());
             
             String rawResponse = client.getRequestFor(searchTransfersRequest).getEntity();
             StripeSearchTransfersResponse transfersResponse = jsonObjectMapper.getObject(rawResponse,
@@ -150,7 +150,7 @@ public class StripeCaptureHandler implements CaptureHandler {
         StripeCharge stripeCharge = getStripeChargeFromPaymentIntent(stripeCaptureResponse);
 
         LOGGER.info("Captured charge id {} with platform account - stripe capture id {}",
-                request.getExternalId(),
+                request.externalId(),
                 stripeCharge.getId()
         );
 
@@ -161,7 +161,7 @@ public class StripeCaptureHandler implements CaptureHandler {
         String transferResponse = client.postRequestFor(StripeTransferOutRequest.of(netTransferAmount.toString(), stripeChargeId, request, stripeGatewayConfig)).getEntity();
         StripeTransfer stripeTransfer = jsonObjectMapper.getObject(transferResponse, StripeTransfer.class);
         LOGGER.info("In capturing charge id {}, transferred net amount {} - transfer id {} -  to Stripe Connect account id {} in transfer group {}",
-                request.getExternalId(),
+                request.externalId(),
                 stripeTransfer.getAmount(),
                 stripeTransfer.getId(),
                 stripeTransfer.getDestinationStripeAccountId(),

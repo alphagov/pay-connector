@@ -13,31 +13,43 @@ public record CancelGatewayRequest (
         return new CancelGatewayRequest(charge);
     }
 
-    public String getTransactionId() {
+    public String transactionId() {
         return charge.getGatewayTransactionId();
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
+    public GatewayAccountEntity gatewayAccount() {
         return charge.getGatewayAccount();
     }
+//    public GatewayAccountEntity getGatewayAccount() {
+//        return charge.getGatewayAccount();
+//    }
 
     @Override
-    public GatewayOperation getRequestType() {
+    public GatewayOperation requestType() {
         return GatewayOperation.CANCEL;
     }
+//    public GatewayOperation getRequestType() {
+//        return GatewayOperation.CANCEL;
+//    }
 
     @Override
-    public GatewayCredentials getGatewayCredentials() {
+    public GatewayCredentials gatewayCredentials() {
         return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
     }
+//    public GatewayCredentials getGatewayCredentials() {
+//        return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
+//    }
 
     @Override
-    public AuthorisationMode getAuthorisationMode() {
+    public AuthorisationMode authorisationMode() {
         return charge.getAuthorisationMode();
     }
+//    public AuthorisationMode getAuthorisationMode() {
+//        return charge.getAuthorisationMode();
+//    }
 
-    public String getExternalChargeId() {
+    public String externalChargeId() {
         return charge.getExternalId();
     }
 

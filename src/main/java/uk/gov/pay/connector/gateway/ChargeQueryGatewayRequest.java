@@ -17,20 +17,30 @@ public record ChargeQueryGatewayRequest (
     boolean isForRecurringPayment
 ) implements GatewayRequest {
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
+    public GatewayAccountEntity gatewayAccount() {
         return gatewayAccount;
     }
+//    public GatewayAccountEntity getGatewayAccount() {
+//        return gatewayAccount;
+//    }
 
     @Override
-    public GatewayOperation getRequestType() {
+    public GatewayOperation requestType() {
         return GatewayOperation.QUERY;
     }
+//    public GatewayOperation getRequestType() {
+//        return GatewayOperation.QUERY;
+//    }
 
-    public AuthorisationMode getAuthorisationMode() {
-        return authorisationMode;
-    }
+//    public AuthorisationMode getAuthorisationMode() {
+//        return authorisationMode;
+//    }
 
     @Override
+    public GatewayCredentials gatewayCredentials() {
+        return gatewayAccountCredentialsEntity.getCredentialsObject();
+    }
+
     public GatewayCredentials getGatewayCredentials() {
         return gatewayAccountCredentialsEntity.getCredentialsObject();
     }

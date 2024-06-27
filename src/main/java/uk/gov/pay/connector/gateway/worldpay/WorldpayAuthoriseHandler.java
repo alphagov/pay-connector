@@ -55,11 +55,11 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
         try {
             GatewayClient.Response response = authoriseClient.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    gatewayUrlMap.get(request.gatewayAccount().getType()),
                     WORLDPAY,
-                    request.getGatewayAccount().getType(),
+                    request.gatewayAccount().getType(),
                     WorldpayOrderBuilder.buildAuthoriseRecurringOrder(request),
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                    getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
             return getWorldpayGatewayResponse(response);
         } catch (GatewayException.GatewayErrorException e) {
             LOGGER.error("Authorisation user not present failed due to an internal error. Reason: {}. Status code from Worldpay: {}.",
@@ -83,11 +83,11 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
         try {
             GatewayClient.Response response = authoriseClient.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    gatewayUrlMap.get(request.gatewayAccount().getType()),
                     WORLDPAY,
-                    request.getGatewayAccount().getType(),
+                    request.gatewayAccount().getType(),
                     WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine, acceptLanguageHeaderParser),
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                    getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
 
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required: %s", sanitiseMessage(response.getEntity())));
@@ -122,9 +122,9 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
     }
 
     private void logMissingDdcResultFor3dsFlexIntegration(CardAuthorisationGatewayRequest request) {
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        GatewayAccountEntity gatewayAccount = request.gatewayAccount();
         if (gatewayAccount.isRequires3ds() && gatewayAccount.getIntegrationVersion3ds() == 2 &&
-                request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isEmpty()) {
+                request.authCardDetails().getWorldpay3dsFlexDdcResult().isEmpty()) {
             LOGGER.info("[3DS Flex] Missing device data collection result for {}", gatewayAccount.getId());
         }
     }

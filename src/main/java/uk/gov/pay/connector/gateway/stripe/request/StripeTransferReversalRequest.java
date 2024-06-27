@@ -24,11 +24,11 @@ public class StripeTransferReversalRequest extends StripePostRequest {
     public static StripeTransferReversalRequest of(String transferId, RefundGatewayRequest request,
                                                    StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferReversalRequest(
-                request.getGatewayAccount(),
+                request.gatewayAccount(),
                 request.refundExternalId(),
                 stripeGatewayConfig,
                 transferId,
-                request.getGatewayCredentials()
+                request.gatewayCredentials()
         );
     }
 

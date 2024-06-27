@@ -51,7 +51,7 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
     }
     
     public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
-        AppleDecryptedPaymentData appleDecryptedPaymentData = decryptApplePaymentData(authorisationGatewayRequest.getGovUkPayPaymentId(), authorisationGatewayRequest.getApplePayAuthRequest());
+        AppleDecryptedPaymentData appleDecryptedPaymentData = decryptApplePaymentData(authorisationGatewayRequest.govUkPayPaymentId(), authorisationGatewayRequest.applePayAuthRequest());
 
         WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseApplePayOrderRequestBuilder();
         worldpayOrderRequestBuilder.withAppleDecryptedPaymentData(appleDecryptedPaymentData);
@@ -63,15 +63,15 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
     }
 
     public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
-        GooglePayAuthRequest googlePayAuthRequest = authorisationGatewayRequest.getGooglePayAuthRequest();
+        GooglePayAuthRequest googlePayAuthRequest = authorisationGatewayRequest.googlePayAuthRequest();
         if (googlePayAuthRequest.getEncryptedPaymentData().isEmpty()) {
             throw new ValidationException(List.of("Field [encrypted_payment_data] is required"));
         }
         WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseGooglePayOrderRequestBuilder();
-        worldpayOrderRequestBuilder.withGooglePayPaymentData(authorisationGatewayRequest.getGooglePayAuthRequest());
+        worldpayOrderRequestBuilder.withGooglePayPaymentData(authorisationGatewayRequest.googlePayAuthRequest());
 
-        boolean is3dsRequired = authorisationGatewayRequest.getGatewayAccount().isRequires3ds();
-        boolean isSendIpAddress = authorisationGatewayRequest.getGatewayAccount().isSendPayerIpAddressToGateway();
+        boolean is3dsRequired = authorisationGatewayRequest.gatewayAccount().isRequires3ds();
+        boolean isSendIpAddress = authorisationGatewayRequest.gatewayAccount().isSendPayerIpAddressToGateway();
         worldpayOrderRequestBuilder
                 .withUserAgentHeader(googlePayAuthRequest.getPaymentInfo().getUserAgentHeader())
                 .withAcceptHeader(googlePayAuthRequest.getPaymentInfo().getAcceptHeader())
@@ -89,28 +89,28 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
 
     private GatewayResponse postGatewayRequest(GatewayOrder gatewayOrder, AuthorisationGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         GatewayClient.Response response = authoriseClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                gatewayUrlMap.get(request.gatewayAccount().getType()),
                 WORLDPAY,
-                request.getGatewayAccount().getType(),
+                request.gatewayAccount().getType(),
                 gatewayOrder,
-                getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
 
         return getWorldpayGatewayResponse(response);
     }
 
     private GatewayOrder buildWalletAuthoriseOrder(AuthorisationGatewayRequest request, WalletPaymentInfo walletPaymentInfo, WorldpayOrderRequestBuilder builder) {
-        boolean isSendPayerEmailToGateway = request.getGatewayAccount().isSendPayerEmailToGateway();
+        boolean isSendPayerEmailToGateway = request.gatewayAccount().isSendPayerEmailToGateway();
 
         if (isSendPayerEmailToGateway) {
             Optional.ofNullable(walletPaymentInfo.getEmail()).ifPresent(builder::withPayerEmail);
         }
 
         return builder
-                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.govUkPayPaymentId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
-                .withDescription(request.getDescription())
-                .withAmount(request.getAmount())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
+                .withDescription(request.description())
+                .withAmount(request.amount())
                 .build();
     }
     

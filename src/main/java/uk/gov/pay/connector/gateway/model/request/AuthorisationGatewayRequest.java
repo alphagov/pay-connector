@@ -13,131 +13,141 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 
 import java.util.Optional;
 
-public abstract class AuthorisationGatewayRequest implements GatewayRequest {
-    private final String gatewayTransactionId;
-    private final String email;
-    private final SupportedLanguage language;
-    private final boolean moto;
-    private final String amount;
-    private final String description;
-    private final ServicePaymentReference reference;
-    private final String govUkPayPaymentId;
-    private final GatewayCredentials credentials;
-    private final GatewayAccountEntity gatewayAccount;
-    private final AuthorisationMode authorisationMode;
-    private final boolean savePaymentInstrumentToAgreement;
-    private final Optional<AgreementEntity> agreement;
+public interface AuthorisationGatewayRequest extends GatewayRequest {
+//    private final String gatewayTransactionId;
+//    private final String email;
+//    private final SupportedLanguage language;
+//    private final boolean moto;
+//    private final String amount;
+//    private final String description;
+//    private final ServicePaymentReference reference;
+//    private final String govUkPayPaymentId;
+//    private final GatewayCredentials credentials;
+//    private final GatewayAccountEntity gatewayAccount;
+//    private final AuthorisationMode authorisationMode;
+//    private final boolean savePaymentInstrumentToAgreement;
+//    private final Optional<AgreementEntity> agreement;
     
-    protected AuthorisationGatewayRequest(ChargeEntity charge) {
-        // NOTE: we don't store the ChargeEntity as we want to discourage code that deals with this request from
-        // updating the charge in the database.
-        this.gatewayTransactionId = charge.getGatewayTransactionId();
-        this.email = charge.getEmail();
-        this.language = charge.getLanguage();
-        this.moto = charge.isMoto();
-        this.amount = String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
-        this.description = charge.getDescription();
-        this.reference = charge.getReference();
-        this.govUkPayPaymentId = charge.getExternalId();
-        this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
-                .map(GatewayAccountCredentialsEntity::getCredentialsObject)
-                .orElse(null);
-        this.gatewayAccount = charge.getGatewayAccount();
-        this.authorisationMode = charge.getAuthorisationMode();
-        this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
-        this.agreement = charge.getAgreement();
-    }
+//    protected AuthorisationGatewayRequest(ChargeEntity charge) {
+//        // NOTE: we don't store the ChargeEntity as we want to discourage code that deals with this request from
+//        // updating the charge in the database.
+//        this.gatewayTransactionId = charge.getGatewayTransactionId();
+//        this.email = charge.getEmail();
+//        this.language = charge.getLanguage();
+//        this.moto = charge.isMoto();
+//        this.amount = String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
+//        this.description = charge.getDescription();
+//        this.reference = charge.getReference();
+//        this.govUkPayPaymentId = charge.getExternalId();
+//        this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
+//                .map(GatewayAccountCredentialsEntity::getCredentialsObject)
+//                .orElse(null);
+//        this.gatewayAccount = charge.getGatewayAccount();
+//        this.authorisationMode = charge.getAuthorisationMode();
+//        this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
+//        this.agreement = charge.getAgreement();
+//    }
 
-    public AuthorisationGatewayRequest(String gatewayTransactionId,
-                                       String email,
-                                       SupportedLanguage language,
-                                       boolean moto,
-                                       String amount,
-                                       String description,
-                                       ServicePaymentReference reference,
-                                       String govUkPayPaymentId,
-                                       GatewayCredentials credentials,
-                                       GatewayAccountEntity gatewayAccount,
-                                       AuthorisationMode authorisationMode,
-                                       boolean savePaymentInstrumentToAgreement,
-                                       AgreementEntity agreement) {
-        this.gatewayTransactionId = gatewayTransactionId;
-        this.email = email;
-        this.language = language;
-        this.moto = moto;
-        this.amount = amount;
-        this.description = description;
-        this.reference = reference;
-        this.govUkPayPaymentId = govUkPayPaymentId;
-        this.credentials = credentials;
-        this.gatewayAccount = gatewayAccount;
-        this.authorisationMode = authorisationMode;
-        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
-        this.agreement = Optional.ofNullable(agreement);
-    }
+//    public AuthorisationGatewayRequest(String gatewayTransactionId,
+//                                       String email,
+//                                       SupportedLanguage language,
+//                                       boolean moto,
+//                                       String amount,
+//                                       String description,
+//                                       ServicePaymentReference reference,
+//                                       String govUkPayPaymentId,
+//                                       GatewayCredentials credentials,
+//                                       GatewayAccountEntity gatewayAccount,
+//                                       AuthorisationMode authorisationMode,
+//                                       boolean savePaymentInstrumentToAgreement,
+//                                       AgreementEntity agreement) {
+//        this.gatewayTransactionId = gatewayTransactionId;
+//        this.email = email;
+//        this.language = language;
+//        this.moto = moto;
+//        this.amount = amount;
+//        this.description = description;
+//        this.reference = reference;
+//        this.govUkPayPaymentId = govUkPayPaymentId;
+//        this.credentials = credentials;
+//        this.gatewayAccount = gatewayAccount;
+//        this.authorisationMode = authorisationMode;
+//        this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+//        this.agreement = Optional.ofNullable(agreement);
+//    }
 
-    public String getEmail() {
-        return email;
-    }
+//    public String getEmail() {
+//        return email;
+//    }
+    public String email();
+    
+//    public boolean isMoto() {
+//        return moto;
+//    }
+    public boolean isMoto();
+    
+//    public SupportedLanguage getLanguage() {
+//        return language;
+//    }
+    public SupportedLanguage language();
 
-    public boolean isMoto() {
-        return moto;
-    }
+//    public Optional<String> getTransactionId() {
+//        return Optional.ofNullable(gatewayTransactionId);
+//    }
+    public Optional<String> getTransactionId();
 
-    public SupportedLanguage getLanguage() {
-        return language;
-    }
+//    public String getAmount() {
+//        return amount;
+//    }
+    public String amount();
 
-    public Optional<String> getTransactionId() {
-        return Optional.ofNullable(gatewayTransactionId);
-    }
+//    public String getDescription() {
+//        return description;
+//    }
+    public String description();
 
-    public String getAmount() {
-        return amount;
-    }
+//    public ServicePaymentReference getReference() {
+//        return reference;
+//    }
+    public ServicePaymentReference reference();
 
-    public String getDescription() {
-        return description;
-    }
+//    public String getGovUkPayPaymentId() {
+//        return govUkPayPaymentId;
+//    }
+    public String govUkPayPaymentId();
 
-    public ServicePaymentReference getReference() {
-        return reference;
-    }
+//    @Override
+//    public GatewayCredentials getGatewayCredentials() {
+//        return credentials;
+//    }
 
-    public String getGovUkPayPaymentId() {
-        return govUkPayPaymentId;
-    }
+//    @Override
+//    public GatewayAccountEntity getGatewayAccount() {
+//        return gatewayAccount;
+//    }
 
-    @Override
-    public GatewayCredentials getGatewayCredentials() {
-        return credentials;
-    }
+//    @Override
+//    public GatewayOperation getRequestType() {
+//        return GatewayOperation.AUTHORISE;
+//    }
 
-    @Override
-    public GatewayAccountEntity getGatewayAccount() {
-        return gatewayAccount;
-    }
+//    @Override
+//    public AuthorisationMode getAuthorisationMode() {
+//        return authorisationMode;
+//    }
 
-    @Override
-    public GatewayOperation getRequestType() {
-        return GatewayOperation.AUTHORISE;
-    }
+//    public boolean isSavePaymentInstrumentToAgreement() {
+//        return savePaymentInstrumentToAgreement;
+//    }
+    public boolean isSavePaymentInstrumentToAgreement();
 
-    @Override
-    public AuthorisationMode getAuthorisationMode() {
-        return authorisationMode;
-    }
+//    public Optional<AgreementEntity> getAgreement() {
+//        return agreement;
+//    }
+    public Optional<AgreementEntity> agreement();
 
-    public boolean isSavePaymentInstrumentToAgreement() {
-        return savePaymentInstrumentToAgreement;
-    }
-
-    public Optional<AgreementEntity> getAgreement() {
-        return agreement;
-    }
-
-    @Override
-    public boolean isForRecurringPayment() {
-        return agreement.isPresent();
-    }
+//    @Override
+//    public boolean isForRecurringPayment() {
+//        return agreement.isPresent();
+//    }
 }
