@@ -290,6 +290,6 @@ public class CardResourceCancelChargeTest {
     private void assertErrorResponse(Response response, int status, String errorMessage) {
         assertThat(response.getStatus(), is(status));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem(errorMessage));
+        assertThat(errorResponse.messages(), hasItem(errorMessage));
     }
 }

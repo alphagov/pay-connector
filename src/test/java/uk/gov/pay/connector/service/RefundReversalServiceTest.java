@@ -159,7 +159,7 @@ public class RefundReversalServiceTest {
 
         Response response = thrown.getResponse();
         ErrorResponse errorResponse = (ErrorResponse) response.getEntity();
-        assertThat(errorResponse.getMessages(), hasItems("Refund with Refund ID: " + refund.getExternalId() + " and Stripe ID: " + stripeRefundId + " is not in a failed state"));
+        assertThat(errorResponse.messages(), hasItems("Refund with Refund ID: " + refund.getExternalId() + " and Stripe ID: " + stripeRefundId + " is not in a failed state"));
     }
 
     @Test

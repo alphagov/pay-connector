@@ -185,9 +185,9 @@ class CardResourceAuthoriseTest {
         assertThat(response.getStatus(), is(422));
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem(expectedMessage));
+        assertThat(errorResponse.messages(), hasItem(expectedMessage));
 
-        assertThat(errorResponse.getIdentifier(), is(expectedErrorIdentifier));
+        assertThat(errorResponse.identifier(), is(expectedErrorIdentifier));
     }
 
     private static Object[] expiryDateMonthOffsetAndExpectedResponseStatus() {
@@ -220,8 +220,8 @@ class CardResourceAuthoriseTest {
 
         if (expectedResponseCode == 422) {
             ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-            assertThat(errorResponse.getMessages(), hasItem("Invalid attribute value: expiry_date. Must be a valid date in the future"));
-            assertThat(errorResponse.getIdentifier(), is(INVALID_ATTRIBUTE_VALUE));
+            assertThat(errorResponse.messages(), hasItem("Invalid attribute value: expiry_date. Must be a valid date in the future"));
+            assertThat(errorResponse.identifier(), is(INVALID_ATTRIBUTE_VALUE));
         }
     }
 
@@ -254,8 +254,8 @@ class CardResourceAuthoriseTest {
         assertThat(response.getStatus(), is(400));
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("The one_time_token is not valid"));
-        assertThat(errorResponse.getIdentifier(), is(ONE_TIME_TOKEN_INVALID));
+        assertThat(errorResponse.messages(), hasItem("The one_time_token is not valid"));
+        assertThat(errorResponse.identifier(), is(ONE_TIME_TOKEN_INVALID));
     }
 
     @Test
@@ -271,8 +271,8 @@ class CardResourceAuthoriseTest {
         assertThat(response.getStatus(), is(400));
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("The one_time_token has already been used"));
-        assertThat(errorResponse.getIdentifier(), is(ONE_TIME_TOKEN_ALREADY_USED));
+        assertThat(errorResponse.messages(), hasItem("The one_time_token has already been used"));
+        assertThat(errorResponse.identifier(), is(ONE_TIME_TOKEN_ALREADY_USED));
     }
 
     @Test
@@ -288,8 +288,8 @@ class CardResourceAuthoriseTest {
         assertThat(response.getStatus(), is(400));
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("The one_time_token is not a valid moto api token"));
-        assertThat(errorResponse.getIdentifier(), is(ONE_TIME_TOKEN_INVALID));
+        assertThat(errorResponse.messages(), hasItem("The one_time_token is not a valid moto api token"));
+        assertThat(errorResponse.identifier(), is(ONE_TIME_TOKEN_INVALID));
     }
 
     @Test
@@ -308,8 +308,8 @@ class CardResourceAuthoriseTest {
         assertThat(response.getStatus(), is(402));
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Card number rejected"));
-        assertThat(errorResponse.getIdentifier(), is(CARD_NUMBER_REJECTED));
+        assertThat(errorResponse.messages(), hasItem("Card number rejected"));
+        assertThat(errorResponse.identifier(), is(CARD_NUMBER_REJECTED));
     }
 
     private static Object[] authorisationFailedInput() {
@@ -340,8 +340,8 @@ class CardResourceAuthoriseTest {
 
         assertThat(response.getStatus(), is(expectedResponseCode));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem(expectedErrorMessage));
-        assertThat(errorResponse.getIdentifier(), is(expectedErrorIdentifier));
+        assertThat(errorResponse.messages(), hasItem(expectedErrorMessage));
+        assertThat(errorResponse.identifier(), is(expectedErrorIdentifier));
     }
 
     private static Object[] gatewayExceptions() {
@@ -366,8 +366,8 @@ class CardResourceAuthoriseTest {
 
         assertThat(response.getStatus(), is(500));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("There was an error authorising the payment"));
-        assertThat(errorResponse.getIdentifier(), is(AUTHORISATION_ERROR));
+        assertThat(errorResponse.messages(), hasItem("There was an error authorising the payment"));
+        assertThat(errorResponse.identifier(), is(AUTHORISATION_ERROR));
     }
 
     @Test
@@ -384,8 +384,8 @@ class CardResourceAuthoriseTest {
 
         assertThat(response.getStatus(), is(500));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Authorisation status unexpected"));
-        assertThat(errorResponse.getIdentifier(), is(GENERIC));
+        assertThat(errorResponse.messages(), hasItem("Authorisation status unexpected"));
+        assertThat(errorResponse.identifier(), is(GENERIC));
     }
 
     @Test
@@ -409,8 +409,8 @@ class CardResourceAuthoriseTest {
 
         assertThat(response.getStatus(), is(500));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("InterpretedStatus not found for Gateway response"));
-        assertThat(errorResponse.getIdentifier(), is(GENERIC));
+        assertThat(errorResponse.messages(), hasItem("InterpretedStatus not found for Gateway response"));
+        assertThat(errorResponse.identifier(), is(GENERIC));
     }
     
     @Test
@@ -488,8 +488,8 @@ class CardResourceAuthoriseTest {
     private void verify422AndErrorMessage(Response response, String expectedErrorMessage) {
         assertThat(response.getStatus(), is(422));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem(expectedErrorMessage));
-        assertThat(errorResponse.getIdentifier(), is(GENERIC));
+        assertThat(errorResponse.messages(), hasItem(expectedErrorMessage));
+        assertThat(errorResponse.identifier(), is(GENERIC));
     }
     
     private void verifyReceiptOfPayloadNotLogged(Response response, String logMessage) {

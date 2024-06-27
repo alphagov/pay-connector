@@ -11,30 +11,19 @@ import java.util.List;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
-public class ErrorResponse {
-    
+public record ErrorResponse (
     @JsonProperty("error_identifier")
     @Schema(example = "GENERIC")
-    private ErrorIdentifier identifier;
+    ErrorIdentifier identifier,
     
     @JsonProperty("message")
     @ArraySchema(schema = @Schema(example = "error message"))
-    private List<String> messages;
+    List<String> messages,
     
     @JsonProperty("reason")
     @Schema(required = false, example = "Optional - ex: amount_not_available")
-    private String reason;
-    
-    public ErrorResponse() {
-        // for Jackson deserialization
-    }
-    
-    public ErrorResponse(ErrorIdentifier identifier, List<String> messages, String reason) {
-        this.identifier = identifier;
-        this.messages = messages;
-        this.reason = reason;
-    }
-    
+    String reason
+) {
     public ErrorResponse(ErrorIdentifier identifier, List<String> messages) {
         this(identifier, messages, null);
     }
@@ -45,17 +34,5 @@ public class ErrorResponse {
     
     public ErrorResponse(ErrorIdentifier identifier, String message, String reason) {
         this(identifier, List.of(message), reason);
-    }
-
-    public ErrorIdentifier getIdentifier() {
-        return identifier;
-    }
-
-    public List<String> getMessages() {
-        return messages;
-    }
-
-    public String getReason() {
-        return reason;
     }
 }
