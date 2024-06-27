@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.epdq.EpdqPaymentProvider;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
@@ -16,16 +15,12 @@ import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentProvidersTest {
 
     @Mock
     private WorldpayPaymentProvider worldpayPaymentProvider;
-    
-    @Mock
-    private EpdqPaymentProvider epdqPaymentProvider;
     
     @Mock
     private SandboxPaymentProvider sandboxPaymentProvider;
@@ -37,7 +32,7 @@ class PaymentProvidersTest {
 
     @BeforeEach
     void setup() {
-        providers = new PaymentProviders(worldpayPaymentProvider, epdqPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
+        providers = new PaymentProviders(worldpayPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
     }
 
     @Test
@@ -50,11 +45,5 @@ class PaymentProvidersTest {
     void shouldResolveWorldpayPaymentProvider() {
         PaymentProvider worldpay = providers.byName(PaymentGatewayName.WORLDPAY);
         assertThat(worldpay, is(instanceOf(WorldpayPaymentProvider.class)));
-    }
-
-    @Test
-    void shouldResolveEpdqPaymentProvider() {
-        PaymentProvider epdq = providers.byName(EPDQ);
-        assertThat(epdq, is(instanceOf(EpdqPaymentProvider.class)));
     }
 }
