@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,6 +14,7 @@ import java.util.Map;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 @JsonInclude(NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface GatewayAccountResponse {
 
     @JsonProperty("gateway_account_id")
@@ -28,7 +31,7 @@ public interface GatewayAccountResponse {
     
     @JsonProperty("type")
     @Schema(example = "test", description = "Account type for the payment provider (test/live)")
-    GatewayAccountType type();
+    String type();
 
     @JsonProperty("live")
     @Schema(example = "true", description = "Whether the account is live")
@@ -169,7 +172,6 @@ public interface GatewayAccountResponse {
     @Schema(example = "No longer required", description = "The reason the account is disabled, if applicable")
     String disabledReason();
     
-    String getType();
     static DefaultGatewayAccountResponse of(GatewayAccountEntity gatewayAccountEntity) {
         return new DefaultGatewayAccountResponse(gatewayAccountEntity);
     }

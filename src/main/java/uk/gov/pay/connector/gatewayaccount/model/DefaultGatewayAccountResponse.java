@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
@@ -10,7 +11,8 @@ public record DefaultGatewayAccountResponse (
         long accountId,
         String externalId,
         String paymentProvider,
-        GatewayAccountType type,
+        @JsonIgnore
+        GatewayAccountType accountType,
         boolean isLive,
         String description,
         String serviceName,
@@ -84,7 +86,7 @@ public record DefaultGatewayAccountResponse (
         );
     }
     
-    public String getType() {
-        return type.toString();
+    public String type() {
+        return accountType.toString();
     }
 }

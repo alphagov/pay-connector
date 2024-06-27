@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,7 +19,8 @@ public record GatewayAccountWithCredentialsWithInternalIdResponse (
         long accountId,
         String externalId,
         String paymentProvider,
-        GatewayAccountType type,
+        @JsonIgnore
+        GatewayAccountType accountType,
         boolean isLive,
         String description,
         String serviceName,
@@ -107,7 +109,7 @@ public record GatewayAccountWithCredentialsWithInternalIdResponse (
         );
     }
 
-    public String getType() {
-        return type.toString();
+    public String type() {
+        return accountType.toString();
     }
 }

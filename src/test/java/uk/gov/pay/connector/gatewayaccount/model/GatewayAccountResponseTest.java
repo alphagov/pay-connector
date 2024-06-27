@@ -65,7 +65,7 @@ class GatewayAccountResponseTest {
         assertThat(dto.accountId(), is(entity.getId()));
         assertThat(dto.externalId(), is(entity.getExternalId()));
         assertThat(dto.paymentProvider(), is(entity.getGatewayName()));
-        assertThat(dto.type().toString(), is(entity.getType()));
+        assertThat(dto.type(), is(entity.getType()));
         assertThat(dto.isLive(), is(entity.isLive()));
         assertThat(dto.description(), is(entity.getDescription()));
         assertThat(dto.serviceName(), is(entity.getServiceName()));
