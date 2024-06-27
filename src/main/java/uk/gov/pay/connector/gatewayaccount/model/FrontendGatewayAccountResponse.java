@@ -98,7 +98,7 @@ public record FrontendGatewayAccountResponse (
                 gatewayAccountEntity.getServiceId(),
                 gatewayAccountEntity.getAnalyticsId(),
                 gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
-                gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
+                gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
                 gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount(),
                 gatewayAccountEntity.isAllowApplePay(),
                 gatewayAccountEntity.isAllowGooglePay(),
