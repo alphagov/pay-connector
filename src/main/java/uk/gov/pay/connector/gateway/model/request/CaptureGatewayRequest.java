@@ -12,14 +12,9 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import java.time.Instant;
 import java.util.List;
 
-public class CaptureGatewayRequest implements GatewayRequest {
-
-    private final ChargeEntity charge;
-
-    private CaptureGatewayRequest(ChargeEntity charge) {
-        this.charge = charge;
-    }
-
+public record CaptureGatewayRequest (
+        ChargeEntity charge
+) implements GatewayRequest {
     public String getAmountAsString() {
         return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
     }
