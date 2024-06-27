@@ -40,46 +40,25 @@ public record RecurringPaymentAuthorisationGatewayRequest (
         return Optional.ofNullable(paymentInstrument);
     }
     
-//    public Optional<String> getGatewayTransactionId() {
-//        return Optional.ofNullable(gatewayTransactionId);
-//    }
-
-//    @Override
-//    public Optional<String> transactionId() {
-//        return Optional.ofNullable(gatewayTransactionId);
-//    }
-    
     @Override
     public GatewayAccountEntity gatewayAccount() {
         return gatewayAccount;
     }
-//    public GatewayAccountEntity getGatewayAccount() {
-//        return gatewayAccount;
-//    }
 
     @Override
     public GatewayOperation requestType() {
         return GatewayOperation.AUTHORISE;
     }
-//    public GatewayOperation getRequestType() {
-//        return GatewayOperation.AUTHORISE;
-//    }
 
     @Override
     public GatewayCredentials gatewayCredentials() {
         return gatewayCredentials;
     }
-//    public GatewayCredentials getGatewayCredentials() {
-//        return gatewayCredentials;
-//    }
 
     @Override
     public AuthorisationMode authorisationMode() {
         return AuthorisationMode.AGREEMENT;
     }
-//    public AuthorisationMode getAuthorisationMode() {
-//        return AuthorisationMode.AGREEMENT;
-//    }
 
     @Override
     public boolean isForRecurringPayment() {

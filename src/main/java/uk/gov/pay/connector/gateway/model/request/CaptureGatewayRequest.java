@@ -43,43 +43,26 @@ public record CaptureGatewayRequest (
     public boolean isCaptureRetry() {
         return charge.getEvents().stream().anyMatch(event -> event.getStatus() == ChargeStatus.CAPTURE_APPROVED_RETRY);
     }
-    
-//    @Override
-//    public String transactionId() {
-//        return charge.getGatewayTransactionId();
-//    }
 
     @Override
     public GatewayAccountEntity gatewayAccount() {
         return charge.getGatewayAccount();
     }
-//    public GatewayAccountEntity getGatewayAccount() {
-//        return charge.getGatewayAccount();
-//    }
 
     @Override
     public GatewayOperation requestType() {
         return GatewayOperation.CAPTURE;
     }
-//    public GatewayOperation getRequestType() {
-//        return GatewayOperation.CAPTURE;
-//    }
 
     @Override
     public GatewayCredentials gatewayCredentials() {
         return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
     }
-//    public GatewayCredentials getGatewayCredentials() {
-//        return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
-//    }
 
     @Override
     public AuthorisationMode authorisationMode() {
         return charge.getAuthorisationMode();
     }
-//    public AuthorisationMode getAuthorisationMode() {
-//        return charge.getAuthorisationMode();
-//    }
 
     @Override
     public boolean isForRecurringPayment() {

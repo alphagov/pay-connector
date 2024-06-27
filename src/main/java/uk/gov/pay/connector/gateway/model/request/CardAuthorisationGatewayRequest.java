@@ -76,20 +76,11 @@ public record CardAuthorisationGatewayRequest (
                 authCardDetails
         );
     }
-
-//    public AuthCardDetails authCardDetails() {
-//        return authCardDetails;
-//    }
-
+    
     @Override
     public boolean isMoto() {
         return moto;
     }
-
-//    @Override
-//    public Optional<String> getTransactionId() {
-//        return Optional.ofNullable(gatewayTransactionId);
-//    }
 
     @Override
     public boolean isSavePaymentInstrumentToAgreement() {

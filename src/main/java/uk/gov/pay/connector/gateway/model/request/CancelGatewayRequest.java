@@ -23,33 +23,21 @@ public record CancelGatewayRequest (
     public GatewayAccountEntity gatewayAccount() {
         return charge.getGatewayAccount();
     }
-//    public GatewayAccountEntity getGatewayAccount() {
-//        return charge.getGatewayAccount();
-//    }
 
     @Override
     public GatewayOperation requestType() {
         return GatewayOperation.CANCEL;
     }
-//    public GatewayOperation getRequestType() {
-//        return GatewayOperation.CANCEL;
-//    }
 
     @Override
     public GatewayCredentials gatewayCredentials() {
         return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
     }
-//    public GatewayCredentials getGatewayCredentials() {
-//        return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
-//    }
 
     @Override
     public AuthorisationMode authorisationMode() {
         return charge.getAuthorisationMode();
     }
-//    public AuthorisationMode getAuthorisationMode() {
-//        return charge.getAuthorisationMode();
-//    }
 
     public String externalChargeId() {
         return charge.getExternalId();

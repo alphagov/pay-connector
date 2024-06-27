@@ -21,21 +21,11 @@ public record ChargeQueryGatewayRequest (
     public GatewayAccountEntity gatewayAccount() {
         return gatewayAccount;
     }
-//    public GatewayAccountEntity getGatewayAccount() {
-//        return gatewayAccount;
-//    }
 
     @Override
     public GatewayOperation requestType() {
         return GatewayOperation.QUERY;
     }
-//    public GatewayOperation getRequestType() {
-//        return GatewayOperation.QUERY;
-//    }
-
-//    public AuthorisationMode getAuthorisationMode() {
-//        return authorisationMode;
-//    }
 
     @Override
     public GatewayCredentials gatewayCredentials() {

@@ -27,7 +27,6 @@ public record Auth3dsResponseGatewayRequest (
         return Optional.ofNullable(charge.getProviderSessionId()).map(ProviderSessionIdentifier::of);
     }
     
-//    @Override
     public Optional<String> transactionId() {
         return Optional.ofNullable(charge.getGatewayTransactionId());
     }

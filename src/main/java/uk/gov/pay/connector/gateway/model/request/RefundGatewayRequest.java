@@ -25,38 +25,16 @@ public record RefundGatewayRequest (
     public GatewayAccountEntity gatewayAccount() {
         return gatewayAccount;
     }
-//    public GatewayAccountEntity getGatewayAccount() {
-//        return gatewayAccount;
-//    }
 
     @Override
     public GatewayOperation requestType() {
         return GatewayOperation.REFUND;
     }
-//    public GatewayOperation getRequestType() {
-//        return GatewayOperation.REFUND;
-//    }
 
     @Override
     public GatewayCredentials gatewayCredentials() {
         return credentialsEntity.getCredentialsObject();
     }
-//    public GatewayCredentials getGatewayCredentials() {
-//        return credentialsEntity.getCredentialsObject();
-//    }
-
-//    @Override
-//    public AuthorisationMode authorisationMode() {
-//        return authorisationMode;
-//    }
-//    public AuthorisationMode getAuthorisationMode() {
-//        return authorisationMode;
-//    }
-
-//    @Override
-//    public boolean isForRecurringPayment() {
-//        return isForRecurringPayment;
-//    }
 
     /**
      * <p>
