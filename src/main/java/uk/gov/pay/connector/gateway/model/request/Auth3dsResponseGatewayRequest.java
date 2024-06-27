@@ -11,20 +11,10 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Optional;
 
-public class Auth3dsResponseGatewayRequest implements GatewayRequest {
-
-    private final ChargeEntity charge;
-    private final Auth3dsResult auth3dsResult;
-
-    public Auth3dsResponseGatewayRequest(ChargeEntity charge, Auth3dsResult auth3dsResult) {
-        this.charge = charge;
-        this.auth3dsResult = auth3dsResult;
-    }
-
-    public Auth3dsResult getAuth3dsResult() {
-        return auth3dsResult;
-    }
-
+public record Auth3dsResponseGatewayRequest (
+    ChargeEntity charge,
+    Auth3dsResult auth3dsResult
+)  implements GatewayRequest {
     public Optional<String> getTransactionId() {
         return Optional.ofNullable(charge.getGatewayTransactionId());
     }
@@ -35,10 +25,6 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
 
     public Optional<ProviderSessionIdentifier> getProviderSessionId() {
         return Optional.ofNullable(charge.getProviderSessionId()).map(ProviderSessionIdentifier::of);
-    }
-
-    public ChargeEntity getCharge() {
-        return charge;
     }
 
     @Override

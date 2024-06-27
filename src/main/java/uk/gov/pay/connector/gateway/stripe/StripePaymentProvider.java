@@ -143,17 +143,17 @@ public class StripePaymentProvider implements PaymentProvider {
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
 
-        if (request.getAuth3dsResult() != null && request.getAuth3dsResult().getAuth3dsResultOutcome() != null) {
-            Gateway3dsRequiredParams params = new Stripe3dsRequiredParams(request.getCharge().get3dsRequiredDetails(), request.getAuth3dsResult().getThreeDsVersion());
-            switch (request.getAuth3dsResult().getAuth3dsResultOutcome()) {
+        if (request.auth3dsResult() != null && request.auth3dsResult().getAuth3dsResultOutcome() != null) {
+            Gateway3dsRequiredParams params = new Stripe3dsRequiredParams(request.charge().get3dsRequiredDetails(), request.auth3dsResult().getThreeDsVersion());
+            switch (request.auth3dsResult().getAuth3dsResultOutcome()) {
                 case CANCELED:
-                    return Gateway3DSAuthorisationResponse.of(request.getAuth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.CANCELLED, params);
+                    return Gateway3DSAuthorisationResponse.of(request.auth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.CANCELLED, params);
                 case ERROR:
-                    return Gateway3DSAuthorisationResponse.of(request.getAuth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.ERROR, params);
+                    return Gateway3DSAuthorisationResponse.of(request.auth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.ERROR, params);
                 case DECLINED:
-                    return Gateway3DSAuthorisationResponse.of(request.getAuth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.REJECTED, params);
+                    return Gateway3DSAuthorisationResponse.of(request.auth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.REJECTED, params);
                 case AUTHORISED:
-                    return Gateway3DSAuthorisationResponse.of(request.getAuth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED, params);
+                    return Gateway3DSAuthorisationResponse.of(request.auth3dsResult().getGatewayResponseStringified(), BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED, params);
             }
         }
 

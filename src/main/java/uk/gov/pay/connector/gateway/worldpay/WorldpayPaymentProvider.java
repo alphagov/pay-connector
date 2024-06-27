@@ -310,7 +310,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
             GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
 
-            calculateAndStoreExemption(request.getCharge(), gatewayResponse);
+            calculateAndStoreExemption(request.charge(), gatewayResponse);
 
             LOGGER.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
 
@@ -382,7 +382,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()
-                .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
+                .withPaResponse3ds(request.auth3dsResult().getPaResponse())
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
