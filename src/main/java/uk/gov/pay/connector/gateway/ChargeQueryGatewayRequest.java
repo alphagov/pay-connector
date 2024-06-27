@@ -7,41 +7,23 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-public class ChargeQueryGatewayRequest implements GatewayRequest {
+public record ChargeQueryGatewayRequest (
     
-    private final GatewayAccountEntity gatewayAccountEntity;
-    private final GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
-    private final String chargeExternalId;
-    private final String transactionId;
-    private final AuthorisationMode authorisationMode;
-    private boolean isForRecurringPayment;
-
-    public ChargeQueryGatewayRequest(GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
-                                     String chargeExternalId, String transactionId, AuthorisationMode authorisationMode, boolean isForRecurringPayment) {
-        this.gatewayAccountEntity = gatewayAccountEntity;
-        this.gatewayAccountCredentialsEntity = gatewayAccountCredentialsEntity;
-        this.chargeExternalId = chargeExternalId;
-        this.transactionId = transactionId;
-        this.authorisationMode = authorisationMode;
-        this.isForRecurringPayment = isForRecurringPayment;
-    }
-
+    GatewayAccountEntity gatewayAccount,
+    GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
+    String chargeExternalId,
+    String transactionId,
+    AuthorisationMode authorisationMode,
+    boolean isForRecurringPayment
+) implements GatewayRequest {
     @Override
     public GatewayAccountEntity getGatewayAccount() {
-        return gatewayAccountEntity;
+        return gatewayAccount;
     }
 
     @Override
     public GatewayOperation getRequestType() {
         return GatewayOperation.QUERY;
-    }
-
-    public String getChargeExternalId() {
-        return chargeExternalId;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
     }
 
     public AuthorisationMode getAuthorisationMode() {

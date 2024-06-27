@@ -151,11 +151,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = inquiryClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                gatewayUrlMap.get(request.gatewayAccount().getType()),
                 WORLDPAY,
-                request.getGatewayAccount().getType(),
+                request.gatewayAccount().getType(),
                 buildQuery(request),
-                getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment())
+                getWorldpayAuthHeader(request.getGatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment())
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -184,7 +184,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .orElseThrow(() ->
                         new WebApplicationException(format(
                                 "Unable to query charge %s - an error occurred: %s",
-                                request.getChargeExternalId(),
+                                request.chargeExternalId(),
                                 worldpayGatewayResponse
                         )));
     }
@@ -196,9 +196,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     private GatewayOrder buildQuery(ChargeQueryGatewayRequest request) {
         return aWorldpayInquiryRequestBuilder()
-                .withTransactionId(request.getTransactionId())
+                .withTransactionId(request.transactionId())
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(),
-                        request.getAuthorisationMode(), request.isForRecurringPayment()))
+                        request.authorisationMode(), request.isForRecurringPayment()))
                 .build();
     }
 

@@ -37,19 +37,19 @@ public class StripeQueryPaymentStatusHandler {
     }
 
     public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest chargeQueryGatewayRequest) throws GatewayException {
-        LOGGER.info(format("Querying Stripe payment status for [%s]", chargeQueryGatewayRequest.getChargeExternalId()));
+        LOGGER.info(format("Querying Stripe payment status for [%s]", chargeQueryGatewayRequest.chargeExternalId()));
         StripeQueryPaymentStatusRequest request = StripeQueryPaymentStatusRequest.of(chargeQueryGatewayRequest.getGatewayAccount(),
-                stripeGatewayConfig, chargeQueryGatewayRequest.getChargeExternalId());
+                stripeGatewayConfig, chargeQueryGatewayRequest.chargeExternalId());
         try {
             String rawResponse = client.getRequestFor(request).getEntity();
             StripeSearchPaymentIntentsResponse queryResponse = jsonObjectMapper.getObject(rawResponse, StripeSearchPaymentIntentsResponse.class);
             List<StripePaymentIntent> paymentIntentList = queryResponse.getPaymentIntents();
             if (paymentIntentList == null || paymentIntentList.isEmpty()) {
-                LOGGER.info("There are no payment intents for charge: [{}]", chargeQueryGatewayRequest.getChargeExternalId());
+                LOGGER.info("There are no payment intents for charge: [{}]", chargeQueryGatewayRequest.chargeExternalId());
                 return new ChargeQueryResponse(GatewayError.genericGatewayError("There are no payment intents for charge"));
             }
             if (paymentIntentList.size() > 1) {
-                LOGGER.error("There are more than one payment intents for charge: [{}]", chargeQueryGatewayRequest.getChargeExternalId());
+                LOGGER.error("There are more than one payment intents for charge: [{}]", chargeQueryGatewayRequest.chargeExternalId());
                 throw new ChargeNotFoundRuntimeException(request.getChargeExternalId());
             }
             return new ChargeQueryResponse(StripeChargeStatus.mapToChargeStatus(StripeChargeStatus.fromString(paymentIntentList.get(0).getStatus())),
