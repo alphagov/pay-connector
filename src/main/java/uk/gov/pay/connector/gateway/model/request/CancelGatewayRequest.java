@@ -6,14 +6,9 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-public class CancelGatewayRequest implements GatewayRequest {
-
-    private ChargeEntity charge;
-
-    private CancelGatewayRequest(ChargeEntity charge) {
-        this.charge = charge;
-    }
-
+public record CancelGatewayRequest (
+        ChargeEntity charge
+) implements GatewayRequest {
     public static CancelGatewayRequest valueOf(ChargeEntity charge) {
         return new CancelGatewayRequest(charge);
     }
