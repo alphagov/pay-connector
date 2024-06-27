@@ -49,7 +49,7 @@ public interface WorldpayOrderBuilder {
                 .with3dsRequired(is3dsRequired)
                 .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
                 .withAgreementId(request.agreement().map(AgreementEntity::getExternalId).orElse(null))
-                .withTransactionId(request.getTransactionId().orElse(""))
+                .withTransactionId(request.transactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
                 .withAmount(request.amount())
                 .withAuthorisationDetails(request.authCardDetails())
@@ -77,7 +77,7 @@ public interface WorldpayOrderBuilder {
                 .withPaymentTokenId(Optional.ofNullable(recurringAuthToken.get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY)).orElse(""))
                 .withMerchantCode(merchantCode)
                 .withAmount(request.amount())
-                .withTransactionId(request.getGatewayTransactionId().orElse(""))
+                .withTransactionId(request.transactionId().orElse(""))
                 .withDescription(request.description());
 
         if (recurringAuthToken.get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY) != null) {

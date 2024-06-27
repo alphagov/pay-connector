@@ -15,7 +15,7 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import java.util.Optional;
 
 public record CardAuthorisationGatewayRequest (
-        String gatewayTransactionId,
+        Optional<String> transactionId,
         String email,
         SupportedLanguage language,
         boolean moto,
@@ -35,7 +35,7 @@ public record CardAuthorisationGatewayRequest (
         // updating the charge in the database.
         
         this(
-                charge.getGatewayTransactionId(),
+                Optional.ofNullable(charge.getGatewayTransactionId()),
                 charge.getEmail(),
                 charge.getLanguage(),
                 charge.isMoto(),
@@ -59,7 +59,8 @@ public record CardAuthorisationGatewayRequest (
     }
     
     private CardAuthorisationGatewayRequest(CardAuthorisationGatewayRequest other, AuthCardDetails authCardDetails, String gatewayTransactionId) {
-        this(gatewayTransactionId,
+        this(
+                Optional.ofNullable(gatewayTransactionId),
                 other.email(),
                 other.language(),
                 other.isMoto(),
@@ -76,19 +77,19 @@ public record CardAuthorisationGatewayRequest (
         );
     }
 
-    public AuthCardDetails authCardDetails() {
-        return authCardDetails;
-    }
+//    public AuthCardDetails authCardDetails() {
+//        return authCardDetails;
+//    }
 
     @Override
     public boolean isMoto() {
         return moto;
     }
 
-    @Override
-    public Optional<String> getTransactionId() {
-        return Optional.ofNullable(gatewayTransactionId);
-    }
+//    @Override
+//    public Optional<String> getTransactionId() {
+//        return Optional.ofNullable(gatewayTransactionId);
+//    }
 
     @Override
     public boolean isSavePaymentInstrumentToAgreement() {

@@ -50,7 +50,7 @@ public class StripeCaptureHandler implements CaptureHandler {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-        String transactionId = request.gatewayTransactionId();
+        String transactionId = request.transactionId();
 
         try {
             List<Fee> feeList = doCaptureAndTransferIfNotPreviouslySucceeded(request);
@@ -99,7 +99,7 @@ public class StripeCaptureHandler implements CaptureHandler {
     }
 
     private StripeCharge queryStripeCharge(CaptureGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayErrorException {
-        var getPaymentIntentRequest = new StripeGetPaymentIntentRequest(request.gatewayAccount(), stripeGatewayConfig, request.gatewayTransactionId());
+        var getPaymentIntentRequest = new StripeGetPaymentIntentRequest(request.gatewayAccount(), stripeGatewayConfig, request.transactionId());
         String rawResponse = client.getRequestFor(getPaymentIntentRequest).getEntity();
         StripePaymentIntent paymentIntent = jsonObjectMapper.getObject(rawResponse, StripePaymentIntent.class);
 

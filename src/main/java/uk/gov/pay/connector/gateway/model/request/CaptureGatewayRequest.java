@@ -11,6 +11,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public record CaptureGatewayRequest (
         ChargeEntity charge
@@ -23,7 +24,7 @@ public record CaptureGatewayRequest (
         return charge.getAmount();
     }
     
-    public String gatewayTransactionId() {
+    public String transactionId() {
         return charge.getGatewayTransactionId();
     }
     
@@ -42,6 +43,11 @@ public record CaptureGatewayRequest (
     public boolean isCaptureRetry() {
         return charge.getEvents().stream().anyMatch(event -> event.getStatus() == ChargeStatus.CAPTURE_APPROVED_RETRY);
     }
+    
+//    @Override
+//    public String transactionId() {
+//        return charge.getGatewayTransactionId();
+//    }
 
     @Override
     public GatewayAccountEntity gatewayAccount() {

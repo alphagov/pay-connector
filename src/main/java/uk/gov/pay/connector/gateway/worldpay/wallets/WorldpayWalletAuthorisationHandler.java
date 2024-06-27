@@ -107,7 +107,7 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
 
         return builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.govUkPayPaymentId()))
-                .withTransactionId(request.getTransactionId().orElse(""))
+                .withTransactionId(request.transactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
                 .withDescription(request.description())
                 .withAmount(request.amount())

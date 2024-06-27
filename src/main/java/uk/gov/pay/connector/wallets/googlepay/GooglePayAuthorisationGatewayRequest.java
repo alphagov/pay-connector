@@ -16,7 +16,7 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import java.util.Optional;
 
 public record GooglePayAuthorisationGatewayRequest (
-        String gatewayTransactionId,
+        Optional<String> transactionId,
         String email,
         SupportedLanguage language,
         boolean moto,
@@ -33,7 +33,7 @@ public record GooglePayAuthorisationGatewayRequest (
 ) implements AuthorisationGatewayRequest {
     public GooglePayAuthorisationGatewayRequest(ChargeEntity charge, GooglePayAuthRequest googlePayAuthRequest) {
         this(
-                charge.getGatewayTransactionId(),
+                Optional.ofNullable(charge.getGatewayTransactionId()),
                 charge.getEmail(),
                 charge.getLanguage(),
                 charge.isMoto(),
@@ -57,10 +57,10 @@ public record GooglePayAuthorisationGatewayRequest (
         return moto;
     }
 
-    @Override
-    public Optional<String> getTransactionId() {
-        return Optional.ofNullable(gatewayTransactionId);
-    }
+//    @Override
+//    public Optional<String> getTransactionId() {
+//        return Optional.ofNullable(gatewayTransactionId);
+//    }
 
     @Override
     public boolean isSavePaymentInstrumentToAgreement() {

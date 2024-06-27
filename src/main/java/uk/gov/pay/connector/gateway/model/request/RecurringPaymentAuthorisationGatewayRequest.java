@@ -17,7 +17,7 @@ public record RecurringPaymentAuthorisationGatewayRequest (
     GatewayCredentials gatewayCredentials,
     String agreementId,
     String amount,
-    String gatewayTransactionId,
+    Optional<String> transactionId,
     String description,
     PaymentInstrumentEntity paymentInstrument,
     String govUkPayPaymentId
@@ -30,7 +30,7 @@ public record RecurringPaymentAuthorisationGatewayRequest (
                         .orElse(null),
                 charge.getAgreement().map(AgreementEntity::getExternalId).orElse(null),
                 String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)),
-                charge.getGatewayTransactionId(),
+                Optional.ofNullable(charge.getGatewayTransactionId()),
                 charge.getDescription(),
                 charge.getPaymentInstrument().orElse(null),
                 charge.getExternalId());
@@ -40,10 +40,15 @@ public record RecurringPaymentAuthorisationGatewayRequest (
         return Optional.ofNullable(paymentInstrument);
     }
     
-    public Optional<String> getGatewayTransactionId() {
-        return Optional.ofNullable(gatewayTransactionId);
-    }
+//    public Optional<String> getGatewayTransactionId() {
+//        return Optional.ofNullable(gatewayTransactionId);
+//    }
 
+//    @Override
+//    public Optional<String> transactionId() {
+//        return Optional.ofNullable(gatewayTransactionId);
+//    }
+    
     @Override
     public GatewayAccountEntity gatewayAccount() {
         return gatewayAccount;

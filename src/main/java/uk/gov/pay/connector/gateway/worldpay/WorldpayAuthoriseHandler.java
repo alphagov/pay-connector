@@ -51,7 +51,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
     }
 
     public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
-        LOGGER.info("Authorising user not present request: {}", request.getGatewayTransactionId().orElse("gatewayTransactionId is not present"));
+        LOGGER.info("Authorising user not present request: {}", request.transactionId().orElse("gatewayTransactionId is not present"));
 
         try {
             GatewayClient.Response response = authoriseClient.postRequestFor(

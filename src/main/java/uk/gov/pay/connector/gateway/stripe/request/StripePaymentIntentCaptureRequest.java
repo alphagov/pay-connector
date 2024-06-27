@@ -26,7 +26,7 @@ public class StripePaymentIntentCaptureRequest extends StripeCaptureRequest {
                 request.gatewayAccount(),
                 request.externalId(),
                 stripeGatewayConfig,
-                request.gatewayTransactionId(),
+                request.transactionId(),
                 request.gatewayCredentials()
         );
     }

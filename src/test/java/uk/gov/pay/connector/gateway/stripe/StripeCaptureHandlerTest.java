@@ -132,7 +132,7 @@ class StripeCaptureHandlerTest {
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(captureResponse.getTransactionId().isPresent(), is(true));
-        assertThat(captureResponse.getTransactionId().get(), is(captureGatewayRequest.gatewayTransactionId()));
+        assertThat(captureResponse.getTransactionId().get(), is(captureGatewayRequest.transactionId()));
         assertThat(captureResponse.getFeeList(), hasSize(2));
         assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(TRANSACTION));
         assertThat(captureResponse.getFeeList().get(0).getAmount(), is(58L));

@@ -26,6 +26,11 @@ public record Auth3dsResponseGatewayRequest (
     public Optional<ProviderSessionIdentifier> getProviderSessionId() {
         return Optional.ofNullable(charge.getProviderSessionId()).map(ProviderSessionIdentifier::of);
     }
+    
+//    @Override
+    public Optional<String> transactionId() {
+        return Optional.ofNullable(charge.getGatewayTransactionId());
+    }
 
     @Override
     public GatewayAccountEntity gatewayAccount() { return charge.getGatewayAccount(); }

@@ -7,8 +7,9 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-public record ChargeQueryGatewayRequest (
-    
+import java.util.Optional;
+
+public record ChargeQueryGatewayRequest (    
     GatewayAccountEntity gatewayAccount,
     GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
     String chargeExternalId,

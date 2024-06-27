@@ -10,7 +10,7 @@ public interface AuthorisationGatewayRequest extends GatewayRequest {
     public String email();
     public boolean isMoto();
     public SupportedLanguage language();
-    public Optional<String> getTransactionId();
+    public Optional<String> transactionId();
     public String amount();
     public String description();
     public ServicePaymentReference reference();

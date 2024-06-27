@@ -8,6 +8,8 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
+import java.util.Optional;
+
 public record RefundGatewayRequest (
     GatewayAccountEntity gatewayAccount,
     String amount,

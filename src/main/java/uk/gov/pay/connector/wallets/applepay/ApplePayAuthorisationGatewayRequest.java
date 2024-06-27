@@ -16,7 +16,7 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import java.util.Optional;
 
 public record ApplePayAuthorisationGatewayRequest (
-        String gatewayTransactionId,
+        Optional<String> transactionId,
         String email,
         SupportedLanguage language,
         boolean moto,
@@ -34,7 +34,7 @@ public record ApplePayAuthorisationGatewayRequest (
 
     public ApplePayAuthorisationGatewayRequest(ChargeEntity charge, ApplePayAuthRequest applePayAuthRequest) {
         this(
-                charge.getGatewayTransactionId(),
+                Optional.ofNullable(charge.getGatewayTransactionId()),
                 charge.getEmail(),
                 charge.getLanguage(),
                 charge.isMoto(),
@@ -58,10 +58,10 @@ public record ApplePayAuthorisationGatewayRequest (
         return moto;
     }
 
-    @Override
-    public Optional<String> getTransactionId() {
-        return Optional.ofNullable(gatewayTransactionId);
-    }
+//    @Override
+//    public Optional<String> getTransactionId() {
+//        return Optional.ofNullable(gatewayTransactionId);
+//    }
 
     @Override
     public boolean isSavePaymentInstrumentToAgreement() {
