@@ -114,7 +114,7 @@ class EventFactoryTest {
         paymentProviders = mock(PaymentProviders.class);
         paymentInstrumentService = mock(PaymentInstrumentService.class);
 
-        eventFactory = new EventFactory(chargeService, refundDao, refundService, chargeEventDao, paymentProviders);
+        eventFactory = new EventFactory(chargeService, refundDao, chargeEventDao);
     }
 
     @Test
