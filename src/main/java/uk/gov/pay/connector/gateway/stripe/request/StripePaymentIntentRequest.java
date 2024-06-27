@@ -111,17 +111,17 @@ public class StripePaymentIntentRequest extends StripePostRequest {
             String frontendUrl
     ) {
         return new StripePaymentIntentRequest(
-                request.getGatewayAccount(),
-                request.getGovUkPayPaymentId(),
+                request.gatewayAccount(),
+                request.govUkPayPaymentId(),
                 stripeGatewayConfig,
-                request.getAmount(),
+                request.amount(),
                 paymentMethodId,
-                request.getGovUkPayPaymentId(),
+                request.govUkPayPaymentId(),
                 frontendUrl,
-                request.getGovUkPayPaymentId(),
-                request.getDescription(),
+                request.govUkPayPaymentId(),
+                request.description(),
                 false,
-                request.getGatewayCredentials(),
+                request.gatewayCredentials(),
                 customerId, 
                 true,
                 null);

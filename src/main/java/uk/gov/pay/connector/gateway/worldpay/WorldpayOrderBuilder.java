@@ -70,15 +70,15 @@ public interface WorldpayOrderBuilder {
         var paymentInstrument = request.getPaymentInstrument().orElseThrow(() -> new IllegalArgumentException("Expected request to have payment instrument but it does not"));
         var recurringAuthToken = paymentInstrument.getRecurringAuthToken().orElseThrow(() -> new IllegalArgumentException("Payment instrument does not have recurring auth token set"));
 
-        String merchantCode = AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(),
+        String merchantCode = AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(),
                 request.getAuthorisationMode(), request.isForRecurringPayment());
         WorldpayOrderRequestBuilder builder = (WorldpayOrderRequestBuilder) aWorldpayAuthoriseRecurringOrderRequestBuilder()
-                .withAgreementId(request.getAgreementId())
+                .withAgreementId(request.agreementId())
                 .withPaymentTokenId(Optional.ofNullable(recurringAuthToken.get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY)).orElse(""))
                 .withMerchantCode(merchantCode)
-                .withAmount(request.getAmount())
+                .withAmount(request.amount())
                 .withTransactionId(request.getGatewayTransactionId().orElse(""))
-                .withDescription(request.getDescription());
+                .withDescription(request.description());
 
         if (recurringAuthToken.get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY) != null) {
             builder.withSchemeTransactionIdentifier(recurringAuthToken.get(WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY));
