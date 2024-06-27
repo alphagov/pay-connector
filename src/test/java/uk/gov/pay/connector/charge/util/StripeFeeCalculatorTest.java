@@ -50,22 +50,22 @@ class StripeFeeCalculatorTest {
     void shouldReturnFeeListForChargeWithNo3ds() {
         List<Fee> feeList = StripeFeeCalculator.getFeeList(stripeFee, request, feePercentage, 5, 10);
         assertThat(feeList.size(), is(2));
-        assertThat(feeList.get(0).getFeeType(), Is.is(FeeType.TRANSACTION));
-        assertThat(feeList.get(0).getAmount(), Is.is(100L));
-        assertThat(feeList.get(1).getFeeType(), Is.is(FeeType.RADAR));
-        assertThat(feeList.get(1).getAmount(), Is.is(5L));
+        assertThat(feeList.get(0).feeType(), Is.is(FeeType.TRANSACTION));
+        assertThat(feeList.get(0).amount(), Is.is(100L));
+        assertThat(feeList.get(1).feeType(), Is.is(FeeType.RADAR));
+        assertThat(feeList.get(1).amount(), Is.is(5L));
     }
 
     @Test
     void shouldReturnFeeListForChargeWith3ds() {
         List<Fee> feeList = StripeFeeCalculator.getFeeList(stripeFee, requestForChargeWith3ds, feePercentage, 5, 10);
         assertThat(feeList.size(), is(3));
-        assertThat(feeList.get(0).getFeeType(), Is.is(FeeType.TRANSACTION));
-        assertThat(feeList.get(0).getAmount(), Is.is(100L));
-        assertThat(feeList.get(1).getFeeType(), Is.is(FeeType.RADAR));
-        assertThat(feeList.get(1).getAmount(), Is.is(5L));
-        assertThat(feeList.get(2).getFeeType(), Is.is(FeeType.THREE_D_S));
-        assertThat(feeList.get(2).getAmount(), Is.is(10L));
+        assertThat(feeList.get(0).feeType(), Is.is(FeeType.TRANSACTION));
+        assertThat(feeList.get(0).amount(), Is.is(100L));
+        assertThat(feeList.get(1).feeType(), Is.is(FeeType.RADAR));
+        assertThat(feeList.get(1).amount(), Is.is(5L));
+        assertThat(feeList.get(2).feeType(), Is.is(FeeType.THREE_D_S));
+        assertThat(feeList.get(2).amount(), Is.is(10L));
     }
 
     @Test

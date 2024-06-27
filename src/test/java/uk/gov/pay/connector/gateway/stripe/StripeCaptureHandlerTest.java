@@ -134,10 +134,10 @@ class StripeCaptureHandlerTest {
         assertThat(captureResponse.getTransactionId().isPresent(), is(true));
         assertThat(captureResponse.getTransactionId().get(), is(captureGatewayRequest.getGatewayTransactionId()));
         assertThat(captureResponse.getFeeList(), hasSize(2));
-        assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(TRANSACTION));
-        assertThat(captureResponse.getFeeList().get(0).getAmount(), is(58L));
-        assertThat(captureResponse.getFeeList().get(1).getFeeType(), is(RADAR));
-        assertThat(captureResponse.getFeeList().get(1).getAmount(), is(5L));
+        assertThat(captureResponse.getFeeList().get(0).feeType(), is(TRANSACTION));
+        assertThat(captureResponse.getFeeList().get(0).amount(), is(58L));
+        assertThat(captureResponse.getFeeList().get(1).feeType(), is(RADAR));
+        assertThat(captureResponse.getFeeList().get(1).amount(), is(5L));
     }
 
     @Test
@@ -161,10 +161,10 @@ class StripeCaptureHandlerTest {
 
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.getFeeList(), hasSize(2));
-        assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(TRANSACTION));
-        assertThat(captureResponse.getFeeList().get(0).getAmount(), is(59L));
-        assertThat(captureResponse.getFeeList().get(1).getFeeType(), is(RADAR));
-        assertThat(captureResponse.getFeeList().get(1).getAmount(), is(5L));
+        assertThat(captureResponse.getFeeList().get(0).feeType(), is(TRANSACTION));
+        assertThat(captureResponse.getFeeList().get(0).amount(), is(59L));
+        assertThat(captureResponse.getFeeList().get(1).feeType(), is(RADAR));
+        assertThat(captureResponse.getFeeList().get(1).amount(), is(5L));
     }
 
     @Test
@@ -188,10 +188,10 @@ class StripeCaptureHandlerTest {
 
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.getFeeList(), hasSize(2));
-        assertThat(captureResponse.getFeeList().get(0).getFeeType(), is(TRANSACTION));
-        assertThat(captureResponse.getFeeList().get(0).getAmount(), is(51L));
-        assertThat(captureResponse.getFeeList().get(1).getFeeType(), is(RADAR));
-        assertThat(captureResponse.getFeeList().get(1).getAmount(), is(5L));
+        assertThat(captureResponse.getFeeList().get(0).feeType(), is(TRANSACTION));
+        assertThat(captureResponse.getFeeList().get(0).amount(), is(51L));
+        assertThat(captureResponse.getFeeList().get(1).feeType(), is(RADAR));
+        assertThat(captureResponse.getFeeList().get(1).amount(), is(5L));
     }
 
     @Test
@@ -448,10 +448,10 @@ class StripeCaptureHandlerTest {
         assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(response.getTransactionId().get(), is("pi_123"));
         assertThat(response.getFeeList(), hasSize(2));
-        assertThat(response.getFeeList().get(0).getFeeType(), is(TRANSACTION));
-        assertThat(response.getFeeList().get(0).getAmount(), is(58L));
-        assertThat(response.getFeeList().get(1).getFeeType(), is(RADAR));
-        assertThat(response.getFeeList().get(1).getAmount(), is(5L));
+        assertThat(response.getFeeList().get(0).feeType(), is(TRANSACTION));
+        assertThat(response.getFeeList().get(0).amount(), is(58L));
+        assertThat(response.getFeeList().get(1).feeType(), is(RADAR));
+        assertThat(response.getFeeList().get(1).amount(), is(5L));
         
         verify(gatewayClient, times(2)).getRequestFor(gatewayClientGetRequestArgumentCaptor.capture());
         List<GatewayClientGetRequest> getRequests = gatewayClientGetRequestArgumentCaptor.getAllValues();
@@ -497,10 +497,10 @@ class StripeCaptureHandlerTest {
         assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(response.getTransactionId().get(), is("pi_123"));
         assertThat(response.getFeeList(), hasSize(2));
-        assertThat(response.getFeeList().get(0).getFeeType(), is(TRANSACTION));
-        assertThat(response.getFeeList().get(0).getAmount(), is(58L));
-        assertThat(response.getFeeList().get(1).getFeeType(), is(RADAR));
-        assertThat(response.getFeeList().get(1).getAmount(), is(5L));
+        assertThat(response.getFeeList().get(0).feeType(), is(TRANSACTION));
+        assertThat(response.getFeeList().get(0).amount(), is(58L));
+        assertThat(response.getFeeList().get(1).feeType(), is(RADAR));
+        assertThat(response.getFeeList().get(1).amount(), is(5L));
         
         verify(gatewayClient).postRequestFor(stripeTransferOutRequestArgumentCaptor.capture());
         StripeTransferOutRequest transferOutRequest = stripeTransferOutRequestArgumentCaptor.getValue();
@@ -541,10 +541,10 @@ class StripeCaptureHandlerTest {
         assertThat(response.state(), is(CaptureResponse.ChargeState.COMPLETE));
         assertThat(response.getTransactionId().get(), is("pi_123"));
         assertThat(response.getFeeList(), hasSize(2));
-        assertThat(response.getFeeList().get(0).getFeeType(), is(TRANSACTION));
-        assertThat(response.getFeeList().get(0).getAmount(), is(58L));
-        assertThat(response.getFeeList().get(1).getFeeType(), is(RADAR));
-        assertThat(response.getFeeList().get(1).getAmount(), is(5L));
+        assertThat(response.getFeeList().get(0).feeType(), is(TRANSACTION));
+        assertThat(response.getFeeList().get(0).amount(), is(58L));
+        assertThat(response.getFeeList().get(1).feeType(), is(RADAR));
+        assertThat(response.getFeeList().get(1).amount(), is(5L));
 
         verify(gatewayClient, never()).postRequestFor(any(StripeCaptureRequest.class));
     }
