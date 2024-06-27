@@ -27,9 +27,9 @@ public class StripeRefundRequest extends StripePostRequest {
     public static StripeRefundRequest of(RefundGatewayRequest request, String stripeChargeId,
                                          StripeGatewayConfig stripeGatewayConfig) {
         return new StripeRefundRequest(              
-                request.getAmount(),
-                request.getGatewayAccount(),
-                request.getRefundExternalId(),
+                request.amount(),
+                request.gatewayAccount(),
+                request.refundExternalId(),
                 stripeChargeId,
                 stripeGatewayConfig,
                 request.getGatewayCredentials()

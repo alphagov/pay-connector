@@ -21,9 +21,9 @@ public class StripeGetPaymentIntentRequest extends StripeGetRequest {
 
     public static StripeGetPaymentIntentRequest of(RefundGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeGetPaymentIntentRequest(
-                request.getGatewayAccount(),
+                request.gatewayAccount(),
                 stripeGatewayConfig,
-                request.getTransactionId()
+                request.transactionId()
         );
     }
     

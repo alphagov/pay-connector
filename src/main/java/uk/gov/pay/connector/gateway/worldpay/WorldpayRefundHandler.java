@@ -35,11 +35,11 @@ public class WorldpayRefundHandler implements RefundHandler {
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         try {
             GatewayClient.Response response = client.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    gatewayUrlMap.get(request.gatewayAccount().getType()),
                     WORLDPAY,
-                    request.getGatewayAccount().getType(),
+                    request.gatewayAccount().getType(),
                     buildRefundOrder(request), 
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, WorldpayRefundResponse.class), PENDING);
         } catch (GatewayException e) {
             return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
@@ -48,10 +48,10 @@ public class WorldpayRefundHandler implements RefundHandler {
 
     private GatewayOrder buildRefundOrder(RefundGatewayRequest request) {
         return aWorldpayRefundOrderRequestBuilder()
-                .withReference(request.getRefundExternalId())
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
-                .withAmount(request.getAmount())
-                .withTransactionId(request.getTransactionId())
+                .withReference(request.refundExternalId())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
+                .withAmount(request.amount())
+                .withTransactionId(request.transactionId())
                 .build();
     }
 }

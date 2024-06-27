@@ -25,7 +25,7 @@ public class StripeTransferReversalRequest extends StripePostRequest {
                                                    StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferReversalRequest(
                 request.getGatewayAccount(),
-                request.getRefundExternalId(),
+                request.refundExternalId(),
                 stripeGatewayConfig,
                 transferId,
                 request.getGatewayCredentials()

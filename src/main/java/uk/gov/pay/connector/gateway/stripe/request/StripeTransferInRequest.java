@@ -36,14 +36,14 @@ public class StripeTransferInRequest extends StripeTransferRequest {
     public static StripeTransferInRequest createRefundTransferRequest(RefundGatewayRequest request, String stripeChargeId,
                                                                       StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferInRequest(
-                request.getAmount(),
-                request.getGatewayAccount(),
+                request.amount(),
+                request.gatewayAccount(),
                 stripeChargeId,
-                request.getRefundExternalId(),
+                request.refundExternalId(),
                 stripeGatewayConfig,
-                request.getRefundExternalId(),
+                request.refundExternalId(),
                 request.getGatewayCredentials(),
-                request.getChargeExternalId(),
+                request.chargeExternalId(),
                 StripeTransferMetadataReason.TRANSFER_REFUND_AMOUNT
         );
     }
