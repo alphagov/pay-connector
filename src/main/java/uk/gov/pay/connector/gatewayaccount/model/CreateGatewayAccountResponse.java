@@ -2,43 +2,36 @@ package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-public class CreateGatewayAccountResponse {
-
-    @JsonProperty("type")
-    @Schema(example = "live")
-    private final String providerAccountType;
-
-    @JsonProperty("service_name")
-    @Schema(example = "service name")
-    private final String serviceName;
-
-    @JsonProperty("description")
-    @Schema(example = "account for some gov org")
-    private final String description;
+public record CreateGatewayAccountResponse (
+    @JsonProperty("gateway_account_id")
+    @Schema(example = "2")
+    String gatewayAccountId,
 
     @JsonProperty("external_id")
     @Schema(example = "ab2c296ed98647e9a25f045f5e6e87a2")
-    private final String externalId;
+    String externalId,
+    
+    @JsonProperty("type")
+    @Schema(example = "live")
+    String providerAccountType,
+
+    @JsonProperty("service_name")
+    @Schema(example = "service name")
+    String serviceName,
+
+    @JsonProperty("description")
+    @Schema(example = "account for some gov org")
+    String description,
 
     @JsonProperty("analytics_id")
     @Schema(example = "ananytics-id")
-    private final String analyticsId;
-
-    @JsonProperty("gateway_account_id")
-    @Schema(example = "2")
-    private final String gatewayAccountId;
-
-    @JsonProperty("requires_3ds")
-    @Schema(example = "true")
-    private final boolean requires3ds;
+    String analyticsId,
 
     @JsonProperty("links")
     @Schema(example = "[" +
@@ -48,57 +41,28 @@ public class CreateGatewayAccountResponse {
             "            \"method\": \"GET\"" +
             "        }" +
             "    ]")
-    private final List<Map<String, Object>> links;
+    List<Map<String, Object>> links,
 
     @JsonIgnore
-    private final URI location;
+    URI location,
+
+    @JsonProperty("requires_3ds")
+    @Schema(example = "true")
+    boolean requires3ds
+) {    
 
     public CreateGatewayAccountResponse(GatewayAccountResponseBuilder gatewayAccountResponseBuilder) {
-        this.gatewayAccountId = gatewayAccountResponseBuilder.gatewayAccountId;
-        this.externalId = gatewayAccountResponseBuilder.externalId;
-        this.providerAccountType = gatewayAccountResponseBuilder.providerAccountType;
-        this.serviceName = gatewayAccountResponseBuilder.serviceName;
-        this.description = gatewayAccountResponseBuilder.description;
-        this.analyticsId = gatewayAccountResponseBuilder.analyticsId;
-        this.links = gatewayAccountResponseBuilder.links;
-        this.location = gatewayAccountResponseBuilder.location;
-        this.requires3ds = gatewayAccountResponseBuilder.requires3ds;
-    }
-
-    public String getProviderAccountType() {
-        return providerAccountType;
-    }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public String getAnalyticsId() {
-        return analyticsId;
-    }
-
-    public String getGatewayAccountId() {
-        return gatewayAccountId;
-    }
-
-    public List<Map<String, Object>> getLinks() {
-        return links;
-    }
-
-    public URI getLocation() {
-        return location;
-    }
-
-    public boolean getRequires3ds() {
-        return requires3ds;
-    }
-
-    public String getExternalId() {
-        return externalId;
+        this(
+            gatewayAccountResponseBuilder.gatewayAccountId,
+            gatewayAccountResponseBuilder.externalId,
+            gatewayAccountResponseBuilder.providerAccountType,
+            gatewayAccountResponseBuilder.serviceName,
+            gatewayAccountResponseBuilder.description,
+            gatewayAccountResponseBuilder.analyticsId,
+            gatewayAccountResponseBuilder.links,
+            gatewayAccountResponseBuilder.location,
+            gatewayAccountResponseBuilder.requires3ds
+        );
     }
 
     public static class GatewayAccountResponseBuilder {
@@ -148,7 +112,7 @@ public class CreateGatewayAccountResponse {
         }
 
         public GatewayAccountResponseBuilder generateLinks(URI href) {
-            this.links = ImmutableList.of(ImmutableMap.of("href", href, "rel", "self", "method", "GET"));
+            this.links = List.of(Map.of("href", href, "rel", "self", "method", "GET"));
             return this;
         }
 
