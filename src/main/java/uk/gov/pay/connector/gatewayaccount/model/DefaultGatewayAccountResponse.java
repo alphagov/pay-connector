@@ -1,20 +1,12 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
-
-@JsonInclude(NON_NULL)
-public record GatewayAccountWithCredentialsResponse (
+public record DefaultGatewayAccountResponse (
         long accountId,
         String externalId,
         String paymentProvider,
@@ -48,21 +40,12 @@ public record GatewayAccountWithCredentialsResponse (
         boolean isAllowAuthorisationApi,
         boolean isRecurringEnabled,
         boolean isDisabled,
-        String disabledReason,
-        
-        @JsonProperty("notifySettings")
-        @Schema(description = "An object containing the Notify credentials and configuration for sending custom branded emails")
-        Map<String, String> notifySettings,
-
-        @JsonProperty("notificationCredentials")
-        @Schema(description = "The gateway credentials for receiving notifications. Only present for Smartpay accounts")
-        NotificationCredentials notificationCredentials,
-
-        @JsonProperty("gateway_account_credentials")
-        @Schema(description = "Array of the credentials configured for this account")
-        List<GatewayAccountCredentials> gatewayAccountCredentials
+        String disabledReason
 ) implements GatewayAccountResponse {
-    public GatewayAccountWithCredentialsResponse(GatewayAccountEntity gatewayAccountEntity) {
+    public DefaultGatewayAccountResponse(GatewayAccountEntity gatewayAccountEntity) {
+        this(gatewayAccountEntity, null);
+    }
+    public DefaultGatewayAccountResponse(GatewayAccountEntity gatewayAccountEntity, Map<String, Map<String, URI>> links) {
         this(
                 gatewayAccountEntity.getId(),
                 gatewayAccountEntity.getExternalId(),
@@ -76,7 +59,7 @@ public record GatewayAccountWithCredentialsResponse (
                 gatewayAccountEntity.getCorporateNonPrepaidCreditCardSurchargeAmount(),
                 gatewayAccountEntity.getCorporateNonPrepaidDebitCardSurchargeAmount(),
                 gatewayAccountEntity.getCorporatePrepaidDebitCardSurchargeAmount(),
-                null,
+                links,
                 gatewayAccountEntity.isAllowApplePay(),
                 gatewayAccountEntity.isAllowGooglePay(),
                 gatewayAccountEntity.isBlockPrepaidCards(),
@@ -97,16 +80,10 @@ public record GatewayAccountWithCredentialsResponse (
                 gatewayAccountEntity.isAllowAuthorisationApi(),
                 gatewayAccountEntity.isRecurringEnabled(),
                 gatewayAccountEntity.isDisabled(),
-                gatewayAccountEntity.getDisabledReason(),
-                gatewayAccountEntity.getNotifySettings(),
-                gatewayAccountEntity.getNotificationCredentials(),
-                gatewayAccountEntity.getGatewayAccountCredentials()
-                        .stream()
-                        .map(GatewayAccountCredentials::new)
-                        .toList()
+                gatewayAccountEntity.getDisabledReason()
         );
     }
-
+    
     public String getType() {
         return type.toString();
     }

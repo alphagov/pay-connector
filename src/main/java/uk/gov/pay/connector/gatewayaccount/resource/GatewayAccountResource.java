@@ -163,8 +163,11 @@ public class GatewayAccountResource {
     private Response getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
         logger.info(format("Searching gateway accounts by parameters %s", gatewayAccountSearchParams.toString()));
 
-        List<GatewayAccountResponse> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
-        gatewayAccounts.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
+        List<GatewayAccountEntity> gatewayAccountEntitiesList = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
+        List<GatewayAccountResponse> gatewayAccounts = gatewayAccountEntitiesList.stream().map(
+                account -> GatewayAccountResponse.of(account, "self", buildUri(uriInfo, account.getId()))
+        ).collect(Collectors.toList());
+//        gatewayAccounts.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
 
         return Response
                 .ok(GatewayAccountsListDTO.of(gatewayAccounts))

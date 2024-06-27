@@ -93,10 +93,8 @@ public class GatewayAccountService {
         return gatewayAccountDao.findById(gatewayAccountId);
     }
 
-    public List<GatewayAccountResponse> searchGatewayAccounts(GatewayAccountSearchParams params) {
-        return gatewayAccountDao.search(params).stream()
-                .map(GatewayAccountResponse::new)
-                .collect(Collectors.toList());
+    public List<GatewayAccountEntity> searchGatewayAccounts(GatewayAccountSearchParams params) {
+        return gatewayAccountDao.search(params);
     }
 
     @Transactional

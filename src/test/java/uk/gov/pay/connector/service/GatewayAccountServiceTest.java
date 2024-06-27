@@ -117,7 +117,7 @@ class GatewayAccountServiceTest {
         when(mockGatewayAccountDao.search(gatewayAccountSearchParams))
                 .thenReturn(Arrays.asList(getMockGatewayAccountEntity1, getMockGatewayAccountEntity2));
 
-        List<GatewayAccountResponse> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
 
         assertThat(gatewayAccounts, hasSize(2));
         assertThat(gatewayAccounts.get(0).getServiceName(), is("service one"));

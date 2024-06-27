@@ -61,32 +61,32 @@ class GatewayAccountResponseTest {
         emailNotifications.put(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(new GatewayAccountEntity(), "testTemplate", true));
         entity.setEmailNotifications(emailNotifications);
         
-        GatewayAccountResponse dto = new GatewayAccountResponse(entity);
-        assertThat(dto.getAccountId(), is(entity.getId()));
-        assertThat(dto.getExternalId(), is(entity.getExternalId()));
-        assertThat(dto.getPaymentProvider(), is(entity.getGatewayName()));
-        assertThat(dto.getType(), is(entity.getType()));
+        GatewayAccountResponse dto = GatewayAccountResponse.of(entity);
+        assertThat(dto.accountId(), is(entity.getId()));
+        assertThat(dto.externalId(), is(entity.getExternalId()));
+        assertThat(dto.paymentProvider(), is(entity.getGatewayName()));
+        assertThat(dto.type().toString(), is(entity.getType()));
         assertThat(dto.isLive(), is(entity.isLive()));
-        assertThat(dto.getDescription(), is(entity.getDescription()));
-        assertThat(dto.getServiceName(), is(entity.getServiceName()));
-        assertThat(dto.getAnalyticsId(), is(entity.getAnalyticsId()));
-        assertThat(dto.getCorporateCreditCardSurchargeAmount(), is(entity.getCorporateNonPrepaidCreditCardSurchargeAmount()));
-        assertThat(dto.getCorporateDebitCardSurchargeAmount(), is(entity.getCorporateNonPrepaidDebitCardSurchargeAmount()));
-        assertThat(dto.getCorporatePrepaidDebitCardSurchargeAmount(), is(entity.getCorporatePrepaidDebitCardSurchargeAmount()));
+        assertThat(dto.description(), is(entity.getDescription()));
+        assertThat(dto.serviceName(), is(entity.getServiceName()));
+        assertThat(dto.analyticsId(), is(entity.getAnalyticsId()));
+        assertThat(dto.corporateCreditCardSurchargeAmount(), is(entity.getCorporateNonPrepaidCreditCardSurchargeAmount()));
+        assertThat(dto.corporateDebitCardSurchargeAmount(), is(entity.getCorporateNonPrepaidDebitCardSurchargeAmount()));
+        assertThat(dto.corporatePrepaidDebitCardSurchargeAmount(), is(entity.getCorporatePrepaidDebitCardSurchargeAmount()));
         assertThat(dto.isAllowApplePay(), is(entity.isAllowApplePay()));
         assertThat(dto.isAllowGooglePay(), is(entity.isAllowGooglePay()));
         assertThat(dto.isRequires3ds(), is(entity.isRequires3ds()));
         assertThat(dto.isAllowZeroAmount(), is(entity.isAllowZeroAmount()));
-        assertThat(dto.getEmailCollectionMode(), is(entity.getEmailCollectionMode()));
-        assertThat(dto.getEmailNotifications().size(), is(1));
-        assertThat(dto.getEmailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED).getTemplateBody(), is("testTemplate"));
-        assertThat(dto.getIntegrationVersion3ds(), is(entity.getIntegrationVersion3ds()));
+        assertThat(dto.emailCollectionMode(), is(entity.getEmailCollectionMode()));
+        assertThat(dto.emailNotifications().size(), is(1));
+        assertThat(dto.emailNotifications().get(EmailNotificationType.PAYMENT_CONFIRMED).getTemplateBody(), is("testTemplate"));
+        assertThat(dto.integrationVersion3ds(), is(entity.getIntegrationVersion3ds()));
         assertThat(dto.isBlockPrepaidCards(), is(entity.isBlockPrepaidCards()));
         assertThat(dto.isAllowMoto(), is(entity.isAllowMoto()));
         assertThat(dto.isMotoMaskCardNumberInput(), is(entity.isMotoMaskCardNumberInput()));
         assertThat(dto.isMotoMaskCardSecurityCodeInput(), is(entity.isMotoMaskCardSecurityCodeInput()));
         assertThat(dto.isAllowTelephonePaymentNotifications(), is(entity.isAllowTelephonePaymentNotifications()));
-        assertThat(dto.getWorldpay3dsFlexCredentials(), is(entity.getWorldpay3dsFlexCredentials()));
+        assertThat(dto.worldpay3dsFlexCredentials(), is(entity.getWorldpay3dsFlexCredentials().get()));
         assertThat(dto.isProviderSwitchEnabled(), is(entity.isProviderSwitchEnabled()));
         assertThat(dto.isSendPayerIpAddressToGateway(), is(true));
         assertThat(dto.isSendPayerEmailToGateway(), is(true));
@@ -94,6 +94,6 @@ class GatewayAccountResponseTest {
         assertThat(dto.isAllowAuthorisationApi(), is(entity.isAllowAuthorisationApi()));
         assertThat(dto.isRecurringEnabled(), is(entity.isRecurringEnabled()));
         assertThat(dto.isDisabled(), is(entity.isDisabled()));
-        assertThat(dto.getDisabledReason(), is(entity.getDisabledReason()));
+        assertThat(dto.disabledReason(), is(entity.getDisabledReason()));
     }
 }

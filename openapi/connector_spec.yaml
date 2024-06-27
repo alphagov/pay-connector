@@ -4333,6 +4333,9 @@ components:
         type:
           type: string
           description: Account type for the payment provider (test/live)
+          enum:
+          - test
+          - live
           example: test
         worldpay_3ds_flex:
           $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
@@ -4557,6 +4560,9 @@ components:
         type:
           type: string
           description: Account type for the payment provider (test/live)
+          enum:
+          - test
+          - live
           example: test
         worldpay_3ds_flex:
           $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
@@ -4767,6 +4773,9 @@ components:
         type:
           type: string
           description: Account type for the payment provider (test/live)
+          enum:
+          - test
+          - live
           example: test
         worldpay_3ds_flex:
           $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
