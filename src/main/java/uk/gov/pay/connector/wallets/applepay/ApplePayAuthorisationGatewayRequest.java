@@ -5,7 +5,6 @@ import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.gateway.GatewayOperation;
-import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
@@ -32,7 +31,6 @@ public record ApplePayAuthorisationGatewayRequest (
         Optional<AgreementEntity> agreement,
         ApplePayAuthRequest applePayAuthRequest
 ) implements AuthorisationGatewayRequest {
-//    private ApplePayAuthRequest applePayAuthRequest;
 
     public ApplePayAuthorisationGatewayRequest(ChargeEntity charge, ApplePayAuthRequest applePayAuthRequest) {
         this(
@@ -53,13 +51,7 @@ public record ApplePayAuthorisationGatewayRequest (
                 charge.getAgreement(),
                 applePayAuthRequest
         );
-//        super(charge);
-//        this.applePayAuthRequest = applePayAuthRequest;
     }
-
-//    public ApplePayAuthRequest getApplePayAuthRequest() {
-//        return applePayAuthRequest;
-//    }
     
     @Override
     public boolean isMoto() {

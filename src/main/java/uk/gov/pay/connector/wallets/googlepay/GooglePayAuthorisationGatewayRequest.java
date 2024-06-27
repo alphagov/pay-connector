@@ -9,7 +9,6 @@ import uk.gov.pay.connector.gateway.model.request.AuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -32,8 +31,6 @@ public record GooglePayAuthorisationGatewayRequest (
         Optional<AgreementEntity> agreement,
         GooglePayAuthRequest googlePayAuthRequest
 ) implements AuthorisationGatewayRequest {
-//    private GooglePayAuthRequest googlePayAuthRequest;
-
     public GooglePayAuthorisationGatewayRequest(ChargeEntity charge, GooglePayAuthRequest googlePayAuthRequest) {
         this(
                 charge.getGatewayTransactionId(),
@@ -53,8 +50,6 @@ public record GooglePayAuthorisationGatewayRequest (
                 charge.getAgreement(),
                 googlePayAuthRequest
         );
-//        super(charge);
-//        this.googlePayAuthRequest = googlePayAuthRequest;
     }
 
     @Override
@@ -81,11 +76,6 @@ public record GooglePayAuthorisationGatewayRequest (
     public boolean isForRecurringPayment() {
         return agreement.isPresent();
     }
-
-//    public GooglePayAuthRequest getGooglePayAuthRequest() {
-//        return googlePayAuthRequest;
-//    }
-
     public static GooglePayAuthorisationGatewayRequest valueOf(ChargeEntity charge, GooglePayAuthRequest googlePayAuthRequest) {
         return new GooglePayAuthorisationGatewayRequest(charge, googlePayAuthRequest);
     }

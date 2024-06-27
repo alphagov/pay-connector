@@ -30,13 +30,6 @@ public record CardAuthorisationGatewayRequest (
         Optional<AgreementEntity> agreement,
         AuthCardDetails authCardDetails
 ) implements AuthorisationGatewayRequest {
-//    private AuthCardDetails authCardDetails;
-
-//    public CardAuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails) {
-//        super(charge);
-//        this.authCardDetails = authCardDetails;
-//    }
-
     public CardAuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails) {
         // NOTE: we don't store the ChargeEntity as we want to discourage code that deals with this request from
         // updating the charge in the database.
@@ -59,21 +52,6 @@ public record CardAuthorisationGatewayRequest (
                 charge.getAgreement(),
                 authCardDetails 
         );
-//        this.gatewayTransactionId = charge.getGatewayTransactionId();
-//        this.email = charge.getEmail();
-//        this.language = charge.getLanguage();
-//        this.moto = charge.isMoto();
-//        this.amount = String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
-//        this.description = charge.getDescription();
-//        this.reference = charge.getReference();
-//        this.govUkPayPaymentId = charge.getExternalId();
-//        this.credentials = Optional.ofNullable(charge.getGatewayAccountCredentialsEntity())
-//                .map(GatewayAccountCredentialsEntity::getCredentialsObject)
-//                .orElse(null);
-//        this.gatewayAccount = charge.getGatewayAccount();
-//        this.authorisationMode = charge.getAuthorisationMode();
-//        this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
-//        this.agreement = charge.getAgreement();
     }
     
     public CardAuthorisationGatewayRequest withNewTransactionId(String gatewayTransactionId) {
@@ -96,7 +74,6 @@ public record CardAuthorisationGatewayRequest (
                 other.agreement(),
                 authCardDetails
         );
-//        this.authCardDetails = authCardDetails;
     }
 
     public AuthCardDetails authCardDetails() {
