@@ -291,7 +291,7 @@ public class GatewayAccountResource {
         }
         CreateGatewayAccountResponse createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
 
-        return Response.created(createGatewayAccountResponse.getLocation()).entity(createGatewayAccountResponse).build();
+        return Response.created(createGatewayAccountResponse.location()).entity(createGatewayAccountResponse).build();
     }
 
     @PATCH

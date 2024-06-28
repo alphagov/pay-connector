@@ -43,18 +43,18 @@ public class GatewayAccountCredentialsRequestValidator {
     public static final String GATEWAY_MERCHANT_ID_PATH = "credentials/gateway_merchant_id";
 
     public void validateCreate(GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
-        if (gatewayAccountCredentialsRequest.getPaymentProvider() == null) {
+        if (gatewayAccountCredentialsRequest.paymentProvider() == null) {
             throw new ValidationException(List.of("Field(s) missing: [" + PAYMENT_PROVIDER_FIELD_NAME + ']'));
         }
 
-        var paymentGatewayName = PaymentGatewayName.valueFrom(gatewayAccountCredentialsRequest.getPaymentProvider());
+        var paymentGatewayName = PaymentGatewayName.valueFrom(gatewayAccountCredentialsRequest.paymentProvider());
 
         if (!(paymentGatewayName == WORLDPAY || paymentGatewayName == STRIPE)) {
             throw new ValidationException(List.of("Operation not supported for payment provider '"
                     + paymentGatewayName.getName() + "'"));
         }
 
-        Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap();
+        Map<String, String> credentials = gatewayAccountCredentialsRequest.credentials();
         if (credentials != null) {
             if (paymentGatewayName == WORLDPAY) {
                 throw new ValidationException(List.of("Field [credentials] is not supported for payment provider Worldpay"));

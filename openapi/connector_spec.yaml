@@ -4048,7 +4048,6 @@ components:
             example: "{\"stripe_account_id\":\"accnt_id\"}"
           example:
             stripe_account_id: accnt_id
-          writeOnly: true
         payment_provider:
           type: string
           description: "Payment provider. Accepted values - stripe, worldpay"

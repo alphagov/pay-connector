@@ -172,8 +172,8 @@ public class GatewayAccountCredentialsResource {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount -> {
-                    Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
-                    return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
+                    Map<String, String> credentials = gatewayAccountCredentialsRequest.credentials() == null ? Map.of() : gatewayAccountCredentialsRequest.credentials();
+                    return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.paymentProvider(), credentials);
                 })
                 .map(GatewayAccountCredentialsWithInternalId::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
@@ -248,8 +248,8 @@ public class GatewayAccountCredentialsResource {
 
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount -> {
-                    Map<String, String> credentials = gatewayAccountCredentialsRequest.getCredentialsAsMap() == null ? Map.of() : gatewayAccountCredentialsRequest.getCredentialsAsMap();
-                    return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.getPaymentProvider(), credentials);
+                    Map<String, String> credentials = gatewayAccountCredentialsRequest.credentials() == null ? Map.of() : gatewayAccountCredentialsRequest.credentials();
+                    return gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccount, gatewayAccountCredentialsRequest.paymentProvider(), credentials);
                 })
                 .map(GatewayAccountCredentials::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
