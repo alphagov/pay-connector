@@ -33,7 +33,7 @@ public class StripeFeeCalculator {
     }
     
     public static Long getTotalFeeAmount(List<Fee> feeList) {
-        return feeList.stream().map(Fee::getAmount).reduce(0L, Long::sum);
+        return feeList.stream().map(Fee::amount).reduce(0L, Long::sum);
     }
 
     private static Double getPlatformFee(Double feePercentage, Long grossChargeAmount) {

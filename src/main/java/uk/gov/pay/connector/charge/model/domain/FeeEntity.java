@@ -41,7 +41,7 @@ public class FeeEntity {
     }
 
     public FeeEntity(ChargeEntity chargeEntity, Instant createdDate, Fee fee) {
-        this(chargeEntity, createdDate, fee.getAmount(), fee.getFeeType());
+        this(chargeEntity, createdDate, fee.amount(), fee.feeType());
     }
 
     @Id
