@@ -10,26 +10,14 @@ import java.util.List;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ChargeEventsResponse {
+public record ChargeEventsResponse (
     @JsonProperty("charge_id")
     @Schema(example = "2c6vtn9pth38ppbmnt20d57t49")
-    private String chargeExternalId;
-    private List<TransactionEvent> events;
-
-    public ChargeEventsResponse(String chargeExternalId, List<TransactionEvent> events) {
-        this.chargeExternalId = chargeExternalId;
-        this.events = events;
-    }
-
+    String chargeExternalId,
+    
+    List<TransactionEvent> events
+){
     public static ChargeEventsResponse of(String chargeExternalId, List<TransactionEvent> events) {
         return new ChargeEventsResponse(chargeExternalId, events);
-    }
-
-    public String getChargeExternalId() {
-        return chargeExternalId;
-    }
-
-    public List<TransactionEvent> getEvents() {
-        return events;
     }
 }
