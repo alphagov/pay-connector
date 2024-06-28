@@ -117,10 +117,10 @@ public class RefundService {
                 charge.getGatewayTransactionId(),
                 gatewayAccountEntity.getId(),
                 availableAmount,
-                refundRequest.getAmount(),
+                refundRequest.amount(),
                 charge.getPaymentGatewayName(),
                 gatewayAccountEntity.getType(),
-                refundRequest.getUserExternalId());
+                refundRequest.userExternalId());
 
         return refundEntity;
     }
@@ -203,8 +203,8 @@ public class RefundService {
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public RefundEntity createRefundEntity(RefundRequest refundRequest, GatewayAccountEntity gatewayAccountEntity, Charge charge) {
-        RefundEntity refundEntity = new RefundEntity(refundRequest.getAmount(),
-                refundRequest.getUserExternalId(), refundRequest.getUserEmail(), charge.getExternalId());
+        RefundEntity refundEntity = new RefundEntity(refundRequest.amount(),
+                refundRequest.userExternalId(), refundRequest.userEmail(), charge.getExternalId());
         transitionRefundState(refundEntity, gatewayAccountEntity, RefundStatus.CREATED, charge);
         refundDao.persist(refundEntity);
 
@@ -229,15 +229,15 @@ public class RefundService {
     }
 
     private void checkIfRefundRequestIsInConflictOrTerminate(RefundRequest refundRequest, Charge reloadedCharge, long totalAmountToBeRefunded) {
-        if (totalAmountToBeRefunded != refundRequest.getAmountAvailableForRefund()) {
+        if (totalAmountToBeRefunded != refundRequest.amountAvailableForRefund()) {
             logger.info("Refund request has a mismatch on amount available for refund - charge_external_id={}, amount_actually_available_for_refund={}, refund_amount_available_in_request={}",
-                    reloadedCharge.getExternalId(), totalAmountToBeRefunded, refundRequest.getAmountAvailableForRefund());
+                    reloadedCharge.getExternalId(), totalAmountToBeRefunded, refundRequest.amountAvailableForRefund());
             throw RefundException.refundAmountAvailableMismatchException("Refund Amount Available Mismatch");
         }
     }
 
     private void checkIfRefundAmountWithinLimitOrTerminate(RefundRequest refundRequest, Charge reloadedCharge, ExternalChargeRefundAvailability refundAvailability, GatewayAccountEntity gatewayAccount, long totalAmountToBeRefunded) {
-        if (totalAmountToBeRefunded - refundRequest.getAmount() < 0) {
+        if (totalAmountToBeRefunded - refundRequest.amount() < 0) {
 
             logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}, amount_available_refund={}, amount_requested_refund={}",
                     reloadedCharge.getExternalId(),
@@ -247,7 +247,7 @@ public class RefundService {
                     reloadedCharge.getPaymentGatewayName(),
                     gatewayAccount.getType(),
                     totalAmountToBeRefunded,
-                    refundRequest.getAmount());
+                    refundRequest.amount());
 
             throw RefundException.notAvailableForRefundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
         }
