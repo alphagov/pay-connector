@@ -10,20 +10,11 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class CardTypesResponse {
-
-    @Schema(name = "card_types")
-    private final List<CardTypeEntity> cardTypes;
-
-    public CardTypesResponse(List<CardTypeEntity> cardTypeList) {
-        this.cardTypes = cardTypeList;
-    }
-
+public record CardTypesResponse (
+        @Schema(name = "card_types")
+        List<CardTypeEntity> cardTypes
+) {
     public static CardTypesResponse of(List<CardTypeEntity> cardTypes) {
         return new CardTypesResponse(cardTypes);
-    }
-
-    public List<CardTypeEntity> getCardTypes() {
-        return cardTypes;
     }
 }
