@@ -326,12 +326,12 @@ public class CardResource {
     )
     public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
         // Fields are removed from the MDC when the API responds in LoggingMDCResponseFilter 
-        MDC.put(SECURE_TOKEN, authoriseRequest.getOneTimeToken());
+        MDC.put(SECURE_TOKEN, authoriseRequest.oneTimeToken());
         authoriseRequest.validate();
 
-        TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(authoriseRequest.getOneTimeToken());
+        TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(authoriseRequest.oneTimeToken());
         MDCUtils.addChargeAndGatewayAccountDetailsToMDC(tokenEntity.getChargeEntity());
-        CardInformation cardInformation = motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
+        CardInformation cardInformation = motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.cardNumber());
 
         AuthorisationResponse response = cardAuthoriseService.doAuthoriseMotoApi(tokenEntity.getChargeEntity(), cardInformation, authoriseRequest);
         return handleAuthResponseForMotoApi(response);

@@ -64,10 +64,10 @@ public class AuthCardDetails {
 
     public static AuthCardDetails of(AuthoriseRequest authoriseRequest, ChargeEntity chargeEntity, CardInformation cardInformation) {
         AuthCardDetails authCardDetails = new AuthCardDetails();
-        authCardDetails.setCardNo(authoriseRequest.getCardNumber());
-        authCardDetails.setCardHolder(authoriseRequest.getCardholderName());
-        authCardDetails.setEndDate(CardExpiryDate.valueOf(authoriseRequest.getExpiryDate()));
-        authCardDetails.setCvc(authoriseRequest.getCvc());
+        authCardDetails.setCardNo(authoriseRequest.cardNumber());
+        authCardDetails.setCardHolder(authoriseRequest.cardholderName());
+        authCardDetails.setEndDate(CardExpiryDate.valueOf(authoriseRequest.expiryDate()));
+        authCardDetails.setCvc(authoriseRequest.cvc());
 
         authCardDetails.setCardBrand(cardInformation.getBrand());
         authCardDetails.setCorporateCard(cardInformation.isCorporate());
