@@ -273,9 +273,9 @@ public class ChargesApiResourceTest {
     private static void assertGenericErrorResponse(Response response, int status, String errorMessage) {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(response.getStatus(), is(status));
-        assertThat(errorResponse.getIdentifier(), is(ErrorIdentifier.GENERIC));
+        assertThat(errorResponse.identifier(), is(ErrorIdentifier.GENERIC));
         var errorIsPresentInMessages = errorResponse
-                .getMessages()
+                .messages()
                 .stream()
                 .anyMatch(message -> message
                         .contains(errorMessage));

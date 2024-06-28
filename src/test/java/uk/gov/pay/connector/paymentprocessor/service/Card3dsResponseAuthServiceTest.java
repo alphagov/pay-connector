@@ -390,7 +390,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
             fail("Exception not thrown.");
         } catch (OperationAlreadyInProgressRuntimeException e) {
             ErrorResponse response = (ErrorResponse) e.getResponse().getEntity();
-            assertThat(response.getMessages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
+            assertThat(response.messages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
         }
     }
 

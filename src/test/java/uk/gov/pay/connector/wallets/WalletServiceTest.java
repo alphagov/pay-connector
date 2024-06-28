@@ -92,7 +92,7 @@ public class WalletServiceTest {
         verify(mockWalletAuthoriseService).authorise(externalChargeId, applePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse) authorisationResponse.getEntity();
-        assertThat(response.getMessages(), contains("oops"));
+        assertThat(response.messages(), contains("oops"));
     }
 
     @Test
@@ -149,7 +149,7 @@ public class WalletServiceTest {
         verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
-        assertThat(response.getMessages(), contains("oops"));
+        assertThat(response.messages(), contains("oops"));
     }
 
     @Test
@@ -170,7 +170,7 @@ public class WalletServiceTest {
         verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(402));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
-        assertThat(response.getMessages(), contains("There was an error authorising the transaction."));
+        assertThat(response.messages(), contains("There was an error authorising the transaction."));
     }
 
     @Test
@@ -189,7 +189,7 @@ public class WalletServiceTest {
         verify(mockWalletAuthoriseService).authorise(externalChargeId, googlePayAuthRequest);
         assertThat(authorisationResponse.getStatus(), is(400));
         ErrorResponse response = (ErrorResponse)authorisationResponse.getEntity();
-        assertThat(response.getMessages(), contains("This transaction was declined."));
-        assertThat(response.getIdentifier(), is(ErrorIdentifier.AUTHORISATION_REJECTED));
+        assertThat(response.messages(), contains("This transaction was declined."));
+        assertThat(response.identifier(), is(ErrorIdentifier.AUTHORISATION_REJECTED));
     }
 }

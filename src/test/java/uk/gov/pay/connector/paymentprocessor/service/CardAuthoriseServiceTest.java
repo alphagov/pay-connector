@@ -695,7 +695,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         OperationAlreadyInProgressRuntimeException e = assertThrows(OperationAlreadyInProgressRuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeExternalId, authCardDetails));
         ErrorResponse response = (ErrorResponse) e.getResponse().getEntity();
-        assertThat(response.getMessages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
+        assertThat(response.messages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
     }
 
     @Test

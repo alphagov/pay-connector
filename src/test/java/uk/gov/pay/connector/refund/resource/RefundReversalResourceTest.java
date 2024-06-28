@@ -121,7 +121,7 @@ class RefundReversalResourceTest {
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
-        assertThat(errorResponse.getMessages(), hasItem("Refund with id [a-refund-id] not found."));
+        assertThat(errorResponse.messages(), hasItem("Refund with id [a-refund-id] not found."));
     }
 
     @Test
@@ -150,7 +150,7 @@ class RefundReversalResourceTest {
                 .post(Entity.json(Map.of("zendesk_ticket_id", "1223333343", "github_user_id", "Idris")));
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Refund with id [a-refund-id] not found for Charge wih id [a-charge-id] and gateway account with id [1234]."));
+        assertThat(errorResponse.messages(), hasItem("Refund with id [a-refund-id] not found for Charge wih id [a-charge-id] and gateway account with id [1234]."));
         assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
     }
 
@@ -169,7 +169,7 @@ class RefundReversalResourceTest {
 
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
-        assertThat(errorResponse.getMessages(), hasItem("Gateway Account with id [0] not found."));
+        assertThat(errorResponse.messages(), hasItem("Gateway Account with id [0] not found."));
 
     }
 
@@ -202,7 +202,7 @@ class RefundReversalResourceTest {
 
         assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
-        assertThat(errorResponse.getMessages(), hasItem("Refund with id [a-refund-id] not found for Charge wih id [a-charge-id] and gateway account with id [1234]."));
+        assertThat(errorResponse.messages(), hasItem("Refund with id [a-refund-id] not found for Charge wih id [a-charge-id] and gateway account with id [1234]."));
     }
 
     @Test
@@ -220,6 +220,6 @@ class RefundReversalResourceTest {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
 
         assertThat(response.getStatus(), is(Response.Status.NOT_FOUND.getStatusCode()));
-        assertThat(errorResponse.getMessages(), hasItem("Charge with id [a-charge-id] not found."));
+        assertThat(errorResponse.messages(), hasItem("Charge with id [a-charge-id] not found."));
     }
 }
