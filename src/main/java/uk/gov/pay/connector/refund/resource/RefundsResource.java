@@ -84,7 +84,7 @@ public class RefundsResource {
                                  @Parameter(example = "2c6vtn9pth38ppbmnt20d57t49", description = "Charge external ID")
                                  @PathParam("chargeId") String chargeExternalId,
                                  RefundRequest refundRequest, @Context UriInfo uriInfo) {
-        validateRefundRequest(refundRequest.getAmount());
+        validateRefundRequest(refundRequest.amount());
 
         ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId)
                 .map(charge -> refundService.doRefund(accountId, charge, refundRequest))
