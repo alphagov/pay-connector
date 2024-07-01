@@ -6,43 +6,40 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-public class CancelGatewayRequest implements GatewayRequest {
+import java.util.Optional;
 
-    private ChargeEntity charge;
-
-    private CancelGatewayRequest(ChargeEntity charge) {
-        this.charge = charge;
-    }
-
+public record CancelGatewayRequest (
+        ChargeEntity charge
+) implements GatewayRequest {
     public static CancelGatewayRequest valueOf(ChargeEntity charge) {
         return new CancelGatewayRequest(charge);
     }
 
-    public String getTransactionId() {
+    public String transactionId() {
         return charge.getGatewayTransactionId();
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
+    public GatewayAccountEntity gatewayAccount() {
         return charge.getGatewayAccount();
     }
 
     @Override
-    public GatewayOperation getRequestType() {
+    public GatewayOperation requestType() {
         return GatewayOperation.CANCEL;
     }
 
     @Override
-    public GatewayCredentials getGatewayCredentials() {
+    public GatewayCredentials gatewayCredentials() {
         return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
     }
 
     @Override
-    public AuthorisationMode getAuthorisationMode() {
+    public AuthorisationMode authorisationMode() {
         return charge.getAuthorisationMode();
     }
 
-    public String getExternalChargeId() {
+    public String externalChargeId() {
         return charge.getExternalId();
     }
 

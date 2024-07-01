@@ -35,12 +35,12 @@ public class StripeCustomerRequest extends StripePostRequest {
 
     public static StripeCustomerRequest of(CardAuthorisationGatewayRequest request, StripeGatewayConfig config, AgreementEntity agreement) {
         return new StripeCustomerRequest(
-                request.getGatewayAccount(),
-                request.getGovUkPayPaymentId(),
+                request.gatewayAccount(),
+                request.govUkPayPaymentId(),
                 config,
-                request.getAuthCardDetails(),
+                request.authCardDetails(),
                 agreement,
-                request.getGatewayCredentials()
+                request.gatewayCredentials()
         );
     }
 

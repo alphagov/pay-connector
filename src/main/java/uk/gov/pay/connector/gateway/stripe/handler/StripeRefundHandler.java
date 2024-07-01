@@ -49,10 +49,10 @@ public class StripeRefundHandler {
                 stripeChargeId = stripePaymentIntent.getCharge()
                         .map(StripeCharge::getId)
                         .orElseThrow(() -> new GatewayException.GenericGatewayException(
-                                String.format("Stripe charge not found for payment intent id %s", request.getTransactionId()))
+                                String.format("Stripe charge not found for payment intent id %s", request.transactionId()))
                         );
             } else {
-                stripeChargeId = request.getTransactionId();
+                stripeChargeId = request.transactionId();
             }
             StripeRefund refundResponse = refundCharge(request, stripeChargeId);
             transferFromConnectAccount(request, stripeChargeId);
@@ -72,12 +72,12 @@ public class StripeRefundHandler {
 
             if (e.getFamily() == SERVER_ERROR) {
                 logger.error("Refund failed for refund gateway request {}. Reason: {}. Status code from Stripe: {}.", request, e.getMessage(), e.getStatus());
-                GatewayError gatewayError = gatewayConnectionError("An internal server error occurred while refunding Transaction id: " + request.getTransactionId());
+                GatewayError gatewayError = gatewayConnectionError("An internal server error occurred while refunding Transaction id: " + request.transactionId());
                 return GatewayRefundResponse.fromGatewayError(gatewayError);
             }
 
             logger.error("Unrecognised response status when refunding. refund_external_id={}, status={}, response={}",
-                    request.getRefundExternalId(), e.getStatus(), e.getResponseFromGateway());
+                    request.refundExternalId(), e.getStatus(), e.getResponseFromGateway());
             throw new RuntimeException("Unrecognised response status when refunding.");
         } catch (GatewayException e) {
             logger.error("Refund failed for refund gateway request {}. GatewayException: {}.", request, e);
@@ -86,7 +86,7 @@ public class StripeRefundHandler {
     }
 
     private boolean usePaymentIntent(RefundGatewayRequest request) {
-        return request.getTransactionId().startsWith("pi_");
+        return request.transactionId().startsWith("pi_");
     }
     
     private StripePaymentIntent getPaymentIntent(RefundGatewayRequest request) throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
@@ -99,9 +99,9 @@ public class StripeRefundHandler {
         final String refundResponse = client.postRequestFor(stripeRefundRequest).getEntity();
         StripeRefund refund = jsonObjectMapper.getObject(refundResponse, StripeRefund.class);
         logger.info("As part of refund {} to refund charge id {} refunded stripe charge id {}",
-                request.getTransactionId(),
-                request.getChargeExternalId(),
-                request.getRefundExternalId()
+                request.transactionId(),
+                request.chargeExternalId(),
+                request.refundExternalId()
         );
 
         return refund;
@@ -112,8 +112,8 @@ public class StripeRefundHandler {
         String transferResponse = client.postRequestFor(StripeTransferInRequest.createRefundTransferRequest(request, stripeChargeId, stripeGatewayConfig)).getEntity();
         StripeTransfer stripeTransfer = jsonObjectMapper.getObject(transferResponse, StripeTransfer.class);
         logger.info("As part of refund {} refunding charge id {}, transferred net amount {} - transfer id {} -  from Stripe Connect account id {} in transfer group {}",
-                request.getRefundExternalId(),
-                request.getChargeExternalId(),
+                request.refundExternalId(),
+                request.chargeExternalId(),
                 stripeTransfer.getAmount(),
                 stripeTransfer.getId(),
                 stripeTransfer.getDestinationStripeAccountId(),

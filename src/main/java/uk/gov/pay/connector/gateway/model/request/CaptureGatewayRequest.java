@@ -11,36 +11,32 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
-public class CaptureGatewayRequest implements GatewayRequest {
-
-    private final ChargeEntity charge;
-
-    private CaptureGatewayRequest(ChargeEntity charge) {
-        this.charge = charge;
-    }
-
+public record CaptureGatewayRequest (
+        ChargeEntity charge
+) implements GatewayRequest {
     public String getAmountAsString() {
         return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
     }
     
-    public Long getAmount() {
+    public Long amount() {
         return charge.getAmount();
     }
     
-    public String getGatewayTransactionId() {
+    public String transactionId() {
         return charge.getGatewayTransactionId();
     }
     
-    public String getExternalId() {
+    public String externalId() {
         return charge.getExternalId();
     }
 
-    public Instant getCreatedDate() {
+    public Instant createdDate() {
         return charge.getCreatedDate();
     }
 
-    public List<ChargeEventEntity> getEvents() {
+    public List<ChargeEventEntity> events() {
         return charge.getEvents();
     }
     
@@ -49,22 +45,22 @@ public class CaptureGatewayRequest implements GatewayRequest {
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
+    public GatewayAccountEntity gatewayAccount() {
         return charge.getGatewayAccount();
     }
 
     @Override
-    public GatewayOperation getRequestType() {
+    public GatewayOperation requestType() {
         return GatewayOperation.CAPTURE;
     }
 
     @Override
-    public GatewayCredentials getGatewayCredentials() {
+    public GatewayCredentials gatewayCredentials() {
         return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
     }
 
     @Override
-    public AuthorisationMode getAuthorisationMode() {
+    public AuthorisationMode authorisationMode() {
         return charge.getAuthorisationMode();
     }
 

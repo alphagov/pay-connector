@@ -236,7 +236,7 @@ class ChargeExpiryServiceTest {
         assertThat(sweepResult.get("expiry-failed"), is(0));
 
         verify(mockPaymentProvider).cancel(cancelCaptor.capture());
-        assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
+        assertThat(cancelCaptor.getValue().transactionId(), is(chargeEntity.getGatewayTransactionId()));
     }
 
     @ParameterizedTest
@@ -278,7 +278,7 @@ class ChargeExpiryServiceTest {
         assertThat(sweepResult.get("expiry-failed"), is(0));
 
         verify(mockPaymentProvider).cancel(cancelCaptor.capture());
-        assertThat(cancelCaptor.getValue().getTransactionId(), is(chargeEntity.getGatewayTransactionId()));
+        assertThat(cancelCaptor.getValue().transactionId(), is(chargeEntity.getGatewayTransactionId()));
     }
 
 

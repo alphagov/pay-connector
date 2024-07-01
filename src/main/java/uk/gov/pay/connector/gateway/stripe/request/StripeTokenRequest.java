@@ -25,7 +25,7 @@ public class StripeTokenRequest extends StripePostRequest {
     }
 
     public static StripeTokenRequest of(ApplePayAuthorisationGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
-        return new StripeTokenRequest(request.getGatewayAccount(), stripeGatewayConfig, request.getGatewayCredentials(), request.getApplePayAuthRequest());
+        return new StripeTokenRequest(request.gatewayAccount(), stripeGatewayConfig, request.gatewayCredentials(), request.applePayAuthRequest());
     }
 
     @Override

@@ -76,7 +76,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
             StripePaymentIntent stripePaymentIntent;
             if (request.isSavePaymentInstrumentToAgreement()) {
-                StripeCustomer stripeCustomerResponse = createCustomer(request, request.getAgreement().orElseThrow(() -> new RuntimeException("Expected charge with isSavePaymentInstrumentToAgreement == true to have a saved agreement")));
+                StripeCustomer stripeCustomerResponse = createCustomer(request, request.agreement().orElseThrow(() -> new RuntimeException("Expected charge with isSavePaymentInstrumentToAgreement == true to have a saved agreement")));
                 var customerId = stripeCustomerResponse.getId();
                 stripePaymentIntent = createPaymentIntentForSetUpAgreement(request, stripePaymentMethodResponse.getId(), customerId);
                 logger.info("Created Stripe payment intent and stored payment details for recurring payment agreement",
@@ -133,7 +133,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
-            String tokenId = request.getGooglePayAuthRequest().getTokenId().orElseThrow(() -> new ValidationException(List.of("Field [token_id] is required")));
+            String tokenId = request.googlePayAuthRequest().getTokenId().orElseThrow(() -> new ValidationException(List.of("Field [token_id] is required")));
             StripePaymentIntent StripePaymentIntent = createPaymentIntentFromWalletToken(request, tokenId);
             return responseBuilder
                     .withResponse(StripeAuthorisationResponse.of(StripePaymentIntent)).build();

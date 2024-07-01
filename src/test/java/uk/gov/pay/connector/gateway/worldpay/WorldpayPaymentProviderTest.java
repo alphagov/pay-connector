@@ -306,8 +306,8 @@ class WorldpayPaymentProviderTest {
 
         verify(worldpayAuthoriseHandler).authoriseWithoutExemption(cardAuthorisationGatewayRequestArgumentCaptor.capture());
         CardAuthorisationGatewayRequest secondRequest = cardAuthorisationGatewayRequestArgumentCaptor.getValue();
-        assertThat(secondRequest.getTransactionId(), not(nullValue()));
-        assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
+        assertThat(secondRequest.transactionId(), not(nullValue()));
+        assertThat(secondRequest.transactionId(), not(chargeEntity.getGatewayTransactionId()));
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
         verifyEventEmitted(chargeEntity, EXEMPTION_REJECTED);
     }
@@ -330,8 +330,8 @@ class WorldpayPaymentProviderTest {
 
         verify(worldpayAuthoriseHandler).authoriseWithoutExemption(cardAuthorisationGatewayRequestArgumentCaptor.capture());
         CardAuthorisationGatewayRequest secondRequest = cardAuthorisationGatewayRequestArgumentCaptor.getValue();
-        assertThat(secondRequest.getTransactionId(), not(nullValue()));
-        assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
+        assertThat(secondRequest.transactionId(), not(nullValue()));
+        assertThat(secondRequest.transactionId(), not(chargeEntity.getGatewayTransactionId()));
         verifyChargeUpdatedWith(EXEMPTION_OUT_OF_SCOPE);
         verifyEventEmitted(chargeEntity, EXEMPTION_OUT_OF_SCOPE);
     }
@@ -417,8 +417,8 @@ class WorldpayPaymentProviderTest {
 
         verify(worldpayAuthoriseHandler).authoriseWithoutExemption(cardAuthorisationGatewayRequestArgumentCaptor.capture());
         CardAuthorisationGatewayRequest secondRequest = cardAuthorisationGatewayRequestArgumentCaptor.getValue();
-        assertThat(secondRequest.getTransactionId(), not(nullValue()));
-        assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
+        assertThat(secondRequest.transactionId(), not(nullValue()));
+        assertThat(secondRequest.transactionId(), not(chargeEntity.getGatewayTransactionId()));
 
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());

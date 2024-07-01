@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
                 .withCorporateSurcharge(250L)
                 .build();
         CardAuthorisationGatewayRequest gatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, null);
-        assertThat(gatewayRequest.getAmount(), is("2250"));
+        assertThat(gatewayRequest.amount(), is("2250"));
     }
     
     @Test
@@ -26,6 +26,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
                 .withAmount(2000L)
                 .build();
         CardAuthorisationGatewayRequest gatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, null);
-        assertThat(gatewayRequest.getAmount(), is("2000"));
+        assertThat(gatewayRequest.amount(), is("2000"));
     }
 }

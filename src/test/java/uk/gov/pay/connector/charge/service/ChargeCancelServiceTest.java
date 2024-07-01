@@ -322,9 +322,9 @@ class ChargeCancelServiceTest {
         return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<CancelGatewayRequest>() {
             @Override
             protected boolean matchesSafely(CancelGatewayRequest cancelGatewayRequest) {
-                return cancelGatewayRequest.getGatewayAccount().equals(chargeEntity.getGatewayAccount()) &&
-                        cancelGatewayRequest.getRequestType().equals(GatewayOperation.CANCEL) &&
-                        cancelGatewayRequest.getTransactionId().equals(chargeEntity.getGatewayTransactionId());
+                return cancelGatewayRequest.gatewayAccount().equals(chargeEntity.getGatewayAccount()) &&
+                        cancelGatewayRequest.requestType().equals(GatewayOperation.CANCEL) &&
+                        cancelGatewayRequest.transactionId().equals(chargeEntity.getGatewayTransactionId());
             }
 
             @Override

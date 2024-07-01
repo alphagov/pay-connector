@@ -8,70 +8,32 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-public class RefundGatewayRequest implements GatewayRequest {
+import java.util.Optional;
 
-    private final GatewayAccountEntity gatewayAccountEntity;
-    private final String amount;
-    private final String transactionId;
-    private final String refundExternalId;
-    private final String chargeExternalId;
-    private final GatewayAccountCredentialsEntity credentialsEntity;
-    private final AuthorisationMode authorisationMode;
-    private boolean isForRecurringPayment;
+public record RefundGatewayRequest (
+    GatewayAccountEntity gatewayAccount,
+    String amount,
+    String transactionId,
+    String refundExternalId,
+    String chargeExternalId,
+    GatewayAccountCredentialsEntity credentialsEntity,
+    AuthorisationMode authorisationMode,
+    boolean isForRecurringPayment
+) implements GatewayRequest {
 
-    private RefundGatewayRequest(String transactionId, GatewayAccountEntity gatewayAccount,
-                                 String amount, String refundExternalId, String chargeExternalId,
-                                 GatewayAccountCredentialsEntity credentialsEntity,
-                                 AuthorisationMode authorisationMode, boolean isForRecurringPayment) {
-        this.transactionId = transactionId;
-        this.gatewayAccountEntity = gatewayAccount;
-        this.amount = amount;
-        this.refundExternalId = refundExternalId;
-        this.chargeExternalId = chargeExternalId;
-        this.credentialsEntity = credentialsEntity;
-        this.authorisationMode = authorisationMode;
-        this.isForRecurringPayment = isForRecurringPayment;
-    }
-
-    public String getAmount() {
-        return amount;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public String getChargeExternalId() {
-        return chargeExternalId;
+    @Override
+    public GatewayAccountEntity gatewayAccount() {
+        return gatewayAccount;
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
-        return gatewayAccountEntity;
-    }
-
-    @Override
-    public GatewayOperation getRequestType() {
+    public GatewayOperation requestType() {
         return GatewayOperation.REFUND;
     }
 
     @Override
-    public GatewayCredentials getGatewayCredentials() {
+    public GatewayCredentials gatewayCredentials() {
         return credentialsEntity.getCredentialsObject();
-    }
-
-    @Override
-    public AuthorisationMode getAuthorisationMode() {
-        return authorisationMode;
-    }
-
-    public String getRefundExternalId() {
-        return refundExternalId;
-    }
-
-    @Override
-    public boolean isForRecurringPayment() {
-        return isForRecurringPayment;
     }
 
     /**
@@ -87,9 +49,9 @@ public class RefundGatewayRequest implements GatewayRequest {
                                                GatewayAccountEntity gatewayAccountEntity,
                                                GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         return new RefundGatewayRequest(
-                charge.getGatewayTransactionId(),
                 gatewayAccountEntity,
                 String.valueOf(refundEntity.getAmount()),
+                charge.getGatewayTransactionId(),
                 refundEntity.getExternalId(),
                 charge.getExternalId(),
                 gatewayAccountCredentialsEntity,

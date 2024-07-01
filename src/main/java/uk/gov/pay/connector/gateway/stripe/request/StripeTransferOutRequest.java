@@ -25,12 +25,12 @@ public class StripeTransferOutRequest extends StripeTransferRequest {
     public static StripeTransferOutRequest of(String amount, String stripeChargeId, CaptureGatewayRequest request, StripeGatewayConfig stripeGatewayConfig) {
         return new StripeTransferOutRequest(
                 amount,
-                request.getGatewayAccount(),
+                request.gatewayAccount(),
                 stripeChargeId,
-                request.getExternalId(),
+                request.externalId(),
                 stripeGatewayConfig,
-                request.getExternalId(),
-                request.getGatewayCredentials());
+                request.externalId(),
+                request.gatewayCredentials());
     }
 
     @Override

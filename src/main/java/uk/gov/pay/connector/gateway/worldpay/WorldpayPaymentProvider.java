@@ -151,11 +151,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public ChargeQueryResponse queryPaymentStatus(ChargeQueryGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = inquiryClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                gatewayUrlMap.get(request.gatewayAccount().getType()),
                 WORLDPAY,
-                request.getGatewayAccount().getType(),
+                request.gatewayAccount().getType(),
                 buildQuery(request),
-                getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment())
+                getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment())
         );
         GatewayResponse<WorldpayQueryResponse> worldpayGatewayResponse = getWorldpayGatewayResponse(response, WorldpayQueryResponse.class);
 
@@ -184,7 +184,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .orElseThrow(() ->
                         new WebApplicationException(format(
                                 "Unable to query charge %s - an error occurred: %s",
-                                request.getChargeExternalId(),
+                                request.chargeExternalId(),
                                 worldpayGatewayResponse
                         )));
     }
@@ -196,9 +196,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
     private GatewayOrder buildQuery(ChargeQueryGatewayRequest request) {
         return aWorldpayInquiryRequestBuilder()
-                .withTransactionId(request.getTransactionId())
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(),
-                        request.getAuthorisationMode(), request.isForRecurringPayment()))
+                .withTransactionId(request.transactionId())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(),
+                        request.authorisationMode(), request.isForRecurringPayment()))
                 .build();
     }
 
@@ -218,7 +218,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
 
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getGatewayAccount(), request.getAuthCardDetails(), request.isSavePaymentInstrumentToAgreement());
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.gatewayAccount(), request.authCardDetails(), request.isSavePaymentInstrumentToAgreement());
 
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
@@ -288,7 +288,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
-        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        GatewayAccountEntity gatewayAccount = request.gatewayAccount();
         return gatewayAccount.isRequires3ds() && gatewayAccount.getWorldpay3dsFlexCredentials()
                 .map(Worldpay3dsFlexCredentials::isExemptionEngineEnabled)
                 .orElse(false);
@@ -302,15 +302,15 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     .orElse(emptyList());
 
             GatewayClient.Response response = authoriseClient.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    gatewayUrlMap.get(request.gatewayAccount().getType()),
                     WORLDPAY,
-                    request.getGatewayAccount().getType(),
+                    request.gatewayAccount().getType(),
                     build3dsResponseAuthOrder(request),
                     cookies,
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                    getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
             GatewayResponse<WorldpayOrderStatusResponse> gatewayResponse = getWorldpayGatewayResponse(response);
 
-            calculateAndStoreExemption(request.getCharge(), gatewayResponse);
+            calculateAndStoreExemption(request.charge(), gatewayResponse);
 
             LOGGER.info(format("Worldpay 3ds authorisation response for %s : %s", request.getChargeExternalId(), sanitiseMessage(response.getEntity())));
 
@@ -350,22 +350,22 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
         GatewayClient.Response response = cancelClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                gatewayUrlMap.get(request.gatewayAccount().getType()),
                 WORLDPAY,
-                request.getGatewayAccount().getType(),
+                request.gatewayAccount().getType(),
                 buildCancelOrder(request),
-                getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                getWorldpayAuthHeader(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()));
         return getWorldpayGatewayResponse(response);
     }
 
     @Override
     public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
          deleteTokenClient.postRequestFor(
-                gatewayUrlMap.get(request.getGatewayAccountType()),
+                gatewayUrlMap.get(request.gatewayAccountType()),
                 WORLDPAY,
-                request.getGatewayAccountType(),
+                request.gatewayAccountType(),
                 buildDeleteTokenOrder(request),
-                getWorldpayAuthHeaderForManagingRecurringAuthTokens(request.getGatewayCredentials()));
+                getWorldpayAuthHeaderForManagingRecurringAuthTokens(request.gatewayCredentials()));
     }
     
     @Override
@@ -382,28 +382,28 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()
-                .withPaResponse3ds(request.getAuth3dsResult().getPaResponse())
+                .withPaResponse3ds(request.auth3dsResult().getPaResponse())
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getChargeExternalId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
                 .build();
     }
 
     private GatewayOrder buildCancelOrder(CancelGatewayRequest request) {
         return aWorldpayCancelOrderRequestBuilder()
-                .withTransactionId(request.getTransactionId())
-                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
+                .withTransactionId(request.transactionId())
+                .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.gatewayCredentials(), request.authorisationMode(), request.isForRecurringPayment()))
                 .build();
     }
 
     private GatewayOrder buildDeleteTokenOrder(DeleteStoredPaymentDetailsGatewayRequest request) {
-        WorldpayCredentials worldpayCredentials = (WorldpayCredentials) request.getGatewayCredentials();
+        WorldpayCredentials worldpayCredentials = (WorldpayCredentials) request.gatewayCredentials();
         String merchantCode = worldpayCredentials.getRecurringCustomerInitiatedCredentials()
                 .map(WorldpayMerchantCodeCredentials::getMerchantCode)
                 .orElseThrow(MissingCredentialsForRecurringPaymentException::new);
         return aWorldpayDeleteTokenOrderRequestBuilder()
-                .withAgreementId(request.getAgreementExternalId())
-                .withPaymentTokenId(request.getRecurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY))
+                .withAgreementId(request.agreementExternalId())
+                .withPaymentTokenId(request.recurringAuthToken().get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY))
                 .withMerchantCode(merchantCode)
                 .build();
     }

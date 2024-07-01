@@ -63,12 +63,12 @@ public class SandboxPaymentProvider implements PaymentProvider {
     
     @Override
     public GatewayResponse<BaseAuthoriseResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
-        return authorise(request.getAuthCardDetails().getCardNo());
+        return authorise(request.authCardDetails().getCardNo());
     }
 
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
-        return authorise(request.getAuthCardDetails().getCardNo());
+        return authorise(request.authCardDetails().getCardNo());
     }
 
     @Override

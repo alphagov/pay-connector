@@ -59,7 +59,7 @@ public class StripeCancelHandler {
             }).build();
         } catch (GatewayErrorException e) {
             logger.error("Cancel failed for gateway transaction id {}. Failure message from Stripe: {}. Charge External Id: {}. Response code from Stripe: {}",
-                    request.getTransactionId(), e.getResponseFromGateway(), request.getExternalChargeId(), e.getStatus());
+                    request.transactionId(), e.getResponseFromGateway(), request.externalChargeId(), e.getStatus());
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         } catch (GenericGatewayException | GatewayConnectionTimeoutException e) {
             return responseBuilder.withGatewayError(e.toGatewayError()).build();

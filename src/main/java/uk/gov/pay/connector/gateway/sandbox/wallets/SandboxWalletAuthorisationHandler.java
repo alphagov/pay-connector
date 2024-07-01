@@ -15,11 +15,11 @@ public class SandboxWalletAuthorisationHandler {
     }
     
     public GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest request) {
-        return sandboxGatewayResponseGenerator.getSandboxGatewayWalletResponse(request.getDescription());
+        return sandboxGatewayResponseGenerator.getSandboxGatewayWalletResponse(request.description());
     }
 
     public GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest request) {
-        return sandboxGatewayResponseGenerator.getSandboxGatewayWalletResponse(request.getDescription());
+        return sandboxGatewayResponseGenerator.getSandboxGatewayWalletResponse(request.description());
     }
     
 }

@@ -892,9 +892,9 @@ public class RefundServiceTest {
     private ArgumentMatcher<RefundGatewayRequest> aRefundRequestWith(ChargeEntity capturedCharge, long amountInPence) {
         return object -> {
             RefundGatewayRequest refundGatewayRequest = object;
-            return refundGatewayRequest.getGatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
-                    refundGatewayRequest.getTransactionId().equals(capturedCharge.getGatewayTransactionId()) &&
-                    refundGatewayRequest.getAmount().equals(String.valueOf(amountInPence));
+            return refundGatewayRequest.gatewayAccount().equals(capturedCharge.getGatewayAccount()) &&
+                    refundGatewayRequest.transactionId().equals(capturedCharge.getGatewayTransactionId()) &&
+                    refundGatewayRequest.amount().equals(String.valueOf(amountInPence));
         };
     }
 

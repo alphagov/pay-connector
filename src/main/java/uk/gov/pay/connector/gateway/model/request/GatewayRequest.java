@@ -5,14 +5,16 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
+import java.util.Optional;
+
 public interface GatewayRequest {
-    GatewayAccountEntity getGatewayAccount();
+    GatewayAccountEntity gatewayAccount();
 
-    GatewayOperation getRequestType();
+    GatewayOperation requestType();
 
-    GatewayCredentials getGatewayCredentials();
+    GatewayCredentials gatewayCredentials();
 
-    AuthorisationMode getAuthorisationMode();
+    AuthorisationMode authorisationMode();
     
     boolean isForRecurringPayment();
 }

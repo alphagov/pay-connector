@@ -7,48 +7,31 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-public class ChargeQueryGatewayRequest implements GatewayRequest {
-    
-    private final GatewayAccountEntity gatewayAccountEntity;
-    private final GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
-    private final String chargeExternalId;
-    private final String transactionId;
-    private final AuthorisationMode authorisationMode;
-    private boolean isForRecurringPayment;
+import java.util.Optional;
 
-    public ChargeQueryGatewayRequest(GatewayAccountEntity gatewayAccountEntity, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
-                                     String chargeExternalId, String transactionId, AuthorisationMode authorisationMode, boolean isForRecurringPayment) {
-        this.gatewayAccountEntity = gatewayAccountEntity;
-        this.gatewayAccountCredentialsEntity = gatewayAccountCredentialsEntity;
-        this.chargeExternalId = chargeExternalId;
-        this.transactionId = transactionId;
-        this.authorisationMode = authorisationMode;
-        this.isForRecurringPayment = isForRecurringPayment;
+public record ChargeQueryGatewayRequest (    
+    GatewayAccountEntity gatewayAccount,
+    GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity,
+    String chargeExternalId,
+    String transactionId,
+    AuthorisationMode authorisationMode,
+    boolean isForRecurringPayment
+) implements GatewayRequest {
+    @Override
+    public GatewayAccountEntity gatewayAccount() {
+        return gatewayAccount;
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
-        return gatewayAccountEntity;
-    }
-
-    @Override
-    public GatewayOperation getRequestType() {
+    public GatewayOperation requestType() {
         return GatewayOperation.QUERY;
     }
 
-    public String getChargeExternalId() {
-        return chargeExternalId;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public AuthorisationMode getAuthorisationMode() {
-        return authorisationMode;
-    }
-
     @Override
+    public GatewayCredentials gatewayCredentials() {
+        return gatewayAccountCredentialsEntity.getCredentialsObject();
+    }
+
     public GatewayCredentials getGatewayCredentials() {
         return gatewayAccountCredentialsEntity.getCredentialsObject();
     }

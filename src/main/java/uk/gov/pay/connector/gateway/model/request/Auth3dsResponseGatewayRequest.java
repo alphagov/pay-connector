@@ -11,20 +11,10 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Optional;
 
-public class Auth3dsResponseGatewayRequest implements GatewayRequest {
-
-    private final ChargeEntity charge;
-    private final Auth3dsResult auth3dsResult;
-
-    public Auth3dsResponseGatewayRequest(ChargeEntity charge, Auth3dsResult auth3dsResult) {
-        this.charge = charge;
-        this.auth3dsResult = auth3dsResult;
-    }
-
-    public Auth3dsResult getAuth3dsResult() {
-        return auth3dsResult;
-    }
-
+public record Auth3dsResponseGatewayRequest (
+    ChargeEntity charge,
+    Auth3dsResult auth3dsResult
+)  implements GatewayRequest {
     public Optional<String> getTransactionId() {
         return Optional.ofNullable(charge.getGatewayTransactionId());
     }
@@ -36,30 +26,22 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
     public Optional<ProviderSessionIdentifier> getProviderSessionId() {
         return Optional.ofNullable(charge.getProviderSessionId()).map(ProviderSessionIdentifier::of);
     }
-
-    public ChargeEntity getCharge() {
-        return charge;
+    
+    public Optional<String> transactionId() {
+        return Optional.ofNullable(charge.getGatewayTransactionId());
     }
 
     @Override
-    public GatewayAccountEntity getGatewayAccount() {
-        return charge.getGatewayAccount();
-    }
+    public GatewayAccountEntity gatewayAccount() { return charge.getGatewayAccount(); }
 
     @Override
-    public GatewayOperation getRequestType() {
-        return GatewayOperation.AUTHORISE;
-    }
+    public GatewayOperation requestType() { return GatewayOperation.AUTHORISE; }
 
     @Override
-    public GatewayCredentials getGatewayCredentials() {
-        return charge.getGatewayAccountCredentialsEntity().getCredentialsObject();
-    }
+    public GatewayCredentials gatewayCredentials() { return charge.getGatewayAccountCredentialsEntity().getCredentialsObject(); }
 
     @Override
-    public AuthorisationMode getAuthorisationMode() {
-        return charge.getAuthorisationMode();
-    }
+    public AuthorisationMode authorisationMode() { return charge.getAuthorisationMode(); }
 
     @Override
     public boolean isForRecurringPayment() {
@@ -69,12 +51,8 @@ public class Auth3dsResponseGatewayRequest implements GatewayRequest {
     public static Auth3dsResponseGatewayRequest valueOf(ChargeEntity charge, Auth3dsResult auth3DsResult) {
         return new Auth3dsResponseGatewayRequest(charge, auth3DsResult);
     }
-
-    public String getAmount() {
-        return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
-    }
-
-    public String getDescription() {
-        return charge.getDescription();
-    }
+    
+    public String amount() { return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge)); }
+    
+    public String description() { return charge.getDescription(); }
 }
