@@ -138,10 +138,10 @@ public class ChargeExpungeService {
             logger.info("Charge expunged from connector {}", kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
         } else {
             if (hasChargeBeenParityCheckedBefore) {
-                logger.error("Charge cannot be expunged because parity check with ledger repeatedly failed",
+                logger.warn("Charge cannot be expunged because parity check with ledger repeatedly failed",
                         kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
             } else {
-                logger.info("Charge cannot be expunged because parity check with ledger failed",
+                logger.warn("Charge cannot be expunged because parity check with ledger failed",
                         kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
             }
         }
