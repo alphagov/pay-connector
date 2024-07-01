@@ -99,7 +99,7 @@ public class ChargeEventsResourceIT {
             //verify that a get request returns the correct transaction events
             //each of the charge events added to the database has a distinct internal state but these map to just three external states
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
                     .then()
                     .statusCode(200)
                     .body("charge_id", is(CHARGE_EXTERNAL_ID))
@@ -150,7 +150,7 @@ public class ChargeEventsResourceIT {
             //each of the charge events added to the database has a distinct internal state but these map to just three external states
             //each of the refund events added to the database has a distinct internal state but these map to just two external states for each refund
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("charge_id", is(testCharge.getExternalChargeId()))
@@ -167,7 +167,7 @@ public class ChargeEventsResourceIT {
         @Test
         public void shouldReturn404WhenServiceIdIsIncorrect() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", "incorrect-service-id", GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s/events", "incorrect-service-id", GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
                     .then()
                     .contentType(JSON)
                     .statusCode(NOT_FOUND.getStatusCode())
@@ -178,7 +178,7 @@ public class ChargeEventsResourceIT {
         @Test
         public void shouldReturn404WhenChargeIdDoesNotExist() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/accountType/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, "non-existent-charge"))
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, "non-existent-charge"))
                     .then()
                     .contentType(JSON)
                     .statusCode(NOT_FOUND.getStatusCode())

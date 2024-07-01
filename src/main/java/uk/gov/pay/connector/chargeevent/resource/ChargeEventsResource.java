@@ -67,7 +67,7 @@ public class ChargeEventsResource {
     }
 
     @GET
-    @Path("/v1/api/service/{serviceId}/accountType/{accountType}/charges/{chargeId}/events")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/events")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Get transaction history for a charge",
