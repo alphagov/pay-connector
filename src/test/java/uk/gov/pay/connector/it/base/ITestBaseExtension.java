@@ -41,9 +41,9 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
@@ -187,7 +187,6 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                     CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
             );
         }
-
 
         credentialParams = anAddGatewayAccountCredentialsParams()
                 .withId(gatewayAccountCredentialsId)
@@ -350,11 +349,6 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
 
     public static String captureChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
-    }
-    
-    public static String captureUrlByChargeIdForAwaitingCaptureCharge(String chargeId) {
-        return "/v1/api/charges/{chargeId}/capture"
-                .replace("{chargeId}", chargeId);
     }
 
     public static String cancelChargeUrlFor(String accountId, String chargeId) {

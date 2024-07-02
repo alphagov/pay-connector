@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.exception.ConflictRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
@@ -34,40 +35,40 @@ public class DelayedCaptureService {
         this.captureQueue = captureQueue;
     }
 
+    @Transactional
     public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId, Long accountId) {
-        ChargeEntity charge = updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(externalId, accountId);
+        ChargeEntity charge = chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId)
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+        updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(charge);
         addChargeToCaptureQueue(charge);
         return charge;
     }
 
     @Transactional
-    public ChargeEntity updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(String externalId, Long accountId) {
-        return chargeDao.findByExternalIdAndGatewayAccount(externalId, accountId).map(charge -> {
-            switch (fromString(charge.getStatus())) {
-                case AWAITING_CAPTURE_REQUEST:
-                    try {
-                        chargeService.transitionChargeState(charge, CAPTURE_APPROVED);
-                    } catch (InvalidStateTransitionException e) {
-                        throw new ConflictRuntimeException(charge.getExternalId(),
-                                "attempt to perform delayed capture on invalid charge state " + e.getMessage());
-                    }
-
-                    return charge;
-
-                case CAPTURE_APPROVED:
-                case CAPTURE_APPROVED_RETRY:
-                case CAPTURE_READY:
-                case CAPTURE_SUBMITTED:
-                case CAPTURED:
-                    return charge;
-
-                default:
+    public ChargeEntity markDelayedCaptureChargeAsCaptureApproved(String externalId, String serviceId, GatewayAccountType accountType) {
+        ChargeEntity charge = chargeDao.findByExternalIdAndServiceIdAndAccountType(externalId, serviceId, accountType)
+                .orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+        updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(charge);
+        addChargeToCaptureQueue(charge);
+        return charge;
+    }
+    
+    public ChargeEntity updateStatusToCaptureApprovedIfCurrentStatusAwaitingCaptureRequest(ChargeEntity charge) {
+        return switch (fromString(charge.getStatus())) {
+            case AWAITING_CAPTURE_REQUEST -> {
+                try {
+                    chargeService.transitionChargeState(charge, CAPTURE_APPROVED);
+                } catch (InvalidStateTransitionException e) {
                     throw new ConflictRuntimeException(charge.getExternalId(),
-                            format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST)
-                    );
+                            "attempt to perform delayed capture on invalid charge state " + e.getMessage());
+                }
+                yield charge;
             }
-
-        }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
+            case CAPTURE_APPROVED, CAPTURE_APPROVED_RETRY, CAPTURE_READY, CAPTURE_SUBMITTED, CAPTURED -> charge;
+            default -> throw new ConflictRuntimeException(charge.getExternalId(),
+                    format("attempt to perform delayed capture on charge not in %s state.", AWAITING_CAPTURE_REQUEST)
+            );
+        };
     }
 
     private void addChargeToCaptureQueue(ChargeEntity charge) {
