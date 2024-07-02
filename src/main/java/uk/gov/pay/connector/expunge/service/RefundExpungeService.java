@@ -96,7 +96,7 @@ public class RefundExpungeService {
                 expungeRefund(refundEntity);
                 logger.info("Refund expunged from connector {}", kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()));
             } else if (hasRefundBeenParityCheckedBefore) {
-                logger.error("Refund cannot be expunged because parity check with ledger repeatedly failed",
+                logger.warn("Refund cannot be expunged because parity check with ledger repeatedly failed",
                         kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()));
             } else {
                 logger.info("Refund cannot be expunged because parity check with ledger failed",
