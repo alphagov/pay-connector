@@ -59,13 +59,13 @@ worldpay:
       readTimeout: 50000ms
     cancel:
       # Cancel median time is 500ms and done synchronously. Leave a bit of headroom since we don't have retries on this.
-      readTimeout: 4000ms
+      readTimeout: 5000ms
     refund:
       # Refund median time is 500ms and done synchronously. Leave a bit of headroom since we don't have retries on this.
-      readTimeout: 4000ms
+      readTimeout: 5000ms
     capture:
       # Capture median time is 200ms. We can be quite agressive in the timeout since we have a retry mechanism.
-      readTimeout: 2000ms
+      readTimeout: 3000ms
 
 sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS}
