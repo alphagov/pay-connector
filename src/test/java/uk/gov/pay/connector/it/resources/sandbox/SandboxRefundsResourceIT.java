@@ -326,7 +326,7 @@ public class SandboxRefundsResourceIT  {
                         .withRefundSummary(refundSummary)
                         .withPaymentProvider(testBaseExtension.getPaymentProvider())
                         .build();
-                app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
+                app.getLedgerStub().returnLedgerTransaction(chargeExternalId, defaultTestAccount.getAccountId(), charge);
 
                 // add one refund that is still in connector and another that is only in ledger to check
                 // that both are used when calculating refundability
@@ -365,7 +365,7 @@ public class SandboxRefundsResourceIT  {
                         .withRefundSummary(refundSummary)
                         .withPaymentProvider(testBaseExtension.getPaymentProvider())
                         .build();
-                app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
+                app.getLedgerStub().returnLedgerTransaction(chargeExternalId, defaultTestAccount.getAccountId(), charge);
 
                 // add one refund that is still in connector and another that is only in ledger to check
                 // that both are used when calculating refundability
@@ -400,7 +400,7 @@ public class SandboxRefundsResourceIT  {
                         .withAmount(1000L)
                         .withRefundSummary(refundSummary)
                         .build();
-                app.getLedgerStub().returnLedgerTransaction(chargeExternalId, charge);
+                app.getLedgerStub().returnLedgerTransaction(chargeExternalId, defaultTestAccount.getAccountId(), charge);
 
                 app.getLedgerStub().returnErrorForFindRefundsForPayment(chargeExternalId);
 
