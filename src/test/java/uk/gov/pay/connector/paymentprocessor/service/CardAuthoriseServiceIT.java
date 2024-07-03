@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -18,6 +17,8 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 
 public class CardAuthoriseServiceIT {
     @RegisterExtension
@@ -35,7 +36,7 @@ public class CardAuthoriseServiceIT {
     
     @Test
     void shouldAuthoriseSandboxWebPayment() {
-        String chargeExternalId = testBaseExtension.addCharge(ChargeStatus.ENTERING_CARD_DETAILS);
+        String chargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS));
         var response = app.getInstanceFromGuiceContainer(CardAuthoriseService.class)
                 .doAuthoriseWeb(chargeExternalId, AuthCardDetailsFixture.anAuthCardDetails().build());
         assertThat(response.getGatewayError(), is(Optional.empty()));
@@ -70,7 +71,8 @@ public class CardAuthoriseServiceIT {
 
     @Test
     void shouldAuthoriseRecurringSandboxAgreementSetUpAndDeclineSubsequentRecurringPayment() {
-        String setupAgreementChargeId = testBaseExtension.addCharge(ChargeStatus.ENTERING_CARD_DETAILS);
+        String setupAgreementChargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS));
         ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS, SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS, null);
 
         var chargeRecurring = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
@@ -86,5 +88,4 @@ public class CardAuthoriseServiceIT {
         Map<String, Object> chargeUpdated = app.getDatabaseTestHelper().getChargeByExternalId(userNotPresentChargeId.toString());
         assertThat(chargeUpdated.get("can_retry"), is(false));
     }
-
 }

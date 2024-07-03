@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
@@ -25,14 +24,11 @@ import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
-import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.RestAssuredClient;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -117,7 +113,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     private final DatabaseTestHelper databaseTestHelper;
     private final int appLocalPort;
     
-    public  ITestBaseExtension(String paymentProvider, int appLocalPort, DatabaseTestHelper databaseTestHelper) {
+    public ITestBaseExtension(String paymentProvider, int appLocalPort, DatabaseTestHelper databaseTestHelper) {
         this.paymentProvider = paymentProvider;
         this.databaseTestHelper = databaseTestHelper;
         this.appLocalPort = appLocalPort;
@@ -406,69 +402,42 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         return chargeId;
     }
 
-    public String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate) {
-        return addChargeAndCardDetails(status, reference, fromDate, "");
-
-    }
-
-    public String addChargeAndCardDetails(ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
-        return addChargeAndCardDetails(nextLong(), status, reference, fromDate, cardBrand);
-    }
-
-    public String addCharge(ChargeStatus status) {
-        return addCharge(status, "ref", Instant.now(), RandomIdGenerator.newId());
-    }
-
-    public String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId) {
-        return addCharge(status, reference, createdDate, transactionId, "tokenId", WEB);
-    }
-
-    public String addCharge(ChargeStatus status, String reference, Instant createdDate, String transactionId, String tokenId, AuthorisationMode authorisationMode) {
+    public String addCharge(AddChargeParameters.Builder builder) {
         long chargeId = RandomUtils.nextInt();
         String externalChargeId = "charge" + chargeId;
-        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        addCharge(chargeId, externalChargeId, status, ServicePaymentReference.of(reference), createdDate, transactionId, paymentProvider, authorisationMode);
-        databaseTestHelper.addToken(chargeId, tokenId);
-        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
+        builder.withChargeId(chargeId)
+                .withExternalChargeId(externalChargeId)
+                .withPaymentProvider(paymentProvider)
+                .withAuthorisationMode(WEB);
+        AddChargeParameters addChargeParameters = builder.build();
+        addCharge(addChargeParameters);
+        databaseTestHelper.addToken(chargeId, "tokenId");
+        databaseTestHelper.addEvent(chargeId, addChargeParameters.chargeStatus().getValue());
         databaseTestHelper.updateChargeCardDetails(
                 chargeId,
                 AuthCardDetailsFixture.anAuthCardDetails().build());
         return externalChargeId;
     }
 
-    private void addCharge(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
-                           ServicePaymentReference reference, Instant createdDate, String transactionId,
-                           String paymentProvider, AuthorisationMode authorisationMode) {
+    private void addCharge(AddChargeParameters addChargeParameters) {
         databaseTestHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
+                .withChargeId(addChargeParameters.chargeId())
+                .withExternalChargeId(addChargeParameters.externalChargeId())
                 .withGatewayAccountId(accountId)
                 .withServiceId(SERVICE_ID)
                 .withAmount(AMOUNT)
                 .withPaymentProvider(paymentProvider)
-                .withStatus(chargeStatus)
-                .withTransactionId(transactionId)
-                .withReference(reference)
-                .withCreatedDate(createdDate)
+                .withStatus(addChargeParameters.chargeStatus())
+                .withTransactionId(addChargeParameters.transactionId())
+                .withReference(addChargeParameters.reference())
+                .withCreatedDate(addChargeParameters.createdDate())
                 .withVersion(1)
                 .withLanguage(SupportedLanguage.ENGLISH)
                 .withDelayedCapture(false)
                 .withEmail(EMAIL)
                 .withGatewayCredentialId(credentialParams.getId())
-                .withAuthorisationMode(authorisationMode)
+                .withAuthorisationMode(addChargeParameters.authorisationMode())
                 .build());
-    }
-
-    public String addChargeAndCardDetails(Long chargeId, ChargeStatus status, ServicePaymentReference reference, Instant fromDate, String cardBrand) {
-        String externalChargeId = "charge" + chargeId;
-        ChargeStatus chargeStatus = status != null ? status : AUTHORISATION_SUCCESS;
-        addCharge(chargeId, externalChargeId, chargeStatus, reference, fromDate, null, paymentProvider, WEB);
-        databaseTestHelper.addToken(chargeId, "tokenId");
-        databaseTestHelper.addEvent(chargeId, chargeStatus.getValue());
-        databaseTestHelper.updateChargeCardDetails(chargeId, cardBrand, "1234", "123456", "Mr. McPayment",
-                CardExpiryDate.valueOf("03/18"), null, "line1", null, "postcode", "city", null, "country");
-
-        return externalChargeId;
     }
 
     public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
+import uk.gov.pay.connector.it.base.AddChargeParameters;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
@@ -31,6 +32,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_FAILED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
 public class ChargeExpiryResourceIT {
@@ -44,12 +46,24 @@ public class ChargeExpiryResourceIT {
     
     @Test
     void shouldExpireChargesAndHaveTheCorrectEvents() {
-        String extChargeId1 = testBaseExtension.addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String extChargeId2 = testBaseExtension.addCharge(ENTERING_CARD_DETAILS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String extChargeId3 = testBaseExtension.addCharge(AUTHORISATION_READY, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String extChargeId4 = testBaseExtension.addCharge(AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String extChargeId5 = testBaseExtension.addCharge(AUTHORISATION_3DS_READY, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String extChargeId6 = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String extChargeId1 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        String extChargeId2 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        String extChargeId3 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_READY)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        String extChargeId4 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        String extChargeId5 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_READY)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        String extChargeId6 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
@@ -104,8 +118,13 @@ public class ChargeExpiryResourceIT {
 
     @Test
     void shouldExpireChargesOnlyAfterTheExpiryWindow() {
-        String shouldExpireCreatedChargeId = testBaseExtension.addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String shouldntExpireCreatedChargeId = testBaseExtension.addCharge(CREATED, "ref", Instant.now().minus(89, MINUTES), RandomIdGenerator.newId());
+        String shouldExpireCreatedChargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+
+        String shouldntExpireCreatedChargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED)
+                        .withCreatedDate(Instant.now().minus(89, MINUTES)));
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
@@ -183,8 +202,12 @@ public class ChargeExpiryResourceIT {
 
     @Test
     void shouldExpireChargesEvenIfOnGatewayCancellationError() {
-        String extChargeId1 = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        testBaseExtension.addCharge(CAPTURE_SUBMITTED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId()); //should not get picked
+        String extChargeId1 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CAPTURE_SUBMITTED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES))); //should not get picked
 
         app.getWorldpayMockClient().mockCancelError();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
@@ -214,9 +237,17 @@ public class ChargeExpiryResourceIT {
     @Test
     void shouldExpireSuccessAndFailForMatchingCharges() {
         final String gatewayTransactionId1 = RandomIdGenerator.newId();
-        String extChargeId1 = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), gatewayTransactionId1);
-        String extChargeId2 = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        testBaseExtension.addCharge(CAPTURE_SUBMITTED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId()); //should ignore
+        String extChargeId1 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                .withCreatedDate(Instant.now().minus(90, MINUTES))
+                .withTransactionId(gatewayTransactionId1));
+        
+        String extChargeId2 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+
+        testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CAPTURE_SUBMITTED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES))); //should ignore
 
         app.getWorldpayMockClient().mockCancelError();
         app.getWorldpayMockClient().mockCancelSuccessOnlyFor(gatewayTransactionId1);
@@ -257,7 +288,9 @@ public class ChargeExpiryResourceIT {
 
     @Test
     void shouldPreserveCardDetailsIfChargeExpires() {
-        String externalChargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
+        String externalChargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
         Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
 
         app.getWorldpayMockClient().mockCancelSuccess();
@@ -285,9 +318,12 @@ public class ChargeExpiryResourceIT {
 
     @Test
     void shouldNotExpireChargesWhenAwaitingCaptureDelayIsLessThan120Hours() {
-        String chargeToBeExpiredCreatedStatus = testBaseExtension.addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String chargeToBeExpiredAwaitingCaptureRequest = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref",
-                Instant.now().minus(120, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+        String chargeToBeExpiredCreatedStatus = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        String chargeToBeExpiredAwaitingCaptureRequest = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                        .withCreatedDate(Instant.now().minus(120, HOURS).plus(1, MINUTES)));
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
@@ -326,9 +362,12 @@ public class ChargeExpiryResourceIT {
 
     @Test
     void shouldExpireChargesWhenAwaitingCaptureDelayIsMoreThan120Hours() {
-        String chargeToBeExpiredCreatedStatus = testBaseExtension.addCharge(CREATED, "ref", Instant.now().minus(90, MINUTES), RandomIdGenerator.newId());
-        String chargeToBeExpiredAwaitingCaptureRequest = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref",
-                Instant.now().minus(120, HOURS).minus(1, MINUTES), RandomIdGenerator.newId());
+        String chargeToBeExpiredCreatedStatus = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
+        String chargeToBeExpiredAwaitingCaptureRequest = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                        .withCreatedDate(Instant.now().minus(120, HOURS).minus(1, MINUTES)));
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();

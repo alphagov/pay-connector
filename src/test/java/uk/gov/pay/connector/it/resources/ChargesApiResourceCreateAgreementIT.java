@@ -41,6 +41,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_KEY;
@@ -178,7 +179,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = testBaseExtension.addCharge(CREATED);
+        String existingChargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED));
 
         // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
         // create charge request, changes to the business code should be made in a way that a request stored in the 
@@ -222,7 +223,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = testBaseExtension.addCharge(CREATED);
+        String existingChargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED));
 
         // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
         // create charge request, changes to the business code should be made in a way that a request stored in the 
@@ -271,7 +272,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = testBaseExtension.addCharge(CREATED);
+        String existingChargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED));
         
         Map<String, Object> previousRequestBodyMap = Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,

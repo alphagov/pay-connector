@@ -2,11 +2,10 @@ package uk.gov.pay.connector.it.resources;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.Nested;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -45,6 +44,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
@@ -53,6 +53,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUBMITTED;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
@@ -379,8 +380,8 @@ public class ChargesApiResourceIT {
 
     @Test
     void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
-        //create charge
-        String extChargeId = testBaseExtension.addChargeAndCardDetails(CREATED, ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED)
+                .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
         // run expiry task
         testBaseExtension.getConnectorRestApiClient()
@@ -404,8 +405,8 @@ public class ChargesApiResourceIT {
 
     @Test
     void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
-        String extChargeId = testBaseExtension.addChargeAndCardDetails(ChargeStatus.AUTHORISATION_3DS_REQUIRED, ServicePaymentReference.of("ref"),
-                Instant.now().minus(90, MINUTES));
+        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
         testBaseExtension.getConnectorRestApiClient()
                 .postChargeExpiryTask()
@@ -427,9 +428,8 @@ public class ChargesApiResourceIT {
 
     @Test
     void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
-        //create charge
-        String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                ServicePaymentReference.of("ref"), Instant.now().minus(120, HOURS));
+        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                .withCreatedDate(Instant.now().minus(120, HOURS)));
 
         // run expiry task
         testBaseExtension.getConnectorRestApiClient()
@@ -618,9 +618,8 @@ public class ChargesApiResourceIT {
     class DelayedCaptureApproveByAccountId {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
-            //create charge
-            String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             testBaseExtension.getConnectorRestApiClient()
                     .withAccountId(accountId)
@@ -642,9 +641,8 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
-            //create charge
-            String extChargeId = testBaseExtension.addChargeAndCardDetails(CAPTURE_APPROVED,
-                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CAPTURE_APPROVED)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             testBaseExtension.getConnectorRestApiClient()
                     .withAccountId(accountId)
@@ -678,9 +676,8 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
-            //create charge
-            String extChargeId = testBaseExtension.addChargeAndCardDetails(EXPIRED,
-                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(EXPIRED)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
             testBaseExtension.getConnectorRestApiClient()
@@ -699,8 +696,8 @@ public class ChargesApiResourceIT {
     class DelayedCaptureApproveByServiceIdAndAccountType {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
-            String extChargeId = testBaseExtension.addChargeAndCardDetails(AWAITING_CAPTURE_REQUEST,
-                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             app.givenSetup()
                     .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
@@ -718,8 +715,8 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
-            String extChargeId = testBaseExtension.addChargeAndCardDetails(CAPTURE_APPROVED,
-                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CAPTURE_APPROVED)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             app.givenSetup()
                     .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
@@ -748,8 +745,8 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenChargeExpired() {
-            String extChargeId = testBaseExtension.addChargeAndCardDetails(EXPIRED,
-                    ServicePaymentReference.of("ref"), Instant.now().minus(90, MINUTES));
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(EXPIRED)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
             app.givenSetup()
