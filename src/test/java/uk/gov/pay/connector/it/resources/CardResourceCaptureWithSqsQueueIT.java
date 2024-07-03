@@ -6,7 +6,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -32,7 +31,8 @@ import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-        
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.SERVICE_ID;
+
 public class CardResourceCaptureWithSqsQueueIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(config("captureProcessConfig.backgroundProcessingEnabled", "false"));
@@ -93,14 +93,11 @@ public class CardResourceCaptureWithSqsQueueIT {
     @Nested
     class DelayedCaptureApproveByServiceIdAndAccountType {
         @Test
-        @Disabled // temporary ignore
         void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeId() {
             String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
 
-            String captureApproveByChargeIdUrl = ITestBaseExtension.captureUrlByChargeIdForAwaitingCaptureCharge(chargeId);
-
             app.givenSetup()
-                    .post(captureApproveByChargeIdUrl)
+                    .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, chargeId))
                     .then()
                     .statusCode(204);
 
