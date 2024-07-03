@@ -108,7 +108,6 @@ public class CardResource {
     public Response authoriseApplePay(@Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID")
                                       @PathParam("chargeId") String chargeId,
                                       @NotNull @Valid ApplePayAuthRequest applePayAuthRequest) {
-        logger.info("Received encrypted payload for charge with id {} ", chargeId);
         return walletService.authorise(chargeId, applePayAuthRequest);
     }
 

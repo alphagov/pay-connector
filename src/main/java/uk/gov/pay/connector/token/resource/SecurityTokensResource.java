@@ -57,7 +57,6 @@ public class SecurityTokensResource {
     public TokenResponse getToken(@Parameter(example = "a69a2cf3-d5d1-408f-b196-4b716767b507")
                                   @PathParam("chargeTokenId") String chargeTokenId,
                                   @Context UriInfo uriInfo) {
-        logger.debug("get token {}", chargeTokenId);
         return tokenDao.findByTokenId(chargeTokenId)
                 .filter(tokenEntity -> tokenEntity.getChargeEntity().getAuthorisationMode() != MOTO_API)
                 .map(tokenEntity -> new TokenResponse(tokenEntity.isUsed(), chargeService.buildChargeResponse(uriInfo, tokenEntity.getChargeEntity())))
