@@ -124,7 +124,7 @@ public class ChargeParityChecker {
     }
 
     private boolean matchCreatedDate(ChargeEntity chargeEntity, LedgerTransaction transaction) {
-        return getChargeEventDate(chargeEntity, List.of(CREATED, PAYMENT_NOTIFICATION_CREATED))
+        boolean createdDateMatches = getChargeEventDate(chargeEntity, List.of(CREATED, PAYMENT_NOTIFICATION_CREATED))
                 .map(connectorDate -> {
                     // Due to charge events being out of order for some historic payments, the date in ledger was 
                     // slightly different to in connector. Allow for a few seconds of difference as it is not worth 
@@ -132,6 +132,12 @@ public class ChargeParityChecker {
                     return Math.abs(Duration.between(connectorDate, ZonedDateTime.parse(transaction.getCreatedDate())).toMillis()) < 5000;
                 })
                 .orElse(false);
+
+        if (!createdDateMatches) {
+            logger.info("Field value does not match between ledger and connector [field_name=created_date]",
+                    kv(FIELD_NAME, "created_date"));
+        }
+        return createdDateMatches;
     }
 
     private boolean matchCardDetails(CardDetailsEntity cardDetailsEntity, CardDetails ledgerCardDetails) {
