@@ -86,7 +86,7 @@ public class RefundsResource {
                                  RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
 
-        ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId)
+        ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId, accountId)
                 .map(charge -> refundService.doRefund(accountId, charge, refundRequest))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
         GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();

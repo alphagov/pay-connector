@@ -64,6 +64,18 @@ public class LedgerStub {
         );
     }
 
+    public void returnLedgerTransaction(String externalId, long gatewayAccountId, LedgerTransaction ledgerTransaction) throws JsonProcessingException {
+        ResponseDefinitionBuilder response = aResponse()
+                .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .withStatus(200)
+                .withBody(objectMapper.writeValueAsString(ledgerTransaction));
+        wireMockServer.stubFor(
+                get(urlPathEqualTo(format("/v1/transaction/%s", externalId)))
+                        .withQueryParam("account_id", equalTo(String.valueOf(gatewayAccountId)))
+                        .willReturn(response)
+        );
+    }
+
     public void returnLedgerTransactionWithMismatch(String externalId, DatabaseFixtures.TestCharge testCharge, DatabaseFixtures.TestFee testFee) throws JsonProcessingException {
         Map<String, Object> ledgerTransactionFields = testChargeToLedgerTransactionJson(testCharge, testFee);
         ledgerTransactionFields.put("description", "This is a mismatch");
