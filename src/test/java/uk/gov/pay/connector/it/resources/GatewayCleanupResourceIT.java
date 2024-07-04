@@ -21,6 +21,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 
@@ -32,10 +33,10 @@ public class GatewayCleanupResourceIT {
 
     @Test
     public void shouldCleanUpChargesInAuthorisationErrorStates() {
-        String chargeId1 = testBaseExtension.addCharge(AUTHORISATION_REJECTED);
-        String chargeId2 = testBaseExtension.addCharge(AUTHORISATION_ERROR);
-        String chargeId3 = testBaseExtension.addCharge(AUTHORISATION_UNEXPECTED_ERROR);
-        String chargeId4 = testBaseExtension.addCharge(AUTHORISATION_TIMEOUT);
+        String chargeId1 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_REJECTED));
+        String chargeId2 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
+        String chargeId3 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_UNEXPECTED_ERROR));
+        String chargeId4 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_TIMEOUT));
 
         // add a non-Worldpay charge that shouldn't be picked up
         var sandboxAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -85,9 +86,9 @@ public class GatewayCleanupResourceIT {
 
     @Test
     public void shouldLimitChargesCleanedUp() {
-        testBaseExtension.addCharge(AUTHORISATION_ERROR);
-        testBaseExtension.addCharge(AUTHORISATION_ERROR);
-        testBaseExtension.addCharge(AUTHORISATION_ERROR);
+        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
+        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
+        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();

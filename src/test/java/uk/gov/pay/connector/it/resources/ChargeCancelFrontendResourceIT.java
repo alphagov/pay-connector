@@ -39,6 +39,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_READY;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 
 public class ChargeCancelFrontendResourceIT {
     @RegisterExtension
@@ -66,7 +67,8 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith204WithNoLockingState_whenCancellationBeforeAuth() {
 
-        String chargeId = testBaseExtension.addCharge(ENTERING_CARD_DETAILS, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS)
+                        .withCreatedDate(Instant.now().minus(1, HOURS)));
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -75,7 +77,8 @@ public class ChargeCancelFrontendResourceIT {
 
     @Test
     void respondWith204WithLockingState_whenCancellationAfterAuth() {
-        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id");
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                        .withCreatedDate(Instant.now().minus(1, HOURS)));
         app.getWorldpayMockClient().mockCancelSuccess();
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
@@ -90,7 +93,8 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith204_whenCancellationDuringAuthReady() {
 
-        String chargeId = testBaseExtension.addCharge(AUTHORISATION_READY, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_READY)
+                        .withCreatedDate(Instant.now().minus(1, HOURS)));
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -99,7 +103,8 @@ public class ChargeCancelFrontendResourceIT {
 
     @Test
     void respondWith202_whenCancelAlreadyInProgress() {
-        String chargeId = testBaseExtension.addCharge(USER_CANCEL_READY, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(USER_CANCEL_READY)
+                        .withCreatedDate(Instant.now().minus(1, HOURS)));
         String expectedMessage = "User Cancellation for charge already in progress, " + chargeId;
         testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
@@ -113,10 +118,9 @@ public class ChargeCancelFrontendResourceIT {
 
     @Test
     void respondWith204WithLockingState_whenCancelFailsAfterAuth() {
-
-        String gatewayTransactionId = "gatewayTransactionId";
         app.getWorldpayMockClient().mockCancelError();
-        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), gatewayTransactionId);
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                        .withCreatedDate(Instant.now().minus(1, HOURS)));
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
@@ -128,14 +132,15 @@ public class ChargeCancelFrontendResourceIT {
 
     @Test
     void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
-        String chargeId = testBaseExtension.addCharge(AUTHORISATION_3DS_REQUIRED, "ref", Instant.now().minus(1, HOURS), "irrelvant");
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                        .withCreatedDate(Instant.now().minus(1, HOURS)));
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
         assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCELLED.getValue()));
     }
     
-    private String userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
+    private void userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
         testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
                 .postFrontendChargeCancellation()
@@ -151,7 +156,6 @@ public class ChargeCancelFrontendResourceIT {
                 .withChargeId(chargeId)
                 .getFrontendCharge()
                 .body("status", is(targetState.getValue()));
-        return chargeId;
     }
 
     @Test
@@ -172,7 +176,8 @@ public class ChargeCancelFrontendResourceIT {
     void respondWith400_whenNotCancellableState() {
         NON_USER_CANCELLABLE_STATUSES
                 .forEach(status -> {
-                    String chargeId = testBaseExtension.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+                    String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
+                                    .withCreatedDate(Instant.now().minus(1, HOURS)));
                     String incorrectStateMessage = "Charge not in correct state to be processed, " + chargeId;
 
                     testBaseExtension.getConnectorRestApiClient()
@@ -183,7 +188,6 @@ public class ChargeCancelFrontendResourceIT {
                             .contentType(JSON)
                             .body("message", contains(incorrectStateMessage))
                             .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-
                 });
     }
 }

@@ -12,9 +12,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
+import uk.gov.pay.connector.it.base.AddChargeParameters;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
-import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.time.Instant;
 import java.util.List;
@@ -73,7 +73,9 @@ public class CardResourceCaptureWithSqsQueueIT {
     class DelayedCaptureApproveByChargeIdAndAccountId {
         @Test
         void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeIdAndAccountId() {
-            String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+            String chargeId = testBaseExtension.addCharge(
+                    AddChargeParameters.Builder.anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                            .withCreatedDate(Instant.now().minus(48, HOURS)));
             
             app.givenSetup()
                     .post(format("/v1/api/accounts/%s/charges/%s/capture", testBaseExtension.getAccountId(), chargeId))
@@ -94,7 +96,9 @@ public class CardResourceCaptureWithSqsQueueIT {
     class DelayedCaptureApproveByServiceIdAndAccountType {
         @Test
         void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeId() {
-            String chargeId = testBaseExtension.addCharge(AWAITING_CAPTURE_REQUEST, "ref", Instant.now().minus(48, HOURS).plus(1, MINUTES), RandomIdGenerator.newId());
+            String chargeId = testBaseExtension.addCharge(
+                    AddChargeParameters.Builder.anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                            .withCreatedDate(Instant.now().minus(48, HOURS).plus(1, MINUTES)));
 
             app.givenSetup()
                     .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, chargeId))

@@ -17,7 +17,6 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +28,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
 
 public class StateTransitionsIT {
@@ -47,7 +47,10 @@ public class StateTransitionsIT {
 
     @Test
     void shouldPutPaymentStateTransitionMessageOntoQueueGivenAuthCancel() throws InterruptedException {
-        String chargeId = testBaseExtension.addCharge(AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
+        String chargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
+                        .withCreatedDate(Instant.now().minus(1, HOURS))
+                        .withTransactionId("transaction-id-transition-it"));
 
         testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
@@ -77,7 +80,10 @@ public class StateTransitionsIT {
 
     @Test
     void shouldEmitCorrectRefundEvents() throws Exception{
-        String chargeId = testBaseExtension.addCharge(CAPTURED, "ref", Instant.now().minus(1, HOURS), "transaction-id-transition-it");
+        String chargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CAPTURED)
+                        .withCreatedDate(Instant.now().minus(1, HOURS))
+                        .withTransactionId("transaction-id-transition-it"));
         Long refundAmount = 50L;
         Long refundAmountAvailable = AMOUNT;
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvailable);
@@ -142,10 +148,6 @@ public class StateTransitionsIT {
         assertThat(message4.get("event_details").getAsJsonObject().get("gateway_transaction_id").getAsString(), is(notNullValue()));
         assertThat(message4.get("service_id").getAsString(), is("external-service-id"));
         assertThat(message4.get("live").getAsBoolean(), is(false));
-    }
-
-    private ZonedDateTime getTimestampFromMessage(Message message) {
-        return ZonedDateTime.parse(new JsonParser().parse(message.getBody()).getAsJsonObject().get("timestamp").getAsString());
     }
 
     private List<Message> readMessagesFromEventQueue() {

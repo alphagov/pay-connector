@@ -28,6 +28,9 @@ import static javax.ws.rs.core.MediaType.TEXT_XML;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRED;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_FAILED_RESPONSE;
@@ -43,8 +46,11 @@ public class DiscrepancyResourceIT {
 
     @Test
     void shouldReturnAllCharges_whenRequestDiscrepancyReport() {
-        String chargeId = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(1, HOURS), "irrelevant");
-        String chargeId2 = testBaseExtension.addCharge(ChargeStatus.AUTHORISATION_SUCCESS, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        String chargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(1, HOURS)));
+        String chargeId2 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS).withCreatedDate(Instant.now().minus(1, HOURS)));
+        
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
         List<JsonNode> results = testBaseExtension.getConnectorRestApiClient()
@@ -101,7 +107,9 @@ public class DiscrepancyResourceIT {
 
     @Test
     void shouldReportOnChargesThatAreInErrorStatesInGatewayAccount() {
-        String chargeId = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+        String chargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(8, DAYS)));
+        
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE));
 
         List<JsonNode> results = testBaseExtension.getConnectorRestApiClient()
@@ -134,8 +142,11 @@ public class DiscrepancyResourceIT {
 
     @Test
     void shouldProcessDiscrepanciesWherePayStateIsExpiredAndGatewayStateIsAuthorised() {
-        String chargeId = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
-        String chargeId2 = testBaseExtension.addCharge(ChargeStatus.EXPIRED, "ref", Instant.now().minus(8, DAYS), "irrelevant");
+        String chargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(8, DAYS)));
+        String chargeId2 = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(8, DAYS)));
+        
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         List<JsonNode> results = testBaseExtension.getConnectorRestApiClient()

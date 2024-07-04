@@ -21,6 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 
 public class ChargeCancelResourceResponseIT {
     @RegisterExtension
@@ -71,7 +72,7 @@ public class ChargeCancelResourceResponseIT {
     @ParameterizedTest()
     @MethodSource("statusCode204")
     public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth(ChargeStatus status, int statuscode) {
-        String chargeId = testBaseExtension.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelevant");
+        String chargeId = createNewInPastChargeWithStatus(status);
         testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, ChargeStatus.SYSTEM_CANCELLED, statuscode);
 
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
@@ -80,6 +81,7 @@ public class ChargeCancelResourceResponseIT {
     }
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
-        return testBaseExtension.addCharge(status, "ref", Instant.now().minus(1, HOURS), "irrelavant");
+        return testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
+                        .withCreatedDate(Instant.now().minus(1, HOURS)));
     }
 }
