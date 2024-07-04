@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -56,6 +55,7 @@ import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.SERVICE_ID;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_LOCAL_DATE_IN_UTC;
@@ -70,7 +70,6 @@ public class ChargesApiResourceIT {
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
     private static final String JSON_MESSAGE_KEY = "message";
-    private static final String CAPTURE_BY_CHARGE_ID_URL = "v1/api/charges/%s/capture";
 
     private final DatabaseTestHelper databaseTestHelper = app.getDatabaseTestHelper();
     private final String accountId = testBaseExtension.getAccountId();
@@ -627,7 +626,6 @@ public class ChargesApiResourceIT {
                     .postMarkChargeAsCaptureApprovedByChargeIdAndAccountId()
                     .statusCode(NO_CONTENT.getStatusCode());
 
-            // get the charge back and assert its status is expired
             testBaseExtension.getConnectorRestApiClient()
                     .withAccountId(accountId)
                     .withChargeId(extChargeId)
@@ -692,7 +690,6 @@ public class ChargesApiResourceIT {
     }
 
     @Nested
-    @Disabled
     class DelayedCaptureApproveByServiceIdAndAccountType {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
@@ -700,7 +697,7 @@ public class ChargesApiResourceIT {
                     .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             app.givenSetup()
-                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, extChargeId))
                     .then()
                     .statusCode(NO_CONTENT.getStatusCode());
 
@@ -719,7 +716,7 @@ public class ChargesApiResourceIT {
                     .withCreatedDate(Instant.now().minus(90, MINUTES)));
 
             app.givenSetup()
-                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, extChargeId))
                     .then()
                     .statusCode(NO_CONTENT.getStatusCode());
 
@@ -735,7 +732,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetNotFoundFor_markChargeAsCaptureApproved_whenNoChargeExists() {
             app.givenSetup()
-                    .post(format(CAPTURE_BY_CHARGE_ID_URL, "non-existent-chargeId"))
+                    .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, "non-existent-chargeId"))
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
                     .contentType(JSON)
@@ -750,7 +747,7 @@ public class ChargesApiResourceIT {
 
             final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
             app.givenSetup()
-                    .post(format(CAPTURE_BY_CHARGE_ID_URL, extChargeId))
+                    .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, extChargeId))
                     .then()
                     .statusCode(CONFLICT.getStatusCode())
                     .contentType(JSON)
