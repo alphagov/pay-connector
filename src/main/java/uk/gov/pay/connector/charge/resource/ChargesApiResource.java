@@ -168,7 +168,7 @@ public class ChargesApiResource {
     }
 
     @POST
-    @Path("v1/api/accounts/{accountId}/telephone-charges")
+    @Path("/v1/api/accounts/{accountId}/telephone-charges")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Create a new telephone charge for gateway account.",
