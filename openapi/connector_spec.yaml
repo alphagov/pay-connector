@@ -372,7 +372,7 @@ paths:
       - Charges
   /v1/api/accounts/{accountId}/charges/{chargeId}:
     get:
-      operationId: getCharge
+      operationId: getChargeByGatewayAccountId
       parameters:
       - description: Gateway account ID
         example: 1
@@ -1441,6 +1441,46 @@ paths:
           description: default response
       tags:
       - Agreements
+  /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}:
+    get:
+      operationId: getChargeByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - description: Charge external ID
+        example: b02b63b370fd35418ad66b0101
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeResponse'
+          description: OK
+        "404":
+          description: Not found
+      summary: "Get charge by service ID, account type and charge external ID"
+      tags:
+      - Charges
   /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/cancel:
     post:
       operationId: cancelChargeByServiceIdAndAccountType
@@ -2165,7 +2205,7 @@ paths:
       - Gateway accounts
   /v1/frontend/charges/{chargeId}:
     get:
-      operationId: getCharge_1
+      operationId: getCharge
       parameters:
       - description: Charge external ID
         example: b02b63b370fd35418ad66b0101

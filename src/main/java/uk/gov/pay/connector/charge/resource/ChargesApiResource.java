@@ -103,10 +103,32 @@ public class ChargesApiResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getCharge(@Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
+    public Response getChargeByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
                               @Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID") @PathParam("chargeId") String chargeId,
                               @Context UriInfo uriInfo) {
         return chargeService.findChargeForAccount(chargeId, accountId, uriInfo)
+                .map(chargeResponse -> ok(chargeResponse).build())
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+    }
+
+    @GET
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Get charge by service ID, account type and charge external ID",
+            tags = {"Charges"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "Not found")
+            }
+    )
+    public Response getChargeByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID") @PathParam("chargeId") String chargeId,
+            @Context UriInfo uriInfo) {
+        return chargeService.findChargeForServiceIdAndAccountType(chargeId, serviceId, accountType, uriInfo)
                 .map(chargeResponse -> ok(chargeResponse).build())
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
