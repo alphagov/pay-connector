@@ -446,7 +446,7 @@ public class ContractTest {
                 .withStatus(ChargeStatus.CAPTURED)
                 .build();
         dbHelper.addCharge(addChargeParams);
-        dbHelper.updateChargeCardDetails(addChargeParams.getChargeId(),
+        dbHelper.updateChargeCardDetails(addChargeParams.chargeId(),
                 AuthCardDetailsFixture.anAuthCardDetails().build());
     }
 

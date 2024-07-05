@@ -14,192 +14,51 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-public class AddChargeParams {
-    private final Long chargeId;
-    private final String externalChargeId;
-    private final String gatewayAccountId;
-    private final String paymentProvider;
-    private final long amount;
-    private final ChargeStatus status;
-    private final String returnUrl;
-    private final String transactionId;
-    private final String description;
-    private final ServicePaymentReference reference;
-    private final Instant createdDate;
-    private final long version;
-    private final String email;
-    private final String providerId;
-    private final SupportedLanguage language;
-    private final boolean delayedCapture;
-    private final Long corporateSurcharge;
-    private final ExternalMetadata externalMetadata;
-    private final ParityCheckStatus parityCheckStatus;
-    private final CardType cardType;
-    private final ZonedDateTime parityCheckDate;
-    private final Long gatewayCredentialId;
-    private final String serviceId;
-    private final String issuerUrl;
-    private final String agreementExternalId;
-    private final boolean savePaymentInstrumentToAgreement;
-    private final AuthorisationMode authorisationMode;
-    private final Instant updatedDate;
-    private final Long paymentInstrumentId;
-    private final Boolean canRetry;
-
-    private AddChargeParams(AddChargeParamsBuilder builder) {
-        chargeId = builder.chargeId;
-        externalChargeId = builder.externalChargeId;
-        amount = builder.amount;
-        gatewayAccountId = builder.gatewayAccountId;
-        paymentProvider = builder.paymentProvider;
-        status = builder.status;
-        returnUrl = builder.returnUrl;
-        transactionId = builder.transactionId;
-        description = builder.description;
-        reference = builder.reference;
-        createdDate = builder.createdDate;
-        version = builder.version;
-        email = builder.email;
-        providerId = builder.providerId;
-        language = builder.language;
-        delayedCapture = builder.delayedCapture;
-        corporateSurcharge = builder.corporateSurcharge;
-        externalMetadata = builder.externalMetadata;
-        parityCheckStatus = builder.parityCheckStatus;
-        parityCheckDate = builder.parityCheckDate;
-        cardType = builder.cardType;
-        gatewayCredentialId = builder.gatewayCredentialId;
-        serviceId = builder.serviceId;
-        issuerUrl = builder.issuerUrl;
-        agreementExternalId = builder.agreementExternalId;
-        savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
-        authorisationMode = builder.authorisationMode;
-        this.updatedDate = builder.updatedDate;
-        paymentInstrumentId = builder.paymentInstrumentId;
-        canRetry = builder.canRetry;
-    }
-
-    public Long getChargeId() {
-        return chargeId;
-    }
-
-    public String getExternalChargeId() {
-        return externalChargeId;
-    }
-
-    public String getGatewayAccountId() {
-        return gatewayAccountId;
-    }
-
-    public String getPaymentProvider() {
-        return paymentProvider;
-    }
-
-    public long getAmount() {
-        return amount;
-    }
-
-    public ChargeStatus getStatus() {
-        return status;
-    }
-
-    public String getReturnUrl() {
-        return returnUrl;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public ServicePaymentReference getReference() {
-        return reference;
-    }
-
-    public Instant getCreatedDate() {
-        return createdDate;
-    }
-
-    public long getVersion() {
-        return version;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getProviderId() {
-        return providerId;
-    }
-
-    public SupportedLanguage getLanguage() {
-        return language;
-    }
-
-    public boolean isDelayedCapture() {
-        return delayedCapture;
-    }
-
-    public Long getCorporateSurcharge() {
-        return corporateSurcharge;
-    }
-
-    public ExternalMetadata getExternalMetadata() {
-        return externalMetadata;
-    }
-
-    public ParityCheckStatus getParityCheckStatus() {
-        return parityCheckStatus;
-    }
-
-    public ZonedDateTime getParityCheckDate() {
-        return parityCheckDate;
-    }
-    
-    public CardType getCardType() {
-        return cardType;
-    }
-
-    public Long getGatewayCredentialId() {
-        return gatewayCredentialId;
-    }
-
-    public String getServiceId() {
-        return serviceId;
-    }
-
-    public String getIssuerUrl() {
-        return issuerUrl;
-    }
-
-    public boolean getSavePaymentInstrumentToAgreement() {
-        return savePaymentInstrumentToAgreement;
-    }
-
-    public String getAgreementExternalId() {
-        return agreementExternalId;
-    }
-
-    public AuthorisationMode getAuthorisationMode() {
-        return authorisationMode;
-    }
-
-    public Instant getUpdatedDate() {
-        return updatedDate;
-    }
-
-    public Long getPaymentInstrumentId() {
-        return paymentInstrumentId;
-    }
-
-    public Boolean getCanRetry() {
-        return canRetry;
-    }
+public record AddChargeParams(
+    Long chargeId,
+    String externalChargeId,
+    String gatewayAccountId,
+    String paymentProvider,
+    long amount,
+    ChargeStatus status,
+    String returnUrl,
+    String transactionId,
+    String description,
+    ServicePaymentReference reference,
+    Instant createdDate,
+    long version,
+    String email,
+    String providerId,
+    SupportedLanguage language,
+    boolean delayedCapture,
+    Long corporateSurcharge,
+    ExternalMetadata externalMetadata,
+    ParityCheckStatus parityCheckStatus,
+    CardType cardType,
+    ZonedDateTime parityCheckDate,
+    Long gatewayCredentialId,
+    String serviceId,
+    String issuerUrl,
+    String agreementExternalId,
+    boolean savePaymentInstrumentToAgreement,
+    AuthorisationMode authorisationMode,
+    Instant updatedDate,
+    Long paymentInstrumentId,
+    Boolean canRetry) {
 
     public static final class AddChargeParamsBuilder {
+        
+        public AddChargeParams build() {
+            List.of(amount, status, returnUrl, gatewayAccountId, description, reference, externalChargeId)
+                    .forEach(Objects::requireNonNull);
+
+            return new AddChargeParams(chargeId, externalChargeId, gatewayAccountId, paymentProvider, amount, status,
+                    returnUrl, transactionId, description, reference, createdDate, version, email, providerId, language,
+                    delayedCapture, corporateSurcharge, externalMetadata, parityCheckStatus, cardType, parityCheckDate,
+                    gatewayCredentialId, serviceId, issuerUrl, agreementExternalId, savePaymentInstrumentToAgreement,
+                    authorisationMode, updatedDate, paymentInstrumentId, canRetry);
+        }
+        
         private Long chargeId = new Random().nextLong();
         private String externalChargeId = "anExternalChargeId";
         private String gatewayAccountId;
@@ -342,7 +201,7 @@ public class AddChargeParams {
             this.parityCheckDate = parityCheckDate;
             return this;
         }
-        
+
         public AddChargeParamsBuilder withCardType(CardType chargeType) {
             this.cardType = chargeType;
             return this;
@@ -352,7 +211,7 @@ public class AddChargeParams {
             this.gatewayCredentialId = gatewayCredentialId;
             return this;
         }
-        
+
         public AddChargeParamsBuilder withIssuerUrl(String issuerUrl) {
             this.issuerUrl = issuerUrl;
             return this;
@@ -367,7 +226,7 @@ public class AddChargeParams {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
             return this;
         }
-        
+
         public AddChargeParamsBuilder withAuthorisationMode(AuthorisationMode authorisationMode) {
             this.authorisationMode = authorisationMode;
             return this;
@@ -386,13 +245,6 @@ public class AddChargeParams {
         public AddChargeParamsBuilder withCanRetry(Boolean canRetry) {
             this.canRetry = canRetry;
             return this;
-        }
-
-        public AddChargeParams build() {
-            List.of(amount, status, returnUrl, gatewayAccountId, description, reference, externalChargeId)
-                    .forEach(Objects::requireNonNull);
-
-            return new AddChargeParams(this);
         }
     }
 }
