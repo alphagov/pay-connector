@@ -179,7 +179,8 @@ public class ChargesApiResourceCreateAgreementIT {
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED));
+        String existingChargeExternalId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED).build());
 
         // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
         // create charge request, changes to the business code should be made in a way that a request stored in the 
@@ -223,7 +224,8 @@ public class ChargesApiResourceCreateAgreementIT {
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED));
+        String existingChargeExternalId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED).build());
 
         // IMPORTANT: Do not modify this request body if the test fails. If properties are modified/removed on the 
         // create charge request, changes to the business code should be made in a way that a request stored in the 
@@ -272,7 +274,8 @@ public class ChargesApiResourceCreateAgreementIT {
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
 
-        String existingChargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED));
+        String existingChargeExternalId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(CREATED).build());
         
         Map<String, Object> previousRequestBodyMap = Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,

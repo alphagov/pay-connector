@@ -50,7 +50,8 @@ public class StateTransitionsIT {
         String chargeId = testBaseExtension.addCharge(
                 anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
                         .withCreatedDate(Instant.now().minus(1, HOURS))
-                        .withTransactionId("transaction-id-transition-it"));
+                        .withTransactionId("transaction-id-transition-it")
+                        .build());
 
         testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
 
@@ -83,7 +84,8 @@ public class StateTransitionsIT {
         String chargeId = testBaseExtension.addCharge(
                 anAddChargeParameters().withChargeStatus(CAPTURED)
                         .withCreatedDate(Instant.now().minus(1, HOURS))
-                        .withTransactionId("transaction-id-transition-it"));
+                        .withTransactionId("transaction-id-transition-it")
+                        .build());
         Long refundAmount = 50L;
         Long refundAmountAvailable = AMOUNT;
         ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvailable);

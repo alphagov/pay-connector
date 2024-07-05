@@ -308,7 +308,6 @@ public class AddChargeParams {
             return this;
         }
 
-
         public AddChargeParamsBuilder withProviderId(String providerId) {
             this.providerId = providerId;
             return this;

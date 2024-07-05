@@ -393,10 +393,10 @@ public class ChargesApiResourceIT {
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
 
-        @Test
-        void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
-            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+    @Test
+    void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
+        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED)
+                .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             // run expiry task
             testBaseExtension.getConnectorRestApiClient()
@@ -418,10 +418,10 @@ public class ChargesApiResourceIT {
 
         }
 
-        @Test
-        void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
-            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+    @Test
+    void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
+        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                        .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             testBaseExtension.getConnectorRestApiClient()
                     .postChargeExpiryTask()
@@ -441,10 +441,10 @@ public class ChargesApiResourceIT {
 
         }
 
-        @Test
-        void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
-            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
-                    .withCreatedDate(Instant.now().minus(120, HOURS)));
+    @Test
+    void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
+        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                .withCreatedDate(Instant.now().minus(120, HOURS)).build());
 
             // run expiry task
             testBaseExtension.getConnectorRestApiClient()
@@ -746,7 +746,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
             String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             testBaseExtension.getConnectorRestApiClient()
                     .withAccountId(accountId)
@@ -768,7 +768,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
             String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CAPTURE_APPROVED)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             testBaseExtension.getConnectorRestApiClient()
                     .withAccountId(accountId)
@@ -803,7 +803,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenNoChargeExists() {
             String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(EXPIRED)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
             testBaseExtension.getConnectorRestApiClient()
@@ -822,7 +822,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_awaitingCaptureRequest() {
             String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             app.givenSetup()
                     .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, extChargeId))
@@ -841,7 +841,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetNoContentForMarkChargeAsCaptureApproved_withStatus_captureApproved() {
             String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CAPTURE_APPROVED)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             app.givenSetup()
                     .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, extChargeId))
@@ -871,7 +871,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetConflictExceptionFor_markChargeAsCaptureApproved_whenChargeExpired() {
             String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(EXPIRED)
-                    .withCreatedDate(Instant.now().minus(90, MINUTES)));
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             final String expectedErrorMessage = format("Operation for charge conflicting, %s, attempt to perform delayed capture on charge not in AWAITING CAPTURE REQUEST state.", extChargeId);
             app.givenSetup()

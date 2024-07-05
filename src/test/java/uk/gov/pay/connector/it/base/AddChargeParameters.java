@@ -8,6 +8,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import java.time.Instant;
 
 import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public record AddChargeParameters(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
                                   ServicePaymentReference reference, Instant createdDate, String transactionId,
@@ -16,13 +17,13 @@ public record AddChargeParameters(long chargeId, String externalChargeId, Charge
 
     public static final class Builder {
         private long chargeId = nextLong();
-        private String externalChargeId;
+        private String externalChargeId = RandomIdGenerator.newId();
         private ChargeStatus chargeStatus;
         private ServicePaymentReference reference = ServicePaymentReference.of("ref");
         private Instant createdDate = Instant.now();
         private String transactionId = RandomIdGenerator.newId();
-        private String paymentProvider;
-        private AuthorisationMode authorisationMode;
+        private String paymentProvider = "sandbox";
+        private AuthorisationMode authorisationMode = WEB;
 
         public static Builder anAddChargeParameters() {
             return new Builder();

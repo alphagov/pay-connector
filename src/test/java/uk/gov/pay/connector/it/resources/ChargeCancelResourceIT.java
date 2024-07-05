@@ -3,6 +3,7 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -167,7 +168,11 @@ public class ChargeCancelResourceIT {
     }
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
+        long chargeId = RandomUtils.nextInt();
         return testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)));
+                .withCreatedDate(Instant.now().minus(1, HOURS))
+                .withChargeId(chargeId)
+                .withExternalChargeId("charge" + chargeId)
+                .build());
     }
 }
