@@ -143,6 +143,7 @@ public class ChargesApiResource {
                     @ApiResponse(responseCode = "201", description = "Created",
                             content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
                     @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "403", description = "Gateway account is disabled"),
                     @ApiResponse(responseCode = "404", description = "Not found"),
                     @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             }
@@ -169,6 +170,68 @@ public class ChargesApiResource {
         } else if (AUTHORISATION_MODES_INCOMPATIBLE_WITH_RETURN_URL.contains(authorisationMode) && chargeRequest.getReturnUrl().isPresent()) {
             throw new UnexpectedAttributeException(RETURN_URL);
         }
+
+        if (idempotencyKey != null && chargeRequest.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
+            Optional<ChargeResponse> maybeExistingChargeResponse = chargeService.checkForChargeCreatedWithIdempotencyKey(
+                    chargeRequest, accountId, idempotencyKey, uriInfo);
+            if (maybeExistingChargeResponse.isPresent()) {
+                ChargeResponse existingChargeResponse = maybeExistingChargeResponse.get();
+                return ok(existingChargeResponse.getLink("self")).entity(existingChargeResponse).build();
+            }
+        }
+
+        return chargeService.create(chargeRequest, accountId, uriInfo, idempotencyKey)
+                .map(response -> {
+                    if (authorisationMode == AuthorisationMode.AGREEMENT) {
+                        chargeService.markChargeAsEligibleForAuthoriseUserNotPresent(response.getChargeId());
+                    }
+                    return created(response.getLink("self")).entity(response).build();
+                })
+                .orElseGet(() -> notFoundResponse("Unknown gateway account: " + accountId));
+    }
+
+    @POST
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/charges")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Create new charge for service ID and account type",
+            tags = {"Charges"},
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "403", description = "Gateway account is disabled"),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            }
+    )
+    @Transactional
+    public Response createNewChargeByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @NotNull @Valid ChargeCreateRequest chargeRequest,
+            @Context UriInfo uriInfo,
+            @Nullable @Length(min = 1, max = 255, message = "Header [Idempotency-Key] can have a size between 1 and 255") @HeaderParam("Idempotency-Key") String idempotencyKey) {
+        logger.info("Creating new charge - {}", chargeRequest.toStringWithoutPersonalIdentifiableInformation());
+
+        AuthorisationMode authorisationMode = chargeRequest.getAuthorisationMode();
+        if (authorisationMode == AuthorisationMode.WEB) {
+            chargeRequest.getReturnUrl().ifPresentOrElse(returnUrl -> {
+                        if (!ReturnUrlValidator.isValid(returnUrl)) {
+                            throw new InvalidAttributeValueException(RETURN_URL, "Must be a valid URL format");
+                        }
+                    },
+                    () -> {
+                        throw new MissingMandatoryAttributeException(RETURN_URL);
+                    });
+
+        } else if (AUTHORISATION_MODES_INCOMPATIBLE_WITH_RETURN_URL.contains(authorisationMode) && chargeRequest.getReturnUrl().isPresent()) {
+            throw new UnexpectedAttributeException(RETURN_URL);
+        }
+
+        Long accountId = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .map(GatewayAccountEntity::getId)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
 
         if (idempotencyKey != null && chargeRequest.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
             Optional<ChargeResponse> maybeExistingChargeResponse = chargeService.checkForChargeCreatedWithIdempotencyKey(

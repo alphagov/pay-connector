@@ -658,33 +658,31 @@ public class ChargesApiResourceIT {
     @Nested
     class GetChargeByServiceIdAndAccountType {
         
-        private String serviceId;
-        private String gatewayAccountId;
-        private String chargeId;
+        private static String VALID_SERVICE_ID = "valid-service-id";
+        private static String NON_EXISTENT_SERVICE_ID = "non-existent-service-id";
+        private String testChargeId;
         
         @BeforeEach
         void setup() {
-            serviceId = "my-test-service-id";
-            gatewayAccountId = app.givenSetup()
+            app.givenSetup()
                     .body(toJson(Map.of(
-                            "service_id", serviceId,
+                            "service_id", VALID_SERVICE_ID,
                             "type", GatewayAccountType.TEST,
                             "payment_provider", PaymentGatewayName.STRIPE.getName(),
                             "service_name", "my-test-service-name"
                     )))
                     .post("/v1/api/accounts")
                     .then()
-                    .statusCode(201)
-                    .extract().path("gateway_account_id");
+                    .statusCode(201);
 
-            chargeId = app.givenSetup()
+            testChargeId = app.givenSetup()
                     .body(toJson(Map.of(
                             JSON_AMOUNT_KEY, AMOUNT,
                             JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
                             JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                             JSON_RETURN_URL_KEY, RETURN_URL)
                     ))
-                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
                     .statusCode(Response.Status.CREATED.getStatusCode())
                     .extract().path("charge_id");
@@ -694,22 +692,22 @@ public class ChargesApiResourceIT {
         void shouldReturnCorrectChargeAndStatus() {
             
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/%s/charges/%s", serviceId, GatewayAccountType.TEST, chargeId))
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(OK.getStatusCode())
-                    .body("charge_id", is(chargeId))
+                    .body("charge_id", is(testChargeId))
                     .body("state.status", is(EXTERNAL_CREATED.getStatus()));
             
             app.givenSetup()
-                    .post(format("/v1/api/service/%s/account/%s/charges/%s/cancel", serviceId, GatewayAccountType.TEST, chargeId))
+                    .post(format("/v1/api/service/%s/account/%s/charges/%s/cancel", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(NO_CONTENT.getStatusCode());
             
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/%s/charges/%s", serviceId, GatewayAccountType.TEST, chargeId)) 
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId)) 
                     .then()
                     .statusCode(OK.getStatusCode())
-                    .body("charge_id", is(chargeId))
+                    .body("charge_id", is(testChargeId))
                     .body("state.status", is(EXTERNAL_CANCELLED.getStatus()))
                     .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
                     .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
@@ -721,18 +719,18 @@ public class ChargesApiResourceIT {
         @Test
         void shouldReturn404_whenChargeIdExistsButServiceIdIsIncorrect() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/%s/charges/%s", "unknown-service-id", GatewayAccountType.TEST, chargeId))
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s", NON_EXISTENT_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
                     .contentType(JSON)
-                    .body(JSON_MESSAGE_KEY, contains(format("Charge with id [%s] not found.", chargeId)))
+                    .body(JSON_MESSAGE_KEY, contains(format("Charge with id [%s] not found.", testChargeId)))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));;
         }
 
         @Test
         void shouldReturn404_whenServiceIdExistsButChargeIdIsIncorrect() {
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/%s/charges/%s", serviceId, GatewayAccountType.TEST, "unknown-charge-id"))
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, "unknown-charge-id"))
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
                     .contentType(JSON)
