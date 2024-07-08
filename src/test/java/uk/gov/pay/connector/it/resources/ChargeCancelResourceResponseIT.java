@@ -82,6 +82,6 @@ public class ChargeCancelResourceResponseIT {
 
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
         return testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)));
+                        .withCreatedDate(Instant.now().minus(1, HOURS)).build());
     }
 }

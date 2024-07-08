@@ -33,10 +33,10 @@ public class GatewayCleanupResourceIT {
 
     @Test
     public void shouldCleanUpChargesInAuthorisationErrorStates() {
-        String chargeId1 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_REJECTED));
-        String chargeId2 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
-        String chargeId3 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_UNEXPECTED_ERROR));
-        String chargeId4 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_TIMEOUT));
+        String chargeId1 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_REJECTED).build());
+        String chargeId2 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR).build());
+        String chargeId3 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_UNEXPECTED_ERROR).build());
+        String chargeId4 = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_TIMEOUT).build());
 
         // add a non-Worldpay charge that shouldn't be picked up
         var sandboxAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -86,9 +86,9 @@ public class GatewayCleanupResourceIT {
 
     @Test
     public void shouldLimitChargesCleanedUp() {
-        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
-        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
-        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR));
+        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR).build());
+        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR).build());
+        testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_ERROR).build());
 
         app.getWorldpayMockClient().mockCancelSuccess();
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();

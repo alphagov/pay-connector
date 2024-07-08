@@ -46,10 +46,14 @@ public class DiscrepancyResourceIT {
 
     @Test
     void shouldReturnAllCharges_whenRequestDiscrepancyReport() {
-        String chargeId = testBaseExtension.addCharge(
-                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(1, HOURS)));
-        String chargeId2 = testBaseExtension.addCharge(
-                anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS).withCreatedDate(Instant.now().minus(1, HOURS)));
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters()
+                .withChargeStatus(EXPIRED)
+                .withCreatedDate(Instant.now().minus(1, HOURS))
+                .build());
+        String chargeId2 = testBaseExtension.addCharge(anAddChargeParameters()
+                .withChargeStatus(AUTHORISATION_SUCCESS)
+                .withCreatedDate(Instant.now().minus(1, HOURS))
+                .build());
         
         app.getWorldpayMockClient().mockAuthorisationQuerySuccess();
 
@@ -107,8 +111,9 @@ public class DiscrepancyResourceIT {
 
     @Test
     void shouldReportOnChargesThatAreInErrorStatesInGatewayAccount() {
-        String chargeId = testBaseExtension.addCharge(
-                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(8, DAYS)));
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters()
+                .withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(8, DAYS))
+                .build());
         
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE));
 
@@ -142,10 +147,14 @@ public class DiscrepancyResourceIT {
 
     @Test
     void shouldProcessDiscrepanciesWherePayStateIsExpiredAndGatewayStateIsAuthorised() {
-        String chargeId = testBaseExtension.addCharge(
-                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(8, DAYS)));
-        String chargeId2 = testBaseExtension.addCharge(
-                anAddChargeParameters().withChargeStatus(EXPIRED).withCreatedDate(Instant.now().minus(8, DAYS)));
+        String chargeId = testBaseExtension.addCharge(anAddChargeParameters()
+                .withChargeStatus(EXPIRED)
+                .withCreatedDate(Instant.now().minus(8, DAYS))
+                .build());
+        String chargeId2 = testBaseExtension.addCharge(anAddChargeParameters()
+                .withChargeStatus(EXPIRED)
+                .withCreatedDate(Instant.now().minus(8, DAYS))
+                .build());
         
         mockAuthorisationQueryAndCancel(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 

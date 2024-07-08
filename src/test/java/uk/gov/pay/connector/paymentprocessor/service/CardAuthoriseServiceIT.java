@@ -36,7 +36,8 @@ public class CardAuthoriseServiceIT {
     
     @Test
     void shouldAuthoriseSandboxWebPayment() {
-        String chargeExternalId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS));
+        String chargeExternalId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS).build());
         var response = app.getInstanceFromGuiceContainer(CardAuthoriseService.class)
                 .doAuthoriseWeb(chargeExternalId, AuthCardDetailsFixture.anAuthCardDetails().build());
         assertThat(response.getGatewayError(), is(Optional.empty()));
@@ -72,7 +73,7 @@ public class CardAuthoriseServiceIT {
     @Test
     void shouldAuthoriseRecurringSandboxAgreementSetUpAndDeclineSubsequentRecurringPayment() {
         String setupAgreementChargeId = testBaseExtension.addCharge(
-                anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS));
+                anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS).build());
         ChargeUtils.ExternalChargeId userNotPresentChargeId = testBaseExtension.addChargeWithAuthorisationModeAgreement(SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS, SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS, null);
 
         var chargeRecurring = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());

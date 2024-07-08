@@ -75,7 +75,8 @@ public class CardResourceCaptureWithSqsQueueIT {
         void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeIdAndAccountId() {
             String chargeId = testBaseExtension.addCharge(
                     AddChargeParameters.Builder.anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
-                            .withCreatedDate(Instant.now().minus(48, HOURS)));
+                            .withCreatedDate(Instant.now().minus(48, HOURS))
+                            .build());
             
             app.givenSetup()
                     .post(format("/v1/api/accounts/%s/charges/%s/capture", testBaseExtension.getAccountId(), chargeId))
@@ -98,7 +99,8 @@ public class CardResourceCaptureWithSqsQueueIT {
         void shouldAddChargeToQueueAndSubmitForCapture_IfChargeWasAwaitingCapture_whenCaptureByChargeId() {
             String chargeId = testBaseExtension.addCharge(
                     AddChargeParameters.Builder.anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
-                            .withCreatedDate(Instant.now().minus(48, HOURS).plus(1, MINUTES)));
+                            .withCreatedDate(Instant.now().minus(48, HOURS).plus(1, MINUTES))
+                            .build());
 
             app.givenSetup()
                     .post(format("/v1/api/service/%s/account/test/charges/%s/capture", SERVICE_ID, chargeId))

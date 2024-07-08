@@ -84,7 +84,7 @@ public class FrontendContractTest {
                 .build();
         dbHelper.addCharge(params);
         
-        dbHelper.addToken(params.getChargeId(), "testToken", false);
+        dbHelper.addToken(params.chargeId(), "testToken", false);
     }
     
     @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")

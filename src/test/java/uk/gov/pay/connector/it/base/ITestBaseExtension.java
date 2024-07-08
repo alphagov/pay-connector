@@ -68,7 +68,6 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
-import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     public static final String ADDRESS_LINE_1 = "The Money Pool";
@@ -402,24 +401,17 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         return chargeId;
     }
 
-    public String addCharge(AddChargeParameters.Builder builder) {
-        long chargeId = RandomUtils.nextInt();
-        String externalChargeId = "charge" + chargeId;
-        builder.withChargeId(chargeId)
-                .withExternalChargeId(externalChargeId)
-                .withPaymentProvider(paymentProvider)
-                .withAuthorisationMode(WEB);
-        AddChargeParameters addChargeParameters = builder.build();
-        addCharge(addChargeParameters);
-        databaseTestHelper.addToken(chargeId, "tokenId");
-        databaseTestHelper.addEvent(chargeId, addChargeParameters.chargeStatus().getValue());
+    public String addCharge(AddChargeParameters addChargeParameters) {
+        addChargeToDatabase(addChargeParameters);
+        databaseTestHelper.addToken(addChargeParameters.chargeId(), "tokenId");
+        databaseTestHelper.addEvent(addChargeParameters.chargeId(), addChargeParameters.chargeStatus().getValue());
         databaseTestHelper.updateChargeCardDetails(
-                chargeId,
+                addChargeParameters.chargeId(),
                 AuthCardDetailsFixture.anAuthCardDetails().build());
-        return externalChargeId;
+        return addChargeParameters.externalChargeId();
     }
 
-    private void addCharge(AddChargeParameters addChargeParameters) {
+    private void addChargeToDatabase(AddChargeParameters addChargeParameters) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(addChargeParameters.chargeId())
                 .withExternalChargeId(addChargeParameters.externalChargeId())
