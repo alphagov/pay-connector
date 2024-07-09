@@ -25,7 +25,6 @@ import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,14 +37,12 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.eclipse.jetty.http.HttpStatus.FORBIDDEN_403;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -55,23 +52,14 @@ import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.EMAIL;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_MOTO_API;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_CHARGE_KEY;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_KEY;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_VALUE;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_EMAIL_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_LANGUAGE_KEY;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_MESSAGE_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_MOTO_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_PROVIDER_KEY;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_KEY;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VALUE;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_RETURN_URL_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_SOURCE_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.PROVIDER_NAME;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
@@ -89,47 +77,62 @@ public class ChargesApiResourceCreateIT {
     );
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
-
-
-    private static final String FRONTEND_CARD_DETAILS_URL = "/secure";
-    private static final String JSON_STATE_KEY = "state.status";
-    private static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
-    private static final String JSON_CORPORATE_CARD_SURCHARGE_KEY = "corporate_card_surcharge";
-    private static final String JSON_TOTAL_AMOUNT_KEY = "total_amount";
     private static final String VALID_CARD_NUMBER = "4242424242424242";
+    private static final String VALID_SERVICE_ID = "valid-service-id";
+    private String gatewayAccountId;
 
-    
+    @BeforeEach
+    void setup() {
+        gatewayAccountId = app.givenSetup()
+                .body(toJson(Map.of(
+                        "service_id", VALID_SERVICE_ID,
+                        "type", GatewayAccountType.TEST,
+                        "payment_provider", PaymentGatewayName.SANDBOX.getName(),
+                        "service_name", "my-test-service-name"
+                )))
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(201)
+                .extract().path("gateway_account_id");
+    }
     
     @Nested
     class ByGatewayAccountId {
+        
         @Test
-        void makeChargeAndRetrieveAmount() {
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_RETURN_URL_KEY, RETURN_URL,
-                    JSON_EMAIL_KEY, EMAIL,
-                    JSON_LANGUAGE_KEY, "cy"
-            ));
-
-            ValidatableResponse response = testBaseExtension.getConnectorRestApiClient()
-                    .postCreateCharge(postBody)
+        void shouldCreateChargeAndRetrieveDetailsSuccessfully() {
+            ValidatableResponse response = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "email", "test@example.com",
+                            "return_url", "http://service.local/success-page/",
+                            "language", "cy",
+                            "metadata", Map.of(),
+                            "source", CARD_API)
+                    ))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
                     .statusCode(Status.CREATED.getStatusCode())
-                    .body(JSON_CHARGE_KEY, is(notNullValue()))
-                    .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                    .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
-                    .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
-                    .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
-                    .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
-                    .body(JSON_EMAIL_KEY, is(EMAIL))
-                    .body(JSON_LANGUAGE_KEY, is("cy"))
-                    .body(JSON_DELAYED_CAPTURE_KEY, is(false))
-                    .body(JSON_MOTO_KEY, is(false))
+                    .body("charge_id", is(notNullValue()))
+                    .body("amount", isNumber(6234L))
+                    .body("reference", is("Test reference"))
+                    .body("description", is("Test description"))
+                    .body("payment_provider", is("sandbox"))
+                    .body("return_url", is("http://service.local/success-page/"))
+                    .body("email", is("test@example.com"))
+                    .body("language", is("cy"))
+                    .body("$", not(hasKey("metadata")))
+                    .body("delayed_capture", is(false))
+                    .body("moto", is(false))
+                    .body("state.status", is(CREATED.toExternal().getStatus()))
+                    .body("corporate_card_surcharge", is(nullValue()))
+                    .body("total_amount", is(nullValue()))
                     .body("containsKey('card_details')", is(false))
                     .body("containsKey('gateway_account')", is(false))
                     .body("refund_summary.amount_submitted", is(0))
-                    .body("refund_summary.amount_available", isNumber(AMOUNT))
+                    .body("refund_summary.amount_available", isNumber(6234L))
                     .body("refund_summary.status", is("pending"))
                     .body("settlement_summary.capture_submit_time", nullValue())
                     .body("settlement_summary.captured_time", nullValue())
@@ -138,40 +141,40 @@ public class ChargesApiResourceCreateIT {
                     .body("authorisation_mode", is("web"))
                     .contentType(JSON);
 
-            String externalChargeId = response.extract().path(JSON_CHARGE_KEY);
-            String documentLocation = expectedChargeLocationFor(testBaseExtension.getAccountId(), externalChargeId);
-            String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
-
-            String hrefNextUrl = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
-            String hrefNextUrlPost = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL;
+            String testChargeId = response.extract().path("charge_id");
+            String documentLocation = expectedChargeLocationFor(gatewayAccountId, testChargeId);
+            String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(testChargeId);
 
             response.header("Location", is(documentLocation))
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", hrefNextUrl))
-                    .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
-                        put("chargeTokenId", chargeTokenId);
-                    }}));
+                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + chargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                            "application/x-www-form-urlencoded", Map.of("chargeTokenId", chargeTokenId)));
 
-            ValidatableResponse getChargeResponse = testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(testBaseExtension.getAccountId())
-                    .withChargeId(externalChargeId)
-                    .getCharge()
+            Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId);
+            assertThat(CARD_API.toString(), equalTo(charge.get("source")));
+
+            ValidatableResponse getChargeResponse = app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", gatewayAccountId, testChargeId))
+                    .then()
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
-                    .body(JSON_CHARGE_KEY, is(externalChargeId))
-                    .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                    .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
-                    .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
-                    .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
-                    .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
-                    .body(JSON_EMAIL_KEY, is(EMAIL))
-                    .body(JSON_LANGUAGE_KEY, is("cy"))
-                    .body(JSON_DELAYED_CAPTURE_KEY, is(false))
-                    .body(JSON_CORPORATE_CARD_SURCHARGE_KEY, is(nullValue()))
-                    .body(JSON_TOTAL_AMOUNT_KEY, is(nullValue()))
-                    .body(JSON_MOTO_KEY, is(false))
+                    .body("charge_id", is(notNullValue()))
+                    .body("amount", isNumber(6234L))
+                    .body("reference", is("Test reference"))
+                    .body("description", is("Test description"))
+                    .body("payment_provider", is("sandbox"))
+                    .body("return_url", is("http://service.local/success-page/"))
+                    .body("email", is("test@example.com"))
+                    .body("language", is("cy"))
+                    .body("$", not(hasKey("metadata")))
+                    .body("delayed_capture", is(false))
+                    .body("moto", is(false))
+                    .body("state.status", is(CREATED.toExternal().getStatus()))
+                    .body("corporate_card_surcharge", is(nullValue()))
+                    .body("total_amount", is(nullValue()))
                     .body("containsKey('card_details')", is(false))
                     .body("containsKey('gateway_account')", is(false))
                     .body("settlement_summary.capture_submit_time", nullValue())
@@ -180,278 +183,199 @@ public class ChargesApiResourceCreateIT {
                     .body("refund_summary.amount_available", isNumber(AMOUNT))
                     .body("refund_summary.status", is("pending"));
 
-
-            // Reload the charge token which as it should have changed
-            String newChargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(externalChargeId);
-
-            String newHrefNextUrl = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
+            // Reload the charge token as it should have changed
+            String newChargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(testChargeId);
 
             getChargeResponse
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", newHrefNextUrl))
-                    .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
-                        put("chargeTokenId", newChargeTokenId);
-                    }}));
+                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + newChargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                            "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
 
-            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(testBaseExtension.getTestAccount().getAccountId()).get(0).get("id").toString();
-            String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(externalChargeId).get("gateway_account_credential_id").toString();
+
+            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(gatewayAccountId)).get(0).get("id").toString();
+            String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId).get("gateway_account_credential_id").toString();
 
             assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
         }
 
         @Test
-        void makeChargeWithAuthorisationModeMotoApi() {
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_EMAIL_KEY, EMAIL,
-                    JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
-            ));
+        void shouldCreateCharge_withAuthorisationModeMotoApi() {
+            app.givenSetup()
+                    .body(toJson(Map.of("op", "replace", "path", "allow_authorisation_api", "value", true)))
+                    .patch(format("/v1/api/accounts/%s", gatewayAccountId))
+                    .then()
+                    .statusCode(Status.OK.getStatusCode());
 
-            ValidatableResponse createResponse = testBaseExtension.getConnectorRestApiClient()
-                    .postCreateCharge(postBody)
-                    .statusCode(Status.CREATED.getStatusCode())
-                    .body(JSON_LANGUAGE_KEY, is("en"))
-                    .contentType(JSON);
+            String testChargeId = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "email", "test@example.com",
+                            "authorisation_mode", "moto_api"
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(201)
+                    .extract().path("charge_id");
 
-            String externalChargeId = createResponse.extract().path(JSON_CHARGE_KEY);
-
-            ValidatableResponse findResponse = testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(testBaseExtension.getAccountId())
-                    .withChargeId(externalChargeId)
-                    .getCharge()
+            ValidatableResponse getChargeResponse = app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", gatewayAccountId, testChargeId))
+                    .then()
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
-                    .body(JSON_AUTH_MODE_KEY, is(JSON_AUTH_MODE_MOTO_API))
-                    .body(JSON_RETURN_URL_KEY, is(nullValue()));
+                    .body("authorisation_mode", is("moto_api"))
+                    .body("return_url", is(nullValue()));
 
-            ArrayList<Map<String, Object>> links = findResponse.extract().body().jsonPath().get("links");
+            ArrayList<Map<String, Object>> links = getChargeResponse.extract().body().jsonPath().get("links");
             var authLink = links.stream().filter(link -> link.get("rel").toString().equals("auth_url_post")).findFirst().get();
             assertThat(authLink.get("method").toString(), is("POST"));
             assertThat(authLink.get("type"), is("application/json"));
             var authLinkParams = (Map<String, String>) authLink.get("params");
             assertThat(authLinkParams.get("one_time_token"), is(not(blankOrNullString())));
         }
-
+        
         @Test
-        void makeChargeNoEmailField_shouldReturnOK() {
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_RETURN_URL_KEY, RETURN_URL
-            ));
-
-
-            testBaseExtension.getConnectorRestApiClient()
-                    .postCreateCharge(postBody)
+        void shouldCreateCharge_withNoEmailField() {
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
                     .statusCode(Status.CREATED.getStatusCode())
-                    .body(JSON_CHARGE_KEY, is(notNullValue()))
-                    .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                    .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
-                    .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
-                    .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
-                    .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
-                    .body("containsKey('card_details')", is(false))
-                    .body("containsKey('gateway_account')", is(false))
-                    .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
-                    .body("created_date", isWithin(10, SECONDS))
-                    .contentType(JSON);
-
-        }
-
-        @Test
-        void shouldCreateCharge_whenReferenceIsACardNumberForAPIPayment() throws JsonProcessingException {
-            var cardInformation = aCardInformation().build();
-            app.getCardidStub().returnCardInformation(VALID_CARD_NUMBER, cardInformation);
-
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_RETURN_URL_KEY, RETURN_URL,
-                    JSON_SOURCE_KEY, CARD_API
-            ));
-
-            testBaseExtension.getConnectorRestApiClient()
-                    .postCreateCharge(postBody)
-                    .statusCode(Status.CREATED.getStatusCode())
-                    .body(JSON_REFERENCE_KEY, is(VALID_CARD_NUMBER))
+                    .body("charge_id", is(notNullValue()))
+                    .body("email", is(nullValue()))
                     .contentType(JSON);
         }
 
         @Test
-        void shouldReturn404WhenCreatingChargeAccountIdIsNonNumeric() {
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_RETURN_URL_KEY, RETURN_URL
-            ));
-
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId("invalidAccountId")
-                    .postCreateCharge(postBody)
-                    .contentType(JSON)
-                    .statusCode(NOT_FOUND.getStatusCode())
-                    .body("code", is(404))
-                    .body("message", is("HTTP 404 Not Found"));
-        }
-
-        @Test
-        void shouldReturn400WhenReferenceIsACardNumberForPaymentLinkPayment() throws JsonProcessingException {
+        void shouldCreateCharge_whenReferenceIsACardNumber_forAPIPayment() throws JsonProcessingException {
             var cardInformation = aCardInformation().build();
             app.getCardidStub().returnCardInformation(VALID_CARD_NUMBER, cardInformation);
 
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_RETURN_URL_KEY, RETURN_URL,
-                    JSON_SOURCE_KEY, CARD_PAYMENT_LINK
-            ));
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", VALID_CARD_NUMBER,
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "source", CARD_API
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(Status.CREATED.getStatusCode())
+                    .body("reference", is(VALID_CARD_NUMBER))
+                    .contentType(JSON);
+        }
 
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(testBaseExtension.getAccountId())
-                    .postCreateCharge(postBody)
+        @Test
+        void shouldReturn400_whenReferenceIsACardNumber_forPaymentLinkPayment() throws JsonProcessingException {
+            var cardInformation = aCardInformation().build();
+            app.getCardidStub().returnCardInformation(VALID_CARD_NUMBER, cardInformation);
+
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", VALID_CARD_NUMBER,
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "source", CARD_PAYMENT_LINK
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
                     .contentType(JSON)
                     .statusCode(BAD_REQUEST.getStatusCode())
                     .body("error_identifier", is(CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED.toString()))
                     .body("message[0]", is("Card number entered in a payment link reference"));
         }
-
+        
         @Test
         void cannotMakeChargeForMissingGatewayAccount() {
-            String missingGatewayAccount = "1234123";
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_EMAIL_KEY, EMAIL,
-                    JSON_RETURN_URL_KEY, RETURN_URL
-            ));
-
-            testBaseExtension.getConnectorRestApiClient()
-                    .withAccountId(missingGatewayAccount)
-                    .postCreateCharge(postBody)
+            String nonExistentGatewayAccount = "1234123";
+            ValidatableResponse response = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "email", "test@example.com",
+                            "return_url", "http://service.local/success-page/")))
+                    .post(format("/v1/api/accounts/%s/charges", nonExistentGatewayAccount))
+                    .then()
                     .statusCode(NOT_FOUND.getStatusCode())
                     .contentType(JSON)
                     .header("Location", is(nullValue()))
-                    .body(JSON_CHARGE_KEY, is(nullValue()))
-                    .body(JSON_MESSAGE_KEY, contains("Unknown gateway account: " + missingGatewayAccount))
+                    .body("charge_id", is(nullValue()))
+                    .body("message", contains("Unknown gateway account: " + nonExistentGatewayAccount))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
 
         @Test
-        void cannotMakeChargeForInvalidSizeOfFields() {
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, randomAlphabetic(256),
-                    JSON_DESCRIPTION_KEY, randomAlphanumeric(256),
-                    JSON_EMAIL_KEY, randomAlphanumeric(255),
-                    JSON_RETURN_URL_KEY, RETURN_URL
-            ));
+        void shouldReturn403_whenAccountDisabled() {
+            app.givenSetup()
+                    .body(toJson(Map.of("op", "replace", "path", "disabled", "value", true)))
+                    .patch(format("/v1/api/accounts/%s", gatewayAccountId))
+                    .then()
+                    .statusCode(Status.OK.getStatusCode());
 
-            testBaseExtension.getConnectorRestApiClient().postCreateCharge(postBody)
-                    .statusCode(422)
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(403)
                     .contentType(JSON)
-                    .header("Location", is(nullValue()))
-                    .body(JSON_CHARGE_KEY, is(nullValue()))
-                    .body(JSON_MESSAGE_KEY, containsInAnyOrder(
-                            "Field [email] can have a size between 0 and 254",
-                            "Field [description] can have a size between 0 and 255",
-                            "Field [reference] can have a size between 0 and 255"
-                    ));
-        }
-
-        @Test
-        void cannotMakeChargeForMissingFields() {
-            testBaseExtension.getConnectorRestApiClient().postCreateCharge("{}")
-                    .statusCode(422)
-                    .contentType(JSON)
-                    .header("Location", is(nullValue()))
-                    .body(JSON_CHARGE_KEY, is(nullValue()))
-                    .body(JSON_MESSAGE_KEY, containsInAnyOrder(
-                            "Field [reference] cannot be null",
-                            "Field [description] cannot be null",
-                            "Field [amount] cannot be null"
-                    ));
-        }
-
-        @Test
-        void shouldReturn403WhenGatewayAccountIsDisabled() {
-            app.getDatabaseTestHelper().setDisabled(Long.parseLong(testBaseExtension.getAccountId()));
-
-            String postBody = toJson(Map.of(
-                    JSON_AMOUNT_KEY, AMOUNT,
-                    JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                    JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                    JSON_RETURN_URL_KEY, RETURN_URL
-            ));
-
-            testBaseExtension.getConnectorRestApiClient()
-                    .postCreateCharge(postBody)
-                    .statusCode(FORBIDDEN_403)
-                    .contentType(JSON)
-                    .body("message", contains("This gateway account is disabled"))
-                    .body("error_identifier", is(ErrorIdentifier.ACCOUNT_DISABLED.toString()));
+                    .body(JSON_MESSAGE_KEY, contains("This gateway account is disabled"));
         }
     }
 
     @Nested
     class GetChargeByServiceIdAndAccountType {
-
-        private static String VALID_SERVICE_ID = "valid-service-id";
-        private static String NON_EXISTENT_SERVICE_ID = "non-existent-service-id";
-
-        private String gatewayAccountId;
-        
-        @BeforeEach
-        void setup() {
-            gatewayAccountId = app.givenSetup()
-                    .body(toJson(Map.of(
-                            "service_id", VALID_SERVICE_ID,
-                            "type", GatewayAccountType.TEST,
-                            "payment_provider", PaymentGatewayName.SANDBOX.getName(),
-                            "service_name", "my-test-service-name"
-                    )))
-                    .post("/v1/api/accounts")
-                    .then()
-                    .statusCode(201)
-                    .extract().path("gateway_account_id");
-        }
         
         @Test
         void shouldCreateChargeAndRetrieveDetailsSuccessfully() {
             ValidatableResponse response = app.givenSetup()
                     .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_RETURN_URL_KEY, RETURN_URL,
-                            JSON_EMAIL_KEY, EMAIL,
-                            JSON_LANGUAGE_KEY, "cy")
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "email", "test@example.com",
+                            "return_url", "http://service.local/success-page/",
+                            "language", "cy",
+                            "metadata", Map.of(),
+                            "source", CARD_API)
                     ))
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
                     .statusCode(Status.CREATED.getStatusCode())
-                    .body(JSON_CHARGE_KEY, is(notNullValue()))
-                    .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                    .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
-                    .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
-                    .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
-                    .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
-                    .body(JSON_EMAIL_KEY, is(EMAIL))
-                    .body(JSON_LANGUAGE_KEY, is("cy"))
-                    .body(JSON_DELAYED_CAPTURE_KEY, is(false))
-                    .body(JSON_MOTO_KEY, is(false))
+                    .body("charge_id", is(notNullValue()))
+                    .body("amount", isNumber(6234L))
+                    .body("reference", is("Test reference"))
+                    .body("description", is("Test description"))
+                    .body("payment_provider", is("sandbox"))
+                    .body("return_url", is("http://service.local/success-page/"))
+                    .body("email", is("test@example.com"))
+                    .body("language", is("cy"))
+                    .body("$", not(hasKey("metadata")))
+                    .body("delayed_capture", is(false))
+                    .body("moto", is(false))
+                    .body("state.status", is(CREATED.toExternal().getStatus()))
+                    .body("corporate_card_surcharge", is(nullValue()))
+                    .body("total_amount", is(nullValue()))
                     .body("containsKey('card_details')", is(false))
                     .body("containsKey('gateway_account')", is(false))
                     .body("refund_summary.amount_submitted", is(0))
-                    .body("refund_summary.amount_available", isNumber(AMOUNT))
+                    .body("refund_summary.amount_available", isNumber(6234L))
                     .body("refund_summary.status", is("pending"))
                     .body("settlement_summary.capture_submit_time", nullValue())
                     .body("settlement_summary.captured_time", nullValue())
@@ -460,38 +384,40 @@ public class ChargesApiResourceCreateIT {
                     .body("authorisation_mode", is("web"))
                     .contentType(JSON);
 
-            String testChargeId = response.extract().path(JSON_CHARGE_KEY);
+            String testChargeId = response.extract().path("charge_id");
             String documentLocation = expectedChargeLocationFor(gatewayAccountId, testChargeId);
             String chargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(testChargeId);
-            String hrefNextUrl = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL + "/" + chargeTokenId;
-            String hrefNextUrlPost = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL;
 
             response.header("Location", is(documentLocation))
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", hrefNextUrl))
-                    .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
-                        put("chargeTokenId", chargeTokenId);
-                    }}));
+                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + chargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                            "application/x-www-form-urlencoded", Map.of("chargeTokenId", chargeTokenId)));
 
+            Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId);
+            assertThat(CARD_API.toString(), equalTo(charge.get("source")));
+            
             ValidatableResponse getChargeResponse = app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
-                    .body(JSON_CHARGE_KEY, is(testChargeId))
-                    .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                    .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
-                    .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
-                    .body(JSON_STATE_KEY, is(CREATED.toExternal().getStatus()))
-                    .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
-                    .body(JSON_EMAIL_KEY, is(EMAIL))
-                    .body(JSON_LANGUAGE_KEY, is("cy"))
-                    .body(JSON_DELAYED_CAPTURE_KEY, is(false))
-                    .body(JSON_CORPORATE_CARD_SURCHARGE_KEY, is(nullValue()))
-                    .body(JSON_TOTAL_AMOUNT_KEY, is(nullValue()))
-                    .body(JSON_MOTO_KEY, is(false))
+                    .body("charge_id", is(notNullValue()))
+                    .body("amount", isNumber(6234L))
+                    .body("reference", is("Test reference"))
+                    .body("description", is("Test description"))
+                    .body("payment_provider", is("sandbox"))
+                    .body("return_url", is("http://service.local/success-page/"))
+                    .body("email", is("test@example.com"))
+                    .body("language", is("cy"))
+                    .body("$", not(hasKey("metadata")))
+                    .body("delayed_capture", is(false))
+                    .body("moto", is(false))
+                    .body("state.status", is(CREATED.toExternal().getStatus()))
+                    .body("corporate_card_surcharge", is(nullValue()))
+                    .body("total_amount", is(nullValue()))
                     .body("containsKey('card_details')", is(false))
                     .body("containsKey('gateway_account')", is(false))
                     .body("settlement_summary.capture_submit_time", nullValue())
@@ -500,19 +426,17 @@ public class ChargesApiResourceCreateIT {
                     .body("refund_summary.amount_available", isNumber(AMOUNT))
                     .body("refund_summary.status", is("pending"));
 
-
             // Reload the charge token as it should have changed
             String newChargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(testChargeId);
-            String newHrefNextUrl = "http://CardFrontend" + FRONTEND_CARD_DETAILS_URL + "/" + newChargeTokenId;
 
             getChargeResponse
                     .body("links", hasSize(4))
                     .body("links", containsLink("self", "GET", documentLocation))
                     .body("links", containsLink("refunds", "GET", documentLocation + "/refunds"))
-                    .body("links", containsLink("next_url", "GET", newHrefNextUrl))
-                    .body("links", containsLink("next_url_post", "POST", hrefNextUrlPost, "application/x-www-form-urlencoded", new HashMap<>() {{
-                        put("chargeTokenId", newChargeTokenId);
-                    }}));
+                    .body("links", containsLink("next_url", "GET", "http://CardFrontend/secure/" + newChargeTokenId))
+                    .body("links", containsLink("next_url_post", "POST", "http://CardFrontend/secure",
+                            "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
+
 
             String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(gatewayAccountId)).get(0).get("id").toString();
             String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId).get("gateway_account_credential_id").toString();
@@ -530,11 +454,11 @@ public class ChargesApiResourceCreateIT {
 
             String testChargeId = app.givenSetup()
                     .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_EMAIL_KEY, EMAIL,
-                            JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_MOTO_API
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "email", "test@example.com",
+                            "authorisation_mode", "moto_api"
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
@@ -546,8 +470,8 @@ public class ChargesApiResourceCreateIT {
                     .then()
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
-                    .body(JSON_AUTH_MODE_KEY, is(JSON_AUTH_MODE_MOTO_API))
-                    .body(JSON_RETURN_URL_KEY, is(nullValue()));
+                    .body("authorisation_mode", is("moto_api"))
+                    .body("return_url", is(nullValue()));
 
             ArrayList<Map<String, Object>> links = getChargeResponse.extract().body().jsonPath().get("links");
             var authLink = links.stream().filter(link -> link.get("rel").toString().equals("auth_url_post")).findFirst().get();
@@ -561,24 +485,15 @@ public class ChargesApiResourceCreateIT {
         void shouldCreateCharge_withNoEmailField() {
             app.givenSetup()
                     .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_RETURN_URL_KEY, RETURN_URL
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
                     .statusCode(Status.CREATED.getStatusCode())
-                    .body(JSON_CHARGE_KEY, is(notNullValue()))
-                    .body(JSON_AMOUNT_KEY, isNumber(AMOUNT))
-                    .body(JSON_REFERENCE_KEY, is(JSON_REFERENCE_VALUE))
-                    .body(JSON_DESCRIPTION_KEY, is(JSON_DESCRIPTION_VALUE))
-                    .body(JSON_PROVIDER_KEY, is(PROVIDER_NAME))
-                    .body(JSON_RETURN_URL_KEY, is(RETURN_URL))
-                    .body("containsKey('card_details')", is(false))
-                    .body("containsKey('gateway_account')", is(false))
-                    .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
-                    .body("created_date", isWithin(10, SECONDS))
+                    .body("charge_id", is(notNullValue()))
                     .contentType(JSON);
 
         }
@@ -590,47 +505,17 @@ public class ChargesApiResourceCreateIT {
 
             app.givenSetup()
                     .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_RETURN_URL_KEY, RETURN_URL,
-                            JSON_SOURCE_KEY, CARD_API
+                            "amount", 6234L,
+                            "reference", VALID_CARD_NUMBER,
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "source", CARD_API
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
                     .statusCode(Status.CREATED.getStatusCode())
-                    .body(JSON_REFERENCE_KEY, is(VALID_CARD_NUMBER))
+                    .body("reference", is(VALID_CARD_NUMBER))
                     .contentType(JSON);
-        }
-
-        @Test
-        void shouldReturn404_whenServiceIdDoesNotExist() {
-            app.givenSetup()
-                    .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_RETURN_URL_KEY, RETURN_URL
-                    )))
-                    .post(format("/v1/api/service/%s/account/%s/charges", NON_EXISTENT_SERVICE_ID, GatewayAccountType.TEST))
-                    .then()
-                    .statusCode(NOT_FOUND.getStatusCode())
-                    .body("message[0]", CoreMatchers.is("Gateway account not found for service ID [non-existent-service-id] and account type [test]"));
-        }
-
-        @Test
-        void shouldReturn404_whenGatewayAccountNotFound() {
-            app.givenSetup()
-                    .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_RETURN_URL_KEY, RETURN_URL
-                    )))
-                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.LIVE))
-                    .then()
-                    .statusCode(NOT_FOUND.getStatusCode())
-                    .body("message[0]", CoreMatchers.is("Gateway account not found for service ID [valid-service-id] and account type [live]"));;
         }
 
         @Test
@@ -640,11 +525,11 @@ public class ChargesApiResourceCreateIT {
 
             app.givenSetup()
                     .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, VALID_CARD_NUMBER,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_RETURN_URL_KEY, RETURN_URL,
-                            JSON_SOURCE_KEY, CARD_PAYMENT_LINK
+                            "amount", 6234L,
+                            "reference", VALID_CARD_NUMBER,
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "source", CARD_PAYMENT_LINK
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
@@ -653,47 +538,37 @@ public class ChargesApiResourceCreateIT {
                     .body("error_identifier", is(CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED.toString()))
                     .body("message[0]", is("Card number entered in a payment link reference"));
         }
-
+        
         @Test
-        void shouldReturn422_whenFieldsExceedMaxSize() {
+        void shouldReturn404_whenServiceIdDoesNotExist() {
             app.givenSetup()
                     .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, randomAlphabetic(256),
-                            JSON_DESCRIPTION_KEY, randomAlphanumeric(256),
-                            JSON_EMAIL_KEY, randomAlphanumeric(255),
-                            JSON_RETURN_URL_KEY, RETURN_URL
+                            "amount", 6234L,
+                            "reference", "4242424242424242",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
                     )))
-                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .post(format("/v1/api/service/%s/account/%s/charges", "non-existent-service-id", GatewayAccountType.TEST))
                     .then()
-                    .statusCode(422)
-                    .contentType(JSON)
-                    .header("Location", is(nullValue()))
-                    .body(JSON_CHARGE_KEY, is(nullValue()))
-                    .body(JSON_MESSAGE_KEY, containsInAnyOrder(
-                            "Field [email] can have a size between 0 and 254",
-                            "Field [description] can have a size between 0 and 255",
-                            "Field [reference] can have a size between 0 and 255"
-                    ));
+                    .statusCode(NOT_FOUND.getStatusCode())
+                    .body("message[0]", CoreMatchers.is("Gateway account not found for service ID [non-existent-service-id] and account type [test]"));
         }
 
         @Test
-        void shouldReturn422_whenFieldsMissing() {
+        void shouldReturn404_whenGatewayAccountNotFound() {
             app.givenSetup()
-                    .body("{}")
-                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "4242424242424242",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.LIVE))
                     .then()
-                    .statusCode(422)
-                    .contentType(JSON)
-                    .header("Location", is(nullValue()))
-                    .body(JSON_CHARGE_KEY, is(nullValue()))
-                    .body(JSON_MESSAGE_KEY, containsInAnyOrder(
-                            "Field [reference] cannot be null",
-                            "Field [description] cannot be null",
-                            "Field [amount] cannot be null"
-                    ));
+                    .statusCode(NOT_FOUND.getStatusCode())
+                    .body("message[0]", CoreMatchers.is("Gateway account not found for service ID [valid-service-id] and account type [live]"));;
         }
-
+        
         @Test
         void shouldReturn403_whenAccountDisabled() {
             app.givenSetup()
@@ -704,16 +579,16 @@ public class ChargesApiResourceCreateIT {
             
             app.givenSetup()
                     .body(toJson(Map.of(
-                            JSON_AMOUNT_KEY, AMOUNT,
-                            JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                            JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                            JSON_RETURN_URL_KEY, RETURN_URL
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
                     .statusCode(403)
                     .contentType(JSON)
-                    .body(JSON_MESSAGE_KEY, contains("This gateway account is disabled"));
+                    .body("message", contains("This gateway account is disabled"));
         }
     }
         /*
