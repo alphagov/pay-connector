@@ -359,6 +359,8 @@ paths:
           description: Created
         "400":
           description: Bad Request
+        "403":
+          description: Gateway account is disabled
         "404":
           description: Not found
         "422":
@@ -1441,6 +1443,59 @@ paths:
           description: default response
       tags:
       - Agreements
+  /v1/api/service/{serviceId}/account/{accountType}/charges:
+    post:
+      operationId: createNewChargeByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/ChargeCreateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeResponse'
+          description: Created
+        "400":
+          description: Bad Request
+        "403":
+          description: Gateway account is disabled
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Missing required fields or invalid values
+      summary: Create new charge for service ID and account type
+      tags:
+      - Charges
   /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}:
     get:
       operationId: getChargeByServiceIdAndAccountType
