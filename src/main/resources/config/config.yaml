@@ -58,11 +58,11 @@ worldpay:
       # GATEWAY_CONNECTION_TIMEOUT_ERROR so we are increasing it to try to not get those outliers.
       readTimeout: 50000ms
     cancel:
-      # Cancel median time is 500ms and done synchronously. Leave a bit of headroom since we don't have retries on this.
-      readTimeout: 5000ms
+      # Cancel median time is 500ms and done synchronously. Timeout is significantly higher as a few requests take longer
+      readTimeout: 10000ms
     refund:
-      # Refund median time is 500ms and done synchronously. Leave a bit of headroom since we don't have retries on this.
-      readTimeout: 5000ms
+      # Refund median time is 500ms and done synchronously. Timeout is significantly higher as a few requests take longer
+      readTimeout: 10000ms
     capture:
       # Capture median time is 200ms. We can be quite agressive in the timeout since we have a retry mechanism.
       readTimeout: 3000ms
