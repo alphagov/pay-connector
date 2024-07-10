@@ -275,7 +275,7 @@ public class ChargesApiResource {
                     @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             }
     )
-    public Response createNewTelephoneCharge(
+    public Response createNewTelephoneChargeByAccountId(
             @Parameter(example = "1", description = "Gateway account ID") @PathParam(ACCOUNT_ID) Long accountId,
             @NotNull @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
             @Context UriInfo uriInfo
@@ -288,6 +288,47 @@ public class ChargesApiResource {
         }
 
         return chargeService.findCharge(accountId, telephoneChargeCreateRequest)
+                .map(response -> Response.status(200).entity(response).build())
+                .orElseGet(() -> Response.status(201).entity(chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount)).build());
+    }
+
+    @POST
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/telephone-charges")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Create a new telephone charge by service id and account type",
+            description = "Create a new telephone charge for gateway account. These are externally taken payments and the outcome is reported to this endpoint. " +
+                    "provider_id is used as an idempotency key for API calls. If a payment already exists with the provider_id provided, the API will not store a record about a new payment, or update or change the record about a payment previously stored.",
+            tags = {"Charges"},
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK - returns existing charge for provider_id",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "201", description = "Created",
+                            content = @Content(schema = @Schema(implementation = ChargeResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(schema = @Schema(example = "{" +
+                            "    \"error_identifier\": \"TELEPHONE_PAYMENT_NOTIFICATIONS_NOT_ALLOWED\"," +
+                            "    \"message\": [" +
+                            "        \"Telephone payment notifications are not enabled for this gateway account\"" +
+                            "    ]" +
+                            "}"))),
+                    @ApiResponse(responseCode = "404", description = "Not found"),
+                    @ApiResponse(responseCode = "422", description = "Missing required fields or invalid values", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            }
+    )
+    public Response createNewTelephoneChargeByServiceIdAndAccountType(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @NotNull @Valid TelephoneChargeCreateRequest telephoneChargeCreateRequest,
+            @Context UriInfo uriInfo
+    ) {
+        GatewayAccountEntity gatewayAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+
+        if (!gatewayAccount.isAllowTelephonePaymentNotifications()) {
+            throw new TelephonePaymentNotificationsNotAllowedException(gatewayAccount.getId());
+        }
+
+        return chargeService.findCharge(gatewayAccount.getId(), telephoneChargeCreateRequest)
                 .map(response -> Response.status(200).entity(response).build())
                 .orElseGet(() -> Response.status(201).entity(chargeService.createFromTelephonePaymentNotification(telephoneChargeCreateRequest, gatewayAccount)).build());
     }
