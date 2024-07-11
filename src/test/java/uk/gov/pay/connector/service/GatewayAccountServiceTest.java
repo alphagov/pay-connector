@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntit
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsHistoryDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
@@ -36,6 +37,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -49,6 +51,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED_REASON;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_RECURRING_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 @ExtendWith(MockitoExtension.class)
@@ -104,11 +107,17 @@ class GatewayAccountServiceTest {
     @Test
     void shouldGetGatewayAccountByServiceIdAndAccountType() {
         String serviceId = "a-service-id";
-        when(mockGatewayAccountDao.findByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST)).thenReturn(Optional.of(mockGatewayAccountEntity));
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
+        var credentials = new GatewayAccountCredentialsEntity(gatewayAccount, "stripe", Map.of(), ACTIVE);
+        gatewayAccount.setGatewayAccountCredentials(List.of(credentials));
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST))
+                .thenReturn(List.of(gatewayAccount));
 
-        Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST);
+        Optional<GatewayAccountEntity> result = 
+                gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST);
 
-        assertThat(gatewayAccountEntity.get(), is(this.mockGatewayAccountEntity));
+        assertTrue(result.isPresent());
+        assertThat(result.get(), is(gatewayAccount));
     }
 
     @Test

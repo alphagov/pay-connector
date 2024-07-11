@@ -19,11 +19,11 @@ import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -52,7 +52,7 @@ public class AgreementServiceTest {
     
     private final GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
     private final AgreementDao mockedAgreementDao = mock(AgreementDao.class);
-    private final GatewayAccountDao mockedGatewayAccountDao = mock(GatewayAccountDao.class);
+    private final GatewayAccountService mockGatewayAccountService = mock(GatewayAccountService.class);
     private final LedgerService mockedLedgerService = mock(LedgerService.class);
     private final TaskQueueService mockedTaskQueueService = mock(TaskQueueService.class);
     private AgreementService agreementService;
@@ -60,7 +60,7 @@ public class AgreementServiceTest {
     @BeforeEach
     public void setUp() {
         InstantSource instantSource = InstantSource.fixed(Instant.parse(INSTANT_EXPECTED));
-        agreementService = new AgreementService(mockedAgreementDao, mockedGatewayAccountDao, mockedLedgerService, instantSource, mockedTaskQueueService);
+        agreementService = new AgreementService(mockedAgreementDao, mockGatewayAccountService, mockedLedgerService, instantSource, mockedTaskQueueService);
     }
     
     @Nested
@@ -74,7 +74,7 @@ public class AgreementServiceTest {
                 when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
                 when(gatewayAccount.isLive()).thenReturn(false);
                 when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
-                when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+                when(mockGatewayAccountService.getGatewayAccount(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
 
                 AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
                 Optional<AgreementResponse> response = agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID);
@@ -88,7 +88,7 @@ public class AgreementServiceTest {
 
             @Test
             public void shouldThrowException_whenGatewayAccountNotFound() {
-                when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
+                when(mockGatewayAccountService.getGatewayAccount(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.empty());
                 AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
                 assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
             }
@@ -96,7 +96,7 @@ public class AgreementServiceTest {
             @Test
             public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
                 when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
-                when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+                when(mockGatewayAccountService.getGatewayAccount(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
                 AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
                 assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByGatewayAccountId(agreementCreateRequest, GATEWAY_ACCOUNT_ID));
             }
@@ -185,7 +185,8 @@ public class AgreementServiceTest {
                 when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
                 when(gatewayAccount.isLive()).thenReturn(false);
                 when(gatewayAccount.isRecurringEnabled()).thenReturn(true);
-                when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
+                when(mockGatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST))
+                        .thenReturn(Optional.of(gatewayAccount));
 
                 AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
                 Optional<AgreementResponse> response = agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST);
@@ -199,17 +200,21 @@ public class AgreementServiceTest {
 
             @Test
             public void shouldThrowNotFoundException_whenGatewayAccountDoesNotExist() {
-                when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.empty());
-                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
-                assertThrows(GatewayAccountNotFoundException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
+                when(mockGatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST))
+                        .thenReturn(Optional.empty());
+                var agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                assertThrows(GatewayAccountNotFoundException.class, 
+                        () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
             }
 
             @Test
             public void shouldThrowRecurringCardPaymentsNotAllowedException_whenRecurringDisabled() {
                 when(gatewayAccount.isRecurringEnabled()).thenReturn(false);
-                when(mockedGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(gatewayAccount));
-                AgreementCreateRequest agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
-                assertThrows(RecurringCardPaymentsNotAllowedException.class, () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
+                when(mockGatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST))
+                        .thenReturn(Optional.of(gatewayAccount));
+                var agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
+                assertThrows(RecurringCardPaymentsNotAllowedException.class, 
+                        () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
             }
         }
 
