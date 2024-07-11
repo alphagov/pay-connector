@@ -227,6 +227,7 @@ public class ChargesApiResourceCreateIT {
                     .then()
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
+                    .body("language", is("en"))
                     .body("authorisation_mode", is("moto_api"))
                     .body("return_url", is(nullValue()));
 
