@@ -25,6 +25,7 @@ import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -296,9 +297,154 @@ public class ChargesApiResourceCreateIT {
                     .body("error_identifier", is(CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED.toString()))
                     .body("message[0]", is("Card number entered in a payment link reference"));
         }
+
+        @Test
+        void shouldCreateCharge_withExternalMetadata() {
+            String chargeExternalId = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "metadata", Map.of(
+                                    "key1", "string",
+                                    "key2", true,
+                                    "key3", 123,
+                                    "key4", 1.23
+                            )
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(Status.CREATED.getStatusCode())
+                    .contentType(JSON)
+                    .body("metadata.key1", is("string"))
+                    .body("metadata.key2", is(true))
+                    .body("metadata.key3", is(123))
+                    .body("metadata.key4", is(1.23F))
+                    .extract().path("charge_id");
+
+            app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", gatewayAccountId, chargeExternalId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("metadata.key1", is("string"))
+                    .body("metadata.key2", is(true))
+                    .body("metadata.key3", is(123))
+                    .body("metadata.key4", is(1.23F));
+            
+        }
+
+        @Test
+        void shouldCreateCharge_withNullMetadata_becauseNullValuesAreNotDeserialised() {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("amount", 6234L);
+            payload.put("reference", "Test reference");
+            payload.put("description", "Test description");
+            payload.put("return_url", "http://service.local/success-page/");
+            payload.put("metadata", null);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(Status.CREATED.getStatusCode())
+                    .body("reference", is("Test reference"));
+        }
         
         @Test
-        void cannotMakeChargeForMissingGatewayAccount() {
+        void shouldReturn422_whenMotoIsTrue_ifMotoNotAllowedForAccount() {
+            //by default, gateway account does not have moto enabled
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "moto", true
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(422)
+                    .contentType(JSON)
+                    .body("message", contains("MOTO payments are not enabled for this gateway account"))
+                    .body("error_identifier", is(ErrorIdentifier.MOTO_NOT_ALLOWED.toString()));;
+        }
+
+        @Test
+        void shouldCreateMotoCharge_whenMotoIsTrue_IfMotoAllowedForAccount() {
+            var payload = Map.of(
+                    "op", "replace",
+                    "path", "allow_moto",
+                    "value", true);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch("/v1/api/accounts/" + gatewayAccountId)
+                    .then()
+                    .statusCode(OK.getStatusCode());
+            
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "moto", true
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON)
+                    .body("moto", is(true));
+        }
+
+        @Test
+        void shouldReturn422_whenAmountIsZero_ifAccountDoesNotAllowZeroAmount() {
+            //by default, gateway account does not have zero amount enabled
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 0,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(422)
+                    .contentType(JSON)
+                    .body("message", contains("Zero amount charges are not enabled for this gateway account"))
+                    .body("error_identifier", is(ErrorIdentifier.ZERO_AMOUNT_NOT_ALLOWED.toString()));
+        }
+
+        @Test
+        void shouldCreateCharge_whenAmountIsZero_ifAccountAllowsZeroAmount() {
+            var payload = Map.of(
+                    "op", "replace",
+                    "path", "allow_zero_amount",
+                    "value", true);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch("/v1/api/accounts/" + gatewayAccountId)
+                    .then()
+                    .statusCode(OK.getStatusCode());
+            
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 0,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
+                    )))
+                    .post(format("/v1/api/accounts/%s/charges", gatewayAccountId))
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON)
+                    .body("amount", is(0));
+        }
+        
+        @Test
+        void shouldReturn404_whenAccountNotFound() {
             String nonExistentGatewayAccount = "1234123";
             ValidatableResponse response = app.givenSetup()
                     .body(toJson(Map.of(
@@ -539,6 +685,150 @@ public class ChargesApiResourceCreateIT {
                     .body("error_identifier", is(CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED.toString()))
                     .body("message[0]", is("Card number entered in a payment link reference"));
         }
+
+        @Test
+        void shouldCreateCharge_withExternalMetadata() {
+            String chargeExternalId = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "metadata", Map.of(
+                                    "key1", "string",
+                                    "key2", true,
+                                    "key3", 123,
+                                    "key4", 1.23
+                            )
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(Status.CREATED.getStatusCode())
+                    .contentType(JSON)
+                    .body("metadata.key1", is("string"))
+                    .body("metadata.key2", is(true))
+                    .body("metadata.key3", is(123))
+                    .body("metadata.key4", is(1.23F))
+                    .extract().path("charge_id");
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("metadata.key1", is("string"))
+                    .body("metadata.key2", is(true))
+                    .body("metadata.key3", is(123))
+                    .body("metadata.key4", is(1.23F));
+        }
+
+        @Test
+        void shouldCreateCharge_whenMetadataIsNull_becauseNullValuesAreNotDeserialised() {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("amount", 6234L);
+            payload.put("reference", "Test reference");
+            payload.put("description", "Test description");
+            payload.put("return_url", "http://service.local/success-page/");
+            payload.put("metadata", null);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(Status.CREATED.getStatusCode())
+                    .body("reference", is("Test reference"));
+        }
+
+        @Test
+        void shouldReturn422_whenMotoIsTrue_ifMotoNotAllowedForAccount() {
+            //by default, gateway account does not have moto enabled
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "moto", true
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(422)
+                    .contentType(JSON)
+                    .body("message", contains("MOTO payments are not enabled for this gateway account"))
+                    .body("error_identifier", is(ErrorIdentifier.MOTO_NOT_ALLOWED.toString()));;
+        }
+
+        @Test
+        void shouldCreateMotoCharge_whenMotoIsTrue_IfMotoAllowedForAccount() {
+            var payload = Map.of(
+                    "op", "replace",
+                    "path", "allow_moto",
+                    "value", true);
+
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .patch(format("/v1/api/service/%s/account/%s/", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 6234L,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/",
+                            "moto", true
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON)
+                    .body("moto", is(true));
+        }
+
+        @Test
+        void shouldReturn422_whenAmountIsZero_ifAccountDoesNotAllowZeroAmount() {
+            //by default, gateway account does not have zero amount enabled
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 0,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(422)
+                    .contentType(JSON)
+                    .body("message", contains("Zero amount charges are not enabled for this gateway account"))
+                    .body("error_identifier", is(ErrorIdentifier.ZERO_AMOUNT_NOT_ALLOWED.toString()));
+        }
+
+        @Test
+        void shouldCreateCharge_whenAmountIsZero_ifAccountAllowsZeroAmount() {
+            var payload = Map.of(
+                    "op", "replace",
+                    "path", "allow_zero_amount",
+                    "value", true);
+
+            app.givenSetup()
+                    .body(toJson(payload)) 
+                    .patch(format("/v1/api/service/%s/account/%s/", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", 0,
+                            "reference", "Test reference",
+                            "description", "Test description",
+                            "return_url", "http://service.local/success-page/"
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON)
+                    .body("amount", is(0));
+        }
         
         @Test
         void shouldReturn404_whenServiceIdDoesNotExist() {
@@ -556,7 +846,7 @@ public class ChargesApiResourceCreateIT {
         }
 
         @Test
-        void shouldReturn404_whenGatewayAccountNotFound() {
+        void shouldReturn404_whenAccountNotFound() {
             app.givenSetup()
                     .body(toJson(Map.of(
                             "amount", 6234L,
