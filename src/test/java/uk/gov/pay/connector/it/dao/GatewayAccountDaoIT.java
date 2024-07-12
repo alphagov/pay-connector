@@ -659,7 +659,7 @@ public class GatewayAccountDaoIT {
     }
 
     @Test
-    void findByServiceIdAndAccountType_shouldReturnMostRecentlyAddedAccount_whenMultipleAccountsExist() {
+    void findByServiceIdAndAccountType_shouldReturnAllAccounts() {
         long firstAccountId = nextLong();
         String firstExternalId = randomUuid();
         String serviceId = randomUuid();

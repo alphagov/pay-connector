@@ -45,6 +45,8 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
     
     private GatewayAccountEntity worldpayGatewayAccount;
     
+    private GatewayAccountEntity smartpayGatewayAccount;
+    
     private static final String SERVICE_ID = "a-service-id";
 
     @BeforeEach
@@ -63,6 +65,10 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
         worldpayGatewayAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
         var worldpayGatewayAccountCreds = new GatewayAccountCredentialsEntity(worldpayGatewayAccount, "worldpay", Map.of(), ACTIVE);
         worldpayGatewayAccount.setGatewayAccountCredentials(List.of(worldpayGatewayAccountCreds));
+        
+        smartpayGatewayAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
+        var smartpayGatewayAccountCreds = new GatewayAccountCredentialsEntity(smartpayGatewayAccount, "smartpay", Map.of(), ACTIVE);
+        smartpayGatewayAccount.setGatewayAccountCredentials(List.of(smartpayGatewayAccountCreds));
     }
 
     @Test
@@ -106,6 +112,16 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
                 gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST);
         assertTrue(gatewayAccount.isPresent());
         assertTrue(gatewayAccount.get().isWorldpayGatewayAccount());
+    }
+    
+    @Test
+    void shouldNotReturnObscureGatewayAccount() {
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST))
+                .thenReturn(List.of(smartpayGatewayAccount));
+
+        Optional<GatewayAccountEntity> gatewayAccount =
+                gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST);
+        assertFalse(gatewayAccount.isPresent());
     }
     
     @Test
