@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.client.ledger.service;
 
-import au.com.dius.pact.consumer.PactVerification;
+import au.com.dius.pact.consumer.junit.PactVerification;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,13 +11,13 @@ import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.service.payments.commons.testing.pact.consumers.PactProviderRule;
 import uk.gov.service.payments.commons.testing.pact.consumers.Pacts;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.RestClientFactory;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.model.RefundTransactionsForPayment;
+import uk.gov.service.payments.commons.testing.pact.consumers.PayPactProviderRule;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Response;
@@ -36,7 +36,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 public class LedgerServiceConsumerTest {
 
     @Rule
-    public PactProviderRule ledgerRule = new PactProviderRule("ledger", this);
+    public PayPactProviderRule ledgerRule = new PayPactProviderRule("ledger", this);
 
     @Mock
     ConnectorConfiguration configuration;
