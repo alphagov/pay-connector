@@ -2,9 +2,9 @@ package uk.gov.pay.connector.it.dao;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.Nested;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -659,9 +659,8 @@ public class GatewayAccountDaoIT {
     }
 
     @Test
-    void findByServiceIdAndAccountType_shouldReturnMostRecentlyAddedAccount_whenMultipleAccountsExist() {
-        // TODO: update this test when decision has been made about multiple accounts
-        Long firstAccountId = nextLong();
+    void findByServiceIdAndAccountType_shouldReturnAllAccounts() {
+        long firstAccountId = nextLong();
         String firstExternalId = randomUuid();
         String serviceId = randomUuid();
         databaseFixtures
@@ -671,7 +670,7 @@ public class GatewayAccountDaoIT {
                 .withServiceId(serviceId)
                 .insert();
 
-        Long secondAccountId = firstAccountId + 1;
+        long secondAccountId = firstAccountId + 1;
         String secondExternalId = randomUuid();
         databaseFixtures
                 .aTestAccount()
@@ -680,10 +679,10 @@ public class GatewayAccountDaoIT {
                 .withServiceId(serviceId)
                 .insert();
         
-        Optional<GatewayAccountEntity> gatewayAccountOptional = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, TEST);
-        assertThat(gatewayAccountOptional.isPresent(), is(true));
-        assertThat(gatewayAccountOptional.get().getId(), is(secondAccountId));
-        assertThat(gatewayAccountOptional.get().getExternalId(), is(secondExternalId));
+        List<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, TEST);
+        assertThat(gatewayAccount.size(), is(2));
+        assertTrue(gatewayAccount.stream().anyMatch(ga -> ga.getExternalId().equals(firstExternalId)));
+        assertTrue(gatewayAccount.stream().anyMatch(ga -> ga.getExternalId().equals(secondExternalId)));
     }
 
     @Test

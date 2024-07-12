@@ -49,6 +49,7 @@ import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExte
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_FRONTEND_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountResourceIT {
     @RegisterExtension
@@ -58,6 +59,40 @@ public class GatewayAccountResourceIT {
 
     @Nested
     class GetByServiceIdAndAccountType {
+        
+        @Test
+        void shouldReturnStripeGatewayAccountWhenThereAreMultipleGatewayAccounts() {
+            String serviceId = randomUuid();
+
+            addGatewayAccountForServiceId(serviceId, "sandbox");
+
+            app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
+                    .then().statusCode(OK.getStatusCode())
+                    .body("gateway_account_credentials", hasSize(1))
+                    .body("gateway_account_credentials[0].payment_provider", is("sandbox"))
+                    .body("service_name", is("Service Name"))
+                    .body("service_id", is(serviceId));
+
+            addGatewayAccountForServiceId(serviceId, "stripe");
+
+            app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
+                    .then().statusCode(OK.getStatusCode())
+                    .body("gateway_account_credentials", hasSize(1))
+                    .body("gateway_account_credentials[0].payment_provider", is("stripe"))
+                    .body("service_name", is("Service Name"))
+                    .body("service_id", is(serviceId));
+        }
+
+        private static void addGatewayAccountForServiceId(String serviceId, String paymentProvider) {
+            Map<String, String> gatewayAccountRequest = Map.of(
+                    "payment_provider", paymentProvider,
+                    "service_id", serviceId,
+                    "service_name", "Service Name",
+                    "type", "test");
+
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post("/v1/api/accounts/");
+        }
+
         @Test
         void shouldReturn404IfServiceIdIsUnknown() {
             String unknownServiceId = "unknown-service-id";

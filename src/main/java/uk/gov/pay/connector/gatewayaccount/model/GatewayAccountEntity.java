@@ -547,4 +547,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return PaymentGatewayName.WORLDPAY.getName().equals(this.getGatewayName());
     }
 
+    public boolean isSandboxGatewayAccount() {
+        return PaymentGatewayName.SANDBOX.getName().equals(this.getGatewayName());
+    }
 }

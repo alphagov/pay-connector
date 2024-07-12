@@ -112,7 +112,7 @@ public class GatewayAccountService {
 
     @Transactional
     public Optional<GatewayAccount> doPatch(String serviceId, GatewayAccountType accountType, JsonPatchRequest gatewayAccountRequest) {
-        return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
+        return getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .flatMap(gatewayAccountEntity -> {
                     attributeUpdater.get(gatewayAccountRequest.getPath())
                             .accept(gatewayAccountRequest, gatewayAccountEntity);
@@ -147,7 +147,11 @@ public class GatewayAccountService {
     }
 
     public Optional<GatewayAccountEntity> getGatewayAccountByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
-        return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType);
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType);
+        return gatewayAccounts.stream().filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
+                .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isSandboxGatewayAccount).findFirst())
+                .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isWorldpayGatewayAccount).findFirst());
+
     }
 
     public boolean isATelephonePaymentNotificationAccount(String merchantCode) {

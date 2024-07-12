@@ -10,10 +10,10 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.usernotification.model.EmailNotificationPatchRequest;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -27,7 +27,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.lang.String.format;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -36,17 +35,14 @@ import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 @Path("/")
 public class EmailNotificationResource {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailNotificationResource.class);
-
     public static final String EMAIL_NOTIFICATION_TEMPLATE_BODY = "template_body";
     private static final String EMAIL_NOTIFICATION_ENABLED = "enabled";
 
-    private static final String FORMATTER = "/%s/%s";
-    private final GatewayAccountDao gatewayDao;
+    private final GatewayAccountService gatewayAccountService;
 
     @Inject
-    public EmailNotificationResource(GatewayAccountDao gatewayDao) {
-        this.gatewayDao = gatewayDao;
+    public EmailNotificationResource(GatewayAccountService gatewayAccountService) {
+        this.gatewayAccountService = gatewayAccountService;
     }
 
     @PATCH
@@ -75,7 +71,7 @@ public class EmailNotificationResource {
                                             @PathParam("accountId") Long gatewayAccountId,
                                             @Valid EmailNotificationPatchRequest request) {
 
-        return gatewayDao.findById(gatewayAccountId)
+        return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccount -> {
                     NotificationPatchInfo patchInfo = getNotificationInfoFromPath(request);
                     EmailNotificationType type = patchInfo.getEmailNotificationType();
@@ -117,7 +113,7 @@ public class EmailNotificationResource {
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @Valid EmailNotificationPatchRequest request) {
 
-        return gatewayDao.findByServiceIdAndAccountType(serviceId, accountType)
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount -> {
                     NotificationPatchInfo patchInfo = getNotificationInfoFromPath(request);
                     EmailNotificationType notificationType = patchInfo.getEmailNotificationType();

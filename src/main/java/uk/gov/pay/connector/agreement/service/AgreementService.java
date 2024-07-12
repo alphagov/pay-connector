@@ -15,10 +15,10 @@ import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
 import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
@@ -31,17 +31,17 @@ import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEnti
 
 public class AgreementService {
 
-    private final GatewayAccountDao gatewayAccountDao;
+    private final GatewayAccountService gatewayAccountService;
     private final AgreementDao agreementDao;
     private final LedgerService ledgerService;
     private final InstantSource instantSource;
     private final TaskQueueService taskQueueService;
 
     @Inject
-    public AgreementService(AgreementDao agreementDao, GatewayAccountDao gatewayAccountDao, LedgerService ledgerService,
+    public AgreementService(AgreementDao agreementDao, GatewayAccountService gatewayAccountService, LedgerService ledgerService,
                             InstantSource instantSource, TaskQueueService taskQueueService) {
         this.agreementDao = agreementDao;
-        this.gatewayAccountDao = gatewayAccountDao;
+        this.gatewayAccountService = gatewayAccountService;
         this.ledgerService = ledgerService;
         this.instantSource = instantSource;
         this.taskQueueService = taskQueueService;
@@ -58,7 +58,7 @@ public class AgreementService {
 
     @Transactional
     public Optional<AgreementResponse> createByGatewayAccountId(AgreementCreateRequest agreementCreateRequest, long accountId) {
-        return gatewayAccountDao.findById(accountId)
+        return gatewayAccountService.getGatewayAccount(accountId)
                 .or(() -> {
                     throw new GatewayAccountNotFoundException(String.format("Gateway account {} not found", accountId));
                 }).map(gatewayAccountEntity -> create(agreementCreateRequest, gatewayAccountEntity));
@@ -66,7 +66,7 @@ public class AgreementService {
     
     @Transactional
     public Optional<AgreementResponse> createByServiceIdAndAccountType(AgreementCreateRequest agreementCreateRequest, String serviceId, GatewayAccountType accountType) {
-        return gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> {
                     throw new GatewayAccountNotFoundException(serviceId, accountType);
                 })
