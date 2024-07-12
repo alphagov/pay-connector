@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -115,18 +114,15 @@ class ChargeExpiryServiceTest {
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
-    private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = ImmutableList.of(
+    private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = List.of(
             CREATED,
             ENTERING_CARD_DETAILS,
             AUTHORISATION_READY,
             AUTHORISATION_3DS_REQUIRED,
             AUTHORISATION_3DS_READY,
-            AUTHORISATION_SUCCESS
-    );
+            AUTHORISATION_SUCCESS);
 
-    private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = ImmutableList.of(
-            AWAITING_CAPTURE_REQUEST
-    );
+    private static final List<ChargeStatus> EXPIRABLE_AWAITING_CAPTURE_REQUEST_STATUS = List.of(AWAITING_CAPTURE_REQUEST);
 
     private static final Duration TOKEN_EXPIRY_WINDOW = Duration.ofSeconds(7 * 24 * 60 * 60);
     private static final Duration IDEMPOTENCY_EXPIRY_WINDOW = Duration.ofSeconds(24 * 60 * 60);

@@ -13,6 +13,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +60,26 @@ public class GatewayAccountResourceIT {
 
     @Nested
     class GetByServiceIdAndAccountType {
+        
+        @Test
+        void shouldReturnConflictWhenThereAreMultipleLiveGatewayAccounts() {
+            String serviceId = randomUuid();
+
+            Map<String, String> gatewayAccountRequest = new HashMap<>();
+            gatewayAccountRequest.put("payment_provider", "stripe");
+            gatewayAccountRequest.put("service_id", serviceId);
+            gatewayAccountRequest.put("service_name", "Service Name");
+            gatewayAccountRequest.put("type", "live");
+
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post("/v1/api/accounts/");
+            
+            gatewayAccountRequest.put("payment_provider", "worldpay");
+
+            app.givenSetup().body(toJson(gatewayAccountRequest)).post("/v1/api/accounts/");
+
+            app.givenSetup().get(format("/v1/api/service/%s/account/live", serviceId))
+                    .then().statusCode(CONFLICT.getStatusCode());
+        }
         
         @Test
         void shouldReturnStripeGatewayAccountWhenThereAreMultipleGatewayAccounts() {

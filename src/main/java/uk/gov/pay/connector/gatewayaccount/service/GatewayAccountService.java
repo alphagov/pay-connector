@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
+import uk.gov.pay.connector.gatewayaccount.exception.MultipleLiveGatewayAccountsException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
@@ -148,6 +149,11 @@ public class GatewayAccountService {
 
     public Optional<GatewayAccountEntity> getGatewayAccountByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType);
+        
+        if (gatewayAccounts.stream().filter(GatewayAccountEntity::isLive).toList().size() > 1) {
+            throw new MultipleLiveGatewayAccountsException(serviceId);
+        }
+        
         return gatewayAccounts.stream().filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isSandboxGatewayAccount).findFirst())
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isWorldpayGatewayAccount).findFirst());
