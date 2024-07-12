@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.client.cardid.model;
 
-import au.com.dius.pact.consumer.PactVerification;
+import au.com.dius.pact.consumer.junit.PactVerification;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,8 +12,8 @@ import uk.gov.pay.connector.app.RestClientFactory;
 import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.client.cardid.service.CardidService;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
-import uk.gov.service.payments.commons.testing.pact.consumers.PactProviderRule;
 import uk.gov.service.payments.commons.testing.pact.consumers.Pacts;
+import uk.gov.service.payments.commons.testing.pact.consumers.PayPactProviderRule;
 
 import javax.ws.rs.client.Client;
 
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 public class CardidServiceConsumerTest {
     
     @Rule
-    public PactProviderRule cardidRule = new PactProviderRule("cardid", this);
+    public PayPactProviderRule cardidRule = new PayPactProviderRule("cardid", this);
     
     @Mock
     ConnectorConfiguration configuration;
