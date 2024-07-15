@@ -130,7 +130,7 @@ public class GatewayAccountService {
         
         if (gatewayAccountEntity.isLive() && 
                 getGatewayAccountByServiceIdAndAccountType(gatewayAccountRequest.getServiceId(), LIVE).isPresent()) {
-            throw new MultipleLiveGatewayAccountsException(gatewayAccountEntity.getServiceId());
+            throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
         }
 
         LOGGER.info("Setting the new account to accept all card types by default");
@@ -157,7 +157,7 @@ public class GatewayAccountService {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType);
 
         if (accountType.equals(LIVE) && gatewayAccounts.size() > 1) {
-            throw new MultipleLiveGatewayAccountsException(serviceId);
+            throw MultipleLiveGatewayAccountsException.multipleLiveGatewayAccounts(serviceId);
         }
         
         return gatewayAccounts.stream().filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
