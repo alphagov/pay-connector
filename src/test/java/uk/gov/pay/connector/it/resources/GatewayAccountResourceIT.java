@@ -42,6 +42,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
@@ -49,6 +50,7 @@ import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExte
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_FRONTEND_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
+import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
@@ -62,7 +64,7 @@ public class GatewayAccountResourceIT {
     class GetByServiceIdAndAccountType {
         
         @Test
-        void shouldReturnConflictWhenThereAreMultipleLiveGatewayAccounts() {
+        void shouldReturnConflictWhenTryingToAddMultipleLiveGatewayAccounts() {
             String serviceId = randomUuid();
 
             Map<String, String> gatewayAccountRequest = new HashMap<>();
@@ -72,11 +74,36 @@ public class GatewayAccountResourceIT {
             gatewayAccountRequest.put("type", "live");
 
             app.givenSetup().body(toJson(gatewayAccountRequest)).post("/v1/api/accounts/");
-            
+
             gatewayAccountRequest.put("payment_provider", "worldpay");
 
-            app.givenSetup().body(toJson(gatewayAccountRequest)).post("/v1/api/accounts/");
+            app.givenSetup().body(toJson(gatewayAccountRequest))
+                    .post("/v1/api/accounts/")
+                    .then()
+                    .statusCode(CONFLICT.getStatusCode());
+        }
+        
+        @Test
+        void shouldReturnConflictWhenThereAreMultipleLiveGatewayAccounts() {
+            String serviceId = randomUuid();
 
+            app.givenSetup().body(toJson(
+                            Map.of("payment_provider", "stripe",
+                                    "service_id", serviceId,
+                                    "service_name", "Service Name",
+                                    "type", "live")))
+                    .post("/v1/api/accounts/");
+            
+            //add another live gateway account directly into the database as it's not possible to add another via API 
+            app.getDatabaseTestHelper().addGatewayAccount(
+                    anAddGatewayAccountParams()
+                            .withPaymentGateway("worldpay")
+                            .withServiceId(serviceId)
+                            .withAccountId(String.valueOf(RandomUtils.nextInt()))
+                            .withServiceName("Service Name")
+                            .withType(LIVE)
+                            .build());
+            
             app.givenSetup().get(format("/v1/api/service/%s/account/live", serviceId))
                     .then().statusCode(CONFLICT.getStatusCode());
         }
