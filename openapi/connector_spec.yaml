@@ -2005,11 +2005,12 @@ paths:
       - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/telephone-charges:
     post:
-      description: "Create a new telephone charge for gateway account. These are externally\
-        \ taken payments and the outcome is reported to this endpoint. provider_id\
-        \ is used as an idempotency key for API calls. If a payment already exists\
-        \ with the provider_id provided, the API will not store a record about a new\
-        \ payment, or update or change the record about a payment previously stored."
+      description: "Create a new telephone charge for a service and account type.\
+        \ These are externally taken payments and the outcome is reported to this\
+        \ endpoint. provider_id is used as an idempotency key for API calls. If a\
+        \ payment already exists with the provider_id provided, the API will not store\
+        \ a record about a new payment, or update or change the record about a payment\
+        \ previously stored."
       operationId: createNewTelephoneChargeByServiceIdAndAccountType
       parameters:
       - description: Service ID
