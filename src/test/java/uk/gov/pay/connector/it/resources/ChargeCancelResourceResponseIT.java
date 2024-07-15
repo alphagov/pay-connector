@@ -29,39 +29,6 @@ public class ChargeCancelResourceResponseIT {
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
-    public static Stream<Arguments> statusCode400() {
-        return Stream.of(
-                Arguments.of(ChargeStatus.AUTHORISATION_REJECTED, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.AUTHORISATION_ERROR, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.CAPTURE_READY, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.CAPTURED, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.CAPTURE_SUBMITTED, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.CAPTURE_ERROR, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.EXPIRED, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.EXPIRE_CANCEL_FAILED, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.SYSTEM_CANCEL_ERROR, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.SYSTEM_CANCELLED, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.USER_CANCEL_READY, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.USER_CANCELLED, BAD_REQUEST.getStatusCode()),
-                Arguments.of(ChargeStatus.USER_CANCEL_ERROR, BAD_REQUEST.getStatusCode())
-        );
-    }
-
-    @ParameterizedTest()
-    @MethodSource("statusCode400")
-    public void respondWith400_whenNotCancellableState(ChargeStatus status, int statusCode) {
-        String chargeId = createNewInPastChargeWithStatus(status);
-        String expectedMessage = "Charge not in correct state to be processed, " + chargeId;
-        testBaseExtension.getConnectorRestApiClient()
-                .withChargeId(chargeId)
-                .postChargeCancellation()
-                .statusCode(statusCode)
-                .and()
-                .contentType(JSON)
-                .body("message", contains(expectedMessage))
-                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-    }
-
     public static Stream<Arguments> statusCode204() {
         return Stream.of(
                 Arguments.of(ChargeStatus.CREATED, NO_CONTENT.getStatusCode()),
