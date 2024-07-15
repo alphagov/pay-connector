@@ -898,7 +898,7 @@ paths:
         \ is used as an idempotency key for API calls. If a payment already exists\
         \ with the provider_id provided, the API will not store a record about a new\
         \ payment, or update or change the record about a payment previously stored."
-      operationId: createNewTelephoneCharge
+      operationId: createNewTelephoneChargeByAccountId
       parameters:
       - description: Gateway account ID
         example: 1
@@ -2003,6 +2003,74 @@ paths:
       summary: Switch payment provider of a gateway account
       tags:
       - Gateway accounts
+  /v1/api/service/{serviceId}/account/{accountType}/telephone-charges:
+    post:
+      description: "Create a new telephone charge for a service and account type.\
+        \ These are externally taken payments and the outcome is reported to this\
+        \ endpoint. provider_id is used as an idempotency key for API calls. If a\
+        \ payment already exists with the provider_id provided, the API will not store\
+        \ a record about a new payment, or update or change the record about a payment\
+        \ previously stored."
+      operationId: createNewTelephoneChargeByServiceIdAndAccountType
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/TelephoneChargeCreateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeResponse'
+          description: OK - returns existing charge for provider_id
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChargeResponse'
+          description: Created
+        "403":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  error_identifier: TELEPHONE_PAYMENT_NOTIFICATIONS_NOT_ALLOWED
+                  message:
+                  - Telephone payment notifications are not enabled for this gateway
+                    account
+          description: Forbidden
+        "404":
+          description: Not found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Missing required fields or invalid values
+      summary: Create a new telephone charge by service id and account type
+      tags:
+      - Charges
   /v1/api/service/{serviceId}/account/{accountType}/worldpay/check-3ds-flex-config:
     post:
       operationId: validateWorldpay3dsCredentialsByServiceIdAndType
