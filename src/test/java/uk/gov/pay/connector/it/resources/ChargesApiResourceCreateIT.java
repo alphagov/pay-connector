@@ -140,6 +140,7 @@ public class ChargesApiResourceCreateIT {
                     .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                     .body("created_date", isWithin(10, SECONDS))
                     .body("authorisation_mode", is("web"))
+                    .body("containsKey('card_details')", is(false))
                     .contentType(JSON);
 
             String testChargeId = response.extract().path("charge_id");
@@ -529,6 +530,7 @@ public class ChargesApiResourceCreateIT {
                     .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                     .body("created_date", isWithin(10, SECONDS))
                     .body("authorisation_mode", is("web"))
+                    .body("containsKey('card_details')", is(false))
                     .contentType(JSON);
 
             String testChargeId = response.extract().path("charge_id");

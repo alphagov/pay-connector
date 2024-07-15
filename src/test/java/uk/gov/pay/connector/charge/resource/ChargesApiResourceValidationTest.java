@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
@@ -399,7 +400,6 @@ public class ChargesApiResourceValidationTest {
             assertThat(response.getStatus(), is(422));
             assertThat(errorResponse.messages(), contains("Unexpected attribute: return_url"));
         }
-        
     }
 
     @DisplayName("Should return 400 if source value is invalid")
@@ -426,7 +426,6 @@ public class ChargesApiResourceValidationTest {
             assertThat(response.getStatus(), is(400));
             assertThat(errorResponse.messages(), contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO"));
         }
-
     }
 
     @DisplayName("Should return 400 if source type is invalid")
@@ -453,9 +452,54 @@ public class ChargesApiResourceValidationTest {
             assertThat(response.getStatus(), is(400));
             assertThat(errorResponse.messages(), contains("Field [source] must be one of CARD_API, CARD_PAYMENT_LINK, CARD_AGENT_INITIATED_MOTO"));
         }
-
     }
 
+    @DisplayName("Should return 422 if prefilled cardholder details exceed maximum length]")
+    @ParameterizedTest
+    @ValueSource( strings = {
+            "/v1/api/accounts/1234/charges",
+            "/v1/api/service/my-service-id/account/test/charges"
+    })
+    void shouldReturn422IfPrefilledCardHolderDetailsExceedMaximumLength(String url) {
+        String cardholderName = randomAlphanumeric(256);
+        String line1 = randomAlphanumeric(256);
+        String line2 = randomAlphanumeric(256);
+        String city = randomAlphanumeric(256);
+        String postcode = randomAlphanumeric(26);
+        String country = "GB";
+        
+        String payload = toJson(Map.of(
+                "amount", 6234L,
+                "reference", "Test reference",
+                "description", "Test description",
+                "return_url", "http://service.local/success-page/",
+                "prefilled_cardholder_details", Map.of(
+                        "cardholder_name", cardholderName,
+                        "billing_address", Map.of(
+                                "line1", line1,
+                                "line2", line2,
+                                "city", city,
+                                "postcode", postcode,
+                                "country", country
+                        ))
+        ));
+
+        try (Response response = chargesApiResource
+                .target(url)
+                .request()
+                .post(Entity.json(payload))) {
+
+            ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
+            assertThat(response.getStatus(), is(422));
+            List<String> errorMessages = errorResponse.messages();
+            assertTrue(errorMessages.contains("Field [cardholder_name] can have a size between 0 and 255"));
+            assertTrue(errorMessages.contains("Field [line1] can have a size between 0 and 255"));
+            assertTrue(errorMessages.contains("Field [line2] can have a size between 0 and 255"));
+            assertTrue(errorMessages.contains("Field [city] can have a size between 0 and 255"));
+            assertTrue(errorMessages.contains("Field [postcode] can have a size between 0 and 25"));
+        }
+    }
+    
     private static void assertGenericErrorResponse(Response response, int status, String errorMessage) {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(response.getStatus(), is(status));

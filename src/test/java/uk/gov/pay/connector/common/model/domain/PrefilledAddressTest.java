@@ -11,30 +11,30 @@ class PrefilledAddressTest {
     
     @Test
     void shouldSetCountryWhenProvidedValueIsTwoCharactersLong() {
-        var address = createPrefilledAdddressWithCountryOf("GB");
+        var address = createPrefilledAddressWithCountryOf("GB");
         assertThat(address.getCountry(), is("GB"));
     }
 
     @Test
     void shouldSetCountryToNullWhenCountryNotSupplied() {
-        var address = createPrefilledAdddressWithCountryOf(null);
+        var address = createPrefilledAddressWithCountryOf(null);
         assertThat(address.getCountry(), is(nullValue()));
     }
     
     @Test
     void shouldSetCountryToNullWhenProvidedCountryTooShort() {
-        var address = createPrefilledAdddressWithCountryOf("G");
+        var address = createPrefilledAddressWithCountryOf("G");
         assertThat(address.getCountry(), is(nullValue()));
     }
 
     @Test
     void shouldSetCountryToNullWhenProvidedCountryTooLong() {
-        var address = createPrefilledAdddressWithCountryOf("GBR");
+        var address = createPrefilledAddressWithCountryOf("GBR");
         assertThat(address.getCountry(), is(nullValue()));
     }
     
     
-    private PrefilledAddress createPrefilledAdddressWithCountryOf(String country) {
+    private PrefilledAddress createPrefilledAddressWithCountryOf(String country) {
         return new PrefilledAddress("line1", "line2", "postcode", "city", "county", country);
     }
 
