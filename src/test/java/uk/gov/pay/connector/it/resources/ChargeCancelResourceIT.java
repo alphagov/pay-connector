@@ -138,7 +138,6 @@ public class ChargeCancelResourceIT {
             assertThat(cardDetails.isEmpty(), is(false));
 
             app.givenSetup()
-                    .body("")
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);
@@ -167,7 +166,6 @@ public class ChargeCancelResourceIT {
             app.getWorldpayMockClient().mockCancelSuccess();
     
             app.givenSetup()
-                    .body("")
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);
@@ -190,7 +188,6 @@ public class ChargeCancelResourceIT {
             app.getWorldpayMockClient().mockCancelError();
 
             app.givenSetup()
-                    .body("")
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);
@@ -211,7 +208,6 @@ public class ChargeCancelResourceIT {
             app.getDatabaseTestHelper().addEvent(chargeInternalId, CREATED.toString());
             
             app.givenSetup()
-                    .body("")
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);
@@ -230,7 +226,6 @@ public class ChargeCancelResourceIT {
             app.getDatabaseTestHelper().addEvent(chargeInternalId, ENTERING_CARD_DETAILS.toString());
 
             app.givenSetup()
-                    .body("")
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);

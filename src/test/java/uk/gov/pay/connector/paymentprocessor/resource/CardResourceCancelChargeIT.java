@@ -82,7 +82,7 @@ public class CardResourceCancelChargeIT {
             void success_shouldReturn204() {
                 var chargeId = createNewCharge();
                 app.givenSetup()
-                        .body("")
+                        
                         .post(String.format("/v1/api/accounts/%s/charges/%s/cancel", gatewayAccountId, chargeId))
                         .then().statusCode(204);
 
@@ -105,7 +105,6 @@ public class CardResourceCancelChargeIT {
             void success_shouldReturn202() {
                 var cancelSubmittedChargeId = ChargeUtils.createNewChargeWithAccountId(ChargeStatus.SYSTEM_CANCEL_SUBMITTED, gatewayAccountId, app.getDatabaseTestHelper(), PAYMENT_GATEWAY_NAME.getName());
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/accounts/%s/charges/%s/cancel", gatewayAccountId, cancelSubmittedChargeId))
                         .then().statusCode(202);
             }
@@ -116,7 +115,6 @@ public class CardResourceCancelChargeIT {
             void badChargeState_shouldReturn400(ChargeStatus chargeStatus) {
                 var badStateChargeId = ChargeUtils.createNewChargeWithAccountId(chargeStatus, gatewayAccountId, app.getDatabaseTestHelper(), PAYMENT_GATEWAY_NAME.getName());
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/accounts/%s/charges/%s/cancel", gatewayAccountId, badStateChargeId))
                         .then().statusCode(400)
                         .body("message", contains(String.format("Charge not in correct state to be processed, %s", badStateChargeId)));
@@ -126,7 +124,6 @@ public class CardResourceCancelChargeIT {
             @DisplayName("Should return 404 if charge is not found")
             void chargeNotFound_shouldReturn404() {
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/accounts/%s/charges/%s/cancel", gatewayAccountId, "not-a-real-charge-id"))
                         .then().statusCode(404)
                         .body("message", contains(String.format("Charge with id [%s] not found.", "not-a-real-charge-id")));
@@ -137,7 +134,6 @@ public class CardResourceCancelChargeIT {
             void accountNotFound_shouldReturn404() {
                 var chargeId = createNewCharge();
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/accounts/%s/charges/%s/cancel", MAX_VALUE, chargeId))
                         .then().statusCode(404)
                         .body("message", contains(String.format("Charge with id [%s] not found.", chargeId)));
@@ -148,7 +144,6 @@ public class CardResourceCancelChargeIT {
             void nonNumericAccount_shouldReturn404() {
                 var chargeId = createNewCharge();
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/accounts/%s/charges/%s/cancel", "invalid-account-id", chargeId))
                         .then().statusCode(404)
                         .body("message", is("HTTP 404 Not Found"));
@@ -169,7 +164,6 @@ public class CardResourceCancelChargeIT {
             void success_shouldReturn204() {
                 var chargeId = createNewCharge();
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))
                         .then().statusCode(204);
 
@@ -190,7 +184,6 @@ public class CardResourceCancelChargeIT {
             void success_shouldReturn202() {
                 var cancelSubmittedChargeId = ChargeUtils.createNewChargeWithAccountId(ChargeStatus.SYSTEM_CANCEL_SUBMITTED, gatewayAccountId, app.getDatabaseTestHelper(), PAYMENT_GATEWAY_NAME.getName());
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, cancelSubmittedChargeId))
                         .then().statusCode(202);
             }
@@ -201,7 +194,6 @@ public class CardResourceCancelChargeIT {
             void badChargeState_shouldReturn400(ChargeStatus chargeStatus) {
                 var badStateChargeId = ChargeUtils.createNewChargeWithAccountId(chargeStatus, gatewayAccountId, app.getDatabaseTestHelper(), PAYMENT_GATEWAY_NAME.getName());
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, badStateChargeId))
                         .then().statusCode(400)
                         .body("message", contains(String.format("Charge not in correct state to be processed, %s", badStateChargeId)));
@@ -211,7 +203,6 @@ public class CardResourceCancelChargeIT {
             @DisplayName("Should return 404 if charge is not found")
             void chargeNotFound_shouldReturn404() {
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, "not-a-real-charge-id"))
                         .then().statusCode(404)
                         .body("message", contains(String.format("Charge with id [%s] not found.", "not-a-real-charge-id")));
@@ -222,7 +213,6 @@ public class CardResourceCancelChargeIT {
             void accountNotFound_shouldReturn404() {
                 var chargeId = createNewCharge();
                 app.givenSetup()
-                        .body("")
                         .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", "not-real-service-id", GATEWAY_ACCOUNT_TYPE, chargeId))
                         .then().statusCode(404)
                         .body("message", contains(String.format("Charge with id [%s] not found.", chargeId)));
