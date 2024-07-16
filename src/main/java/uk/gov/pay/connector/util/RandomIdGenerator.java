@@ -48,4 +48,8 @@ public class RandomIdGenerator {
         }
         return sb.toString();
     }
+    
+    public static long randomLong() {
+        return RANDOM.nextLong();
+    }
 }
