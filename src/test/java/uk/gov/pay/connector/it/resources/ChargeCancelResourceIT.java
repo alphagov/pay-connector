@@ -3,6 +3,9 @@ package uk.gov.pay.connector.it.resources;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -11,8 +14,10 @@ import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.HOURS;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
@@ -30,6 +35,13 @@ public class ChargeCancelResourceIT {
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
+    public static Stream<Arguments> statusCode204() {
+        return Stream.of(
+                Arguments.of(ChargeStatus.CREATED, NO_CONTENT.getStatusCode()),
+                Arguments.of(ChargeStatus.ENTERING_CARD_DETAILS, NO_CONTENT.getStatusCode())
+        );
+    }
+    
     @Test
     public void shouldPreserveCardDetailsIfCancelled() {
         String externalChargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
@@ -83,6 +95,17 @@ public class ChargeCancelResourceIT {
                 SYSTEM_CANCEL_ERROR.getValue()));
     }
 
+    @ParameterizedTest()
+    @MethodSource("statusCode204")
+    public void shouldRespond204WithNoLockingEvent_IfCancelledBeforeAuth(ChargeStatus status, int statuscode) {
+        String chargeId = createNewInPastChargeWithStatus(status);
+        testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, ChargeStatus.SYSTEM_CANCELLED, statuscode);
+
+        List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
+        assertThat(events.size(), is(2));
+        assertThat(events, hasItems(status.getValue(), ChargeStatus.SYSTEM_CANCELLED.getValue()));
+    }
+    
     private String createNewInPastChargeWithStatus(ChargeStatus status) {
         long chargeId = RandomUtils.nextInt();
         return testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
