@@ -478,6 +478,15 @@ public class DatabaseTestHelper {
                 authCardDetails.getAddress().map(Address::getCountry).orElse(null));
     }
 
+    public void updateServiceIdForCharge(String chargeExternalId, String serviceId) {
+        jdbi.withHandle(handle ->
+                handle.createUpdate("UPDATE charges set service_id=:serviceId WHERE external_id=:chargeExternalId")
+                        .bind("chargeExternalId", chargeExternalId)
+                        .bind("serviceId", serviceId)
+                        .execute()
+        );
+    }
+
     public Map<String, Object> getChargeCardDetails(long chargeId) {
         Map<String, Object> ret = jdbi.withHandle(h ->
                 h.createQuery("SELECT id, last_digits_card_number, first_digits_card_number, cardholder_name, expiry_date, address_line1, address_line2, address_postcode, address_city, address_county, address_country, card_type " +
