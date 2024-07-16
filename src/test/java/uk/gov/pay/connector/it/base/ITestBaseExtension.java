@@ -273,8 +273,23 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         return externalChargeId;
     }
 
+    public String authoriseNewChargeWithServiceId(String serviceId) {
+        String externalChargeId = createNewChargeWithNoTransactionId(AUTHORISATION_SUCCESS);
+        databaseTestHelper.updateChargeCardDetails(
+                Long.parseLong(externalChargeId.replace("charge-", "")),
+                AuthCardDetailsFixture.anAuthCardDetails().build());
+        databaseTestHelper.updateServiceIdForCharge(externalChargeId, serviceId);
+        return externalChargeId;
+    }
+
     public String createNewCharge() {
         return createNewChargeWith(CREATED, "");
+    }
+
+    public String createNewChargeWithServiceId(String serviceId) {
+        String chargeExternalId = createNewChargeWith(CREATED, "");
+        databaseTestHelper.updateServiceIdForCharge(chargeExternalId, serviceId);
+        return chargeExternalId;
     }
 
     public String createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ChargeStatus status) {
