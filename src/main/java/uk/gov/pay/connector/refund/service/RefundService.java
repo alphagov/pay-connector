@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
@@ -84,21 +85,27 @@ public class RefundService {
     }
 
     public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
-        if (PaymentGatewayName.isUnsupported(charge.getPaymentGatewayName())) {
-            throw new NotFoundException();
-        }
-        
         GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
                 () -> new GatewayAccountNotFoundException(accountId));
+        return doRefundFor(gatewayAccountEntity, charge, refundRequest);
+    }
+    
+    public ChargeRefundResponse doRefundFor(GatewayAccountEntity gatewayAccountEntity, Charge charge, RefundRequest refundRequest) {
+        if (PaymentGatewayName.isUnsupported(charge.getPaymentGatewayName())) {
+            throw new NotFoundException();
+        }        
         if (gatewayAccountEntity.isDisabled()) {
             throw new GatewayAccountDisabledException("Attempt to create a refund for a disabled gateway account");
         }
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity)
                 .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException("Unable to find gateway account credentials to use to refund charge."));
+
         RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
+
         GatewayRefundResponse gatewayRefundResponse = providers
                 .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
                 .refund(RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity));
+
         RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId(), gatewayAccountEntity, charge);
         return new ChargeRefundResponse(gatewayRefundResponse, refund);
     }

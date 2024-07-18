@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
@@ -43,17 +42,21 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomLong;
 
 public class WorldpayRefundSubmitResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    private static String SERVICE_ID = "a-valid-service-id";
     
     private long defaultAccountId;
     private long defaultCredentialsId;
@@ -85,6 +88,8 @@ public class WorldpayRefundSubmitResourceIT {
                 .aTestAccount()
                 .withAccountId(defaultAccountId)
                 .withGatewayAccountCredentials(List.of(credentialParams))
+                .withServiceId(SERVICE_ID)
+                .withType(TEST)
                 .insert();
 
         defaultTestCharge = DatabaseFixtures
@@ -183,14 +188,6 @@ public class WorldpayRefundSubmitResourceIT {
             assertRefundResponseWith(accountId, charge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
             app.getWorldpayWireMockServer().verify(postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
-        }
-
-        private void verifyRequestBodyToWorldpay(String path, String body) {
-            app.getWorldpayWireMockServer().verify(
-                    postRequestedFor(urlPathEqualTo(path))
-                            .withHeader("Content-Type", equalTo("application/xml"))
-                            .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
-                            .withRequestBody(equalToXml(body)));
         }
 
         @Test
@@ -360,9 +357,89 @@ public class WorldpayRefundSubmitResourceIT {
                     )));
         }
     }
+    
+    @Nested
+    class ByServiceIdAndType {
+        @Test
+        void shouldBeAbleToRequestARefund_partialAmount() {
+            Long refundAmount = 50L;
+            app.getWorldpayMockClient().mockRefundSuccess();
+
+            var response = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", refundAmount,
+                            "refund_amount_available", defaultTestCharge.getAmount()
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
+                    .then()
+                    .statusCode(202)
+                    .body("refund_id", is(notNullValue()))
+                    .body("amount", is(refundAmount.intValue()))
+                    .body("status", is("submitted"))
+                    .body("created_date", is(notNullValue()));
+            
+            String refundId = response.extract().path("refund_id");
+
+            String paymentUrl = format("https://localhost:%s/v1/api/service/%s/account/%s/charges/%s",
+                    app.getLocalPort(), SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId());
+
+            response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))
+                    .body("_links.payment.href", is(paymentUrl));
+            
+            List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+            assertThat(refundsFoundByChargeExternalId.size(), is(1));
+            assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
+
+            List<String> refundsHistory = (app.getDatabaseTestHelper()).getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+            assertThat(refundsHistory.size(), is(2));
+            assertThat(refundsHistory, containsInAnyOrder("REFUND SUBMITTED", "CREATED"));
+
+            String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST)
+                    .replace("{{merchantCode}}", "merchant-id")
+                    .replace("{{transactionId}}", "MyUniqueTransactionId!")
+                    .replace("{{refundReference}}", refundsFoundByChargeExternalId.get(0).get("external_id").toString())
+                    .replace("{{amount}}", "50");
+
+            verifyRequestBodyToWorldpay(WORLDPAY_URL, expectedRequestBody);
+        }
+
+        @Test
+        void shouldBeAbleToRequestARefund_fullAmount() {
+            Long refundAmount = defaultTestCharge.getAmount();
+            app.getWorldpayMockClient().mockRefundSuccess();
+
+            String refundId = app.givenSetup()
+                    .body(toJson(Map.of(
+                            "amount", refundAmount,
+                            "refund_amount_available", defaultTestCharge.getAmount()
+                    )))
+                    .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
+                    .then()
+                    .statusCode(202)
+                    .body("refund_id", is(notNullValue()))
+                    .body("amount", is(refundAmount.intValue()))
+                    .body("status", is("submitted"))
+                    .body("created_date", is(notNullValue()))
+                    .extract().path("refund_id");
+            
+            List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
+            assertThat(refundsFoundByChargeExternalId.size(), is(1));
+            assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
+            assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
+            assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", refundId));
+
+            String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST)
+                    .replace("{{merchantCode}}", "merchant-id")
+                    .replace("{{transactionId}}", "MyUniqueTransactionId!")
+                    .replace("{{refundReference}}", refundsFoundByChargeExternalId.get(0).get("external_id").toString())
+                    .replace("{{amount}}", "100");
+
+            verifyRequestBodyToWorldpay(WORLDPAY_URL, expectedRequestBody);
+        }
+    }
 
     private ValidatableResponse postRefundFor(long accountId, String chargeId, Long refundAmount, Long refundAmountAvlbl) {
-        ImmutableMap<String, Long> refundData = ImmutableMap.of("amount", refundAmount, "refund_amount_available", refundAmountAvlbl);
+        Map<String, Long> refundData = Map.of("amount", refundAmount, "refund_amount_available", refundAmountAvlbl);
         String refundPayload = new Gson().toJson(refundData);
 
         return app.givenSetup()
@@ -391,5 +468,13 @@ public class WorldpayRefundSubmitResourceIT {
                 .body("_links.payment.href", is(paymentUrl));
 
         return refundId;
+    }
+
+    private void verifyRequestBodyToWorldpay(String path, String body) {
+        app.getWorldpayWireMockServer().verify(
+                postRequestedFor(urlPathEqualTo(path))
+                        .withHeader("Content-Type", equalTo("application/xml"))
+                        .withHeader("Authorization", equalTo("Basic dGVzdC11c2VyOnRlc3QtcGFzc3dvcmQ="))
+                        .withRequestBody(equalToXml(body)));
     }
 }

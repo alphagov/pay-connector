@@ -1666,6 +1666,67 @@ paths:
       summary: Get transaction history for a charge
       tags:
       - Charge events
+  /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/refunds:
+    post:
+      operationId: submitRefundByServiceIdAndAccountType
+      parameters:
+      - description: Service external ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account Type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - description: Charge external ID
+        example: 2c6vtn9pth38ppbmnt20d57t49
+        in: path
+        name: chargeId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  amount: 3444
+                  created_date: 2016-10-05T14:15:34.096Z
+                  refund_id: vijjk08adovg10gfqc46joem2l
+                  user_external_id: AA213FD51B3801043FBC
+                  status: success
+                  _links:
+                    self:
+                      href: https://connector.example.com/v1/api/service/46eb1b601348499196c99de90482ee68/account/test/charges/2c6vtn9pth38ppbmnt20d57t49/refunds/vijjk08adovg10gfqc46joem2l
+                    payment:
+                      href: https://connector.example.com/v1/api/service/46eb1b601348499196c99de90482ee68/account/test/charges/2c6vtn9pth38ppbmnt20d57t49
+          description: OK
+        "400":
+          description: Bad request - Invalid fields or not sufficient amount available
+            for refund
+        "404":
+          description: Not found - gateway account or charge not found
+        "500":
+          description: Internal server error
+      summary: Refund a charge
+      tags:
+      - Refunds
   /v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/resend-confirmation-email:
     post:
       operationId: resendConfirmationEmailByServiceIdAndAccountType
