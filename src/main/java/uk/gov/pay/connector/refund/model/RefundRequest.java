@@ -3,6 +3,33 @@ package uk.gov.pay.connector.refund.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * The refund_amount_available field is a mechanism that acts as idempotency-lite, which is especially important when 
+ * performing partial refunds. By having the consumer specify the amount available to refund at the time of the call, 
+ * one can check to see if there’s still that much refundable before performing the refund.
+ * <p> 
+ * For example if a request goes through and gets to connector but then the HTTP response fails and terminates early, 
+ * the client might retry the refund that they thought failed; because they’d still be passing the original 
+ * “amount left to refund” connector can reject it because that refund has already been processed.
+ * <p>
+ * Example:
+ * Payment: £20
+ * <p>
+ * /refund 
+ * - amount £5
+ * - amount available: £20
+ * :green-tick: 
+ * <p>
+ * /refund
+ * - amount £5
+ * - amount available: £20 
+ * :fail: 
+ * <p>
+ * /refund
+ * - amount £5
+ * - amount available: £15
+ * :green-tick:
+ */
 public class RefundRequest {
 
     @JsonProperty("amount")

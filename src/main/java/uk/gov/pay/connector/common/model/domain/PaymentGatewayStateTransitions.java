@@ -91,7 +91,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 
 public class PaymentGatewayStateTransitions {
-    private static PaymentGatewayStateTransitions instance;
+    private static final PaymentGatewayStateTransitions instance = new PaymentGatewayStateTransitions();
 
     private static Map<ChargeStatus, ModelledTypedEvent> eventsForForceUpdatingStatus = Map.of(
             CAPTURED, new ModelledTypedEvent<>(StatusCorrectedToCapturedToMatchGatewayStatus.class),
@@ -100,9 +100,6 @@ public class PaymentGatewayStateTransitions {
     );
 
     public static PaymentGatewayStateTransitions getInstance() {
-        if (instance == null) {
-            instance = new PaymentGatewayStateTransitions();
-        }
         return instance;
     }
 
