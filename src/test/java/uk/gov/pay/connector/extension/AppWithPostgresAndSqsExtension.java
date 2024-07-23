@@ -61,16 +61,17 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final int notifyWireMockPort;
 
     protected static DatabaseTestHelper databaseTestHelper;
-    protected static WireMockServer wireMockServer;
-    protected static WireMockServer worldpayWireMockServer;
-    protected static WireMockServer ledgerWireMockServer;
-    protected static WireMockServer stripeWireMockServer;
-    protected static WireMockServer notifyWireMockServer;
-    protected static WorldpayMockClient worldpayMockClient;
-    protected static StripeMockClient stripeMockClient;
-    protected static LedgerStub ledgerStub;
-    private static CardidStub cardidStub;
-    private static NotifyStub notifyStub;
+    private WireMockServer wireMockServer;
+    private WireMockServer worldpayWireMockServer;
+    private WireMockServer ledgerWireMockServer;
+    private WireMockServer stripeWireMockServer;
+    private WireMockServer notifyWireMockServer;
+    private WorldpayMockClient worldpayMockClient;
+    private StripeMockClient stripeMockClient;
+    private LedgerStub ledgerStub;
+    private CardidStub cardidStub;
+    private NotifyStub notifyStub;
+    
     protected static String accountId = String.valueOf(RandomUtils.nextInt());
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
@@ -257,11 +258,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         return sqsClient;
     }
 
-    public static WireMockServer getWireMockServer() {
+    public WireMockServer getWireMockServer() {
         return wireMockServer;
     }
     
-    public static WireMockServer getStripeWireMockServer() {
+    public WireMockServer getStripeWireMockServer() {
         return stripeWireMockServer;
     }
 
