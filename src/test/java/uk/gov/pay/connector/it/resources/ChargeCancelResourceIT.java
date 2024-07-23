@@ -144,6 +144,7 @@ public class ChargeCancelResourceIT {
         }
         
         @Test
+        @DisplayName("Should preserve charge card details when charge is cancelled")
         void shouldPreserveCardDetailsIfCancelled() {
             String externalChargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
             Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
@@ -168,7 +169,8 @@ public class ChargeCancelResourceIT {
             assertThat(cardDetails.get("address_country"), is(notNullValue()));
         }
     
-        @Test   
+        @Test
+        @DisplayName("Should add locking status to charge events if charge is cancelled after auth success")
         void chargeEventsShouldHaveLockingStatus_IfCancelledAfterAuth() {
             String chargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
             app.getWorldpayMockClient().mockCancelSuccess();
@@ -183,6 +185,7 @@ public class ChargeCancelResourceIT {
         }
     
         @Test
+        @DisplayName("Should add locking status to charge events if charge is cancelled after auth failed")
         void chargeEventsShouldHaveLockingStatus_IfCancelFailedAfterAuth() {
             String chargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
             app.getWorldpayMockClient().mockCancelError();
@@ -198,6 +201,7 @@ public class ChargeCancelResourceIT {
     
         @ParameterizedTest()
         @MethodSource("uk.gov.pay.connector.it.resources.ChargeCancelResourceIT#cancellableChargeStatesPriorToAuthorisation")
+        @DisplayName("Should not add locking status to charge events if charge is cancelled before auth")
         void chargeEventsShouldNotHaveLockingStatus_IfCancelledBeforeAuth(ChargeStatus status) {
             String chargeId = createNewInPastChargeWithStatus(status);
             testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, ChargeStatus.SYSTEM_CANCELLED, 204);
@@ -281,6 +285,7 @@ public class ChargeCancelResourceIT {
     
 
         @Test
+        @DisplayName("Should preserve charge card details when charge is cancelled")
         void shouldPreserveCardDetailsIfCancelled() {
             String chargeExternalId = testBaseExtension.authoriseNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
@@ -312,6 +317,7 @@ public class ChargeCancelResourceIT {
         }
         
         @Test
+        @DisplayName("Should add locking status to charge events if charge is cancelled after auth success")
         void chargeEventsShouldHaveLockingStatus_IfCancelledAfterAuth() {            
             String chargeExternalId = testBaseExtension.authoriseNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
@@ -334,6 +340,7 @@ public class ChargeCancelResourceIT {
         }
 
         @Test
+        @DisplayName("Should add locking status to charge events if charge is cancelled after auth failed")
         void chargeEventsShouldHaveLockingStatus_IfCancelFailedAfterAuth() {
             String chargeExternalId = testBaseExtension.authoriseNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
@@ -356,6 +363,7 @@ public class ChargeCancelResourceIT {
         }
         
         @Test
+        @DisplayName("Should not add locking status to charge events if charge is cancelled in created state")
         void chargeEventsShouldNotHaveLockingStatus_IfCancelledFromCreatedState() {
             String chargeExternalId = testBaseExtension.createNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
@@ -374,6 +382,7 @@ public class ChargeCancelResourceIT {
         }
 
         @Test
+        @DisplayName("Should not add locking status to charge events if charge is cancelled in entering card details state")
         void chargeEventsShouldNotHaveLockingStatus_IfCancelledFromEnteringCardDetailsState() {
             String chargeExternalId = testBaseExtension.createNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
