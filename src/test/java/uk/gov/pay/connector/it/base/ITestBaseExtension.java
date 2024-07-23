@@ -288,9 +288,6 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
 
     public String createNewChargeWithServiceId(String serviceId) {
         return createNewChargeWithServiceIdAndStatus(serviceId, CREATED);
-//        String chargeExternalId = createNewChargeWith(CREATED, "");
-//        databaseTestHelper.updateServiceIdForCharge(chargeExternalId, serviceId);
-//        return chargeExternalId;
     }
     
     public String createNewChargeWithServiceIdAndStatus(String serviceId, ChargeStatus chargeStatus) {
