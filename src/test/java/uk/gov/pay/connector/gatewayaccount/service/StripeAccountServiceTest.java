@@ -1,6 +1,11 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
+import com.stripe.Stripe;
+import com.stripe.model.Account;
+import com.stripe.model.Person;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,6 +34,32 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
     @BeforeEach
      void setUp() {
         stripeAccountService = new StripeAccountService();
+    }
+    
+    /*
+     * These tests are meant to be run manually to give confidence the Java API works. In order to run a valid
+     * apiKey needs to be provided.
+     */
+    @Nested
+    @Disabled
+    class ManualStripeIntegrationTests {
+        
+        @BeforeEach
+        void setUp() {
+            Stripe.apiKey = System.getenv("STRIPE_API_KEY"); // pragma: allowlist secret
+        }
+        
+        @Test
+        void createTestAccount() {
+            Account createdTestAccount = stripeAccountService.createTestAccount("fill-me-in");
+            System.out.println("Created account " + createdTestAccount.getId());
+        }
+
+        @Test
+        void associateDefaultPersonWithTestAccount() {
+            Person person = stripeAccountService.associateDefaultPersonWithTestAccount("fill-me-in");
+            System.out.println("Created person " + person.getId());
+        }
     }
 
     @Test
