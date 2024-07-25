@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
+import com.stripe.model.Account;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,11 +17,14 @@ import uk.gov.pay.connector.gatewayaccount.service.StripeAccountService;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @Path("/")
 @Tag(name = "Gateway accounts")
@@ -34,6 +38,27 @@ public class StripeAccountResource {
                                  GatewayAccountService gatewayAccountService) {
         this.stripeAccountService = stripeAccountService;
         this.gatewayAccountService = gatewayAccountService;
+    }
+    
+    @POST
+    @Path("/v1/service/{serviceId}/request-stripe-test-account")
+    // TODO uncomment when this endpoint's functionality is complete
+//    @Operation(
+//            summary = "1) Create a Stripe Connect Account 2) Create gateway account in connector 3) Disables the old " +
+//                    "sandbox account",
+//            responses = {
+//                    @ApiResponse(responseCode = "200", description = "OK"),
+//                    @ApiResponse(responseCode = "400", description = "Stripe Connect Account already exists"),
+//                    @ApiResponse(responseCode = "404", description = "Not found - Account with serviceId does not exist")
+//            }
+//    )
+    public Response requestStripeTestAccount(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId
+    ) {
+        String serviceName = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST).get().getServiceName();
+        Account testAccount = stripeAccountService.createTestAccount(serviceName);
+        stripeAccountService.createDefaultPersonForAccount(testAccount.getId());
+        return Response.ok().build();
     }
 
     @GET

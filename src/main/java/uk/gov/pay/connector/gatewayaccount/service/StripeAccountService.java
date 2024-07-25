@@ -18,10 +18,12 @@ import com.stripe.param.PersonCollectionCreateParams.Relationship;
 import com.stripe.param.PersonCollectionCreateParams.Verification.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 
+import javax.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,10 +36,10 @@ public class StripeAccountService {
     
     private static RequestOptions requestOptions;
     
-//    @Inject
-//    public StripeAccountService(StripeGatewayConfig stripeGatewayConfig) {
-//        requestOptions = RequestOptions.builder().setApiKey(stripeGatewayConfig.getAuthTokens().getTest()).build();
-//    }
+    @Inject
+    public StripeAccountService(StripeGatewayConfig stripeGatewayConfig) {
+        requestOptions = RequestOptions.builder().setApiKey(stripeGatewayConfig.getAuthTokens().getTest()).build();
+    }
 
     public Optional<StripeAccountResponse> buildStripeAccountResponse(GatewayAccountEntity gatewayAccountEntity) {
         return Optional.ofNullable(gatewayAccountEntity.getGatewayAccountCredentialsEntity(STRIPE.getName()))

@@ -3,15 +3,21 @@ package uk.gov.pay.connector.gatewayaccount.service;
 import com.stripe.Stripe;
 import com.stripe.model.Account;
 import com.stripe.model.Person;
+import com.stripe.net.ApiResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.app.StripeAuthTokens;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +25,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -30,10 +37,18 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
     private StripeAccountService stripeAccountService;
 
     private GatewayAccountEntity gatewayAccountEntity;
+    
+    @Mock
+    private StripeGatewayConfig stripeGatewayConfig;
+    
+    @Mock
+    private StripeAuthTokens stripAuthTokens;
 
     @BeforeEach
      void setUp() {
-        stripeAccountService = new StripeAccountService();
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripAuthTokens);
+        when(stripAuthTokens.getTest()).thenReturn("an-api-key");
+        stripeAccountService = new StripeAccountService(stripeGatewayConfig);
     }
     
     /*
