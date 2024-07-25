@@ -57,8 +57,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 
         @Test
         void associateDefaultPersonWithTestAccount() {
-            Person person = stripeAccountService.associateDefaultPersonWithTestAccount("fill-me-in");
-            System.out.println("Created person " + person.getId());
+            stripeAccountService.createDefaultPersonForAccount("fill-the-created-account-id-from-above");
         }
     }
 

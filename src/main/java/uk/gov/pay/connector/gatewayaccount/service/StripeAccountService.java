@@ -18,24 +18,15 @@ import com.stripe.param.PersonCollectionCreateParams.Relationship;
 import com.stripe.param.PersonCollectionCreateParams.Verification.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.stripe.param.AccountCreateParams.Company.Address;
-import static com.stripe.param.AccountCreateParams.Company.Builder;
-import static com.stripe.param.AccountCreateParams.Company.builder;
+import static com.stripe.param.AccountCreateParams.Company;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
-import static uk.gov.pay.connector.gatewayaccount.service.StripeAccountService.StripeTestAccountDefaults.businessProfile;
-import static uk.gov.pay.connector.gatewayaccount.service.StripeAccountService.StripeTestAccountDefaults.capabilities;
-import static uk.gov.pay.connector.gatewayaccount.service.StripeAccountService.StripeTestAccountDefaults.companyBuilder;
-import static uk.gov.pay.connector.gatewayaccount.service.StripeAccountService.StripeTestAccountDefaults.settings;
-import static uk.gov.pay.connector.gatewayaccount.service.StripeAccountService.StripeTestAccountDefaults.tosAcceptance;
 
 public class StripeAccountService {
 
@@ -59,18 +50,16 @@ public class StripeAccountService {
                 .setType(AccountCreateParams.Type.CUSTOM)
                 .setCountry("GB")
                 .setBusinessType(AccountCreateParams.BusinessType.COMPANY)
-                .setCompany(companyBuilder.setName(serviceName).build())
-                .setCapabilities(capabilities)
+                .setCompany(StripeTestAccountDefaults.companyBuilder.setName(serviceName).build())
+                .setCapabilities(StripeTestAccountDefaults.capabilities)
                 .setDefaultCurrency("GBP")
-                .setSettings(settings)
-                .setBusinessProfile(businessProfile)
-                .setTosAcceptance(tosAcceptance)
+                .setSettings(StripeTestAccountDefaults.settings)
+                .setBusinessProfile(StripeTestAccountDefaults.businessProfile)
+                .setTosAcceptance(StripeTestAccountDefaults.tosAcceptance)
                 .build();
 
-        Account account;
-        
         try {
-            account = Account.create(accountCreateParams, requestOptions);
+            Account account = Account.create(accountCreateParams, requestOptions);
             logger.info("Created account {}", account.getId());
             account.getExternalAccounts().create(StripeTestAccountDefaults.bankAccount, requestOptions);
             return account;
@@ -79,12 +68,11 @@ public class StripeAccountService {
         }
     }
     
-    public Person associateDefaultPersonWithTestAccount(String stripeAccountId) {
+    public void createDefaultPersonForAccount(String stripeAccountId) {
         try {
             Account account = Account.retrieve(stripeAccountId, requestOptions);
             Person person = account.persons(Map.of(), requestOptions).create(StripeTestAccountDefaults.person, requestOptions);
             logger.info("Created person {}", person.getId());
-            return person;
         } catch (StripeException e) {
             throw new RuntimeException(e);
         }
@@ -101,8 +89,8 @@ public class StripeAccountService {
                         "currency", "gbp",
                         "country", "gb"));
 
-        public static final Builder companyBuilder = builder()
-                .setAddress(Address.builder()
+        public static final Company.Builder companyBuilder = Company.builder()
+                .setAddress(Company.Address.builder()
                         .setLine1("address_full_match")
                         .setLine2("WCB")
                         .setCity("London")
