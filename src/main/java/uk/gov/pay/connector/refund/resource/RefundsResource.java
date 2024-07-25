@@ -94,8 +94,12 @@ public class RefundsResource {
         validateRefundRequest(refundRequest.getAmount());
 
         ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId, accountId)
-                .map(charge -> refundService.doRefund(accountId, charge, refundRequest))
-                .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+                .or(() -> {
+                    throw new ChargeNotFoundRuntimeException(chargeExternalId);
+                })
+                .flatMap(charge -> refundService.doRefund(accountId, charge, refundRequest))
+                .orElseThrow(() -> new RuntimeException(""));
+        
         GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();
         if (refundResponse.isSuccessful()) {
             return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), accountId, uriInfo).serialize()).build();
@@ -141,7 +145,7 @@ public class RefundsResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
 
         ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId, account.getId())
-                .map(charge -> refundService.doRefundFor(account, charge, refundRequest))
+                .flatMap(charge -> refundService.doRefundFor(account, charge, refundRequest))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
         
         GatewayRefundResponse gatewayRefundResponse = refundServiceResponse.getGatewayRefundResponse();
