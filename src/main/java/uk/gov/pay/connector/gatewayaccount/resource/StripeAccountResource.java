@@ -42,6 +42,7 @@ public class StripeAccountResource {
     
     @POST
     @Path("/v1/service/{serviceId}/request-stripe-test-account")
+    @Produces(APPLICATION_JSON)
     // TODO uncomment when this endpoint's functionality is complete
 //    @Operation(
 //            summary = "1) Create a Stripe Connect Account 2) Create gateway account in connector 3) Disables the old " +
@@ -55,10 +56,13 @@ public class StripeAccountResource {
     public Response requestStripeTestAccount(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId
     ) {
-        String serviceName = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST).get().getServiceName();
-        Account testAccount = stripeAccountService.createTestAccount(serviceName);
-        stripeAccountService.createDefaultPersonForAccount(testAccount.getId());
-        return Response.ok().build();
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST)
+                .map(gatewayAccountEntity -> {
+                    Account testAccount = stripeAccountService.createTestAccount(gatewayAccountEntity.getServiceName());
+                    stripeAccountService.createDefaultPersonForAccount(testAccount.getId());
+                    return Response.ok().build();
+                })
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, TEST));
     }
 
     @GET

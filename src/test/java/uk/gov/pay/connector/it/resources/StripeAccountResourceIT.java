@@ -41,8 +41,7 @@ public class StripeAccountResourceIT {
         String serviceId = RandomIdGenerator.randomUuid();
         app.setupSandboxGatewayAccount(serviceId, "Ollivander's wand shop");
 
-        app.givenSetup().body(toJson(Map.of("service_id", serviceId)))
-                .post(format("/v1/service/%s/request-stripe-test-account", serviceId))
+        app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
                 .then().statusCode(200);
         
         // TODO Verify: 
@@ -66,7 +65,8 @@ public class StripeAccountResourceIT {
     
     @Test
     void returnNotFoundIfServiceDoesNotExist() {
-        // TODO
+        app.givenSetup().post("/v1/service/doesNotExist/request-stripe-test-account")
+                .then().statusCode(404);
     }
 
     @Nested
