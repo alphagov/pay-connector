@@ -4,12 +4,16 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static java.lang.String.format;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -34,7 +38,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSF
 
 public class StripeMockClient {
 
-    private WireMockServer wireMockServer;
+    private final WireMockServer wireMockServer;
 
     public StripeMockClient(WireMockServer wireMockServer) {
         this.wireMockServer = wireMockServer;
@@ -163,9 +167,49 @@ public class StripeMockClient {
     public void mockSearchPaymentIntentsByMetadata(String chargeExternalId) {
         String responsePayload = TestTemplateResourceLoader.load((STRIPE_SEARCH_PAYMENT_INTENTS_RESPONSE));
         wireMockServer.stubFor(get(urlPathEqualTo("/v1/payment_intents/search"))
-                .withQueryParam("query", equalTo(String.format("metadata['govuk_pay_transaction_external_id']:'%s'", chargeExternalId)))
+                .withQueryParam("query", equalTo(format("metadata['govuk_pay_transaction_external_id']:'%s'", chargeExternalId)))
                 .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)
                         .withStatus(200)
                         .withBody(responsePayload)));
+    }
+
+    public void mockCreateStripeTestConnectAccount() throws Exception {
+        Path file = Path.of("src", "test", "resources", "templates", "stripe").resolve("create_account_response.json");
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/accounts"))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                        .withStatus(201)
+                        .withBody(Files.readString(file))));
+    }
+
+    public void mockCreateRepresentativeForConnectAccount() throws Exception {
+        Path file = Path.of("src", "test", "resources", "templates", "stripe").resolve("create_person_response.json");
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/accounts/acct_123/persons"))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                        .withStatus(201)
+                        .withBody(Files.readString(file))));
+    }
+
+    public void mockCreateExternalAccount() throws Exception {
+        Path file = Path.of("src", "test", "resources", "templates", "stripe").resolve("create_external_account_response.json");
+        wireMockServer.stubFor(post(urlPathEqualTo("/v1/accounts/acct_123/external_accounts"))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                        .withStatus(201)
+                        .withBody(Files.readString(file))));
+    }
+
+    public void mockRetrieveAccount() throws Exception {
+        Path file = Path.of("src", "test", "resources", "templates", "stripe").resolve("create_account_response.json");
+        wireMockServer.stubFor(get(urlPathEqualTo("/v1/accounts/acct_123"))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                        .withStatus(200)
+                        .withBody(Files.readString(file))));
+    }
+
+    public void mockRetrievePersonCollection() throws Exception {
+        Path file = Path.of("src", "test", "resources", "templates", "stripe").resolve("get_persons.json");
+        wireMockServer.stubFor(get(urlPathEqualTo("/v1/accounts/acct_123/persons"))
+                .willReturn(aResponse().withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                        .withStatus(200)
+                        .withBody(Files.readString(file))));
     }
 }

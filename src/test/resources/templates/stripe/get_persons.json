@@ -1,0 +1,6 @@
+{
+  "object": "list",
+  "url": "/v1/accounts/acct_123/persons",
+  "has_more": false,
+  "data": []
+}
