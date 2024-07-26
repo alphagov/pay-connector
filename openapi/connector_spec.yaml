@@ -2996,7 +2996,7 @@ paths:
       responses:
         default:
           content:
-            '*/*': {}
+            application/json: {}
           description: default response
       tags:
       - Gateway accounts
