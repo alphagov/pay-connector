@@ -34,7 +34,7 @@ public class StripeAccountService {
 
     private static final Logger logger = LoggerFactory.getLogger(StripeAccountService.class);
     
-    private static RequestOptions requestOptions;
+    private final RequestOptions requestOptions;
     
     @Inject
     public StripeAccountService(StripeGatewayConfig stripeGatewayConfig) {

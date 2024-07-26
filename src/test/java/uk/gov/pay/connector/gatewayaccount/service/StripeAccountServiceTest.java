@@ -2,8 +2,6 @@ package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.stripe.Stripe;
 import com.stripe.model.Account;
-import com.stripe.model.Person;
-import com.stripe.net.ApiResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
@@ -16,8 +14,6 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +38,12 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
     private StripeGatewayConfig stripeGatewayConfig;
     
     @Mock
-    private StripeAuthTokens stripAuthTokens;
+    private StripeAuthTokens stripeAuthTokens;
 
     @BeforeEach
      void setUp() {
-        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripAuthTokens);
-        when(stripAuthTokens.getTest()).thenReturn("an-api-key");
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
+        when(stripeAuthTokens.getTest()).thenReturn("an-api-key");
         stripeAccountService = new StripeAccountService(stripeGatewayConfig);
     }
     
