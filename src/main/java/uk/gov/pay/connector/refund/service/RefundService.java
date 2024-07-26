@@ -9,13 +9,10 @@ import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
-import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNotFoundException;
-import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
@@ -56,11 +53,9 @@ import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundService {
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final RefundDao refundDao;
-    private final GatewayAccountDao gatewayAccountDao;
     private final PaymentProviders providers;
     private final UserNotificationService userNotificationService;
     private StateTransitionService stateTransitionService;
@@ -69,7 +64,6 @@ public class RefundService {
 
     @Inject
     public RefundService(RefundDao refundDao,
-                         GatewayAccountDao gatewayAccountDao,
                          PaymentProviders providers,
                          UserNotificationService userNotificationService,
                          StateTransitionService stateTransitionService,
@@ -77,21 +71,14 @@ public class RefundService {
                          GatewayAccountCredentialsService gatewayAccountCredentialsService
     ) {
         this.refundDao = refundDao;
-        this.gatewayAccountDao = gatewayAccountDao;
         this.providers = providers;
         this.userNotificationService = userNotificationService;
         this.stateTransitionService = stateTransitionService;
         this.ledgerService = ledgerService;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
     }
-
-//    public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
-//        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
-//                () -> new GatewayAccountNotFoundException(accountId));
-//        return doRefundFor(gatewayAccountEntity, charge, refundRequest);
-//    }
     
-    public ChargeRefundResponse doRefund(GatewayAccountEntity gatewayAccountEntity, Charge charge, RefundRequest refundRequest) {
+    public ChargeRefundResponse submitRefund(GatewayAccountEntity gatewayAccountEntity, Charge charge, RefundRequest refundRequest) {
         if (PaymentGatewayName.isUnsupported(charge.getPaymentGatewayName())) {
             throw new NotFoundException();
         }        
@@ -186,14 +173,11 @@ public class RefundService {
 
     private RefundStatus determineRefundStatus(GatewayRefundResponse gatewayRefundResponse) {
         if (gatewayRefundResponse.isSuccessful()) {
-            switch (gatewayRefundResponse.state()) {
-                case PENDING:
-                    return REFUND_SUBMITTED;
-                case COMPLETE:
-                    return REFUNDED;
-                default:
-                    return REFUND_ERROR;
-            }
+            return switch (gatewayRefundResponse.state()) {
+                case PENDING -> REFUND_SUBMITTED;
+                case COMPLETE -> REFUNDED;
+                default -> REFUND_ERROR;
+            };
         } else
             return RefundStatus.REFUND_ERROR;
     }
@@ -363,9 +347,9 @@ public class RefundService {
         return refundDao.findByExternalId(externalId);
     }
     
-    // This is necessary in transactional methods to ensure the refund entity exists within the persistence context
+    // This is necessary in transactional methods to ensure the refund entity exists within the transaction persistence context
     // if called after a refund entity has been created, this should never cause an error
-    public RefundEntity reloadRefundFromDatabase(Long refundId) {
+    private RefundEntity reloadRefundFromDatabase(Long refundId) {
        return refundDao.findById(refundId).orElseThrow(() -> new RuntimeException(format("Refund %s no longer exists in database", refundId)));
     }
 }
