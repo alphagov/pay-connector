@@ -107,9 +107,6 @@ public class RefundService {
                 .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
                 .refund(RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity));
 
-//        if (gatewayRefundResponse.isSuccessful() && !gatewayRefundResponse.state().equals(REFUND_ERROR)) {
-//            setRefundStatus(refundEntity.getId(), gatewayAccountEntity, REFUND_SUBMITTED, charge);
-//        }
         RefundStatus refundStatus = determineRefundStatus(gatewayRefundResponse);
 
         if (refundStatus == REFUNDED) {
@@ -123,9 +120,6 @@ public class RefundService {
         
         RefundEntity updatedRefundEntity = updateRefundWithTransactionIdAndState(gatewayRefundResponse, refundEntity.getId(), refundStatus, gatewayAccountEntity, charge);
         return new ChargeRefundResponse(gatewayRefundResponse, updatedRefundEntity);
-        
-//        RefundEntity refund = processRefund(gatewayRefundResponse, refundEntity.getId(), gatewayAccountEntity, charge);
-//        return new ChargeRefundResponse(gatewayRefundResponse, refund);
     }
 
     @Transactional
@@ -162,48 +156,6 @@ public class RefundService {
                         && refund.getGatewayTransactionId().equals(gatewayTransactionId))
                 .findFirst();
     }
-
-//    private RefundEntity processRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
-//                                       GatewayAccountEntity gatewayAccountEntity, Charge charge) {
-//        RefundStatus refundStatus = determineRefundStatus(gatewayRefundResponse);
-//
-//        if (refundStatus == REFUNDED) {
-//            // If the gateway confirms refunds immediately, the refund status needs
-//            // to be set to REFUND_SUBMITTED and then REFUNDED. This will  help
-//            // services to view refund history in detail in self service.
-//            // see Javadoc (RefundHistory) for details on how history is handled
-//            setRefundStatus(refundEntityId, gatewayAccountEntity, REFUND_SUBMITTED, charge);
-//        }
-//
-//        return updateRefund(gatewayRefundResponse, refundEntityId, refundStatus, gatewayAccountEntity, charge);
-//    }
-
-//    @Transactional
-//    @SuppressWarnings("WeakerAccess")
-//    public RefundEntity updateRefund(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
-//                                     RefundStatus refundStatus, GatewayAccountEntity gatewayAccountEntity,
-//                                     Charge charge) {
-//        Optional<RefundEntity> refund = refundDao.findById(refundEntityId);
-//
-//        refund.ifPresent(refundEntity -> {
-//            logger.info("Refund {} ({}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
-//                    refundEntity.getExternalId(), charge.getPaymentGatewayName(),
-//                    refundEntity.getChargeExternalId(), charge.getPaymentGatewayName(),
-//                    refundEntity.getGatewayTransactionId(),
-//                    gatewayAccountEntity.getAnalyticsId(), gatewayAccountEntity.getId(),
-//                    gatewayRefundResponse, refundEntity.getStatus(), refundStatus);
-//
-//            if (refundStatus == REFUNDED) {
-//                userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
-//            }
-//
-//            getTransactionId(refundEntity, gatewayRefundResponse).ifPresent(refundEntity::setGatewayTransactionId);
-//
-//            transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge);
-//        });
-//
-//        return refund.get();
-//    }
     
     @Transactional
     public RefundEntity updateRefundWithTransactionIdAndState(GatewayRefundResponse gatewayRefundResponse, Long refundEntityId,
