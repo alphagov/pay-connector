@@ -85,13 +85,13 @@ public class RefundService {
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
     }
 
-    public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
-        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
-                () -> new GatewayAccountNotFoundException(accountId));
-        return doRefundFor(gatewayAccountEntity, charge, refundRequest);
-    }
+//    public ChargeRefundResponse doRefund(Long accountId, Charge charge, RefundRequest refundRequest) {
+//        GatewayAccountEntity gatewayAccountEntity = gatewayAccountDao.findById(accountId).orElseThrow(
+//                () -> new GatewayAccountNotFoundException(accountId));
+//        return doRefundFor(gatewayAccountEntity, charge, refundRequest);
+//    }
     
-    public ChargeRefundResponse doRefundFor(GatewayAccountEntity gatewayAccountEntity, Charge charge, RefundRequest refundRequest) {
+    public ChargeRefundResponse doRefund(GatewayAccountEntity gatewayAccountEntity, Charge charge, RefundRequest refundRequest) {
         if (PaymentGatewayName.isUnsupported(charge.getPaymentGatewayName())) {
             throw new NotFoundException();
         }        
