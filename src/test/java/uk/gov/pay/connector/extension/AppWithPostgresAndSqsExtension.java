@@ -33,6 +33,7 @@ import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -45,6 +46,7 @@ import static uk.gov.pay.connector.rules.PostgresTestDocker.getConnectionUrl;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
@@ -61,16 +63,17 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final int notifyWireMockPort;
 
     protected static DatabaseTestHelper databaseTestHelper;
-    protected static WireMockServer wireMockServer;
-    protected static WireMockServer worldpayWireMockServer;
-    protected static WireMockServer ledgerWireMockServer;
-    protected static WireMockServer stripeWireMockServer;
-    protected static WireMockServer notifyWireMockServer;
-    protected static WorldpayMockClient worldpayMockClient;
-    protected static StripeMockClient stripeMockClient;
-    protected static LedgerStub ledgerStub;
-    private static CardidStub cardidStub;
-    private static NotifyStub notifyStub;
+    private WireMockServer wireMockServer;
+    private WireMockServer worldpayWireMockServer;
+    private WireMockServer ledgerWireMockServer;
+    private WireMockServer stripeWireMockServer;
+    private WireMockServer notifyWireMockServer;
+    private WorldpayMockClient worldpayMockClient;
+    private StripeMockClient stripeMockClient;
+    private LedgerStub ledgerStub;
+    private CardidStub cardidStub;
+    private NotifyStub notifyStub;
+    
     protected static String accountId = String.valueOf(RandomUtils.nextInt());
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
@@ -257,11 +260,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         return sqsClient;
     }
 
-    public static WireMockServer getWireMockServer() {
+    public WireMockServer getWireMockServer() {
         return wireMockServer;
     }
     
-    public static WireMockServer getStripeWireMockServer() {
+    public WireMockServer getStripeWireMockServer() {
         return stripeWireMockServer;
     }
 
@@ -308,5 +311,15 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public void purgeEventQueue() {
         AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
         sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
+    }
+
+    public void setupSandboxGatewayAccount(String serviceId, String serviceName) {
+        givenSetup().body(toJson(Map.of(
+                        "service_id", serviceId,
+                        "type", "test",
+                        "payment_provider", "sandbox",
+                        "service_name", serviceName)))
+                .post("/v1/api/accounts")
+                .then().statusCode(201);
     }
 }

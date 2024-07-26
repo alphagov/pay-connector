@@ -46,7 +46,7 @@ public class StripeAuthoriseRequest extends StripePostRequest {
                 authorisationRequest.getGatewayAccount(),
                 authorisationRequest.getGovUkPayPaymentId(),
                 stripeGatewayConfig,
-                (StripeCredentials) authorisationRequest.getGatewayCredentials()
+                authorisationRequest.getGatewayCredentials()
         );
     }
 

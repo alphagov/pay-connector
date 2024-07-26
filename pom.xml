@@ -7,7 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <pay-java-commons.version>1.0.20240715141443</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20240722124540</pay-java-commons.version>
         <surefire.version>3.3.1</surefire.version>
         <jjwt.version>0.12.6</jjwt.version>
         <pact.version>4.6.11</pact.version>
@@ -41,7 +41,7 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-bom</artifactId>
-                <version>1.12.761</version>
+                <version>1.12.762</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -445,7 +445,7 @@
         <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock-standalone</artifactId>
-            <version>3.8.0</version>
+            <version>3.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

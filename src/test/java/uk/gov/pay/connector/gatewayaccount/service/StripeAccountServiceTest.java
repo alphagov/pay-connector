@@ -1,9 +1,16 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
+import com.stripe.Stripe;
+import com.stripe.model.Account;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.app.StripeAuthTokens;
+import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 
@@ -14,6 +21,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -25,10 +33,43 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
     private StripeAccountService stripeAccountService;
 
     private GatewayAccountEntity gatewayAccountEntity;
+    
+    @Mock
+    private StripeGatewayConfig stripeGatewayConfig;
+    
+    @Mock
+    private StripeAuthTokens stripeAuthTokens;
 
     @BeforeEach
      void setUp() {
-        stripeAccountService = new StripeAccountService();
+        when(stripeGatewayConfig.getAuthTokens()).thenReturn(stripeAuthTokens);
+        when(stripeAuthTokens.getTest()).thenReturn("an-api-key");
+        stripeAccountService = new StripeAccountService(stripeGatewayConfig);
+    }
+    
+    /*
+     * These tests are meant to be run manually to give confidence the Java API works. In order to run a valid
+     * apiKey needs to be provided.
+     */
+    @Nested
+    @Disabled
+    class ManualStripeIntegrationTests {
+        
+        @BeforeEach
+        void setUp() {
+            Stripe.apiKey = System.getenv("STRIPE_API_KEY"); // pragma: allowlist secret
+        }
+        
+        @Test
+        void createTestAccount() {
+            Account createdTestAccount = stripeAccountService.createTestAccount("fill-me-in");
+            System.out.println("Created account " + createdTestAccount.getId());
+        }
+
+        @Test
+        void associateDefaultPersonWithTestAccount() {
+            stripeAccountService.createDefaultPersonForAccount("fill-the-created-account-id-from-above");
+        }
     }
 
     @Test

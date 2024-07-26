@@ -2982,6 +2982,24 @@ paths:
       summary: Mark secure token as used
       tags:
       - Secure token
+  /v1/service/{serviceId}/request-stripe-test-account:
+    post:
+      operationId: requestStripeTestAccount
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      tags:
+      - Gateway accounts
   /v1/tasks/emitted-events-sweep:
     post:
       description: "During the state transition event connector puts an event in an\
