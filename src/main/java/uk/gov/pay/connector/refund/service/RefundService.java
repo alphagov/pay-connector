@@ -162,7 +162,8 @@ public class RefundService {
                                                               RefundStatus refundStatus, GatewayAccountEntity gatewayAccountEntity,
                                                               Charge charge) {
 
-        RefundEntity refundEntity =  refundDao.findById(refundEntityId).orElseThrow(() -> new RuntimeException(format("Refund %s no longer exists in database", refundEntityId)));
+        RefundEntity refundEntity = reloadRefundFromDatabase(refundEntityId);
+        
         logger.info("Refund {} ({}) for {} ({} {}) for {} ({}) - {} .'. {} -> {}",
                 refundEntity.getExternalId(), charge.getPaymentGatewayName(),
                 refundEntity.getChargeExternalId(), charge.getPaymentGatewayName(),
@@ -178,7 +179,7 @@ public class RefundService {
     @Transactional
     @SuppressWarnings("WeakerAccess")
     public RefundEntity setRefundStatus(Long refundEntityId, GatewayAccountEntity gatewayAccountEntity, RefundStatus refundStatus, Charge charge) {
-        RefundEntity refundEntity =  refundDao.findById(refundEntityId).orElseThrow(() -> new RuntimeException(format("Refund %s no longer exists in database", refundEntityId)));
+        RefundEntity refundEntity = reloadRefundFromDatabase(refundEntityId);
         transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge);
         return refundEntity;
     }
@@ -360,5 +361,11 @@ public class RefundService {
 
     public Optional<RefundEntity> findRefundByExternalId(String externalId) {
         return refundDao.findByExternalId(externalId);
+    }
+    
+    // This is necessary in transactional methods to ensure the refund entity exists within the persistence context
+    // if called after a refund entity has been created, this should never cause an error
+    public RefundEntity reloadRefundFromDatabase(Long refundId) {
+       return refundDao.findById(refundId).orElseThrow(() -> new RuntimeException(format("Refund %s no longer exists in database", refundId)));
     }
 }
