@@ -14,7 +14,10 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static java.lang.String.format;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class StripeAccountResourceIT {
@@ -39,28 +42,71 @@ public class StripeAccountResourceIT {
         app.getStripeMockClient().mockCreateRepresentativeForConnectAccount();
         
         String serviceId = RandomIdGenerator.randomUuid();
-        app.setupSandboxGatewayAccount(serviceId, "Ollivander's wand shop");
+        var createGatewayAccountResponse = app.setupSandboxGatewayAccount(serviceId, "Ollivander's wand shop");
 
         app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
                 .then().statusCode(200);
         
-        // TODO Verify: 
-        // Stripe test account created in connector.
-        // Old sandbox account set to be disabled.
+        // Assert API calls to Stripe
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts")));
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/external_accounts")));
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/persons")));
 
-        app.getStripeWireMockServer()
-                .verify(postRequestedFor(urlEqualTo("/v1/accounts")));
+        // Assert Stripe test account created in connector
+        app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
+                .then()
+                .statusCode(200)
+                .body("gateway_account_id", not(createGatewayAccountResponse.gatewayAccountId()))
+                .body("external_id", not(createGatewayAccountResponse.externalId()))
+                .body("service_id", is(serviceId))
+                .body("payment_provider", is("stripe"))
+                .body("type", is("test"))
+                .body("service_name", is("Ollivander's wand shop"))
+                .body("description", is(createGatewayAccountResponse.description()))
+                .body("analyticsId", is(createGatewayAccountResponse.analyticsId()))
+                .body("location", is(createGatewayAccountResponse.location()))
+                .body("requires3ds", is(createGatewayAccountResponse.requires3ds()))
+                .body("links[0].href", not(createGatewayAccountResponse.links().get(0).get("href")))
+                .body("gateway_account_credentials", hasSize(1))
+                .body("gateway_account_credentials[0].payment_provider", is("stripe"))
+                .body("gateway_account_credentials[0].state", is("ACTIVE"));
 
-        app.getStripeWireMockServer()
-                .verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/external_accounts")));
-        
-        app.getStripeWireMockServer()
-                .verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/persons")));
+        // Assert old sandbox account is disabled
+        assertTrue((Boolean) app.getDatabaseTestHelper().getGatewayAccount(Long.valueOf(createGatewayAccountResponse.gatewayAccountId())).get("disabled"));
     }
     
     @Test
     void shouldNotBeAbleToRequestTestStripeAccountIfAlreadyExists() {
-        // TODO
+        String serviceId = RandomIdGenerator.randomUuid();
+        app.givenSetup().body(toJson(Map.of(
+                        "service_id", serviceId,
+                        "type", "test",
+                        "payment_provider", "stripe",
+                        "service_name", "Borgin and Burkes")))
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(201);
+
+        app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
+                .then().statusCode(400)
+                .body("message", is("Cannot request Stripe test account because a Stripe test account already exists."));
+    }
+    
+    @Test
+    void returnBadRequestIfSandboxGatewayAccountDoesNotExist() {
+        String serviceId = RandomIdGenerator.randomUuid();
+        app.givenSetup().body(toJson(Map.of(
+                        "service_id", serviceId,
+                        "type", "test",
+                        "payment_provider", "worldpay",
+                        "service_name", "Borgin and Burkes")))
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(201);
+
+        app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
+                .then().statusCode(400)
+                .body("message", is("Cannot request Stripe test account because existing test account is not a Sandbox one."));
     }
     
     @Test

@@ -23,6 +23,7 @@ import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
+import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.LedgerStub;
@@ -313,13 +314,15 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
     }
 
-    public void setupSandboxGatewayAccount(String serviceId, String serviceName) {
-        givenSetup().body(toJson(Map.of(
+    public CreateGatewayAccountResponse setupSandboxGatewayAccount(String serviceId, String serviceName) {
+        return givenSetup().body(toJson(Map.of(
                         "service_id", serviceId,
                         "type", "test",
                         "payment_provider", "sandbox",
                         "service_name", serviceName)))
                 .post("/v1/api/accounts")
-                .then().statusCode(201);
+                .then()
+                .statusCode(201)
+                .extract().body().as(CreateGatewayAccountResponse.class);
     }
 }

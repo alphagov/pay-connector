@@ -139,4 +139,72 @@ public class GatewayAccountRequest {
     public boolean isAllowGooglePay() {
         return allowGooglePay;
     }
+    
+    public static final class GatewayAccountRequestBuilder {
+        private @NotBlank String providerAccountType;
+        private String serviceName;
+        private String serviceId;
+        private String description;
+        private String analyticsId;
+        private String paymentProvider;
+        private boolean requires3ds;
+        private boolean allowApplePay;
+        private boolean allowGooglePay;
+
+        private GatewayAccountRequestBuilder() {
+        }
+
+        public static GatewayAccountRequestBuilder builder() {
+            return new GatewayAccountRequestBuilder();
+        }
+
+        public GatewayAccountRequestBuilder withProviderAccountType(String providerAccountType) {
+            this.providerAccountType = providerAccountType;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withServiceName(String serviceName) {
+            this.serviceName = serviceName;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withServiceId(String serviceId) {
+            this.serviceId = serviceId;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withDescription(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withAnalyticsId(String analyticsId) {
+            this.analyticsId = analyticsId;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withPaymentProvider(String paymentProvider) {
+            this.paymentProvider = paymentProvider;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withRequires3ds(boolean requires3ds) {
+            this.requires3ds = requires3ds;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withAllowApplePay(boolean allowApplePay) {
+            this.allowApplePay = allowApplePay;
+            return this;
+        }
+
+        public GatewayAccountRequestBuilder withAllowGooglePay(boolean allowGooglePay) {
+            this.allowGooglePay = allowGooglePay;
+            return this;
+        }
+
+        public GatewayAccountRequest build() {
+            return new GatewayAccountRequest(providerAccountType, paymentProvider, serviceName, serviceId, description, analyticsId, requires3ds, allowApplePay, allowGooglePay);
+        }
+    }
 }
