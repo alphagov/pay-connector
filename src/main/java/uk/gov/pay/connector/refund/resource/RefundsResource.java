@@ -92,10 +92,14 @@ public class RefundsResource {
                                  @PathParam("chargeId") String chargeExternalId,
                                  RefundRequest refundRequest, @Context UriInfo uriInfo) {
         validateRefundRequest(refundRequest.getAmount());
+        
+        GatewayAccountEntity account = gatewayAccountService.getGatewayAccount(accountId)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
 
         ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId, accountId)
-                .map(charge -> refundService.doRefund(accountId, charge, refundRequest))
+                .map(charge -> refundService.submitRefund(account, charge, refundRequest))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
+        
         GatewayRefundResponse refundResponse = refundServiceResponse.getGatewayRefundResponse();
         if (refundResponse.isSuccessful()) {
             return Response.accepted(RefundResponse.valueOf(refundServiceResponse.getRefundEntity(), accountId, uriInfo).serialize()).build();
@@ -141,7 +145,7 @@ public class RefundsResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
 
         ChargeRefundResponse refundServiceResponse = chargeService.findCharge(chargeExternalId, account.getId())
-                .map(charge -> refundService.doRefundFor(account, charge, refundRequest))
+                .map(charge -> refundService.submitRefund(account, charge, refundRequest))
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
         
         GatewayRefundResponse gatewayRefundResponse = refundServiceResponse.getGatewayRefundResponse();
