@@ -119,8 +119,8 @@ public class StripeAccountResourceIT {
                 .statusCode(201);
 
         app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
-                .then().statusCode(400)
-                .body("message", is("Cannot request Stripe test account because existing test account is not a Sandbox one."));
+                .then().statusCode(409)
+                .body("message", contains("Cannot request Stripe test account because existing test account is not a Sandbox one."));
     }
     
     @Test

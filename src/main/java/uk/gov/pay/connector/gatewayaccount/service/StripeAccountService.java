@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 
 import javax.inject.Inject;
+import javax.ws.rs.InternalServerErrorException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -66,7 +67,7 @@ public class StripeAccountService {
             account.getExternalAccounts().create(StripeTestAccountDefaults.bankAccount, requestOptions);
             return account;
         } catch (StripeException e) {
-            throw new RuntimeException(e);
+            throw new InternalServerErrorException(e);
         }
     }
     
@@ -76,7 +77,7 @@ public class StripeAccountService {
             Person person = account.persons(Map.of(), requestOptions).create(StripeTestAccountDefaults.person, requestOptions);
             logger.info("Created person {}", person.getId());
         } catch (StripeException e) {
-            throw new RuntimeException(e);
+            throw new InternalServerErrorException(e);
         }
     }
     
