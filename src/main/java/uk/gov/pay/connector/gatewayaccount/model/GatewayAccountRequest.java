@@ -140,8 +140,8 @@ public class GatewayAccountRequest {
         return allowGooglePay;
     }
     
-    public static final class GatewayAccountRequestBuilder {
-        private @NotBlank String providerAccountType;
+    public static final class Builder {
+        private String providerAccountType;
         private String serviceName;
         private String serviceId;
         private String description;
@@ -151,54 +151,54 @@ public class GatewayAccountRequest {
         private boolean allowApplePay;
         private boolean allowGooglePay;
 
-        private GatewayAccountRequestBuilder() {
+        private Builder() {
         }
 
-        public static GatewayAccountRequestBuilder builder() {
-            return new GatewayAccountRequestBuilder();
+        public static Builder builder() {
+            return new Builder();
         }
 
-        public GatewayAccountRequestBuilder withProviderAccountType(String providerAccountType) {
+        public Builder withProviderAccountType(String providerAccountType) {
             this.providerAccountType = providerAccountType;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withServiceName(String serviceName) {
+        public Builder withServiceName(String serviceName) {
             this.serviceName = serviceName;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withServiceId(String serviceId) {
+        public Builder withServiceId(String serviceId) {
             this.serviceId = serviceId;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withDescription(String description) {
+        public Builder withDescription(String description) {
             this.description = description;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withAnalyticsId(String analyticsId) {
+        public Builder withAnalyticsId(String analyticsId) {
             this.analyticsId = analyticsId;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withPaymentProvider(String paymentProvider) {
+        public Builder withPaymentProvider(String paymentProvider) {
             this.paymentProvider = paymentProvider;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withRequires3ds(boolean requires3ds) {
+        public Builder withRequires3ds(boolean requires3ds) {
             this.requires3ds = requires3ds;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withAllowApplePay(boolean allowApplePay) {
+        public Builder withAllowApplePay(boolean allowApplePay) {
             this.allowApplePay = allowApplePay;
             return this;
         }
 
-        public GatewayAccountRequestBuilder withAllowGooglePay(boolean allowGooglePay) {
+        public Builder withAllowGooglePay(boolean allowGooglePay) {
             this.allowGooglePay = allowGooglePay;
             return this;
         }
