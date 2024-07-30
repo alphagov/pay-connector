@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.MultipleLiveGatewayAccountsException;
+import uk.gov.pay.connector.gatewayaccount.exception.MultipleStripeTestGatewayAccountsException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
@@ -40,6 +41,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_AUTHORISATION_API;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_GOOGLE_PAY;
@@ -138,6 +140,8 @@ public class GatewayAccountService {
                 getGatewayAccountByServiceIdAndAccountType(gatewayAccountRequest.getServiceId(), LIVE).isPresent()) {
             throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
         }
+        
+        throwIfRequestIsForStripeTestAccountButItAlreadyExists(gatewayAccountEntity, gatewayAccountRequest.getServiceId());
 
         LOGGER.info("Setting the new account to accept all card types by default");
 
@@ -153,6 +157,17 @@ public class GatewayAccountService {
                 gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getCredentialsAsMap());
 
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
+    }
+
+    private void throwIfRequestIsForStripeTestAccountButItAlreadyExists(GatewayAccountEntity gatewayAccountEntity, String serviceId) {
+        var maybeGatewayAccount = getGatewayAccountByServiceIdAndAccountType(serviceId, TEST);
+        if (maybeGatewayAccount.isPresent() && !gatewayAccountEntity.isLive() && 
+                maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().isPresent() &&
+                maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().get().getPaymentProvider().equalsIgnoreCase("stripe")) {
+            GatewayAccountEntity stripeGatewayAccount = maybeGatewayAccount.get();
+            throw new MultipleStripeTestGatewayAccountsException(serviceId, stripeGatewayAccount.getExternalId(), 
+                    stripeGatewayAccount.getCurrentOrActiveGatewayAccountCredential().get().getExternalId());
+        }
     }
 
     public Optional<GatewayAccountEntity> getGatewayAccountByExternal(String gatewayAccountExternalId) {

@@ -13,13 +13,14 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
+import uk.gov.pay.connector.gatewayaccount.exception.MultipleStripeTestGatewayAccountsException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccount;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
@@ -47,6 +48,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED_REASON;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_RECURRING_ENABLED;
@@ -96,6 +98,22 @@ class GatewayAccountServiceTest {
     }
 
     @Test
+    void shouldThrowErrorIfRequestIsForStripeTestAccountButItAlreadyExists() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
+        var stripeGatewayAccountCredential = new GatewayAccountCredentialsEntity(gatewayAccount, "stripe", 
+                Map.of("stripe_account_id", "acct_1234"), ACTIVE);
+        gatewayAccount.setGatewayAccountCredentials(List.of(stripeGatewayAccountCredential));
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType("a-service-id", TEST)).thenReturn(List.of(gatewayAccount));
+        
+        var gatewayAccountRequest = new GatewayAccountRequest("test","stripe",
+                "a-service-name","a-service-id","description","analyticsId",
+                false,false,false);
+        
+        assertThrows(MultipleStripeTestGatewayAccountsException.class, 
+                () -> gatewayAccountService.createGatewayAccount(gatewayAccountRequest, null));
+    }
+    
+    @Test
     void shouldGetGatewayAccount() {
         when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
 
@@ -107,14 +125,14 @@ class GatewayAccountServiceTest {
     @Test
     void shouldGetGatewayAccountByServiceIdAndAccountType() {
         String serviceId = "a-service-id";
-        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(GatewayAccountType.TEST);
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
         var credentials = new GatewayAccountCredentialsEntity(gatewayAccount, "stripe", Map.of(), ACTIVE);
         gatewayAccount.setGatewayAccountCredentials(List.of(credentials));
-        when(mockGatewayAccountDao.findByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST))
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(serviceId, TEST))
                 .thenReturn(List.of(gatewayAccount));
 
         Optional<GatewayAccountEntity> result = 
-                gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST);
+                gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST);
 
         assertTrue(result.isPresent());
         assertThat(result.get(), is(gatewayAccount));
