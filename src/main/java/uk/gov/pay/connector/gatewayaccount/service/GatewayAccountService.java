@@ -100,6 +100,12 @@ public class GatewayAccountService {
                 .map(GatewayAccountResponse::new)
                 .collect(Collectors.toList());
     }
+    
+    @Transactional
+    public void disableAccount(Long gatewayAccountId) {
+        gatewayAccountDao.findById(gatewayAccountId)
+                .ifPresent(gatewayAccountEntity -> gatewayAccountEntity.setDisabled(true));
+    }
 
     @Transactional
     public Optional<GatewayAccount> doPatch(Long gatewayAccountId, JsonPatchRequest gatewayAccountRequest) {

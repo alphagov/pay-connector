@@ -40,9 +40,7 @@ public class GatewayAccountObjectConverter {
 
     public static CreateGatewayAccountResponse createResponseFrom(GatewayAccountEntity entity, UriInfo uriInfo) {
         
-        URI uri = uriInfo.
-                getBaseUriBuilder().
-                path("/v1/api/accounts/{accountId}").build(entity.getId());
+        URI uri = uriInfo.getBaseUriBuilder().path("/v1/api/accounts/{accountId}").build(entity.getId());
 
         return new CreateGatewayAccountResponse.GatewayAccountResponseBuilder()
                 .gatewayAccountId(entity.getId().toString())

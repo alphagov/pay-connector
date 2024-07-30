@@ -33,7 +33,6 @@ import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -46,7 +45,6 @@ import static uk.gov.pay.connector.rules.PostgresTestDocker.getConnectionUrl;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
-import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
@@ -311,15 +309,5 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public void purgeEventQueue() {
         AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
         sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
-    }
-
-    public void setupSandboxGatewayAccount(String serviceId, String serviceName) {
-        givenSetup().body(toJson(Map.of(
-                        "service_id", serviceId,
-                        "type", "test",
-                        "payment_provider", "sandbox",
-                        "service_name", serviceName)))
-                .post("/v1/api/accounts")
-                .then().statusCode(201);
     }
 }

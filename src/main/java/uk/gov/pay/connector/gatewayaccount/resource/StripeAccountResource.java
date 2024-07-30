@@ -7,10 +7,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.StripeGatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountService;
 
@@ -21,7 +24,9 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -43,26 +48,56 @@ public class StripeAccountResource {
     @POST
     @Path("/v1/service/{serviceId}/request-stripe-test-account")
     @Produces(APPLICATION_JSON)
-    // TODO uncomment when this endpoint's functionality is complete
-//    @Operation(
-//            summary = "1) Create a Stripe Connect Account 2) Create gateway account in connector 3) Disables the old " +
-//                    "sandbox account",
-//            responses = {
-//                    @ApiResponse(responseCode = "200", description = "OK"),
-//                    @ApiResponse(responseCode = "400", description = "Stripe Connect Account already exists"),
-//                    @ApiResponse(responseCode = "404", description = "Not found - Account with serviceId does not exist")
-//            }
-//    )
+    @Operation(
+            summary = "1) Create a Stripe Connect Account 2) Create gateway account in connector 3) Disables the old " +
+                    "sandbox account",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "OK"),
+                    @ApiResponse(responseCode = "404", description = "Not found - Account with serviceId does not exist"),
+                    @ApiResponse(responseCode = "409", description = "Stripe Connect Account already exists, or existing test account is not a Sandbox one"),
+            }
+    )
     public Response requestStripeTestAccount(
-            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
+            @Context UriInfo uriInfo
     ) {
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST)
-                .map(gatewayAccountEntity -> {
-                    Account testAccount = stripeAccountService.createTestAccount(gatewayAccountEntity.getServiceName());
-                    stripeAccountService.createDefaultPersonForAccount(testAccount.getId());
-                    return Response.ok().build();
-                })
+        var sandboxGatewayAccount = getSandboxGatewayAccount(serviceId);
+
+        Account testAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
+        stripeAccountService.createDefaultPersonForAccount(testAccount.getId());
+
+        var stripeCredentials = new StripeCredentials();
+        stripeCredentials.setStripeAccountId(testAccount.getId());
+        StripeGatewayAccountRequest gatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
+                .withProviderAccountType(TEST.toString())
+                .withServiceName(sandboxGatewayAccount.getServiceName())
+                .withServiceId(sandboxGatewayAccount.getServiceId())
+                .withDescription(sandboxGatewayAccount.getDescription())
+                .withAnalyticsId(sandboxGatewayAccount.getAnalyticsId())
+                .withPaymentProvider("stripe")
+                .withRequires3ds(sandboxGatewayAccount.isRequires3ds())
+                .withAllowApplePay(sandboxGatewayAccount.isAllowApplePay())
+                .withAllowGooglePay(sandboxGatewayAccount.isAllowGooglePay())
+                .withCredentials(stripeCredentials)
+                .build();
+        gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
+        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId());
+
+        return Response.ok().build();   
+    }
+
+    private GatewayAccountEntity getSandboxGatewayAccount(String serviceId) {
+        var maybeSandboxTestAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, TEST));
+
+        if (maybeSandboxTestAccount.getGatewayName().equalsIgnoreCase("stripe")) {
+            throw new ConflictWebApplicationException("Cannot request Stripe test account because a Stripe test account already exists.");
+        }
+
+        if (!maybeSandboxTestAccount.getGatewayName().equalsIgnoreCase("sandbox")) {
+            throw new ConflictWebApplicationException("Cannot request Stripe test account because existing test account is not a Sandbox one.");
+        }
+        return maybeSandboxTestAccount;
     }
 
     @GET

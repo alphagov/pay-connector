@@ -85,16 +85,15 @@ public class GatewayAccountCredentialsService {
         GatewayAccountCredentialState state = calculateStateForNewCredentials(gatewayAccountEntity, paymentProvider, credentials);
         // We refactored the type to <String, Object> for nested credentials. We need to "cast" credentials until we refactor creation as well
         Map<String, Object> newMap = new HashMap<>(credentials);
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity
-                = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, newMap, state);
+        var gatewayAccountCredentials = new GatewayAccountCredentialsEntity(gatewayAccountEntity, paymentProvider, newMap, state);
 
         if (state == ACTIVE) {
-            gatewayAccountCredentialsEntity.setActiveStartDate(Instant.now());
+            gatewayAccountCredentials.setActiveStartDate(Instant.now());
         }
-        gatewayAccountCredentialsEntity.setExternalId(randomUuid());
+        gatewayAccountCredentials.setExternalId(randomUuid());
 
-        gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntity);
-        return gatewayAccountCredentialsEntity;
+        gatewayAccountCredentialsDao.persist(gatewayAccountCredentials);
+        return gatewayAccountCredentials;
     }
 
     private GatewayAccountCredentialState calculateStateForNewCredentials(GatewayAccountEntity gatewayAccountEntity,
