@@ -6,8 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.google.common.collect.Maps.newHashMap;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeGatewayAccountRequest extends GatewayAccountRequest {
 
@@ -28,13 +26,9 @@ public class StripeGatewayAccountRequest extends GatewayAccountRequest {
         this.credentials = credentials;
     }
 
-    public Optional<StripeCredentials> getCredentials() {
-        return Optional.ofNullable(credentials);
-    }
-
     @Override
     public Map<String, String> getCredentialsAsMap() {
-        return Optional.ofNullable(credentials).map(StripeCredentials::toMap).orElse(newHashMap());
+        return Optional.ofNullable(credentials).map(StripeCredentials::toMap).orElse(Map.of());
     }
     
     public static final class Builder {

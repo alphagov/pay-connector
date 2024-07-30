@@ -53,8 +53,8 @@ public class StripeAccountResource {
                     "sandbox account",
             responses = {
                     @ApiResponse(responseCode = "201", description = "OK"),
+                    @ApiResponse(responseCode = "404", description = "Not found - Account with serviceId does not exist"),
                     @ApiResponse(responseCode = "409", description = "Stripe Connect Account already exists, or existing test account is not a Sandbox one"),
-                    @ApiResponse(responseCode = "404", description = "Not found - Account with serviceId does not exist")
             }
     )
     public Response requestStripeTestAccount(
