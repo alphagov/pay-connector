@@ -141,7 +141,9 @@ public class GatewayAccountService {
             throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
         }
         
-        throwIfRequestIsForStripeTestAccountButItAlreadyExists(gatewayAccountEntity, gatewayAccountRequest.getServiceId());
+        if (!gatewayAccountEntity.isLive() && gatewayAccountRequest.getPaymentProvider().equalsIgnoreCase("stripe")) {
+            throwIfStripeTestAccountAlreadyExists(gatewayAccountRequest.getServiceId());
+        }
 
         LOGGER.info("Setting the new account to accept all card types by default");
 
@@ -159,9 +161,9 @@ public class GatewayAccountService {
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
     }
 
-    private void throwIfRequestIsForStripeTestAccountButItAlreadyExists(GatewayAccountEntity gatewayAccountEntity, String serviceId) {
+    private void throwIfStripeTestAccountAlreadyExists(String serviceId) {
         var maybeGatewayAccount = getGatewayAccountByServiceIdAndAccountType(serviceId, TEST);
-        if (maybeGatewayAccount.isPresent() && !gatewayAccountEntity.isLive() && 
+        if (maybeGatewayAccount.isPresent() && 
                 maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().isPresent() &&
                 maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().get().getPaymentProvider().equalsIgnoreCase("stripe")) {
             GatewayAccountEntity stripeGatewayAccount = maybeGatewayAccount.get();
