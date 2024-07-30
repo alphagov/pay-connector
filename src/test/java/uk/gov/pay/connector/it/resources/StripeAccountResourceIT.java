@@ -15,6 +15,7 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static java.lang.String.format;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -37,7 +38,7 @@ public class StripeAccountResourceIT {
 
     @Test
     void requestingAStripeTestAccount_willCreateAStripeAccount_AndDisableExistingSandboxAccount() throws Exception {
-        app.getStripeMockClient().mockCreateStripeTestConnectAccount();
+        app.getStripeMockClient().mockCreateStripeTestConnectAccount(); // acct_123 is set statically in this mocked response
         app.getStripeMockClient().mockCreateExternalAccount();
         app.getStripeMockClient().mockRetrieveAccount();
         app.getStripeMockClient().mockRetrievePersonCollection();
@@ -71,7 +72,9 @@ public class StripeAccountResourceIT {
                 .body("links[0].href", not(createGatewayAccountResponse.links().get(0).get("href")))
                 .body("gateway_account_credentials", hasSize(1))
                 .body("gateway_account_credentials[0].payment_provider", is("stripe"))
-                .body("gateway_account_credentials[0].state", is("ACTIVE"));
+                .body("gateway_account_credentials[0].state", is("ACTIVE"))
+                .body("gateway_account_credentials[0].credentials.stripe_account_id", is("acct_123"))
+                .body("gateway_account_credentials[0].external_id", is(notNullValue(String.class)));
 
         // Assert old sandbox account is disabled
         assertTrue((Boolean) app.getDatabaseTestHelper().getGatewayAccount(Long.valueOf(createGatewayAccountResponse.gatewayAccountId())).get("disabled"));

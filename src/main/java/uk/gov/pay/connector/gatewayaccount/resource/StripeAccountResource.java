@@ -10,14 +10,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.StripeGatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountService;
 
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
@@ -66,7 +66,9 @@ public class StripeAccountResource {
         Account testAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
         stripeAccountService.createDefaultPersonForAccount(testAccount.getId());
 
-        GatewayAccountRequest gatewayAccountRequest = GatewayAccountRequest.Builder.builder()
+        var stripeCredentials = new StripeCredentials();
+        stripeCredentials.setStripeAccountId(testAccount.getId());
+        StripeGatewayAccountRequest gatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
                 .withProviderAccountType(TEST.toString())
                 .withServiceName(sandboxGatewayAccount.getServiceName())
                 .withServiceId(sandboxGatewayAccount.getServiceId())
@@ -76,6 +78,7 @@ public class StripeAccountResource {
                 .withRequires3ds(sandboxGatewayAccount.isRequires3ds())
                 .withAllowApplePay(sandboxGatewayAccount.isAllowApplePay())
                 .withAllowGooglePay(sandboxGatewayAccount.isAllowGooglePay())
+                .withCredentials(stripeCredentials)
                 .build();
         gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
         gatewayAccountService.disableAccount(sandboxGatewayAccount.getId());
