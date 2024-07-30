@@ -83,6 +83,7 @@ public class RefundsResource {
                                     "}"))),
                     @ApiResponse(responseCode = "400", description = "Bad request - Invalid fields or not sufficient amount available for refund"),
                     @ApiResponse(responseCode = "404", description = "Not found - gateway account or charge not found"),
+                    @ApiResponse(responseCode = "412", description = "Precondition failed - Refund amount available does not match"),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             }
     )
@@ -130,6 +131,7 @@ public class RefundsResource {
                                     "}"))),
                     @ApiResponse(responseCode = "400", description = "Bad request - Invalid fields or not sufficient amount available for refund"),
                     @ApiResponse(responseCode = "404", description = "Not found - gateway account or charge not found"),
+                    @ApiResponse(responseCode = "412", description = "Precondition failed - Refund amount available does not match"),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             }
     )

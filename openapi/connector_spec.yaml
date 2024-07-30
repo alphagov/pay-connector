@@ -572,6 +572,8 @@ paths:
             for refund
         "404":
           description: Not found - gateway account or charge not found
+        "412":
+          description: Precondition failed - Refund amount available does not match
         "500":
           description: Internal server error
       summary: Refund a charge
@@ -1722,6 +1724,8 @@ paths:
             for refund
         "404":
           description: Not found - gateway account or charge not found
+        "412":
+          description: Precondition failed - Refund amount available does not match
         "500":
           description: Internal server error
       summary: Refund a charge
