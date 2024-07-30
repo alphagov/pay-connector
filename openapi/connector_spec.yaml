@@ -2994,13 +2994,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        "201":
           description: OK
-        "400":
+        "404":
+          description: Not found - Account with serviceId does not exist
+        "409":
           description: "Stripe Connect Account already exists, or existing test account\
             \ is not a Sandbox one"
-        "409":
-          description: Not found - Account with serviceId does not exist
       summary: 1) Create a Stripe Connect Account 2) Create gateway account in connector
         3) Disables the old sandbox account
       tags:
