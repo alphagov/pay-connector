@@ -75,8 +75,6 @@ public class WorldpayRefundSubmitResourceIT {
                     CREDENTIALS_PASSWORD, "test-password")
     );
     
-    private static final List<ChargeStatus> NON_REFUNDABLE_CHARGE_STATUSES = Arrays.stream(ChargeStatus.values()).filter(chargeStatus -> !chargeStatus.equals(CAPTURED)).toList();
-
     @BeforeEach
     void setUpCharge() {
         defaultAccountId = randomLong();
@@ -635,9 +633,11 @@ public class WorldpayRefundSubmitResourceIT {
             // Verify no refund requests are made to Worldpay
             app.getWorldpayWireMockServer().verify(0, postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
         }
-        
+
+
+        private static final Stream<ChargeStatus> NON_REFUNDABLE_CHARGE_STATUSES = Arrays.stream(ChargeStatus.values()).filter(chargeStatus -> !chargeStatus.equals(CAPTURED));
         private static Stream<ChargeStatus> nonRefundableChargeStatuses() {
-            return NON_REFUNDABLE_CHARGE_STATUSES.stream();
+            return NON_REFUNDABLE_CHARGE_STATUSES;
         }
 
         @Test
