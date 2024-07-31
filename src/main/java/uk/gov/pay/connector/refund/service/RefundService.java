@@ -88,7 +88,50 @@ public class RefundService {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity)
                 .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException("Unable to find gateway account credentials to use to refund charge."));
 
-        RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
+        List<Refund> existingRefunds = findRefunds(charge);
+        ExternalChargeRefundAvailability refundAvailability = providers
+                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
+                .getExternalChargeRefundAvailability(charge, existingRefunds);
+        
+        if (isRefundUnavailableDueToDispute(charge, refundAvailability)) {
+            throw RefundException.unavailableDueToChargeDisputed();
+        }
+
+        if (refundAvailability != EXTERNAL_AVAILABLE) {
+            logger.warn("Charge not available for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}",
+                    charge.getExternalId(),
+                    charge.getExternalStatus(),
+                    refundAvailability,
+                    gatewayAccountEntity.getId(),
+                    charge.getPaymentGatewayName(),
+                    gatewayAccountEntity.getType());
+
+            throw RefundException.notAvailableForRefundException(charge.getExternalId(), refundAvailability);
+        }
+        
+        long availableAmount = calculateAmountAvailableToRefund(charge, existingRefunds);
+
+        if (availableAmount != refundRequest.getAmountAvailableForRefund()) {
+            logger.info("Refund request has a mismatch on amount available for refund - charge_external_id={}, amount_actually_available_for_refund={}, refund_amount_available_in_request={}",
+                    charge.getExternalId(), availableAmount, refundRequest.getAmountAvailableForRefund());
+            throw RefundException.refundAmountAvailableMismatchException("Refund Amount Available Mismatch");
+        }
+
+        if (availableAmount - refundRequest.getAmount() < 0) {
+            logger.info("Charge doesn't have sufficient amount for refund - charge_external_id={}, status={}, refund_status={}, account_id={}, operation_type=Refund, provider={}, provider_type={}, amount_available_refund={}, amount_requested_refund={}",
+                    charge.getExternalId(),
+                    charge.getExternalStatus(),
+                    refundAvailability,
+                    gatewayAccountEntity.getId(),
+                    charge.getPaymentGatewayName(),
+                    gatewayAccountEntity.getType(),
+                    availableAmount,
+                    refundRequest.getAmount());
+
+            throw RefundException.notAvailableForRefundException("Not sufficient amount available for refund", NOT_SUFFICIENT_AMOUNT_AVAILABLE);
+        }
+
+        RefundEntity refundEntity = createRefundEntity(refundRequest, gatewayAccountEntity, charge);
 
         GatewayRefundResponse gatewayRefundResponse = providers
                 .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
@@ -250,6 +293,10 @@ public class RefundService {
             throw RefundException.notAvailableForRefundException(reloadedCharge.getExternalId(), refundAvailability);
         }
     }
+    
+    private boolean isRefundUnavailableDueToDispute(Charge charge, ExternalChargeRefundAvailability refundAvailability) {
+        return refundAvailability == EXTERNAL_UNAVAILABLE && charge.getDisputed() != null && charge.getDisputed().equals(Boolean.TRUE);
+    }
 
     /**
      * <p>Worldpay -> Worldpay doesn't return reference. We use our externalId because that's what we sent in the
@@ -290,6 +337,15 @@ public class RefundService {
                 gatewayAccountEntity, availableToBeRefunded);
 
         return availableToBeRefunded;
+    }
+    
+    private long calculateAmountAvailableToRefund(Charge charge,
+                                                  List<Refund> refundList) {
+        // We re-check the database for any newly created refunds that could have been made when we were making the
+        // network request to find the external refund-ability
+        List<Refund> updatedRefunds = checkForNewRefunds(charge, refundList);
+
+        return getTotalAmountAvailableToBeRefunded(charge, updatedRefunds);
     }
 
     private List<Refund> checkForNewRefunds(Charge charge, List<Refund> refundList) {
