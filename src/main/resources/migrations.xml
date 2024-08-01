@@ -2004,4 +2004,13 @@
         <dropIndex indexName="idx_lower_charges_email_gin_idx" tableName="charges"/>
         <dropIndex indexName="idx_lower_charges_reference_gin_idx" tableName="charges"/>
     </changeSet>
+
+    <changeSet id="add exemption 3ds requested column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="exemption_3ds_requested" type="VARCHAR(32)">
+                <constraints nullable="true" unique="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
