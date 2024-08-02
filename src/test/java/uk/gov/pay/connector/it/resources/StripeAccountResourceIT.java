@@ -48,7 +48,12 @@ public class StripeAccountResourceIT {
         var createGatewayAccountResponse = setupSandboxGatewayAccount(serviceId, "Ollivander's wand shop");
 
         app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
-                .then().statusCode(200);
+                .then().statusCode(200).log().body()
+                .body("stripe_connect_account_id", is("acct_123"))
+                .body("gateway_account_id", is(notNullValue()))
+                .body("gateway_account_id", not(createGatewayAccountResponse.gatewayAccountId()))
+                .body("gateway_account_external_id", is(notNullValue()))
+                .body("gateway_account_id", not(createGatewayAccountResponse.externalId()));
         
         // Assert API calls to Stripe
         app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts")));

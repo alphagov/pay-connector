@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
@@ -27,6 +28,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
+import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -49,8 +52,9 @@ public class StripeAccountResource {
     @Path("/v1/service/{serviceId}/request-stripe-test-account")
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "1) Create a Stripe Connect Account 2) Create gateway account in connector 3) Disables the old " +
-                    "sandbox account",
+            summary = "1) Creates a Stripe Connect Account " +
+                    "2) Creates a gateway account in connector and links this with the Stripe Connect Account id " +
+                    "3) Disables the old sandbox account",
             responses = {
                     @ApiResponse(responseCode = "201", description = "OK"),
                     @ApiResponse(responseCode = "404", description = "Not found - Account with serviceId does not exist"),
@@ -63,11 +67,11 @@ public class StripeAccountResource {
     ) {
         var sandboxGatewayAccount = getSandboxGatewayAccount(serviceId);
 
-        Account testAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
-        stripeAccountService.createDefaultPersonForAccount(testAccount.getId());
+        Account stripeTestAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
+        stripeAccountService.createDefaultPersonForAccount(stripeTestAccount.getId());
 
         var stripeCredentials = new StripeCredentials();
-        stripeCredentials.setStripeAccountId(testAccount.getId());
+        stripeCredentials.setStripeAccountId(stripeTestAccount.getId());
         StripeGatewayAccountRequest gatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
                 .withProviderAccountType(TEST.toString())
                 .withServiceName(sandboxGatewayAccount.getServiceName())
@@ -80,10 +84,13 @@ public class StripeAccountResource {
                 .withAllowGooglePay(sandboxGatewayAccount.isAllowGooglePay())
                 .withCredentials(stripeCredentials)
                 .build();
-        gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
+        var createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
         gatewayAccountService.disableAccount(sandboxGatewayAccount.getId());
 
-        return Response.ok().build();   
+        Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestAccount.getId(),
+                "gateway_account_id", createGatewayAccountResponse.gatewayAccountId(),
+                "gateway_account_external_id", createGatewayAccountResponse.externalId());
+        return Response.ok(response).build();   
     }
 
     private GatewayAccountEntity getSandboxGatewayAccount(String serviceId) {
