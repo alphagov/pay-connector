@@ -108,7 +108,7 @@ public class RefundReversalResourceIT {
         app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
 
         when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(mockStripeRefund);
-        app.getStripeMockClient().mockRefund();
+        app.getStripeMockClient().mockRefundSuccess();
 
         when(mockStripeRefund.getStatus()).thenReturn("failed");
 

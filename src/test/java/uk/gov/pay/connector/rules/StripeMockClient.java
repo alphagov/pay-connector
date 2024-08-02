@@ -93,7 +93,7 @@ public class StripeMockClient {
         setupResponse(payload, "/v1/payment_intents/" + paymentIntentId + "/cancel", 200);
     }
 
-    public void mockRefund() {
+    public void mockRefundSuccess() {
         String payload = TestTemplateResourceLoader.load(STRIPE_REFUND_FULL_CHARGE_RESPONSE);
         setupResponse(payload, "/v1/refunds", 200);
     }
