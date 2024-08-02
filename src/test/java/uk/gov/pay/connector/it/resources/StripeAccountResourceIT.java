@@ -48,7 +48,7 @@ public class StripeAccountResourceIT {
         var createGatewayAccountResponse = setupSandboxGatewayAccount(serviceId, "Ollivander's wand shop");
 
         app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
-                .then().statusCode(200).log().body()
+                .then().statusCode(200)
                 .body("stripe_connect_account_id", is("acct_123"))
                 .body("gateway_account_id", is(notNullValue()))
                 .body("gateway_account_id", not(createGatewayAccountResponse.gatewayAccountId()))
