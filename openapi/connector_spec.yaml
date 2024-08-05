@@ -3005,8 +3005,9 @@ paths:
         "409":
           description: "Stripe Connect Account already exists, or existing test account\
             \ is not a Sandbox one"
-      summary: 1) Create a Stripe Connect Account 2) Create gateway account in connector
-        3) Disables the old sandbox account
+      summary: 1) Creates a Stripe Connect Account 2) Creates a gateway account in
+        connector and links this with the Stripe Connect Account id 3) Disables the
+        old sandbox account
       tags:
       - Gateway accounts
   /v1/tasks/emitted-events-sweep:
