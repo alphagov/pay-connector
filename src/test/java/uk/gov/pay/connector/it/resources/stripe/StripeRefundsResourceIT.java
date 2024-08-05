@@ -76,7 +76,7 @@ public class StripeRefundsResourceIT {
         class SubmitRefund {
             @Test
             void shouldSuccessfullyRefund_usingChargeId() {
-                var testChargeCreatedWithStripeChargeAPI = DatabaseFixtures
+                var stripeCharge = DatabaseFixtures
                         .withDatabaseTestHelper(app.getDatabaseTestHelper())
                         .aTestCharge()
                         .withAmount(100L)
@@ -85,7 +85,7 @@ public class StripeRefundsResourceIT {
                         .withChargeStatus(CAPTURED)
                         .withPaymentProvider(STRIPE.getName())
                         .insert();
-                String externalChargeId = testChargeCreatedWithStripeChargeAPI.getExternalChargeId();
+                String externalChargeId = stripeCharge.getExternalChargeId();
                 long refundAmount = 10L;
                 app.getStripeMockClient().mockTransferSuccess();
                 app.getStripeMockClient().mockRefundSuccess();
@@ -93,7 +93,7 @@ public class StripeRefundsResourceIT {
                 ValidatableResponse response = app.givenSetup()
                         .body(toJson(Map.of(
                                 "amount", refundAmount,
-                                "refund_amount_available", testChargeCreatedWithStripeChargeAPI.getAmount()
+                                "refund_amount_available", stripeCharge.getAmount()
                         )))
                         .post("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
                                 .replace("{accountId}", accountId)
@@ -101,10 +101,10 @@ public class StripeRefundsResourceIT {
                         .then()
                         .statusCode(ACCEPTED_202);
 
-                List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(testChargeCreatedWithStripeChargeAPI.getExternalChargeId());
+                List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(stripeCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(1));
                 assertThat(refundsFoundByChargeExternalId.get(0).get("status"), is("REFUNDED"));
-                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", testChargeCreatedWithStripeChargeAPI.getExternalChargeId()));
+                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", stripeCharge.getExternalChargeId()));
                 assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", "re_1DRiccHj08j21DRiccHj08j2_test"));
                 String refundId = response.extract().path("refund_id");
 
@@ -115,7 +115,7 @@ public class StripeRefundsResourceIT {
                 app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                         .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
                         .withHeader("Stripe-Account", equalTo(stripeAccountId))
-                        .withRequestBody(containing("transfer_group=" + testChargeCreatedWithStripeChargeAPI.getExternalChargeId()))
+                        .withRequestBody(containing("transfer_group=" + stripeCharge.getExternalChargeId()))
                         .withRequestBody(containing("destination=" + PLATFORM_ACCOUNT_ID)));
             }
 
@@ -216,7 +216,7 @@ public class StripeRefundsResourceIT {
                 app.getStripeMockClient().mockTransferSuccess();
                 app.getStripeMockClient().mockRefundSuccess();
                 
-                var testChargeCreatedWithStripeChargeAPI = DatabaseFixtures
+                var stripeCharge = DatabaseFixtures
                         .withDatabaseTestHelper(app.getDatabaseTestHelper())
                         .aTestCharge()
                         .withAmount(100L)
@@ -228,25 +228,25 @@ public class StripeRefundsResourceIT {
                 long refundAmount = 10L;
                 
                 // Attempt to submit refund
-                ValidatableResponse response = app.givenSetup()
+                String refundId = app.givenSetup()
                         .body(toJson(Map.of(
                                 "amount", refundAmount, "refund_amount_available",
-                                testChargeCreatedWithStripeChargeAPI.getAmount()
+                                stripeCharge.getAmount()
                         )))
-                        .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, testChargeCreatedWithStripeChargeAPI.getExternalChargeId()))
+                        .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, stripeCharge.getExternalChargeId()))
                         .then()
-                        .statusCode(ACCEPTED_202);
-                String refundId = response.extract().path("refund_id");
+                        .statusCode(ACCEPTED_202)
+                        .extract().path("refund_id");
 
                 // Verify refund entity created in database
-                List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(testChargeCreatedWithStripeChargeAPI.getExternalChargeId());
+                List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(stripeCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(1));
                 assertThat(refundsFoundByChargeExternalId.getFirst().get("status"), is("REFUNDED"));
-                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("charge_external_id", testChargeCreatedWithStripeChargeAPI.getExternalChargeId()));
+                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("charge_external_id", stripeCharge.getExternalChargeId()));
                 assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("gateway_transaction_id", "re_1DRiccHj08j21DRiccHj08j2_test"));
                 
                 // Verify updates to refund status appear in refund history
-                List<String> refundsStatusHistory = (app.getDatabaseTestHelper()).getRefundsHistoryByChargeExternalId(testChargeCreatedWithStripeChargeAPI.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+                List<String> refundsStatusHistory = (app.getDatabaseTestHelper()).getRefundsHistoryByChargeExternalId(stripeCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
                 assertThat(refundsStatusHistory.size(), is(3));
                 assertThat(refundsStatusHistory, containsInAnyOrder("REFUNDED", "REFUND SUBMITTED", "CREATED"));
                 
@@ -258,7 +258,7 @@ public class StripeRefundsResourceIT {
                 app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/transfers"))
                         .withHeader("Idempotency-Key", equalTo("transfer_in" + refundId))
                         .withHeader("Stripe-Account", equalTo(stripeAccountId))
-                        .withRequestBody(containing("transfer_group=" + testChargeCreatedWithStripeChargeAPI.getExternalChargeId()))
+                        .withRequestBody(containing("transfer_group=" + stripeCharge.getExternalChargeId()))
                         .withRequestBody(containing("destination=" + PLATFORM_ACCOUNT_ID)));
             }
 
@@ -272,15 +272,15 @@ public class StripeRefundsResourceIT {
                 app.getStripeMockClient().mockRefundSuccess();
 
                 // Attempt to submit refund
-                ValidatableResponse response = app.givenSetup()
+                String refundId = app.givenSetup()
                         .body(toJson(Map.of(
                                 "amount", refundAmount,
                                 "refund_amount_available", defaultTestCharge.getAmount()
                         )))
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
                         .then()
-                        .statusCode(ACCEPTED_202);
-                String refundId = response.extract().path("refund_id");
+                        .statusCode(ACCEPTED_202)
+                        .extract().path("refund_id");
 
                 // Verify updates to refund status appear in refund history
                 List<String> refundsStatusHistory = (app.getDatabaseTestHelper()).getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
