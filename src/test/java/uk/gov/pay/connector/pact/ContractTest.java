@@ -7,6 +7,7 @@ import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.stripe.Stripe;
 import io.dropwizard.testing.ConfigOverride;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.SQSMockClient;
+import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
@@ -91,7 +93,8 @@ public class ContractTest {
     private static CardidStub mockCardidService;
     private static ObjectMapper objectMapper = new ObjectMapper();
     private static LedgerStub ledgerStub;
-
+    private static StripeMockClient stripeMockClient;
+    
     @BeforeClass
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
@@ -99,11 +102,33 @@ public class ContractTest {
         worldpayMockClient = new WorldpayMockClient(wireMockRule);
         mockCardidService = new CardidStub(wireMockRule);
         ledgerStub = new LedgerStub(wireMockRule);
+        stripeMockClient = new StripeMockClient(wireMockRule);
+        Stripe.overrideApiBase("http://localhost:" + wireMockRule.port());
     }
 
     @Before
     public void refreshDatabase() {
         dbHelper.truncateAllData();
+    }
+
+    @State("a sandbox gateway account with service id a-service-id exists and stripe is configured to create a connect account with id acct_123")
+    public void sandbox_gateway_account_exists_stripe_is_configured() throws Exception {
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(Map.of(
+                        "service_id", "a-service-id",
+                        "type", "test",
+                        "payment_provider", "sandbox",
+                        "service_name", "a-service-name"))
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(201);
+
+        stripeMockClient.mockCreateStripeTestConnectAccount(); // acct_123 is set statically in this mocked response
+        stripeMockClient.mockCreateExternalAccount();
+        stripeMockClient.mockRetrieveAccount();
+        stripeMockClient.mockRetrievePersonCollection();
+        stripeMockClient.mockCreateRepresentativeForConnectAccount();
     }
 
     @State("a charge with metadata exists")
