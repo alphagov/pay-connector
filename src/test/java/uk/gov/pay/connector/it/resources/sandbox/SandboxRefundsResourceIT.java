@@ -419,14 +419,6 @@ public class SandboxRefundsResourceIT  {
             }
         }
     }
-    
-    @Nested
-    class ByServiceIdAndType {
-        @Nested
-        class SubmitRefund {
-            
-        }
-    }
 
     private ValidatableResponse postRefundFor(String chargeId, Long refundAmount, long refundAmountAvlbl) {
         return postRefundFor(chargeId, refundAmount, refundAmountAvlbl, null, null);
