@@ -292,7 +292,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public void updateChargeWithExemption3dsRequestedType(ChargeEntity chargeEntity) {
         chargeEntity.setExemption3dsRequestedType("OPTIMISED");
         LOGGER.info("Requesting {} exemption - charge_external_id={}", "OPTIMISED", chargeEntity.getExternalId());
-        chargeDao.merge(chargeEntity);
+        chargeDao.persist(chargeEntity);
     }
 
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
