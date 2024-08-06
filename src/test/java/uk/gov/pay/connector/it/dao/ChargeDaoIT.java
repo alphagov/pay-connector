@@ -14,7 +14,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
@@ -27,7 +26,6 @@ import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -310,7 +308,7 @@ public class ChargeDaoIT {
     }
 
     @Test
-    void should_update_charge_with_exemption_3ds() {
+    void shouldUpdateChargeWithExemption3ds() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
@@ -324,6 +322,22 @@ public class ChargeDaoIT {
 
         assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3ds(),
                 Exemption3ds.EXEMPTION_NOT_REQUESTED);
+    }
+
+    @Test
+    void shouldUpdateChargeWithExemption3dsRequested() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .build();
+        chargeDao.persist(chargeEntity);
+
+        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3dsRequestedType());
+
+        chargeEntity.setExemption3dsRequestedType("OPTIMISED");
+        chargeDao.merge(chargeEntity);
+
+        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3dsRequestedType(),"OPTIMISED");
     }
 
     @Test
