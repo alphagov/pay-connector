@@ -218,7 +218,7 @@ class WorldpayPaymentProviderTest {
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
-        verify(chargeDao).merge(any(ChargeEntity.class));
+        verify(chargeDao).persist(any(ChargeEntity.class));
     }
 
     @Test
@@ -251,9 +251,13 @@ class WorldpayPaymentProviderTest {
 
     private void verifyChargeUpdatedWith3dsAndExemptionRequested(Exemption3ds exemption3ds) {
         ArgumentCaptor<ChargeEntity> chargeDaoArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
-        verify(chargeDao, times(2)).merge(chargeDaoArgumentCaptor.capture());
+
+        verify(chargeDao, times(1)).persist(chargeDaoArgumentCaptor.capture());
+        assertThat(chargeDaoArgumentCaptor.getValue().getExemption3dsRequestedType(), is("OPTIMISED"));
+        
+        verify(chargeDao, times(1)).merge(chargeDaoArgumentCaptor.capture());
         assertThat(chargeDaoArgumentCaptor.getValue().getExemption3ds(), is(exemption3ds));
-    }
+            }
 
     @Test
     void should_not_include_exemption_if_account_has_exemption_engine_set_to_false() throws Exception {
