@@ -204,6 +204,44 @@ public class RefundsResource {
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
+    @GET
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/charges/{chargeId}/refunds/{refundId}")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Get a refund",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(schema = @Schema(example = "{" +
+                                    "    \"_links\": {" +
+                                    "            \"payment\": {" +
+                                    "                \"href\": \"https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn\"" +
+                                    "            }," +
+                                    "            \"self\": {" +
+                                    "                \"href\": \"https://connector.example.com/v1/api/accounts/2/charges/uqu4s24383qkod35rsb06gv3cn/refunds/vijjk08adovg10gfqc46joem2l\"" +
+                                    "            }" +
+                                    "        }," +
+                                    "    \"amount\": 3444," +
+                                    "    \"created_date\": \"2016-10-05T14:15:34.096Z\"," +
+                                    "    \"refund_id\": \"vijjk08adovg10gfqc46joem2l\"," +
+                                    "    \"user_external_id\": \"AA213FD51B3801043FBC\"," +
+                                    "    \"status\": \"success\"" +
+                                    "}"))),
+                    @ApiResponse(responseCode = "404", description = "Not found - charge or refund not found")
+            }
+    )
+    public Response getRefund(
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
+            @Parameter(example = "b02b63b370fd35418ad66b0101", description = "Charge external ID") @PathParam("chargeId") String chargeId,
+            @Parameter(example = "vijjk08adovg10gfqc46joem2l", description = "Refund external ID") @PathParam("refundId") String refundId,
+            @Context UriInfo uriInfo) {
+        return chargeDao.findByExternalIdAndServiceIdAndAccountType(chargeId, serviceId, accountType)
+                .map(chargeEntity -> 
+                        getRefundResponse(chargeEntity, refundId, serviceId, accountType, uriInfo)
+                )
+                .orElseGet(() -> responseWithChargeNotFound(chargeId));
+    }
+
     /**
      * Not used anymore - public api now only uses ledger, this can be removed once public api code is tidied up.
      */
@@ -232,6 +270,14 @@ public class RefundsResource {
                 .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
                 .findFirst()
                 .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, accountId, uriInfo).serialize()).build())
+                .orElseGet(() -> responseWithRefundNotFound(refundId));
+    }
+
+    private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, String serviceId, GatewayAccountType accountType, UriInfo uriInfo) {
+        return refundService.findNotExpungedRefunds(chargeEntity.getExternalId()).stream()
+                .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
+                .findFirst()
+                .map(refundEntity -> Response.ok(RefundResponse.valueOf(refundEntity, serviceId, accountType, uriInfo).serialize()).build())
                 .orElseGet(() -> responseWithRefundNotFound(refundId));
     }
 }

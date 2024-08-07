@@ -116,7 +116,7 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
 
         String query = "SELECT c FROM ChargeEntity c INNER JOIN GatewayAccountEntity g ON c.gatewayAccount.id = g.id " +
                 "WHERE c.externalId = :externalId " +
-                "AND c.serviceId = :serviceId " +
+                "AND g.serviceId = :serviceId " +
                 "AND g.type = :accountType";
 
         return entityManager.get()
