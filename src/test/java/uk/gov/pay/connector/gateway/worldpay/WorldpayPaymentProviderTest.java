@@ -218,7 +218,7 @@ class WorldpayPaymentProviderTest {
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
-        verify(chargeDao).persist(any(ChargeEntity.class));
+        verify(chargeDao).merge(any(ChargeEntity.class));
     }
 
     @Test
@@ -252,12 +252,11 @@ class WorldpayPaymentProviderTest {
     private void verifyChargeUpdatedWith3dsAndExemptionRequested(Exemption3ds exemption3ds) {
         ArgumentCaptor<ChargeEntity> chargeDaoArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
 
-        verify(chargeDao, times(1)).persist(chargeDaoArgumentCaptor.capture());
-        assertThat(chargeDaoArgumentCaptor.getValue().getExemption3dsRequestedType(), is("OPTIMISED"));
-        
-        verify(chargeDao, times(1)).merge(chargeDaoArgumentCaptor.capture());
-        assertThat(chargeDaoArgumentCaptor.getValue().getExemption3ds(), is(exemption3ds));
-            }
+        verify(chargeDao, times(2)).merge(chargeDaoArgumentCaptor.capture());
+        List<ChargeEntity> mergedCharges = chargeDaoArgumentCaptor.getAllValues();
+        assertThat(mergedCharges.get(0).getExemption3dsRequestedType(), is("OPTIMISED"));
+        assertThat(mergedCharges.get(1).getExemption3ds(), is(exemption3ds));
+    }
 
     @Test
     void should_not_include_exemption_if_account_has_exemption_engine_set_to_false() throws Exception {
@@ -314,6 +313,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
+        when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(any(CardAuthorisationGatewayRequest.class)))
@@ -340,6 +340,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
+        when(chargeDao.merge(any(ChargeEntity.class))).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE));
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(any(CardAuthorisationGatewayRequest.class)))
@@ -386,6 +387,7 @@ class WorldpayPaymentProviderTest {
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
 
+        when(chargeDao.merge(any(ChargeEntity.class))).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest)).thenReturn(getGatewayResponse(worldpayXmlResponse));
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
@@ -407,6 +409,7 @@ class WorldpayPaymentProviderTest {
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
+        when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
 
@@ -436,6 +439,7 @@ class WorldpayPaymentProviderTest {
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));
 
         var secondResponse = getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE);
+        when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authoriseWithoutExemption(any())).thenReturn(secondResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
