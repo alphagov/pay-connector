@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static java.sql.Types.OTHER;
 import static java.time.ZoneOffset.UTC;
@@ -960,6 +961,19 @@ public class DatabaseTestHelper {
                         .mapToMap()
                         .list()
         );
+    }
+
+    public List<Map<String, Object>> getRefundsHistoryByRefundExternalId(String refundExternalId) {
+        return jdbi.withHandle(h ->
+                h.createQuery("SELECT status FROM refunds_history WHERE external_id = :chargeExternalId order by history_start_date desc")
+                        .bind("chargeExternalId", refundExternalId)
+                        .mapToMap()
+                        .list()
+        );
+    }
+    
+    public List<String> getRefundStatusHistoryByChargeExternalId(String chargeExternalId) {
+        return getRefundsHistoryByChargeExternalId(chargeExternalId).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
     }
 
     public Map<String, String> getNotifySettings(Long gatewayAccountId) {
