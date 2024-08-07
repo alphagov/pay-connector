@@ -211,7 +211,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         if (!exemptionEngineEnabled) {
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         } else {
-            updateChargeWithExemption3dsRequestedType(charge);
+            charge = updateChargeWithExemption3dsRequestedType(charge);
             response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
 
@@ -289,10 +289,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Transactional
-    public void updateChargeWithExemption3dsRequestedType(ChargeEntity chargeEntity) {
+    public ChargeEntity updateChargeWithExemption3dsRequestedType(ChargeEntity chargeEntity) {
         chargeEntity.setExemption3dsRequestedType("OPTIMISED");
         LOGGER.info("Requesting {} exemption - charge_external_id={}", "OPTIMISED", chargeEntity.getExternalId());
-        chargeDao.persist(chargeEntity);
+        return chargeDao.merge(chargeEntity);
     }
 
     private boolean isExemptionEngineEnabled(CardAuthorisationGatewayRequest request) {
