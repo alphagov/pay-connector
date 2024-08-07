@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
@@ -61,6 +62,7 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.OPTIMISED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeaderForManagingRecurringAuthTokens;
@@ -211,7 +213,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         if (!exemptionEngineEnabled) {
             response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         } else {
-            charge = updateChargeWithExemption3dsRequestedType(charge);
+            charge = updateChargeWithRequested3dsExemption(charge);
             response = worldpayAuthoriseHandler.authoriseWithExemption(request);
         }
 
@@ -289,9 +291,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Transactional
-    public ChargeEntity updateChargeWithExemption3dsRequestedType(ChargeEntity chargeEntity) {
-        chargeEntity.setExemption3dsRequestedType("OPTIMISED");
+    public ChargeEntity updateChargeWithRequested3dsExemption(ChargeEntity chargeEntity) {
+        chargeEntity.setExemption3dsRequested(OPTIMISED);
         LOGGER.info("Requesting {} exemption - charge_external_id={}", "OPTIMISED", chargeEntity.getExternalId());
+        eventService.emitAndRecordEvent(Requested3dsExemption.from(chargeEntity, Instant.now()));
+
         return chargeDao.merge(chargeEntity);
     }
 

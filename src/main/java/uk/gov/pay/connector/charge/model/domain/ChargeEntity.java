@@ -176,7 +176,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
     private Exemption3ds exemption3ds;
 
     @Column(name = "exemption_3ds_requested")
-    private String exemption3dsRequestedType;
+    @Enumerated(EnumType.STRING)
+    private Exemption3dsType exemption3dsRequested;
 
     @Column(name = "payment_provider")
     private String paymentProvider;
@@ -352,12 +353,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return exemption3ds;
     }
 
-    public String getExemption3dsRequestedType() {
-        return exemption3dsRequestedType;
+    public Exemption3dsType getExemption3dsRequested() {
+        return exemption3dsRequested;
     }
 
-    public void setExemption3dsRequestedType(String exemption3dsRequestedType) {
-        this.exemption3dsRequestedType = exemption3dsRequestedType;
+    public void setExemption3dsRequested(Exemption3dsType exemption3dsType) {
+        this.exemption3dsRequested = exemption3dsType;
     }
 
     public String getPaymentProvider() {
