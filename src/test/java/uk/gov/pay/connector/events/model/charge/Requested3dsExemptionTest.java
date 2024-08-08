@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
-import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 
 import java.time.Instant;
 
@@ -16,7 +15,7 @@ import static uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateT
 class Requested3dsExemptionTest {
 
     @Test
-    void serializesEventDetailsWithExemption3dsHonoured() throws JsonProcessingException {
+    void serializesRequest3dsExemptionEventDetails() throws JsonProcessingException {
         var chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withExemption3dsType(Exemption3dsType.OPTIMISED)
@@ -28,6 +27,6 @@ class Requested3dsExemptionTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("REQUESTED_3DS_EXEMPTION")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
-        assertThat(actual, hasJsonPath("$.event_details.exemption3ds_request_type", equalTo(chargeEntity.getExemption3dsRequested().toString())));
+        assertThat(actual, hasJsonPath("$.event_details.type", equalTo(chargeEntity.getExemption3dsRequested().toString())));
     }
 }
