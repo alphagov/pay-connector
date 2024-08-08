@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -325,19 +326,19 @@ public class ChargeDaoIT {
     }
 
     @Test
-    void shouldUpdateChargeWithExemption3dsRequested() {
+    void shouldUpdateChargeWithExemption3dsType() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .build();
         chargeDao.persist(chargeEntity);
 
-        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3dsRequestedType());
+        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3dsRequested());
 
-        chargeEntity.setExemption3dsRequestedType("OPTIMISED");
+        chargeEntity.setExemption3dsRequested(Exemption3dsType.OPTIMISED);
         chargeDao.merge(chargeEntity);
 
-        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3dsRequestedType(),"OPTIMISED");
+        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getExemption3dsRequested(), Exemption3dsType.OPTIMISED);
     }
 
     @Test

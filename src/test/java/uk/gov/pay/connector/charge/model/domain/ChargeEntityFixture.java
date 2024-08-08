@@ -65,7 +65,7 @@ public class ChargeEntityFixture {
     private Source source = null;
     private boolean moto;
     private Exemption3ds exemption3ds;
-    private String exemption3dsRequestedType = null;
+    private Exemption3dsType exemption3dsRequested = null;
     private String paymentProvider = "sandbox";
     private String serviceId = randomUuid();
     private AgreementEntity agreementEntity;
@@ -169,7 +169,7 @@ public class ChargeEntityFixture {
         chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
-        chargeEntity.setExemption3dsRequestedType(exemption3dsRequestedType);
+        chargeEntity.setExemption3dsRequested(exemption3dsRequested);
         chargeEntity.setPaymentInstrument(paymentInstrument);
         chargeEntity.setUpdatedDate(updatedDate);
 
@@ -336,12 +336,12 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public String getExemption3dsRequestedType() {
-        return exemption3dsRequestedType;
+    public Exemption3dsType getExemption3dsRequested() {
+        return exemption3dsRequested;
     }
 
-    public ChargeEntityFixture withExemption3dsRequestedType(String exemption3dsRequestedType) {
-        this.exemption3dsRequestedType = exemption3dsRequestedType;
+    public ChargeEntityFixture withExemption3dsType(Exemption3dsType exemption3DsRequested) {
+        this.exemption3dsRequested = exemption3DsRequested;
         return this;
     }
 
