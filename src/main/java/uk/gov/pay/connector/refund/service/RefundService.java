@@ -152,27 +152,27 @@ public class RefundService {
         return new ChargeRefundResponse(gatewayRefundResponse, updatedRefundEntity);
     }
 
-    @Transactional
-    @SuppressWarnings("WeakerAccess")
-    public RefundEntity createRefund(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundRequest refundRequest) {
-        List<Refund> refundList = findRefunds(charge);
-        long availableAmount = validateRefundAndGetAvailableAmount(charge, gatewayAccountEntity, refundRequest, refundList);
-        RefundEntity refundEntity = createRefundEntity(refundRequest, gatewayAccountEntity, charge);
-
-        logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
-                charge.getExternalId(),
-                charge.getExternalStatus(),
-                charge.getAmount(),
-                charge.getGatewayTransactionId(),
-                gatewayAccountEntity.getId(),
-                availableAmount,
-                refundRequest.getAmount(),
-                charge.getPaymentGatewayName(),
-                gatewayAccountEntity.getType(),
-                refundRequest.getUserExternalId());
-
-        return refundEntity;
-    }
+//    @Transactional
+//    @SuppressWarnings("WeakerAccess")
+//    public RefundEntity createRefund(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundRequest refundRequest) {
+//        List<Refund> refundList = findRefunds(charge);
+//        long availableAmount = validateRefundAndGetAvailableAmount(charge, gatewayAccountEntity, refundRequest, refundList);
+//        RefundEntity refundEntity = createRefundEntity(refundRequest, gatewayAccountEntity, charge);
+//
+//        logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
+//                charge.getExternalId(),
+//                charge.getExternalStatus(),
+//                charge.getAmount(),
+//                charge.getGatewayTransactionId(),
+//                gatewayAccountEntity.getId(),
+//                availableAmount,
+//                refundRequest.getAmount(),
+//                charge.getPaymentGatewayName(),
+//                gatewayAccountEntity.getType(),
+//                refundRequest.getUserExternalId());
+//
+//        return refundEntity;
+//    }
 
     public Optional<RefundEntity> findByChargeExternalIdAndGatewayTransactionId(String chargeExternalId, String gatewayTransactionId) {
         return refundDao.findByChargeExternalIdAndGatewayTransactionId(chargeExternalId, gatewayTransactionId);
@@ -315,29 +315,29 @@ public class RefundService {
         } else return Optional.empty();
     }
 
-    private long validateRefundAndGetAvailableAmount(Charge charge,
-                                                     GatewayAccountEntity gatewayAccountEntity,
-                                                     RefundRequest refundRequest,
-                                                     List<Refund> refundList) {
-        ExternalChargeRefundAvailability refundAvailability;
-
-        refundAvailability = providers
-                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
-                .getExternalChargeRefundAvailability(charge, refundList);
-        checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
-
-        // We re-check the database for any newly created refunds that could have been made when we were making the
-        // network request to find the external refund-ability
-        List<Refund> updatedRefunds = checkForNewRefunds(charge, refundList);
-
-        long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, updatedRefunds);
-        checkIfRefundRequestIsInConflictOrTerminate(refundRequest, charge, availableToBeRefunded);
-
-        checkIfRefundAmountWithinLimitOrTerminate(refundRequest, charge, refundAvailability,
-                gatewayAccountEntity, availableToBeRefunded);
-
-        return availableToBeRefunded;
-    }
+//    private long validateRefundAndGetAvailableAmount(Charge charge,
+//                                                     GatewayAccountEntity gatewayAccountEntity,
+//                                                     RefundRequest refundRequest,
+//                                                     List<Refund> refundList) {
+//        ExternalChargeRefundAvailability refundAvailability;
+//
+//        refundAvailability = providers
+//                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
+//                .getExternalChargeRefundAvailability(charge, refundList);
+//        checkIfChargeIsRefundableOrTerminate(charge, refundAvailability, gatewayAccountEntity);
+//
+//        // We re-check the database for any newly created refunds that could have been made when we were making the
+//        // network request to find the external refund-ability
+//        List<Refund> updatedRefunds = checkForNewRefunds(charge, refundList);
+//
+//        long availableToBeRefunded = getTotalAmountAvailableToBeRefunded(charge, updatedRefunds);
+//        checkIfRefundRequestIsInConflictOrTerminate(refundRequest, charge, availableToBeRefunded);
+//
+//        checkIfRefundAmountWithinLimitOrTerminate(refundRequest, charge, refundAvailability,
+//                gatewayAccountEntity, availableToBeRefunded);
+//
+//        return availableToBeRefunded;
+//    }
     
     private long calculateAmountAvailableToRefund(Charge charge,
                                                   List<Refund> refundList) {
