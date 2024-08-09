@@ -380,7 +380,7 @@ public class QueueMessageContractTest {
         return gateway3dsInfoObtained.toJsonString();
     }
 
-    @PactVerifyProvider("a gateway requested 3DS exemption")
+    @PactVerifyProvider("a gateway requested 3DS exemption message")
     public String verifyRequested3dsExemptionEvent() throws JsonProcessingException {
         var charge = aValidChargeEntity()
                 .withExemption3dsType(Exemption3dsType.OPTIMISED)
