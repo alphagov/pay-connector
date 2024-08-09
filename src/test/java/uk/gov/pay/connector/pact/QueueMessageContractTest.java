@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDetails;
@@ -21,6 +22,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthori
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsSubmittedByAPIEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.Requested3dsExemptionEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.UserEmailCollectedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeEvidenceSubmittedEventDetails;
@@ -39,6 +41,7 @@ import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
 import uk.gov.pay.connector.events.model.charge.PaymentNotificationCreated;
+import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.events.model.dispute.DisputeCreated;
@@ -375,6 +378,24 @@ public class QueueMessageContractTest {
         );
 
         return gateway3dsInfoObtained.toJsonString();
+    }
+
+    @PactVerifyProvider("a gateway requested 3DS exemption")
+    public String verifyRequested3dsExemptionEvent() throws JsonProcessingException {
+        var charge = aValidChargeEntity()
+                .withExemption3dsType(Exemption3dsType.OPTIMISED)
+                .build();
+
+        var var = new Requested3dsExemption(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
+                resourceId,
+                Requested3dsExemptionEventDetails.from(charge),
+                Instant.now()
+        );
+
+        return var.toJsonString();
     }
 
     @PactVerifyProvider("a gateway requires 3DS authorisation message")
