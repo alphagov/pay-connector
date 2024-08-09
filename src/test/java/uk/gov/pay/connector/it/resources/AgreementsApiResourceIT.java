@@ -2,8 +2,8 @@ package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
@@ -37,7 +38,7 @@ public class AgreementsApiResourceIT {
     
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("stripe", app.getLocalPort());
+    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions(app.getLocalPort());
     
     public static final String VALID_SERVICE_ID = "a-valid-service-id";
     private static final String REFERENCE_ID = "1234";
@@ -182,9 +183,18 @@ public class AgreementsApiResourceIT {
 
         @Nested
         class CreateAgreement {
+            private String gatewayAccountId;
+            
+            @BeforeEach
+            void setUp() {
+                gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                        aCreateGatewayAccountPayloadBuilder()
+                        .withServiceId(VALID_SERVICE_ID)
+                        .build());
+            }
+            
             @Test
             void shouldCreateAgreement_forValidRequest() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
                 testBaseExtension.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
 
                 String createAgreementPayload = toJson(Map.of(
@@ -216,8 +226,6 @@ public class AgreementsApiResourceIT {
 
             @Test
             void shouldReturn422WhenReferenceIdTooLong() {
-                testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
-
                 String payload = toJson(Map.of(
                         "reference", REFERENCE_ID_TOO_LONG,
                         "description", DESCRIPTION
@@ -233,8 +241,6 @@ public class AgreementsApiResourceIT {
 
             @Test
             void shouldReturn422WhenReferenceIdEmpty() {
-                testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
-
                 String payload = toJson(Map.of(
                         "reference", REFERENCE_ID_EMPTY,
                         "description", DESCRIPTION
@@ -250,8 +256,6 @@ public class AgreementsApiResourceIT {
 
             @Test
             void shouldReturn422WhenReferenceIdNotProvided() {
-                testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
-
                 String payload = toJson(Map.of(
                         "description", DESCRIPTION
                 ));
@@ -267,8 +271,6 @@ public class AgreementsApiResourceIT {
 
             @Test
             void shouldReturn422WhenDescriptionNotProvided() {
-                testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
-
                 String payload = toJson(Map.of(
                         "reference", REFERENCE_ID
                 ));
@@ -283,8 +285,6 @@ public class AgreementsApiResourceIT {
 
             @Test
             void shouldReturn422WhenDescriptionEmpty() {
-                testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
-
                 String payload = toJson(Map.of(
                         "reference", REFERENCE_ID,
                         "description", ""
@@ -300,8 +300,6 @@ public class AgreementsApiResourceIT {
 
             @Test
             void shouldReturn422WhenRecurringPaymentsDisabled() {
-                testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
-
                 String payload = toJson(Map.of(
                         "reference", REFERENCE_ID,
                         "description", DESCRIPTION,
@@ -323,7 +321,10 @@ public class AgreementsApiResourceIT {
             
             @Test
             void shouldReturn204AndCancelAgreement() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountWithServiceId(VALID_SERVICE_ID);
+                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                        aCreateGatewayAccountPayloadBuilder()
+                                .withServiceId(VALID_SERVICE_ID)
+                                .build());
                 testBaseExtension.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
 
                 String createAgreementPayload = toJson(Map.of(

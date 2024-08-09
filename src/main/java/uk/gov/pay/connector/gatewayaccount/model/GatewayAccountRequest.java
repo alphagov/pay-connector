@@ -35,6 +35,7 @@ public class GatewayAccountRequest {
     private String serviceName;
 
     @JsonIgnore
+    @NotBlank
     private final String serviceId;
 
     @JsonIgnore
