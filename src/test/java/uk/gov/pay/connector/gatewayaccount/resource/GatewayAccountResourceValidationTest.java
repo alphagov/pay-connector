@@ -58,7 +58,7 @@ class GatewayAccountResourceValidationTest {
     @Test
     void shouldReturn422_whenPaymentProviderIsInvalid() {
 
-        Map<String, Object> payload = Map.of("payment_provider", "blockchain");
+        Map<String, Object> payload = Map.of("service_id", "a-valid-service-id", "payment_provider", "blockchain");
 
         Response response = resources.client()
                 .target("/v1/api/accounts")
