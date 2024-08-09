@@ -199,6 +199,7 @@ public class StripeAccountResourceIT {
             String accountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
                     aCreateGatewayAccountPayloadBuilder()
                             .withServiceId("a-valid-service-id")
+                            .withProvider("stripe")
                             .build());
             Map<String, String> credentials = Map.of("stripe_account_id", STRIPE_ACCOUNT_ID);
             app.givenSetup()
