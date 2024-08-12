@@ -6,6 +6,7 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
@@ -13,10 +14,12 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class GatewayAccountResourceValidationTest {
@@ -40,9 +43,24 @@ class GatewayAccountResourceValidationTest {
     }
 
     @Test
+    void shouldReturn422_whenServiceIdIsMissing() {
+        Map<String, Object> payload = Map.of("provider", "sandbox", "type", "invalid");
+        
+        Response response = resources.client()
+                .target("/v1/api/accounts")
+                .request()
+                .post(Entity.json(payload));
+
+        assertThat(response.getStatus(), is(422));
+
+        List<String> errorResponseMessages = response.readEntity(ErrorResponse.class).messages();
+        assertTrue(errorResponseMessages.contains("Field [service_id] cannot be blank or missing"));
+    }
+
+    @Test
     void shouldReturn422_whenProviderAccountTypeIsInvalid() {
 
-        Map<String, Object> payload = Map.of("type", "invalid");
+        Map<String, Object> payload = Map.of("service_id", "a-valid-service-id", "provider", "sandbox", "type", "invalid");
 
         Response response = resources.client()
                 .target("/v1/api/accounts")
