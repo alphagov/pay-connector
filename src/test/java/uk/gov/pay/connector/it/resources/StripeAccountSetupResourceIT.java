@@ -15,13 +15,13 @@ import static java.lang.String.format;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class StripeAccountSetupResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions(app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testBaseExtension = new GatewayAccountResourceITHelpers(app.getLocalPort());
 
     @Nested
     class ByAccountId {
@@ -29,7 +29,7 @@ public class StripeAccountSetupResourceIT {
         class GetStripeSetup {
             @Test
             void withNoTasksCompletedReturnsFalseFlags() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("stripe").build());
 
                 app.givenSetup()
@@ -47,7 +47,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void withSomeTasksCompletedReturnsAppropriateFlags() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("stripe").build());
 
                 addCompletedTask(gatewayAccountId, StripeAccountSetupTask.BANK_ACCOUNT);
@@ -78,7 +78,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void returnsSuccessfulResponseWhenGatewayAccountIsNotAStripeAccount() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("worldpay").build());
                 app.givenSetup()
                         .get("/v1/api/accounts/" + gatewayAccountId + "/stripe-setup")
@@ -92,7 +92,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void withSingleUpdate_shouldUpdateSetup() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("stripe").build());
                 app.givenSetup()
                         .body(toJson(Collections.singletonList(Map.of(
@@ -117,7 +117,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void withMultipleUpdates_shouldUpdateSetup() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("stripe").build());
                 app.givenSetup()
                         .body(toJson(Arrays.asList(
@@ -169,7 +169,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void forInvalidOperation_shouldReturn422_withValidationError() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("stripe").build());
                 app.givenSetup()
                         .body(toJson(Collections.singletonList(Map.of(
@@ -197,7 +197,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void forGatewayAccountNotStripe_shouldReturn200() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("stripe").build());
                 app.givenSetup()
                         .body(toJson(Collections.singletonList(Map.of(
@@ -211,7 +211,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void forPatchDirectorWithFalse_shouldUpdateSetup() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder().withProvider("stripe").build());
                 addCompletedTask(gatewayAccountId, StripeAccountSetupTask.DIRECTOR);
 
@@ -249,7 +249,7 @@ public class StripeAccountSetupResourceIT {
         class GetStripeSetup {
             @Test
             void withNoTasksCompletedReturnsFalseFlags() {
-                testBaseExtension.createAGatewayAccount(
+                testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder()
                                 .withServiceId("a-valid-service-id")
                                 .withProvider("stripe")
@@ -270,7 +270,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void withSomeTasksCompletedReturnsAppropriateFlags() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder()
                                 .withServiceId("a-valid-service-id")
                                 .withProvider("stripe")
@@ -318,7 +318,7 @@ public class StripeAccountSetupResourceIT {
 
             @Test
             void returnsSuccessfulResponseWhenGatewayAccountIsNotAStripeAccount() {
-                testBaseExtension.createAGatewayAccount(
+                testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder()
                                 .withServiceId("a-valid-service-id")
                                 .withProvider("worldpay")

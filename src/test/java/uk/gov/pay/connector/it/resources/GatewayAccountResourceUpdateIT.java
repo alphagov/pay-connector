@@ -19,8 +19,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceUpdateIT {
@@ -28,7 +28,7 @@ public class GatewayAccountResourceUpdateIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions(app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testBaseExtension = new GatewayAccountResourceITHelpers(app.getLocalPort());
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -392,7 +392,7 @@ public class GatewayAccountResourceUpdateIT {
         @BeforeEach
         void createGatewayAccount() {
             Map<String, String> createAccountPayload = aCreateGatewayAccountPayloadBuilder().withProvider("worldpay").build();
-            gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(createAccountPayload);
+            gatewayAccountId = testBaseExtension.createGatewayAccount(createAccountPayload);
         }
         
         @Test
@@ -565,7 +565,7 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void patchGatewayAccount_forCorporateDebitCardSurcharge() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(aCreateGatewayAccountPayloadBuilder().build());
+            String gatewayAccountId = testBaseExtension.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()

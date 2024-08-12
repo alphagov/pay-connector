@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class EmailNotificationResourceIT {

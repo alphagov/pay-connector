@@ -28,7 +28,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
@@ -38,7 +38,7 @@ public class AgreementsApiResourceIT {
     
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions(app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testBaseExtension = new GatewayAccountResourceITHelpers(app.getLocalPort());
     
     public static final String VALID_SERVICE_ID = "a-valid-service-id";
     private static final String REFERENCE_ID = "1234";
@@ -187,7 +187,7 @@ public class AgreementsApiResourceIT {
             
             @BeforeEach
             void setUp() {
-                gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder()
                         .withServiceId(VALID_SERVICE_ID)
                         .build());
@@ -321,7 +321,7 @@ public class AgreementsApiResourceIT {
             
             @Test
             void shouldReturn204AndCancelAgreement() {
-                String gatewayAccountId = testBaseExtension.createAGatewayAccountAndExtractAccountId(
+                String gatewayAccountId = testBaseExtension.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder()
                                 .withServiceId(VALID_SERVICE_ID)
                                 .build());

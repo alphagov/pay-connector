@@ -28,9 +28,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.assertCorrectCreateResponse;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceCreateIT {
@@ -121,21 +121,21 @@ public class GatewayAccountResourceCreateIT {
             //ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "sandbox", "my test service", "analytics");
             Map<String, Object> payload = Map.of("payment_provider", "sandbox", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
         }
 
         @Test
         public void createAWorldpaySandboxGatewayAccount() {
             Map<String, Object> payload = Map.of("payment_provider", "worldpay", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
         }
 
         @Test
         public void createAWorldpayStripeGatewayAccount() {
             Map<String, Object> payload = Map.of("payment_provider", "stripe", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
         }
 
         @Test
@@ -247,7 +247,7 @@ public class GatewayAccountResourceCreateIT {
         }
 
         private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, type, null, null, null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, type, null, null, null);
         }
     }
 

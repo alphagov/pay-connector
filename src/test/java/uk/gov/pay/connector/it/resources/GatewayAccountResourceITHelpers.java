@@ -10,19 +10,19 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static java.util.Map.entry;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
-public class GatewayAccountResourceITBaseExtensions {
+public class GatewayAccountResourceITHelpers {
+     
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private final int appLocalPort;
 
-    public GatewayAccountResourceITBaseExtensions(int appLocalPort) {
+    public GatewayAccountResourceITHelpers(int appLocalPort) {
         this.appLocalPort = appLocalPort;
     }
 
@@ -30,17 +30,13 @@ public class GatewayAccountResourceITBaseExtensions {
     public static final String ACCOUNTS_API_SERVICE_ID_URL = "/v1/api/service/{serviceId}/account/{accountType}";
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
     public static final String ACCOUNT_FRONTEND_EXTERNAL_ID_URL = "/v1/frontend/accounts/external-id/";
-
     
-    protected ValidatableResponse createAGatewayAccount(Map<String, String> createGatewayAccountPayload) {
+    protected String createGatewayAccount(Map<String, String> createGatewayAccountPayload) {
         return app.givenSetup()
                 .body(toJson(createGatewayAccountPayload))
                 .post(ACCOUNTS_API_URL)
-                .then();
-    }
-    
-    protected String createAGatewayAccountAndExtractAccountId(Map<String, String> createGatewayAccountPayload) {
-        return createAGatewayAccount(createGatewayAccountPayload).extract().path("gateway_account_id");
+                .then()
+                .extract().path("gateway_account_id");
     }
     
     void updateGatewayAccount(String gatewayAccountId, String path, Object value) {
@@ -74,17 +70,18 @@ public class GatewayAccountResourceITBaseExtensions {
     }
     
     public static class CreateGatewayAccountPayloadBuilder {
-        Map<String, String> payload = new HashMap<String, String> (Map.ofEntries(
-                entry("payment_provider", "sandbox"),
-                entry("service_id", "a-valid-service-id")
-        ));
+        private Map<String, String> payload = new HashMap<String, String> (
+                Map.of(
+                "payment_provider", "sandbox",
+                "service_id", "a-valid-service-id")
+        );
         
         public static CreateGatewayAccountPayloadBuilder aCreateGatewayAccountPayloadBuilder() {
             return new CreateGatewayAccountPayloadBuilder();
         }
         
         public Map<String, String> build() {
-            return payload;
+            return Map.copyOf(payload);
         }
 
         public CreateGatewayAccountPayloadBuilder withServiceId(String serviceId) {
