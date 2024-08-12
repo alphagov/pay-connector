@@ -38,7 +38,7 @@ public class AgreementsApiResourceIT {
     
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    public static GatewayAccountResourceITHelpers testBaseExtension = new GatewayAccountResourceITHelpers(app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
     
     public static final String VALID_SERVICE_ID = "a-valid-service-id";
     private static final String REFERENCE_ID = "1234";
@@ -187,7 +187,7 @@ public class AgreementsApiResourceIT {
             
             @BeforeEach
             void setUp() {
-                gatewayAccountId = testBaseExtension.createGatewayAccount(
+                gatewayAccountId = testHelpers.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder()
                         .withServiceId(VALID_SERVICE_ID)
                         .build());
@@ -195,7 +195,7 @@ public class AgreementsApiResourceIT {
             
             @Test
             void shouldCreateAgreement_forValidRequest() {
-                testBaseExtension.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
+                testHelpers.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
 
                 String createAgreementPayload = toJson(Map.of(
                         "reference", REFERENCE_ID,
@@ -321,11 +321,11 @@ public class AgreementsApiResourceIT {
             
             @Test
             void shouldReturn204AndCancelAgreement() {
-                String gatewayAccountId = testBaseExtension.createGatewayAccount(
+                String gatewayAccountId = testHelpers.createGatewayAccount(
                         aCreateGatewayAccountPayloadBuilder()
                                 .withServiceId(VALID_SERVICE_ID)
                                 .build());
-                testBaseExtension.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
+                testHelpers.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
 
                 String createAgreementPayload = toJson(Map.of(
                         "reference", REFERENCE_ID,

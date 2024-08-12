@@ -28,7 +28,7 @@ public class GatewayAccountResourceUpdateIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
-    public static GatewayAccountResourceITHelpers testBaseExtension = new GatewayAccountResourceITHelpers(app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -392,7 +392,7 @@ public class GatewayAccountResourceUpdateIT {
         @BeforeEach
         void createGatewayAccount() {
             Map<String, String> createAccountPayload = aCreateGatewayAccountPayloadBuilder().withProvider("worldpay").build();
-            gatewayAccountId = testBaseExtension.createGatewayAccount(createAccountPayload);
+            gatewayAccountId = testHelpers.createGatewayAccount(createAccountPayload);
         }
         
         @Test
@@ -565,7 +565,7 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void patchGatewayAccount_forCorporateDebitCardSurcharge() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+            String gatewayAccountId = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()

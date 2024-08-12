@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
 import java.util.HashMap;
@@ -18,8 +16,6 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceITHelpers {
      
-    @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private final int appLocalPort;
 
     public GatewayAccountResourceITHelpers(int appLocalPort) {
@@ -32,7 +28,9 @@ public class GatewayAccountResourceITHelpers {
     public static final String ACCOUNT_FRONTEND_EXTERNAL_ID_URL = "/v1/frontend/accounts/external-id/";
     
     protected String createGatewayAccount(Map<String, String> createGatewayAccountPayload) {
-        return app.givenSetup()
+        return given()
+                .port(appLocalPort)
+                .contentType(JSON)
                 .body(toJson(createGatewayAccountPayload))
                 .post(ACCOUNTS_API_URL)
                 .then()

@@ -29,7 +29,7 @@ public class StripeAccountResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     
-    public static GatewayAccountResourceITHelpers testBaseExtension = new GatewayAccountResourceITHelpers(app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
 
     private static final String STRIPE_ACCOUNT_ID = "acct_123example123";
     
@@ -196,7 +196,7 @@ public class StripeAccountResourceIT {
     class GetStripeAccountByServiceIdAndAccountType {
         @Test
         void returnsSuccessfulResponse() {
-            String accountId = testBaseExtension.createGatewayAccount(
+            String accountId = testHelpers.createGatewayAccount(
                     aCreateGatewayAccountPayloadBuilder()
                             .withServiceId("a-valid-service-id")
                             .withProvider("stripe")
@@ -226,7 +226,7 @@ public class StripeAccountResourceIT {
 
         @Test
         void returnsNotFoundResponseWhenNoStripeAccountExistsForService() {
-            testBaseExtension.createGatewayAccount(
+            testHelpers.createGatewayAccount(
                     aCreateGatewayAccountPayloadBuilder()
                             .withServiceId("a-valid-service-id")
                             .withProvider("sandbox")
@@ -241,7 +241,7 @@ public class StripeAccountResourceIT {
 
         @Test
         void returnsNotFoundResponseWhenGatewayAccountCredentialsAreEmpty() {
-            testBaseExtension.createGatewayAccount(
+            testHelpers.createGatewayAccount(
                     aCreateGatewayAccountPayloadBuilder()
                             .withServiceId("a-valid-service-id")
                             .withProvider("stripe")
