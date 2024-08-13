@@ -35,7 +35,6 @@ public class GatewayAccountRequest {
     private String serviceName;
 
     @JsonIgnore
-    @NotBlank(message = "Field [service_id] cannot be blank or missing")
     private final String serviceId;
 
     @JsonIgnore
