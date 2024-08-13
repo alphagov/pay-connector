@@ -28,9 +28,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.createAGatewayAccountRequestSpecificationFor;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.assertCorrectCreateResponse;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceCreateIT {
@@ -48,26 +48,36 @@ public class GatewayAccountResourceCreateIT {
         @Test
         public void shouldNotAllowMultipleGatewayAccountsWhenQueryStringIsIncluded() {
 
-            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay", 
-                    "my test service", "analytics", "my-service-id");
-            var createRequestDuplicate = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), 
-                    "worldpay", "my test service2", "analytics2", "my-service-id");
-
-            createRequest.queryParam("degatewayification", "true");
-            createRequestDuplicate.queryParam("degatewayification", "true");
-
-            ValidatableResponse responseA = createRequest.post(ACCOUNTS_API_URL)
+            Map<String, String> requestForAccountPayload = aCreateGatewayAccountPayloadBuilder()
+                    .withProvider("worldpay")
+                    .withServiceId("my-service-id")
+                    .withDescription("my test service")
+                    .withAnalyticsId("analytics")
+                    .build();
+            
+            Map<String, String> requestForSecondAccountPayload = aCreateGatewayAccountPayloadBuilder()
+                    .withProvider("worldpay")
+                    .withServiceId("my-service-id")
+                    .withDescription("my extra test service")
+                    .withAnalyticsId("more analytics")
+                    .build();
+            
+            ValidatableResponse response = app.givenSetup()
+                    .body(requestForAccountPayload)
+                    .post(ACCOUNTS_API_URL + "?degatewayification=true")
                     .then()
                     .statusCode(201)
                     .contentType(JSON);
-
-            createRequestDuplicate.post(ACCOUNTS_API_URL)
+            
+            app.givenSetup()
+                    .body(requestForSecondAccountPayload)
+                    .post(ACCOUNTS_API_URL + "?degatewayification=true")
                     .then()
                     .statusCode(409)
                     .contentType(JSON)
                     .body("message", contains("Gateway account with service id my-service-id and account type 'test' already exists."));
-
-            assertCorrectCreateResponse(responseA, TEST, "my test service", "analytics", null);
+            
+            assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
         }
     }
 
@@ -76,16 +86,31 @@ public class GatewayAccountResourceCreateIT {
 
         @Test
         public void shouldAllowMultipleGatewayAccounts() {
-            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "sandbox", 
-                    "my test service", "analytics", "my-service-id");
-            createRequest.post(ACCOUNTS_API_URL)
+
+            Map<String, String> requestForAccountPayload = aCreateGatewayAccountPayloadBuilder()
+                    .withProvider("worldpay")
+                    .withServiceId("my-service-id")
+                    .withDescription("my test service")
+                    .withAnalyticsId("analytics")
+                    .build();
+
+            Map<String, String> requestForSecondAccountPayload = aCreateGatewayAccountPayloadBuilder()
+                    .withProvider("worldpay")
+                    .withServiceId("my-service-id")
+                    .withDescription("my extra test service")
+                    .withAnalyticsId("more analytics")
+                    .build();
+
+            app.givenSetup()
+                    .body(requestForAccountPayload)
+                    .post(ACCOUNTS_API_URL)
                     .then()
                     .statusCode(201)
                     .contentType(JSON);
 
-            createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay", 
-                    "my test service", "analytics", "my-service-id");
-            createRequest.post(ACCOUNTS_API_URL)
+            app.givenSetup()
+                    .body(requestForSecondAccountPayload)
+                    .post(ACCOUNTS_API_URL)
                     .then()
                     .statusCode(201)
                     .contentType(JSON);
@@ -93,20 +118,23 @@ public class GatewayAccountResourceCreateIT {
         
         @Test
         public void createASandboxGatewayAccount() {
-            ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "sandbox", "my test service", "analytics");
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            Map<String, Object> payload = Map.of("payment_provider", "sandbox", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
+            ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
         }
 
         @Test
         public void createAWorldpaySandboxGatewayAccount() {
-            ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "worldpay", "my test service", "analytics");
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            Map<String, Object> payload = Map.of("payment_provider", "worldpay", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
+            ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
         }
 
         @Test
         public void createAWorldpayStripeGatewayAccount() {
-            ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "stripe", "my test service", "analytics");
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            Map<String, Object> payload = Map.of("payment_provider", "stripe", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
+            ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
         }
 
         @Test
@@ -132,7 +160,8 @@ public class GatewayAccountResourceCreateIT {
         Map<String, Object> payload = Map.of(
                 "type", "test",
                 "payment_provider", "stripe",
-                "service_name", "My shiny new stripe service");
+                "service_name", "My shiny new stripe service",
+                "service_id", "a-valid-service-id");
         app.givenSetup()
                 .body(toJson(payload))
                 .post(ACCOUNTS_API_URL)
@@ -155,6 +184,7 @@ public class GatewayAccountResourceCreateIT {
                 "type", "test",
                 "payment_provider", "stripe",
                 "service_name", "My shiny new stripe service",
+                "service_id", "a-valid-service-id",
                 "credentials", Map.of("stripe_account_id", stripeAccountId));
         String gatewayAccountId = app.givenSetup()
                 .body(toJson(payload))
@@ -188,13 +218,22 @@ public class GatewayAccountResourceCreateIT {
 
         @Test
         public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
-            String payload = toJson(Map.of("name", "test account", "type", "test"));
+            String payload = toJson(Map.of("name", "test account", "type", "test", "service_id", "a-valid-service-id"));
 
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201);
 
             assertCorrectCreateResponse(response, TEST);
-            GatewayAccountResourceITBaseExtensions.assertGettingAccountReturnsProviderName(app.getLocalPort(), response, "sandbox", TEST);
 
+            app.givenSetup()
+                    .contentType(JSON)
+                    .get(response.extract().header("Location").replace("https", "http")) //Scheme on links back are forced to be https
+                    .then()
+                    .statusCode(200)
+                    .contentType(JSON)
+                    .body("payment_provider", is("sandbox"))
+                    .body("gateway_account_id", is(notNullValue()))
+                    .body("type", is("test"));
+            
             String gatewayAccountId = response.extract().body().jsonPath().getString("gateway_account_id");
             Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
             assertThat(gatewayAccount.isPresent(), is(true));
@@ -207,7 +246,7 @@ public class GatewayAccountResourceCreateIT {
         }
 
         private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
-            GatewayAccountResourceITBaseExtensions.assertCorrectCreateResponse(response, type, null, null, null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, type, null, null, null);
         }
     }
 

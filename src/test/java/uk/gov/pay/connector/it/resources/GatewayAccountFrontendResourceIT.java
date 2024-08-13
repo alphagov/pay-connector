@@ -43,18 +43,17 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_FRONTEND_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.GatewayAccountPayload.createDefault;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.createAGatewayAccountRequestSpecificationFor;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_FRONTEND_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountFrontendResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
     
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
     private static final String ACCOUNTS_CARD_TYPE_FRONTEND_URL = "v1/frontend/accounts/{accountId}/card-types";
     private static final String ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL = "v1/frontend/service/{serviceId}/account/{accountType}/card-types";
 
@@ -62,13 +61,15 @@ public class GatewayAccountFrontendResourceIT {
 
     @Test
     void shouldGetGatewayAccountByExternalId() {
-        var gatewayAccountOptions = createDefault();
         DatabaseFixtures.TestAccount gatewayAccount = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .withPaymentProvider("worldpay")
-                .withCredentials(gatewayAccountOptions.getCredentials())
-                .withServiceName(gatewayAccountOptions.getServiceName())
+                .withCredentials(Map.of(
+                        "username", "a-username",
+                        "password", "a-password",
+                        "merchant_id", "a-merchant-id"))
+                .withServiceName("A Service Name")
                 .withCorporateCreditCardSurchargeAmount(250L)
                 .withCorporateDebitCardSurchargeAmount(50L)
                 .withIntegrationVersion3ds(1)
@@ -89,7 +90,7 @@ public class GatewayAccountFrontendResourceIT {
                 .body("email_notifications.REFUND_ISSUED.enabled", is(true))
                 .body("description", is(gatewayAccount.getDescription()))
                 .body("analytics_id", is(gatewayAccount.getAnalyticsId()))
-                .body("service_name", is(gatewayAccountOptions.getServiceName()))
+                .body("service_name", is("A Service Name"))
                 .body("corporate_credit_card_surcharge_amount", is(250))
                 .body("corporate_debit_card_surcharge_amount", is(50))
                 .body("allow_apple_pay", is(false))
@@ -135,7 +136,8 @@ public class GatewayAccountFrontendResourceIT {
 
     @Test
     void shouldAcceptAllCardTypesNotRequiring3DSForNewlyCreatedAccountAs3dsIsDisabledByDefault() {
-        String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
+        String accountId = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder().withProvider("worldpay").build());
         String frontendCardTypeUrl = ACCOUNTS_CARD_TYPE_FRONTEND_URL.replace("{accountId}", accountId);
         ValidatableResponse response = app.givenSetup().accept(JSON)
                 .get(frontendCardTypeUrl)
@@ -155,7 +157,7 @@ public class GatewayAccountFrontendResourceIT {
 
     @Test
     void shouldGetCardTypesByServiceIdAndAccountType() {
-        testBaseExtension.createAGatewayAccountWithServiceId("a-service-id");
+        testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().withServiceId("a-service-id").build());
         String frontendCardTypeByServiceIdAndAccountTypeUrl = ACCOUNTS_CARD_TYPE_BY_SERVICE_ID_AND_ACCOUNT_TYPE_FRONTEND_URL
                 .replace("{serviceId}", "a-service-id")
                 .replace("{accountType}", GatewayAccountType.TEST.name());
@@ -269,25 +271,27 @@ public class GatewayAccountFrontendResourceIT {
     class UpdateServiceNameByAccountId {
         @Test
         void updateServiceName_shouldUpdateGatewayAccountServiceNameSuccessfully() {
-            String accountId = testBaseExtension.createAGatewayAccountFor("stripe");
+            String accountId = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
 
-            var gatewayAccountPayload = createDefault();
+            String newServiceName = "A Brand New Service Name";
 
             app.givenSetup().accept(JSON)
-                    .body(gatewayAccountPayload.buildServiceNamePayload())
+                    .body(Map.of("service_name", newServiceName))
                     .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
                     .then()
                     .statusCode(200);
 
             String currentServiceName = app.getDatabaseTestHelper().getAccountServiceName(Long.valueOf(accountId));
-            assertThat(currentServiceName, is(gatewayAccountPayload.getServiceName()));
+            assertThat(currentServiceName, is(newServiceName));
         }
 
         @Test
         void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfMissingServiceName() {
-            String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
+            String accountId = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
 
-            updateGatewayAccountServiceNameWith(accountId, new HashMap<>())
+            app.givenSetup().accept(JSON)
+                    .body(Map.of())
+                    .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
                     .then()
                     .statusCode(400)
                     .body("message", contains("Field(s) missing: [service_name]"))
@@ -296,12 +300,12 @@ public class GatewayAccountFrontendResourceIT {
 
         @Test
         void updateServiceName_shouldFailUpdatingIfInvalidServiceNameLength() {
-            String accountId = testBaseExtension.createAGatewayAccountFor("worldpay");
+            String accountId = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+            String tooLongServiceName = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
-            var gatewayAccountPayload = createDefault()
-                    .withServiceName("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-
-            updateGatewayAccountServiceNameWith(accountId, gatewayAccountPayload.buildServiceNamePayload())
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", tooLongServiceName))
+                    .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename")
                     .then()
                     .statusCode(400)
                     .body("message", contains("Field(s) are too big: [service_name]"))
@@ -310,23 +314,26 @@ public class GatewayAccountFrontendResourceIT {
 
         @Test
         void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdIsNotNumeric() {
-            Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
-            updateGatewayAccountServiceNameWith("NO_NUMERIC_ACCOUNT_ID", serviceNamePayload)
+           app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "A Brand New Service Name"))
+                    .patch(ACCOUNTS_FRONTEND_URL + "NON_NUMERIC_ACCOUNT_ID" + "/servicename")
                     .then()
                     .contentType(JSON)
                     .statusCode(NOT_FOUND.getStatusCode())
                     .body("code", is(404))
                     .body("message", is("HTTP 404 Not Found"));
         }
-
+        
         @Test
         void updateServiceName_shouldNotUpdateGatewayAccountServiceNameIfAccountIdDoesNotExist() {
-            String nonExistingAccountId = "111111111";
-            testBaseExtension.createAGatewayAccountFor("stripe");
+            testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+            String nonExistentAccountId = "111111111";
 
-            Map<String, String> serviceNamePayload = createDefault().buildServiceNamePayload();
-            updateGatewayAccountServiceNameWith(nonExistingAccountId, serviceNamePayload)
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "A Brand New Service Name"))
+                    .patch(ACCOUNTS_FRONTEND_URL + nonExistentAccountId + "/servicename")
                     .then()
+                    .contentType(JSON)
                     .statusCode(404)
                     .body("message", contains("The gateway account id '111111111' does not exist"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
@@ -381,13 +388,11 @@ public class GatewayAccountFrontendResourceIT {
             CardTypeEntity visaCredit = getCardTypes(CardType.CREDIT, "visa");
 
             String serviceId = "my-service-id";
-            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
-                    "my test service", "analytics", serviceId);
-            createRequest.post(ACCOUNTS_API_URL)
-                    .then()
-                    .statusCode(201)
-                    .contentType(JSON);
-
+            testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder()
+                    .withProvider("worldpay")
+                    .withServiceId(serviceId)
+                    .build());
+            
             String bodyWithJustVisaCredit = buildAcceptedCardTypesBody(visaCredit);
             updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithJustVisaCredit)
                     .then()
@@ -433,12 +438,10 @@ public class GatewayAccountFrontendResourceIT {
         @Test
         void updateAcceptedCardTypes_shouldUpdateGatewayAccountToAcceptNoCardTypes() {
             String serviceId = "another-service-id";
-            var createRequest = createAGatewayAccountRequestSpecificationFor(app.getLocalPort(), "worldpay",
-                    "my test service", "analytics", serviceId);
-            createRequest.post(ACCOUNTS_API_URL)
-                    .then()
-                    .statusCode(201)
-                    .contentType(JSON);
+            testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder()
+                    .withProvider("worldpay")
+                    .withServiceId(serviceId)
+                    .build());
 
             String bodyWithJustVisaCredit = buildAcceptedCardTypesBody(getCardTypes(CardType.CREDIT, "visa"));
             updateGatewayAccountCardTypesWith(serviceId, GatewayAccountType.TEST, bodyWithJustVisaCredit)
@@ -527,12 +530,6 @@ public class GatewayAccountFrontendResourceIT {
                 app.getDatabaseTestHelper().getAcceptedCardTypesByAccountId(gatewayAccount.getAccountId());
 
         assertEquals(0, acceptedCardTypes.size());
-    }
-
-    private Response updateGatewayAccountServiceNameWith(String accountId, Map<String, String> serviceName) {
-        return app.givenSetup().accept(JSON)
-                .body(serviceName)
-                .patch(ACCOUNTS_FRONTEND_URL + accountId + "/servicename");
     }
 
     private Response updateGatewayAccountCardTypesWith(long accountId, String body) {

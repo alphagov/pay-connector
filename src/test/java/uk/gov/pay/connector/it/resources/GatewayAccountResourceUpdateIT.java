@@ -18,9 +18,9 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class GatewayAccountResourceUpdateIT {
@@ -28,7 +28,7 @@ public class GatewayAccountResourceUpdateIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -387,9 +387,16 @@ public class GatewayAccountResourceUpdateIT {
 
     @Nested
     class PatchByGatewayAccountId {
+        private String gatewayAccountId;
+        
+        @BeforeEach
+        void createGatewayAccount() {
+            Map<String, String> createAccountPayload = aCreateGatewayAccountPayloadBuilder().withProvider("worldpay").build();
+            gatewayAccountId = testHelpers.createGatewayAccount(createAccountPayload);
+        }
+        
         @Test
         void shouldReturn200WhenWorldpayExemptionEngineEnabledIsUpdated() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor(WORLDPAY.getName(), "a-description", "analytics-id");
             app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(
                     Long.valueOf(gatewayAccountId),
                     "macKey",
@@ -416,7 +423,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn200_whenNotifySettingsIsUpdated() throws Exception {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay");
             String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                     "path", "notify_settings",
                     "value", Map.of("api_token", "anapitoken",
@@ -431,7 +437,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn400_whenNotifySettingsIsUpdated_withWrongOp() throws Exception {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay");
             String payload = objectMapper.writeValueAsString(Map.of("op", "insert",
                     "path", "notify_settings",
                     "value", Map.of("api_token", "anapitoken",
@@ -445,7 +450,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn200_whenBlockPrepaidCardsIsUpdated() throws Exception {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay");
             String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                     "path", "block_prepaid_cards",
                     "value", true));
@@ -464,7 +468,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn200_whenEmailCollectionModeIsUpdated() throws Exception {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay");
             String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                     "path", "email_collection_mode",
                     "value", "OFF"));
@@ -477,7 +480,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn400_whenEmailCollectionModeIsUpdated_withWrongValue() throws Exception {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay");
             String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                     "path", "email_collection_mode",
                     "value", "nope"));
@@ -490,7 +492,7 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn404ForNotifySettings_whenGatewayAccountIsNonExistent() throws Exception {
-            String gatewayAccountId = "1000023";
+            String nonExistentGatewayAccountId = "1000023";
             String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                     "path", "notify_settings",
                     "value", Map.of("api_token", "anapitoken",
@@ -498,14 +500,13 @@ public class GatewayAccountResourceUpdateIT {
                             "refund_issued_template_id", "anothertemplate")));
             app.givenSetup()
                     .body(payload)
-                    .patch("/v1/api/accounts/" + gatewayAccountId)
+                    .patch("/v1/api/accounts/" + nonExistentGatewayAccountId)
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode());
         }
 
         @Test
         void shouldReturn200_whenNotifySettingsIsRemoved() throws Exception {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay");
             String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                     "path", "notify_settings",
                     "value", Map.of("api_token", "anapitoken",
@@ -529,7 +530,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn400_whenNotifySettingsIsRemoved_withWrongPath() throws Exception {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay");
             String payload = objectMapper.writeValueAsString(Map.of("op", "insert",
                     "path", "notify_setting"));
             app.givenSetup()
@@ -541,7 +541,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void patchGatewayAccount_forCorporateCreditCardSurcharge() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
@@ -566,7 +565,7 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void patchGatewayAccount_forCorporateDebitCardSurcharge() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+            String gatewayAccountId = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
@@ -591,7 +590,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void patchGatewayAccount_forCorporatePrepaidDebitCardSurcharge() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
@@ -616,7 +614,6 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void patchGatewayAccount_forAllowTelephonePaymentNotifications() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("sandbox", "a-description", "analytics-id");
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
@@ -637,20 +634,19 @@ public class GatewayAccountResourceUpdateIT {
 
         @Test
         void shouldReturn404ForCorporateSurcharge_whenGatewayAccountIsNonExistent() throws Exception {
-            String gatewayAccountId = "1000023";
+            String nonExistentGatewayAccountId = "1000023";
             String payload = objectMapper.writeValueAsString(Map.of("op", "replace",
                     "path", "corporate_credit_card_surcharge_amount",
                     "value", 100));
             app.givenSetup()
                     .body(payload)
-                    .patch("/v1/api/accounts/" + gatewayAccountId)
+                    .patch("/v1/api/accounts/" + nonExistentGatewayAccountId)
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode());
         }
 
         @Test
         void patchGatewayAccount_setDisabledToFalse_shouldClearDisabledReason() throws JsonProcessingException {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("sandbox", "a-description", "analytics-id");
             long gatewayAccountIdAsLong = Long.parseLong(gatewayAccountId);
             app.getDatabaseTestHelper().setDisabled(gatewayAccountIdAsLong);
             String disabledReason = "Because reasons";

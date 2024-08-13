@@ -46,9 +46,10 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_SERVICE_ID_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_API_URL;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITBaseExtensions.ACCOUNTS_FRONTEND_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_SERVICE_ID_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_FRONTEND_URL;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -57,7 +58,7 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 public class GatewayAccountResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("sandbox", app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
     private DatabaseFixtures.TestAccount defaultTestAccount;
 
     @Nested
@@ -381,7 +382,11 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnDescriptionAndAnalyticsId() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "desc", "id");
+            String gatewayAccountId = testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withDescription("desc")
+                            .withAnalyticsId("id")
+                                    .build());
             app.givenSetup()
                     .get(ACCOUNTS_API_URL + gatewayAccountId)
                     .then()
@@ -392,7 +397,10 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnAnalyticsId() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", null, "id");
+            String gatewayAccountId = testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withAnalyticsId("id")
+                            .build());
             app.givenSetup()
                     .get(ACCOUNTS_API_URL + gatewayAccountId)
                     .then()
@@ -403,7 +411,11 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnDescription() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "desc", null);
+            String gatewayAccountId = testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withDescription("desc")
+                            .build());
+            
             app.givenSetup()
                     .get(ACCOUNTS_API_URL + gatewayAccountId)
                     .then()
@@ -415,7 +427,12 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturn3dsSetting() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe", "desc", "id", "true", "test");
+            String gatewayAccountId = testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withProvider("stripe")
+                            .withRequires3ds(true)
+                            .build());
+
             app.givenSetup()
                     .get(ACCOUNTS_API_URL + gatewayAccountId)
                     .then()
@@ -633,7 +650,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldNotReturn3dsFlexCredentials_whenGatewayAccountHasNoCreds() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+            String gatewayAccountId = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
             app.givenSetup()
                     .get("/v1/api/accounts/" + gatewayAccountId)
                     .then()
@@ -653,9 +670,13 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetAllGatewayAccountsWhenSearchWithNoParams() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        testBaseExtension.updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
-        String gatewayAccountId2 = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+        testHelpers.updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
+        String gatewayAccountId2 = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("worldpay")
+                        .build());
+        
         app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(
                 Long.valueOf(gatewayAccountId2),
                 "macKey",
@@ -746,8 +767,8 @@ public class GatewayAccountResourceIT {
     
     @Test
     public void shouldSetApplePayEnabledByDefaultForSandboxAccount() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        String gatewayAccountId2 = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().withProvider("sandbox").build());
+        String gatewayAccountId2 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().withProvider("worldpay").build());
 
         app.givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId1)
@@ -762,9 +783,9 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByIds() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        String gatewayAccountId2 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        testBaseExtension.createAGatewayAccountFor("sandbox");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+        String gatewayAccountId2 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+        testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?accountIds=" + gatewayAccountId1 + "," + gatewayAccountId2)
@@ -779,15 +800,21 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldFilterGetGatewayAccountForExistingAccountByServiceId() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        String gatewayAccountId2 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        String serviceId = "someexternalserviceid";
-
-        app.getDatabaseTestHelper().updateServiceIdFor(Long.parseLong(gatewayAccountId1), serviceId);
-        app.getDatabaseTestHelper().updateServiceIdFor(Long.parseLong(gatewayAccountId2), "notsearchedforserviceid");
-
+        String serviceId = "aValidServiceId";
+        String anotherServiceId = "anotherServiceId";
+        String nonExistentServiceId = "nonExistentServiceId";
+        
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withServiceId(serviceId)
+                        .build());
+        testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withServiceId(anotherServiceId)
+                        .build());
+        
         app.givenSetup().accept(JSON)
-                .get("/v1/api/accounts?serviceIds=somemissingserviceid,anotherserviceid," + serviceId)
+                .get(format("/v1/api/accounts?serviceIds=%s,%s", nonExistentServiceId, serviceId))
                 .then()
                 .statusCode(200)
                 .body("accounts", hasSize(1))
@@ -795,7 +822,7 @@ public class GatewayAccountResourceIT {
                 .body("accounts[0].service_id", is(serviceId));
 
         app.givenSetup().accept(JSON)
-                .get("/v1/api/accounts?serviceIds=nonexistingserviceid")
+                .get(format("/v1/api/accounts?serviceIds=%s", nonExistentServiceId))
                 .then()
                 .statusCode(200)
                 .body("accounts", hasSize(0));
@@ -803,9 +830,9 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByMotoEnabled() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        testBaseExtension.updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
-        testBaseExtension.createAGatewayAccountFor("sandbox");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+        testHelpers.updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
+        testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?moto_enabled=true")
@@ -817,9 +844,9 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByMotoDisabled() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("sandbox");
-        testBaseExtension.updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
-        String gatewayAccountId2 = testBaseExtension.createAGatewayAccountFor("sandbox");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
+        testHelpers.updateGatewayAccount(gatewayAccountId1, "allow_moto", true);
+        String gatewayAccountId2 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?moto_enabled=false")
@@ -831,9 +858,15 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByApplePayEnabled() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("worldpay");
-        testBaseExtension.updateGatewayAccount(gatewayAccountId1, "allow_apple_pay", true);
-        testBaseExtension.createAGatewayAccountFor("stripe");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("worldpay")
+                        .withAllowApplePay(true)
+                        .build());
+        testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("stripe")
+                        .build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?apple_pay_enabled=true")
@@ -845,9 +878,15 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByGooglePayEnabled() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("worldpay");
-        testBaseExtension.updateGatewayAccount(gatewayAccountId1, "allow_google_pay", true);
-        testBaseExtension.createAGatewayAccountFor("sandbox");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("worldpay")
+                        .withAllowGooglePay(true)
+                        .build());
+        testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("stripe")
+                        .build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?google_pay_enabled=true")
@@ -859,8 +898,11 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByType() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("worldpay", "descr", "analytics", "true", "live");
-        testBaseExtension.createAGatewayAccountFor("sandbox");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder()
+                .withProvider("stripe")
+                .withType(LIVE)
+                .build());
+        testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?type=live")
@@ -872,9 +914,11 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByRecurringEnabled() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("worldpay");
-        testBaseExtension.updateGatewayAccount(gatewayAccountId1, "recurring_enabled", true);
-        testBaseExtension.createAGatewayAccountFor("sandbox");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder()
+                .withProvider("worldpay")
+                .build());
+        testHelpers.updateGatewayAccount(gatewayAccountId1, "recurring_enabled", true);
+        testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?recurring_enabled=true")
@@ -886,8 +930,12 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldGetGatewayAccountsByProvider() {
-        String gatewayAccountId1 = testBaseExtension.createAGatewayAccountFor("worldpay");
-        testBaseExtension.createAGatewayAccountFor("sandbox");
+        String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder()
+                .withProvider("worldpay")
+                .build());
+        testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder()
+                .withProvider("stripe")
+                .build());
 
         app.givenSetup()
                 .get("/v1/api/accounts?payment_provider=worldpay")
@@ -1049,10 +1097,17 @@ public class GatewayAccountResourceIT {
     
     @Nested
     class Update3dsToggleByGatewayAccountId {
-
+        String gatewayAccountId;
+        @BeforeEach
+        void createGatewayAccount() {
+            gatewayAccountId = testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withProvider("worldpay")
+                            .build());
+        }
+        
         @Test
         void shouldToggle3dsToTrue() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "old-desc", "old-id");
             app.givenSetup()
                     .body(toJson(Map.of("toggle_3ds", true)))
                     .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
@@ -1067,7 +1122,6 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldToggle3dsToFalse() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "old-desc", "old-id");
             app.givenSetup()
                     .body(toJson(Map.of("toggle_3ds", false)))
                     .patch("/v1/frontend/accounts/" + gatewayAccountId + "/3ds-toggle")
@@ -1082,7 +1136,6 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturn409Conflict_Toggling3dsToFalse_WhenA3dsCardTypeIsAccepted() {
-            String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "desc", "id");
             String maestroCardTypeId = app.getDatabaseTestHelper().getCardTypeId("maestro", "DEBIT");
 
             app.givenSetup()
@@ -1107,7 +1160,10 @@ public class GatewayAccountResourceIT {
     
     @Test
     void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
+        String gatewayAccountId = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("worldpay")
+                        .build());
         app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(Long.valueOf(gatewayAccountId), "macKey", "issuer", "org_unit_id", 2L);
         app.givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
@@ -1124,8 +1180,11 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds_byServiceIdAndAccountType() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("worldpay", "a-description", "analytics-id");
-        app.getDatabaseTestHelper().updateServiceIdFor(Long.parseLong(gatewayAccountId), "a-valid-service-id");
+        String gatewayAccountId = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("worldpay")
+                        .withServiceId("a-valid-service-id")
+                        .build());
         app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(Long.valueOf(gatewayAccountId), "macKey", "issuer", "org_unit_id", 2L);
         String url = ACCOUNTS_API_SERVICE_ID_URL.replace("{serviceId}", "a-valid-service-id").replace("{accountType}", GatewayAccountType.TEST.name());
         app.givenSetup()
@@ -1143,7 +1202,10 @@ public class GatewayAccountResourceIT {
 
     @Test
     void shouldNotReturn3dsFlexCredentials_whenGatewayIsNotAWorldpayAccount() {
-        String gatewayAccountId = testBaseExtension.createAGatewayAccountFor("stripe", "a-description", "analytics-id");
+        String gatewayAccountId = testHelpers.createGatewayAccount(
+                aCreateGatewayAccountPayloadBuilder()
+                        .withProvider("stripe")
+                        .build());
         app.givenSetup()
                 .get("/v1/api/accounts/" + gatewayAccountId)
                 .then()

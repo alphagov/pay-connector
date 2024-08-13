@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class StripeAccountResourceIT {
@@ -28,7 +29,7 @@ public class StripeAccountResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     
-    public static GatewayAccountResourceITBaseExtensions testBaseExtension = new GatewayAccountResourceITBaseExtensions("stripe", app.getLocalPort());
+    public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
 
     private static final String STRIPE_ACCOUNT_ID = "acct_123example123";
     
@@ -195,7 +196,11 @@ public class StripeAccountResourceIT {
     class GetStripeAccountByServiceIdAndAccountType {
         @Test
         void returnsSuccessfulResponse() {
-            String accountId = testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe");
+            String accountId = testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withServiceId("a-valid-service-id")
+                            .withProvider("stripe")
+                            .build());
             Map<String, String> credentials = Map.of("stripe_account_id", STRIPE_ACCOUNT_ID);
             app.givenSetup()
                     .body(toJson(Map.of("payment_provider", "stripe", "credentials", credentials)))
@@ -221,7 +226,11 @@ public class StripeAccountResourceIT {
 
         @Test
         void returnsNotFoundResponseWhenNoStripeAccountExistsForService() {
-            testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "sandbox");
+            testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withServiceId("a-valid-service-id")
+                            .withProvider("sandbox")
+                            .build());
 
             app.givenSetup()
                     .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-account")
@@ -232,7 +241,11 @@ public class StripeAccountResourceIT {
 
         @Test
         void returnsNotFoundResponseWhenGatewayAccountCredentialsAreEmpty() {
-            testBaseExtension.createAGatewayAccountWithServiceId("a-valid-service-id", "stripe");
+            testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withServiceId("a-valid-service-id")
+                            .withProvider("stripe")
+                            .build());
 
             app.givenSetup()
                     .get("/v1/api/service/a-valid-service-id/account/TEST/stripe-account")
