@@ -45,6 +45,9 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
     @Column(name = "exemption_engine")
     private boolean exemptionEngineEnabled;
 
+    @Column(name = "corporate_exemptions")
+    private boolean corporateExemptionEnabled;
+
     public Worldpay3dsFlexCredentialsEntity() {
         super();
     }
@@ -75,6 +78,14 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
         this.exemptionEngineEnabled = isExemptionEngineEnabled;
     }
 
+    public boolean isCorporateExemptionEnabled() {
+        return corporateExemptionEnabled;
+    }
+
+    public void setCorporateExemptionEnabled(boolean corporateExemptionEnabled) {
+        this.corporateExemptionEnabled = corporateExemptionEnabled;
+    }
+
     public void setGatewayAccountId(Long gatewayAccountId) {
         this.gatewayAccountId = gatewayAccountId;
     }
@@ -101,6 +112,7 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
         private String organisationalUnitId;
         private String jwtMacKey;
         private boolean exemptionEngine;
+        private boolean corporateExemptions;
 
         private Worldpay3dsFlexCredentialsEntityBuilder() {
         }
@@ -133,7 +145,12 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
             this.exemptionEngine = exemptionEngine;
             return this;
         }
-        
+
+        public Worldpay3dsFlexCredentialsEntityBuilder withCorporateExemptions(boolean corporateExemptions) {
+            this.corporateExemptions = corporateExemptions;
+            return this;
+        }
+
         public Worldpay3dsFlexCredentialsEntity build() {
             Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity = new Worldpay3dsFlexCredentialsEntity();
             worldpay3dsFlexCredentialsEntity.jwtMacKey = this.jwtMacKey;
@@ -141,6 +158,7 @@ public class Worldpay3dsFlexCredentialsEntity extends AbstractVersionedEntity {
             worldpay3dsFlexCredentialsEntity.organisationalUnitId = this.organisationalUnitId;
             worldpay3dsFlexCredentialsEntity.issuer = this.issuer;
             worldpay3dsFlexCredentialsEntity.exemptionEngineEnabled = this.exemptionEngine;
+            worldpay3dsFlexCredentialsEntity.corporateExemptionEnabled = this.corporateExemptions;
             return worldpay3dsFlexCredentialsEntity;
         }
     }

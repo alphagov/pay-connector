@@ -1090,6 +1090,7 @@ public class DatabaseTestHelper {
                 issuer,
                 organisationalUnitId,
                 version,
+                false,
                 false);
     }
 
@@ -1098,16 +1099,18 @@ public class DatabaseTestHelper {
                                                 String issuer,
                                                 String organisationalUnitId,
                                                 Long version,
-                                                boolean isExemptionEngineEnabled) {
+                                                boolean isExemptionEngineEnabled,
+                                                boolean isCorporateExemptionEnabled) {
         jdbi.withHandle(handle ->
-                handle.createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version, exemption_engine) " +
-                                "VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version, :exemption_engine)")
+                handle.createUpdate("INSERT INTO worldpay_3ds_flex_credentials(gateway_account_id, jwt_mac_key, issuer, organisational_unit_id, version, exemption_engine, corporate_exemptions) " +
+                                "VALUES (:gatewayAccountId, :jwtMacKey, :issuer, :organisationalUnitId, :version, :exemption_engine, :corporate_exemptions)")
                         .bind("gatewayAccountId", gatewayAccountId)
                         .bind("jwtMacKey", jwtMacKey)
                         .bind("issuer", issuer)
                         .bind("organisationalUnitId", organisationalUnitId)
                         .bind("version", version)
                         .bind("exemption_engine", isExemptionEngineEnabled)
+                        .bind("corporate_exemptions", isCorporateExemptionEnabled)
                         .execute()
         );
     }

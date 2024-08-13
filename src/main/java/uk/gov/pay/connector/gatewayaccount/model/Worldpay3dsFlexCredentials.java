@@ -17,14 +17,20 @@ public class Worldpay3dsFlexCredentials {
 
     @JsonIgnore
     private String jwtMacKey;
+
     @Schema(example = "true")
     private boolean exemptionEngineEnabled;
 
-    public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey, boolean exemptionEngineEnabled) {
+    @Schema(example = "false")
+    private boolean corporateExemptionEnabled;
+
+    public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey,
+                                      boolean exemptionEngineEnabled, boolean corporateExemptionEnabled) {
         this.issuer = issuer;
         this.organisationalUnitId = organisationalUnitId;
         this.jwtMacKey = jwtMacKey;
         this.exemptionEngineEnabled = exemptionEngineEnabled;
+        this.corporateExemptionEnabled = corporateExemptionEnabled;
     }
     
     public boolean isExemptionEngineEnabled() {
@@ -43,14 +49,18 @@ public class Worldpay3dsFlexCredentials {
         return jwtMacKey;
     }
 
+    public boolean isCorporateExemptionEnabled() {
+        return corporateExemptionEnabled;
+    }
+
     public static Worldpay3dsFlexCredentials fromEntity(Worldpay3dsFlexCredentialsEntity entity) {
         return new Worldpay3dsFlexCredentials(entity.getIssuer(), entity.getOrganisationalUnitId(), 
-                entity.getJwtMacKey(), entity.isExemptionEngineEnabled());
+                entity.getJwtMacKey(), entity.isExemptionEngineEnabled(), entity.isCorporateExemptionEnabled());
     }
     
     public static Worldpay3dsFlexCredentials from(Worldpay3dsFlexCredentialsRequest credentialsRequest) {
         return new Worldpay3dsFlexCredentials(credentialsRequest.getIssuer(), 
-                credentialsRequest.getOrganisationalUnitId(), credentialsRequest.getJwtMacKey(), false);
+                credentialsRequest.getOrganisationalUnitId(), credentialsRequest.getJwtMacKey(), false, false);
     }
 
     @Override
