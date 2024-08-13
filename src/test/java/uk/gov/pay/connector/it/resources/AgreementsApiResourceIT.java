@@ -180,18 +180,18 @@ public class AgreementsApiResourceIT {
 
     @Nested
     class ByServiceIdAndAccountType {
+        private String gatewayAccountId;
 
+        @BeforeEach
+        void setUp() {
+            gatewayAccountId = testHelpers.createGatewayAccount(
+                    aCreateGatewayAccountPayloadBuilder()
+                            .withServiceId(VALID_SERVICE_ID)
+                            .build());
+        }
+        
         @Nested
         class CreateAgreement {
-            private String gatewayAccountId;
-            
-            @BeforeEach
-            void setUp() {
-                gatewayAccountId = testHelpers.createGatewayAccount(
-                        aCreateGatewayAccountPayloadBuilder()
-                        .withServiceId(VALID_SERVICE_ID)
-                        .build());
-            }
             
             @Test
             void shouldCreateAgreement_forValidRequest() {
@@ -321,10 +321,6 @@ public class AgreementsApiResourceIT {
             
             @Test
             void shouldReturn204AndCancelAgreement() {
-                String gatewayAccountId = testHelpers.createGatewayAccount(
-                        aCreateGatewayAccountPayloadBuilder()
-                                .withServiceId(VALID_SERVICE_ID)
-                                .build());
                 testHelpers.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
 
                 String createAgreementPayload = toJson(Map.of(

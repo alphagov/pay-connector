@@ -118,7 +118,6 @@ public class GatewayAccountResourceCreateIT {
         
         @Test
         public void createASandboxGatewayAccount() {
-            //ValidatableResponse response = GatewayAccountResourceITBaseExtensions.createAGatewayAccountFor(app.getLocalPort(), "sandbox", "my test service", "analytics");
             Map<String, Object> payload = Map.of("payment_provider", "sandbox", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
             GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
