@@ -27,7 +27,7 @@ public class GatewayAccountResourceITHelpers {
     public static final String ACCOUNTS_FRONTEND_URL = "/v1/frontend/accounts/";
     public static final String ACCOUNT_FRONTEND_EXTERNAL_ID_URL = "/v1/frontend/accounts/external-id/";
     
-    protected String createGatewayAccount(Map<String, String> createGatewayAccountPayload) {
+    public String createGatewayAccount(Map<String, String> createGatewayAccountPayload) {
         return given()
                 .port(appLocalPort)
                 .contentType(JSON)
@@ -37,7 +37,7 @@ public class GatewayAccountResourceITHelpers {
                 .extract().path("gateway_account_id");
     }
     
-    void updateGatewayAccount(String gatewayAccountId, String path, Object value) {
+    public void updateGatewayAccount(String gatewayAccountId, String path, Object value) {
         given()
                 .port(appLocalPort)
                 .contentType(JSON)
