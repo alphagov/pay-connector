@@ -5743,7 +5743,7 @@ components:
     Worldpay3dsFlexCredentials:
       type: object
       properties:
-        corporate_exemption_enabled:
+        corporate_exemptions_enabled:
           type: boolean
           example: false
         exemption_engine_enabled:
