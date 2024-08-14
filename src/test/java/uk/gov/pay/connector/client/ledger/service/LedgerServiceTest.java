@@ -39,8 +39,10 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
@@ -116,7 +118,7 @@ public class LedgerServiceTest {
         when(mockResponse.getStatus()).thenReturn(SC_BAD_REQUEST);
         assertThrows(LedgerException.class, () -> ledgerService.postEvent(event));
     }
-    
+
     @Test
     void serialiseAndSendMultipleEvents() {
         setupMocksForPostRequest();
@@ -133,7 +135,7 @@ public class LedgerServiceTest {
                 .withPaymentInstrument(paymentInstrumentEntity)
                 .withGatewayAccount(gatewayAccountEntity)
                 .build();
-        var eventThree =  AgreementInactivated.from(agreementEntity, MappedAuthorisationRejectedReason.EXPIRED_CARD.name(), Instant.now());
+        var eventThree = AgreementInactivated.from(agreementEntity, MappedAuthorisationRejectedReason.EXPIRED_CARD.name(), Instant.now());
 
         List<Event> list = List.of(eventOne, eventTwo, eventThree);
         when(mockResponse.getStatus()).thenReturn(SC_ACCEPTED);
@@ -148,7 +150,7 @@ public class LedgerServiceTest {
         when(mockResponse.getStatus()).thenReturn(SC_OK);
         when(mockResponse.readEntity(LedgerTransaction.class)).thenReturn(ledgerTransaction);
 
-        Optional<LedgerTransaction> maybeTransaction = ledgerService.getTransaction("transactiom-id");
+        Optional<LedgerTransaction> maybeTransaction = ledgerService.getTransaction("transaction-id");
         assertThat(maybeTransaction.isPresent(), is(true));
         assertThat(maybeTransaction.get(), is(ledgerTransaction));
     }
@@ -165,7 +167,29 @@ public class LedgerServiceTest {
     void getTransaction_shouldThrowExceptionWhenLedgerReturns500() {
         setupMocksForGetRequest();
         when(mockResponse.getStatus()).thenReturn(SC_INTERNAL_SERVER_ERROR);
-        
+
         assertThrows(LedgerException.class, () -> ledgerService.getTransaction("transaction-id"));
+    }
+
+    @Test
+    void getTransactionForProviderAndGatewayTransactionId_shouldEncodeCorrectly() {
+        var oddId = "an-id-with//some-weird-stuff-in-it";
+        LedgerTransaction ledgerTransaction = aValidLedgerTransaction()
+                .withPaymentProvider("worldpay")
+                .withGatewayTransactionId(oddId)
+                .build();
+        setupMocksForGetRequest();
+        when(mockResponse.getStatus()).thenReturn(SC_OK);
+        when(mockResponse.readEntity(LedgerTransaction.class)).thenReturn(ledgerTransaction);
+
+        var expectedPath = "/v1/transaction/gateway-transaction/an-id-with%2F%2Fsome-weird-stuff-in-it";
+        
+        Optional<LedgerTransaction> maybeTransaction = ledgerService.getTransactionForProviderAndGatewayTransactionId("worldpay", oddId);
+        verify(mockClient).target(argThat((UriBuilder arg) -> {
+            assertEquals(expectedPath, arg.build().getRawPath());
+            return true;
+        }));
+        assertThat(maybeTransaction.isPresent(), is(true));
+        assertThat(maybeTransaction.get(), is(ledgerTransaction));
     }
 }
