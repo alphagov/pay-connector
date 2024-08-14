@@ -2286,6 +2286,30 @@ paths:
       summary: Validate Worldpay credentials by service ID and account type
       tags:
       - Gateway account credentials
+  /v1/api/service/{serviceId}/request-stripe-test-account:
+    post:
+      operationId: requestStripeTestAccount
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          description: OK
+        "404":
+          description: Not found - Account with serviceId does not exist
+        "409":
+          description: "Stripe Connect Account already exists, or existing test account\
+            \ is not a Sandbox one"
+      summary: 1) Creates a Stripe Connect Account 2) Creates a gateway account in
+        connector and links this with the Stripe Connect Account id 3) Disables the
+        old sandbox account
+      tags:
+      - Gateway accounts
   /v1/frontend/accounts/external-id/{externalId}:
     get:
       description: "Get gateway account by external ID. Also returns notifications\
@@ -3044,30 +3068,6 @@ paths:
       summary: Mark secure token as used
       tags:
       - Secure token
-  /v1/service/{serviceId}/request-stripe-test-account:
-    post:
-      operationId: requestStripeTestAccount
-      parameters:
-      - description: Service ID
-        example: 46eb1b601348499196c99de90482ee68
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      responses:
-        "201":
-          description: OK
-        "404":
-          description: Not found - Account with serviceId does not exist
-        "409":
-          description: "Stripe Connect Account already exists, or existing test account\
-            \ is not a Sandbox one"
-      summary: 1) Creates a Stripe Connect Account 2) Creates a gateway account in
-        connector and links this with the Stripe Connect Account id 3) Disables the
-        old sandbox account
-      tags:
-      - Gateway accounts
   /v1/tasks/emitted-events-sweep:
     post:
       description: "During the state transition event connector puts an event in an\

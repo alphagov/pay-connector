@@ -48,7 +48,7 @@ public class StripeAccountResourceIT {
         String serviceId = RandomIdGenerator.randomUuid();
         var createGatewayAccountResponse = setupSandboxGatewayAccount(serviceId, "Ollivander's wand shop");
 
-        app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
+        app.givenSetup().post(format("/v1/api/service/%s/request-stripe-test-account", serviceId))
                 .then().statusCode(200)
                 .body("stripe_connect_account_id", is("acct_123"))
                 .body("gateway_account_id", is(notNullValue()))
@@ -110,7 +110,7 @@ public class StripeAccountResourceIT {
                 .then()
                 .statusCode(201);
 
-        app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
+        app.givenSetup().post(format("/v1/api/service/%s/request-stripe-test-account", serviceId))
                 .then().statusCode(409)
                 .body("message", contains("Cannot request Stripe test account because a Stripe test account already exists."));
     }
@@ -127,14 +127,14 @@ public class StripeAccountResourceIT {
                 .then()
                 .statusCode(201);
 
-        app.givenSetup().post(format("/v1/service/%s/request-stripe-test-account", serviceId))
+        app.givenSetup().post(format("/v1/api/service/%s/request-stripe-test-account", serviceId))
                 .then().statusCode(409)
                 .body("message", contains("Cannot request Stripe test account because existing test account is not a Sandbox one."));
     }
     
     @Test
     void returnNotFoundIfServiceDoesNotExist() {
-        app.givenSetup().post("/v1/service/doesNotExist/request-stripe-test-account")
+        app.givenSetup().post("/v1/api/service/doesNotExist/request-stripe-test-account")
                 .then().statusCode(404);
     }
 
