@@ -275,7 +275,7 @@ public class GatewayAccountResourceIT {
                     .body("worldpay_3ds_flex", not(hasKey("version")))
                     .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
                     .body("worldpay_3ds_flex.exemption_engine_enabled", is(false))
-                    .body("worldpay_3ds_flex.corporate_exemption_enabled", is(false));
+                    .body("worldpay_3ds_flex.corporate_exemptions_enabled", is(false));
         }
 
         @Test
@@ -698,7 +698,7 @@ public class GatewayAccountResourceIT {
                 .body("accounts[1].worldpay_3ds_flex.issuer", is("issuer"))
                 .body("accounts[1].worldpay_3ds_flex.organisational_unit_id", is("org_unit_id"))
                 .body("accounts[1].worldpay_3ds_flex.exemption_engine_enabled", is(true))
-                .body("accounts[1].worldpay_3ds_flex.corporate_exemption_enabled", is(true))
+                .body("accounts[1].worldpay_3ds_flex.corporate_exemptions_enabled", is(true))
                 .body("accounts[1].worldpay_3ds_flex", not(hasKey("jwt_mac_key")));
     }
 
@@ -1179,7 +1179,7 @@ public class GatewayAccountResourceIT {
                 .body("worldpay_3ds_flex", not(hasKey("version")))
                 .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
                 .body("worldpay_3ds_flex.exemption_engine_enabled", is(false))
-                .body("worldpay_3ds_flex.corporate_exemption_enabled", is(false));
+                .body("worldpay_3ds_flex.corporate_exemptions_enabled", is(false));
     }
 
     @Test
@@ -1202,7 +1202,7 @@ public class GatewayAccountResourceIT {
                 .body("worldpay_3ds_flex", not(hasKey("version")))
                 .body("worldpay_3ds_flex", not(hasKey("gateway_account_id")))
                 .body("worldpay_3ds_flex.exemption_engine_enabled", is(false))
-                .body("worldpay_3ds_flex.corporate_exemption_enabled", is(false));
+                .body("worldpay_3ds_flex.corporate_exemptions_enabled", is(false));
     }
 
     @Test

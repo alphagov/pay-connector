@@ -22,15 +22,15 @@ public class Worldpay3dsFlexCredentials {
     private boolean exemptionEngineEnabled;
 
     @Schema(example = "false")
-    private boolean corporateExemptionEnabled;
+    private boolean corporateExemptionsEnabled;
 
     public Worldpay3dsFlexCredentials(String issuer, String organisationalUnitId, String jwtMacKey,
-                                      boolean exemptionEngineEnabled, boolean corporateExemptionEnabled) {
+                                      boolean exemptionEngineEnabled, boolean corporateExemptionsEnabled) {
         this.issuer = issuer;
         this.organisationalUnitId = organisationalUnitId;
         this.jwtMacKey = jwtMacKey;
         this.exemptionEngineEnabled = exemptionEngineEnabled;
-        this.corporateExemptionEnabled = corporateExemptionEnabled;
+        this.corporateExemptionsEnabled = corporateExemptionsEnabled;
     }
     
     public boolean isExemptionEngineEnabled() {
@@ -49,8 +49,8 @@ public class Worldpay3dsFlexCredentials {
         return jwtMacKey;
     }
 
-    public boolean isCorporateExemptionEnabled() {
-        return corporateExemptionEnabled;
+    public boolean isCorporateExemptionsEnabled() {
+        return corporateExemptionsEnabled;
     }
 
     public static Worldpay3dsFlexCredentials fromEntity(Worldpay3dsFlexCredentialsEntity entity) {
