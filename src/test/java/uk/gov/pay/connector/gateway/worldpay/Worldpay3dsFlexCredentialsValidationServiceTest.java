@@ -137,7 +137,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         var invalidIssuer = "54i0917n10va4428b69l5id0";
         var invalidOrgUnitId = "57992i087n0v4849895alid2";
         var invalidJwtMacKey = "4inva5l2-0133-4i82-d0e5-2024dbeddaa9";
-        var flexCredentials = new Worldpay3dsFlexCredentials(invalidIssuer, invalidOrgUnitId, invalidJwtMacKey, false);
+        var flexCredentials = new Worldpay3dsFlexCredentials(invalidIssuer, invalidOrgUnitId, invalidJwtMacKey, false, false);
 
         when(response.getStatus()).thenReturn(HttpStatus.SC_BAD_REQUEST);
         when(client.target(threeDsFlexDdcUrls.get(type))).thenReturn(webTarget);
@@ -217,7 +217,7 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
         var validIssuer = "53f0917f101a4428b69d5fb0"; //pragma: allowlist secret
         var validOrgUnitId = "57992a087a0c4849895ab8a2";
         var validJwtMacKey = "4cabd5d2-0133-4e82-b0e5-2024dbeddaa9";
-        return new Worldpay3dsFlexCredentials(validIssuer, validOrgUnitId, validJwtMacKey, false);
+        return new Worldpay3dsFlexCredentials(validIssuer, validOrgUnitId, validJwtMacKey, false, false);
     }
     
     private void mockJerseyClient() {
