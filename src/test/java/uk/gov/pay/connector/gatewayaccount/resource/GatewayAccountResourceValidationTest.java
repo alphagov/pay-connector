@@ -41,7 +41,22 @@ class GatewayAccountResourceValidationTest {
 
         assertThat(response.getStatus(), is(422));
     }
-    
+
+    @Test
+    void shouldReturn422_whenServiceIdIsMissing() {
+        Map<String, Object> payload = Map.of("provider", "sandbox", "type", "invalid");
+
+        Response response = resources.client()
+                .target("/v1/api/accounts")
+                .request()
+                .post(Entity.json(payload));
+
+        assertThat(response.getStatus(), is(422));
+
+        List<String> errorResponseMessages = response.readEntity(ErrorResponse.class).messages();
+        assertTrue(errorResponseMessages.contains("Field [service_id] cannot be blank or missing"));
+    }
+
     @Test
     void shouldReturn422_whenProviderAccountTypeIsInvalid() {
 
