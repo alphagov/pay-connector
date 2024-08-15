@@ -49,7 +49,7 @@ public class StripeAccountResource {
     }
     
     @POST
-    @Path("/v1/service/{serviceId}/request-stripe-test-account")
+    @Path("/v1/api/service/{serviceId}/request-stripe-test-account")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "1) Creates a Stripe Connect Account " +
