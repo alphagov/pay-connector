@@ -17,6 +17,8 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -61,9 +63,9 @@ public class LedgerService {
                                                                                         String gatewayTransactionId) {
         var uri = UriBuilder
                 .fromPath(ledgerUrl)
-                .path(format("/v1/transaction/gateway-transaction/%s", gatewayTransactionId))
+                .path(format("/v1/transaction/gateway-transaction/%s", URLEncoder.encode(gatewayTransactionId, StandardCharsets.UTF_8)))
                 .queryParam("payment_provider", paymentGatewayName);
-
+        
         return getTransactionFromLedger(uri);
     }
 
@@ -147,5 +149,4 @@ public class LedgerService {
                 .request()
                 .get();
     }
-
 }
