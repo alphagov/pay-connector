@@ -120,6 +120,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEM
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NULL_LAST_EVENT_INQUIRY_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
@@ -782,6 +783,25 @@ class WorldpayPaymentProviderTest {
         assertThat(chargeQueryResponse.foundCharge(), is(false));
         assertThat(chargeQueryResponse.getGatewayError().isPresent(), is(true));
         assertThat(chargeQueryResponse.getGatewayError().get().getMessage(), is("Worldpay query response (error code: 5, error: Could not find payment for order)"));
+    }
+
+    @Test
+    void query_payment_status_should_return_response_with_gateway_error_when_worldpay_returns_null_for_last_event() throws Exception {
+        when(response.getEntity()).thenReturn(
+                load(WORLDPAY_NULL_LAST_EVENT_INQUIRY_RESPONSE)
+        );
+
+        ChargeEntity chargeEntity = chargeEntityFixture.build();
+
+        when(inquiryClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(response);
+
+        ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
+        ChargeQueryResponse chargeQueryResponse = worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
+
+        assertThat(chargeQueryResponse.foundCharge(), is(true));
+        assertThat(chargeQueryResponse.getMappedStatus().isPresent(), is(true));
+        assertThat(chargeQueryResponse.getMappedStatus().get(), is(ChargeStatus.AUTHORISATION_ERROR));
     }
 
     @Test
