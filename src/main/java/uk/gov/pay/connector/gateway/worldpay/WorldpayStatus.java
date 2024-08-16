@@ -13,7 +13,9 @@ public enum WorldpayStatus {
     CANCELLED("CANCELLED", ChargeStatus.AUTHORISATION_CANCELLED),
     CAPTURED("CAPTURED", ChargeStatus.CAPTURED),
     ERROR("ERROR", ChargeStatus.AUTHORISATION_ERROR),
-    REFUSED("REFUSED", ChargeStatus.AUTHORISATION_REJECTED);
+    REFUSED("REFUSED", ChargeStatus.AUTHORISATION_REJECTED),
+    NULL("null", ChargeStatus.AUTHORISATION_ERROR);
+
 
     private final String worldpayStatus;
     private final ChargeStatus payStatus;
