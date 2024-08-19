@@ -305,7 +305,7 @@ public class GatewayAccountResource {
                     "email_collection_mode, corporate_credit_card_surcharge_amount, corporate_debit_card_surcharge_amount, " +
                     "corporate_prepaid_debit_card_surcharge_amount, allow_zero_amount, allow_moto, moto_mask_card_number_input, " +
                     "moto_mask_card_security_code_input, allow_telephone_payment_notifications, send_payer_ip_address_to_gateway, send_payer_email_to_gateway, " +
-                    "integration_version_3ds, send_reference_to_gateway, allow_authorisation_api or worldpay_exemption_engine_enabled using a JSON Patch-esque message body.",
+                    "integration_version_3ds, send_reference_to_gateway, allow_authorisation_api, worldpay_corporate_exemptions_enabled or worldpay_exemption_engine_enabled using a JSON Patch-esque message body.",
             tags = {"Gateway accounts"},
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
                     "    \"op\":\"replace\", \"path\":\"allow_apple_pay\", \"value\": true" +

@@ -52,6 +52,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED_REASON;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_RECURRING_ENABLED;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
@@ -586,6 +587,43 @@ class GatewayAccountServiceTest {
         Optional<GatewayAccountEntity> gatewayAccountEntity = gatewayAccountService.getGatewayAccountByExternal(externalId);
 
         assertThat(gatewayAccountEntity.get(), is(this.mockGatewayAccountEntity));
+    }
+
+
+    @Test
+    void shouldUpdateWorldpayCorporateExemptionsEnabledToFalse() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED,
+                "value", false)));
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn(WORLDPAY.getName());
+        when(mockGatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()).thenReturn(Optional.of(mockWorldpay3dsFlexCredentialsEntity));
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        InOrder inOrder = inOrder(mockWorldpay3dsFlexCredentialsEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockWorldpay3dsFlexCredentialsEntity).setCorporateExemptionEnabled(false);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
+    }
+
+    @Test
+    void shouldUpdateWorldpayCorporateExemptionsEnabledToTrue() {
+        JsonPatchRequest request = JsonPatchRequest.from(objectMapper.valueToTree(Map.of(
+                "op", "replace",
+                "path", FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED,
+                "value", true)));
+        when(mockGatewayAccountEntity.getGatewayName()).thenReturn(WORLDPAY.getName());
+        when(mockGatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()).thenReturn(Optional.of(mockWorldpay3dsFlexCredentialsEntity));
+        when(mockGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockGatewayAccountEntity));
+
+        Optional<GatewayAccount> optionalGatewayAccount = gatewayAccountService.doPatch(GATEWAY_ACCOUNT_ID, request);
+
+        InOrder inOrder = inOrder(mockWorldpay3dsFlexCredentialsEntity, mockGatewayAccountDao);
+        assertThat(optionalGatewayAccount.isPresent(), is(true));
+        inOrder.verify(mockWorldpay3dsFlexCredentialsEntity).setCorporateExemptionEnabled(true);
+        inOrder.verify(mockGatewayAccountDao).merge(mockGatewayAccountEntity);
     }
 
     @Test

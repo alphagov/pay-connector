@@ -64,6 +64,7 @@ import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequest
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_EMAIL_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_REFERENCE_TO_GATEWAY;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
@@ -265,6 +266,15 @@ public class GatewayAccountService {
             entry(
                     FIELD_SEND_REFERENCE_TO_GATEWAY,
                     (gatewayAccountRequest, gatewayAccountEntity) -> gatewayAccountEntity.setSendReferenceToGateway(gatewayAccountRequest.valueAsBoolean())
+            ),
+            entry(
+                    FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED,
+                    (gatewayAccountRequest, gatewayAccountEntity) -> {
+                        throwIfGatewayAccountIsNotWorldpay(gatewayAccountEntity, FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED);
+                        var worldpay3dsFlexCredentialsEntity = gatewayAccountEntity.getWorldpay3dsFlexCredentialsEntity()
+                                .orElseThrow(() -> new MissingWorldpay3dsFlexCredentialsEntityException(gatewayAccountEntity.getId(), FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED));
+                        worldpay3dsFlexCredentialsEntity.setCorporateExemptionEnabled(gatewayAccountRequest.valueAsBoolean());
+                    }
             ),
             entry(
                     FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
