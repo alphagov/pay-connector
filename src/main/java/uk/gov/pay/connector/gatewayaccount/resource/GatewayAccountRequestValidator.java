@@ -95,43 +95,21 @@ public class GatewayAccountRequestValidator {
             throw new ValidationException(Collections.singletonList(format("Operation [%s] not supported for path [%s]", FIELD_OPERATION, path)));
 
         switch (path) {
-            case FIELD_NOTIFY_SETTINGS:
-                validateNotifySettingsRequest(payload);
-                break;
-            case FIELD_EMAIL_COLLECTION_MODE:
-                validateEmailCollectionMode(payload);
-                break;
-            case FIELD_ALLOW_GOOGLE_PAY:
-            case FIELD_BLOCK_PREPAID_CARDS:
-            case FIELD_ALLOW_ZERO_AMOUNT:
-            case FIELD_ALLOW_APPLE_PAY:
-            case FIELD_ALLOW_MOTO:
-            case FIELD_MOTO_MASK_CARD_NUMBER_INPUT:
-            case FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT:
-            case FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS:
-            case FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED:
-            case FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED:
-            case FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY:
-            case FIELD_SEND_PAYER_EMAIL_TO_GATEWAY:
-            case FIELD_PROVIDER_SWITCH_ENABLED:
-            case FIELD_SEND_REFERENCE_TO_GATEWAY:
-            case FIELD_ALLOW_AUTHORISATION_API:
-            case FIELD_RECURRING_ENABLED:
-            case FIELD_DISABLED:
-                validateReplaceBooleanValue(payload);
-                break;
-            case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT:
-            case FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT:
-            case FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT:
-            case FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT:
-                validateCorporateCardSurchargePayload(payload);
-                break;
-            case FIELD_INTEGRATION_VERSION_3DS:
-                validateIntegrationVersion3ds(payload);
-                break;
-            case FIELD_DISABLED_REASON:
-                validateReplaceString(payload);
-                break;
+            case FIELD_NOTIFY_SETTINGS -> validateNotifySettingsRequest(payload);
+            case FIELD_EMAIL_COLLECTION_MODE -> validateEmailCollectionMode(payload);
+            case FIELD_ALLOW_GOOGLE_PAY, FIELD_BLOCK_PREPAID_CARDS, FIELD_ALLOW_ZERO_AMOUNT,
+                 FIELD_ALLOW_APPLE_PAY, FIELD_ALLOW_MOTO, FIELD_MOTO_MASK_CARD_NUMBER_INPUT,
+                 FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT, FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS,
+                 FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED, FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED,
+                 FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY, FIELD_SEND_PAYER_EMAIL_TO_GATEWAY,
+                 FIELD_PROVIDER_SWITCH_ENABLED, FIELD_SEND_REFERENCE_TO_GATEWAY,
+                 FIELD_ALLOW_AUTHORISATION_API, FIELD_RECURRING_ENABLED, FIELD_DISABLED
+                    -> validateReplaceBooleanValue(payload);
+            case FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT, FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT,
+                 FIELD_CORPORATE_PREPAID_CREDIT_CARD_SURCHARGE_AMOUNT, FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT
+                    -> validateCorporateCardSurchargePayload(payload);
+            case FIELD_INTEGRATION_VERSION_3DS -> validateIntegrationVersion3ds(payload);
+            case FIELD_DISABLED_REASON -> validateReplaceString(payload);
         }
     }
 
