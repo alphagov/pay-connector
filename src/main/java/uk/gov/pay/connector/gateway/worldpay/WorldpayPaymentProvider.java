@@ -264,27 +264,15 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private void calculateAndStoreExemption(ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
-        response.getBaseResponse().flatMap(WorldpayOrderStatusResponse::getExemptionResponseResult).ifPresent(exemption3ds -> {
-            switch (exemption3ds) {
-                case "HONOURED":
-                    updateChargeWithExemption3ds(EXEMPTION_HONOURED, charge, getExemptionReasonFromResponse(response));
-                    break;
-                case "REJECTED":
-                    updateChargeWithExemption3ds(EXEMPTION_REJECTED, charge, getExemptionReasonFromResponse(response));
-                    break;
-                case "OUT_OF_SCOPE":
-                    updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, charge, getExemptionReasonFromResponse(response));
-                    break;
-                default:
-                    LOGGER.warn("Received unrecognised exemption 3ds response result {} from Worldpay - " +
-                            "charge_external_id={}", exemption3ds, charge.getExternalId());
+        response.getBaseResponse().flatMap(WorldpayOrderStatusResponse::getExemptionResponse).ifPresent(exemptionResponse -> {
+            switch (exemptionResponse.result()) {
+                case "HONOURED" ->  updateChargeWithExemption3ds(EXEMPTION_HONOURED, charge, exemptionResponse.reason());
+                case "REJECTED" -> updateChargeWithExemption3ds(EXEMPTION_REJECTED, charge, exemptionResponse.reason());
+                case "OUT_OF_SCOPE" -> updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, charge, exemptionResponse.reason());
+                default -> LOGGER.warn("Received unrecognised exemption 3ds response result {} from Worldpay - " +
+                            "charge_external_id={}", exemptionResponse, charge.getExternalId());
             }
         });
-    }
-
-    private String getExemptionReasonFromResponse(GatewayResponse<WorldpayOrderStatusResponse> response) {
-        return response.getBaseResponse().map(baseResponse -> baseResponse.getExemptionResponseReason())
-                .orElse("NO REASON GIVEN");
     }
 
     public void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {

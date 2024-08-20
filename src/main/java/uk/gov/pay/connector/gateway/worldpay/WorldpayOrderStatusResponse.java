@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import javax.swing.text.html.Option;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.time.YearMonth;
 import java.util.HashMap;
@@ -141,6 +142,11 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
 
     public String getExemptionResponseReason() {
         return exemptionResponseReason;
+    }
+
+    public Optional<WorldpayExemptionResponse> getExemptionResponse() {
+        return Optional.ofNullable(exemptionResponseResult)
+                .map(result -> new WorldpayExemptionResponse(result, exemptionResponseReason));
     }
 
     public String getPaRequest() {

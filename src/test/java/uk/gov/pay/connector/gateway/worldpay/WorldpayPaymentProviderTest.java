@@ -545,7 +545,7 @@ class WorldpayPaymentProviderTest {
         worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(chargeEntity));
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
-        verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "NO REASON GIVEN", chargeEntity.getExternalId(), 2);
+        verifyLoggingWithOutExemptionReason(EXEMPTION_REJECTED, chargeEntity.getExternalId(), 2);
         verifyEventEmitted(chargeEntity, EXEMPTION_REJECTED);
     }
 
