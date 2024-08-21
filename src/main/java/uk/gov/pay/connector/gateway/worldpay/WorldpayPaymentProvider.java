@@ -264,28 +264,29 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     private void calculateAndStoreExemption(ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
-        response.getBaseResponse().flatMap(WorldpayOrderStatusResponse::getExemptionResponseResult).ifPresent(exemption3ds -> {
-            switch (exemption3ds) {
-                case "HONOURED":
-                    updateChargeWithExemption3ds(EXEMPTION_HONOURED, charge);
-                    break;
-                case "REJECTED":
-                    updateChargeWithExemption3ds(EXEMPTION_REJECTED, charge);
-                    break;
-                case "OUT_OF_SCOPE":
-                    updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, charge);
-                    break;
-                default:
-                    LOGGER.warn("Received unrecognised exemption 3ds response result {} from Worldpay - " +
-                            "charge_external_id={}", exemption3ds, charge.getExternalId());
+        response.getBaseResponse().flatMap(WorldpayOrderStatusResponse::getExemptionResponse).ifPresent(exemptionResponse -> {
+            switch (exemptionResponse.result()) {
+                case "HONOURED" ->  updateChargeWithExemption3ds(EXEMPTION_HONOURED, charge, exemptionResponse.reason());
+                case "REJECTED" -> updateChargeWithExemption3ds(EXEMPTION_REJECTED, charge, exemptionResponse.reason());
+                case "OUT_OF_SCOPE" -> updateChargeWithExemption3ds(EXEMPTION_OUT_OF_SCOPE, charge, exemptionResponse.reason());
+                default -> LOGGER.warn("Received unrecognised exemption 3ds response result {} from Worldpay - " +
+                            "charge_external_id={}", exemptionResponse, charge.getExternalId());
             }
         });
     }
 
-    @Transactional
     public void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge) {
+       updateChargeWithExemption3ds(exemption3ds, charge, null);
+    }
+
+    @Transactional
+    public void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge, String reason) {
         charge.setExemption3ds(exemption3ds);
-        LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
+        if (reason == null) {
+            LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
+        } else {
+            LOGGER.info("Updated exemption_3ds of charge to {} (reason {}) - charge_external_id={}", exemption3ds.name(), reason, charge.getExternalId());
+        }
         chargeDao.merge(charge);
         eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, Instant.now()));
     }
