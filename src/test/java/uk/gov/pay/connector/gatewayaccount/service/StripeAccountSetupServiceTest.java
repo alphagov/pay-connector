@@ -18,11 +18,17 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.BANK_ACCOUNT;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.COMPANY_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask.DIRECTOR;
@@ -58,6 +64,8 @@ class StripeAccountSetupServiceTest {
     private StripeAccountSetupTaskEntity mockOrganisationDetailsCompletedTaskEntity;
 
     private StripeAccountSetupService stripeAccountSetupService;
+    
+    private static final String EXPECTED_ERROR_MSG = "Gateway account type must be TEST and gateway name must be STRIPE";
 
     @BeforeEach
     public void setUp() {
@@ -165,6 +173,33 @@ class StripeAccountSetupServiceTest {
         stripeAccountSetupService.update(mockGatewayAccountEntity, Collections.singletonList(patchRequest));
 
         verify(mockStripeAccountSetupDao).removeCompletedTaskForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT);
+    }
+    
+    @Test
+    void completeTestAccountSetupShouldCompleteAllTasksForStripeTestAccounts() {
+        given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
+        given(mockGatewayAccountEntity.getGatewayName()).willReturn(STRIPE.getName());
+
+        stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity);
+
+        verify(mockStripeAccountSetupDao, times(7)).persist(any(StripeAccountSetupTaskEntity.class));
+    }
+
+    @Test
+    void completeTestAccountSetupShouldThrowIllegalArgExceptionIfAccountEntityIsNotTest() {
+        given(mockGatewayAccountEntity.getType()).willReturn(LIVE.toString());
+        var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
+        verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
+        assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
+    }
+
+    @Test
+    void completeTestAccountSetupShouldThrowIllegalArgExceptionIfAccountEntityIsNotStripe() {
+        given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
+        given(mockGatewayAccountEntity.getGatewayName()).willReturn(SANDBOX.getName());
+        var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
+        verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
+        assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
     }
 
     @Test

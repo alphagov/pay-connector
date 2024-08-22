@@ -11,6 +11,9 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest
 
 import java.util.List;
 
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+
 public class StripeAccountSetupService {
 
     private final StripeAccountSetupDao stripeAccountSetupDao;
@@ -67,6 +70,17 @@ public class StripeAccountSetupService {
                 stripeAccountSetupDao.removeCompletedTaskForGatewayAccount(gatewayAccountId, task);
             }
         });
+    }
+
+    @Transactional
+    public void completeTestAccountSetup(GatewayAccountEntity gatewayAccountEntity) {
+        if (gatewayAccountEntity.getType().equals(TEST.toString()) && gatewayAccountEntity.getGatewayName().equals(STRIPE.getName())) {
+            List.of(StripeAccountSetupTask.values()).forEach(task -> {
+                stripeAccountSetupDao.persist(new StripeAccountSetupTaskEntity(gatewayAccountEntity, task));
+            });
+        } else {
+            throw new IllegalArgumentException("Gateway account type must be TEST and gateway name must be STRIPE");
+        }
     }
 
 }

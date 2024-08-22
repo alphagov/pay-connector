@@ -105,9 +105,12 @@ public class GatewayAccountService {
     }
     
     @Transactional
-    public void disableAccount(Long gatewayAccountId) {
+    public void disableAccount(Long gatewayAccountId, String disabledReason) {
         gatewayAccountDao.findById(gatewayAccountId)
-                .ifPresent(gatewayAccountEntity -> gatewayAccountEntity.setDisabled(true));
+                .ifPresent(gatewayAccountEntity -> {
+                    gatewayAccountEntity.setDisabled(true);
+                    gatewayAccountEntity.setDisabledReason(disabledReason);
+                });
     }
 
     @Transactional
