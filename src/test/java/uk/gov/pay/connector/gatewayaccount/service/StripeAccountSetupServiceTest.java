@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -174,33 +175,6 @@ class StripeAccountSetupServiceTest {
 
         verify(mockStripeAccountSetupDao).removeCompletedTaskForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT);
     }
-    
-    @Test
-    void completeTestAccountSetupShouldCompleteAllTasksForStripeTestAccounts() {
-        given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
-        given(mockGatewayAccountEntity.getGatewayName()).willReturn(STRIPE.getName());
-
-        stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity);
-
-        verify(mockStripeAccountSetupDao, times(7)).persist(any(StripeAccountSetupTaskEntity.class));
-    }
-
-    @Test
-    void completeTestAccountSetupShouldThrowIllegalArgExceptionIfAccountEntityIsNotTest() {
-        given(mockGatewayAccountEntity.getType()).willReturn(LIVE.toString());
-        var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
-        verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
-        assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
-    }
-
-    @Test
-    void completeTestAccountSetupShouldThrowIllegalArgExceptionIfAccountEntityIsNotStripe() {
-        given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
-        given(mockGatewayAccountEntity.getGatewayName()).willReturn(SANDBOX.getName());
-        var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
-        verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
-        assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
-    }
 
     @Test
     void shouldRecordMultipleTasksCompleted() {
@@ -246,5 +220,35 @@ class StripeAccountSetupServiceTest {
 
         assertThat(entities.get(5).getGatewayAccount(), is(mockGatewayAccountEntity));
         assertThat(entities.get(5).getTask(), is(ORGANISATION_DETAILS));
+    }
+    
+    @Nested
+    class completeTestAccountSetup {
+        @Test
+        void shouldCompleteAllTasksForStripeTestAccounts() {
+            given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
+            given(mockGatewayAccountEntity.getGatewayName()).willReturn(STRIPE.getName());
+
+            stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity);
+
+            verify(mockStripeAccountSetupDao, times(7)).persist(any(StripeAccountSetupTaskEntity.class));
+        }
+
+        @Test
+        void shouldThrowIllegalArgExceptionIfAccountEntityIsNotTest() {
+            given(mockGatewayAccountEntity.getType()).willReturn(LIVE.toString());
+            var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
+            verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
+            assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
+        }
+
+        @Test
+        void shouldThrowIllegalArgExceptionIfAccountEntityIsNotStripe() {
+            given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
+            given(mockGatewayAccountEntity.getGatewayName()).willReturn(SANDBOX.getName());
+            var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
+            verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
+            assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
+        }   
     }
 }
