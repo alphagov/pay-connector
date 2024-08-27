@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.google.inject.persist.Transactional;
+import com.google.inject.persist.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -39,33 +40,11 @@ import static java.lang.String.format;
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_APPLE_PAY;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_AUTHORISATION_API;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_GOOGLE_PAY;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_MOTO;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_TELEPHONE_PAYMENT_NOTIFICATIONS;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_ALLOW_ZERO_AMOUNT;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_BLOCK_PREPAID_CARDS;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_CREDIT_CARD_SURCHARGE_AMOUNT;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_DEBIT_CARD_SURCHARGE_AMOUNT;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_CORPORATE_PREPAID_DEBIT_CARD_SURCHARGE_AMOUNT;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED_REASON;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_EMAIL_COLLECTION_MODE;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_INTEGRATION_VERSION_3DS;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_NUMBER_INPUT;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_MOTO_MASK_CARD_SECURITY_CODE_INPUT;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_NOTIFY_SETTINGS;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_PROVIDER_SWITCH_ENABLED;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_RECURRING_ENABLED;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_EMAIL_TO_GATEWAY;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_PAYER_IP_ADDRESS_TO_GATEWAY;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_SEND_REFERENCE_TO_GATEWAY;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_CORPORATE_EXEMPTIONS_ENABLED;
-import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_WORLDPAY_EXEMPTION_ENGINE_ENABLED;
+import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.*;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
@@ -81,17 +60,20 @@ public class GatewayAccountService {
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao;
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
-
+    private UnitOfWork unitOfWork;
+    
     @Inject
     public GatewayAccountService(GatewayAccountDao gatewayAccountDao, CardTypeDao cardTypeDao,
-                                 GatewayAccountCredentialsService gatewayAccountCredentialsService, 
-                                 GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao, 
-                                 GatewayAccountCredentialsDao gatewayAccountCredentialsDao) {
+                                 GatewayAccountCredentialsService gatewayAccountCredentialsService,
+                                 GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao,
+                                 GatewayAccountCredentialsDao gatewayAccountCredentialsDao,
+                                 UnitOfWork unitOfWork) {
         this.gatewayAccountDao = gatewayAccountDao;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.gatewayAccountCredentialsHistoryDao = gatewayAccountCredentialsHistoryDao;
         this.gatewayAccountCredentialsDao = gatewayAccountCredentialsDao;
+        this.unitOfWork = unitOfWork;
     }
 
     public Optional<GatewayAccountEntity> getGatewayAccount(long gatewayAccountId) {
@@ -103,7 +85,7 @@ public class GatewayAccountService {
                 .map(GatewayAccountResponse::new)
                 .collect(Collectors.toList());
     }
-    
+
     @Transactional
     public void disableAccount(Long gatewayAccountId, String disabledReason) {
         gatewayAccountDao.findById(gatewayAccountId)
@@ -135,43 +117,52 @@ public class GatewayAccountService {
                 });
     }
 
-    @Transactional
+    public GatewayAccountEntity createGatewayAccount(GatewayAccountRequest gatewayAccountRequest) {
+        unitOfWork.begin();
+        try {
+            GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConverter.createEntityFrom(gatewayAccountRequest);
+
+            if (gatewayAccountEntity.isLive() &&
+                    getGatewayAccountByServiceIdAndAccountType(gatewayAccountRequest.getServiceId(), LIVE).isPresent()) {
+                throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
+            }
+
+            if (!gatewayAccountEntity.isLive() && gatewayAccountRequest.getPaymentProvider().equalsIgnoreCase(STRIPE.getName())) {
+                throwIfStripeTestAccountAlreadyExists(gatewayAccountRequest.getServiceId());
+            }
+
+            LOGGER.info("Setting the new account to accept all card types by default");
+
+            gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
+
+            if (SANDBOX.getName().equalsIgnoreCase(gatewayAccountRequest.getPaymentProvider())) {
+                gatewayAccountEntity.setAllowApplePay(true);
+            }
+
+            gatewayAccountDao.persist(gatewayAccountEntity);
+
+            gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity,
+                    gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getCredentialsAsMap());
+
+            gatewayAccountDao.forceRefresh(gatewayAccountEntity);
+            return gatewayAccountEntity;
+        } finally {
+            unitOfWork.end();
+        }
+    }
+
     public CreateGatewayAccountResponse createGatewayAccount(GatewayAccountRequest gatewayAccountRequest, UriInfo uriInfo) {
-
-        GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConverter.createEntityFrom(gatewayAccountRequest);
-        
-        if (gatewayAccountEntity.isLive() && 
-                getGatewayAccountByServiceIdAndAccountType(gatewayAccountRequest.getServiceId(), LIVE).isPresent()) {
-            throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
-        }
-        
-        if (!gatewayAccountEntity.isLive() && gatewayAccountRequest.getPaymentProvider().equalsIgnoreCase("stripe")) {
-            throwIfStripeTestAccountAlreadyExists(gatewayAccountRequest.getServiceId());
-        }
-
-        LOGGER.info("Setting the new account to accept all card types by default");
-
-        gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
-
-        if (SANDBOX.getName().equalsIgnoreCase(gatewayAccountRequest.getPaymentProvider())) {
-            gatewayAccountEntity.setAllowApplePay(true);
-        }
-
-        gatewayAccountDao.persist(gatewayAccountEntity);
-
-        gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity,
-                gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getCredentialsAsMap());
-
-        return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
+        GatewayAccountEntity gatewayAccount = createGatewayAccount(gatewayAccountRequest);
+        return GatewayAccountObjectConverter.createResponseFrom(gatewayAccount, uriInfo);
     }
 
     private void throwIfStripeTestAccountAlreadyExists(String serviceId) {
         var maybeGatewayAccount = getGatewayAccountByServiceIdAndAccountType(serviceId, TEST);
-        if (maybeGatewayAccount.isPresent() && 
+        if (maybeGatewayAccount.isPresent() &&
                 maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().isPresent() &&
                 maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().get().getPaymentProvider().equalsIgnoreCase("stripe")) {
             GatewayAccountEntity stripeGatewayAccount = maybeGatewayAccount.get();
-            throw new MultipleStripeTestGatewayAccountsException(serviceId, stripeGatewayAccount.getExternalId(), 
+            throw new MultipleStripeTestGatewayAccountsException(serviceId, stripeGatewayAccount.getExternalId(),
                     stripeGatewayAccount.getCurrentOrActiveGatewayAccountCredential().get().getExternalId());
         }
     }
@@ -186,7 +177,7 @@ public class GatewayAccountService {
         if (accountType.equals(LIVE) && gatewayAccounts.size() > 1) {
             throw MultipleLiveGatewayAccountsException.multipleLiveGatewayAccounts(serviceId);
         }
-        
+
         return gatewayAccounts.stream().filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isSandboxGatewayAccount).findFirst())
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isWorldpayGatewayAccount).findFirst());
@@ -334,10 +325,10 @@ public class GatewayAccountService {
     @Transactional
     public void disableAccountsAndRedactOrDeleteCredentials(String serviceId) {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceId(serviceId);
-        
+
         LOGGER.info(format("Disabling gateway accounts %s for service.", gatewayAccounts.stream().map(GatewayAccountEntity::getExternalId).collect(Collectors.joining(","))),
                 kv(SERVICE_EXTERNAL_ID, serviceId));
-        
+
         gatewayAccounts.forEach(ga -> {
             ga.setDisabled(true);
             ga.setNotificationCredentials(null);

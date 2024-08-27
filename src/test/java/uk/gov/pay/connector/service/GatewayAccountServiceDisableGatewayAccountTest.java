@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.google.inject.persist.UnitOfWork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,7 +83,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
     void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mock(CardTypeDao.class),
                 mock(GatewayAccountCredentialsService.class), mockGatewayAccountCredentialsHistoryDao,
-                mockGatewayAccountCredentialsDao);
+                mockGatewayAccountCredentialsDao, mock(UnitOfWork.class));
         Logger root = (Logger) LoggerFactory.getLogger(GatewayAccountService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);

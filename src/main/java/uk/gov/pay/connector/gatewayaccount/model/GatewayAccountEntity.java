@@ -161,6 +161,7 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "provider_switch_enabled")
     private boolean providerSwitchEnabled;
+    
     @Column(name = "recurring_enabled")
     private boolean recurringEnabled;
 
@@ -549,5 +550,9 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public boolean isSandboxGatewayAccount() {
         return PaymentGatewayName.SANDBOX.getName().equals(this.getGatewayName());
+    }
+
+    public boolean isStripeTestAccount() {
+        return GatewayAccountType.TEST.toString().equals(this.getType()) && PaymentGatewayName.STRIPE.getName().equals(this.getGatewayName());
     }
 }

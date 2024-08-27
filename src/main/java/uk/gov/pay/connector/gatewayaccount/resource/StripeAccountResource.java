@@ -28,7 +28,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -71,11 +70,11 @@ public class StripeAccountResource {
     ) {
         var sandboxGatewayAccount = getSandboxGatewayAccount(serviceId);
 
-        Account stripeTestAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
-        stripeAccountService.createDefaultPersonForAccount(stripeTestAccount.getId());
+        Account stripeTestConnectAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
+        stripeAccountService.createDefaultPersonForAccount(stripeTestConnectAccount.getId());
 
         var stripeCredentials = new StripeCredentials();
-        stripeCredentials.setStripeAccountId(stripeTestAccount.getId());
+        stripeCredentials.setStripeAccountId(stripeTestConnectAccount.getId());
         StripeGatewayAccountRequest stripeGatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
                 .withProviderAccountType(TEST.toString())
                 .withDescription(String.format("Stripe test account for service %s", sandboxGatewayAccount.getServiceName()))
@@ -90,16 +89,13 @@ public class StripeAccountResource {
                 .withCredentials(stripeCredentials)
                 .build();
         
-        var createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(stripeGatewayAccountRequest, uriInfo);
-        GatewayAccountEntity testStripeAccount = gatewayAccountService.getGatewayAccountByExternal(createGatewayAccountResponse.externalId())
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, TEST));
-        
+        GatewayAccountEntity testStripeAccount = gatewayAccountService.createGatewayAccount(stripeGatewayAccountRequest);
         stripeAccountSetupService.completeTestAccountSetup(testStripeAccount);
-        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by Stripe test account [ext id: %s]", createGatewayAccountResponse.externalId()));
+        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by Stripe test account [ext id: %s]", testStripeAccount.getExternalId()));
 
-        Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestAccount.getId(),
-                "gateway_account_id", createGatewayAccountResponse.gatewayAccountId(),
-                "gateway_account_external_id", createGatewayAccountResponse.externalId());
+        Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestConnectAccount.getId(),
+                "gateway_account_id", testStripeAccount.getId().toString(),
+                "gateway_account_external_id", testStripeAccount.getExternalId());
         return Response.ok(response).build();
     }
 

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.StripeAccountSetupDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -46,8 +48,8 @@ class StripeAccountSetupServiceTest {
     @Mock
     private StripeAccountSetupDao mockStripeAccountSetupDao;
 
-    @Mock
-    private GatewayAccountEntity mockGatewayAccountEntity;
+    @Spy
+    private GatewayAccountEntity spyGatewayAccountEntity;
 
     @Mock
     private StripeAccountSetupTaskEntity mockBankDetailsCompletedTaskEntity;
@@ -139,46 +141,46 @@ class StripeAccountSetupServiceTest {
 
     @Test
     void shouldRecordBankAccountCompleted() {
-        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
+        given(spyGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         StripeAccountSetupUpdateRequest patchRequest = new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, true);
 
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT)).willReturn(false);
 
-        stripeAccountSetupService.update(mockGatewayAccountEntity, Collections.singletonList(patchRequest));
+        stripeAccountSetupService.update(spyGatewayAccountEntity, Collections.singletonList(patchRequest));
 
         ArgumentCaptor<StripeAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(StripeAccountSetupTaskEntity.class);
         verify(mockStripeAccountSetupDao).persist(entityArgumentCaptor.capture());
 
         StripeAccountSetupTaskEntity entity = entityArgumentCaptor.getValue();
-        assertThat(entity.getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entity.getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entity.getTask(), is(BANK_ACCOUNT));
     }
 
     @Test
     void shouldDoNothingWhenAskedToRecordBankAccountCompletedIfAlreadyRecorded() {
-        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
+        given(spyGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         StripeAccountSetupUpdateRequest patchRequest = new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, true);
 
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT)).willReturn(true);
 
-        stripeAccountSetupService.update(mockGatewayAccountEntity, Collections.singletonList(patchRequest));
+        stripeAccountSetupService.update(spyGatewayAccountEntity, Collections.singletonList(patchRequest));
 
         verify(mockStripeAccountSetupDao, never()).persist(any(StripeAccountSetupTaskEntity.class));
     }
 
     @Test
     void shouldRecordBankAccountNotCompleted() {
-        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
+        given(spyGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         StripeAccountSetupUpdateRequest patchRequest = new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, false);
 
-        stripeAccountSetupService.update(mockGatewayAccountEntity, Collections.singletonList(patchRequest));
+        stripeAccountSetupService.update(spyGatewayAccountEntity, Collections.singletonList(patchRequest));
 
         verify(mockStripeAccountSetupDao).removeCompletedTaskForGatewayAccount(GATEWAY_ACCOUNT_ID, BANK_ACCOUNT);
     }
 
     @Test
     void shouldRecordMultipleTasksCompleted() {
-        given(mockGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
+        given(spyGatewayAccountEntity.getId()).willReturn(GATEWAY_ACCOUNT_ID);
         List<StripeAccountSetupUpdateRequest> patchRequests = Arrays.asList(
                 new StripeAccountSetupUpdateRequest(BANK_ACCOUNT, true),
                 new StripeAccountSetupUpdateRequest(RESPONSIBLE_PERSON, true),
@@ -194,7 +196,7 @@ class StripeAccountSetupServiceTest {
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, GOVERNMENT_ENTITY_DOCUMENT)).willReturn(false);
         given(mockStripeAccountSetupDao.isTaskCompletedForGatewayAccount(GATEWAY_ACCOUNT_ID, ORGANISATION_DETAILS)).willReturn(false);
 
-        stripeAccountSetupService.update(mockGatewayAccountEntity, patchRequests);
+        stripeAccountSetupService.update(spyGatewayAccountEntity, patchRequests);
 
         ArgumentCaptor<StripeAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(StripeAccountSetupTaskEntity.class);
         verify(mockStripeAccountSetupDao, times(6)).persist(entityArgumentCaptor.capture());
@@ -203,22 +205,22 @@ class StripeAccountSetupServiceTest {
 
         assertThat(entities.size(), is(6));
 
-        assertThat(entities.get(0).getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entities.get(0).getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entities.get(0).getTask(), is(BANK_ACCOUNT));
 
-        assertThat(entities.get(1).getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entities.get(1).getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entities.get(1).getTask(), is(RESPONSIBLE_PERSON));
 
-        assertThat(entities.get(2).getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entities.get(2).getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entities.get(2).getTask(), is(VAT_NUMBER));
 
-        assertThat(entities.get(3).getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entities.get(3).getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entities.get(3).getTask(), is(DIRECTOR));
 
-        assertThat(entities.get(4).getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entities.get(4).getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entities.get(4).getTask(), is(GOVERNMENT_ENTITY_DOCUMENT));
 
-        assertThat(entities.get(5).getGatewayAccount(), is(mockGatewayAccountEntity));
+        assertThat(entities.get(5).getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entities.get(5).getTask(), is(ORGANISATION_DETAILS));
     }
     
@@ -226,27 +228,27 @@ class StripeAccountSetupServiceTest {
     class completeTestAccountSetup {
         @Test
         void shouldCompleteAllTasksForStripeTestAccounts() {
-            given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
-            given(mockGatewayAccountEntity.getGatewayName()).willReturn(STRIPE.getName());
+            doReturn(TEST.toString()).when(spyGatewayAccountEntity).getType();
+            doReturn(STRIPE.getName()).when(spyGatewayAccountEntity).getGatewayName();
 
-            stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity);
+            stripeAccountSetupService.completeTestAccountSetup(spyGatewayAccountEntity);
 
             verify(mockStripeAccountSetupDao, times(7)).persist(any(StripeAccountSetupTaskEntity.class));
         }
 
         @Test
         void shouldThrowIllegalArgExceptionIfAccountEntityIsNotTest() {
-            given(mockGatewayAccountEntity.getType()).willReturn(LIVE.toString());
-            var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
+            doReturn(LIVE.toString()).when(spyGatewayAccountEntity).getType();
+            var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(spyGatewayAccountEntity));
             verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
             assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
         }
 
         @Test
         void shouldThrowIllegalArgExceptionIfAccountEntityIsNotStripe() {
-            given(mockGatewayAccountEntity.getType()).willReturn(TEST.toString());
-            given(mockGatewayAccountEntity.getGatewayName()).willReturn(SANDBOX.getName());
-            var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(mockGatewayAccountEntity));
+            doReturn(TEST.toString()).when(spyGatewayAccountEntity).getType();
+            doReturn(SANDBOX.getName()).when(spyGatewayAccountEntity).getGatewayName();
+            var ex = assertThrows(IllegalArgumentException.class, () -> stripeAccountSetupService.completeTestAccountSetup(spyGatewayAccountEntity));
             verify(mockStripeAccountSetupDao, times(0)).persist(any(StripeAccountSetupTaskEntity.class));
             assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
         }   

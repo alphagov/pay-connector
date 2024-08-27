@@ -3,6 +3,7 @@ package uk.gov.pay.connector.service;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import com.google.inject.persist.UnitOfWork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.MultipleLiveGatewayAccountsException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccount.service.StripeAccountSetupService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsHistoryDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -60,7 +62,7 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
     @BeforeEach
     void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mockCardTypeDao,
-                mockGatewayAccountCredentialsService, mock(GatewayAccountCredentialsHistoryDao.class), mock(GatewayAccountCredentialsDao.class));
+                mockGatewayAccountCredentialsService, mock(GatewayAccountCredentialsHistoryDao.class), mock(GatewayAccountCredentialsDao.class), mock(UnitOfWork.class));
         
         stripeGatewayAccount = new GatewayAccountEntity(TEST);
         var stripeGatewayAccountCreds = new GatewayAccountCredentialsEntity(stripeGatewayAccount, "stripe", Map.of(), ACTIVE);
