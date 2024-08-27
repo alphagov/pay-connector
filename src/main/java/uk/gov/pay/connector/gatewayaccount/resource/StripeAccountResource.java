@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
-import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountResponse;
@@ -17,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.StripeGatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountService;
+import uk.gov.pay.connector.gatewayaccount.service.StripeAccountSetupService;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -28,10 +28,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @Path("/")
@@ -39,15 +39,18 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 public class StripeAccountResource {
 
     private final StripeAccountService stripeAccountService;
+    private final StripeAccountSetupService stripeAccountSetupService;
     private final GatewayAccountService gatewayAccountService;
 
     @Inject
-    public StripeAccountResource(StripeAccountService stripeAccountService,
+    public StripeAccountResource(StripeAccountService stripeAccountService, 
+                                 StripeAccountSetupService stripeAccountSetupService,
                                  GatewayAccountService gatewayAccountService) {
         this.stripeAccountService = stripeAccountService;
+        this.stripeAccountSetupService = stripeAccountSetupService;
         this.gatewayAccountService = gatewayAccountService;
     }
-    
+
     @POST
     @Path("/v1/api/service/{serviceId}/request-stripe-test-account")
     @Produces(APPLICATION_JSON)
@@ -67,30 +70,33 @@ public class StripeAccountResource {
     ) {
         var sandboxGatewayAccount = getSandboxGatewayAccount(serviceId);
 
-        Account stripeTestAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
-        stripeAccountService.createDefaultPersonForAccount(stripeTestAccount.getId());
+        Account stripeTestConnectAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
+        stripeAccountService.createDefaultPersonForAccount(stripeTestConnectAccount.getId());
 
         var stripeCredentials = new StripeCredentials();
-        stripeCredentials.setStripeAccountId(stripeTestAccount.getId());
-        StripeGatewayAccountRequest gatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
+        stripeCredentials.setStripeAccountId(stripeTestConnectAccount.getId());
+        StripeGatewayAccountRequest stripeGatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
                 .withProviderAccountType(TEST.toString())
+                .withDescription(String.format("Stripe test account for service %s", sandboxGatewayAccount.getServiceName()))
                 .withServiceName(sandboxGatewayAccount.getServiceName())
                 .withServiceId(sandboxGatewayAccount.getServiceId())
                 .withDescription(sandboxGatewayAccount.getDescription())
                 .withAnalyticsId(sandboxGatewayAccount.getAnalyticsId())
-                .withPaymentProvider("stripe")
+                .withPaymentProvider(STRIPE.getName())
                 .withRequires3ds(sandboxGatewayAccount.isRequires3ds())
                 .withAllowApplePay(sandboxGatewayAccount.isAllowApplePay())
                 .withAllowGooglePay(sandboxGatewayAccount.isAllowGooglePay())
                 .withCredentials(stripeCredentials)
                 .build();
-        var createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
-        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId());
+        
+        GatewayAccountEntity stripeTestGatewayAccount = gatewayAccountService.createGatewayAccount(stripeGatewayAccountRequest);
+        stripeAccountSetupService.completeTestAccountSetup(stripeTestGatewayAccount);
+        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by Stripe test account [ext id: %s]", stripeTestGatewayAccount.getExternalId()));
 
-        Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestAccount.getId(),
-                "gateway_account_id", createGatewayAccountResponse.gatewayAccountId(),
-                "gateway_account_external_id", createGatewayAccountResponse.externalId());
-        return Response.ok(response).build();   
+        Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestConnectAccount.getId(),
+                "gateway_account_id", stripeTestGatewayAccount.getId().toString(),
+                "gateway_account_external_id", stripeTestGatewayAccount.getExternalId());
+        return Response.ok(response).build();
     }
 
     private GatewayAccountEntity getSandboxGatewayAccount(String serviceId) {

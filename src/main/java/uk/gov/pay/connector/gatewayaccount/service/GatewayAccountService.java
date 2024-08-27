@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
 import com.google.inject.persist.Transactional;
+import com.google.inject.persist.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -39,6 +40,7 @@ import static java.lang.String.format;
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -81,17 +83,20 @@ public class GatewayAccountService {
     private final GatewayAccountCredentialsService gatewayAccountCredentialsService;
     private final GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao;
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
-
+    private UnitOfWork unitOfWork;
+    
     @Inject
     public GatewayAccountService(GatewayAccountDao gatewayAccountDao, CardTypeDao cardTypeDao,
-                                 GatewayAccountCredentialsService gatewayAccountCredentialsService, 
-                                 GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao, 
-                                 GatewayAccountCredentialsDao gatewayAccountCredentialsDao) {
+                                 GatewayAccountCredentialsService gatewayAccountCredentialsService,
+                                 GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao,
+                                 GatewayAccountCredentialsDao gatewayAccountCredentialsDao,
+                                 UnitOfWork unitOfWork) {
         this.gatewayAccountDao = gatewayAccountDao;
         this.cardTypeDao = cardTypeDao;
         this.gatewayAccountCredentialsService = gatewayAccountCredentialsService;
         this.gatewayAccountCredentialsHistoryDao = gatewayAccountCredentialsHistoryDao;
         this.gatewayAccountCredentialsDao = gatewayAccountCredentialsDao;
+        this.unitOfWork = unitOfWork;
     }
 
     public Optional<GatewayAccountEntity> getGatewayAccount(long gatewayAccountId) {
@@ -103,11 +108,14 @@ public class GatewayAccountService {
                 .map(GatewayAccountResponse::new)
                 .collect(Collectors.toList());
     }
-    
+
     @Transactional
-    public void disableAccount(Long gatewayAccountId) {
+    public void disableAccount(Long gatewayAccountId, String disabledReason) {
         gatewayAccountDao.findById(gatewayAccountId)
-                .ifPresent(gatewayAccountEntity -> gatewayAccountEntity.setDisabled(true));
+                .ifPresent(gatewayAccountEntity -> {
+                    gatewayAccountEntity.setDisabled(true);
+                    gatewayAccountEntity.setDisabledReason(disabledReason);
+                });
     }
 
     @Transactional
@@ -132,43 +140,52 @@ public class GatewayAccountService {
                 });
     }
 
-    @Transactional
+    public GatewayAccountEntity createGatewayAccount(GatewayAccountRequest gatewayAccountRequest) {
+        unitOfWork.begin();
+        try {
+            GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConverter.createEntityFrom(gatewayAccountRequest);
+
+            if (gatewayAccountEntity.isLive() &&
+                    getGatewayAccountByServiceIdAndAccountType(gatewayAccountRequest.getServiceId(), LIVE).isPresent()) {
+                throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
+            }
+
+            if (!gatewayAccountEntity.isLive() && gatewayAccountRequest.getPaymentProvider().equalsIgnoreCase(STRIPE.getName())) {
+                throwIfStripeTestAccountAlreadyExists(gatewayAccountRequest.getServiceId());
+            }
+
+            LOGGER.info("Setting the new account to accept all card types by default");
+
+            gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
+
+            if (SANDBOX.getName().equalsIgnoreCase(gatewayAccountRequest.getPaymentProvider())) {
+                gatewayAccountEntity.setAllowApplePay(true);
+            }
+
+            gatewayAccountDao.persist(gatewayAccountEntity);
+
+            gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity,
+                    gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getCredentialsAsMap());
+
+            gatewayAccountDao.forceRefresh(gatewayAccountEntity);
+            return gatewayAccountEntity;
+        } finally {
+            unitOfWork.end();
+        }
+    }
+
     public CreateGatewayAccountResponse createGatewayAccount(GatewayAccountRequest gatewayAccountRequest, UriInfo uriInfo) {
-
-        GatewayAccountEntity gatewayAccountEntity = GatewayAccountObjectConverter.createEntityFrom(gatewayAccountRequest);
-        
-        if (gatewayAccountEntity.isLive() && 
-                getGatewayAccountByServiceIdAndAccountType(gatewayAccountRequest.getServiceId(), LIVE).isPresent()) {
-            throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
-        }
-        
-        if (!gatewayAccountEntity.isLive() && gatewayAccountRequest.getPaymentProvider().equalsIgnoreCase("stripe")) {
-            throwIfStripeTestAccountAlreadyExists(gatewayAccountRequest.getServiceId());
-        }
-
-        LOGGER.info("Setting the new account to accept all card types by default");
-
-        gatewayAccountEntity.setCardTypes(cardTypeDao.findAllNon3ds());
-
-        if (SANDBOX.getName().equalsIgnoreCase(gatewayAccountRequest.getPaymentProvider())) {
-            gatewayAccountEntity.setAllowApplePay(true);
-        }
-
-        gatewayAccountDao.persist(gatewayAccountEntity);
-
-        gatewayAccountCredentialsService.createGatewayAccountCredentials(gatewayAccountEntity,
-                gatewayAccountRequest.getPaymentProvider(), gatewayAccountRequest.getCredentialsAsMap());
-
-        return GatewayAccountObjectConverter.createResponseFrom(gatewayAccountEntity, uriInfo);
+        GatewayAccountEntity gatewayAccount = createGatewayAccount(gatewayAccountRequest);
+        return GatewayAccountObjectConverter.createResponseFrom(gatewayAccount, uriInfo);
     }
 
     private void throwIfStripeTestAccountAlreadyExists(String serviceId) {
         var maybeGatewayAccount = getGatewayAccountByServiceIdAndAccountType(serviceId, TEST);
-        if (maybeGatewayAccount.isPresent() && 
+        if (maybeGatewayAccount.isPresent() &&
                 maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().isPresent() &&
                 maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().get().getPaymentProvider().equalsIgnoreCase("stripe")) {
             GatewayAccountEntity stripeGatewayAccount = maybeGatewayAccount.get();
-            throw new MultipleStripeTestGatewayAccountsException(serviceId, stripeGatewayAccount.getExternalId(), 
+            throw new MultipleStripeTestGatewayAccountsException(serviceId, stripeGatewayAccount.getExternalId(),
                     stripeGatewayAccount.getCurrentOrActiveGatewayAccountCredential().get().getExternalId());
         }
     }
@@ -183,7 +200,7 @@ public class GatewayAccountService {
         if (accountType.equals(LIVE) && gatewayAccounts.size() > 1) {
             throw MultipleLiveGatewayAccountsException.multipleLiveGatewayAccounts(serviceId);
         }
-        
+
         return gatewayAccounts.stream().filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isSandboxGatewayAccount).findFirst())
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isWorldpayGatewayAccount).findFirst());
@@ -331,10 +348,10 @@ public class GatewayAccountService {
     @Transactional
     public void disableAccountsAndRedactOrDeleteCredentials(String serviceId) {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceId(serviceId);
-        
+
         LOGGER.info(format("Disabling gateway accounts %s for service.", gatewayAccounts.stream().map(GatewayAccountEntity::getExternalId).collect(Collectors.joining(","))),
                 kv(SERVICE_EXTERNAL_ID, serviceId));
-        
+
         gatewayAccounts.forEach(ga -> {
             ga.setDisabled(true);
             ga.setNotificationCredentials(null);

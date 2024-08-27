@@ -20,19 +20,20 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class StripeAccountResourceIT {
-    
+
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    
+
     public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
 
     private static final String STRIPE_ACCOUNT_ID = "acct_123example123";
-    
+
     static {
         Stripe.overrideApiBase("http://localhost:" + app.getStripeWireMockServer().port());
     }
@@ -44,7 +45,7 @@ public class StripeAccountResourceIT {
         app.getStripeMockClient().mockRetrieveAccount();
         app.getStripeMockClient().mockRetrievePersonCollection();
         app.getStripeMockClient().mockCreateRepresentativeForConnectAccount();
-        
+
         String serviceId = RandomIdGenerator.randomUuid();
         var createGatewayAccountResponse = setupSandboxGatewayAccount(serviceId, "Ollivander's wand shop");
 
@@ -55,14 +56,14 @@ public class StripeAccountResourceIT {
                 .body("gateway_account_id", not(createGatewayAccountResponse.gatewayAccountId()))
                 .body("gateway_account_external_id", is(notNullValue()))
                 .body("gateway_account_id", not(createGatewayAccountResponse.externalId()));
-        
+
         // Assert API calls to Stripe
         app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts")));
         app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/external_accounts")));
         app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/persons")));
 
         // Assert Stripe test account created in connector
-        app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
+        var externalId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
                 .then()
                 .statusCode(200)
                 .body("gateway_account_id", not(createGatewayAccountResponse.gatewayAccountId()))
@@ -80,10 +81,26 @@ public class StripeAccountResourceIT {
                 .body("gateway_account_credentials[0].payment_provider", is("stripe"))
                 .body("gateway_account_credentials[0].state", is("ACTIVE"))
                 .body("gateway_account_credentials[0].credentials.stripe_account_id", is("acct_123"))
-                .body("gateway_account_credentials[0].external_id", is(notNullValue(String.class)));
+                .body("gateway_account_credentials[0].external_id", is(notNullValue(String.class)))
+                .extract().path("external_id");
+        
+        // Assert all setup tasks are completed
+        app.givenSetup().get(format("/v1/api/service/%s/account/test/stripe-setup", serviceId))
+                .then()
+                .statusCode(200)
+                .body("bank_account", is(true))
+                .body("responsible_person", is(true))
+                .body("vat_number", is(true))
+                .body("company_number", is(true))
+                .body("director", is(true))
+                .body("government_entity_document", is(true))
+                .body("organisation_details", is(true));
 
         // Assert old sandbox account is disabled
-        assertTrue((Boolean) app.getDatabaseTestHelper().getGatewayAccount(Long.valueOf(createGatewayAccountResponse.gatewayAccountId())).get("disabled"));
+        var oldSandboxAccount = app.getDatabaseTestHelper().getGatewayAccount(Long.valueOf(createGatewayAccountResponse.gatewayAccountId()));
+        
+        assertTrue((Boolean) oldSandboxAccount.get("disabled"));
+        assertEquals(String.format("Superseded by Stripe test account [ext id: %s]", externalId), oldSandboxAccount.get("disabled_reason"));
     }
 
     private CreateGatewayAccountResponse setupSandboxGatewayAccount(String serviceId, String serviceName) {
@@ -97,7 +114,7 @@ public class StripeAccountResourceIT {
                 .statusCode(201)
                 .extract().body().as(CreateGatewayAccountResponse.class);
     }
-    
+
     @Test
     void shouldNotBeAbleToRequestTestStripeAccountIfAlreadyExists() {
         String serviceId = RandomIdGenerator.randomUuid();
@@ -114,7 +131,7 @@ public class StripeAccountResourceIT {
                 .then().statusCode(409)
                 .body("message", contains("Cannot request Stripe test account because a Stripe test account already exists."));
     }
-    
+
     @Test
     void returnBadRequestIfSandboxGatewayAccountDoesNotExist() {
         String serviceId = RandomIdGenerator.randomUuid();
@@ -131,7 +148,7 @@ public class StripeAccountResourceIT {
                 .then().statusCode(409)
                 .body("message", contains("Cannot request Stripe test account because existing test account is not a Sandbox one."));
     }
-    
+
     @Test
     void returnNotFoundIfServiceDoesNotExist() {
         app.givenSetup().post("/v1/api/service/doesNotExist/request-stripe-test-account")
@@ -147,14 +164,14 @@ public class StripeAccountResourceIT {
                     .withPaymentProvider("stripe")
                     .withCredentials(Collections.singletonMap("stripe_account_id", STRIPE_ACCOUNT_ID))
                     .insert();
-    
+
             app.givenSetup()
                     .get("/v1/api/accounts/" + testAccount.getAccountId() + "/stripe-account")
                     .then()
                     .statusCode(200)
                     .body("stripe_account_id", is(STRIPE_ACCOUNT_ID));
         }
-    
+
         @Test
         void returnsNotFoundResponseWhenGatewayAccountNotFound() {
             app.givenSetup()
@@ -162,7 +179,7 @@ public class StripeAccountResourceIT {
                     .then()
                     .statusCode(404);
         }
-    
+
         @Test
         void returnsNotFoundResponseWhenGatewayAccountIsNotStripe() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
@@ -170,13 +187,13 @@ public class StripeAccountResourceIT {
                     .withPaymentProvider("sandbox")
                     .withCredentials(Collections.singletonMap("stripe_account_id", STRIPE_ACCOUNT_ID))
                     .insert();
-    
+
             app.givenSetup()
                     .get("/v1/api/accounts/" + testAccount.getAccountId() + "/stripe-account")
                     .then()
                     .statusCode(404);
         }
-    
+
         @Test
         void returnsNotFoundResponseWhenGatewayAccountCredentialsAreEmpty() {
             DatabaseFixtures.TestAccount testAccount = app.getDatabaseFixtures()
@@ -184,14 +201,14 @@ public class StripeAccountResourceIT {
                     .withPaymentProvider("stripe")
                     .withCredentials(Collections.emptyMap())
                     .insert();
-    
+
             app.givenSetup()
                     .get("/v1/api/accounts/" + testAccount.getAccountId() + "/stripe-account")
                     .then()
                     .statusCode(404);
         }
     }
-    
+
     @Nested
     class GetStripeAccountByServiceIdAndAccountType {
         @Test

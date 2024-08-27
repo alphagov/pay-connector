@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.persist.UnitOfWork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,7 +91,7 @@ class GatewayAccountServiceTest {
     @BeforeEach
     void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mockCardTypeDao,
-                mockGatewayAccountCredentialsService, mock(GatewayAccountCredentialsHistoryDao.class), mock(GatewayAccountCredentialsDao.class));
+                mockGatewayAccountCredentialsService, mock(GatewayAccountCredentialsHistoryDao.class), mock(GatewayAccountCredentialsDao.class), mock(UnitOfWork.class));
         lenient().when(mockGatewayAccountEntity.getType()).thenReturn("test");
         lenient().when(getMockGatewayAccountEntity1.getType()).thenReturn("test");
         lenient().when(getMockGatewayAccountEntity1.getServiceName()).thenReturn("service one");

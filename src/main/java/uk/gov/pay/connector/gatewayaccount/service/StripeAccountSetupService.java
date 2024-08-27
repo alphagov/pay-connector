@@ -69,4 +69,14 @@ public class StripeAccountSetupService {
         });
     }
 
+    @Transactional
+    public void completeTestAccountSetup(GatewayAccountEntity gatewayAccountEntity) {
+        if (gatewayAccountEntity.isStripeTestAccount()) {
+            List.of(StripeAccountSetupTask.values()).forEach(task -> {
+                stripeAccountSetupDao.persist(new StripeAccountSetupTaskEntity(gatewayAccountEntity, task));
+            });
+        } else {
+            throw new IllegalArgumentException("Gateway account type must be TEST and gateway name must be STRIPE");
+        }
+    }
 }
