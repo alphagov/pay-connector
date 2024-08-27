@@ -89,13 +89,13 @@ public class StripeAccountResource {
                 .withCredentials(stripeCredentials)
                 .build();
         
-        GatewayAccountEntity testStripeAccount = gatewayAccountService.createGatewayAccount(stripeGatewayAccountRequest);
-        stripeAccountSetupService.completeTestAccountSetup(testStripeAccount);
-        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by Stripe test account [ext id: %s]", testStripeAccount.getExternalId()));
+        GatewayAccountEntity stripeTestGatewayAccount = gatewayAccountService.createGatewayAccount(stripeGatewayAccountRequest);
+        stripeAccountSetupService.completeTestAccountSetup(stripeTestGatewayAccount);
+        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by Stripe test account [ext id: %s]", stripeTestGatewayAccount.getExternalId()));
 
         Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestConnectAccount.getId(),
-                "gateway_account_id", testStripeAccount.getId().toString(),
-                "gateway_account_external_id", testStripeAccount.getExternalId());
+                "gateway_account_id", stripeTestGatewayAccount.getId().toString(),
+                "gateway_account_external_id", stripeTestGatewayAccount.getExternalId());
         return Response.ok(response).build();
     }
 
