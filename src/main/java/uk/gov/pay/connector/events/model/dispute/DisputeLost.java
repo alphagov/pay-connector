@@ -6,6 +6,9 @@ import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
 
 import java.time.Instant;
 
+/**
+ * This event represents a dispute that was lost by a service.
+ */
 public class DisputeLost extends DisputeEvent {
     public DisputeLost(String resourceExternalId, String parentResourceExternalId, String serviceId, Boolean live,
                        DisputeLostEventDetails eventDetails, Instant eventDate) {
