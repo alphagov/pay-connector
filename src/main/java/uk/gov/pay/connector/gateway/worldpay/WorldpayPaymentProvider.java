@@ -7,6 +7,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
@@ -62,6 +63,7 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
 import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.OPTIMISED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
@@ -208,14 +210,20 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
 
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
+        boolean corporateExemptionsEnabled = isCorporateExemptionsEnabled(request);
+        boolean cardIsCorporate = isCorporateCard(request);
+        
         GatewayResponse<WorldpayOrderStatusResponse> response;
+        Exemption3dsType exemptionType = corporateExemptionsEnabled && cardIsCorporate ? CORPORATE : OPTIMISED;
 
-        if (!exemptionEngineEnabled) {
-            response = worldpayAuthoriseHandler.authoriseWithoutExemption(request);
-        } else {
-            charge = updateChargeWithRequested3dsExemption(charge);
-            response = worldpayAuthoriseHandler.authoriseWithExemption(request);
+        if (exemptionEngineEnabled || corporateExemptionsEnabled) {
+            charge = updateChargeWithRequested3dsExemption(charge, exemptionType);
         }
+        
+        response = exemptionEngineEnabled
+                ? worldpayAuthoriseHandler.authoriseWithExemption(request)
+                : worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+        
 
         calculateAndStoreExemption(exemptionEngineEnabled, charge, response);
 
@@ -292,9 +300,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Transactional
-    public ChargeEntity updateChargeWithRequested3dsExemption(ChargeEntity chargeEntity) {
-        chargeEntity.setExemption3dsRequested(OPTIMISED);
-        LOGGER.info("Requesting {} exemption - charge_external_id={}", "OPTIMISED", chargeEntity.getExternalId());
+    public ChargeEntity updateChargeWithRequested3dsExemption(ChargeEntity chargeEntity, Exemption3dsType exemption3dsType) {
+        chargeEntity.setExemption3dsRequested(exemption3dsType);
+        LOGGER.info("Requesting {} exemption - charge_external_id={}", exemption3dsType, chargeEntity.getExternalId());
         eventService.emitAndRecordEvent(Requested3dsExemption.from(chargeEntity, Instant.now()));
 
         return chargeDao.merge(chargeEntity);
@@ -305,6 +313,18 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return gatewayAccount.isRequires3ds() && gatewayAccount.getWorldpay3dsFlexCredentials()
                 .map(Worldpay3dsFlexCredentials::isExemptionEngineEnabled)
                 .orElse(false);
+    }
+    
+    private boolean isCorporateExemptionsEnabled(CardAuthorisationGatewayRequest request) {
+        GatewayAccountEntity gatewayAccount = request.getGatewayAccount();
+        return gatewayAccount.isRequires3ds() && gatewayAccount.getWorldpay3dsFlexCredentials()
+                .map(Worldpay3dsFlexCredentials::isCorporateExemptionsEnabled)
+                .orElse(false);
+    }
+    
+    private boolean isCorporateCard(CardAuthorisationGatewayRequest request) {
+        AuthCardDetails authCardDetails = request.getAuthCardDetails();
+        return authCardDetails.isCorporateCard();
     }
 
     @Override
