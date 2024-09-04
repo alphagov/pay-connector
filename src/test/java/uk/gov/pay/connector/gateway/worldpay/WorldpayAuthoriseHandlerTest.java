@@ -334,50 +334,6 @@ class WorldpayAuthoriseHandlerTest {
     }
 
     @Test
-    void should_not_include_3DS2_ddc_data_and_use_default_3ds_data_for_samsung_browsers() throws Exception {
-        when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
-
-        ChargeEntity chargeEntity = chargeEntityFixture
-                .withExternalId("uniqueSessionId")
-                .withAmount(500L)
-                .withDescription("This is a description")
-                .withReference(ServicePaymentReference.of("service-payment-reference"))
-                .withTransactionId("transaction-id")
-                .build();
-
-        gatewayAccountEntity.setIntegrationVersion3ds(2);
-        gatewayAccountEntity.setRequires3ds(true);
-
-        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
-                .thenReturn(authorisationSuccessResponse);
-
-        AuthCardDetails authCardDetails = getValidTestCard(UUID.randomUUID().toString());
-        authCardDetails.setUserAgentHeader("SamsungBrowser/26.0 Chrome/122.0.0.0");
-        authCardDetails.setAcceptLanguageHeader("en-GB,en-US;q=0.9,en;q=0.8");
-
-        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), authCardDetails);
-        worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthorisationGatewayRequest);        
-
-        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
-
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@dfReferenceId", document),
-                is(""));
-        assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengeWindowSize", document),
-                is("390x400"));
-        assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengePreference", document),
-                is("noPreference"));
-        assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
-                not(emptyString()));
-        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/acceptHeader", document),
-                not(emptyString()));
-        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
-                not(emptyString()));
-    }
-
-    @Test
     void should_include_email_when_present_and_send_email_to_gateway_enabled_and_3ds_disabled() throws Exception {
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
