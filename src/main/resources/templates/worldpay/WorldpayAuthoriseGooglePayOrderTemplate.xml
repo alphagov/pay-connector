@@ -34,18 +34,10 @@
             </shopper>
             </#if>
             <#if googlePayPaymentData.paymentInfo.worldpay3dsFlexDdcResult.isPresent()>
-                <#if userAgentHeader?contains("SamsungBrowser/26")>
-                        <additional3DSData
-                        dfReferenceId=""
-                        javaScriptEnabled="false"
-                        challengeWindowSize="390x400" challengePreference="noPreference"
-                        />
-                <#else>
             <additional3DSData
                 dfReferenceId="${googlePayPaymentData.paymentInfo.worldpay3dsFlexDdcResult.get()?xml}"
                 challengeWindowSize="390x400" challengePreference="noPreference"
             />
-                </#if>
             </#if>
         </order>
     </submit>

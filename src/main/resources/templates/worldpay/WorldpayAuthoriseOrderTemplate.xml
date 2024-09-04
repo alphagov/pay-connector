@@ -68,18 +68,10 @@
             </#if>
             <#if requires3ds>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>
-                <#if authCardDetails.userAgentHeader?contains("SamsungBrowser/26")>
-                    <additional3DSData
-                    dfReferenceId=""
-                    javaScriptEnabled="false"
-                    challengeWindowSize="390x400" challengePreference="noPreference"
-                    />
-                <#else>
-                    <additional3DSData
-                    dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()?xml}"
-                    challengeWindowSize="390x400" challengePreference="noPreference"
-                    />
-                </#if>
+            <additional3DSData
+                dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()?xml}"
+                challengeWindowSize="390x400" challengePreference="noPreference"
+            />
             </#if>
             <#if authCardDetails.worldpay3dsFlexDdcResult.isEmpty() && integrationVersion3ds == 2>
             <additional3DSData

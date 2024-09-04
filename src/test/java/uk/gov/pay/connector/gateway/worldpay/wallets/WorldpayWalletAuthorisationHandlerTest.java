@@ -8,7 +8,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.w3c.dom.Document;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -17,18 +16,15 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
-import uk.gov.pay.connector.util.XPathUtils;
-import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
-import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
+import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -38,9 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -252,40 +246,6 @@ class WorldpayWalletAuthorisationHandlerTest {
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
-        }
-    }
-
-    @Test
-    void shouldSendGooglePay3dsRequestWithDefault3DSDataForSamsungBrowsers() throws Exception {
-        try {
-
-            String fixturePath = "googlepay/example-3ds-auth-request-with-ddc-samsung-browser.json";
-            GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(
-                    load(fixturePath), GooglePayAuthRequest.class);
-            chargeEntity.getGatewayAccount().setRequires3ds(true);
-            chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(false);
-            chargeEntity.setExternalId(GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS);
-            GooglePayAuthorisationGatewayRequest googlePayAuthorisationGatewayRequest
-                    = new GooglePayAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
-
-            worldpayWalletAuthorisationHandler.authoriseGooglePay(googlePayAuthorisationGatewayRequest);
-        } catch (GatewayErrorException e) {
-            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-
-            Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-            XPath xPath = XPathFactory.newInstance().newXPath();
-            assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@dfReferenceId", document),
-                    is(""));
-            assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengeWindowSize", document),
-                    is("390x400"));
-            assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengePreference", document),
-                    is("noPreference"));
-            assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
-                    not(emptyString()));
-            assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/acceptHeader", document),
-                    not(emptyString()));
-            assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
-                    not(emptyString()));
         }
     }
 
