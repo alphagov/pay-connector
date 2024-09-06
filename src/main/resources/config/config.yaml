@@ -1,9 +1,11 @@
 server:
   applicationConnectors:
     - type: http
+      bindHost: ${BIND_HOST:-127.0.0.1}
       port: ${PORT:-0}
   adminConnectors:
     - type: http
+      bindHost: ${BIND_HOST:-127.0.0.1}
       port: ${ADMIN_PORT:-0}
   registerDefaultExceptionMappers: false
   requestLog:
