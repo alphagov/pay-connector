@@ -50,5 +50,23 @@ public class ChargesAwaitingCaptureMetricEmitter {
         };
 
         metricRegistry.register("gateway-operations.capture-process.queue-size.ready_capture_queue_size", cachedGauge);
+
+        final CachedGauge<Integer> cachedGaugeForDuration = new CachedGauge<>(CAPTURE_METRIC_UPDATE_DELAY_MINUTES, TimeUnit.MINUTES) {
+            @Override
+            protected Integer loadValue() {
+                try {
+                    return chargeService.getLongestDurationOfChargesAwaitingCaptureInMinutes(
+                            captureConfig.getChargesConsideredOverdueForCaptureAfter()
+                    );
+                } catch (Exception e) {
+                    logger.warn(
+                            "An exception has been caught while retrieving the longest duration of charges awaiting capture metric [{}]",
+                            e.getMessage());
+                }
+                return null;
+            }
+        };
+
+        metricRegistry.register("gateway-operations.capture-process.longest_duration_of_charges_awaiting_capture", cachedGaugeForDuration);
     }
 }

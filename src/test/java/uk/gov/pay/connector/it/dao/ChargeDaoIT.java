@@ -742,7 +742,7 @@ public class ChargeDaoIT {
     @Nested
     class TestGetEarliestUpdatedDateOfChargesReadyForImmediateCapture {
         @Test
-        void getEarliestUpdatedDateOfChargesReadyForImmediateCapture_shouldReturnNumberOfChargesInCaptureApprovedState() {
+        void getEarliestUpdatedDateOfChargesReadyForImmediateCapture_shouldReturnEarliestChargeDateInCaptureReadyState() {
             TestCharge earliestCaptureReadyCharge = app.getDatabaseFixtures()
                     .aTestCharge()
                     .withTestAccount(defaultTestAccount)
