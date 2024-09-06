@@ -27,14 +27,17 @@ import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.time.Duration.ofMinutes;
+import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.MICROS;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static junit.framework.TestCase.assertTrue;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -129,7 +132,7 @@ public class ChargeDaoIT {
 
     @Test
     void invalidSizeOfReference() {
-        assertThrows(RuntimeException.class,  () -> {
+        assertThrows(RuntimeException.class, () -> {
             chargeDao.persist(aValidChargeEntity()
                     .withGatewayAccountEntity(gatewayAccount)
                     .withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255)))
@@ -356,7 +359,7 @@ public class ChargeDaoIT {
         assertThat(charge.get().getParityCheckStatus(), equalTo(ParityCheckStatus.EXISTS_IN_LEDGER));
         assertThat(charge.get().getParityCheckDate(), is(notNullValue()));
     }
-    
+
     @Test
     void shouldReturnNullFindingByIdWhenChargeDoesNotExist() {
 
@@ -383,7 +386,7 @@ public class ChargeDaoIT {
                 .withExternalChargeId(externalChargeId)
                 .withTransactionId(transactionId)
                 .insert();
-        DatabaseFixtures.TestCardDetails testCardDetails =app.getDatabaseFixtures()
+        DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
                 .validTestCardDetails()
                 .withChargeId(chargeId)
                 .update();
@@ -532,7 +535,7 @@ public class ChargeDaoIT {
             assertThat(chargeForAccount.isPresent(), is(false));
         }
     }
-    
+
     @Test
     void findById_shouldFindChargeEntity() {
 
@@ -734,6 +737,64 @@ public class ChargeDaoIT {
                 .insert();
 
         assertThat(chargeDao.countChargesForImmediateCapture(Duration.ofHours(1)), is(2));
+    }
+
+    @Nested
+    class TestGetEarliestUpdatedDateOfChargesReadyForImmediateCapture {
+        @Test
+        void getEarliestUpdatedDateOfChargesReadyForImmediateCapture_shouldReturnNumberOfChargesInCaptureApprovedState() {
+            TestCharge earliestCaptureReadyCharge = app.getDatabaseFixtures()
+                    .aTestCharge()
+                    .withTestAccount(defaultTestAccount)
+                    .withChargeId(nextLong())
+                    .withExternalChargeId(RandomIdGenerator.newId())
+                    .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
+                    .withUpdatedDate(Instant.now().minus(Duration.ofHours(2)))
+                    .withChargeStatus(CAPTURE_APPROVED)
+                    .insert();
+            TestCharge charge = app.getDatabaseFixtures()
+                    .aTestCharge()
+                    .withTestAccount(defaultTestAccount)
+                    .withChargeId(nextLong())
+                    .withExternalChargeId(RandomIdGenerator.newId())
+                    .withCreatedDate(Instant.now())
+                    .withUpdatedDate(Instant.now())
+                    .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                    .insert();
+
+            Instant date = chargeDao.getEarliestUpdatedDateOfChargesReadyForImmediateCapture(60);
+            assertThat(date.truncatedTo(MILLIS), is(earliestCaptureReadyCharge.getUpdatedDate().truncatedTo(MILLIS)));
+        }
+
+        @Test
+        void getEarliestUpdatedDateOfChargesReadyForImmediateCapture_shouldReturnNullWhenNoChargesAreAvailableForImmediateCapture() {
+            TestCharge authSuccessChargeToBeIgnored = app.getDatabaseFixtures()
+                    .aTestCharge()
+                    .withTestAccount(defaultTestAccount)
+                    .withChargeId(nextLong())
+                    .withExternalChargeId(RandomIdGenerator.newId())
+                    .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
+                    .withUpdatedDate(Instant.now().minus(Duration.ofHours(2)))
+                    .withChargeStatus(AUTHORISATION_SUCCESS)
+                    .insert();
+            TestCharge captureReadyButRetriedWithInLastHourAndIsIgnored = app.getDatabaseFixtures()
+                    .aTestCharge()
+                    .withTestAccount(defaultTestAccount)
+                    .withChargeId(nextLong())
+                    .withExternalChargeId(RandomIdGenerator.newId())
+                    .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
+                    .withUpdatedDate(Instant.now().minus(Duration.ofHours(2)))
+                    .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                    .insert();
+            app.getDatabaseFixtures().aTestChargeEvent()
+                    .withChargeStatus(CAPTURE_APPROVED_RETRY)
+                    .withDate(ZonedDateTime.now(UTC).minusMinutes(15))
+                    .withTestCharge(captureReadyButRetriedWithInLastHourAndIsIgnored)
+                    .insert();
+
+            Instant date = chargeDao.getEarliestUpdatedDateOfChargesReadyForImmediateCapture(60);
+            assertThat(date, is(nullValue()));
+        }
     }
 
     @Test
