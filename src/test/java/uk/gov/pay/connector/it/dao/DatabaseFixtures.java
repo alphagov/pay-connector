@@ -929,6 +929,10 @@ public class DatabaseFixtures {
             return createdDate;
         }
 
+        public Instant getUpdatedDate() {
+            return updatedDate;
+        }
+
         public String getDescription() {
             return description;
         }
