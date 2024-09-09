@@ -69,12 +69,16 @@ public class StripeAccountResource {
             @Context UriInfo uriInfo
     ) {
         var sandboxGatewayAccount = getSandboxGatewayAccount(serviceId);
-
-        Account stripeTestConnectAccount = stripeAccountService.createTestAccount(sandboxGatewayAccount.getServiceName());
-        stripeAccountService.createDefaultPersonForAccount(stripeTestConnectAccount.getId());
-
+        
+        try {
+            Thread.sleep(8000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        
         var stripeCredentials = new StripeCredentials();
-        stripeCredentials.setStripeAccountId(stripeTestConnectAccount.getId());
+        stripeCredentials.setStripeAccountId("test-account-id");
+        
         StripeGatewayAccountRequest stripeGatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
                 .withProviderAccountType(TEST.toString())
                 .withDescription(String.format("Stripe test account for service %s", sandboxGatewayAccount.getServiceName()))
@@ -93,7 +97,7 @@ public class StripeAccountResource {
         stripeAccountSetupService.completeTestAccountSetup(stripeTestGatewayAccount);
         gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by Stripe test account [ext id: %s]", stripeTestGatewayAccount.getExternalId()));
 
-        Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestConnectAccount.getId(),
+        Map<String, String> response = Map.of("stripe_connect_account_id", "test-account-id",
                 "gateway_account_id", stripeTestGatewayAccount.getId().toString(),
                 "gateway_account_external_id", stripeTestGatewayAccount.getExternalId());
         return Response.ok(response).build();
