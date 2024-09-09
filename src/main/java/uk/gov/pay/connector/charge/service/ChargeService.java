@@ -911,6 +911,17 @@ public class ChargeService {
         return chargeDao.countChargesForImmediateCapture(notAttemptedWithin);
     }
 
+    public Integer getLongestDurationOfChargesAwaitingCaptureInMinutes(int chargesConsideredOverdueForCaptureAfterMinutes) {
+        Instant earliestDate = chargeDao.getEarliestUpdatedDateOfChargesReadyForImmediateCapture(
+                chargesConsideredOverdueForCaptureAfterMinutes);
+
+        if (earliestDate != null) {
+            return (int) Duration.between(earliestDate, Instant.now()).toMinutes();
+        }
+
+        return null;
+    }
+
     public ChargeEntity findChargeByExternalId(String chargeId) {
         return chargeDao.findByExternalId(chargeId)
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeId));

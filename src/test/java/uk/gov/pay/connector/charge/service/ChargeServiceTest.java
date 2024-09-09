@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -71,9 +72,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Collections.singletonList;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -116,10 +119,10 @@ class ChargeServiceTest {
 
     @Mock
     private TokenDao mockedTokenDao;
-    
+
     @Mock
     private ChargeDao mockedChargeDao;
-    
+
     @Mock
     private ChargeEventDao mockedChargeEventDao;
 
@@ -506,16 +509,37 @@ class ChargeServiceTest {
         when(mockedRefundService.findRefunds(charge)).thenReturn(List.of(refund));
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(charge, List.of(refund))).thenReturn(EXTERNAL_AVAILABLE);
-        
+
         RefundAvailabilityUpdated refundAvailabilityUpdated = chargeService.createRefundAvailabilityUpdatedEvent(charge, Instant.now());
-        
+
         assertThat(refundAvailabilityUpdated.getResourceExternalId(), is(charge.getExternalId()));
         assertThat(refundAvailabilityUpdated.getResourceType(), is(ResourceType.PAYMENT));
         assertThat(refundAvailabilityUpdated.getEventDetails(), is(instanceOf(RefundAvailabilityUpdatedEventDetails.class)));
-        
+
         RefundAvailabilityUpdatedEventDetails eventDetails = (RefundAvailabilityUpdatedEventDetails) refundAvailabilityUpdated.getEventDetails();
         assertThat(eventDetails.getRefundAmountAvailable(), is(900L));
         assertThat(eventDetails.getRefundAmountRefunded(), is(100L));
         assertThat(eventDetails.getRefundStatus(), is(EXTERNAL_AVAILABLE.getStatus()));
+    }
+
+    @Nested
+    class TestGetLongestDurationOfChargesAwaitingCaptureInMinutes {
+        @Test
+        void shouldReturnLongestDurationOfChargeAwaitingCapture() {
+            when(mockedChargeDao.getEarliestUpdatedDateOfChargesReadyForImmediateCapture(60)).thenReturn(
+                    Instant.now().minus(7230, SECONDS)
+            );
+
+            Integer result = chargeService.getLongestDurationOfChargesAwaitingCaptureInMinutes(60);
+            assertThat(result, is(120));
+        }
+
+        @Test
+        void shouldReturnNullIfNoChargesAreAwaitingCapture() {
+            when(mockedChargeDao.getEarliestUpdatedDateOfChargesReadyForImmediateCapture(60)).thenReturn(null);
+
+            Integer result = chargeService.getLongestDurationOfChargesAwaitingCaptureInMinutes(60);
+            assertThat(result, is(nullValue()));
+        }
     }
 }
