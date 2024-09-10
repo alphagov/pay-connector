@@ -22,7 +22,7 @@ import static org.testcontainers.containers.PostgreSQLContainer.POSTGRESQL_PORT;
 
 public class SqsTestDocker {
     private static final Logger logger = LoggerFactory.getLogger(SqsTestDocker.class);
-
+    private static final boolean IS_CI = Boolean.parseBoolean(System.getenv("CI"));
     private static GenericContainer sqsContainer;
 
     public static AmazonSQS initialise(List<String> queueNames) {
@@ -41,12 +41,16 @@ public class SqsTestDocker {
 
             sqsContainer = new GenericContainer("softwaremill/elasticmq-native:1.4.2")
                     .withExposedPorts(9324)
-                    .withCreateContainerCmdModifier((Consumer<CreateContainerCmd>) cmd -> cmd.withHostConfig(
-                            new HostConfig().withPortBindings(new PortBinding(
-                                    Ports.Binding.bindIp("127.0.0.1"),
-                                    new ExposedPort(9324)
-                            ))
-                    ))
+                    .withCreateContainerCmdModifier((Consumer<CreateContainerCmd>) cmd -> {
+                        if (!IS_CI) {
+                            cmd.withHostConfig(
+                                    new HostConfig().withPortBindings(new PortBinding(
+                                            Ports.Binding.bindIp("127.0.0.1"),
+                                            new ExposedPort(9324)
+                                    ))
+                            );
+                        }
+                    })
                     .waitingFor(Wait.forLogMessage(".*ElasticMQ server.*.*started.*", 1));
             sqsContainer.start();
         }
