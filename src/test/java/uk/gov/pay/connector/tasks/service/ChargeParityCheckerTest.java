@@ -81,7 +81,7 @@ class ChargeParityCheckerTest {
     
     private ChargeEntity chargeEntity;
     private ChargeEntity chargeEntityWith3ds;
-    private List<RefundEntity> refundEntities = List.of();
+    private final List<RefundEntity> refundEntities = List.of();
     
     @BeforeEach
     void setUp() {
@@ -254,11 +254,24 @@ class ChargeParityCheckerTest {
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .withRefundSummary(null)
+                .withDisputed(false)
                 .build();
 
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @Test
+    void parityCheck_shouldIgnoreRefundSummaryMismatchIfLedgerTransactionIsDisputed() {
+        LedgerTransaction transaction = from(chargeEntity, refundEntities)
+                .withRefundSummary(null)
+                .withDisputed(true)
+                .build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
     }
 
     @Test
