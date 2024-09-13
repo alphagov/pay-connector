@@ -6,6 +6,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -31,6 +32,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.ws.rs.WebApplicationException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +42,13 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
 import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
@@ -54,6 +60,8 @@ import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GatewayAccountEntity.class);
+    
+    private static final EnumSet<GatewayAccountCredentialState> pendingCredentialStates = EnumSet.of(CREATED, ENTERED, VERIFIED_WITH_LIVE_PAYMENT);
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gateway_accounts_gateway_account_id_seq")
@@ -554,5 +562,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     public boolean isStripeTestAccount() {
         return GatewayAccountType.TEST.toString().equals(this.getType()) && PaymentGatewayName.STRIPE.getName().equals(this.getGatewayName());
+    }
+
+    public boolean hasPendingWorldpayCredential() {
+        return providerSwitchEnabled && gatewayAccountCredentials.stream()
+                .filter(credential -> credential.getPaymentProvider().equals(WORLDPAY.getName()))
+                .anyMatch(credential -> pendingCredentialStates.contains(credential.getState()));
     }
 }
