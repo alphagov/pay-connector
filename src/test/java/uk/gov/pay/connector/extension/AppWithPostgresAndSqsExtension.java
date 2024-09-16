@@ -204,6 +204,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
         newConfigOverride.add(config("worldpay.urls.test", "http://localhost:" + worldpayWireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
         newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + worldpayWireMockPort + "/shopper/3ds/ddc.html"));
+        newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.live", "http://localhost:" + worldpayWireMockPort + "/shopper/3ds/ddc.html"));
         newConfigOverride.add(config("stripe.url", "http://localhost:" + stripeWireMockPort));
         newConfigOverride.add(config("ledgerBaseURL", "http://localhost:" + ledgerWireMockPort));
         newConfigOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));

@@ -27,7 +27,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 public class Worldpay3dsFlexCredentialsValidationService {
 
     private static final List<Integer> ACCEPTABLE_RESPONSE_CODES_FROM_3DS_FLEX_URL = List.of(SC_OK, SC_BAD_REQUEST);
-    
+
     private final Client client;
     private final Worldpay3dsFlexJwtService worldpay3dsFlexJwtService;
     private final Map<String, String> threeDsFlexDdcUrls;
@@ -43,12 +43,12 @@ public class Worldpay3dsFlexCredentialsValidationService {
     }
 
     public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, Worldpay3dsFlexCredentials flexCredentials) {
-        if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName())) {
+        if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName()) && !gatewayAccountEntity.hasPendingWorldpayCredential()) {
             throw new NotAWorldpayGatewayAccountException(gatewayAccountEntity.getId());
         }
-
+        
         String ddcToken = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(gatewayAccountEntity),
-                flexCredentials, Instant.now(), gatewayAccountEntity.getGatewayName());
+                flexCredentials, Instant.now(), WORLDPAY.getName()); // we've already checked that the gateway account has a valid worldpay credential
 
         var formData = new MultivaluedHashMap<String, String>();
         formData.add("JWT", ddcToken);
@@ -65,11 +65,11 @@ public class Worldpay3dsFlexCredentialsValidationService {
                 response.close();
             }
         }
-        
+
         if (!ACCEPTABLE_RESPONSE_CODES_FROM_3DS_FLEX_URL.contains(response.getStatus())) {
             throw new ThreeDsFlexDdcServiceUnavailableException();
         }
-        
+
         return response.getStatus() == SC_OK;
     }
 }

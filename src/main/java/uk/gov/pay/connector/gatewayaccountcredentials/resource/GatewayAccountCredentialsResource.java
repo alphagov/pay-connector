@@ -19,7 +19,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsReques
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountCredentialsWithInternalId;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountWithCredentialsWithInternalIdResponse;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsRequest;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
@@ -41,9 +40,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -93,8 +90,7 @@ public class GatewayAccountCredentialsResource {
             @Valid Worldpay3dsFlexCredentialsRequest worldpay3dsCredentials) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
-                .filter(gatewayAccountEntity ->
-                        gatewayAccountEntity.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName()))
+                .filter(gatewayAccountEntity -> (gatewayAccountEntity.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName()) || gatewayAccountEntity.hasPendingWorldpayCredential()))
                 .map(gatewayAccountEntity -> {
                     worldpay3dsFlexCredentialsService.setGatewayAccountWorldpay3dsFlexCredentials(worldpay3dsCredentials,
                             gatewayAccountEntity);
@@ -166,8 +162,8 @@ public class GatewayAccountCredentialsResource {
             }
     )
     public GatewayAccountCredentialsWithInternalId createGatewayAccountCredentials(@Parameter(example = "1", description = "Gateway account ID")
-                                                                     @PathParam("accountId") Long gatewayAccountId,
-                                                                     @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
+                                                                                   @PathParam("accountId") Long gatewayAccountId,
+                                                                                   @NotNull GatewayAccountCredentialsRequest gatewayAccountCredentialsRequest) {
         gatewayAccountCredentialsRequestValidator.validateCreate(gatewayAccountCredentialsRequest);
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
@@ -279,7 +275,7 @@ public class GatewayAccountCredentialsResource {
                     throw new GatewayAccountNotFoundException(serviceId, accountType);
                 })
                 .filter(gatewayAccountEntity ->
-                        gatewayAccountEntity.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName()))
+                        (gatewayAccountEntity.getGatewayName().equals(PaymentGatewayName.WORLDPAY.getName()) || gatewayAccountEntity.hasPendingWorldpayCredential()))
                 .map(gatewayAccountEntity -> {
                     worldpay3dsFlexCredentialsService.setGatewayAccountWorldpay3dsFlexCredentials(worldpay3dsCredentials,
                             gatewayAccountEntity);
@@ -313,7 +309,7 @@ public class GatewayAccountCredentialsResource {
                 .map(ValidationResult::new)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
-    
+
     @PATCH
     @Path("/v1/api/service/{serviceId}/account/{accountType}/credentials/{credentialsId}")
     @Consumes(APPLICATION_JSON)
@@ -347,16 +343,16 @@ public class GatewayAccountCredentialsResource {
                 })
                 .map(GatewayAccountEntity::getGatewayAccountCredentials)
                 .flatMap(gatewayAccountCredentials -> gatewayAccountCredentials.stream()
-                    .filter(c -> c.getExternalId().equals(credentialsId))
-                    .findFirst())
+                        .filter(c -> c.getExternalId().equals(credentialsId))
+                        .findFirst())
                 .or(() -> {
                     throw GatewayAccountCredentialsNotFoundException.forExternalId(credentialsId);
                 })
                 .map(gatewayAccountCredentialsEntity -> {
                     gatewayAccountCredentialsRequestValidator.validatePatch(payload,
-                        gatewayAccountCredentialsEntity.getPaymentProvider(),
-                        gatewayAccountCredentialsEntity.getCredentialsObject());
-                    
+                            gatewayAccountCredentialsEntity.getPaymentProvider(),
+                            gatewayAccountCredentialsEntity.getCredentialsObject());
+
                     List<JsonPatchRequest> updateRequests = StreamSupport.stream(payload.spliterator(), false)
                             .map(JsonPatchRequest::from)
                             .collect(Collectors.toList());
