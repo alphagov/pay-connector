@@ -486,7 +486,12 @@ class WorldpayOrderRequestBuilderTest {
 
     @ParameterizedTest
     @MethodSource("exemptionValues")
-    void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(Boolean corporateExemptions, Boolean exemptionEngine, String testTemplate, Boolean corporateCard) throws Exception {
+    void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(
+            Boolean corporateExemptions, 
+            Boolean exemptionEngine, 
+            String testTemplate, 
+            Boolean corporateCard
+    ) throws Exception {
 
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
@@ -516,7 +521,8 @@ class WorldpayOrderRequestBuilderTest {
                 arguments(true, false, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_AUTHORISATION, true),
                 arguments(true, true, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_AUTHORISATION, true),
                 arguments(false, true, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED, true),
-                arguments(true, true, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED, false)
+                arguments(true, true, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED, false),
+                arguments(false, false, WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS, true)
         );
     }
 
