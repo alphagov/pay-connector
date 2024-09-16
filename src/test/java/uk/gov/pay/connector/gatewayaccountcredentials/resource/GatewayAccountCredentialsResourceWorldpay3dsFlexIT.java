@@ -32,6 +32,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -40,6 +41,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -100,7 +102,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                         createGatewayAccountCredentialsParams(anAccountId, "worldpay", CREATED)
                 );
 
-                var anAccount = addGatewayAccountAndCredential(anAccountId, "stripe", LIVE, SERVICE_ID, credentials, true);
+                var anAccount = addGatewayAccountAndCredential(anAccountId, LIVE, SERVICE_ID, credentials, true);
 
                 app.getWorldpayWireMockServer().stubFor(post("/shopper/3ds/ddc.html").willReturn(ok()));
 
@@ -145,7 +147,34 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
         }
 
         @Nested
-        class Update3dsFlexCredentials {    
+        class Update3dsFlexCredentials {
+
+            @Test
+            void forAccountSwitchingToWorldpay_shouldSet3dsFlexCredentials_andReturn200() throws Exception {
+                var anAccountId = nextLong(2, 10000);
+                var credentials = List.of(
+                        createGatewayAccountCredentialsParams(anAccountId, "stripe", ACTIVE),
+                        createGatewayAccountCredentialsParams(anAccountId, "worldpay", CREATED)
+                );
+                var anAccount = addGatewayAccountAndCredential(anAccountId, LIVE, SERVICE_ID, credentials, true);
+                String payload = objectMapper.writeValueAsString(Map.of(
+                        "issuer", VALID_ISSUER,
+                        "organisational_unit_id", VALID_ORG_UNIT_ID,
+                        "jwt_mac_key", VALID_JWT_MAC_KEY
+                ));
+                givenSetup()
+                        .body(payload)
+                        .post(format(UPDATE_3DS_FLEX_CREDENTIALS_URL, anAccount.getAccountId()))
+                        .then()
+                        .statusCode(200);
+                var result = app.getDatabaseTestHelper().getWorldpay3dsFlexCredentials(anAccount.getAccountId());
+                assertThat(result.get("issuer"), is(VALID_ISSUER));
+                assertThat(result.get("organisational_unit_id"), is(VALID_ORG_UNIT_ID));
+                assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
+                List<Map<String, Object>> gatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(anAccount.getAccountId());
+                assertThat(gatewayAccountCredentials.get(1).get("payment_provider"), is(WORLDPAY.getName()));
+                assertThat(gatewayAccountCredentials.get(1).get("state"), is(ENTERED.name()));
+            }
 
             @Test
             void forNoExistingCredentials_shouldSet3dsFlexCredentials_andReturn200() throws JsonProcessingException {
@@ -286,6 +315,30 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                         app.getDatabaseTestHelper().getWorldpay3dsFlexCredentials(Long.valueOf(gatewayAccountId))
                 );
                 assertThat(exception.getMessage(), is("Expected at least one element, but found none"));
+            }
+
+            @Test
+            void forAccountSwitchingToWorldpay_shouldReturn200_andUpdateCredentials() {
+                var anAccountId = nextLong(2, 10000);
+                var anAccount = addGatewayAccountAndCredential(anAccountId, LIVE, SERVICE_ID, List.of(
+                        createGatewayAccountCredentialsParams(anAccountId, "stripe", ACTIVE),
+                        createGatewayAccountCredentialsParams(anAccountId, "worldpay", CREATED)
+                ), true);
+
+                app.givenSetup()
+                        .body(toJson(valid3dsFlexCredentialsPayload))
+                        .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", SERVICE_ID, LIVE))
+                        .then()
+                        .statusCode(200);
+
+                Map<String, Object> updatedGatewayAccountCredentials = app.getDatabaseTestHelper().getWorldpay3dsFlexCredentials(anAccount.getAccountId());
+                assertThat(updatedGatewayAccountCredentials, hasEntry("issuer", VALID_ISSUER));
+                assertThat(updatedGatewayAccountCredentials, hasEntry("jwt_mac_key", VALID_JWT_MAC_KEY));
+                assertThat(updatedGatewayAccountCredentials, hasEntry("organisational_unit_id", VALID_ORG_UNIT_ID));
+
+                List<Map<String, Object>> gatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(anAccount.getAccountId());
+                assertThat(gatewayAccountCredentials.get(1).get("payment_provider"), is(WORLDPAY.getName()));
+                assertThat(gatewayAccountCredentials.get(1).get("state"), is(ENTERED.name()));
             }
 
             @Test
@@ -442,24 +495,21 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                                                                         GatewayAccountType gatewayAccountType, String serviceId) {
         long accountId = nextLong(2, 10000);
         return addGatewayAccountAndCredential(accountId,
-                paymentProvider,
                 gatewayAccountType,
                 serviceId,
                 List.of(createGatewayAccountCredentialsParams(
                         accountId,
-                        "worldpay",
+                        paymentProvider,
                         state
                 )),
                 false);
     }
 
-    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(long accountId, String paymentProvider,
-                                                                        GatewayAccountType gatewayAccountType, String serviceId, List<AddGatewayAccountCredentialsParams> credentialsParams, boolean providerSwitchEnabled) {
+    private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(long accountId, GatewayAccountType gatewayAccountType, String serviceId, List<AddGatewayAccountCredentialsParams> credentialsParams, boolean providerSwitchEnabled) {
 
         return app.getDatabaseFixtures()
                 .aTestAccount()
                 .withProviderSwitchEnabled(providerSwitchEnabled)
-                .withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)
                 .withAccountId(accountId)
                 .withType(gatewayAccountType)

@@ -300,6 +300,15 @@ class Worldpay3dsFlexCredentialsValidationServiceTest {
             assertThrows(NotAWorldpayGatewayAccountException.class,
                     () -> service.validateCredentials(liveGatewayAccountEntity, flexCredentials));
         }
+
+        @Test
+        void should_throw_when_not_a_worldpay_account() {
+            liveGatewayAccountEntity.setProviderSwitchEnabled(false);
+            liveGatewayAccountEntity.setGatewayAccountCredentials(List.of(activeStripeCredentialsEntity));
+
+            assertThrows(NotAWorldpayGatewayAccountException.class,
+                    () -> service.validateCredentials(liveGatewayAccountEntity, flexCredentials));
+        }
     }
 
     private Worldpay3dsFlexCredentials getValid3dsFlexCredentials() {
