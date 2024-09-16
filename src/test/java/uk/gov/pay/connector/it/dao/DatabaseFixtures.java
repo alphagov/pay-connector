@@ -356,6 +356,7 @@ public class DatabaseFixtures {
         private boolean motoMaskCardSecurityCodeInput;
         private boolean allowTelephonePaymentNotifications;
         private boolean recurringEnabled;
+        private boolean providerSwitchEnabled;
         private boolean requires3ds;
         private final Map<String, Object> defaultCredentials = Map.of(
                 CREDENTIALS_MERCHANT_ID, "merchant-id",
@@ -554,6 +555,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestAccount withProviderSwitchEnabled(boolean providerSwitchEnabled) {
+            this.providerSwitchEnabled = providerSwitchEnabled;
+            return this;
+        }
+
         public TestAccount insert() {
             if (gatewayAccountCredentialsParams == null) {
                 gatewayAccountCredentialsParams = Collections.singletonList(
@@ -586,6 +592,7 @@ public class DatabaseFixtures {
                     .withServiceId(serviceId)
                     .withRequires3ds(requires3ds)
                     .withRecurringEnabled(recurringEnabled)
+                    .withProviderSwitchEnabled(providerSwitchEnabled)
                     .build());
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());
@@ -927,6 +934,10 @@ public class DatabaseFixtures {
 
         public Instant getCreatedDate() {
             return createdDate;
+        }
+
+        public Instant getUpdatedDate() {
+            return updatedDate;
         }
 
         public String getDescription() {

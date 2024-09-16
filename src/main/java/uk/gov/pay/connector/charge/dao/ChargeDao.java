@@ -17,6 +17,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -24,10 +25,13 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED_RETRY;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
 
 @Transactional
 public class ChargeDao extends JpaDao<ChargeEntity> {
@@ -206,6 +210,31 @@ public class ChargeDao extends JpaDao<ChargeEntity> {
                 .setParameter("cutoffDate", utcCutoffThreshold)
                 .getSingleResult();
         return count.intValue();
+    }
+
+
+    public Instant getEarliestUpdatedDateOfChargesReadyForImmediateCapture(int chargesConsideredOverdueForCaptureAfterMinutes) {
+        String query = "SELECT min(c.updated_date at time zone 'utc') as updated_date FROM charges c" +
+                " WHERE (c.status=?1 OR c.status=?2 OR c.status=?3)" +
+                " AND NOT EXISTS (" +
+                "  SELECT ce.charge_id FROM charge_events ce WHERE " +
+                "    ce.charge_id = c.id AND " +
+                "    ce.status = ?4 AND " +
+                "    ce.updated >= ?5" +
+                ") ";
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        Timestamp utcCutoffThreshold = Timestamp.from(Instant.now().minus(chargesConsideredOverdueForCaptureAfterMinutes, MINUTES));
+
+        Timestamp updatedDate = (Timestamp) entityManager.get()
+                .createNativeQuery(query)
+                .setParameter(1, CAPTURE_APPROVED.getValue())
+                .setParameter(2, CAPTURE_APPROVED_RETRY.getValue())
+                .setParameter(3, CAPTURE_QUEUED.getValue())
+                .setParameter(4, CAPTURE_APPROVED_RETRY.getValue())
+                .setParameter(5, utcCutoffThreshold)
+                .getSingleResult();
+
+        return updatedDate == null ? null : updatedDate.toInstant();
     }
 
     public int countCaptureRetriesForChargeExternalId(String externalId) {

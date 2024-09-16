@@ -87,7 +87,9 @@ public class ChargeParityChecker {
             fieldsMatch = fieldsMatch && matchGatewayAccountFields(chargeEntity.getGatewayAccount(), transaction);
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
-            fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
+            if (!transaction.isDisputed()) {
+                fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
+            }
             fieldsMatch = fieldsMatch && matchAuthorisationSummary(chargeEntity, transaction);
 
             if (fieldsMatch) {

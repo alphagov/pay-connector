@@ -10,7 +10,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.service.ChargeService;
 
 import javax.inject.Inject;
-import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class ChargesAwaitingCaptureMetricEmitter {
@@ -19,7 +18,7 @@ public class ChargesAwaitingCaptureMetricEmitter {
     private final CaptureProcessConfig captureConfig;
     private final MetricRegistry metricRegistry;
     private final int CAPTURE_METRIC_UPDATE_DELAY_MINUTES = 20;
-    private ChargeService chargeService;
+    private final ChargeService chargeService;
 
     @Inject
     public ChargesAwaitingCaptureMetricEmitter(
@@ -34,21 +33,22 @@ public class ChargesAwaitingCaptureMetricEmitter {
     }
 
     public void register() {
-        final CachedGauge<Integer> cachedGauge = new CachedGauge<>(CAPTURE_METRIC_UPDATE_DELAY_MINUTES, TimeUnit.MINUTES) {
+        final CachedGauge<Integer> cachedGaugeForDuration = new CachedGauge<>(CAPTURE_METRIC_UPDATE_DELAY_MINUTES, TimeUnit.MINUTES) {
             @Override
             protected Integer loadValue() {
                 try {
-                    Duration notAttemptedWithinDuration = Duration.ofMinutes(captureConfig.getChargesConsideredOverdueForCaptureAfter());
-                    return chargeService.getNumberOfChargesAwaitingCapture(notAttemptedWithinDuration);
+                    return chargeService.getLongestDurationOfChargesAwaitingCaptureInMinutes(
+                            captureConfig.getChargesConsideredOverdueForCaptureAfter()
+                    );
                 } catch (Exception e) {
                     logger.warn(
-                            "An exception has been caught while retrieving the number of charges to capture metric [{}]",
+                            "An exception has been caught while retrieving the longest duration of charges awaiting capture metric [{}]",
                             e.getMessage());
                 }
                 return null;
             }
         };
 
-        metricRegistry.register("gateway-operations.capture-process.queue-size.ready_capture_queue_size", cachedGauge);
+        metricRegistry.register("gateway-operations.capture-process.longest_duration_of_charges_awaiting_capture", cachedGaugeForDuration);
     }
 }
