@@ -80,10 +80,16 @@
                 challengeWindowSize="390x400" challengePreference="noPreference"
             />
             </#if>
-            <#if exemptionEngineEnabled>
+            <#if authCardDetails.corporateCard>
+            <#if (corporateExemptionEnabled)>
+            <exemption type="CP" placement="AUTHORISATION"/>
+            <#elseif !corporateExemptionEnabled && exemptionEngineEnabled>
             <exemption type="OP" placement="OPTIMISED"/>
             </#if>
+            <#elseif !authCardDetails.corporateCard && exemptionEngineEnabled>
+            <exemption type="OP" placement="OPTIMISED"/>
             </#if>
+        </#if>
         </order>
     </submit>
 </paymentService>
