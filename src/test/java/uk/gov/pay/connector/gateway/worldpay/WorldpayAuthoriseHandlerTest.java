@@ -6,9 +6,6 @@ import com.codahale.metrics.MetricRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,7 +51,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,7 +59,6 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -220,14 +215,8 @@ class WorldpayAuthoriseHandlerTest {
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
-    @ParameterizedTest
-    @MethodSource("exemptionValues")
-    void should_include_exemption_element_if_account_has_exemption_engine_set_to_true(
-            boolean corporateExemption,
-            String exemptionType,
-            String exemptionPlacement,
-            boolean corporateCard
-    ) throws Exception {
+    @Test
+    void should_include_exemption_element_if_account_has_exemption_engine_set_to_true() throws Exception {
 
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
@@ -235,10 +224,7 @@ class WorldpayAuthoriseHandlerTest {
 
         gatewayAccountEntity.setRequires3ds(true);
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
-
-        AuthCardDetails authCardDetails = getValidTestCard(UUID.randomUUID().toString());
-        authCardDetails.setCorporateCard(corporateCard);
-        worldpayAuthoriseHandler.authoriseWithExemption(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), authCardDetails));
+        worldpayAuthoriseHandler.authoriseWithExemption(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
@@ -250,17 +236,10 @@ class WorldpayAuthoriseHandlerTest {
 
         Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
         XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@type", document), is(exemptionType));
-        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@placement", document), is(exemptionPlacement));
+        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@type", document), is("OP"));
+        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@placement", document), is("OPTIMISED"));
     }
 
-    private static Stream<Arguments> exemptionValues() {
-        return Stream.of(
-                arguments(true, "CP", "AUTHORISATION", true),
-                arguments(true, "OP", "OPTIMISED", false)
-        );
-    }
-    
     @Test
     void should_not_include_exemption_element() throws Exception {
 

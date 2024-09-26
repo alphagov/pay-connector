@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
-import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import java.util.Optional;
@@ -44,16 +43,10 @@ public interface WorldpayOrderBuilder {
 
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
-        
-        boolean isCorporateExemptionEnabled = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
-                request.getGatewayAccount().getWorldpay3dsFlexCredentials().map(Worldpay3dsFlexCredentials::isCorporateExemptionsEnabled)
-                        .orElse(false);
-        
 
         return (WorldpayOrderRequestBuilder) builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
-                .withCorporateExemptionEnabled(isCorporateExemptionEnabled)
                 .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
                 .withAgreementId(request.getAgreement().map(AgreementEntity::getExternalId).orElse(null))
                 .withTransactionId(request.getTransactionId().orElse(""))
