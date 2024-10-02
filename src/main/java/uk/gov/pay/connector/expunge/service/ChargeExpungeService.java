@@ -61,6 +61,8 @@ public class ChargeExpungeService {
             SYSTEM_CANCEL_SUBMITTED,
             USER_CANCEL_SUBMITTED);
 
+    private final List<ChargeStatus> terminalStatesFor0pPayments = List.of(CAPTURE_SUBMITTED);
+
     @Inject
     public ChargeExpungeService(ChargeDao chargeDao, ConnectorConfiguration connectorConfiguration,
                                 ParityCheckService parityCheckService,
@@ -76,6 +78,10 @@ public class ChargeExpungeService {
         long ageInDays = ChronoUnit.DAYS.between(chargeEntity.getCreatedDate(), ZonedDateTime.now());
         boolean chargeIsHistoric = ageInDays > expungeConfig.getMinimumAgeForHistoricChargeExceptions();
         ChargeStatus status = ChargeStatus.fromString(chargeEntity.getStatus());
+
+        if(chargeEntity.getAmount() == 0 && terminalStatesFor0pPayments.contains(status)){
+            return true;
+        }
         if (chargeIsHistoric && historicChargeExceptionStatuses.contains(status)) {
             return true;
         }
