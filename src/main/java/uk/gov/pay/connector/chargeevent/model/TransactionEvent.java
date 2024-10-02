@@ -10,7 +10,7 @@ import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 
 import java.time.Instant;
 
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonSnakeCase
 public record TransactionEvent (

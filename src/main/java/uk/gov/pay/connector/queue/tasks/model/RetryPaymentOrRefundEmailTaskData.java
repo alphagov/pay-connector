@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
+import uk.gov.service.payments.commons.api.json.IsoInstantMillisecondSerializer;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -17,7 +17,7 @@ public class RetryPaymentOrRefundEmailTaskData {
     private EmailNotificationType emailNotificationType;
 
     @JsonProperty("failed_attempt_time")
-    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    @JsonSerialize(using = IsoInstantMillisecondSerializer.class)
     private Instant failedAttemptTime;
 
     public RetryPaymentOrRefundEmailTaskData() {

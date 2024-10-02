@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.dropwizard.jackson.Jackson;
 import uk.gov.pay.connector.events.eventdetails.EmptyEventDetails;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
-import uk.gov.service.payments.commons.api.json.ApiResponseInstantWithMicrosecondPrecisionSerializer;
+import uk.gov.service.payments.commons.api.json.IsoInstantMicrosecondSerializer;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -42,7 +42,7 @@ public abstract class Event {
         return eventDetails;
     }
 
-    @JsonSerialize(using = ApiResponseInstantWithMicrosecondPrecisionSerializer.class)
+    @JsonSerialize(using = IsoInstantMicrosecondSerializer.class)
     public Instant getTimestamp() {
         return timestamp;
     }

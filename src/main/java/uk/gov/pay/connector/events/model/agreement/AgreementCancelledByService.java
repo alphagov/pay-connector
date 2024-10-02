@@ -3,7 +3,7 @@ package uk.gov.pay.connector.events.model.agreement;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
-import uk.gov.service.payments.commons.api.json.ApiResponseInstantWithMicrosecondPrecisionSerializer;
+import uk.gov.service.payments.commons.api.json.IsoInstantMicrosecondSerializer;
 
 import java.time.Instant;
 
@@ -24,7 +24,7 @@ public class AgreementCancelledByService extends AgreementEvent {
     }
 
     static class AgreementCancelledByServiceEventDetails extends EventDetails {
-        @JsonSerialize(using = ApiResponseInstantWithMicrosecondPrecisionSerializer.class)
+        @JsonSerialize(using = IsoInstantMicrosecondSerializer.class)
         private final Instant cancelledDate;
 
         public AgreementCancelledByServiceEventDetails(Instant cancelledDate) {

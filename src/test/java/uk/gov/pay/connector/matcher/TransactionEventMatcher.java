@@ -7,7 +7,7 @@ import org.hamcrest.TypeSafeMatcher;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 
 public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>> {
 
