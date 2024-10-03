@@ -1,20 +1,20 @@
 package uk.gov.pay.connector.events.eventdetails.payout;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateTimeSerializer;
+import uk.gov.service.payments.commons.api.json.IsoInstantMicrosecondSerializer;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class PayoutCreatedEventDetails extends PayoutEventWithGatewayStatusDetails {
 
     private Long gatewayAccountId;
     private Long amount;
-    @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
-    private ZonedDateTime estimatedArrivalDateInBank;
+    @JsonSerialize(using = IsoInstantMicrosecondSerializer.class)
+    private Instant estimatedArrivalDateInBank;
     private String destinationType;
     private String statementDescriptor;
 
-    public PayoutCreatedEventDetails(Long gatewayAccountId, Long amount, ZonedDateTime estimatedArrivalDateInBank, String gatewayStatus, String destinationType, String statementDescriptor) {
+    public PayoutCreatedEventDetails(Long gatewayAccountId, Long amount, Instant estimatedArrivalDateInBank, String gatewayStatus, String destinationType, String statementDescriptor) {
         super(gatewayStatus);
         this.gatewayAccountId = gatewayAccountId;
         this.amount = amount;
@@ -31,7 +31,7 @@ public class PayoutCreatedEventDetails extends PayoutEventWithGatewayStatusDetai
         return amount;
     }
 
-    public ZonedDateTime getEstimatedArrivalDateInBank() {
+    public Instant getEstimatedArrivalDateInBank() {
         return estimatedArrivalDateInBank;
     }
 

@@ -132,7 +132,7 @@ public class PayoutReconcileProcess {
         Payout payoutObject = (Payout) balanceTransaction.getSourceObject();
         StripePayout stripePayout = StripePayout.from(payoutObject);
 
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated().toInstant(),
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, stripePayout.getCreated(),
                 payoutReconcileMessage.getConnectAccountId(), stripePayout);
 
         emitTerminalPayoutEvent(payoutReconcileMessage.getConnectAccountId(), stripePayout);
@@ -149,7 +149,7 @@ public class PayoutReconcileProcess {
         if (stripePayoutStatus.isTerminal()) {
             Optional<Class<? extends PayoutEvent>> mayBeEventClass = stripePayoutStatus.getEventClass();
             mayBeEventClass.ifPresentOrElse(
-                    eventClass -> payoutEmitterService.emitPayoutEvent(eventClass, stripePayout.getCreated().toInstant(),
+                    eventClass -> payoutEmitterService.emitPayoutEvent(eventClass, stripePayout.getCreated(),
                             connectAccountId, stripePayout),
                     () -> LOGGER.warn("Event class is not available for a payout in terminal status. " +
                                     "gateway_payout_id [{}], connect_account_id [{}], status [{}]",
@@ -199,7 +199,7 @@ public class PayoutReconcileProcess {
     private void emitPaymentEvent(PayoutReconcileMessage payoutReconcileMessage, String paymentExternalId) {
         var paymentEvent = new PaymentIncludedInPayout(paymentExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
-                payoutReconcileMessage.getCreatedDate().toInstant());
+                payoutReconcileMessage.getCreatedDate());
         emitEvent(paymentEvent, payoutReconcileMessage, paymentExternalId);
 
         LOGGER.info(format("Emitted event for payment [%s] included in payout [%s]",
@@ -211,7 +211,7 @@ public class PayoutReconcileProcess {
     private void emitRefundEvent(PayoutReconcileMessage payoutReconcileMessage, String refundExternalId) {
         var refundEvent = new RefundIncludedInPayout(refundExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
-                payoutReconcileMessage.getCreatedDate().toInstant());
+                payoutReconcileMessage.getCreatedDate());
         emitEvent(refundEvent, payoutReconcileMessage, refundExternalId);
 
         LOGGER.info(format("Emitted event for refund [%s] included in payout [%s]",
@@ -223,7 +223,7 @@ public class PayoutReconcileProcess {
     private void emitDisputeEvent(PayoutReconcileMessage payoutReconcileMessage, String disputeExternalId) {
         var disputeEvent = new DisputeIncludedInPayout(disputeExternalId,
                 payoutReconcileMessage.getGatewayPayoutId(),
-                payoutReconcileMessage.getCreatedDate().toInstant());
+                payoutReconcileMessage.getCreatedDate());
         emitEvent(disputeEvent, payoutReconcileMessage, disputeExternalId);
 
         LOGGER.info(format("Emitted event for dispute [%s] included in payout [%s]",

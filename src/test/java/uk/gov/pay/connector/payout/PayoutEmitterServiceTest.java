@@ -24,9 +24,9 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
-import static java.time.ZonedDateTime.parse;
+import static java.time.Instant.parse;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,8 +49,8 @@ class PayoutEmitterServiceTest {
 
     private PayoutEmitterService payoutEmitterService;
     private StripePayout payout;
-    private ZonedDateTime eventDate = parse("2019-09-04T18:43:23Z");
-    private ZonedDateTime arrivalDate = parse("2020-05-19T00:00Z");
+    private Instant eventDate = parse("2019-09-04T18:43:23Z");
+    private Instant arrivalDate = parse("2020-05-19T00:00:00Z");
     private String connectAccount = "connect-account";
     @Captor
     private ArgumentCaptor<PayoutEvent> payoutArgumentCaptor;
@@ -60,8 +60,8 @@ class PayoutEmitterServiceTest {
         when(mockConnectorConfiguration.getEmitPayoutEvents()).thenReturn(true);
 
         payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountCredentialsService);
-        payout = new StripePayout("po_123", 1213L, arrivalDate.toEpochSecond(),
-                eventDate.toEpochSecond(), "pending", "card", null);
+        payout = new StripePayout("po_123", 1213L, arrivalDate.getEpochSecond(),
+                eventDate.getEpochSecond(), "pending", "card", null);
     }
 
     @Test
@@ -74,7 +74,7 @@ class PayoutEmitterServiceTest {
                 .thenReturn(gatewayAccountEntity);
 
 
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate.toInstant(), connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
 
@@ -84,14 +84,14 @@ class PayoutEmitterServiceTest {
         assertThat(payoutEvent.getEventType(), is("PAYOUT_CREATED"));
         assertThat(payoutEvent.getResourceExternalId(), is("po_123"));
         assertThat(payoutEvent.getResourceType(), is(PAYOUT));
-        assertThat(payoutEvent.getTimestamp(), is(eventDate.toInstant()));
+        assertThat(payoutEvent.getTimestamp(), is(eventDate));
         assertThat(details.getAmount(), is(1213L));
         assertThat(details.getGatewayStatus(), is("pending"));
     }
 
     @Test
     void shouldEmitPayoutUpdatedEventCorrectly() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutUpdated.class, eventDate.toInstant(), connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutUpdated.class, eventDate, connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutUpdated payoutEvent = (PayoutUpdated) payoutArgumentCaptor.getValue();
@@ -105,7 +105,7 @@ class PayoutEmitterServiceTest {
     void shouldEmitPayoutFailedEventCorrectly() throws QueueException {
         payout = new StripePayout("po_123", "pending", "account_closed",
                 "The bank account has been closed", "ba_1GkZtqDv3CZEaFO2CQhLrluk");
-        payoutEmitterService.emitPayoutEvent(PayoutFailed.class, eventDate.toInstant(), "connect-account", payout);
+        payoutEmitterService.emitPayoutEvent(PayoutFailed.class, eventDate, "connect-account", payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutFailed payoutEvent = (PayoutFailed) payoutArgumentCaptor.getValue();
@@ -120,7 +120,7 @@ class PayoutEmitterServiceTest {
 
     @Test
     void shouldEmitPayoutPaidEventCorrectly() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutPaid.class, eventDate.toInstant(), connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutPaid.class, eventDate, connectAccount, payout);
 
         verify(mockEventService).emitEvent(payoutArgumentCaptor.capture(), anyBoolean());
         PayoutPaid payoutEvent = (PayoutPaid) payoutArgumentCaptor.getValue();
@@ -134,7 +134,7 @@ class PayoutEmitterServiceTest {
     private void assertCommonPayoutFields(PayoutEvent event, String gatewayStatus) {
         assertThat(event.getResourceExternalId(), is("po_123"));
         assertThat(event.getResourceType(), is(PAYOUT));
-        assertThat(event.getTimestamp(), is(eventDate.toInstant()));
+        assertThat(event.getTimestamp(), is(eventDate));
         assertThat(gatewayStatus, is("pending"));
     }
 
@@ -147,7 +147,7 @@ class PayoutEmitterServiceTest {
         when(mockGatewayAccountCredentialsService.findStripeGatewayAccountForCredentialKeyAndValue(STRIPE_ACCOUNT_ID_KEY, connectAccount))
                 .thenReturn(gatewayAccountEntity);
 
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate.toInstant(), connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
         verify(mockEventService).emitEvent(any(), anyBoolean());
     }
 
@@ -162,13 +162,13 @@ class PayoutEmitterServiceTest {
 
         when(mockConnectorConfiguration.getEmitPayoutEvents()).thenReturn(false);
         payoutEmitterService = new PayoutEmitterService(mockEventService, mockConnectorConfiguration, mockGatewayAccountCredentialsService);
-        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate.toInstant(), connectAccount, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutCreated.class, eventDate, connectAccount, payout);
         verify(mockEventService, never()).emitEvent(any(), anyBoolean());
     }
 
     @Test
     void emitPayoutEventShouldNotEmitEventForAnUnknownPayoutEvent() throws QueueException {
-        payoutEmitterService.emitPayoutEvent(PayoutEvent.class, eventDate.toInstant(), null, payout);
+        payoutEmitterService.emitPayoutEvent(PayoutEvent.class, eventDate, null, payout);
         verify(mockEventService, never()).emitEvent(any(), anyBoolean());
     }
 }
