@@ -300,7 +300,7 @@ class StripeNotificationServiceTest {
         Payout payout = payoutArgumentCaptor.getValue();
         assertThat(payout.getGatewayPayoutId(), is("po_aaaaaaaaaaaaaaaaaaaaa"));
         assertThat(payout.getConnectAccountId(), is("connect_account_id"));
-        assertThat(payout.getCreatedDate(), is(ZonedDateTime.parse("2020-03-24T01:30:46Z")));
+        assertThat(payout.getCreatedDate(), is(Instant.parse("2020-03-24T01:30:46Z")));
     }
 
     @Test
