@@ -8,7 +8,7 @@ import uk.gov.service.payments.commons.api.json.ApiResponseDateTimeDeserializer;
 
 import java.time.ZonedDateTime;
 
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 @JsonIgnoreProperties(ignoreUnknown = true)

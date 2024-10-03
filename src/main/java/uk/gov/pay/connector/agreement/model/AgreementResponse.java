@@ -6,10 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
-import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
+import uk.gov.service.payments.commons.api.json.IsoInstantMillisecondSerializer;
 
 import java.time.Instant;
-import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
@@ -19,7 +18,7 @@ public record AgreementResponse (
         String agreementId,
 
         @JsonProperty("created_date")
-        @JsonSerialize(using = ApiResponseInstantSerializer.class)
+        @JsonSerialize(using = IsoInstantMillisecondSerializer.class)
         @Schema(example = "2022-06-27T13:07:57.580Z")
         Instant createdDate,
 
