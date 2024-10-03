@@ -1,25 +1,25 @@
 package uk.gov.pay.connector.events.eventdetails.charge;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateTimeSerializer;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
+import uk.gov.service.payments.commons.api.json.IsoInstantMicrosecondSerializer;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class CaptureSubmittedEventDetails extends EventDetails {
-    @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
-    private final ZonedDateTime captureSubmittedDate;
+    @JsonSerialize(using = IsoInstantMicrosecondSerializer.class)
+    private final Instant captureSubmittedDate;
 
-    private CaptureSubmittedEventDetails(ZonedDateTime captureSubmittedDate) {
+    private CaptureSubmittedEventDetails(Instant captureSubmittedDate) {
         this.captureSubmittedDate = captureSubmittedDate;
     }
 
     public static CaptureSubmittedEventDetails from(ChargeEventEntity chargeEvent) {
-        return new CaptureSubmittedEventDetails(chargeEvent.getUpdated());
+        return new CaptureSubmittedEventDetails(chargeEvent.getUpdated().toInstant());
     }
 
-    public ZonedDateTime getCaptureSubmittedDate() {
+    public Instant getCaptureSubmittedDate() {
         return captureSubmittedDate;
     }
 }
