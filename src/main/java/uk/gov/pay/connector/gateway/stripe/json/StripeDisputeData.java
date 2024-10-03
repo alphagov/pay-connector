@@ -6,10 +6,8 @@ import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.Evidence;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.List;
-
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StripeDisputeData {
@@ -80,8 +78,8 @@ public class StripeDisputeData {
         return reason;
     }
 
-    public ZonedDateTime getDisputeCreated() {
-        return toUTCZonedDateTime(created);
+    public Instant getDisputeCreated() {
+        return Instant.ofEpochSecond(created);
     }
 
     public List<BalanceTransaction> getBalanceTransactionList() {
