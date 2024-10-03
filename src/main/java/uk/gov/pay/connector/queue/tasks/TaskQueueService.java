@@ -144,4 +144,22 @@ public class TaskQueueService {
             MDC.remove("email_notification_type");
         }
     }
+
+    public void addQueryAndUpdateChargeInSubmittedStateTask(ChargeEntity chargeEntity) {
+        try {
+            MDC.put(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId());
+            var data = new PaymentTaskData(chargeEntity.getExternalId());
+            add(new Task(objectMapper.writeValueAsString(data), TaskType.QUERY_AND_UPDATE_CAPTURE_SUBMITTED_PAYMENT));
+        } catch (Exception e) {
+            logger.warn("Error adding payment task message to queue", ArrayUtils.addAll(
+                    chargeEntity.getStructuredLoggingArgs(),
+                    kv("task_name", TaskType.QUERY_AND_UPDATE_CAPTURE_SUBMITTED_PAYMENT),
+                    kv("error", e.getMessage()))
+            );
+            Sentry.captureException(e);
+        } finally {
+            MDC.remove(PAYMENT_EXTERNAL_ID);
+        }
+    }
+
 }

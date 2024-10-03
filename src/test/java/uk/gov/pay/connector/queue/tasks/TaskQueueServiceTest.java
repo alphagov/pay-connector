@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeEntity;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -278,6 +279,17 @@ class TaskQueueServiceTest {
         var taskData = new Task(objectMapper.writeValueAsString(data), DELETE_STORED_PAYMENT_DETAILS);
         taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
         verify(mockTaskQueue).addTaskToQueue(eq(taskData));
+    }
+
+    @Test
+    void shouldAddQueryAndUpdateChargeInSubmittedStateTaskToQueue() throws QueueException, JsonProcessingException {
+        ChargeEntity chargeEntity = aValidChargeEntity().
+                withExternalId("payment-external-id")
+                .build();
+        String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
+        taskQueueService.addQueryAndUpdateChargeInSubmittedStateTask(chargeEntity);
+        var expectedPaymentTask = new Task(data, TaskType.QUERY_AND_UPDATE_CAPTURE_SUBMITTED_PAYMENT);
+        verify(mockTaskQueue).addTaskToQueue(expectedPaymentTask);
     }
 
     @Nested
