@@ -9,6 +9,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.QueryAndUpdatePaymentInSubmittedStateTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.ServiceArchivedTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
@@ -39,6 +40,7 @@ public class TaskQueueMessageHandler {
     private final DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
     private final RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler;
     private ServiceArchivedTaskHandler serviceArchivedTaskHandler;
+    private final QueryAndUpdatePaymentInSubmittedStateTaskHandler queryAndUpdatePaymentInSubmittedStateTaskHandler;
     private final ObjectMapper objectMapper;
 
     @Inject
@@ -48,7 +50,8 @@ public class TaskQueueMessageHandler {
                                    AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler,
                                    DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler,
                                    RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler,
-                                   ServiceArchivedTaskHandler serviceArchivedTaskHandler, 
+                                   ServiceArchivedTaskHandler serviceArchivedTaskHandler,
+                                   QueryAndUpdatePaymentInSubmittedStateTaskHandler queryAndUpdatePaymentInSubmittedStateTaskHandler,
                                    ObjectMapper objectMapper) {
         this.taskQueue = taskQueue;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
@@ -57,6 +60,7 @@ public class TaskQueueMessageHandler {
         this.deleteStoredPaymentDetailsHandler = deleteStoredPaymentDetailsHandler;
         this.retryPaymentOrRefundEmailTaskHandler = retryPaymentOrRefundEmailTaskHandler;
         this.serviceArchivedTaskHandler = serviceArchivedTaskHandler;
+        this.queryAndUpdatePaymentInSubmittedStateTaskHandler = queryAndUpdatePaymentInSubmittedStateTaskHandler;
         this.objectMapper = objectMapper;
     }
 
@@ -114,6 +118,12 @@ public class TaskQueueMessageHandler {
                         MDC.put(SERVICE_EXTERNAL_ID, serviceArchivedTaskData.getServiceId());
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         serviceArchivedTaskHandler.process(serviceArchivedTaskData);
+                        break;
+                    case QUERY_AND_UPDATE_CAPTURE_SUBMITTED_PAYMENT:
+                        var data = objectMapper.readValue(taskMessage.getTask().getData(), PaymentTaskData.class);
+                        MDC.put(PAYMENT_EXTERNAL_ID, data.getPaymentExternalId());
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        queryAndUpdatePaymentInSubmittedStateTaskHandler.process(data);
                         break;
                     default:
                         LOGGER.error("Task [{}] is not supported.", taskType.getName());

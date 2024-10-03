@@ -8,7 +8,8 @@ public enum TaskType {
     AUTHORISE_WITH_USER_NOT_PRESENT("authorise_with_user_not_present"),
     DELETE_STORED_PAYMENT_DETAILS("delete_stored_payment_details"),
     RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL("retry_failed_payment_or_refund_email"), 
-    SERVICE_ARCHIVED("service_archived");
+    SERVICE_ARCHIVED("service_archived"),
+    QUERY_AND_UPDATE_CAPTURE_SUBMITTED_PAYMENT("query_and_update_capture_submitted_payment");
 
     TaskType(String name) {
         this.name = name;
