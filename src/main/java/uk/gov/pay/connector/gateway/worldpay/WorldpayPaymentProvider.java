@@ -211,7 +211,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         boolean corporateExemptionsEnabled = isCorporateExemptionsEnabled(request);
-        boolean cardIsCorporate = isCorporateCard(request);
+        boolean cardIsCorporate = isCorporateCard(request, charge);
         boolean corporateExemptionsOrExemptionEngineEnabled = corporateExemptionsEnabled || exemptionEngineEnabled;
         
         GatewayResponse<WorldpayOrderStatusResponse> response;
@@ -322,8 +322,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                 .orElse(false);
     }
     
-    private boolean isCorporateCard(CardAuthorisationGatewayRequest request) {
+    private boolean isCorporateCard(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         AuthCardDetails authCardDetails = request.getAuthCardDetails();
+        LOGGER.info("Card is corporate card: {} for charge_external_id={}", authCardDetails.isCorporateCard(), charge.getExternalId());
         return authCardDetails.isCorporateCard();
     }
 

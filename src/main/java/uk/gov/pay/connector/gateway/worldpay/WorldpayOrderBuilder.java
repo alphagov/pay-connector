@@ -45,7 +45,7 @@ public interface WorldpayOrderBuilder {
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
         
-        boolean isCorporateExemptionEnabled = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
+        boolean isCorporateExemptionEnabled = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() &&
                 request.getGatewayAccount().getWorldpay3dsFlexCredentials().map(Worldpay3dsFlexCredentials::isCorporateExemptionsEnabled)
                         .orElse(false);
         
