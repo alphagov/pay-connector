@@ -545,6 +545,7 @@ public class ChargeDaoIT {
                 .withTestAccount(defaultTestAccount)
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
                 .withCanRetry(true)
+                .withRequires3ds(true)
                 .insert();
         defaultTestCardDetails
                 .withChargeId(defaultTestCharge.chargeId)
@@ -567,6 +568,7 @@ public class ChargeDaoIT {
         assertThat(charge.getCreatedDate(), is(defaultTestCharge.getCreatedDate()));
         assertThat(charge.getCardDetails().getCardBrand(), is(defaultTestCardDetails.getCardBrand()));
         assertThat(charge.getCanRetry(), is(true));
+        assertThat(charge.getRequires3ds(), is(true));
     }
 
     @Test
@@ -1104,6 +1106,21 @@ public class ChargeDaoIT {
         assertThat(charges, containsInAnyOrder(
                 hasProperty("externalId", is(chargeWithAuthorisationModeWeb.externalChargeId))
         ));
+    }
+
+    @Test
+    void shouldReturnNullValueForRequires3dsWhenNoValuePersisted() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .build();
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> optionalCharge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(optionalCharge.isPresent(), is(true));
+        assertThat(optionalCharge.get().getRequires3ds(), is(nullValue()));
     }
 
     private void insertTestAccount() {

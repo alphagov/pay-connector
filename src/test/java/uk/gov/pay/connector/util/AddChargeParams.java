@@ -44,7 +44,8 @@ public record AddChargeParams(
     AuthorisationMode authorisationMode,
     Instant updatedDate,
     Long paymentInstrumentId,
-    Boolean canRetry) {
+    Boolean canRetry,
+    Boolean requires3ds) {
 
     public static final class AddChargeParamsBuilder {
         
@@ -56,7 +57,7 @@ public record AddChargeParams(
                     returnUrl, transactionId, description, reference, createdDate, version, email, providerId, language,
                     delayedCapture, corporateSurcharge, externalMetadata, parityCheckStatus, cardType, parityCheckDate,
                     gatewayCredentialId, serviceId, issuerUrl, agreementExternalId, savePaymentInstrumentToAgreement,
-                    authorisationMode, updatedDate, paymentInstrumentId, canRetry);
+                    authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds);
         }
         
         private Long chargeId = new Random().nextLong();
@@ -89,6 +90,7 @@ public record AddChargeParams(
         private Instant updatedDate;
         private Long paymentInstrumentId;
         private Boolean canRetry;
+        private Boolean requires3ds;
 
         private AddChargeParamsBuilder() {
         }
@@ -244,6 +246,11 @@ public record AddChargeParams(
 
         public AddChargeParamsBuilder withCanRetry(Boolean canRetry) {
             this.canRetry = canRetry;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withRequires3ds(Boolean requires3ds) {
+            this.requires3ds = requires3ds;
             return this;
         }
     }
