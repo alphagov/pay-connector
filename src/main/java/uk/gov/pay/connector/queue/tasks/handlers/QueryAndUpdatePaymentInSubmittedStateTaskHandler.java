@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue.tasks.handlers;
 
 import com.google.inject.Inject;
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -9,6 +10,8 @@ import uk.gov.pay.connector.gateway.ChargeQueryResponse;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
+
+import javax.ws.rs.WebApplicationException;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -28,6 +31,7 @@ public class QueryAndUpdatePaymentInSubmittedStateTaskHandler {
         this.queryService = queryService;
     }
 
+    @Transactional
     public void process(PaymentTaskData paymentTaskData) {
         ChargeEntity chargeEntity = chargeService.findChargeByExternalId(paymentTaskData.getPaymentExternalId());
 
@@ -47,7 +51,7 @@ public class QueryAndUpdatePaymentInSubmittedStateTaskHandler {
                 LOGGER.warn("Charge not found on gateway",
                         kv(PROVIDER, chargeEntity.getPaymentProvider()));
             }
-        } catch (GatewayException | UnsupportedOperationException e) {
+        } catch (GatewayException | UnsupportedOperationException | WebApplicationException e) {
             LOGGER.warn("Error querying charge with gateway",
                     kv(PROVIDER, chargeEntity.getPaymentProvider()),
                     kv("exception", e.getMessage())

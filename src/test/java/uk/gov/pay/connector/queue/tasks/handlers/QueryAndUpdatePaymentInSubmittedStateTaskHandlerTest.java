@@ -14,6 +14,10 @@ import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
+import javax.ws.rs.WebApplicationException;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -61,7 +65,7 @@ class QueryAndUpdatePaymentInSubmittedStateTaskHandlerTest {
     }
 
     @Test
-    void shouldNotUpdateChargeStatus_whenPaymentProviderReturnsAnError() throws GatewayException {
+    void shouldNotUpdateChargeStatus_ForGatewayError() throws GatewayException {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withStatus(CAPTURE_SUBMITTED)
                 .withExternalId("payment-ext-id")
@@ -69,6 +73,22 @@ class QueryAndUpdatePaymentInSubmittedStateTaskHandlerTest {
         PaymentTaskData taskData = new PaymentTaskData("payment-ext-id");
 
         when(queryService.getChargeGatewayStatus(chargeEntity)).thenThrow(new GatewayException.GatewayErrorException("some error"));
+        when(chargeService.findChargeByExternalId(chargeEntity.getExternalId())).thenReturn(chargeEntity);
+
+        taskHandler.process(taskData);
+
+        verify(chargeService, times(0)).transitionChargeState(any(ChargeEntity.class), any());
+    }
+
+    @Test
+    void shouldNotUpdateChargeStatus_ForWebApplicationException() throws GatewayException {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withStatus(CAPTURE_SUBMITTED)
+                .withExternalId("payment-ext-id")
+                .build();
+        PaymentTaskData taskData = new PaymentTaskData("payment-ext-id");
+
+        when(queryService.getChargeGatewayStatus(chargeEntity)).thenThrow(new WebApplicationException("some error"));
         when(chargeService.findChargeByExternalId(chargeEntity.getExternalId())).thenReturn(chargeEntity);
 
         taskHandler.process(taskData);
