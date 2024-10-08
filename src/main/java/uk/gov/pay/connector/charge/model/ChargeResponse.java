@@ -13,8 +13,8 @@ import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.wallets.WalletType;
-import uk.gov.service.payments.commons.api.json.ApiResponseInstantSerializer;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
+import uk.gov.service.payments.commons.api.json.IsoInstantMillisecondSerializer;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -27,8 +27,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_LOCAL_DATE_IN_UTC;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_LOCAL_DATE_IN_UTC;
 
 @JsonInclude(Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
@@ -112,12 +112,12 @@ public class ChargeResponse {
     private String providerId;
 
     @JsonProperty("created_date")
-    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    @JsonSerialize(using = IsoInstantMillisecondSerializer.class)
     @Schema(example = "2022-06-28T09:24:45.715Z")
     private Instant createdDate;
 
     @JsonProperty("authorised_date")
-    @JsonSerialize(using = ApiResponseInstantSerializer.class)
+    @JsonSerialize(using = IsoInstantMillisecondSerializer.class)
     @Schema(description = "Only applicable for telephone payments reported. Date and time Payment service provider authorised the payment. ",
             example = "2022-06-28T16:05:33Z")
     private Instant authorisedDate;

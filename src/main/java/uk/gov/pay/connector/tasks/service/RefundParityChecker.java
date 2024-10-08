@@ -16,12 +16,12 @@ import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.tasks.service.ParityCheckService.FIELD_NAME;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundParityChecker {

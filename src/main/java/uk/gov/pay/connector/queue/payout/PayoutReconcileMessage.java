@@ -2,7 +2,7 @@ package uk.gov.pay.connector.queue.payout;
 
 import uk.gov.service.payments.commons.queue.model.QueueMessage;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 
 public class PayoutReconcileMessage {
     private Payout payout;
@@ -25,7 +25,9 @@ public class PayoutReconcileMessage {
         return payout.getConnectAccountId();
     }
     
-    public ZonedDateTime getCreatedDate() { return payout.getCreatedDate(); }
+    public Instant getCreatedDate() {
+        return payout.getCreatedDate();
+    }
 
     public String getQueueMessageReceiptHandle() {
         return queueMessage.getReceiptHandle();
@@ -38,4 +40,5 @@ public class PayoutReconcileMessage {
     public QueueMessage getQueueMessage() {
         return queueMessage;
     }
+
 }

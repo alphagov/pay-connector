@@ -1,19 +1,19 @@
 package uk.gov.pay.connector.events.eventdetails.dispute;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateTimeSerializer;
+import uk.gov.service.payments.commons.api.json.IsoInstantMicrosecondSerializer;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Objects;
 
 public class DisputeCreatedEventDetails extends DisputeEventDetails {
-    @JsonSerialize(using = MicrosecondPrecisionDateTimeSerializer.class)
-    private final ZonedDateTime evidenceDueDate;
+    @JsonSerialize(using = IsoInstantMicrosecondSerializer.class)
+    private final Instant evidenceDueDate;
     private final Long amount;
     private final String reason;
     private final String gatewayTransactionId;
 
-    public DisputeCreatedEventDetails(ZonedDateTime evidenceDueDate, String gatewayAccountId, Long amount,
+    public DisputeCreatedEventDetails(Instant evidenceDueDate, String gatewayAccountId, Long amount,
                                       String reason, String gatewayTransactionId) {
         super(gatewayAccountId);
         this.evidenceDueDate = evidenceDueDate;
@@ -22,7 +22,7 @@ public class DisputeCreatedEventDetails extends DisputeEventDetails {
         this.gatewayTransactionId = gatewayTransactionId;
     }
 
-    public ZonedDateTime getEvidenceDueDate() {
+    public Instant getEvidenceDueDate() {
         return evidenceDueDate;
     }
 

@@ -21,6 +21,6 @@ public class PayoutCreated extends PayoutEvent {
                         payout.getStatus(),
                         payout.getType(),
                         payout.getStatementDescriptor()),
-                payout.getCreated().toInstant());
+                        payout.getCreated());
     }
 }

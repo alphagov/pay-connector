@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.QueryAndUpdatePaymentInSubmittedStateTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.RetryPaymentOrRefundEmailTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.ServiceArchivedTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.StripeWebhookTaskHandler;
@@ -42,10 +43,10 @@ import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificati
 
 @ExtendWith(MockitoExtension.class)
 class TaskQueueMessageHandlerTest {
-    
+
     @Mock
     private TaskQueue taskQueue;
-    
+
     @Mock
     private CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
 
@@ -60,6 +61,8 @@ class TaskQueueMessageHandlerTest {
     @Mock
     private RetryPaymentOrRefundEmailTaskHandler mockRetryPaymentOrRefundEmailTaskHandler;
     @Mock
+    private QueryAndUpdatePaymentInSubmittedStateTaskHandler mockQueryAndUpdatePaymentInSubmittedStateTaskHandler;
+    @Mock
     private ServiceArchivedTaskHandler mockServiceArchivedTaskHandler;
     @Mock
     private Appender<ILoggingEvent> mockAppender;
@@ -69,14 +72,17 @@ class TaskQueueMessageHandlerTest {
 
     @Captor
     ArgumentCaptor<RetryPaymentOrRefundEmailTaskData> retryPaymentOrRefundEmailTaskDataArgumentCaptor;
-    
+
     @Captor
     ArgumentCaptor<ServiceArchivedTaskData> serviceArchivedTaskDataArgumentCaptor;
-    
+
+    @Captor
+    ArgumentCaptor<PaymentTaskData> paymentTaskDataArgumentCaptor;
+
     private TaskQueueMessageHandler taskQueueMessageHandler;
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     private final String chargeExternalId = "a-charge-external-id";
 
     @BeforeEach
@@ -89,6 +95,7 @@ class TaskQueueMessageHandlerTest {
                 deleteStoredPaymentDetailsHandler,
                 mockRetryPaymentOrRefundEmailTaskHandler,
                 mockServiceArchivedTaskHandler,
+                mockQueryAndUpdatePaymentInSubmittedStateTaskHandler,
                 objectMapper);
 
         Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);
@@ -120,7 +127,7 @@ class TaskQueueMessageHandlerTest {
         when(taskQueue.retrieveTaskQueueMessages()).thenReturn(List.of(taskMessage));
         when(oldFormatTask.getPaymentExternalId()).thenReturn(chargeExternalId);
         when(oldFormatTask.getTaskType()).thenReturn(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
-        
+
         taskQueueMessageHandler.processMessages();
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
@@ -155,7 +162,7 @@ class TaskQueueMessageHandlerTest {
         verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
-    
+
     @Test
     void shouldProcessServiceArchivedTask() throws Exception {
         TaskMessage taskMessage = setupQueueMessage("{ \"service_external_id\": \"external-service-id\"}", TaskType.SERVICE_ARCHIVED);
@@ -177,6 +184,18 @@ class TaskQueueMessageHandlerTest {
         RetryPaymentOrRefundEmailTaskData taskData = retryPaymentOrRefundEmailTaskDataArgumentCaptor.getValue();
         assertThat(taskData.getEmailNotificationType(), is(PAYMENT_CONFIRMED));
         assertThat(taskData.getResourceExternalId(), is("external-id"));
+        verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
+    }
+
+    @Test
+    void shouldProcessUpdatePaymentInSubmittedStateTask() throws Exception {
+        TaskMessage taskMessage = setupQueueMessage("{ \"payment_external_id\": \"payment-ext-id\"}",
+                TaskType.QUERY_AND_UPDATE_CAPTURE_SUBMITTED_PAYMENT);
+        taskQueueMessageHandler.processMessages();
+        verify(mockQueryAndUpdatePaymentInSubmittedStateTaskHandler).process(paymentTaskDataArgumentCaptor.capture());
+
+        PaymentTaskData taskData = paymentTaskDataArgumentCaptor.getValue();
+        assertThat(taskData.getPaymentExternalId(), is("payment-ext-id"));
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
     }
 

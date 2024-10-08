@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.expunge.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,6 +20,7 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import java.time.Duration;
@@ -34,11 +36,14 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.RADAR;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.SKIPPED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
@@ -54,7 +59,9 @@ class ChargeExpungeServiceTest {
     @Mock
     private ChargeService mockChargeService;
     @Mock
-    private  IdempotencyDao mockIdempotencyDao;
+    private IdempotencyDao mockIdempotencyDao;
+    @Mock
+    private TaskQueueService mockTaskQueueService;
     @Mock
     private ConnectorConfiguration mockConnectorConfiguration;
     @Mock
@@ -78,11 +85,11 @@ class ChargeExpungeServiceTest {
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
 
         chargeExpungeService = new ChargeExpungeService(mockChargeDao, mockConnectorConfiguration, parityCheckService,
-                mockChargeService, mockIdempotencyDao);
+                mockChargeService, mockIdempotencyDao, mockTaskQueueService);
     }
 
     @Test
-   void expunge_shouldExpungeNoOfChargesAsPerConfiguration() {
+    void expunge_shouldExpungeNoOfChargesAsPerConfiguration() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
         when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
@@ -327,12 +334,53 @@ class ChargeExpungeServiceTest {
         verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
     }
 
+    @Nested
+    class TestExpungingZeroPenceCharges {
+        @Test
+        void shouldExpungeChargeIfItIsInCaptureSubmittedStateAndIsAZeroPencePayment() {
+            ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                    .withCreatedDate(Instant.now().minus(Duration.ofDays(1)))
+                    .withAmount(0L)
+                    .withStatus(CAPTURE_SUBMITTED)
+                    .build();
+            when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+            when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(90);
+            when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+            when(parityCheckService.parityCheckChargeForExpunger(chargeEntity)).thenReturn(true);
+            when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                    .thenReturn(Optional.of(chargeEntity));
+            when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+
+            chargeExpungeService.expunge(1);
+            verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
+        }
+
+        @Test
+        void shouldNotExpungeChargeIfItIsNotInTerminalStateAndIsAZeroPencePayment() {
+            ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                    .withCreatedDate(Instant.now().minus(Duration.ofDays(1)))
+                    .withAmount(0L)
+                    .withStatus(AUTHORISATION_SUCCESS)
+                    .build();
+            when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+            when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(90);
+            when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+            when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                    .thenReturn(Optional.of(chargeEntity));
+            when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+
+            chargeExpungeService.expunge(1);
+            verify(mockChargeDao, times(0)).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
+        }
+    }
+
     @Test
     void expunge_shouldNotExpungeChargeIfInCaptureSubmittedAndChargeIsNewerThanHistoric() {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(8);
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
+                .withPaymentProvider(STRIPE.getName())
                 .withStatus(CAPTURE_SUBMITTED)
                 .build();
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
@@ -345,6 +393,29 @@ class ChargeExpungeServiceTest {
 
         verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
         verify(mockChargeDao, never()).expungeCharge(any(), any());
+        verifyNoInteractions(mockTaskQueueService);
+    }
+
+    @Test
+    void expunge_shouldAddWorldpayChargeStuckInCaptureSubmittedStateToTheTaskQueue() {
+        when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(8);
+
+        ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
+                .withPaymentProvider(WORLDPAY.getName())
+                .withStatus(CAPTURE_SUBMITTED)
+                .build();
+        when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
+        when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
+                .thenReturn(Optional.of(chargeEntity));
+        when(mockExpungeConfig.getExcludeChargesOrRefundsParityCheckedWithInDays()).thenReturn(defaultExcludeChargesParityCheckedWithInDays);
+
+        chargeExpungeService.expunge(1);
+
+        verify(mockChargeService).updateChargeParityStatus(chargeEntity.getExternalId(), SKIPPED);
+        verify(mockChargeDao, never()).expungeCharge(any(), any());
+        verify(mockTaskQueueService).addQueryAndUpdateChargeInSubmittedStateTask(chargeEntity);
     }
 
     @Test

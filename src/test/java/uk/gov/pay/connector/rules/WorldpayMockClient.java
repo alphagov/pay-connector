@@ -22,6 +22,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CANCEL_SUCCESS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURED_INQUIRY_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_CAPTURE_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE;
@@ -116,6 +117,11 @@ public class WorldpayMockClient {
     public void mockRefundError() {
         String refundResponse = load(WORLDPAY_REFUND_ERROR_RESPONSE);
         paymentServiceResponse(refundResponse);
+    }
+    
+    public void mockInquiryCaptured() {
+        String capturedResponse = load(WORLDPAY_CAPTURED_INQUIRY_RESPONSE);
+        paymentServiceResponse(capturedResponse);
     }
     
     public void mockCredentialsValidationValid() {

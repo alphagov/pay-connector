@@ -26,8 +26,8 @@ import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixture.aValidRefundTransactionsForPayment;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 
 public class LedgerStub {
 

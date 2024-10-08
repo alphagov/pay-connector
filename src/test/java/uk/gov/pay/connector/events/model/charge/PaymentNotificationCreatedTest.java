@@ -21,8 +21,8 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
-import static uk.gov.service.payments.commons.model.ApiResponseDateTimeFormatter.ISO_INSTANT_MICROSECOND_PRECISION;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
+import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MICROSECOND_PRECISION;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 
 public class PaymentNotificationCreatedTest {

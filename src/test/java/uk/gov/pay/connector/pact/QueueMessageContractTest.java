@@ -68,7 +68,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-import static java.time.ZonedDateTime.parse;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
@@ -458,7 +457,7 @@ public class QueueMessageContractTest {
     @PactVerifyProvider("a dispute created event")
     public String verifyDisputeCreatedEvent() throws JsonProcessingException {
         DisputeCreatedEventDetails eventDetails =
-                new DisputeCreatedEventDetails(parse("2022-02-14T23:59:59.000Z"), "a-gateway-account-id",
+                new DisputeCreatedEventDetails(Instant.parse("2022-02-14T23:59:59.000Z"), "a-gateway-account-id",
                         6500L, "duplicate", "du_1LIaq8Dv3CZEaFO2MNQJK333");
         DisputeCreated disputeCreated =
                 new DisputeCreated("resource-external-id", "external-id", "service-id",

@@ -136,8 +136,8 @@ public class StripeWebhookTaskHandlerTest {
 
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction,
-                stripeDisputeData.getDisputeCreated().toInstant());
-        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
+                stripeDisputeData.getDisputeCreated());
+        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
                 transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedDateTime));
 
@@ -614,8 +614,8 @@ public class StripeWebhookTaskHandlerTest {
 
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         var disputeCreated = DisputeCreated.from(resourceExternalId, stripeDisputeData, transaction,
-                stripeDisputeData.getDisputeCreated().toInstant());
-        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
+                stripeDisputeData.getDisputeCreated());
+        var paymentDisputed = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
         var refundAvailabilityUpdated = RefundAvailabilityUpdated.from(
                 transaction, ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE, Instant.parse(fixedDateTime));
 

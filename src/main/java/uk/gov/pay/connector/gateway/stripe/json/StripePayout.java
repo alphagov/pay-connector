@@ -5,10 +5,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.stripe.model.Payout;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Objects;
-
-import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -65,12 +63,12 @@ public class StripePayout {
         return amount;
     }
 
-    public ZonedDateTime getCreated() {
-        return toUTCZonedDateTime(created);
+    public Instant getCreated() {
+        return Instant.ofEpochSecond(created);
     }
 
-    public ZonedDateTime getArrivalDate() {
-        return toUTCZonedDateTime(arrivalDate);
+    public Instant getArrivalDate() {
+        return Instant.ofEpochSecond(arrivalDate);
     }
 
     public String getStatus() {

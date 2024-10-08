@@ -15,7 +15,7 @@ import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.service.payments.commons.queue.model.QueueMessage;
 import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -63,12 +63,12 @@ class PayoutReconcileQueueTest {
         assertNotNull(payoutReconcileMessages);
         assertEquals("payout-id", payoutReconcileMessages.get(0).getGatewayPayoutId());
         assertEquals("connect-accnt-id", payoutReconcileMessages.get(0).getConnectAccountId());
-        assertEquals(ZonedDateTime.parse("2020-05-01T10:30:00.000Z"), payoutReconcileMessages.get(0).getCreatedDate());
+        assertEquals(Instant.parse("2020-05-01T10:30:00.000Z"), payoutReconcileMessages.get(0).getCreatedDate());
     }
 
     @Test
     void shouldSendValidSerialisedPayoutToQueue() throws QueueException, JsonProcessingException {
-        Payout payout = new Payout("payout-id", "connect-accnt-id", ZonedDateTime.parse("2020-05-01T10:30:00.000Z"));
+        Payout payout = new Payout("payout-id", "connect-accnt-id", Instant.parse("2020-05-01T10:30:00.000Z"));
         when(sqsQueueService.sendMessage(anyString(), anyString())).thenReturn(mock(QueueMessage.class));
 
         payoutReconcileQueue.sendPayout(payout);

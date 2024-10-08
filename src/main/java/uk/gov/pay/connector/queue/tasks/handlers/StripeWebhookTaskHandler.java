@@ -121,9 +121,9 @@ public class StripeWebhookTaskHandler {
                 switch (stripeNotificationType) {
                     case DISPUTE_CREATED:
                         DisputeCreated disputeCreatedEvent = DisputeCreated.from(disputeExternalId, stripeDisputeData, transaction,
-                                stripeDisputeData.getDisputeCreated().toInstant());
+                                stripeDisputeData.getDisputeCreated());
                         emitEvent(disputeCreatedEvent);
-                        PaymentDisputed paymentDisputedEvent = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated().toInstant());
+                        PaymentDisputed paymentDisputedEvent = PaymentDisputed.from(transaction, stripeDisputeData.getDisputeCreated());
                         emitEvent(paymentDisputedEvent);
                         // NOTE: we update the refund availability in ledger - but for connector it is calculated separately.
                         // So this status update will block a refund attempt made VIA the API is made if the charge has been
@@ -206,8 +206,8 @@ public class StripeWebhookTaskHandler {
     }
 
     private boolean shouldRechargeDispute(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {
-        return (transaction.getLive() && stripeDisputeData.getDisputeCreated().toInstant().isAfter(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate())) ||
-                (!transaction.getLive() && stripeDisputeData.getDisputeCreated().toInstant().isAfter(stripeGatewayConfig.getRechargeServicesForTestPaymentDisputesFromDate()));
+        return (transaction.getLive() && stripeDisputeData.getDisputeCreated().isAfter(stripeGatewayConfig.getRechargeServicesForLivePaymentDisputesFromDate())) ||
+                (!transaction.getLive() && stripeDisputeData.getDisputeCreated().isAfter(stripeGatewayConfig.getRechargeServicesForTestPaymentDisputesFromDate()));
     }
 
     private void submitEvidenceForTestAccount(StripeDisputeData stripeDisputeData, LedgerTransaction transaction) {
