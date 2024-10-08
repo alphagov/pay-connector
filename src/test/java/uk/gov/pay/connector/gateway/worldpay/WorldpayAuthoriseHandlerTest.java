@@ -234,6 +234,7 @@ class WorldpayAuthoriseHandlerTest {
                 .thenReturn(authorisationSuccessResponse);
 
         gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withCorporateExemptions(corporateExemption).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         AuthCardDetails authCardDetails = getValidTestCard(UUID.randomUUID().toString());
@@ -257,7 +258,8 @@ class WorldpayAuthoriseHandlerTest {
     private static Stream<Arguments> exemptionValues() {
         return Stream.of(
                 arguments(true, "CP", "AUTHORISATION", true),
-                arguments(true, "OP", "OPTIMISED", false)
+                arguments(true, "OP", "OPTIMISED", false),
+                arguments(false, "OP", "OPTIMISED", true)
         );
     }
     
