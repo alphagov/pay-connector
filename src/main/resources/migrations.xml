@@ -2054,4 +2054,11 @@
             end; $$
         </createProcedure>
     </changeSet>
+
+    <changeSet id="Add requires_3ds column to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="requires_3ds" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
