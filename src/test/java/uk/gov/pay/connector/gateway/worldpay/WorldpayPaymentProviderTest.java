@@ -282,10 +282,20 @@ class WorldpayPaymentProviderTest {
     
     private void verifyLoggingTypeOf3dsExemption(Exemption3dsType exemption3dsType, String externalId) {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
             String log = format("Requesting %s exemption - charge_external_id=%s", exemption3dsType.name(), externalId);
+            return loggingEvent.getFormattedMessage().contains(log);
+        }));
+    }
+
+    private void verifyLoggingCorporateCard(Boolean isCorporateCard, String externalId) {
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = format("Card is corporate card: %s for charge_external_id=%s", isCorporateCard, externalId);
             return loggingEvent.getFormattedMessage().contains(log);
         }));
     }
@@ -422,6 +432,7 @@ class WorldpayPaymentProviderTest {
         verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_HONOURED, exemption3dsType);
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, exemption3dsType);
         verifyLoggingTypeOf3dsExemption(exemption3dsType, chargeEntity.getExternalId());
+        verifyLoggingCorporateCard(corporateCard, chargeEntity.getExternalId());
     }
 
     private static Stream<Arguments> exemptionValues() {
