@@ -207,6 +207,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     private Instant updatedDate;
 
+    @Column(name = "requires_3ds")
+    private Boolean requires3ds;
+
     public ChargeEntity() {
         //for jpa
     }
@@ -234,7 +237,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
             AgreementEntity agreementEntity,
             boolean savePaymentInstrumentToAgreement,
             AuthorisationMode authorisationMode,
-            Boolean canRetry
+            Boolean canRetry,
+            Boolean requires3ds
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -259,6 +263,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
         this.canRetry = canRetry;
+        this.requires3ds = requires3ds;
     }
 
     public Long getId() {
@@ -590,6 +595,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.canRetry = canRetry;
     }
 
+    public Boolean getRequires3ds() {
+        return requires3ds;
+    }
+
+    public void setRequires3ds(Boolean requires3ds) {
+        this.requires3ds = requires3ds;
+    }
+
     public void setUpdatedDate(Instant updatedDate) {
         this.updatedDate = updatedDate;
     }
@@ -733,6 +746,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     agreementEntity,
                     savePaymentInstrumentToAgreement,
                     authorisationMode,
+                    null,
                     null);
         }
     }
@@ -848,6 +862,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     agreementEntity,
                     savePaymentInstrumentToAgreement,
                     AuthorisationMode.EXTERNAL,
+                    null,
                     null);
         }
     }

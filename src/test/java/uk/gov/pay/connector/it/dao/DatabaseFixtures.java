@@ -744,6 +744,7 @@ public class DatabaseFixtures {
         private Instant updatedDate;
         private Boolean canRetry;
         private String serviceId;
+        private Boolean requires3ds;
 
         public TestCardDetails getCardDetails() {
             return cardDetails;
@@ -849,6 +850,11 @@ public class DatabaseFixtures {
             return this;
         }
 
+        public TestCharge withRequires3ds(Boolean requires3ds) {
+            this.requires3ds = requires3ds;
+            return this;
+        }
+
         public TestCharge insert() {
             if (testAccount == null)
                 throw new IllegalStateException("Test Account must be provided.");
@@ -877,6 +883,7 @@ public class DatabaseFixtures {
                     .withCanRetry(canRetry)
                     .withUpdatedDate(updatedDate)
                     .withServiceId(serviceId)
+                    .withRequires3ds(requires3ds)
                     .build());
 
             if (cardDetails != null) {
@@ -971,7 +978,11 @@ public class DatabaseFixtures {
         public Boolean getCanRetry() {
             return canRetry;
         }
-        
+
+        public Boolean getRequires3ds() {
+            return requires3ds;
+        }
+
         public String getServiceId() { return serviceId; }
     }
 
