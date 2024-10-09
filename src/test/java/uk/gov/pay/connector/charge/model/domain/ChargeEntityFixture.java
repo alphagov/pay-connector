@@ -6,6 +6,7 @@ import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -75,6 +76,7 @@ public class ChargeEntityFixture {
     private Boolean canRetry;
     private Instant updatedDate;
     private Boolean requires3ds;
+    private ChargeResponse.AuthorisationSummary authorisationSummary;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();

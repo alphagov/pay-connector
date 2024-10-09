@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
+import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -79,6 +81,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -521,6 +524,139 @@ class ChargeServiceTest {
         assertThat(eventDetails.getRefundAmountRefunded(), is(100L));
         assertThat(eventDetails.getRefundStatus(), is(EXTERNAL_AVAILABLE.getStatus()));
     }
+
+
+    @Test
+    void shouldAddAuthorisationSummary_whenRequires3dsTrueAndAuth3dsRequiredEntityIsNull() {
+        Long chargeId = 101L;
+        Long amount = 1000L;
+
+        ChargeEntity charge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURED)
+                .withAmount(amount)
+                .withRequires3ds(true)
+                .build();
+
+        String externalId = charge.getExternalId();
+
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(charge));
+
+        Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+
+        assertThat(chargeResponse.getAuthorisationSummary(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getRequired(), is(true));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getVersion(), is(nullValue()));
+    }
+
+    @Test
+    void shouldAddAuthorisationSummary_whenRequires3dsTrueAndAuth3dsRequiredEntityIsNotNull() {
+        Long chargeId = 101L;
+        Long amount = 1000L;
+
+        Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1");
+
+        ChargeEntity charge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURED)
+                .withAmount(amount)
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .withRequires3ds(true)
+                .build();
+
+        String externalId = charge.getExternalId();
+
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(charge));
+
+        Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+
+        assertThat(chargeResponse.getAuthorisationSummary(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getRequired(), is(true));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getVersion(), is("2.1"));
+    }
+
+    @Test
+    void shouldAddAuthorisationSummary_whenRequires3dsIsNullAndAuth3dsRequiredEntityIsNotNull() {
+        Long chargeId = 101L;
+        Long amount = 1000L;
+        Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1");
+
+        ChargeEntity charge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURED)
+                .withAmount(amount)
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .withRequires3ds(null)
+                .build();
+
+        String externalId = charge.getExternalId();
+
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(charge));
+
+        Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+
+        assertThat(chargeResponse.getAuthorisationSummary(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getRequired(), is(true));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getVersion(), is("2.1"));
+    }
+
+    @Test
+    void shouldNotAddAuthorisationSummary_whenRequires3dsFalseAndAuth3dsRequiredEntityIsNotNull() {
+        Long chargeId = 101L;
+        Long amount = 1000L;
+        Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1");
+
+        ChargeEntity charge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURED)
+                .withAmount(amount)
+                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                .withRequires3ds(false)
+                .build();
+
+        String externalId = charge.getExternalId();
+
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(charge));
+
+        Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+
+        assertThat(chargeResponse.getAuthorisationSummary(), is(nullValue()));
+    }
+
 
     @Nested
     class TestGetLongestDurationOfChargesAwaitingCaptureInMinutes {

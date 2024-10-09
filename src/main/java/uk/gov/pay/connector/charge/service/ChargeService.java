@@ -630,11 +630,17 @@ public class ChargeService {
             auth3dsData = new ChargeResponse.Auth3dsData();
             auth3dsData.setPaRequest(chargeEntity.get3dsRequiredDetails().getPaRequest());
             auth3dsData.setIssuerUrl(chargeEntity.get3dsRequiredDetails().getIssuerUrl());
-
+            if (chargeEntity.getRequires3ds() == null || chargeEntity.getRequires3ds()) {
+                authorisationSummary = new ChargeResponse.AuthorisationSummary();
+                ChargeResponse.AuthorisationSummary.ThreeDSecure threeDSecure = new ChargeResponse.AuthorisationSummary.ThreeDSecure();
+                threeDSecure.setRequired(true);
+                threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
+                authorisationSummary.setThreeDSecure(threeDSecure);
+            }
+        } else if (chargeEntity.getRequires3ds() != null && chargeEntity.getRequires3ds()) {
             authorisationSummary = new ChargeResponse.AuthorisationSummary();
             ChargeResponse.AuthorisationSummary.ThreeDSecure threeDSecure = new ChargeResponse.AuthorisationSummary.ThreeDSecure();
             threeDSecure.setRequired(true);
-            threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
             authorisationSummary.setThreeDSecure(threeDSecure);
         }
 
