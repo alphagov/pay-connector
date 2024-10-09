@@ -47,7 +47,7 @@ import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidL
 
 public class RefundReversalResourceIT {
     private static final StripeSdkClientFactory mockStripeSdkClientFactory = mock(StripeSdkClientFactory.class);
-    private static RandomIdGenerator mockRandomIdGenerator = mock(RandomIdGenerator.class);
+    private static final RandomIdGenerator mockRandomIdGenerator = mock(RandomIdGenerator.class);
 
     // App must be instantiated after mock is set
     @RegisterExtension
@@ -85,6 +85,7 @@ public class RefundReversalResourceIT {
                 .build();
 
         refund = aValidLedgerTransaction()
+                .withAmount(50L)
                 .withExternalId(REFUND_EXTERNAL_ID)
                 .withGatewayAccountId(Long.parseLong(testBaseExtension.getAccountId()))
                 .withParentTransactionId(CHARGE_EXTERNAL_ID)
@@ -124,6 +125,11 @@ public class RefundReversalResourceIT {
         ValidatableResponse response = given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
+                .body("""
+                 {
+                        "zendesk_ticket_id": "1223333343",
+                        "github_user_id": "John Doe"
+                 }""")
                 .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
                         .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
@@ -131,7 +137,7 @@ public class RefundReversalResourceIT {
                 .then();
         response.statusCode(Response.Status.OK.getStatusCode());
     }
-    
+
     @Test
     void shouldReturnInternalErrorWhenRefundNotFoundFromStripe() throws JsonProcessingException, StripeException {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
@@ -186,6 +192,11 @@ public class RefundReversalResourceIT {
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
+                .body("""
+                 {
+                        "zendesk_ticket_id": "1223333343",
+                        "github_user_id": "John Doe"
+                 }""")
                 .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
                         .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
@@ -195,7 +206,7 @@ public class RefundReversalResourceIT {
                 .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
                 );
     }
-    
+
     @Test
     void shouldReturnErrorWhenInsufficientFunds() throws JsonProcessingException, StripeException {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
@@ -246,6 +257,11 @@ public class RefundReversalResourceIT {
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
+                .body("""
+                 {
+                        "zendesk_ticket_id": "1223333343",
+                        "github_user_id": "John Doe"
+                 }""")
                 .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
                         .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
@@ -304,6 +320,11 @@ public class RefundReversalResourceIT {
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
+                .body("""
+                 {
+                        "zendesk_ticket_id": "1223333343",
+                        "github_user_id": "John Doe"
+                 }""")
                 .post("/v1/api/accounts/{gatewayAccountId}/charges/{chargeId}/refunds/{refundId}/reverse-failed"
                         .replace("{gatewayAccountId}", testBaseExtension.getAccountId())
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)

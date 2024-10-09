@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.refund.resource;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,6 +16,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.exception.RefundNotFoundForChargeException;
 import uk.gov.pay.connector.refund.exception.RefundNotFoundRuntimeException;
+import uk.gov.pay.connector.refund.model.domain.GithubAndZendeskCredential;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundReversalService;
 
@@ -66,7 +68,10 @@ public class RefundReversalResource {
                                   @PathParam("chargeId") String chargeExternalId,
                                   @Parameter(example = "3c6vtn9pth38ppbmnt20d57t49", description = "Refund external ID")
                                   @PathParam("refundId") String refundExternalId,
-                                  @Context UriInfo uriInfo) {
+                                  @Context UriInfo uriInfo,
+                                  @Parameter
+                                  GithubAndZendeskCredential githubAndZendeskCredential
+    ) {
 
         Charge charge = chargeService.findCharge(chargeExternalId)
                 .orElseThrow(() -> new ChargeNotFoundRuntimeException(chargeExternalId));
@@ -84,14 +89,16 @@ public class RefundReversalResource {
             throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
         }
 
-        Refund refund = refundReversalService.findMaybeHistoricRefundByRefundId(refundExternalId)   
+        Refund refund = refundReversalService.findMaybeHistoricRefundByRefundId(refundExternalId)
                 .orElseThrow(() -> new RefundNotFoundRuntimeException(refundExternalId));
 
         if (!refund.getChargeExternalId().equals(chargeExternalId)) {
             throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
         }
-        
-        refundReversalService.reverseFailedRefund(gatewayAccount,refund);
+            
+        String githubUserId = githubAndZendeskCredential.githubUserId();
+        String zendeskUserId = githubAndZendeskCredential.zendeskTicketId();
+        refundReversalService.reverseFailedRefund(gatewayAccount, refund, charge, githubUserId, zendeskUserId);
         return Response.ok().build();
     }
 }

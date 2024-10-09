@@ -4,18 +4,26 @@ import com.stripe.exception.StripeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.refund.PaymentStatusCorrectedToSuccessByAdmin;
+import uk.gov.pay.connector.events.model.refund.RefundFailureFundsSentToConnectAccount;
+import uk.gov.pay.connector.events.model.refund.RefundStatusCorrectedToErrorByAdmin;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.dao.RefundDao;
+import uk.gov.pay.connector.refund.model.domain.GithubAndZendeskCredential;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundReversalService;
@@ -23,13 +31,16 @@ import uk.gov.pay.connector.refund.service.RefundReversalStripeConnectTransferRe
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -56,9 +67,20 @@ public class RefundReversalServiceTest {
     @Mock
     private RefundReversalStripeConnectTransferRequestBuilder mockBuilder;
 
+
+
+    ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
+            .withGatewayAccountEntity(aGatewayAccountEntity().withType(LIVE).build());
+    Charge charge = Charge.from(chargeEntityFixture.build());
+    GithubAndZendeskCredential githubAndZendeskCredential = new GithubAndZendeskCredential("1223333343", "John Doe (JohnDoeGds)");
+
+    private String githubUserId = githubAndZendeskCredential.githubUserId();
+    private String zendeskId = githubAndZendeskCredential.zendeskTicketId();
+
     @BeforeEach
     void setUp() {
-        refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao, mockStripeSDKClientFactory, mockBuilder);
+        refundReversalService = new RefundReversalService(mockLedgerService, mockRefundDao,
+                mockStripeSDKClientFactory, mockBuilder);
     }
 
     @Test
@@ -131,7 +153,7 @@ public class RefundReversalServiceTest {
         );
         when(mockBuilder.createRequest(mockedStripeRefund)).thenReturn(transferRequest);
 
-        assertDoesNotThrow(() -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
+        assertDoesNotThrow(() -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund, charge, githubUserId, zendeskId));
 
         verify(mockStripeSDKClient).createTransfer(transferRequest, true);
     }
@@ -155,7 +177,7 @@ public class RefundReversalServiceTest {
         when(mockedStripeRefund.getStatus()).thenReturn("succeeded");
 
         WebApplicationException thrown = assertThrows(WebApplicationException.class, () ->
-                refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
+                refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund, charge, githubUserId, zendeskId));
 
         Response response = thrown.getResponse();
         ErrorResponse errorResponse = (ErrorResponse) response.getEntity();
@@ -182,11 +204,50 @@ public class RefundReversalServiceTest {
                 .thenThrow(mockStripeException);
 
         var thrown = assertThrows(WebApplicationException.class,
-                () -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund));
+                () -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund, charge, githubUserId, zendeskId));
 
         assertThat(thrown.getMessage(),
                 is("There was an error trying to get refund from Stripe with refund id: " + refund.getExternalId()));
 
         verify(mockStripeSDKClient).getRefund(stripeRefundId, isLiveGatewayAccount);
+    }
+
+    @Test
+    void shouldCreateCorrectEventsAfterRefundReversalToPostToLedger() throws StripeException {
+        when(mockStripeSDKClientFactory.getInstance()).thenReturn(mockStripeSDKClient);
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withType(LIVE).build();
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
+                .withAmount(100L)
+                .withGatewayTransactionId("a-transaction-id")
+                .build();
+        Refund refund = Refund.from(refundEntity);
+
+        com.stripe.model.Refund mockedStripeRefund = Mockito.mock(com.stripe.model.Refund.class);
+        when(mockStripeSDKClient.getRefund(refund.getGatewayTransactionId(), gatewayAccountEntity.isLive()))
+                .thenReturn(mockedStripeRefund);
+        when(mockedStripeRefund.getStatus()).thenReturn("failed");
+
+        refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund, charge, githubUserId, zendeskId);
+
+        ArgumentCaptor<List<Event>> eventsCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mockLedgerService).postEvent(eventsCaptor.capture());
+        List<Event> postedEvents = eventsCaptor.getValue();
+
+        assertThat(postedEvents, hasSize(3));
+        assertInstanceOf(RefundFailureFundsSentToConnectAccount.class, postedEvents.get(0));
+        assertInstanceOf(PaymentStatusCorrectedToSuccessByAdmin.class, postedEvents.get(1));
+        assertInstanceOf(RefundStatusCorrectedToErrorByAdmin.class, postedEvents.get(2));
+
+        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(0)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
+        assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
+        assertThat(((RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
+
+        assertThat(postedEvents.get(0).getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(postedEvents.get(1).getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(postedEvents.get(2).getResourceExternalId(), is(refund.getExternalId()));
+
+        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(0)).getServiceId(), is(charge.getServiceId()));
+        assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1)).getServiceId(), is(charge.getServiceId()));
+        assertThat(((RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2)).getServiceId(), is(charge.getServiceId()));
     }
 }
