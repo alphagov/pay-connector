@@ -370,6 +370,10 @@ public class ChargeResponse {
         return authorisationMode;
     }
 
+    public AuthorisationSummary getAuthorisationSummary() {
+        return authorisationSummary;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
