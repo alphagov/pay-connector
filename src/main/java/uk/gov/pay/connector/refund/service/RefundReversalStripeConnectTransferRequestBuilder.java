@@ -19,7 +19,7 @@ public class RefundReversalStripeConnectTransferRequestBuilder {
 
     public Map<String, Object> createRequest(com.stripe.model.Refund refundFromStripe) {
         String stripeChargeId = refundFromStripe.getChargeObject().getId();
-        String destination = refundFromStripe.getChargeObject().getOnBehalfOfObject().getId();
+        String destination = refundFromStripe.getChargeObject().getOnBehalfOf();
         String transferGroup = refundFromStripe.getChargeObject().getTransferGroup();
         long amount = refundFromStripe.getAmount();
         String currency = refundFromStripe.getCurrency();
@@ -30,11 +30,11 @@ public class RefundReversalStripeConnectTransferRequestBuilder {
                 "destination", destination,
                 "amount", amount,
                 "metadata", Map.of(
-                        "stripeChargeId", stripeChargeId,
-                        "correctionPaymentId", correctionPaymentId
+                        "stripe_charge_id", stripeChargeId,
+                        "correction_payment_id", correctionPaymentId
                 ),
                 "currency", currency,
-                "transferGroup", transferGroup,
+                "transfer_group", transferGroup,
                 "expand", List.of("balance_transaction", "destination_payment")
         );
 

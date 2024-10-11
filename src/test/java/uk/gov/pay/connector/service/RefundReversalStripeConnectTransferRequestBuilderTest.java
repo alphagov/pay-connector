@@ -41,8 +41,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         when(mockStripeRefund.getChargeObject()).thenReturn(mockStripeCharge);
         when(mockStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
         when(mockStripeCharge.getTransferGroup()).thenReturn("abc");
-        when(mockStripeCharge.getOnBehalfOfObject()).thenReturn(mockStripeAccount);
-        when(mockStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
         when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("randomId123");
