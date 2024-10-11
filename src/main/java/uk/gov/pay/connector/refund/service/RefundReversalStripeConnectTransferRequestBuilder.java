@@ -10,31 +10,27 @@ import java.util.Map;
 
 @Singleton
 public class RefundReversalStripeConnectTransferRequestBuilder {
-    private final RandomIdGenerator randomIdGenerator;
 
     @Inject
-    public RefundReversalStripeConnectTransferRequestBuilder(RandomIdGenerator randomIdGenerator) {
-        this.randomIdGenerator = randomIdGenerator;
+    public RefundReversalStripeConnectTransferRequestBuilder() {
     }
 
-    public Map<String, Object> createRequest(com.stripe.model.Refund refundFromStripe) {
+    public Map<String, Object> createRequest(String correctionPaymentId, com.stripe.model.Refund refundFromStripe) {
         String stripeChargeId = refundFromStripe.getChargeObject().getId();
-        String destination = refundFromStripe.getChargeObject().getOnBehalfOfObject().getId();
+        String destination = refundFromStripe.getChargeObject().getOnBehalfOf();
         String transferGroup = refundFromStripe.getChargeObject().getTransferGroup();
         long amount = refundFromStripe.getAmount();
         String currency = refundFromStripe.getCurrency();
-        String correctionPaymentId = randomIdGenerator.random13ByteHexGenerator();
-
 
         return Map.of(
                 "destination", destination,
                 "amount", amount,
                 "metadata", Map.of(
-                        "stripeChargeId", stripeChargeId,
-                        "correctionPaymentId", correctionPaymentId
+                        "stripe_charge_id", stripeChargeId,
+                        "govuk_pay_transaction_external_id", correctionPaymentId
                 ),
                 "currency", currency,
-                "transferGroup", transferGroup,
+                "transfer_group", transferGroup,
                 "expand", List.of("balance_transaction", "destination_payment")
         );
 

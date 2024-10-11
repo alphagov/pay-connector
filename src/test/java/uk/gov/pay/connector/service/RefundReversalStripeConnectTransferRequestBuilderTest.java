@@ -32,7 +32,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
 
     @BeforeEach
     public void setUp() {
-        builder = new RefundReversalStripeConnectTransferRequestBuilder(mockRandomIdGenerator);
+        builder = new RefundReversalStripeConnectTransferRequestBuilder();
     }
 
     @Test
@@ -41,14 +41,12 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         when(mockStripeRefund.getChargeObject()).thenReturn(mockStripeCharge);
         when(mockStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
         when(mockStripeCharge.getTransferGroup()).thenReturn("abc");
-        when(mockStripeCharge.getOnBehalfOfObject()).thenReturn(mockStripeAccount);
-        when(mockStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
-        when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("randomId123");
 
-        Map<String, Object> builderRequest = builder.createRequest(mockStripeRefund);
-        
+        Map<String, Object> builderRequest = builder.createRequest("randomId123", mockStripeRefund);
+
         List expandList = (List) builderRequest.get("expand");
         assertEquals(2, expandList.size());
         assertEquals("balance_transaction", expandList.get(0));
@@ -58,11 +56,11 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         assertEquals("acct_jdsa7789d", builderRequest.get("destination"));
         assertEquals(100L, builderRequest.get("amount"));
         assertEquals("GBP", builderRequest.get("currency"));
-        
+
         Map<String, Object> metadataMap = (Map<String, Object>) builderRequest.get("metadata");
         assertEquals(2, metadataMap.size());
-        assertEquals("abc", builderRequest.get("transferGroup"));
-        assertEquals("ch_sdkhdg887s", (metadataMap.get("stripeChargeId")));
-        assertEquals("randomId123", (metadataMap.get("correctionPaymentId")));
+        assertEquals("abc", builderRequest.get("transfer_group"));
+        assertEquals("ch_sdkhdg887s", (metadataMap.get("stripe_charge_id")));
+        assertEquals("randomId123", (metadataMap.get("govuk_pay_transaction_external_id")));
     }
 }

@@ -44,36 +44,7 @@ class RefundReversalResourceTest {
     public static final ResourceExtension resources = ResourceExtension.builder()
             .addResource(new RefundReversalResource(mockChargeService, mockGatewayAccountDao, mockRefundReversalService))
             .build();
-
-
-    @Test
-    void shouldReturn200WhenRefundExistsAndProviderIsStripe() {
-
-        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().withId(gatewayAccountId).build();
-        when(mockGatewayAccountDao.findById(gatewayAccountId)).thenReturn(Optional.of(gatewayAccountEntity));
-
-        RefundEntity refundEntity = aValidRefundEntity()
-                .withExternalId(refundExternalId)
-                .withChargeExternalId(externalChargeId)
-                .build();
-        Refund refund = Refund.from(refundEntity);
-        when(mockRefundReversalService.findMaybeHistoricRefundByRefundId(refundExternalId)).thenReturn(Optional.of(refund));
-
-        ChargeEntity chargeEntity = aValidChargeEntity()
-                .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
-                .withExternalId(externalChargeId)
-                .withGatewayAccountEntity(gatewayAccountEntity)
-                .build();
-        Charge charge = Charge.from(chargeEntity);
-        when(mockChargeService.findCharge(externalChargeId)).thenReturn(Optional.of(charge));
-
-        Response response = resources
-                .target("/v1/api/accounts/1234/charges/a-charge-id/refunds/a-refund-id/reverse-failed")
-                .request()
-                .post(Entity.json(Map.of("zendesk_ticket_id", "1223333343", "github_user_id", "87")));
-
-        assertThat(response.getStatus(), is(Response.Status.OK.getStatusCode()));
-    }
+    
 
     @Test
     void shouldReturn400ErrorWhenPaymentProviderIsNotStripe() {

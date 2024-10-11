@@ -3,6 +3,7 @@ package uk.gov.pay.connector.events.model.refund;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.eventdetails.refund.PaymentStatusCorrectedToSuccessByAdminEventDetails;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.GithubAndZendeskCredential;
@@ -20,7 +21,7 @@ class PaymentStatusCorrectedToSuccessByAdminTest {
     void shouldCreatePaymentStatusCorrectedToSuccessByAdminEventFromRefundAndCharge() {
 
         Instant fixedTimestamp = Instant.now();
-
+        String correctionPaymentId = "ExampleCorrectionPaymentId123";
         ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity()
                 .withServiceId("service-id")
                 .withGatewayAccountEntity(aGatewayAccountEntity().withType(LIVE).build());
@@ -37,11 +38,11 @@ class PaymentStatusCorrectedToSuccessByAdminTest {
         String zendeskId = githubAndZendeskCredential.zendeskTicketId();
 
         PaymentStatusCorrectedToSuccessByAdmin paymentStatusCorrectedToSuccessByAdmin = PaymentStatusCorrectedToSuccessByAdmin
-                .from(refund, charge, fixedTimestamp, githubUserId, zendeskId);
+                .from(correctionPaymentId, refund, charge, fixedTimestamp, githubUserId, zendeskId);
 
         assertThat(paymentStatusCorrectedToSuccessByAdmin.isLive(), is(true));
         assertThat(paymentStatusCorrectedToSuccessByAdmin.getGatewayAccountId(), is(charge.getGatewayAccountId()));
-        assertThat(paymentStatusCorrectedToSuccessByAdmin.getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(paymentStatusCorrectedToSuccessByAdmin.getResourceExternalId(), is(correctionPaymentId));
 
         PaymentStatusCorrectedToSuccessByAdminEventDetails details = (PaymentStatusCorrectedToSuccessByAdminEventDetails) paymentStatusCorrectedToSuccessByAdmin.getEventDetails();
 
@@ -53,7 +54,7 @@ class PaymentStatusCorrectedToSuccessByAdminTest {
         assertThat(details.getNetAmount(), is(charge.getAmount()));
         assertThat(details.getRefundAmountAvailable(), is(0L));
         assertThat(details.getRefundAmountRefunded(), is(0L));
-        assertThat(details.getRefundStatus(), is(refund.getExternalStatus()));
+        assertThat(details.getRefundStatus(), is(ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE.getStatus()));
         assertThat(details.getGatewayAccountId(), is(charge.getGatewayAccountId()));
         assertThat(details.getCaptureSubmittedDate(), is(fixedTimestamp));
         assertThat(details.getReference(), is(charge.getReference()));
