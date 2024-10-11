@@ -37,4 +37,13 @@ public class RefundStatusCorrectedToErrorByAdminEventDetails extends EventDetail
     public void setZendeskId(String zendeskId) {
         this.zendeskId = zendeskId;
     }
+
+    @Override
+    public String toString() {
+        return "RefundStatusCorrectedToErrorByAdminEventDetails{" +
+                "updatedReason='" + updatedReason + '\'' +
+                ", adminGithubId='" + adminGithubId + '\'' +
+                ", zendeskId='" + zendeskId + '\'' +
+                '}';
+    }
 }

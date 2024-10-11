@@ -8,6 +8,7 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import java.time.Instant;
 
 public class RefundStatusCorrectedToErrorByAdmin extends RefundEvent {
+    
     private RefundStatusCorrectedToErrorByAdmin(String serviceId, boolean live, Long gatewayAccountId,
                                                 String resourceExternalId, String parentResourceExternalId,
                                                 RefundStatusCorrectedToErrorByAdminEventDetails eventDetails,

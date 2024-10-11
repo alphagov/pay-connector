@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.stripe.Stripe;
 import com.stripe.exception.ApiException;
 import com.stripe.exception.CardException;
 import com.stripe.exception.IdempotencyException;
@@ -28,6 +29,7 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.ws.rs.WebApplicationException;
@@ -36,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
+import static org.apache.http.client.methods.RequestBuilder.post;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -116,8 +119,7 @@ public class RefundReversalResourceIT {
         when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
 
         when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
-        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
-        when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockedStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
