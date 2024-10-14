@@ -627,18 +627,15 @@ class ChargeServiceTest {
     }
 
     @Test
-    void shouldNotAddAuthorisationSummary_whenRequires3dsFalseAndAuth3dsRequiredEntityIsNotNull() {
+    void shouldAddAuthorisationSummaryRequiredOnly_whenRequires3dsFalseAndAuth3dsRequiredEntityIsNull() {
         Long chargeId = 101L;
         Long amount = 1000L;
-        Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
-        auth3dsRequiredEntity.setThreeDsVersion("2.1");
 
         ChargeEntity charge = aValidChargeEntity()
                 .withId(chargeId)
                 .withGatewayAccountEntity(gatewayAccount)
                 .withStatus(CAPTURED)
                 .withAmount(amount)
-                .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
                 .withRequires3ds(false)
                 .build();
 
@@ -654,9 +651,38 @@ class ChargeServiceTest {
         assertThat(chargeResponseForAccount.isPresent(), is(true));
         final ChargeResponse chargeResponse = chargeResponseForAccount.get();
 
-        assertThat(chargeResponse.getAuthorisationSummary(), is(nullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getRequired(), is(false));
     }
 
+    @Test
+    void shouldAddAuthorisationSummaryRequiredOnly_whenRequires3dsIsNullAndAuth3dsRequiredEntityIsNull() {
+        Long chargeId = 101L;
+        Long amount = 1000L;
+
+        ChargeEntity charge = aValidChargeEntity()
+                .withId(chargeId)
+                .withGatewayAccountEntity(gatewayAccount)
+                .withStatus(CAPTURED)
+                .withAmount(amount)
+                .withRequires3ds(null)
+                .build();
+
+        String externalId = charge.getExternalId();
+
+        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
+        when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
+        when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(charge));
+
+        Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
+
+        assertThat(chargeResponseForAccount.isPresent(), is(true));
+        final ChargeResponse chargeResponse = chargeResponseForAccount.get();
+
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure(), is(notNullValue()));
+        assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getRequired(), is(false));
+    }
 
     @Nested
     class TestGetLongestDurationOfChargesAwaitingCaptureInMinutes {
