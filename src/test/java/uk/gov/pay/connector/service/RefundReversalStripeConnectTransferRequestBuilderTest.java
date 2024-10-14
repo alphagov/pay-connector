@@ -32,7 +32,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
 
     @BeforeEach
     public void setUp() {
-        builder = new RefundReversalStripeConnectTransferRequestBuilder(mockRandomIdGenerator);
+        builder = new RefundReversalStripeConnectTransferRequestBuilder();
     }
 
     @Test
@@ -46,7 +46,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
         when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("randomId123");
 
-        Map<String, Object> builderRequest = builder.createRequest(mockStripeRefund);
+        Map<String, Object> builderRequest = builder.createRequest("randomId123", mockStripeRefund);
         
         List expandList = (List) builderRequest.get("expand");
         assertEquals(2, expandList.size());

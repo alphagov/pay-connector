@@ -36,8 +36,9 @@ class RefundFailureFundsSentToConnectAccountTest {
         String githubUserId = githubAndZendeskCredential.githubUserId();
         String zendeskId = githubAndZendeskCredential.zendeskTicketId();
 
+        //todo: set correctionPaymentId
         RefundFailureFundsSentToConnectAccount refundFailureFundsSentToConnectAccount = RefundFailureFundsSentToConnectAccount
-                .from(refund, charge, githubUserId, zendeskId);
+                .from("", refund, charge, githubUserId, zendeskId);
 
         assertThat(refundFailureFundsSentToConnectAccount.getResourceExternalId(), is(charge.getExternalId()));
         assertThat(refundFailureFundsSentToConnectAccount.isLive(), is(true));

@@ -36,8 +36,9 @@ class PaymentStatusCorrectedToSuccessByAdminTest {
         String githubUserId = githubAndZendeskCredential.githubUserId();
         String zendeskId = githubAndZendeskCredential.zendeskTicketId();
 
+        //todo: set correctionPaymentId
         PaymentStatusCorrectedToSuccessByAdmin paymentStatusCorrectedToSuccessByAdmin = PaymentStatusCorrectedToSuccessByAdmin
-                .from(refund, charge, fixedTimestamp, githubUserId, zendeskId);
+                .from("", refund, charge, fixedTimestamp, githubUserId, zendeskId);
 
         assertThat(paymentStatusCorrectedToSuccessByAdmin.isLive(), is(true));
         assertThat(paymentStatusCorrectedToSuccessByAdmin.getGatewayAccountId(), is(charge.getGatewayAccountId()));

@@ -151,7 +151,7 @@ public class RefundReversalServiceTest {
                 "transferGroup", "abc",
                 "expand", new String[]{"balance_transaction", "destination_payment"}
         );
-        when(mockBuilder.createRequest(mockedStripeRefund)).thenReturn(transferRequest);
+        when(mockBuilder.createRequest("random123", mockedStripeRefund)).thenReturn(transferRequest);
 
         assertDoesNotThrow(() -> refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund, charge, githubUserId, zendeskId));
 
