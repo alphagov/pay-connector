@@ -630,18 +630,11 @@ public class ChargeService {
             auth3dsData = new ChargeResponse.Auth3dsData();
             auth3dsData.setPaRequest(chargeEntity.get3dsRequiredDetails().getPaRequest());
             auth3dsData.setIssuerUrl(chargeEntity.get3dsRequiredDetails().getIssuerUrl());
-            if (chargeEntity.getRequires3ds() == null || chargeEntity.getRequires3ds()) {
-                authorisationSummary = new ChargeResponse.AuthorisationSummary();
-                ChargeResponse.AuthorisationSummary.ThreeDSecure threeDSecure = new ChargeResponse.AuthorisationSummary.ThreeDSecure();
-                threeDSecure.setRequired(true);
-                threeDSecure.setVersion(chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
-                authorisationSummary.setThreeDSecure(threeDSecure);
-            }
-        } else if (chargeEntity.getRequires3ds() != null && chargeEntity.getRequires3ds()) {
-            authorisationSummary = new ChargeResponse.AuthorisationSummary();
-            ChargeResponse.AuthorisationSummary.ThreeDSecure threeDSecure = new ChargeResponse.AuthorisationSummary.ThreeDSecure();
-            threeDSecure.setRequired(true);
-            authorisationSummary.setThreeDSecure(threeDSecure);
+            authorisationSummary = getAuthorisationSummary(true, chargeEntity.get3dsRequiredDetails().getThreeDsVersion());
+        } else if (chargeEntity.getRequires3ds() != null) {
+            authorisationSummary = getAuthorisationSummary(chargeEntity.getRequires3ds(), null);
+        } else if (chargeEntity.get3dsRequiredDetails() == null && chargeEntity.getRequires3ds() == null) {
+            authorisationSummary = getAuthorisationSummary(false,  null);
         }
 
         T builderOfResponse = responseBuilder
@@ -700,6 +693,15 @@ public class ChargeService {
         } else {
             return builderOfResponse;
         }
+    }
+
+    private ChargeResponse.AuthorisationSummary getAuthorisationSummary(Boolean requires3ds, String version) {
+        ChargeResponse.AuthorisationSummary authorisationSummary = new ChargeResponse.AuthorisationSummary();
+        ChargeResponse.AuthorisationSummary.ThreeDSecure threeDSecure = new ChargeResponse.AuthorisationSummary.ThreeDSecure();
+        threeDSecure.setRequired(requires3ds);
+        threeDSecure.setVersion(version);
+        authorisationSummary.setThreeDSecure(threeDSecure);
+        return authorisationSummary;
     }
 
     private boolean needsNextUrl(ChargeEntity chargeEntity) {
