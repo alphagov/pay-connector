@@ -725,6 +725,7 @@ public class ChargeResponse {
             private boolean required;
 
             @JsonProperty("version")
+            @JsonInclude(Include.NON_EMPTY)
             @Schema(description = "3DS version used to authorise payment", example = "2.1.0")
             private String version;
 
