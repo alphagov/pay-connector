@@ -41,8 +41,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         when(mockStripeRefund.getChargeObject()).thenReturn(mockStripeCharge);
         when(mockStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
         when(mockStripeCharge.getTransferGroup()).thenReturn("abc");
-        when(mockStripeCharge.getOnBehalfOfObject()).thenReturn(mockStripeAccount);
-        when(mockStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
         when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("randomId123");
@@ -61,8 +60,8 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
         
         Map<String, Object> metadataMap = (Map<String, Object>) builderRequest.get("metadata");
         assertEquals(2, metadataMap.size());
-        assertEquals("abc", builderRequest.get("transferGroup"));
-        assertEquals("ch_sdkhdg887s", (metadataMap.get("stripeChargeId")));
-        assertEquals("randomId123", (metadataMap.get("correctionPaymentId")));
+        assertEquals("abc", builderRequest.get("transfer_group"));
+        assertEquals("ch_sdkhdg887s", (metadataMap.get("stripe_charge_id")));
+        assertEquals("randomId123", (metadataMap.get("correction_payment_id")));
     }
 }

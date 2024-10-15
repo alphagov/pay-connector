@@ -290,6 +290,9 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public LedgerStub getLedgerStub() {
         return ledgerStub;
     }
+    public WireMockServer getLedgerWireMockServer() {
+        return ledgerWireMockServer;
+    }
     
     public CardidStub getCardidStub() {
         return cardidStub;
