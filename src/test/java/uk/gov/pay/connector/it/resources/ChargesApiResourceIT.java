@@ -290,6 +290,55 @@ public class ChargesApiResourceIT {
         }
 
         @Test
+        void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3dsAndVersionIsNotPresent() {
+            long chargeId = nextInt();
+            String externalChargeId = RandomIdGenerator.newId();
+
+            databaseTestHelper.addCharge(anAddChargeParams()
+                    .withChargeId(chargeId)
+                    .withExternalChargeId(externalChargeId)
+                    .withGatewayAccountId(accountId)
+                    .withAmount(AMOUNT)
+                    .withStatus(AUTHORISATION_SUCCESS)
+                    .build());
+            databaseTestHelper.updateCharge3dsFlexChallengeDetails(chargeId, "acsUrl", "transactionId", "payload", null);
+            databaseTestHelper.addToken(chargeId, "tokenId");
+
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(externalChargeId)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body("authorisation_summary.three_d_secure.required", is(true))
+                    .body("authorisation_summary.three_d_secure", not(hasKey("version")));
+        }
+
+        @Test
+        void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWithOut3dsAndVersionIsNotPresent() {
+            long chargeId = nextInt();
+            String externalChargeId = RandomIdGenerator.newId();
+
+            databaseTestHelper.addCharge(anAddChargeParams()
+                    .withChargeId(chargeId)
+                    .withExternalChargeId(externalChargeId)
+                    .withGatewayAccountId(accountId)
+                    .withAmount(AMOUNT)
+                    .withStatus(AUTHORISATION_SUCCESS)
+                    .build());
+            databaseTestHelper.addToken(chargeId, "tokenId");
+
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(externalChargeId)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body("authorisation_summary.three_d_secure.required", is(false))
+                    .body("authorisation_summary.three_d_secure", not(hasKey("version")));
+        }
+
+        @Test
         void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
             long chargeId = nextInt();
             String externalChargeId = RandomIdGenerator.newId();
