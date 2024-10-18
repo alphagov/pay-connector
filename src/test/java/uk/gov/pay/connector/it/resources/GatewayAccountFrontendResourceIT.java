@@ -190,36 +190,90 @@ public class GatewayAccountFrontendResourceIT {
     }
 
     @Nested
-    class UpdateServiceNameByServiceIdAndAccountType {
+    class UpdateServiceNameByServiceId {
+        private Map<String, String> gatewayAccountRequest = Map.of();
+        private Map<String, String> testGatewayAccountRequest;
+        private Map<String, String> liveGatewayAccountRequest;
         
-        private Map<String, String> gatewayAccountRequest;
         private String serviceId;
         
         @BeforeEach
         void before() {
             serviceId = RandomIdGenerator.newId();
-            gatewayAccountRequest = Map.of(
+            testGatewayAccountRequest = Map.of(
                     "payment_provider", "stripe",
                     "service_id", serviceId,
                     "service_name", "Service Name",
                     "type", "test");
+            liveGatewayAccountRequest = Map.of(
+                    "payment_provider", "stripe",
+                    "service_id", serviceId,
+                    "service_name", "Service Name",
+                    "type", "live");
         }
         
         @Test
-        void updateGatewayAccountServiceNameSuccessfully() {
+        void shouldUpdateServiceNameInTestAndLive_andReturn200() {
+            // Create test account
             app.givenSetup()
-                    .body(toJson(gatewayAccountRequest))        
+                    .body(toJson(testGatewayAccountRequest))        
                     .post(ACCOUNTS_API_URL)
                     .then()
                     .statusCode(201)
                     .body("service_name", is("Service Name"));
 
+            // Create live account
+            app.givenSetup()
+                    .body(toJson(liveGatewayAccountRequest))
+                    .post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .body("service_name", is("Service Name"));
+
+            // attempt to update service name
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "New Service Name"))
-                    .patch(format("/v1/frontend/service/%s/account/test/servicename", serviceId))
+                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
                     .then()
                     .statusCode(200);
 
+            // verify service name updated in test account 
+            given().port(app.getLocalPort())
+                    .contentType(JSON)
+                    .accept(JSON)
+                    .get(format("/v1/api/service/%s/account/test", serviceId))
+                    .then()
+                    .statusCode(200)
+                    .body("service_name", is("New Service Name"));
+
+            // verify service name updated in live account 
+            given().port(app.getLocalPort())
+                    .contentType(JSON)
+                    .accept(JSON)
+                    .get(format("/v1/api/service/%s/account/live", serviceId))
+                    .then()
+                    .statusCode(200)
+                    .body("service_name", is("New Service Name"));
+        }
+
+        @Test
+        void shouldUpdateServiceNameInTest_whenNoLiveAccountExists() {
+            // Create test account
+            app.givenSetup()
+                    .body(toJson(testGatewayAccountRequest))
+                    .post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .body("service_name", is("Service Name"));
+
+            // attempt to update service name
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
+                    .then()
+                    .statusCode(200);
+
+            // verify service name updated in test account 
             given().port(app.getLocalPort())
                     .contentType(JSON)
                     .accept(JSON)
@@ -228,6 +282,36 @@ public class GatewayAccountFrontendResourceIT {
                     .statusCode(200)
                     .body("service_name", is("New Service Name"));
         }
+        
+        @Test
+        void shouldReturn404_whenNoTestOrLiveAccountsExist()
+        {
+            // attempt to update service name
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
+                    .then()
+                    .statusCode(404);
+        }
+
+        @Test
+        void shouldReturn404_whenNoTestAccountExists()
+        {
+            // Create live account
+            app.givenSetup()
+                    .body(toJson(liveGatewayAccountRequest))
+                    .post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .body("service_name", is("Service Name"));
+
+            // attempt to update service name
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
+                    .then()
+                    .statusCode(404);
+        }
 
         @Test
         void assertBadRequestForMissingServiceNameField() {
@@ -235,7 +319,7 @@ public class GatewayAccountFrontendResourceIT {
 
             app.givenSetup().accept(JSON)
                     .body(Map.of())
-                    .patch(format("/v1/frontend/service/%s/account/test/servicename", serviceId))
+                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
                     .then()
                     .statusCode(422)
                     .body("message", contains("Field [service_name] cannot be null"))
@@ -248,7 +332,7 @@ public class GatewayAccountFrontendResourceIT {
 
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "service-name-more-than-fifty-chars-service-name-more-than-fifty-chars"))
-                    .patch(format("/v1/frontend/service/%s/account/test/servicename", serviceId))
+                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
                     .then()
                     .statusCode(422)
                     .body("message", contains("Field [service_name] can have a size between 1 and 50"))
@@ -259,7 +343,7 @@ public class GatewayAccountFrontendResourceIT {
         void assertNotFoundForNonExistentServiceId() {
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "New Service Name"))
-                    .patch("/v1/frontend/service/nexiste-pas/account/test/servicename")
+                    .patch("/v1/frontend/service/nexiste-pas/servicename")
                     .then()
                     .statusCode(404)
                     .body("message", contains("Gateway account not found for service ID [nexiste-pas] and account type [test]"))

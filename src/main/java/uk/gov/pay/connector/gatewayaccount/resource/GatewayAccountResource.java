@@ -365,12 +365,12 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path("/v1/frontend/service/{serviceId}/account/{accountType}/servicename")
+    @Path("/v1/frontend/service/{serviceId}/servicename")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
     @Operation(
-            summary = "Update service name of a gateway account",
+            summary = "Update service name of Test and Live (if existent) accounts for service",
             tags = {"Gateway accounts"},
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
                     "  \"service_name\": \"a new service name\"" +
@@ -384,17 +384,20 @@ public class GatewayAccountResource {
     )
     public Response updateGatewayAccountServiceNameByServiceId(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
-            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @Valid UpdateServiceNameRequest updateServiceNameRequest) {
+        
+        // Live account might not exist, in which case there is nothing to update
+        gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.LIVE)
+                .ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
 
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST)
                 .map(gatewayAccount ->
                         {
                             gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName());
                             return Response.ok().build();
                         }
                 )
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, GatewayAccountType.TEST));
     }
     
     @PATCH
