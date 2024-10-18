@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.refund.resource;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -95,10 +94,10 @@ public class RefundReversalResource {
         if (!refund.getChargeExternalId().equals(chargeExternalId)) {
             throw new RefundNotFoundForChargeException(refundExternalId, chargeExternalId, gatewayAccountId);
         }
-            
+
         String githubUserId = githubAndZendeskCredential.githubUserId();
         String zendeskUserId = githubAndZendeskCredential.zendeskTicketId();
-        refundReversalService.reverseFailedRefund(gatewayAccount, refund, charge, githubUserId, zendeskUserId);
-        return Response.ok().build();
+        return refundReversalService.reverseFailedRefund(gatewayAccount, refund, charge, githubUserId, zendeskUserId);
+
     }
 }

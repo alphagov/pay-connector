@@ -23,7 +23,6 @@ class RefundFailureFundsSentToConnectAccountTest {
                 .withServiceId("service-id")
                 .withGatewayAccountEntity(aGatewayAccountEntity().withType(LIVE).build());
 
-
         Charge charge = Charge.from(chargeEntityFixture.withPaymentProvider(STRIPE.getName()).build());
 
         Refund refund = Refund.from(RefundEntityFixture.aValidRefundEntity()
@@ -35,14 +34,15 @@ class RefundFailureFundsSentToConnectAccountTest {
 
         String githubUserId = githubAndZendeskCredential.githubUserId();
         String zendeskId = githubAndZendeskCredential.zendeskTicketId();
+        String correctionPaymentId = "ExampleCorrectionPaymentId123";
+
 
         RefundFailureFundsSentToConnectAccount refundFailureFundsSentToConnectAccount = RefundFailureFundsSentToConnectAccount
-                .from(refund, charge, githubUserId, zendeskId);
+                .from(correctionPaymentId, refund, charge, githubUserId, zendeskId);
 
-        assertThat(refundFailureFundsSentToConnectAccount.getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(refundFailureFundsSentToConnectAccount.getResourceExternalId(), is(correctionPaymentId));
         assertThat(refundFailureFundsSentToConnectAccount.isLive(), is(true));
         assertThat(refundFailureFundsSentToConnectAccount.getGatewayAccountId(), is(charge.getGatewayAccountId()));
-        assertThat(refundFailureFundsSentToConnectAccount.getResourceExternalId(), is(refund.getChargeExternalId()));
 
         RefundFailureFundsSentToConnectAccountEventDetails details = (RefundFailureFundsSentToConnectAccountEventDetails) refundFailureFundsSentToConnectAccount.getEventDetails();
 

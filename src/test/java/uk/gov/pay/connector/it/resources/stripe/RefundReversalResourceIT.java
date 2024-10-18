@@ -8,7 +8,10 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import com.stripe.model.StripeError;
 import io.dropwizard.core.setup.Environment;
+import io.restassured.RestAssured;
+import io.restassured.parsing.Parser;
 import io.restassured.http.ContentType;
+import io.restassured.parsing.Parser;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,6 +41,8 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -94,7 +99,7 @@ public class RefundReversalResourceIT {
                 .withGatewayTransactionId(STRIPE_REFUND_ID)
                 .build();
 
-        when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
+//        when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
 
     }
 
@@ -116,12 +121,13 @@ public class RefundReversalResourceIT {
         when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
 
         when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
-        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
-        when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockedStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
 
+//        when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
+        
         ValidatableResponse response = given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -161,34 +167,23 @@ public class RefundReversalResourceIT {
         app.getLedgerStub().returnLedgerTransaction(CHARGE_EXTERNAL_ID, charge);
         app.getLedgerStub().returnLedgerTransaction(REFUND_EXTERNAL_ID, refund);
 
-        Map<String, Object> transferRequest = Map.of(
-                "destination", "acct_jdsa7789d",
-                "amount", 100L,
-                "metadata", Map.of(
-                        "stripeChargeId", "ch_sdkhdg887s",
-                        "correctionPaymentId", "random123"
-                ),
-                "currency", "GBP",
-                "transferGroup", "abc",
-                "expand", List.of("balance_transaction", "destination_payment")
-        );
 
         when(mockStripeRefund.getStatus()).thenReturn("failed");
-
+        
         when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
         when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(mockStripeRefund);
 
         when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
-        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
-        when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockedStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
-
-
+        
         doThrow(new ApiException("error connecting to Stripe", "request_123", null, 500, null))
-                .when(mockStripeSdkClient).createTransfer(transferRequest, false);
+                .when(mockStripeSdkClient).createTransfer(anyMap(), anyBoolean(), anyString());
 
+        
+        // stub postevent json in ledger
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -202,7 +197,7 @@ public class RefundReversalResourceIT {
                         .replace("{chargeId}", CHARGE_EXTERNAL_ID)
                         .replace("{refundId}", REFUND_EXTERNAL_ID))
                 .then()
-                .body("message", is("There was an error trying to create transfer with id: " + REFUND_EXTERNAL_ID + " from Stripe: " + "error connecting to Stripe; request-id: request_123"))
+              .body("message", is("There was an error trying to create transfer with id: " + REFUND_EXTERNAL_ID + " from Stripe: " + "error connecting to Stripe; request-id: request_123"))
                 .statusCode(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()
                 );
     }
@@ -230,8 +225,7 @@ public class RefundReversalResourceIT {
         when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(mockStripeRefund);
 
         when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
-        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
-        when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
+        when(mockedStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
@@ -252,7 +246,7 @@ public class RefundReversalResourceIT {
                 null);
 
         cardexception.setStripeError(stripeError);
-        doThrow(cardexception).when(mockStripeSdkClient).createTransfer(transferRequest, false);
+        doThrow(cardexception).when(mockStripeSdkClient).createTransfer(anyMap(), anyBoolean(), anyString());
 
         given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
@@ -294,8 +288,9 @@ public class RefundReversalResourceIT {
         when(mockStripeRefund.getChargeObject()).thenReturn(mockedStripeCharge);
         when(mockStripeSdkClient.getRefund(eq(STRIPE_REFUND_ID), anyBoolean())).thenReturn(mockStripeRefund);
 
+
         when(mockedStripeCharge.getId()).thenReturn("ch_sdkhdg887s");
-        when(mockedStripeCharge.getOnBehalfOfObject()).thenReturn(mockedStripeAccount);
+        when(mockedStripeCharge.getOnBehalfOf()).thenReturn("acct_jdsa7789d");
         when(mockedStripeAccount.getId()).thenReturn("acct_jdsa7789d");
         when(mockedStripeCharge.getTransferGroup()).thenReturn("abc");
         when(mockStripeRefund.getAmount()).thenReturn(100L);
@@ -314,7 +309,7 @@ public class RefundReversalResourceIT {
         idempotencyException.setStripeError(stripeError);
 
         doThrow(idempotencyException)
-                .when(mockStripeSdkClient).createTransfer(transferRequest, false);
+                .when(mockStripeSdkClient).createTransfer(anyMap(), eq(false),anyString());
 
 
         given().port(app.getLocalPort())

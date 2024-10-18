@@ -5,11 +5,14 @@ import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Refund;
 import com.stripe.net.RequestOptions;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
+import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.yaml.snakeyaml.nodes.Tag.STR;
 
 public class StripeSdkClient {
 
@@ -62,9 +65,14 @@ public class StripeSdkClient {
         return stripeSDKWrapper.getRefund(stripeRefundId, params, requestOptions);
     }
 
-    public void createTransfer(Map<String, Object> transferRequest, boolean live) throws StripeException {
+    public void createTransfer(Map<String, Object> transferRequest,
+                               boolean live, String refundId) throws StripeException {
         String apiKey = getStripeApiKey(live);
+
+        String idempotencyKey = String.format("correction_payment_for_%s", refundId);
+
         RequestOptions requestOptions = RequestOptions.builder()
+                .setIdempotencyKey(idempotencyKey)
                 .setApiKey(apiKey)
                 .build();
         stripeSDKWrapper.createTransfer(transferRequest, requestOptions);

@@ -135,12 +135,14 @@ class StripeSdkClientTest {
     @Test
     void createTransfer_shouldUseLiveAPIKey() throws Exception {
         when(stripeAuthTokens.getLive()).thenReturn(LIVE_API_KEY);
+        String expectedIdempotencyKey = String.format("correction_payment_for_%s", STRIPE_REFUND_ID);
 
-        stripeSDKClient.createTransfer(transferRequest, true);
+        stripeSDKClient.createTransfer(transferRequest, true, STRIPE_REFUND_ID);
 
         verify(stripeSDKWrapper).createTransfer(paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
 
         assertThat(requestOptionsArgumentCaptor.getValue().getApiKey(), is(LIVE_API_KEY));
+        assertThat(requestOptionsArgumentCaptor.getValue().getIdempotencyKey(), is(expectedIdempotencyKey));
         assertThat(paramsArgumentCaptor.getValue(), is(transferRequest));
 
     }
@@ -149,7 +151,7 @@ class StripeSdkClientTest {
     void createTransfer_shouldUseTestAPIKey() throws Exception {
         when(stripeAuthTokens.getTest()).thenReturn(TEST_API_KEY);
 
-        stripeSDKClient.createTransfer(transferRequest, false);
+        stripeSDKClient.createTransfer(transferRequest, false, STRIPE_REFUND_ID);
 
         verify(stripeSDKWrapper).createTransfer(paramsArgumentCaptor.capture(), requestOptionsArgumentCaptor.capture());
 

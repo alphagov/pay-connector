@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.events.eventdetails.refund;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.service.payments.commons.api.json.IsoInstantMicrosecondSerializer;
 
@@ -12,7 +11,7 @@ public class PaymentStatusCorrectedToSuccessByAdminEventDetails extends EventDet
     private final long netAmount;
     @JsonSerialize(using = IsoInstantMicrosecondSerializer.class)
     private final Instant capturedDate;
-    private final ExternalRefundStatus refundStatus;
+    private final String refundStatus;
     private final String updatedReason;
     private final String adminGithubId;
     private final long gatewayAccountId;
@@ -27,7 +26,7 @@ public class PaymentStatusCorrectedToSuccessByAdminEventDetails extends EventDet
             long fee,
             long netAmount,
             Instant capturedDate,
-            ExternalRefundStatus refundStatus,
+            String refundStatus,
             String updatedReason,
             String adminGithubId,
             long gatewayAccountId,
@@ -62,7 +61,7 @@ public class PaymentStatusCorrectedToSuccessByAdminEventDetails extends EventDet
         return capturedDate;
     }
 
-    public ExternalRefundStatus getRefundStatus() {
+    public String getRefundStatus() {
         return refundStatus;
     }
 
