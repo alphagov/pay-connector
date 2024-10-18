@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
 import static java.lang.String.format;
@@ -365,12 +366,12 @@ public class GatewayAccountResource {
     }
 
     @PATCH
-    @Path("/v1/frontend/service/{serviceId}/account/{accountType}/servicename")
+    @Path("/v1/frontend/service/{serviceId}/servicename")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Transactional
     @Operation(
-            summary = "Update service name of a gateway account",
+            summary = "Update service name of Test and Live (if existent) accounts for service",
             tags = {"Gateway accounts"},
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "{" +
                     "  \"service_name\": \"a new service name\"" +
@@ -384,17 +385,20 @@ public class GatewayAccountResource {
     )
     public Response updateGatewayAccountServiceNameByServiceId(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
-            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @Valid UpdateServiceNameRequest updateServiceNameRequest) {
-
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .map(gatewayAccount ->
-                        {
-                            gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName());
-                            return Response.ok().build();
-                        }
-                )
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+        
+        Optional<GatewayAccountEntity> testAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST);
+        Optional<GatewayAccountEntity> liveAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.LIVE);
+        
+        testAccount.ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
+        liveAccount.ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
+        
+        if (testAccount.isPresent() || liveAccount.isPresent()) {
+            return Response.ok().build();
+        } else {
+            
+            throw new GatewayAccountNotFoundException(String.format("No gateway accounts found for service ID [%s]", serviceId));
+        }
     }
     
     @PATCH
