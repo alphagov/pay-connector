@@ -395,7 +395,7 @@ class WorldpayPaymentProviderTest {
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
-        when(worldpayAuthoriseHandler.authoriseWithoutExemption(cardAuthRequest))
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
