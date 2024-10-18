@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
 import static java.lang.String.format;
@@ -386,18 +387,18 @@ public class GatewayAccountResource {
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Valid UpdateServiceNameRequest updateServiceNameRequest) {
         
-        // Live account might not exist, in which case there is nothing to update
-        gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.LIVE)
-                .ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
-
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST)
-                .map(gatewayAccount ->
-                        {
-                            gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName());
-                            return Response.ok().build();
-                        }
-                )
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, GatewayAccountType.TEST));
+        Optional<GatewayAccountEntity> testAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST);
+        Optional<GatewayAccountEntity> liveAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.LIVE);
+        
+        testAccount.ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
+        liveAccount.ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
+        
+        if (testAccount.isPresent() || liveAccount.isPresent()) {
+            return Response.ok().build();
+        } else {
+            
+            throw new GatewayAccountNotFoundException(String.format("No gateway accounts found for service ID [%s]", serviceId));
+        }
     }
     
     @PATCH

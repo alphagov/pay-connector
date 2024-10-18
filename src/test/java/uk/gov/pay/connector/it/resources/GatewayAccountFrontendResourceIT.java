@@ -191,7 +191,6 @@ public class GatewayAccountFrontendResourceIT {
 
     @Nested
     class UpdateServiceNameByServiceId {
-        private Map<String, String> gatewayAccountRequest = Map.of();
         private Map<String, String> testGatewayAccountRequest;
         private Map<String, String> liveGatewayAccountRequest;
         
@@ -284,20 +283,8 @@ public class GatewayAccountFrontendResourceIT {
         }
         
         @Test
-        void shouldReturn404_whenNoTestOrLiveAccountsExist()
-        {
-            // attempt to update service name
-            app.givenSetup().accept(JSON)
-                    .body(Map.of("service_name", "New Service Name"))
-                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
-                    .then()
-                    .statusCode(404);
-        }
-
-        @Test
-        void shouldReturn404_whenNoTestAccountExists()
-        {
-            // Create live account
+        void shouldUpdateServiceNameInLive_whenNoTestAccountExists() {
+            // Create test account
             app.givenSetup()
                     .body(toJson(liveGatewayAccountRequest))
                     .post(ACCOUNTS_API_URL)
@@ -310,12 +297,32 @@ public class GatewayAccountFrontendResourceIT {
                     .body(Map.of("service_name", "New Service Name"))
                     .patch(format("/v1/frontend/service/%s/servicename", serviceId))
                     .then()
+                    .statusCode(200);
+
+            // verify service name updated in test account 
+            given().port(app.getLocalPort())
+                    .contentType(JSON)
+                    .accept(JSON)
+                    .get(format("/v1/api/service/%s/account/live", serviceId))
+                    .then()
+                    .statusCode(200)
+                    .body("service_name", is("New Service Name"));
+        }
+        
+        @Test
+        void shouldReturn404_whenNoTestOrLiveAccountsExist()
+        {
+            // attempt to update service name
+            app.givenSetup().accept(JSON)
+                    .body(Map.of("service_name", "New Service Name"))
+                    .patch(format("/v1/frontend/service/%s/servicename", serviceId))
+                    .then()
                     .statusCode(404);
         }
 
         @Test
         void assertBadRequestForMissingServiceNameField() {
-            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
+            app.givenSetup().body(toJson(testGatewayAccountRequest)).post(ACCOUNTS_API_URL);
 
             app.givenSetup().accept(JSON)
                     .body(Map.of())
@@ -328,7 +335,7 @@ public class GatewayAccountFrontendResourceIT {
         
         @Test
         void assertBadRequestForInvalidServiceNameLength() {
-            app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
+            app.givenSetup().body(toJson(testGatewayAccountRequest)).post(ACCOUNTS_API_URL);
 
             app.givenSetup().accept(JSON)
                     .body(Map.of("service_name", "service-name-more-than-fifty-chars-service-name-more-than-fifty-chars"))
@@ -346,7 +353,7 @@ public class GatewayAccountFrontendResourceIT {
                     .patch("/v1/frontend/service/nexiste-pas/servicename")
                     .then()
                     .statusCode(404)
-                    .body("message", contains("Gateway account not found for service ID [nexiste-pas] and account type [test]"))
+                    .body("message", contains("No gateway accounts found for service ID [nexiste-pas]"))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
     }
