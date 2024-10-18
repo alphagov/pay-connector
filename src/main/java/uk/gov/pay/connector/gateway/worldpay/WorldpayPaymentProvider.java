@@ -221,7 +221,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             charge = updateChargeWithRequested3dsExemption(charge, exemptionType);
         }
         
-        response = exemptionEngineEnabled
+        response = corporateExemptionsOrExemptionEngineEnabled
                 ? worldpayAuthoriseHandler.authoriseWithExemption(request)
                 : worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         
