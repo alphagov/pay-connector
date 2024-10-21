@@ -212,7 +212,6 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         boolean corporateExemptionsEnabled = isCorporateExemptionsEnabled(request);
         boolean cardIsCorporate = isCorporateCard(request, charge);
-        boolean corporateExemptionsOrExemptionEngineEnabled = corporateExemptionsEnabled || exemptionEngineEnabled;
         
         GatewayResponse<WorldpayOrderStatusResponse> response;
         Exemption3dsType exemptionType = corporateExemptionsEnabled && cardIsCorporate ? CORPORATE : OPTIMISED;
