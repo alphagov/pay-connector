@@ -2967,7 +2967,7 @@ paths:
       summary: Update accepted card types for a gateway account
       tags:
       - Gateway accounts
-  /v1/frontend/service/{serviceId}/account/{accountType}/servicename:
+  /v1/frontend/service/{serviceId}/servicename:
     patch:
       operationId: updateGatewayAccountServiceNameByServiceId
       parameters:
@@ -2978,16 +2978,6 @@ paths:
         required: true
         schema:
           type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
       requestBody:
         content:
           application/json:
@@ -3008,7 +2998,7 @@ paths:
           description: Bad request
         "404":
           description: Not found
-      summary: Update service name of a gateway account
+      summary: Update service name of Test and Live (if existent) accounts for service
       tags:
       - Gateway accounts
   /v1/frontend/tokens/{chargeTokenId}:
