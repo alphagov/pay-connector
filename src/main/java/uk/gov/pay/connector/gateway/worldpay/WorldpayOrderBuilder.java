@@ -14,19 +14,15 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseRecurringOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpaySendExemptionEngineRequest.SEND_EXEMPTION_ENGINE_REQUEST;
 
 public interface WorldpayOrderBuilder {
 
-    static WorldpayOrderRequestBuilder buildAuthoriseOrderWithExemptionEngine(WorldpayOrderRequestBuilder builder,
-                                                                              CardAuthorisationGatewayRequest request,
-                                                                              AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
+    static GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request,
+                                            WorldpaySendExemptionEngineRequest sendExemptionEngineRequest,
+                                            AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
 
-        return buildAuthoriseOrderWithoutExemptionEngine(builder, request, acceptLanguageHeaderParser).withExemptionEngine(true);
-    }
-
-    static WorldpayOrderRequestBuilder buildAuthoriseOrderWithoutExemptionEngine(WorldpayOrderRequestBuilder builder,
-                                                                                 CardAuthorisationGatewayRequest request,
-                                                                                 AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
+        WorldpayOrderRequestBuilder builder = aWorldpayAuthoriseOrderRequestBuilder();
 
         if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
             request.getAuthCardDetails().getIpAddress().ifPresent(builder::withPayerIpAddress);
@@ -48,12 +44,18 @@ public interface WorldpayOrderBuilder {
         boolean isCorporateExemptionEnabled = request.getGatewayAccount().getWorldpay3dsFlexCredentials()
                 .map(Worldpay3dsFlexCredentials::isCorporateExemptionsEnabled)
                 .orElse(false);
-        
 
-        return (WorldpayOrderRequestBuilder) builder
+        boolean requestExemptionEngineExemption =
+                switch (sendExemptionEngineRequest) {
+                    case SEND_EXEMPTION_ENGINE_REQUEST -> true;
+                    case DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST -> false;
+                };
+
+        return builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
                 .withCorporateExemptionEnabled(isCorporateExemptionEnabled)
+                .withExemptionEngine(requestExemptionEngineExemption)
                 .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
                 .withAgreementId(request.getAgreement().map(AgreementEntity::getExternalId).orElse(null))
                 .withTransactionId(request.getTransactionId().orElse(""))
@@ -62,15 +64,8 @@ public interface WorldpayOrderBuilder {
                 .withAuthorisationDetails(request.getAuthCardDetails())
                 .withIntegrationVersion3ds(request.getGatewayAccount().getIntegrationVersion3ds())
                 .withPaymentPlatformReference(request.getGovUkPayPaymentId())
-                .withBrowserLanguage(acceptLanguageHeaderParser.getPreferredLanguageFromAcceptLanguageHeader(request.getAuthCardDetails().getAcceptLanguageHeader()));
-    }
-
-    static GatewayOrder buildAuthoriseOrderWithExemptionEngine(CardAuthorisationGatewayRequest request, boolean withExemptionEngine, AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
-        if (withExemptionEngine) {
-            return buildAuthoriseOrderWithExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request, acceptLanguageHeaderParser).build();
-        } else {
-            return buildAuthoriseOrderWithoutExemptionEngine(aWorldpayAuthoriseOrderRequestBuilder(), request, acceptLanguageHeaderParser).build();
-        }
+                .withBrowserLanguage(acceptLanguageHeaderParser.getPreferredLanguageFromAcceptLanguageHeader(request.getAuthCardDetails().getAcceptLanguageHeader()))
+                .build();
     }
 
     static GatewayOrder buildAuthoriseRecurringOrder(RecurringPaymentAuthorisationGatewayRequest request) {
