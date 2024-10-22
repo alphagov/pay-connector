@@ -2,8 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -18,10 +17,8 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayPaymentInfo;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.LocalDate;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseGooglePayOrderRequestBuilder;
@@ -54,8 +51,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_AUTHORISATION;
 import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
 class WorldpayOrderRequestBuilderTest {
@@ -485,19 +480,28 @@ class WorldpayOrderRequestBuilderTest {
     }
 
     @ParameterizedTest
-    @MethodSource("exemptionValues")
-    void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(Boolean corporateExemptions, Boolean exemptionEngine, String testTemplate, Boolean corporateCard) throws Exception {
+    @CsvSource(useHeadersInDisplayName = true, textBlock = """
+            corporateExemptionsEnabled, exemptionEngineEnabled, testTemplatePath, isCorporateCard
+            true, false, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
+            true, true, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
+            false, true, templates/worldpay/valid-authorise-worldpay-3ds-request-exemption-optimised.xml, true
+            true, true, templates/worldpay/valid-authorise-worldpay-3ds-request-exemption-optimised.xml, false
+            """)
+    void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(Boolean corporateExemptionsEnabled,
+                                                                                    Boolean exemptionEngineEnabled,
+                                                                                    String testTemplatePath,
+                                                                                    Boolean isCorporateCard) throws Exception {
 
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCorporateCardDetails = getValidTestCard(minAddress);
-        authCorporateCardDetails.setCorporateCard(corporateCard);
+        authCorporateCardDetails.setCorporateCard(isCorporateCard);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .with3dsRequired(true)
-                .withCorporateExemptionEnabled(corporateExemptions)
-                .withExemptionEngine(exemptionEngine)
+                .withCorporateExemptionEnabled(corporateExemptionsEnabled)
+                .withExemptionEngine(exemptionEngineEnabled)
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")
@@ -507,17 +511,8 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCorporateCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(testTemplate), actualRequest.getPayload());
+        assertXMLEqual(TestTemplateResourceLoader.load(testTemplatePath), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
-    }
-
-    private static Stream<Arguments> exemptionValues() {
-        return Stream.of(
-                arguments(true, false, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_AUTHORISATION, true),
-                arguments(true, true, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_AUTHORISATION, true),
-                arguments(false, true, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED, true),
-                arguments(true, true, WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED, false)
-        );
     }
 
     private AuthCardDetails getValidTestCard(Address address) {
