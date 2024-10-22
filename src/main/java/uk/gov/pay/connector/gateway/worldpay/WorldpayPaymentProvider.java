@@ -212,15 +212,18 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         boolean exemptionEngineEnabled = isExemptionEngineEnabled(request);
         boolean corporateExemptionsEnabled = isCorporateExemptionsEnabled(request);
         boolean cardIsCorporate = isCorporateCard(request, charge);
-        
-        GatewayResponse<WorldpayOrderStatusResponse> response;
-        Exemption3dsType exemptionType = corporateExemptionsEnabled && cardIsCorporate ? CORPORATE : OPTIMISED;
-
-        if (exemptionEngineEnabled || corporateExemptionsEnabled) {
-            charge = updateChargeWithRequested3dsExemption(charge, exemptionType);
+        if (cardIsCorporate) {
+            LOGGER.info("Card is corporate card and request corporate exemption is {}: charge_external_id={}", corporateExemptionsEnabled, charge.getExternalId());
         }
-        
-        response = exemptionEngineEnabled
+        boolean corporateExemptionsEnabledAndCorporateCardUsed = corporateExemptionsEnabled && cardIsCorporate;
+
+        if (corporateExemptionsEnabledAndCorporateCardUsed) {
+            charge = updateChargeWithRequested3dsExemption(charge, Exemption3dsType.CORPORATE);
+        } else if (exemptionEngineEnabled) {
+            charge = updateChargeWithRequested3dsExemption(charge, Exemption3dsType.OPTIMISED);
+        }
+
+        GatewayResponse<WorldpayOrderStatusResponse> response = exemptionEngineEnabled
                 ? worldpayAuthoriseHandler.authoriseWithExemption(request)
                 : worldpayAuthoriseHandler.authoriseWithoutExemption(request);
         
@@ -324,7 +327,6 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     
     private boolean isCorporateCard(CardAuthorisationGatewayRequest request, ChargeEntity charge) {
         AuthCardDetails authCardDetails = request.getAuthCardDetails();
-        LOGGER.info("Card is corporate card: {} for charge_external_id={}", authCardDetails.isCorporateCard(), charge.getExternalId());
         return authCardDetails.isCorporateCard();
     }
 

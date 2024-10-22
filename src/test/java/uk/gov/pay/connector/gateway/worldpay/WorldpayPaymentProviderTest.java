@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -251,7 +252,7 @@ class WorldpayPaymentProviderTest {
         assertThat(chargeEntity.getExemption3dsRequested(), is(nullValue()));
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 2);
+        verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 1);
         verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
@@ -290,12 +291,12 @@ class WorldpayPaymentProviderTest {
         }));
     }
 
-    private void verifyLoggingCorporateCard(Boolean isCorporateCard, String externalId) {
+    private void verifyLoggingTypeOf3dsExemption(Exemption3dsType exemption3dsType, String externalId, int timesLoggingCalled) {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(timesLoggingCalled)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Card is corporate card: %s for charge_external_id=%s", isCorporateCard, externalId);
+            String log = format("Requesting %s exemption - charge_external_id=%s", exemption3dsType.name(), externalId);
             return loggingEvent.getFormattedMessage().contains(log);
         }));
     }
@@ -330,7 +331,7 @@ class WorldpayPaymentProviderTest {
         assertThat(chargeEntity.getExemption3dsRequested(), is(nullValue()));
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 2);
+        verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 1);
         verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
@@ -353,7 +354,7 @@ class WorldpayPaymentProviderTest {
         assertThat(chargeEntity.getExemption3dsRequested(), is(nullValue()));
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 2);
+        verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 1);
         verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
@@ -382,16 +383,20 @@ class WorldpayPaymentProviderTest {
         assertThat(secondRequest.getTransactionId(), not(nullValue()));
         assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
         verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_REJECTED, OPTIMISED);
-        verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "HIGH_RISK", chargeEntity.getExternalId(), 4);
+        verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "HIGH_RISK", chargeEntity.getExternalId(), 3);
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_REJECTED, OPTIMISED);
     }
 
     @Test
-    void should_send_corporate_exemption_with_worldpay_authorisation_if_corporate_exemptions_disabled_and_corporate_card_is_used() throws Exception {
+    void should_not_send_corporate_exemption_with_worldpay_authorisation_if_corporate_exemptions_false_and_corporate_card_is_used() throws Exception {
         gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(false).withCorporateExemptions(true).build());
-        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
-        ChargeEntity chargeEntity = chargeEntityFixture.withExemption3dsType(CORPORATE).build();
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity()
+                .withExemptionEngine(false)
+                .withCorporateExemptions(false)
+                .build());
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
@@ -400,26 +405,24 @@ class WorldpayPaymentProviderTest {
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
-        assertThat(chargeEntity.getExemption3dsRequested(), is(CORPORATE));
-        
-        verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_NOT_REQUESTED, CORPORATE);
-        verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED, CORPORATE);
-        verifyLoggingTypeOf3dsExemption(CORPORATE, chargeEntity.getExternalId());
+        assertThat(chargeEntity.getExemption3dsRequested(), is(nullValue()));
+
+        verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
+        verifyEventEmitted(chargeEntity, EXEMPTION_NOT_REQUESTED);
     }
 
-    @ParameterizedTest
-    @MethodSource("exemptionValues")
-    void should_send_corporate_exemption_with_worldpay_authorisation_if_corporate_exemption_enabled_and_exemption_engine_enabled_and_corporate_card_used(
-            Boolean corporateExemption, 
-            Boolean exemptionEngine, 
-            Exemption3dsType exemption3dsType, 
-            Boolean corporateCard
-    ) throws Exception {
+    @Test
+    void should_send_corporate_exemption_with_worldpay_authorisation_if_corporate_exemption_enabled_and_exemption_engine_enabled_and_corporate_card_used() throws Exception {
         gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(exemptionEngine).withCorporateExemptions(corporateExemption).build());
-        chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
-        ChargeEntity chargeEntity = chargeEntityFixture.withExemption3dsType(exemption3dsType).build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().withCorporateCard(corporateCard).build());
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity()
+                .withExemptionEngine(true)
+                .withCorporateExemptions(true)
+                .build());
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails()
+                .withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
@@ -427,20 +430,37 @@ class WorldpayPaymentProviderTest {
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
-        assertThat(chargeEntity.getExemption3dsRequested(), is(exemption3dsType));
+        assertThat(chargeEntity.getExemption3dsRequested(), is(CORPORATE));
 
-        verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_HONOURED, exemption3dsType);
-        verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, exemption3dsType);
-        verifyLoggingTypeOf3dsExemption(exemption3dsType, chargeEntity.getExternalId());
-        verifyLoggingCorporateCard(corporateCard, chargeEntity.getExternalId());
+        verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_HONOURED, CORPORATE);
+        verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, CORPORATE);
+        verifyLoggingTypeOf3dsExemption(CORPORATE, chargeEntity.getExternalId());
     }
 
-    private static Stream<Arguments> exemptionValues() {
-        return Stream.of(
-                arguments(true, true, CORPORATE, true),
-                arguments(false, true, OPTIMISED, true),
-                arguments(true, true, OPTIMISED, false)
-        );
+    @Test
+    void should_not_send_corporate_exemption_with_worldpay_authorisation_if_corporate_exemption_is_not_enabled_and_exemption_engine_enabled_and_corporate_card_used() throws Exception {
+        gatewayAccountEntity.setRequires3ds(true);
+        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity()
+                .withExemptionEngine(true)
+                .withCorporateExemptions(false)
+                .build());
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .build();
+        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails()
+                .withCorporateCard(true).build());
+
+        when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
+        when(worldpayAuthoriseHandler.authoriseWithExemption(cardAuthRequest))
+                .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE));
+
+        worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
+
+        assertThat(chargeEntity.getExemption3dsRequested(), is(OPTIMISED));
+
+        verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_HONOURED, OPTIMISED);
+        verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, OPTIMISED);
+        verifyLoggingTypeOf3dsExemption(OPTIMISED, chargeEntity.getExternalId());
     }
 
     @Test
@@ -467,7 +487,7 @@ class WorldpayPaymentProviderTest {
         assertThat(secondRequest.getTransactionId(), not(nullValue()));
         assertThat(secondRequest.getTransactionId(), not(chargeEntity.getGatewayTransactionId()));
         verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_OUT_OF_SCOPE, OPTIMISED);
-        verifyLoggingWithExemptionReason(EXEMPTION_OUT_OF_SCOPE, "HIGH_RISK", chargeEntity.getExternalId(), 4);
+        verifyLoggingWithExemptionReason(EXEMPTION_OUT_OF_SCOPE, "HIGH_RISK", chargeEntity.getExternalId(), 3);
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_OUT_OF_SCOPE, OPTIMISED);
     }
 
@@ -531,7 +551,7 @@ class WorldpayPaymentProviderTest {
         assertThat(chargeEntity.getExemption3dsRequested(), is(OPTIMISED));
 
         verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_HONOURED, OPTIMISED);
-        verifyLoggingWithExemptionReason(EXEMPTION_HONOURED, "ISSUER_HONOURED", chargeEntity.getExternalId(), 3);
+        verifyLoggingWithExemptionReason(EXEMPTION_HONOURED, "ISSUER_HONOURED", chargeEntity.getExternalId(), 2);
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, OPTIMISED);
     }
 
@@ -567,7 +587,7 @@ class WorldpayPaymentProviderTest {
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
+        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
             String log = format("Authorisation with billing address and with 3DS data and without device data " +

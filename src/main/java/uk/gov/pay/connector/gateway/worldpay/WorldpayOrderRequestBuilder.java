@@ -108,7 +108,9 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             return requires3ds;
         }
         
-        public boolean isCorporateExemptionEnabled() { return corporateExemptionEnabled; }
+        public boolean isCorporateExemptionEnabled() {
+            return corporateExemptionEnabled;
+        }
 
         public void setRequires3ds(boolean requires3ds) {
             this.requires3ds = requires3ds;
