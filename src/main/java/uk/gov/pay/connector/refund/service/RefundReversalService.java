@@ -84,10 +84,10 @@ public class RefundReversalService {
         }
 
         Map<String, Object> refundRequestBody = refundRequest.createRequest(correctionPaymentId, refundFromStripe);
-
+        String transferId;
         try {
 
-            stripeClient.createTransfer(refundRequestBody, isLiveGatewayAccount, refundExternalId);
+            transferId = stripeClient.createTransfer(refundRequestBody, isLiveGatewayAccount, refundExternalId);
         } catch (StripeException e) {
             if (e.getStripeError() != null && "insufficient_funds".equals(e.getStripeError().getDeclineCode())) {
                 throw new WebApplicationException(badRequestResponse(
@@ -103,7 +103,7 @@ public class RefundReversalService {
         try {
             ledgerService.postEvent(List.of(
                             PaymentStatusCorrectedToSuccessByAdmin.from(correctionPaymentId, refund, charge, Instant.now(), githubUserId, zendeskUserId),
-                            RefundFailureFundsSentToConnectAccount.from(correctionPaymentId, refund, charge, githubUserId, zendeskUserId),
+                            RefundFailureFundsSentToConnectAccount.from(correctionPaymentId, refund, charge, githubUserId, zendeskUserId, transferId),
                             RefundStatusCorrectedToErrorByAdmin.from(refund, charge, githubUserId, zendeskUserId)
                     )
             );

@@ -8,10 +8,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Refund;
 import com.stripe.model.StripeError;
 import io.dropwizard.core.setup.Environment;
-import io.restassured.RestAssured;
-import io.restassured.parsing.Parser;
 import io.restassured.http.ContentType;
-import io.restassured.parsing.Parser;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -98,9 +95,6 @@ public class RefundReversalResourceIT {
                 .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                 .withGatewayTransactionId(STRIPE_REFUND_ID)
                 .build();
-
-//        when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
-
     }
 
     @AfterEach
@@ -126,8 +120,6 @@ public class RefundReversalResourceIT {
         when(mockStripeRefund.getAmount()).thenReturn(100L);
         when(mockStripeRefund.getCurrency()).thenReturn("GBP");
 
-//        when(mockRandomIdGenerator.random13ByteHexGenerator()).thenReturn("random123");
-        
         ValidatableResponse response = given().port(app.getLocalPort())
                 .accept(ContentType.JSON)
                 .contentType(ContentType.JSON)
@@ -264,7 +256,6 @@ public class RefundReversalResourceIT {
                 .body("message[0]", is("Transfer failed due to insufficient funds for refund with " + REFUND_EXTERNAL_ID + " error with stripe because of insufficient funds; code: insufficient_funds_error; request-id: req_12345"))
                 .statusCode(Response.Status.BAD_REQUEST.getStatusCode());
     }
-
 
     @Test
     void shouldReturnErrorWhenDuplicateIdepmpotencyKeys() throws JsonProcessingException, StripeException {

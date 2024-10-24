@@ -35,10 +35,10 @@ class RefundFailureFundsSentToConnectAccountTest {
         String githubUserId = githubAndZendeskCredential.githubUserId();
         String zendeskId = githubAndZendeskCredential.zendeskTicketId();
         String correctionPaymentId = "ExampleCorrectionPaymentId123";
-
+        String transferIdFromStripe = "a-transfer-id-123";
 
         RefundFailureFundsSentToConnectAccount refundFailureFundsSentToConnectAccount = RefundFailureFundsSentToConnectAccount
-                .from(correctionPaymentId, refund, charge, githubUserId, zendeskId);
+                .from(correctionPaymentId, refund, charge, githubUserId, zendeskId, transferIdFromStripe);
 
         assertThat(refundFailureFundsSentToConnectAccount.getResourceExternalId(), is(correctionPaymentId));
         assertThat(refundFailureFundsSentToConnectAccount.isLive(), is(true));
@@ -54,6 +54,6 @@ class RefundFailureFundsSentToConnectAccountTest {
         assertThat(details.getPaymentProvider(), is(charge.getPaymentGatewayName()));
         assertThat(details.getReference(), is(charge.getReference()));
         assertThat(details.getDescription(), is("Failed refund correction for payment."));
-        assertThat(details.getGatewayTransactionId(), is(charge.getGatewayTransactionId()));
+        assertThat(details.getGatewayTransactionId(), is(transferIdFromStripe));
     }
 }

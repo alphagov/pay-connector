@@ -28,7 +28,7 @@ public class StripeSdkWrapper {
         return Refund.retrieve(stripeRefundId, params, requestOptions);
     }
 
-    void createTransfer(Map<String, Object> params, RequestOptions requestOptions) throws StripeException {
-        Transfer.create(params, requestOptions);
+    String createTransfer(Map<String, Object> params, RequestOptions requestOptions) throws StripeException {
+        return Transfer.create(params, requestOptions).getId();
     }
 }

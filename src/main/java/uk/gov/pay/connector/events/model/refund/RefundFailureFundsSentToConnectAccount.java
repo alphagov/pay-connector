@@ -17,7 +17,9 @@ public class RefundFailureFundsSentToConnectAccount extends PaymentEvent {
     }
 
 
-    public static RefundFailureFundsSentToConnectAccount from(String correctionPaymentId, Refund refund, Charge charge, String githubUserId, String zendeskId) {
+    public static RefundFailureFundsSentToConnectAccount from(String correctionPaymentId, Refund refund,
+                                                              Charge charge, String githubUserId,
+                                                              String zendeskId, String gatewayTransactionId) {
         return new RefundFailureFundsSentToConnectAccount(
                 charge.getServiceId(),
                 charge.isLive(),
@@ -31,7 +33,7 @@ public class RefundFailureFundsSentToConnectAccount extends PaymentEvent {
                         "A refund failed and we returned the recovered funds to the service",
                         charge.getPaymentGatewayName(),
                         charge.getGatewayAccountId(),
-                        charge.getGatewayTransactionId(), //todo: should be new transfer ID
+                        gatewayTransactionId,
                         zendeskId
                 ),
                 Instant.now()
