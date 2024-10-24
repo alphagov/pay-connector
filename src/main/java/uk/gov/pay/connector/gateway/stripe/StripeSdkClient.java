@@ -65,7 +65,7 @@ public class StripeSdkClient {
         return stripeSDKWrapper.getRefund(stripeRefundId, params, requestOptions);
     }
 
-    public void createTransfer(Map<String, Object> transferRequest,
+    public String createTransfer(Map<String, Object> transferRequest,
                                boolean live, String refundId) throws StripeException {
         String apiKey = getStripeApiKey(live);
 
@@ -75,6 +75,6 @@ public class StripeSdkClient {
                 .setIdempotencyKey(idempotencyKey)
                 .setApiKey(apiKey)
                 .build();
-        stripeSDKWrapper.createTransfer(transferRequest, requestOptions);
+        return stripeSDKWrapper.createTransfer(transferRequest, requestOptions);
     }
 }
