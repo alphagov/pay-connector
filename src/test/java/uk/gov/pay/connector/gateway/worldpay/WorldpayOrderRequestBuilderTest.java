@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -475,6 +477,42 @@ class WorldpayOrderRequestBuilderTest {
 
         assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
         assertEquals(OrderRequestType.DELETE_STORED_PAYMENT_DETAILS, actualRequest.getOrderRequestType());
+    }
+
+    @ParameterizedTest
+    @CsvSource(useHeadersInDisplayName = true, textBlock = """
+            corporateExemptionsEnabled, exemptionEngineEnabled, testTemplatePath, isCorporateCard
+            true, false, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
+            true, true, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
+            false, true, templates/worldpay/valid-authorise-worldpay-3ds-request-exemption-optimised.xml, true
+            true, true, templates/worldpay/valid-authorise-worldpay-3ds-request-exemption-optimised.xml, false
+            """)
+    void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(Boolean corporateExemptionsEnabled,
+                                                                                    Boolean exemptionEngineEnabled,
+                                                                                    String testTemplatePath,
+                                                                                    Boolean isCorporateCard) throws Exception {
+
+        Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
+
+        AuthCardDetails authCorporateCardDetails = getValidTestCard(minAddress);
+        authCorporateCardDetails.setCorporateCard(isCorporateCard);
+
+        GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .with3dsRequired(true)
+                .withCorporateExemptionEnabled(corporateExemptionsEnabled)
+                .withExemptionEngine(exemptionEngineEnabled)
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withTransactionId("MyUniqueTransactionId!")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is the description")
+                .withAmount("500")
+                .withAuthorisationDetails(authCorporateCardDetails)
+                .build();
+
+        assertXMLEqual(TestTemplateResourceLoader.load(testTemplatePath), actualRequest.getPayload());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     private AuthCardDetails getValidTestCard(Address address) {
