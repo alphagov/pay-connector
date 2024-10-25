@@ -6,8 +6,6 @@ import com.codahale.metrics.MetricRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -217,35 +215,16 @@ class WorldpayAuthoriseHandlerTest {
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
-    @ParameterizedTest
-    @CsvSource(useHeadersInDisplayName = true, textBlock =
-            """
-                corporateExemptionEnabled, corporateCardNumberEntered, expectedExemptionType, expectedExemptionPlacement
-                true, true, CP, AUTHORISATION
-                true, false, OP, OPTIMISED
-                false, true, OP, OPTIMISED
-                false, false, OP, OPTIMISED
-            """
-    )
-    void should_include_the_correct_exemption_element_when_account_exemption_engine_is_enabled(
-            boolean corporateExemptionEnabled,
-            boolean corporateCardNumberEntered,
-            String expectedExemptionType,
-            String expectedExemptionPlacement) throws Exception {
+    @Test
+    void should_include_exemption_element_if_account_has_exemption_engine_set_to_true() throws Exception {
 
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
         when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
                 .thenReturn(authorisationSuccessResponse);
 
         gatewayAccountEntity.setRequires3ds(true);
-        gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity()
-                .withCorporateExemptions(corporateExemptionEnabled)
-                .build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
-
-        AuthCardDetails authCardDetails = getValidTestCard(UUID.randomUUID().toString());
-        authCardDetails.setCorporateCard(corporateCardNumberEntered);
-        worldpayAuthoriseHandler.authoriseWithExemption(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), authCardDetails));
+        worldpayAuthoriseHandler.authoriseWithExemption(new CardAuthorisationGatewayRequest(chargeEntityFixture.build(), getValidTestCard()));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
@@ -257,8 +236,8 @@ class WorldpayAuthoriseHandlerTest {
 
         Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
         XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@type", document), is(expectedExemptionType));
-        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@placement", document), is(expectedExemptionPlacement));
+        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@type", document), is("OP"));
+        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@placement", document), is("OPTIMISED"));
     }
 
     @Test

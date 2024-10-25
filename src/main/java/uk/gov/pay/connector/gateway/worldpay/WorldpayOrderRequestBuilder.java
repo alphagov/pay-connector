@@ -31,7 +31,6 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String acceptHeader;
         private String userAgentHeader;
         private boolean requires3ds;
-        private boolean corporateExemptionEnabled;
         private String paResponse3ds;
         private String payerIpAddress;
         private String payerEmail;
@@ -107,19 +106,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         public boolean isRequires3ds() {
             return requires3ds;
         }
-        
-        public boolean isCorporateExemptionEnabled() {
-            return corporateExemptionEnabled;
-        }
 
         public void setRequires3ds(boolean requires3ds) {
             this.requires3ds = requires3ds;
         }
 
-        public void setCorporateExemptionEnabled(boolean corporateExemptionEnabled) {
-            this.corporateExemptionEnabled = corporateExemptionEnabled;
-        }
-        
         public Optional<String> getPaResponse3ds() {
             return Optional.ofNullable(paResponse3ds);
         }
@@ -302,12 +293,6 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public WorldpayOrderRequestBuilder with3dsRequired(boolean requires3ds) {
         logger.info("3DS requirement is: " + requires3ds + " for " + worldpayTemplateData.sessionId);
         worldpayTemplateData.setRequires3ds(requires3ds);
-        return this;
-    }
-    
-    public WorldpayOrderRequestBuilder withCorporateExemptionEnabled(boolean corporateExemptionEnabled) {
-        logger.info("Corporate Exemption is: " + corporateExemptionEnabled + " for " + worldpayTemplateData.sessionId);
-        worldpayTemplateData.setCorporateExemptionEnabled(corporateExemptionEnabled);
         return this;
     }
 
