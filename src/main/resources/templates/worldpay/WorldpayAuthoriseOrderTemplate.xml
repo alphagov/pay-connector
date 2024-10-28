@@ -80,9 +80,9 @@
                 challengeWindowSize="390x400" challengePreference="noPreference"
             />
             </#if>
-            <#if corporateExemptionEnabled && authCardDetails.corporateCard>
+            <#if requestExemption.name() == "SEND_CORPORATE_EXEMPTION_REQUEST">
             <exemption type="CP" placement="AUTHORISATION"/>
-            <#elseif exemptionEngineEnabled>
+            <#elseif requestExemption.name() == "SEND_EXEMPTION_ENGINE_REQUEST">
             <exemption type="OP" placement="OPTIMISED"/>
             </#if>
         </#if>

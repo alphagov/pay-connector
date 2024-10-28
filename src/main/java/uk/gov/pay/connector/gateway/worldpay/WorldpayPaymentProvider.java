@@ -54,7 +54,6 @@ import javax.inject.Named;
 import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
-import java.time.Instant;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Map;
@@ -72,8 +71,9 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpaySendExemptionEngineRequest.DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpaySendExemptionEngineRequest.SEND_EXEMPTION_ENGINE_REQUEST;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_CORPORATE_EXEMPTION_REQUEST;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_EXEMPTION_ENGINE_REQUEST;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
@@ -221,17 +221,18 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         }
         boolean corporateExemptionsEnabledAndCorporateCardUsed = corporateExemptionsEnabled && cardIsCorporate;
 
+        SendWorldpayExemptionRequest sendExemptionEngineRequest = DO_NOT_SEND_EXEMPTION_REQUEST;
+
         if (corporateExemptionsEnabledAndCorporateCardUsed) {
             charge = updateChargeWithRequested3dsExemption(charge, Exemption3dsType.CORPORATE);
+            sendExemptionEngineRequest = SEND_CORPORATE_EXEMPTION_REQUEST;
         } else if (exemptionEngineEnabled) {
             charge = updateChargeWithRequested3dsExemption(charge, Exemption3dsType.OPTIMISED);
+            sendExemptionEngineRequest = SEND_EXEMPTION_ENGINE_REQUEST;
         }
 
-        WorldpaySendExemptionEngineRequest sendExemptionEngineRequest = exemptionEngineEnabled ?
-                SEND_EXEMPTION_ENGINE_REQUEST : DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST;
-
-        GatewayResponse<WorldpayOrderStatusResponse> response  = worldpayAuthoriseHandler.authorise(request, sendExemptionEngineRequest);
-        
+        GatewayResponse<WorldpayOrderStatusResponse> response  = worldpayAuthoriseHandler
+                .authorise(request, sendExemptionEngineRequest);
 
         calculateAndStoreExemption(exemptionEngineEnabled, charge, response);
 
@@ -250,7 +251,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     charge.getChargeStatus());
 
             CardAuthorisationGatewayRequest newRequest = request.withNewTransactionId(newTransactionId());
-            response = worldpayAuthoriseHandler.authorise(newRequest, DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST);
+            response = worldpayAuthoriseHandler.authorise(newRequest, DO_NOT_SEND_EXEMPTION_REQUEST);
         }
 
         return response;
@@ -263,7 +264,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
      */
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
-        return worldpayAuthoriseHandler.authorise(request, DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST);
+        return worldpayAuthoriseHandler.authorise(request, DO_NOT_SEND_EXEMPTION_REQUEST);
     }
 
     @Override
