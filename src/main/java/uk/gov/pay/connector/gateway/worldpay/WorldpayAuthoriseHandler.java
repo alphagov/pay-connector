@@ -42,14 +42,6 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         this.gatewayUrlMap = gatewayUrlMap;
     }
 
-    public GatewayResponse<WorldpayOrderStatusResponse> authoriseWithExemption(CardAuthorisationGatewayRequest request) {
-        return authorise(request, true);
-    }
-
-    public GatewayResponse<WorldpayOrderStatusResponse> authoriseWithoutExemption(CardAuthorisationGatewayRequest request) {
-        return authorise(request, false);
-    }
-
     public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
         LOGGER.info("Authorising user not present request: {}", request.getGatewayTransactionId().orElse("gatewayTransactionId is not present"));
 
@@ -76,8 +68,8 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         }
     }
 
-    private GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request,
-                                                                   boolean withExemptionEngine) {
+    public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request,
+                                                                  WorldpaySendExemptionEngineRequest sendExemptionEngineRequest) {
 
         logMissingDdcResultFor3dsFlexIntegration(request);
 
@@ -86,7 +78,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
-                    WorldpayOrderBuilder.buildAuthoriseOrderWithExemptionEngine(request, withExemptionEngine, acceptLanguageHeaderParser),
+                    WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionEngineRequest, acceptLanguageHeaderParser),
                     getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
 
             if (response.getEntity().contains("request3DSecure")) {

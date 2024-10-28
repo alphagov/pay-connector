@@ -10,8 +10,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
+import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
@@ -63,8 +63,6 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
-import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
-import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.OPTIMISED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeaderForManagingRecurringAuthTokens;
@@ -73,6 +71,8 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpaySendExemptionEngineRequest.DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpaySendExemptionEngineRequest.SEND_EXEMPTION_ENGINE_REQUEST;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
@@ -223,9 +223,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             charge = updateChargeWithRequested3dsExemption(charge, Exemption3dsType.OPTIMISED);
         }
 
-        GatewayResponse<WorldpayOrderStatusResponse> response = exemptionEngineEnabled
-                ? worldpayAuthoriseHandler.authoriseWithExemption(request)
-                : worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+        WorldpaySendExemptionEngineRequest sendExemptionEngineRequest = exemptionEngineEnabled ?
+                SEND_EXEMPTION_ENGINE_REQUEST : DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST;
+
+        GatewayResponse<WorldpayOrderStatusResponse> response  = worldpayAuthoriseHandler.authorise(request, sendExemptionEngineRequest);
         
 
         calculateAndStoreExemption(exemptionEngineEnabled, charge, response);
@@ -245,7 +246,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                     charge.getChargeStatus());
 
             CardAuthorisationGatewayRequest newRequest = request.withNewTransactionId(newTransactionId());
-            response = worldpayAuthoriseHandler.authoriseWithoutExemption(newRequest);
+            response = worldpayAuthoriseHandler.authorise(newRequest, DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST);
         }
 
         return response;
@@ -258,7 +259,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
      */
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) {
-        return worldpayAuthoriseHandler.authoriseWithoutExemption(request);
+        return worldpayAuthoriseHandler.authorise(request, DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST);
     }
 
     @Override
