@@ -234,9 +234,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         GatewayResponse<WorldpayOrderStatusResponse> response  = worldpayAuthoriseHandler
                 .authorise(request, sendExemptionEngineRequest);
 
-        calculateAndStoreExemption(exemptionEngineEnabled, charge, response);
+        calculateAndStoreExemption(exemptionEngineEnabled, corporateExemptionsEnabledAndCorporateCardUsed, charge, response);
 
-        if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
+        if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false) && !corporateExemptionsEnabledAndCorporateCardUsed) {
 
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getGatewayAccount(), request.getAuthCardDetails(), request.isSavePaymentInstrumentToAgreement());
 
@@ -272,8 +272,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return worldpayAuthoriseHandler.authoriseUserNotPresent(request);
     }
 
-    private void calculateAndStoreExemption(boolean exemptionEngineEnabled, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
-        if (!exemptionEngineEnabled) {
+    private void calculateAndStoreExemption(boolean exemptionEngineEnabled, boolean corporateExemptionsEnabledAndCorporateCardUsed, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
+        if (!exemptionEngineEnabled && !corporateExemptionsEnabledAndCorporateCardUsed) {
             updateChargeWithExemption3ds(EXEMPTION_NOT_REQUESTED, charge);
         } else {
             calculateAndStoreExemption(charge, response);
