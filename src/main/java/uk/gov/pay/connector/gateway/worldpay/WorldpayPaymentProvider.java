@@ -236,7 +236,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         calculateAndStoreExemption(exemptionEngineEnabled, corporateExemptionsEnabledAndCorporateCardUsed, charge, response);
 
-        if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false) && !corporateExemptionsEnabledAndCorporateCardUsed) {
+        if (authorisationWithExemptionRequestSoftDeclinedButRetryableWithoutExemption(response, corporateExemptionsEnabledAndCorporateCardUsed)) {
 
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getGatewayAccount(), request.getAuthCardDetails(), request.isSavePaymentInstrumentToAgreement());
 
@@ -255,6 +255,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         }
 
         return response;
+    }
+
+    private static boolean authorisationWithExemptionRequestSoftDeclinedButRetryableWithoutExemption(GatewayResponse<WorldpayOrderStatusResponse> response, boolean corporateExemptionsEnabledAndCorporateCardUsed) {
+        return response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false) && !corporateExemptionsEnabledAndCorporateCardUsed;
     }
 
     /**
