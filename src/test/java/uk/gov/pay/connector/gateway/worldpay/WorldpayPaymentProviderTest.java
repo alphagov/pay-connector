@@ -86,6 +86,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -435,6 +436,7 @@ class WorldpayPaymentProviderTest {
         assertThat(chargeEntity.getExemption3dsRequested(), is(CORPORATE));
 
         verify(worldpayAuthoriseHandler, times(1)).authorise(cardAuthRequest, DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST);
+        verifyNoMoreInteractions(worldpayAuthoriseHandler);
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED, 2);
         verifyEventEmitted(chargeEntity, EXEMPTION_REJECTED, 2);
