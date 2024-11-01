@@ -55,6 +55,7 @@ import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -106,6 +107,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final AuthorisationLogger authorisationLogger;
     private final ChargeDao chargeDao;
     private final EventService eventService;
+    private final InstantSource instantSource;
 
     @Inject
     public WorldpayPaymentProvider(@Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
@@ -120,7 +122,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    AuthorisationService authorisationService,
                                    AuthorisationLogger authorisationLogger,
                                    ChargeDao chargeDao,
-                                   EventService eventService) {
+                                   EventService eventService,
+                                   InstantSource instantSource) {
 
         this.gatewayUrlMap = gatewayUrlMap;
         this.cancelClient = cancelClient;
@@ -136,6 +139,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.chargeDao = chargeDao;
         this.eventService = eventService;
         externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        this.instantSource = instantSource;
     }
 
     @Override
@@ -300,14 +304,14 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             LOGGER.info("Updated exemption_3ds of charge to {} (reason {}) - charge_external_id={}", exemption3ds.name(), reason, charge.getExternalId());
         }
         chargeDao.merge(charge);
-        eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, Instant.now()));
+        eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, instantSource.instant()));
     }
 
     @Transactional
     public ChargeEntity updateChargeWithRequested3dsExemption(ChargeEntity chargeEntity, Exemption3dsType exemption3dsType) {
         chargeEntity.setExemption3dsRequested(exemption3dsType);
         LOGGER.info("Requesting {} exemption - charge_external_id={}", exemption3dsType, chargeEntity.getExternalId());
-        eventService.emitAndRecordEvent(Requested3dsExemption.from(chargeEntity, Instant.now()));
+        eventService.emitAndRecordEvent(Requested3dsExemption.from(chargeEntity, instantSource.instant()));
 
         return chargeDao.merge(chargeEntity);
     }

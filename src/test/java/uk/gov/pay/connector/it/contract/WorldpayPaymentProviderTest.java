@@ -56,6 +56,8 @@ import javax.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.time.Clock;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -106,6 +108,7 @@ class WorldpayPaymentProviderTest {
     private static final String MAGIC_CARDHOLDER_NAME_FOR_3DS_FLEX_CHALLENGE_REQUIRED_RESPONSE = "3DS_V2_CHALLENGE_IDENTIFIED";
 
     private static final String VISA_CARD_NUMBER = "4444333322221111";
+    private InstantSource instantSource = Clock.systemUTC();
 
     private GatewayAccountEntity validGatewayAccount;
     private GatewayAccountEntity validGatewayAccountFor3ds;
@@ -659,7 +662,8 @@ class WorldpayPaymentProviderTest {
                 new AuthorisationService(mockCardExecutorService, mockEnvironment, mockConnectorConfiguration),
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 mock(ChargeDao.class),
-                mock(EventService.class));
+                mock(EventService.class),
+                instantSource);
     }
 
     private Map<String, URI> gatewayUrlMap() {
