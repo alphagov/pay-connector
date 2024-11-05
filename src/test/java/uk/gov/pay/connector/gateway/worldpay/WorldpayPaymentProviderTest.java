@@ -57,6 +57,8 @@ import javax.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.InstantSource;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -78,6 +80,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -144,6 +147,7 @@ class WorldpayPaymentProviderTest {
     public static final String MIT_MERCHANT_CODE = "mit-merchant-code";
     public static final String MIT_USERNAME = "mit-username";
     public static final String MIT_PASSWORD = "mit-password";
+    private static final String INSTANT_EXPECTED = "2024-11-01T14:13:47Z";
 
     @Mock
     private GatewayClient authoriseClient;
@@ -178,6 +182,7 @@ class WorldpayPaymentProviderTest {
 
     @BeforeEach
     void setup() {
+        InstantSource instantSource = InstantSource.fixed(Instant.parse(INSTANT_EXPECTED));
         worldpayPaymentProvider = new WorldpayPaymentProvider(
                 GATEWAY_URL_MAP,
                 authoriseClient,
@@ -191,7 +196,8 @@ class WorldpayPaymentProviderTest {
                 new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class), mock(ConnectorConfiguration.class)),
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 chargeDao,
-                eventService);
+                eventService,
+                instantSource);
 
         gatewayAccountEntity = aGatewayAccount();
         chargeEntityFixture = aValidChargeEntity()
