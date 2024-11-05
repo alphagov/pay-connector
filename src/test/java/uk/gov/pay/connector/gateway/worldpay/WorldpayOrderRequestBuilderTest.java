@@ -28,7 +28,6 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 import static uk.gov.pay.connector.model.domain.googlepay.GooglePayPaymentInfoFixture.aGooglePayPaymentInfo;
@@ -144,7 +143,6 @@ class WorldpayOrderRequestBuilderTest {
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withRequestExemption(DO_NOT_SEND_EXEMPTION_REQUEST)
                 .with3dsRequired(true)
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -190,7 +188,6 @@ class WorldpayOrderRequestBuilderTest {
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
-                .withRequestExemption(DO_NOT_SEND_EXEMPTION_REQUEST)
                 .with3dsRequired(true)
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
@@ -484,12 +481,14 @@ class WorldpayOrderRequestBuilderTest {
 
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, textBlock = """
-            sendExemptionRequest, testTemplatePath, isCorporateCard
-            SEND_CORPORATE_EXEMPTION_REQUEST, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
-            SEND_CORPORATE_EXEMPTION_REQUEST, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
-            SEND_EXEMPTION_ENGINE_REQUEST, templates/worldpay/valid-authorise-worldpay-3ds-request-exemption-optimised.xml, true
+            corporateExemptionsEnabled, exemptionEngineEnabled, testTemplatePath, isCorporateCard
+            true, false, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
+            true, true, templates/worldpay/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml, true
+            false, true, templates/worldpay/valid-authorise-worldpay-3ds-request-exemption-optimised.xml, true
+            true, true, templates/worldpay/valid-authorise-worldpay-3ds-request-exemption-optimised.xml, false
             """)
-    void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(SendWorldpayExemptionRequest sendExemptionRequest,
+    void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(Boolean corporateExemptionsEnabled,
+                                                                                    Boolean exemptionEngineEnabled,
                                                                                     String testTemplatePath,
                                                                                     Boolean isCorporateCard) throws Exception {
 
@@ -501,7 +500,8 @@ class WorldpayOrderRequestBuilderTest {
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
                 .with3dsRequired(true)
-                .withRequestExemption(sendExemptionRequest)
+                .withCorporateExemptionEnabled(corporateExemptionsEnabled)
+                .withExemptionEngine(exemptionEngineEnabled)
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withTransactionId("MyUniqueTransactionId!")

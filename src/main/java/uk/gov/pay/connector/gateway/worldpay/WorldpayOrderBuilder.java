@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
+import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import java.util.Optional;
@@ -13,11 +14,12 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseRecurringOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpaySendExemptionEngineRequest.SEND_EXEMPTION_ENGINE_REQUEST;
 
 public interface WorldpayOrderBuilder {
 
     static GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request,
-                                            SendWorldpayExemptionRequest sendExemptionEngineRequest,
+                                            WorldpaySendExemptionEngineRequest sendExemptionEngineRequest,
                                             AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
 
         WorldpayOrderRequestBuilder builder = aWorldpayAuthoriseOrderRequestBuilder();
@@ -38,11 +40,22 @@ public interface WorldpayOrderBuilder {
 
         boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
                 request.getGatewayAccount().isRequires3ds();
+        
+        boolean isCorporateExemptionEnabled = request.getGatewayAccount().getWorldpay3dsFlexCredentials()
+                .map(Worldpay3dsFlexCredentials::isCorporateExemptionsEnabled)
+                .orElse(false);
+
+        boolean requestExemptionEngineExemption =
+                switch (sendExemptionEngineRequest) {
+                    case SEND_EXEMPTION_ENGINE_REQUEST -> true;
+                    case DO_NOT_SEND_EXEMPTION_ENGINE_REQUEST -> false;
+                };
 
         return builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
-                .withRequestExemption(sendExemptionEngineRequest)
+                .withCorporateExemptionEnabled(isCorporateExemptionEnabled)
+                .withExemptionEngine(requestExemptionEngineExemption)
                 .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
                 .withAgreementId(request.getAgreement().map(AgreementEntity::getExternalId).orElse(null))
                 .withTransactionId(request.getTransactionId().orElse(""))

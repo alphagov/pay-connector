@@ -31,11 +31,12 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String acceptHeader;
         private String userAgentHeader;
         private boolean requires3ds;
-        private SendWorldpayExemptionRequest requestExemption;
+        private boolean corporateExemptionEnabled;
         private String paResponse3ds;
         private String payerIpAddress;
         private String payerEmail;
         private String state;
+        private boolean exemptionEngineEnabled;
         private int integrationVersion3ds;
         private boolean savePaymentInstrumentToAgreement;
         private String agreementId;
@@ -107,16 +108,16 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
             return requires3ds;
         }
         
-        public SendWorldpayExemptionRequest getRequestExemption() {
-            return requestExemption;
+        public boolean isCorporateExemptionEnabled() {
+            return corporateExemptionEnabled;
         }
 
         public void setRequires3ds(boolean requires3ds) {
             this.requires3ds = requires3ds;
         }
 
-        public void setRequestExemption(SendWorldpayExemptionRequest requestExemption) {
-            this.requestExemption = requestExemption;
+        public void setCorporateExemptionEnabled(boolean corporateExemptionEnabled) {
+            this.corporateExemptionEnabled = corporateExemptionEnabled;
         }
         
         public Optional<String> getPaResponse3ds() {
@@ -149,6 +150,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setState(String state) {
             this.state = state;
+        }
+
+        public boolean isExemptionEngineEnabled() {
+            return exemptionEngineEnabled;
+        }
+
+        public void setExemptionEngineEnabled(boolean exemptionEngineEnabled) {
+            this.exemptionEngineEnabled = exemptionEngineEnabled;
         }
 
         public boolean isSavePaymentInstrumentToAgreement() {
@@ -296,9 +305,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         return this;
     }
     
-    public WorldpayOrderRequestBuilder withRequestExemption(SendWorldpayExemptionRequest requestExemption) {
-        logger.info("Sending exemption is: " + requestExemption.name() + " for " + worldpayTemplateData.sessionId);
-        worldpayTemplateData.setRequestExemption(requestExemption);
+    public WorldpayOrderRequestBuilder withCorporateExemptionEnabled(boolean corporateExemptionEnabled) {
+        logger.info("Corporate Exemption is: " + corporateExemptionEnabled + " for " + worldpayTemplateData.sessionId);
+        worldpayTemplateData.setCorporateExemptionEnabled(corporateExemptionEnabled);
+        return this;
+    }
+
+    public WorldpayOrderRequestBuilder withExemptionEngine(boolean exemptionEngine) {
+        worldpayTemplateData.setExemptionEngineEnabled(exemptionEngine);
         return this;
     }
 
