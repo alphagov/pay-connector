@@ -170,12 +170,15 @@ public class ChargeEntityFixture {
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
         chargeEntity.getEvents().addAll(events);
         chargeEntity.setProviderSessionId(providerSessionId);
-        chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
         chargeEntity.setWalletType(walletType);
         chargeEntity.setExemption3ds(exemption3ds);
         chargeEntity.setExemption3dsRequested(exemption3dsRequested);
         chargeEntity.setPaymentInstrument(paymentInstrument);
         chargeEntity.setUpdatedDate(updatedDate);
+
+        if (this.auth3DsRequiredEntity != null) {
+            chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
+        }
 
         if (this.fees != null) {
             fees.stream().forEach(partialFee -> {

@@ -2,6 +2,7 @@ package uk.gov.pay.connector.model.domain;
 
 
 import org.junit.jupiter.api.Test;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
@@ -15,6 +16,7 @@ import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -219,5 +221,17 @@ class ChargeEntityTest {
                 kv(AGREEMENT_EXTERNAL_ID, agreementExternalId)
         ));
     }
-     
+
+    @Test
+    void shouldSetRequires3dsToTrueWhenSettingAuth3dsRequiredEntity() {
+        Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1");
+        ChargeEntity chargeEntity = aValidChargeEntity().build();
+
+        assertThat(chargeEntity.getRequires3ds(), is(nullValue()));
+
+        chargeEntity.set3dsRequiredDetails(auth3dsRequiredEntity);
+
+        assertTrue(chargeEntity.getRequires3ds());
+    }
 }

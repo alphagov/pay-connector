@@ -184,8 +184,9 @@ public class ChargeDaoIT {
                 .withId(null)
                 .withGatewayAccountEntity(gatewayAccount)
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
-                .withAuth3dsDetailsEntity(auth3dsDetailsEntity)
                 .build();
+
+        chargeEntity.set3dsRequiredDetails(auth3dsDetailsEntity);
 
         assertThat(chargeEntity.getId(), is(nullValue()));
 
@@ -201,6 +202,7 @@ public class ChargeDaoIT {
         assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(worldpayChallengeTransactionId));
         assertThat(charge.get().get3dsRequiredDetails().getWorldpayChallengePayload(), is(worldpayChallengePayload));
         assertThat(charge.get().get3dsRequiredDetails().getThreeDsVersion(), is(threeDsVersion));
+        assertThat(charge.get().getRequires3ds(), is(true));
     }
 
     @Test

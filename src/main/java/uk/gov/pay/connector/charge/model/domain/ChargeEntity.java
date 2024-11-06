@@ -496,6 +496,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public void set3dsRequiredDetails(Auth3dsRequiredEntity auth3dsRequiredDetails) {
         this.auth3dsRequiredDetails = auth3dsRequiredDetails;
+        this.requires3ds = true;
     }
 
     public SupportedLanguage getLanguage() {

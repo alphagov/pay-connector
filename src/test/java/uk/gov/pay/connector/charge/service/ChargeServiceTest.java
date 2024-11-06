@@ -450,6 +450,8 @@ class ChargeServiceTest {
         verify(chargeSpy).setGatewayTransactionId("transaction-id");
         verify(chargeSpy).setStatus(AUTHORISATION_SUCCESS);
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
+
+        assertThat(chargeSpy.getRequires3ds(), is(nullValue()));
     }
 
     @Test
@@ -472,6 +474,8 @@ class ChargeServiceTest {
         verify(chargeSpy).setProviderSessionId("provider-session-identifier");
         verify(mockedChargeEventDao).persistChargeEventOf(eq(chargeSpy), isNull());
         verify(mockEventService).emitAndRecordEvent(any(Gateway3dsInfoObtained.class));
+
+        assertThat(chargeSpy.getRequires3ds(), is(true));
     }
 
     @Test
