@@ -995,6 +995,16 @@ public class ChargeService {
         }).orElseThrow(() -> new InvalidForceStateTransitionException(fromChargeState, targetChargeState));
     }
 
+    @Transactional
+    public void updateRequires3ds(String chargeExternalId, Boolean requires3ds) {
+        Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeExternalId);
+        charge.map(chargeEntity -> {
+            chargeEntity.setRequires3ds(requires3ds);
+            chargeDao.merge(chargeEntity);
+            return chargeEntity;
+        });
+    }
+
     public Optional<ChargeEntity> findByProviderAndTransactionId(String paymentGatewayName, String transactionId) {
         return chargeDao.findByProviderAndTransactionId(paymentGatewayName, transactionId);
     }
