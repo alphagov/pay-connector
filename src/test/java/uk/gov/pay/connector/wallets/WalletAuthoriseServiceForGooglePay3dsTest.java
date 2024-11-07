@@ -19,6 +19,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -35,7 +37,6 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,6 +50,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
@@ -94,9 +96,12 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
 
+    @Mock
+    EventService mockEventService;
+
     @Captor
     private ArgumentCaptor<Auth3dsRequiredEntity> auth3dsRequiredEntityArgumentCaptor;
-    
+
     private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
     
     @BeforeEach
@@ -110,7 +115,8 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         doAnswer(invocation -> Pair.of(COMPLETED, ((Supplier) invocation.getArguments()[0]).get()))
                 .when(mockExecutorService).execute(any(Supplier.class), anyInt());
         
-        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
+        AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment,
+                mockConfiguration);
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
@@ -134,6 +140,8 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);
 
+        when(chargeService.updateRequires3dsPostAuthorisation(chargeEntity.getExternalId())).thenReturn(chargeEntity);
+
         GooglePayAuthRequest authorisationData =
                 Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
@@ -152,6 +160,8 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         assertThat(auth3dsRequiredEntityArgumentCaptor.getValue(), is(notNullValue()));
         assertThat(auth3dsRequiredEntityArgumentCaptor.getValue().getIssuerUrl(), is(worldpayOrderStatusResponse.getIssuerUrl()));
         assertThat(auth3dsRequiredEntityArgumentCaptor.getValue().getPaRequest(), is(worldpayOrderStatusResponse.getPaRequest()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     private GatewayResponse providerRequestsFor3dsAuthorisation(WorldpayOrderStatusResponse worldpayOrderStatusResponse) throws Exception {

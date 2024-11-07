@@ -71,6 +71,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.model.agreement.AgreementInactivated;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
+import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
@@ -108,6 +109,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -131,6 +133,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneCha
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.WebChargeEntityBuilder.aWebChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
@@ -178,6 +181,7 @@ public class ChargeService {
 
     private final Boolean rejectPaymentLinkPaymentsWithCardNumberInReference;
     private final CardidService cardidService;
+    private final InstantSource instantSource;
 
     @Inject
     public ChargeService(TokenDao tokenDao,
@@ -200,7 +204,8 @@ public class ChargeService {
                          IdempotencyDao idempotencyDao,
                          ExternalTransactionStateFactory externalTransactionStateFactory,
                          ObjectMapper objectMapper,
-                         CardidService cardidService) {
+                         CardidService cardidService,
+                         InstantSource instantSource) {
         this.tokenDao = tokenDao;
         this.chargeDao = chargeDao;
         this.chargeEventDao = chargeEventDao;
@@ -225,6 +230,7 @@ public class ChargeService {
         this.worldpay3dsFlexJwtService = worldpay3dsFlexJwtService;
         this.rejectPaymentLinkPaymentsWithCardNumberInReference = config.getRejectPaymentLinkPaymentsWithCardNumberInReference();
         this.cardidService = cardidService;
+        this.instantSource = instantSource;
     }
 
     @Transactional
@@ -1008,6 +1014,20 @@ public class ChargeService {
         ChargeEntity charge = findChargeByExternalId(externalId);
         ChargeStatus status = ChargeStatus.fromString(charge.getStatus());
         return status == CAPTURED || status == CAPTURE_SUBMITTED;
+    }
+
+    @Transactional
+    public ChargeEntity updateRequires3dsPostAuthorisation(String externalId) {
+        return chargeDao.findByExternalId(externalId)
+                .map(chargeEntity -> {
+                    if (chargeEntity.getChargeStatus() == AUTHORISATION_SUCCESS || chargeEntity.getChargeStatus() == AUTHORISATION_REJECTED) {
+                        if (!Boolean.TRUE.equals(chargeEntity.getRequires3ds())) {
+                            chargeEntity.setRequires3ds(false);
+                            eventService.emitAndRecordEvent(GatewayDoesNotRequire3dsAuthorisation.from(chargeEntity, instantSource.instant()));
+                        }
+                    }
+                    return chargeEntity;
+                }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     public int count3dsRequiredEvents(String externalId) {

@@ -41,6 +41,8 @@ import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.util.AuthUtils;
 
+import java.time.Instant;
+import java.time.InstantSource;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -112,6 +114,8 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     private ChargeService chargeService;
     private Card3dsResponseAuthService card3dsResponseAuthService;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     @BeforeEach
     public void setUpCardAuthorisationService() {
         Environment mockEnvironment = mock(Environment.class);
@@ -126,7 +130,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
                 null, null, mockConfiguration, null, mockStateTransitionService, ledgerService,
                 mockedRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
                 mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
-                mockExternalTransactionStateFactory, objectMapper, null);
+                mockExternalTransactionStateFactory, objectMapper, null, fixedInstantSource);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
 
         card3dsResponseAuthService = new Card3dsResponseAuthService(mockedProviders, chargeService, authorisationService, mockConfiguration);

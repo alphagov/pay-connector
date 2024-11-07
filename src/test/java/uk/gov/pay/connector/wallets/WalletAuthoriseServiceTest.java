@@ -37,6 +37,7 @@ import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -64,6 +65,8 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.time.Instant;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -85,6 +88,7 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -179,11 +183,13 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
-    @InjectMocks
+    @Mock
     private EventService mockEventService;
 
     @InjectMocks
     private PaymentInstrumentService mockPaymentInstrumentService;
+
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-12T14:19:00Z"));
 
     @BeforeEach
     void setUp() {
@@ -206,7 +212,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
                 ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
                 mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
-                mockExternalTransactionStateFactory, objectMapper, null));
+                mockExternalTransactionStateFactory, objectMapper, null, fixedInstantSource));
         walletAuthoriseService = new WalletAuthoriseService(
                 mockedProviders,
                 chargeService,
@@ -266,13 +272,16 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
+        assertThat(charge.getRequires3ds(), is(false));
 
         verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().get(0).getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -299,13 +308,16 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
+        assertThat(charge.getRequires3ds(), is(false));
 
         verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().get(0).getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -334,13 +346,16 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getWalletType(), is(WalletType.GOOGLE_PAY));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
         assertThat(charge.getEmail(), is(authorisationData.getPaymentInfo().getEmail()));
+        assertThat(charge.getRequires3ds(), is(false));
 
         verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventQueue, times(1)).emitEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().get(0).getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -353,6 +368,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -391,6 +409,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -404,6 +424,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -419,6 +441,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -429,6 +453,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(mockCardDetailsEntity));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -439,6 +465,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(mockCardDetailsEntity));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -448,6 +476,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -457,6 +487,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(charge.getProviderSessionId(), is(nullValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -470,6 +502,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
             ErrorResponse response = (ErrorResponse) e.getResponse().getEntity();
             assertThat(response.messages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
         }
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -479,6 +513,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(ChargeNotFoundRuntimeException.class, () -> walletAuthoriseService.authorise(chargeId, validApplePayDetails));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -490,6 +526,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 () -> walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails));
 
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -501,6 +539,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 () -> walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails));
 
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -511,6 +551,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(response.isFailed(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -521,6 +563,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(response.isFailed(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode, CardExpiryDate cardExpiryDate) {
@@ -580,5 +624,10 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private void providerWillRespondWithError(Exception gatewayError) throws Exception {
         when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenThrow(gatewayError);
+    }
+
+    private void verifyGatewayDoesNotRequire3dsEventWasEmitted(ChargeEntity chargeEntity) {
+        GatewayDoesNotRequire3dsAuthorisation event = GatewayDoesNotRequire3dsAuthorisation.from(chargeEntity, fixedInstantSource.instant());
+        verify(mockEventService).emitAndRecordEvent(event);
     }
 }

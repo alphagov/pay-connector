@@ -55,6 +55,8 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.ws.rs.core.UriInfo;
+import java.time.Instant;
+import java.time.InstantSource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -158,6 +160,8 @@ class ChargeServiceCreateAgreementTest {
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
@@ -193,7 +197,7 @@ class ChargeServiceCreateAgreementTest {
                 mockConfig, mockProviders, mockStateTransitionService, mockLedgerService, mockedRefundService, mockEventService,
                 mockPaymentInstrumentService, mockGatewayAccountCredentialsService,
                 mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao,
-                mockExternalTransactionStateFactory, objectMapper, null);
+                mockExternalTransactionStateFactory, objectMapper, null, fixedInstantSource);
     }
 
     @Test

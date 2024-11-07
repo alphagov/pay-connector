@@ -37,6 +37,9 @@ public class WorldpayCardAuthoriseServiceIT {
         var successResponse = app.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseUserNotPresent(successCharge);
         assertThat(successResponse.getGatewayError(), is(Optional.empty()));
         assertThat(successResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED)));
+
+        var mergedCharge = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
+        assertThat(mergedCharge.getRequires3ds(), is(false));
     }
 
     @Test
@@ -59,6 +62,9 @@ public class WorldpayCardAuthoriseServiceIT {
         Map<String, Object> chargeUpdated = app.getDatabaseTestHelper().getChargeByExternalId(userNotPresentChargeId.toString());
 
         assertThat(chargeUpdated.get("can_retry"), is(true));
+
+        var mergedCharge = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
+        assertThat(mergedCharge.getRequires3ds(), is(false));
     }
 
     @Test
@@ -81,6 +87,9 @@ public class WorldpayCardAuthoriseServiceIT {
         Map<String, Object> chargeUpdated = app.getDatabaseTestHelper().getChargeByExternalId(userNotPresentChargeId.toString());
 
         assertThat(chargeUpdated.get("can_retry"), is(false));
+
+        var mergedCharge = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
+        assertThat(mergedCharge.getRequires3ds(), is(false));
     }
 
     @Test
@@ -103,5 +112,8 @@ public class WorldpayCardAuthoriseServiceIT {
         Map<String, Object> chargeUpdated = app.getDatabaseTestHelper().getChargeByExternalId(userNotPresentChargeId.toString());
 
         assertThat(chargeUpdated.get("can_retry"), is(nullValue()));
+
+        var mergedCharge = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
+        assertThat(mergedCharge.getRequires3ds(), is(nullValue()));
     }
 }

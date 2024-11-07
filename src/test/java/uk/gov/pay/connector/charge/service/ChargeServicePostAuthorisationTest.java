@@ -44,6 +44,7 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +103,8 @@ class ChargeServicePostAuthorisationTest {
     @Captor
     private ArgumentCaptor<AgreementInactivated> agreementInactivatedArgumentCaptor;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     private static ObjectMapper objectMapper = new ObjectMapper();
     private final Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
     private final ChargeEntityFixture chargeEntityFixture = ChargeEntityFixture.aValidChargeEntity();
@@ -136,7 +139,8 @@ class ChargeServicePostAuthorisationTest {
                 mockCardTypeDao, mockAgreementDao, mockGatewayAccountDao, mockConnectorConfig, mockProviders,
                 mockStateTransitionService, mockLedgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory,
+                objectMapper, null, fixedInstantSource);
     }
 
     @Test

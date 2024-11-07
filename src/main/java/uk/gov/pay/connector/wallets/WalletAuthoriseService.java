@@ -31,8 +31,8 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 
 public class WalletAuthoriseService {
     
@@ -75,16 +75,10 @@ public class WalletAuthoriseService {
             try {
 
                 LOGGER.info("Authorising charge for {}", walletAuthorisationRequest.getWalletType().toString());
-                switch (walletAuthorisationRequest.getWalletType()) {
-                    case APPLE_PAY:
-                        operationResponse = authoriseApplePay(charge, walletAuthorisationRequest);
-                        break;
-                    case GOOGLE_PAY:
-                        operationResponse = authoriseGooglePay(charge, walletAuthorisationRequest);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException(format("Wallet type %s not recognised", walletAuthorisationRequest.getWalletType()));
-                }
+                operationResponse = switch (walletAuthorisationRequest.getWalletType()) {
+                    case APPLE_PAY -> authoriseApplePay(charge, walletAuthorisationRequest);
+                    case GOOGLE_PAY -> authoriseGooglePay(charge, walletAuthorisationRequest);
+                };
 
                 if (operationResponse.getBaseResponse().isPresent()) {
                     requestStatus = "success";
@@ -189,6 +183,8 @@ public class WalletAuthoriseService {
                 walletAuthorisationRequest.getWalletType(),
                 walletAuthorisationRequest.getPaymentInfo().getEmail(),
                 auth3dsRequiredDetails);
+
+        updatedCharge = chargeService.updateRequires3dsPostAuthorisation(updatedCharge.getExternalId());
 
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.%s.authorise.result.%s",

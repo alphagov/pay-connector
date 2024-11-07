@@ -41,6 +41,8 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
+import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -135,6 +137,8 @@ class ChargeServiceCreateTelephonePaymentTest {
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     @BeforeEach
     void setUp() {
         telephoneRequestBuilder = new TelephoneChargeCreateRequest.Builder()
@@ -173,7 +177,8 @@ class ChargeServiceCreateTelephonePaymentTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory,
+                objectMapper, null, fixedInstantSource);
     }
 
     @Test

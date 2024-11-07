@@ -54,6 +54,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -166,6 +167,8 @@ class ChargeServiceFindTest {
 
     @Captor ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
 
@@ -209,7 +212,8 @@ class ChargeServiceFindTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter, mockTaskQueueService,
-                mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
+                mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper,
+                null, fixedInstantSource);
     }
     @Test
     void shouldNotFindCharge() {

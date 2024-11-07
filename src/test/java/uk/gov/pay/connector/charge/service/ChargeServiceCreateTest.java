@@ -82,6 +82,7 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -229,6 +230,8 @@ class ChargeServiceCreateTest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
@@ -286,7 +289,8 @@ class ChargeServiceCreateTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper, mockCardidService);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory,
+                mapper, mockCardidService, fixedInstantSource);
     }
 
     @Test
@@ -949,7 +953,8 @@ class ChargeServiceCreateTest {
                     mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                     mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                     mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                    mockTaskQueueService, null, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper, mockCardidService);
+                    mockTaskQueueService, null, mockIdempotencyDao, mockExternalTransactionStateFactory,
+                    mapper, mockCardidService, fixedInstantSource);
         }
 
         private void setupMocksToCreateACharge() {
