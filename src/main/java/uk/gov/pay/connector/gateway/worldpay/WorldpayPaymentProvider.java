@@ -234,9 +234,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         GatewayResponse<WorldpayOrderStatusResponse> response  = worldpayAuthoriseHandler
                 .authorise(request, sendExemptionEngineRequest);
 
-        calculateAndStoreExemption(exemptionEngineEnabled, charge, response);
+        calculateAndStoreExemption(exemptionEngineEnabled, corporateExemptionsEnabledAndCorporateCardUsed, charge, response);
 
-        if (response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false)) {
+        if (authorisationWithExemptionRequestSoftDeclinedButRetryableWithoutExemption(response, corporateExemptionsEnabledAndCorporateCardUsed)) {
 
             var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getGatewayAccount(), request.getAuthCardDetails(), request.isSavePaymentInstrumentToAgreement());
 
@@ -257,6 +257,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return response;
     }
 
+    private static boolean authorisationWithExemptionRequestSoftDeclinedButRetryableWithoutExemption(GatewayResponse<WorldpayOrderStatusResponse> response, boolean corporateExemptionsEnabledAndCorporateCardUsed) {
+        return response.getBaseResponse().map(WorldpayOrderStatusResponse::isSoftDecline).orElse(false) && !corporateExemptionsEnabledAndCorporateCardUsed;
+    }
+
     /**
      * IMPORTANT: this method should not attempt to update the Charge in the database. This is because it is executed
      * on a worker thread and the initiating thread can attempt to update the Charge status while it is still being
@@ -272,8 +276,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return worldpayAuthoriseHandler.authoriseUserNotPresent(request);
     }
 
-    private void calculateAndStoreExemption(boolean exemptionEngineEnabled, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
-        if (!exemptionEngineEnabled) {
+    private void calculateAndStoreExemption(boolean exemptionEngineEnabled, boolean corporateExemptionsEnabledAndCorporateCardUsed, ChargeEntity charge, GatewayResponse<WorldpayOrderStatusResponse> response) {
+        if (!exemptionEngineEnabled && !corporateExemptionsEnabledAndCorporateCardUsed) {
             updateChargeWithExemption3ds(EXEMPTION_NOT_REQUESTED, charge);
         } else {
             calculateAndStoreExemption(charge, response);
