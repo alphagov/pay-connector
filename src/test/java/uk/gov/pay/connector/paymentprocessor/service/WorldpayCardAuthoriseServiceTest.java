@@ -28,10 +28,6 @@ import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetails
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.eventdetails.charge.GatewayDoesNotRequires3dsAuthorisationEventDetails;
-import uk.gov.pay.connector.events.model.Event;
-import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequires3dsAuthorisation;
-import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -67,7 +63,6 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -114,9 +109,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
-    
-    @Mock
-    private EventService mockedEventServiceForCardAuthService;
 
     private AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
     private CardAuthoriseService cardAuthorisationService;
@@ -151,9 +143,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 new AuthorisationService(mockExecutorService, environment, mockConfiguration),
                 chargeService,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
-                mockChargeEligibleForCaptureService, mock(PaymentInstrumentEntityToAuthCardDetailsConverter.class),
-                environment,
-                mockedEventServiceForCardAuthService);
+                mockChargeEligibleForCaptureService, mock(PaymentInstrumentEntityToAuthCardDetailsConverter.class), environment);
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
 
@@ -181,15 +171,12 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REJECTED));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
-        assertThat(charge.getRequires3ds(), is(false));
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
         assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, exemptionResponse result: HONOURED, exemptionResponse reason: HIGH_RISK)"));
-
-        verifyGatewayDoesNotRequires3dsEventWasEmitted(charge.getExternalId());
     }
 
     @Test
@@ -206,15 +193,12 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
-        assertThat(charge.getRequires3ds(), is(false));
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
         assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED, exemptionResponse result: HONOURED, exemptionResponse reason: ISSUER_HONOURED)"));
-
-        verifyGatewayDoesNotRequires3dsEventWasEmitted(charge.getExternalId());
     }
 
     @Test
@@ -229,9 +213,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
-        assertThat(charge.getRequires3ds(), is(true));
-
-        verifyNoInteractions(mockedEventServiceForCardAuthService);
     }
 
     @Test
@@ -246,9 +227,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getAuthoriseStatus().isPresent());
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
         assertThat(charge.getStatus(), is(AUTHORISATION_3DS_REQUIRED.getValue()));
-        assertThat(charge.getRequires3ds(), is(true));
-
-        verifyNoInteractions(mockedEventServiceForCardAuthService);
     }
 
     @Test
@@ -281,9 +259,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsRequiredDetails().getWorldpayChallengeTransactionId(), is(worldpayOrderStatusResponse.getChallengeTransactionId()));
         assertThat(charge.get3dsRequiredDetails().getWorldpayChallengePayload(), is(worldpayOrderStatusResponse.getChallengePayload()));
         assertThat(charge.get3dsRequiredDetails().getThreeDsVersion(), is(worldpayOrderStatusResponse.getThreeDsVersion()));
-        assertThat(charge.getRequires3ds(), is(true));
-
-        verifyNoInteractions(mockedEventServiceForCardAuthService);
     }
 
     @Test
@@ -299,19 +274,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
         assertThat(charge.get3dsRequiredDetails().getIssuerUrl(), is(worldpayOrderStatusResponse.getIssuerUrl()));
         assertThat(charge.get3dsRequiredDetails().getPaRequest(), is(worldpayOrderStatusResponse.getPaRequest()));
-        assertThat(charge.getRequires3ds(), is(true));
-
-        verifyNoInteractions(mockedEventServiceForCardAuthService);
-    }
-
-    private void verifyGatewayDoesNotRequires3dsEventWasEmitted(String chargeExternalId) {
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(PaymentEvent.class);
-        verify(mockedEventServiceForCardAuthService).emitAndRecordEvent(eventCaptor.capture());
-        GatewayDoesNotRequires3dsAuthorisation event = (GatewayDoesNotRequires3dsAuthorisation) eventCaptor.getAllValues().get(0);
-        assertThat(event.getResourceExternalId(), is(chargeExternalId));
-        assertThat(event.getEventType(), is("GATEWAY_DOES_NOT_REQUIRES_3DS_AUTHORISATION"));
-        GatewayDoesNotRequires3dsAuthorisationEventDetails eventDetails = (GatewayDoesNotRequires3dsAuthorisationEventDetails) event.getEventDetails();
-        assertThat(eventDetails.isRequires3DS(), is(false));
     }
 
     private WorldpayOrderStatusResponse worldpayRespondsWith(ProviderSessionIdentifier sessionIdentifier,

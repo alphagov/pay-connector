@@ -19,8 +19,6 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetailsConverter;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
-import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequires3dsAuthorisation;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
@@ -40,12 +38,10 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import javax.inject.Inject;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
@@ -68,7 +64,6 @@ public class CardAuthoriseService {
     private final ChargeEligibleForCaptureService chargeEligibleForCaptureService;
     private final PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter;
     private final MetricRegistry metricRegistry;
-    private final EventService eventService;
 
     @Inject
     public CardAuthoriseService(CardTypeDao cardTypeDao,
@@ -78,8 +73,7 @@ public class CardAuthoriseService {
                                 AuthorisationLogger authorisationLogger,
                                 ChargeEligibleForCaptureService chargeEligibleForCaptureService,
                                 PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter,
-                                Environment environment,
-                                EventService eventService) {
+                                Environment environment) {
         this.cardTypeDao = cardTypeDao;
         this.providers = providers;
         this.authorisationService = authorisationService;
@@ -88,7 +82,6 @@ public class CardAuthoriseService {
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
         this.paymentInstrumentEntityToAuthCardDetailsConverter = paymentInstrumentEntityToAuthCardDetailsConverter;
         this.metricRegistry = environment.metrics();
-        this.eventService = eventService;
     }
 
     public AuthorisationResponse doAuthoriseWeb(String chargeId, AuthCardDetails authCardDetails) {
@@ -227,14 +220,6 @@ public class CardAuthoriseService {
                 maybeToken.orElse(null),
                 mayBeCanRetry.orElse(null),
                 mayBeRejectedReason.orElse(null));
-
-        if (newStatus == AUTHORISATION_SUCCESS || newStatus == AUTHORISATION_REJECTED) {
-            if (updatedCharge.getRequires3ds() == null || !updatedCharge.getRequires3ds()) {
-                updatedCharge.setRequires3ds(false);
-                chargeService.updateRequires3ds(updatedCharge.getExternalId(), false);
-                eventService.emitAndRecordEvent(GatewayDoesNotRequires3dsAuthorisation.from(updatedCharge, Instant.now()));
-            }
-        }
 
         var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
 
