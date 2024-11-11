@@ -40,6 +40,7 @@ import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -94,7 +95,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
     private AuthorisationConfig mockAuthorisationConfig;
 
     @Captor
-    private ArgumentCaptor<Optional<Auth3dsRequiredEntity>> auth3dsRequiredEntityArgumentCaptor;
+    private ArgumentCaptor<Auth3dsRequiredEntity> auth3dsRequiredEntityArgumentCaptor;
     
     private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().build();
     
@@ -123,7 +124,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
                 .thenReturn(mockAuthCardDetails);
         when(chargeService.updateChargePostWalletAuthorisation(anyString(), any(ChargeStatus.class), anyString(), 
                 isNull(), eq(mockAuthCardDetails), any(WalletType.class), any(), 
-                any(Optional.class))
+                any(Auth3dsRequiredEntity.class))
         ).thenReturn(chargeEntity);
     }
 
@@ -148,9 +149,9 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
                 anyString(),
                 auth3dsRequiredEntityArgumentCaptor.capture());
         
-        assertThat(auth3dsRequiredEntityArgumentCaptor.getValue().isPresent(), is(true));
-        assertThat(auth3dsRequiredEntityArgumentCaptor.getValue().get().getIssuerUrl(), is(worldpayOrderStatusResponse.getIssuerUrl()));
-        assertThat(auth3dsRequiredEntityArgumentCaptor.getValue().get().getPaRequest(), is(worldpayOrderStatusResponse.getPaRequest()));
+        assertThat(auth3dsRequiredEntityArgumentCaptor.getValue(), is(notNullValue()));
+        assertThat(auth3dsRequiredEntityArgumentCaptor.getValue().getIssuerUrl(), is(worldpayOrderStatusResponse.getIssuerUrl()));
+        assertThat(auth3dsRequiredEntityArgumentCaptor.getValue().getPaRequest(), is(worldpayOrderStatusResponse.getPaRequest()));
     }
 
     private GatewayResponse providerRequestsFor3dsAuthorisation(WorldpayOrderStatusResponse worldpayOrderStatusResponse) throws Exception {

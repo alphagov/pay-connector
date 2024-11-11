@@ -733,8 +733,8 @@ public class ChargeService {
                                                             AuthCardDetails authCardDetails,
                                                             WalletType walletType,
                                                             String emailAddress,
-                                                            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails) {
-        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails.orElse(null), sessionIdentifier,
+                                                            Auth3dsRequiredEntity auth3dsRequiredDetails) {
+        return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
                 walletType, emailAddress, null, null, null);
     }
 

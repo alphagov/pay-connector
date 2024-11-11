@@ -119,7 +119,7 @@ public class WalletAuthoriseService {
                     transactionId.orElse(null),
                     sessionIdentifier.orElse(null),
                     chargeStatus,
-                    auth3dsDetailsEntity,
+                    auth3dsDetailsEntity.orElse(null),
                     cardExpiryDate);
             
             authorisationLogger.logChargeAuthorisation(
@@ -174,7 +174,7 @@ public class WalletAuthoriseService {
             String transactionId,
             ProviderSessionIdentifier sessionIdentifier,
             ChargeStatus status,
-            Optional<Auth3dsRequiredEntity> auth3dsRequiredDetails,
+            Auth3dsRequiredEntity auth3dsRequiredDetails,
             CardExpiryDate cardExpiryDate) {
         
         LOGGER.info("Processing gateway auth response for {}", walletAuthorisationRequest.getWalletType().toString());
