@@ -502,6 +502,9 @@ class WorldpayPaymentProviderTest {
         verify(worldpayAuthoriseHandler).authorise(cardAuthRequest, SEND_CORPORATE_EXEMPTION_REQUEST);
         verifyNoMoreInteractions(worldpayAuthoriseHandler);
 
+        verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_REJECTED, CORPORATE);
+        verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "HIGH_RISK", chargeEntity.getExternalId(), 3);
+
         var exemptionRejectedEvent = new Gateway3dsExemptionResultObtained(
                 chargeEntity.getServiceId(), 
                 chargeEntity.getGatewayAccount().isLive(), 
