@@ -3787,6 +3787,8 @@ components:
         email:
           type: string
           example: Joe.Bogs@example.org
+        exemption:
+          $ref: '#/components/schemas/Exemption'
         fee:
           type: integer
           format: int64
@@ -4028,6 +4030,26 @@ components:
         reason:
           type: string
           example: "Optional - ex: amount_not_available"
+    Exemption:
+      type: object
+      description: Object containing information about 3DS exemption request of the
+        payment.
+      example:
+        exemption:
+          requested: true
+      properties:
+        outcome:
+          $ref: '#/components/schemas/Outcome'
+        requested:
+          type: boolean
+          description: Flag indicating whether 3ds exemption was requested for the
+            payment.
+          example: true
+        type:
+          type: string
+          description: Indicating the type of the 3ds exemption was requested for
+            the payment if applicable.
+          example: corporate
     ExternalMetadata:
       type: object
       example: "{\"property1\": \"value1\", \"property2\": \"value2\"}\""
@@ -4131,6 +4153,8 @@ components:
         email:
           type: string
           example: Joe.Bogs@example.org
+        exemption:
+          $ref: '#/components/schemas/Exemption'
         fee:
           type: integer
           format: int64
@@ -5337,6 +5361,22 @@ components:
         version:
           type: integer
           format: int64
+    Outcome:
+      type: object
+      description: Object containing information about the outcome of the 3ds exemption
+        request
+      example: honoured
+      properties:
+        result:
+          type: string
+          description: Indicating the result if 3ds exemption was requested for the
+            payment.
+          enum:
+          - not requested
+          - honoured
+          - rejected
+          - out of scope
+          example: honoured
     PaymentOutcome:
       type: object
       description: Only applicable for telephone payments reported. Outcome after
