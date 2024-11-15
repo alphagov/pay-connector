@@ -3,7 +3,6 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -67,6 +66,7 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 
 import javax.ws.rs.core.UriInfo;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -192,6 +192,8 @@ class ChargeServiceTest {
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
@@ -230,7 +232,8 @@ class ChargeServiceTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory,
+                objectMapper, null, fixedInstantSource);
     }
 
     @Test

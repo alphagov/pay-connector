@@ -49,6 +49,7 @@ import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import javax.ws.rs.core.UriInfo;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.Map;
 import java.util.Optional;
 
@@ -150,6 +151,8 @@ class ChargeServiceIdempotencyTest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     private ChargeService chargeService;
     private GatewayAccountEntity gatewayAccount;
 
@@ -167,7 +170,8 @@ class ChargeServiceIdempotencyTest {
                 mockedCardTypeDao, mockedAgreementDao, mockedGatewayAccountDao, mockedConfig, mockedProviders,
                 mockStateTransitionService, ledgerService, mockedRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, mapper, null);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory,
+                mapper, null, fixedInstantSource);
     }
 
     @Test

@@ -221,6 +221,8 @@ public class CardAuthoriseService {
                 mayBeCanRetry.orElse(null),
                 mayBeRejectedReason.orElse(null));
 
+        updatedCharge = chargeService.updateRequires3dsPostAuthorisation(updatedCharge.getExternalId());
+
         var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
 
         authorisationLogger.logChargeAuthorisation(

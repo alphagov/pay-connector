@@ -48,6 +48,7 @@ import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
+import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -81,6 +82,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -106,6 +108,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -211,6 +214,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
+    private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
+
     private CardAuthoriseService cardAuthorisationService;
     private final CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(
             LastDigitsCardNumber.of("1234"),
@@ -232,7 +237,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 null, null, null, mockConfiguration, null,
                 stateTransitionService, ledgerService, mockRefundService, mockEventService, mockPaymentInstrumentService,
                 mockGatewayAccountCredentialsService, mockAuthCardDetailsToCardDetailsEntityConverter,
-                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper, null);
+                mockTaskQueueService, mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory,
+                objectMapper, null, fixedInstantSource);
 
         LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService = mock(LinkPaymentInstrumentToAgreementService.class);
         CaptureQueue captureQueue = mock(CaptureQueue.class);
@@ -301,9 +307,11 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(mockEventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().get(0).getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -326,6 +334,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(cardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -354,6 +364,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(cardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -386,12 +399,15 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
         assertThat(charge.getCardDetails(), is(cardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().get(), is(250L));
+        assertThat(charge.getRequires3ds(), is(false));
 
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
                 hasItems("Applied corporate card surcharge for charge"));
         assertThat(loggingEvents.get(0).getArgumentArray(), hasItemInArray(kv("corporate_card_surcharge", 250L)));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -421,6 +437,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCardDetails(), is(cardDetailsEntity));
         assertThat(charge.getCorporateSurcharge().get(), is(50L));
         assertThat(charge.getWalletType(), is(nullValue()));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Disabled("Agreement and MOTO auth modes do not yet used shared authorise operation code")
@@ -478,6 +497,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         var exception = assertThrows(IllegalArgumentException.class, () -> cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails));
         assertThat(exception.getMessage(), is("Authorise operation does not support authorisation mode"));
+
+        assertThat(charge.getRequires3ds(), is(nullValue()));
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -502,7 +524,10 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
         assertThat(charge.getWalletType(), is(nullValue()));
+        assertThat(charge.getRequires3ds(), is(false));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
     
     @Test
@@ -519,6 +544,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThrows(RuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeExternalId, authCardDetails));
         assertThat(charge.getGatewayTransactionId(), is(generatedTransactionId));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -555,6 +582,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThrows(IllegalStateRuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeWithConflicting3dsId, authCardDetails));
         assertThat(charge.getStatus(), is(AUTHORISATION_ABORTED.toString()));
         verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -579,6 +608,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 "sandbox", "test", "without-billing-address", "authorisation rejected"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -606,6 +637,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 "sandbox", "test", "without-billing-address", "authorisation cancelled"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -630,6 +663,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 "sandbox", "test", "without-billing-address", "authorisation error"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -645,6 +680,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -661,6 +699,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -673,6 +713,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
         assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -685,6 +727,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
         assertThat(charge.getProviderSessionId(), is(nullValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -696,6 +740,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         OperationAlreadyInProgressRuntimeException e = assertThrows(OperationAlreadyInProgressRuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeExternalId, authCardDetails));
         ErrorResponse response = (ErrorResponse) e.getResponse().getEntity();
         assertThat(response.messages(), contains(format("Authorisation for charge already in progress, %s", charge.getExternalId())));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -710,6 +756,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
         assertThrows(ChargeNotFoundRuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeId, authCardDetails));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -724,6 +772,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThrows(OperationAlreadyInProgressRuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(inProgressChargeId, authCardDetails));
 
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -738,6 +788,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThrows(IllegalStateRuntimeException.class, () -> cardAuthorisationService.doAuthoriseWeb(chargeWithInvalidStatusId, authCardDetails));
 
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -756,11 +808,14 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getGatewayError().get().getErrorType(), is(GATEWAY_CONNECTION_TIMEOUT_ERROR));
 
         assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "authorisation timeout"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -778,11 +833,14 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getGatewayError().isPresent());
         assertThat(response.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "authorisation unexpected error"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -800,9 +858,13 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(AuthoriseStatus.AUTHORISED));
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(mockEventService, times(1)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getValue().getEventType(), is("PAYMENT_DETAILS_SUBMITTED_BY_API"));
+        verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().get(0).getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_SUBMITTED_BY_API"));
+
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -826,6 +888,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao, times(2)).persistChargeEventOf(eq(charge), isNull());
 
         assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -855,12 +920,15 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
         assertThat(charge.getWalletType(), is(nullValue()));
+        assertThat(charge.getRequires3ds(), is(false));
         verify(mockedChargeEventDao, times(2)).persistChargeEventOf(eq(charge), isNull());
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -878,6 +946,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         CardInformation cardInformation = aCardInformation().build();
         assertThrows(RuntimeException.class, () -> cardAuthorisationService.doAuthoriseMotoApi(charge, cardInformation, authoriseRequest));
         assertThat(charge.getGatewayTransactionId(), is(generatedTransactionId));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -899,11 +970,14 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        assertThat(charge.getRequires3ds(), is(false));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "authorisation rejected"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -928,11 +1002,14 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "authorisation cancelled"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -954,11 +1031,14 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(nullValue()));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "authorisation error"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -976,6 +1056,10 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
+
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
     @Test
@@ -994,6 +1078,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -1009,6 +1096,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getGatewayError().isPresent());
         assertThat(response.getGatewayError().get().getErrorType(), is(GATEWAY_CONNECTION_TIMEOUT_ERROR));
         assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -1022,7 +1111,11 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         CardInformation cardInformation = aCardInformation().build();
         assertThrows(IllegalStateRuntimeException.class, () -> cardAuthorisationService.doAuthoriseMotoApi(charge, cardInformation, authoriseRequest));
 
+        assertThat(charge.getRequires3ds(), is(nullValue()));
+
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -1039,6 +1132,30 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertTrue(response.getGatewayError().isPresent());
         assertThat(response.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
+    }
+
+    @Test
+    void doAuthoriseApi_shouldNotOverrideRequires3ds_IfAlreadyTrue() throws Exception {
+        charge.setRequires3ds(true);
+        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("424242"), LastDigitsCardNumber.of("4242"),
+                "Mr. Pay", CardExpiryDate.valueOf("11/99"), "VISA", CardType.DEBIT, null);
+        when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
+        when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(any())).thenReturn(cardDetailsEntity);
+        mockRecordAuthorisationResult();
+        providerWillRejectForMotoApiPayment();
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
+
+        CardDetailsEntity cardDetails = charge.getCardDetails();
+        assertThat(cardDetails, is(notNullValue()));
+
+        assertThat(charge.getRequires3ds(), is(true));
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -1064,8 +1181,11 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(cardDetailsEntity));
         assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
+        assertThat(charge.getRequires3ds(), is(nullValue()));
 
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
+
+        verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
     @Test
@@ -1106,6 +1226,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 "worldpay", "test", "without-billing-address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+        assertThat(chargeLocal.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(chargeLocal);
     }
 
     @Test
@@ -1146,6 +1269,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 "worldpay", "test", "without-billing-address", "authorisation rejected"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+        assertThat(chargeLocal.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(chargeLocal);
     }
 
     @Test
@@ -1187,6 +1313,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 "worldpay", "test", "without-billing-address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
+        assertThat(chargeLocal.getRequires3ds(), is(false));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(chargeLocal);
     }
 
     @Test
@@ -1195,6 +1324,11 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         charge.setPaymentInstrument(null);
 
         assertThrows(IllegalArgumentException.class, () -> cardAuthorisationService.doAuthoriseUserNotPresent(charge));
+    }
+
+    private void verifyGatewayDoesNotRequire3dsEventWasEmitted(ChargeEntity chargeEntity) {
+        GatewayDoesNotRequire3dsAuthorisation event = GatewayDoesNotRequire3dsAuthorisation.from(chargeEntity, fixedInstantSource.instant());
+        verify(mockEventService).emitAndRecordEvent(event);
     }
 
     private void providerWillRespondToAuthoriseWith(GatewayResponse value, PaymentGatewayName paymentGatewayName) throws Exception {
