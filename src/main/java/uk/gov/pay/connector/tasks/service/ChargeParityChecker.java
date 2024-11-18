@@ -90,7 +90,6 @@ public class ChargeParityChecker {
             if (!transaction.isDisputed()) {
                 fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
             }
-            fieldsMatch = fieldsMatch && matchAuthorisationSummary(chargeEntity, transaction);
 
             if (fieldsMatch) {
                 parityCheckStatus = EXISTS_IN_LEDGER;
