@@ -90,6 +90,7 @@ public class ChargeParityChecker {
             if (!transaction.isDisputed()) {
                 fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
             }
+            fieldsMatch = fieldsMatch && matchAuthorisationSummary(chargeEntity, transaction);
 
             if (fieldsMatch) {
                 parityCheckStatus = EXISTS_IN_LEDGER;
@@ -289,6 +290,11 @@ public class ChargeParityChecker {
         }
         if (chargeEntity.get3dsRequiredDetails() == null) {
             if (transaction.getAuthorisationSummary() == null) {
+                return true;
+            }
+            if (transaction.getAuthorisationSummary() != null 
+                    && transaction.getAuthorisationSummary().getThreeDSecure() != null
+                    && !transaction.getAuthorisationSummary().getThreeDSecure().isRequired()) {
                 return true;
             }
             logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary",
