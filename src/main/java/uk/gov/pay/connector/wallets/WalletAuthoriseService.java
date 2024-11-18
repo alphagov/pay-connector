@@ -184,7 +184,7 @@ public class WalletAuthoriseService {
                 walletAuthorisationRequest.getPaymentInfo().getEmail(),
                 auth3dsRequiredDetails);
 
-        updatedCharge = chargeService.updateRequires3dsPostAuthorisation(updatedCharge.getExternalId());
+        updatedCharge = chargeService.updateRequires3dsPostAuthorisationAndEmitEvent(updatedCharge.getExternalId());
 
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.%s.authorise.result.%s",
