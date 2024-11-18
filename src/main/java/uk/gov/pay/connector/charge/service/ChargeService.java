@@ -1016,14 +1016,22 @@ public class ChargeService {
         return status == CAPTURED || status == CAPTURE_SUBMITTED;
     }
 
+    public ChargeEntity updateRequires3dsPostAuthorisationAndEmitEvent(String externalId) {
+        ChargeEntity updatedChargeEntity = updateRequires3ds(externalId);
+        if (Boolean.FALSE.equals(updatedChargeEntity.getRequires3ds())) {
+            eventService.emitAndRecordEvent(GatewayDoesNotRequire3dsAuthorisation.from(updatedChargeEntity, instantSource.instant()));
+        }
+
+        return updatedChargeEntity;
+    }
+
     @Transactional
-    public ChargeEntity updateRequires3dsPostAuthorisation(String externalId) {
+    public ChargeEntity updateRequires3ds(String externalId) {
         return chargeDao.findByExternalId(externalId)
                 .map(chargeEntity -> {
                     if (chargeEntity.getChargeStatus() == AUTHORISATION_SUCCESS || chargeEntity.getChargeStatus() == AUTHORISATION_REJECTED) {
                         if (!Boolean.TRUE.equals(chargeEntity.getRequires3ds())) {
                             chargeEntity.setRequires3ds(false);
-                            eventService.emitAndRecordEvent(GatewayDoesNotRequire3dsAuthorisation.from(chargeEntity, instantSource.instant()));
                         }
                     }
                     return chargeEntity;
