@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -50,6 +51,14 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MI
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
+import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_TRUE;
+import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_FALSE;
+import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
+import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_NO_AUTHORISATION_SUMMARY;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT;
 import static uk.gov.pay.connector.tasks.service.ParityCheckService.FIELD_NAME;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -87,6 +96,7 @@ public class ChargeParityChecker {
             fieldsMatch = fieldsMatch && matchGatewayAccountFields(chargeEntity.getGatewayAccount(), transaction);
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchAuthorisationSummary(chargeEntity, transaction);
             if (!transaction.isDisputed()) {
                 fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
             }
@@ -283,29 +293,80 @@ public class ChargeParityChecker {
                 ofNullable(transaction.getRefundSummary()).map(ChargeResponse.RefundSummary::getStatus).orElse(null), "refund_summary.status");
     }
 
+    private static ConnectAuthorisationSummaryState calculateConnectorAuthorisationSummaryState(ChargeEntity chargeEntity) {
+        if (chargeEntity.getRequires3ds() == null) {
+            if (chargeEntity.get3dsRequiredDetails() == null) {
+                return CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
+            } else {
+                return CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS;
+            }
+        } else if (chargeEntity.getRequires3ds()) {
+            return CONNECTOR_HAS_REQUIRES_3DS_TRUE;
+        } else {
+            return CONNECTOR_HAS_REQUIRES_3DS_FALSE;
+        }
+    }
+
+    private LedgerAuthorisationSummaryState calculateLedgerAuthorisationSummaryState(LedgerTransaction transaction) {
+        if (transaction.getAuthorisationSummary() == null) {
+            return LEDGER_HAS_NO_AUTHORISATION_SUMMARY;
+        } else {
+            if (transaction.getAuthorisationSummary().getThreeDSecure() == null) {
+                return LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT;
+            } else {
+                if (transaction.getAuthorisationSummary().getThreeDSecure().isRequired()) {
+                    return LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
+                } else {
+                    return LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE;
+                }
+            }
+        }
+    }
+
     private boolean matchAuthorisationSummary(ChargeEntity chargeEntity, LedgerTransaction transaction) {
         if (chargeEntity.getCreatedDate().isBefore(CHECK_AUTHORISATION_SUMMARY_PARITY_AFTER_DATE)) {
             return true;
         }
-        if (chargeEntity.get3dsRequiredDetails() == null) {
-            if (transaction.getAuthorisationSummary() == null) {
-                return true;
+
+        ConnectAuthorisationSummaryState connectorAuthorisationSummaryState = calculateConnectorAuthorisationSummaryState(chargeEntity);
+        LedgerAuthorisationSummaryState ledgerAuthorisationSummaryState = calculateLedgerAuthorisationSummaryState(transaction);
+
+        return switch (connectorAuthorisationSummaryState) {
+            case CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS -> {
+                if (ledgerAuthorisationSummaryState != LEDGER_HAS_NO_AUTHORISATION_SUMMARY) {
+                    logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary.three_d_secure.required",
+                            kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
+                    yield false;
+                }
+                yield true;
             }
-            logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary",
-                    kv(FIELD_NAME, "authorisation_summary"));
-            return false;
-        }
+            case CONNECTOR_HAS_REQUIRES_3DS_FALSE -> {
+                if (ledgerAuthorisationSummaryState != LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE) {
+                    logger.info("Field value does not match between ledger and connector [field_name={}]",
+                            "authorisation_summary.three_d_secure.required",
+                            kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
+                    yield false;
+                }
+                yield compareVersions(chargeEntity, transaction);
+            }
 
-        if (transaction.getAuthorisationSummary() == null
-                || transaction.getAuthorisationSummary().getThreeDSecure() == null
-                || !transaction.getAuthorisationSummary().getThreeDSecure().isRequired()) {
-            logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary.three_d_secure.required",
-                    kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
-            return false;
-        }
+            case CONNECTOR_HAS_REQUIRES_3DS_TRUE, CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS -> {
+                if (ledgerAuthorisationSummaryState != LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE) {
+                    logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary.three_d_secure.required",
+                            kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
+                    yield false;
+                }
+                yield compareVersions(chargeEntity, transaction);
+            }
+        };
+    }
 
-        return isEquals(chargeEntity.get3dsRequiredDetails().getThreeDsVersion(),
-                transaction.getAuthorisationSummary().getThreeDSecure().getVersion(), "authorisation_summary.three_d_secure.version");
+    private boolean compareVersions(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        String connectorVersion = Optional.ofNullable(chargeEntity.get3dsRequiredDetails())
+                .map(Auth3dsRequiredEntity::getThreeDsVersion)
+                .orElse(null);
+        String ledgerVersion = transaction.getAuthorisationSummary().getThreeDSecure().getVersion();
+        return isEquals(connectorVersion, ledgerVersion, "authorisation_summary.three_d_secure.version");
     }
 
     private Optional<ZonedDateTime> getChargeEventDate(ChargeEntity chargeEntity, List<ChargeStatus> chargeEventStatuses) {
