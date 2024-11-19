@@ -490,7 +490,7 @@ class ChargeParityCheckerTest {
             } else {
                 chargeEntity.set3dsRequiredDetails(null);
             }
-
+            
             chargeEntity.setRequires3ds(isRequired);
             return chargeEntity;
         }
