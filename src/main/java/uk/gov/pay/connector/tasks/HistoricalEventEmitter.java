@@ -21,6 +21,7 @@ import uk.gov.pay.connector.events.model.charge.BackfillerGatewayTransactionIdSe
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
+import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
@@ -118,6 +119,26 @@ public class HistoricalEventEmitter {
         processUserEmailCollectedEvent(charge, chargeEventEntities, forceEmission);
         processGatewayTransactionIdSetEvent(charge, chargeEventEntities, forceEmission);
         process3DSVersionEvent(charge,chargeEventEntities, forceEmission);
+        processGatewayDoesNotRequire3DSAuthorisation(charge, chargeEventEntities, forceEmission);
+    }
+
+    private void processGatewayDoesNotRequire3DSAuthorisation(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
+        if (Boolean.FALSE.equals(charge.getRequires3ds())) {
+            chargeEventEntities
+                    .stream()
+                    .filter(chargeEventEntity ->
+                            chargeEventEntity.getStatus() == AUTHORISATION_SUCCESS || chargeEventEntity.getStatus() == AUTHORISATION_REJECTED)
+                    .findFirst()
+                    .map(chargeEventEntity ->
+                            GatewayDoesNotRequire3dsAuthorisation.from(chargeEventEntity.getChargeEntity(),
+                                    chargeEventEntity.getUpdated().toInstant())
+                    ).filter(gatewayDoesNotRequire3dsAuthorisation ->
+                            forceEmission || !emittedEventDao.hasBeenEmittedBefore(gatewayDoesNotRequire3dsAuthorisation)
+                    ).ifPresent(gatewayDoesNotRequire3dsAuthorisation -> {
+                        eventService.emitAndRecordEvent(gatewayDoesNotRequire3dsAuthorisation, getDoNotRetryEmitUntilDate());
+                        logger.info("Gateway does not require 3DS Authorisation event emitted for [chargeExternalId={}]", charge.getExternalId());
+                    });
+        }
     }
 
     private void process3DSVersionEvent(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {

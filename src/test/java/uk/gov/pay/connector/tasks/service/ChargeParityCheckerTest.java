@@ -8,6 +8,9 @@ import ch.qos.logback.core.Appender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -23,6 +26,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
@@ -32,7 +36,9 @@ import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.time.ZonedDateTime.parse;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -82,7 +88,29 @@ class ChargeParityCheckerTest {
     private ChargeEntity chargeEntity;
     private ChargeEntity chargeEntityWith3ds;
     private final List<RefundEntity> refundEntities = List.of();
-    
+
+    private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL = ChargeEntityFactory.createWith3dsRequiredNull();
+    private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE = ChargeEntityFactory.createWith3dsRequired(true);
+    private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE = ChargeEntityFactory.createWith3dsRequired(false);
+    private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL = ChargeEntityFactory.createWith3dsRequiredDetailsBut3dsRequiredNull();
+    private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL = ChargeEntityFactory.createWith3dsRequiredDetailsNullAnd3dsRequired(false);
+
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_AUTHORISATION_SUMMARY_NULL_3D_SECURE = LedgerTransactionFactory.createWithAuthorisationSummaryButNull3dSecure(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_DISCREPANCY = LedgerTransactionFactory.createWith3dsRequiredFalse(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_NULL = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, null);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_DISCREPANCY = LedgerTransactionFactory.createWith3dsRequiredTrue(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_CONFLICT = LedgerTransactionFactory.createWith3dsRequiredFalse(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_CONFLICT = LedgerTransactionFactory.createWith3dsRequiredTrue(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, false);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_TRUE = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, true);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE = LedgerTransactionFactory.createWith3dsRequiredTrue(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE = LedgerTransactionFactory.createWith3dsRequiredFalse(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_DETAILS_BUT_REQUIRED_NULL = LedgerTransactionFactory.createWith3dsRequiredTrue(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE_AND_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL_FROM_CHARGE = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL, false);
+
+
     @BeforeEach
     void setUp() {
         ChargeEventEntity chargeEventCreated = createChargeEventEntity(CREATED, "2016-01-25T13:23:55Z");
@@ -360,6 +388,154 @@ class ChargeParityCheckerTest {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeBeforeDate, transaction);
         
         assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    @ParameterizedTest
+    @MethodSource
+    void parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepencies(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction, String fieldName) {
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, ledgerTransaction);
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.getFirst().getFormattedMessage(), is("Field value does not match between ledger and connector " + fieldName));
+    }
+
+    private static Stream<Arguments> parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepencies() {
+        return Stream.of(
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE, "[field_name=authorisation_summary.three_d_secure.required]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_AUTHORISATION_SUMMARY_NULL_3D_SECURE, "[field_name=authorisation_summary.three_d_secure.required]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_DISCREPANCY, "[field_name=authorisation_summary.three_d_secure.required]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_NULL, "[field_name=authorisation_summary.three_d_secure.required]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_DISCREPANCY, "[field_name=authorisation_summary.three_d_secure.required]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_CONFLICT, "[field_name=authorisation_summary.three_d_secure.required]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_CONFLICT, "[field_name=authorisation_summary.three_d_secure.required]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE, "[field_name=authorisation_summary.three_d_secure.version]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_TRUE, "[field_name=authorisation_summary.three_d_secure.version]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE_AND_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL_FROM_CHARGE, "[field_name=authorisation_summary.three_d_secure.version]")
+        );
+    }
+    
+    @ParameterizedTest
+    @MethodSource
+    void parityCheck_shouldReturnMatchIf3dsDataMatchesExactly(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction) {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, ledgerTransaction);
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    private static Stream<Arguments> parityCheck_shouldReturnMatchIf3dsDataMatchesExactly() {
+        return Stream.of(
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3DS_DETAILS_BUT_REQUIRED_NULL),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY)
+        );
+    }
+
+    public static class LedgerTransactionFactory {
+
+        public static LedgerTransaction createWithNullAuthorisationSummary(ChargeEntity chargeEntity) {
+            return buildTransaction(chargeEntity, null);
+        }
+
+        public static LedgerTransaction createWith3dsRequiredFalse(ChargeEntity chargeEntity) {
+            return buildTransaction(chargeEntity, createAuthorisationSummary(false));
+        }
+
+        public static LedgerTransaction createWith3dsRequiredTrue(ChargeEntity chargeEntity) {
+            return buildTransaction(chargeEntity, createAuthorisationSummary(true));
+        }
+
+        public static LedgerTransaction createWithAuthorisationSummaryButNull3dSecure(ChargeEntity chargeEntity) {
+            return buildTransaction(chargeEntity, createAuthorisationSummary(null));
+        }
+
+        public static LedgerTransaction createWith3dSecureVersionMismatch(ChargeEntity chargeEntity, Boolean threeDSecureRequired) {
+            LedgerTransaction transaction = buildTransaction(chargeEntity, createAuthorisationSummary(threeDSecureRequired));
+            if (transaction.getAuthorisationSummary() != null && transaction.getAuthorisationSummary().getThreeDSecure() != null) {
+                transaction.getAuthorisationSummary().getThreeDSecure().setVersion("mismatch");
+            }
+            return transaction;
+        }
+
+        private static LedgerTransaction buildTransaction(ChargeEntity chargeEntity, AuthorisationSummary authorisationSummary) {
+            return from(chargeEntity, Collections.emptyList())
+                    .withAuthorisationSummary(authorisationSummary)
+                    .build();
+        }
+
+        private static AuthorisationSummary createAuthorisationSummary(Boolean threeDSecureRequired) {
+            AuthorisationSummary authorisationSummary = new AuthorisationSummary();
+
+            if (threeDSecureRequired != null) {
+                ThreeDSecure threeDSecure = new ThreeDSecure();
+                threeDSecure.setVersion("2.1.0");
+                threeDSecure.setRequired(threeDSecureRequired);
+                authorisationSummary.setThreeDSecure(threeDSecure);
+            }
+
+            return authorisationSummary;
+        }
+    }
+
+    public static class ChargeEntityFactory {
+
+        public static ChargeEntity createWith3dsRequired(boolean isRequired) {
+            ChargeEntity chargeEntity = createChargeEntity();
+            chargeEntity.setRequires3ds(isRequired);
+            return chargeEntity; 
+        }
+
+        public static ChargeEntity createWith3dsRequiredDetailsNullAnd3dsRequired(boolean isRequired) {
+            ChargeEntity chargeEntity = createChargeEntity();
+            chargeEntity.set3dsRequiredDetails(null);
+            chargeEntity.setRequires3ds(isRequired);
+            return chargeEntity;
+        }
+        
+        public static ChargeEntity createWith3dsRequiredNull() {
+            List<ChargeEventEntity> chargeEvents = createChargeEvents();
+            return aValidChargeEntity()
+                    .withStatus(CAPTURED)
+                    .withEvents(chargeEvents)
+                    .withRequires3ds(null)
+                    .build();
+        }
+        
+        public static ChargeEntity createWith3dsRequiredDetailsBut3dsRequiredNull() {
+            List<ChargeEventEntity> chargeEvents = createChargeEvents();
+            Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+            auth3dsRequiredEntity.setThreeDsVersion("2.1.0");
+            ChargeEntity chargeEntity = aValidChargeEntity()
+                    .withStatus(CAPTURED)
+                    .withEvents(chargeEvents)
+                    .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                    .build();
+            chargeEntity.setRequires3ds(null);
+            return chargeEntity;
+        }
+
+        private static ChargeEntity createChargeEntity() {
+            List<ChargeEventEntity> chargeEvents = createChargeEvents();
+            Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity()
+                    .withThreeDsVersion("2.1.0")
+                    .build();
+            return aValidChargeEntity()
+                    .withStatus(CAPTURED)
+                    .withEvents(chargeEvents)
+                    .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
+                    .build();
+        }
+
+        private static List<ChargeEventEntity> createChargeEvents() {
+            ChargeEventEntity chargeEventEntity = aValidChargeEventEntity()
+                    .withCharge(null)
+                    .withChargeStatus(CREATED)
+                    .withTimestamp(parse("2016-01-25T13:23:55Z"))
+                    .build();
+
+            return List.of(chargeEventEntity);
+        }
     }
 
     private ChargeEventEntity createChargeEventEntity(ChargeStatus status, String timeStamp) {
