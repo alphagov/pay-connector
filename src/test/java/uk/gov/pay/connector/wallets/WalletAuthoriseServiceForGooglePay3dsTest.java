@@ -140,8 +140,6 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);
 
-        when(chargeService.updateRequires3dsPostAuthorisationAndEmitEvent(chargeEntity.getExternalId())).thenReturn(chargeEntity);
-
         GooglePayAuthRequest authorisationData =
                 Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 

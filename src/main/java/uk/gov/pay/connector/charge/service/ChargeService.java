@@ -765,6 +765,9 @@ public class ChargeService {
         } else {
             eventService.emitAndRecordEvent(PaymentDetailsEntered.from(chargeEntity));
         }
+        if (Boolean.FALSE.equals(chargeEntity.getRequires3ds())) {
+            eventService.emitAndRecordEvent(GatewayDoesNotRequire3dsAuthorisation.from(chargeEntity, instantSource.instant()));
+        }
 
         return chargeEntity;
     }
@@ -810,6 +813,12 @@ public class ChargeService {
 
             if (charge.isSavePaymentInstrumentToAgreement()) {
                 Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
+            }
+            
+            if (newStatus == AUTHORISATION_SUCCESS || newStatus == AUTHORISATION_REJECTED) {
+                if (!Boolean.TRUE.equals(charge.getRequires3ds())) {
+                    charge.setRequires3ds(false);
+                }
             }
 
             transitionChargeState(charge, newStatus);
@@ -1014,28 +1023,6 @@ public class ChargeService {
         ChargeEntity charge = findChargeByExternalId(externalId);
         ChargeStatus status = ChargeStatus.fromString(charge.getStatus());
         return status == CAPTURED || status == CAPTURE_SUBMITTED;
-    }
-
-    public ChargeEntity updateRequires3dsPostAuthorisationAndEmitEvent(String externalId) {
-        ChargeEntity updatedChargeEntity = updateRequires3ds(externalId);
-        if (Boolean.FALSE.equals(updatedChargeEntity.getRequires3ds())) {
-            eventService.emitAndRecordEvent(GatewayDoesNotRequire3dsAuthorisation.from(updatedChargeEntity, instantSource.instant()));
-        }
-
-        return updatedChargeEntity;
-    }
-
-    @Transactional
-    public ChargeEntity updateRequires3ds(String externalId) {
-        return chargeDao.findByExternalId(externalId)
-                .map(chargeEntity -> {
-                    if (chargeEntity.getChargeStatus() == AUTHORISATION_SUCCESS || chargeEntity.getChargeStatus() == AUTHORISATION_REJECTED) {
-                        if (!Boolean.TRUE.equals(chargeEntity.getRequires3ds())) {
-                            chargeEntity.setRequires3ds(false);
-                        }
-                    }
-                    return chargeEntity;
-                }).orElseThrow(() -> new ChargeNotFoundRuntimeException(externalId));
     }
 
     public int count3dsRequiredEvents(String externalId) {
