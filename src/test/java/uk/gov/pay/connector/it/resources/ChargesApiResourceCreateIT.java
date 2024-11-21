@@ -67,6 +67,7 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
+import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
@@ -81,6 +82,7 @@ public class ChargesApiResourceCreateIT {
     private static final String VALID_CARD_NUMBER = "4242424242424242";
     private static final String VALID_SERVICE_ID = "valid-service-id";
     private String gatewayAccountId;
+    private String liveGatewayAccountId;
 
     @BeforeEach
     void setup() {
@@ -95,6 +97,38 @@ public class ChargesApiResourceCreateIT {
                 .then()
                 .statusCode(201)
                 .extract().path("gateway_account_id");
+        
+        liveGatewayAccountId = app.givenSetup()
+                .body(toJson(Map.of(
+                        "service_id", VALID_SERVICE_ID,
+                        "type", GatewayAccountType.LIVE,
+                        "payment_provider", PaymentGatewayName.SANDBOX.getName(),
+                        "service_name", "my-test-service-name"
+                )))
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(201)
+                .extract().path("gateway_account_id");
+        
+        app.givenSetup().body(Map.of("op", "replace", "path", "allow_zero_amount", "value", false))
+                .patch("/v1/api/accounts/" + liveGatewayAccountId)
+                .then()
+                .statusCode(200);
+    }
+    
+    @Test
+    void testMultipleValidationErrors() {
+        app.givenSetup()
+                .body(toJson(Map.of(
+                        "amount", 0L,
+                        "reference", "Test reference",
+                        "description", "Test description",
+                        "email", "test@example.com",
+                        "return_url", "http://service.local/success-page/")
+                ))
+                .post(format("/v1/api/accounts/%s/charges", liveGatewayAccountId))
+                .then().log().body()
+                .statusCode(422);
     }
     
     @Nested

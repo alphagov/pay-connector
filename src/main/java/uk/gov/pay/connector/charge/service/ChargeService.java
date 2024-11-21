@@ -19,16 +19,16 @@ import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentEx
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
 import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
+import uk.gov.pay.connector.charge.exception.ErrorList;
+import uk.gov.pay.connector.charge.exception.ErrorListMapper;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
-import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
 import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
-import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
@@ -55,6 +55,7 @@ import uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator;
 import uk.gov.pay.connector.charge.util.RefundCalculator;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.service.CardidService;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
@@ -117,6 +118,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -129,6 +132,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -145,6 +149,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
+import static uk.gov.pay.connector.charge.service.CreateChargeValidations.MOTO_PAYMENT_CHECK;
+import static uk.gov.pay.connector.charge.service.CreateChargeValidations.RETURN_URL_CHECK;
+import static uk.gov.pay.connector.charge.service.CreateChargeValidations.ZERO_AMOUNT_ALLOWED_CHECK;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
@@ -314,26 +321,20 @@ public class ChargeService {
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, String idempotencyKey) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
             checkIfGatewayAccountDisabled(gatewayAccount);
-
-            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
-
-            var authorisationMode = chargeRequest.getAuthorisationMode();
-
-            if (authorisationMode == MOTO_API) {
-                checkMotoApiAuthorisationModeAllowed(gatewayAccount);
-            } else {
-                checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
+            
+            List<CompletableFuture<Optional<ErrorListMapper.Error>>> unprocessableEntityValidations = List.of(
+                    CompletableFuture.supplyAsync(() -> ZERO_AMOUNT_ALLOWED_CHECK.apply(chargeRequest, gatewayAccount)),
+                    CompletableFuture.supplyAsync(() -> MOTO_PAYMENT_CHECK.apply(chargeRequest, gatewayAccount)),
+                    CompletableFuture.supplyAsync(() -> RETURN_URL_CHECK.apply(chargeRequest, gatewayAccount)),
+                    CompletableFuture.supplyAsync(() -> checkCardNumberInReferenceForPaymentLinkPayments(chargeRequest.getSource(), chargeRequest.getReference()))
+            );
+            
+            Set<ErrorListMapper.Error> errors = unprocessableEntityValidations.stream().map(CompletableFuture::join).flatMap(Optional::stream).collect(Collectors.toSet());
+            if (!errors.isEmpty()) {
+                throw new ErrorList(SC_UNPROCESSABLE_ENTITY, errors);
             }
 
-            checkCardNumberInReferenceForPaymentLinkPayments(chargeRequest.getSource(), chargeRequest.getReference());
-
             checkAgreementOptions(chargeRequest, gatewayAccount);
-
-            chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
-                if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
-                    LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
-                }
-            });
 
             GatewayAccountCredentialsEntity gatewayAccountCredential =
                     getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
@@ -342,6 +343,8 @@ public class ChargeService {
                     agreementDao.findByExternalIdAndGatewayAccountId(chargeRequest.getAgreementId(), gatewayAccount.getId())
                             .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.")));
 
+            var authorisationMode = chargeRequest.getAuthorisationMode();
+            
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
                     .withDescription(chargeRequest.getDescription())
@@ -396,7 +399,7 @@ public class ChargeService {
         });
     }
 
-    private void checkCardNumberInReferenceForPaymentLinkPayments(Source source, String reference) {
+    private Optional<ErrorListMapper.Error> checkCardNumberInReferenceForPaymentLinkPayments(Source source, String reference) {
         if (rejectPaymentLinkPaymentsWithCardNumberInReference != null && rejectPaymentLinkPaymentsWithCardNumberInReference
                 && (source == CARD_PAYMENT_LINK || source == CARD_AGENT_INITIATED_MOTO)) {
 
@@ -405,18 +408,19 @@ public class ChargeService {
             if (referenceWithOutSpaceAndHyphen.length() >= 12 && referenceWithOutSpaceAndHyphen.length() <= 19
                     && LUHN_CHECK_DIGIT.isValid(referenceWithOutSpaceAndHyphen)) {
 
-                cardidService.getCardInformation(referenceWithOutSpaceAndHyphen)
-                        .ifPresent(cardInformation -> {
-                            // Used by Splunk alert
-                            LOGGER.info(
-                                    "Card number entered in a payment link reference",
-                                    kv("first_6_digits_reference", referenceWithOutSpaceAndHyphen.substring(0, 6)),
-                                    kv("last_4_digits_reference", referenceWithOutSpaceAndHyphen.substring(referenceWithOutSpaceAndHyphen.length() - 4))
-                            );
-                            throw new CardNumberInPaymentLinkReferenceException();
-                        });
+                Optional<CardInformation> cardInformation = cardidService.getCardInformation(referenceWithOutSpaceAndHyphen);
+                if (cardInformation.isPresent()) {
+                    LOGGER.info(
+                            "Card number entered in a payment link reference",
+                            kv("first_6_digits_reference", referenceWithOutSpaceAndHyphen.substring(0, 6)),
+                            kv("last_4_digits_reference", referenceWithOutSpaceAndHyphen.substring(referenceWithOutSpaceAndHyphen.length() - 4))
+                    );
+                    return Optional.of(new CardNumberInPaymentLinkReferenceException());
+
+                }
             }
         }
+        return Optional.empty();
     }
 
     private GatewayAccountCredentialsEntity getGatewayAccountCredentialsEntity(ChargeCreateRequest chargeRequest,
@@ -1158,13 +1162,6 @@ public class ChargeService {
         return value;
     }
 
-    private void checkMotoApiAuthorisationModeAllowed(GatewayAccountEntity gatewayAccount) {
-        if (!gatewayAccount.isAllowAuthorisationApi()) {
-            throw new AuthorisationApiNotAllowedForGatewayAccountException(gatewayAccount.getId());
-        }
-    }
-
-
     private void checkIfGatewayAccountDisabled(GatewayAccountEntity gatewayAccount) {
         if (gatewayAccount.isDisabled()) {
             throw new GatewayAccountDisabledException("Attempt to create a charge for a disabled gateway account");
@@ -1174,12 +1171,6 @@ public class ChargeService {
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
-        }
-    }
-
-    private void checkIfMotoPaymentsAllowed(boolean moto, GatewayAccountEntity gatewayAccount) {
-        if (moto && !gatewayAccount.isAllowMoto()) {
-            throw new MotoPaymentNotAllowedForGatewayAccountException(gatewayAccount.getId());
         }
     }
 
