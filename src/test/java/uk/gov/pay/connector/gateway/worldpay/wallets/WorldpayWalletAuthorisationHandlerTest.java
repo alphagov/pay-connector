@@ -16,12 +16,12 @@ import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
-import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.applepay.api.ApplePayPaymentInfo;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
@@ -55,11 +55,13 @@ import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixt
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_EMAIL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
@@ -177,6 +179,19 @@ class WorldpayWalletAuthorisationHandlerTest {
     }
 
     @Test
+    void shouldSendApplePayRequestWithReferenceAsDescriptionWhenIsSendReferenceToGatewayIsEnabled() throws Exception {
+        when(mockApplePayDecrypter.performDecryptOperation(any(ApplePayAuthRequest.class))).thenReturn(getAppleDecryptedPaymentData());
+        gatewayAccountEntity.setSendReferenceToGateway(true);
+        try {
+            worldpayWalletAuthorisationHandler.authoriseApplePay(getApplePayGatewayAuthorisationRequest(false));
+        } catch (GatewayErrorException e) {
+            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION),
+                    gatewayOrderArgumentCaptor.getValue().getPayload());
+        }
+    }
+
+    @Test
     void shouldSendGooglePayRequestWhenGooglePayDetailsArePresent() throws Exception {
         try {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequest(false));
@@ -202,6 +217,18 @@ class WorldpayWalletAuthorisationHandlerTest {
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
+        }
+    }
+
+    @Test
+    void shouldSendGooglePayRequestWithReferenceAsDescriptionWhenIsSendReferenceToGatewayIsEnabled() throws Exception {
+        gatewayAccountEntity.setSendReferenceToGateway(true);
+        try {
+            worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequest(false));
+        } catch (GatewayErrorException e) {
+            verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
+            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION),
+                    gatewayOrderArgumentCaptor.getValue().getPayload());
         }
     }
 

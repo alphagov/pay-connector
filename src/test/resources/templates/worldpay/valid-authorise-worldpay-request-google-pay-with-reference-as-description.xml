@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="MERCHANTCODE">
+    <submit>
+        <order orderCode="MyUniqueTransactionId!" shopperLanguageCode="en">
+            <description>This is a reference</description>
+            <amount currencyCode="GBP" exponent="2" value="500"/>
+            <paymentDetails>
+                <PAYWITHGOOGLE-SSL>
+                    <protocolVersion>ECv1</protocolVersion>
+                    <signature>MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl</signature>
+                    <signedMessage>aSignedMessage</signedMessage>
+                </PAYWITHGOOGLE-SSL>
+            </paymentDetails>
+        </order>
+    </submit>
+</paymentService>

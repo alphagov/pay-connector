@@ -46,6 +46,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-apple-pay.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-apple-pay-with-email.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay.xml";
+    public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-apple-pay-with-reference-as-description.xml";
 
     public static final String WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-3ds-with-ddc.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-with-email.xml";
@@ -55,6 +56,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-3ds-flex-non-js.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-exemption-optimised.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_CORPORATE_EXEMPTION_AUTHORISATION = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml";
+    public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-with-reference-as-description.xml";
 
     public static final String WORLDPAY_3DS_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-response.xml";
     public static final String WORLDPAY_3DS_FLEX_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-flex-response.xml";
