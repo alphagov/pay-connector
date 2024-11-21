@@ -43,6 +43,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
@@ -90,6 +91,7 @@ import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -142,7 +144,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
+import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
@@ -665,7 +669,8 @@ public class ChargeService {
                 .withLink("refunds", GET, refundsUriFor(uriInfo, chargeEntity.getGatewayAccount().getId(), chargeEntity.getExternalId()))
                 .withWalletType(chargeEntity.getWalletType())
                 .withMoto(chargeEntity.isMoto())
-                .withAuthorisationMode(chargeEntity.getAuthorisationMode());
+                .withAuthorisationMode(chargeEntity.getAuthorisationMode())
+                .withExemption(buildExemptionResponseObject(chargeEntity.getExemption3ds(), chargeEntity.getExemption3dsRequested()));
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getAgreement().ifPresent(agreement -> builderOfResponse.withAgreementId(agreement.getExternalId()));
@@ -699,6 +704,25 @@ public class ChargeService {
         } else {
             return builderOfResponse;
         }
+    }
+
+    private ChargeResponse.Exemption buildExemptionResponseObject(Exemption3ds exemption3ds, Exemption3dsType exemption3dsRequested) {
+        ChargeResponse.Exemption exemption = null;
+
+        if (exemption3ds != null) {
+            exemption = new ChargeResponse.Exemption();
+            exemption.setRequested(exemption3ds != EXEMPTION_NOT_REQUESTED);
+
+            if (exemption3ds != EXEMPTION_NOT_REQUESTED) {
+                exemption.setType(exemption3dsRequested == CORPORATE ? CORPORATE.name().toLowerCase() : null);
+                exemption.setOutcome(new ChargeResponse.Exemption.Outcome(exemption3ds));
+            }
+        } else if (exemption3dsRequested != null){
+            exemption = new ChargeResponse.Exemption();
+            exemption.setRequested(true);
+            exemption.setType(exemption3dsRequested == CORPORATE ? CORPORATE.name().toLowerCase() : null);
+        }
+        return exemption;
     }
 
     private ChargeResponse.AuthorisationSummary getAuthorisationSummary(Boolean requires3ds, String version) {

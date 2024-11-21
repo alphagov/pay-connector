@@ -104,14 +104,14 @@ public class DatabaseTestHelper {
                                 "delayed_capture, corporate_surcharge, parity_check_status, parity_check_date, " +
                                 "external_metadata, card_type, payment_provider, gateway_account_credential_id, service_id, " +
                                 "issuer_url_3ds, save_payment_instrument_to_agreement, authorisation_mode, updated_date, " +
-                                "payment_instrument_id, agreement_external_id, can_retry, requires_3ds) " +
+                                "payment_instrument_id, agreement_external_id, can_retry, requires_3ds, exemption_3ds, exemption_3ds_requested) " +
                                 "VALUES(:id, :external_id, :amount, " +
                                 ":status, :gateway_account_id, :return_url, :gateway_transaction_id, " +
                                 ":description, :created_date, :reference, :version, :email, :language, " +
                                 ":delayed_capture, :corporate_surcharge, :parity_check_status, :parity_check_date, " +
                                 ":external_metadata, :card_type, :payment_provider, :gateway_account_credential_id, :service_id, " +
                                 ":issuer_url_3ds, :savePaymentInstrumentToAgreement, :authorisationMode, :updatedDate, " +
-                                ":paymentInstrumentId, :agreementExternalId, :canRetry, :requires3ds)")
+                                ":paymentInstrumentId, :agreementExternalId, :canRetry, :requires3ds, :exemption_3ds, :exemption_3ds_requested)")
                         .bind("id", addChargeParams.chargeId())
                         .bind("external_id", addChargeParams.externalChargeId())
                         .bind("amount", addChargeParams.amount())
@@ -142,6 +142,8 @@ public class DatabaseTestHelper {
                         .bind("paymentInstrumentId", addChargeParams.paymentInstrumentId())
                         .bind("canRetry", addChargeParams.canRetry())
                         .bind("requires3ds", addChargeParams.requires3ds())
+                        .bind("exemption_3ds_requested", addChargeParams.exemption3dsType())
+                        .bind("exemption_3ds", addChargeParams.exemption3ds())
                         .execute());
     }
 
