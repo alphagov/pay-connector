@@ -250,4 +250,24 @@ class ChargeServiceExemptionTest {
         assertThat(response.getExemption().getOutcome(), is(notNullValue()));
         assertThat(response.getExemption().getOutcome().getResult(), is(exemption3dsOutcome));
     }
+
+    @ParameterizedTest
+    @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
+        exemption3dsOutcome
+        EXEMPTION_HONOURED
+        EXEMPTION_REJECTED
+        EXEMPTION_OUT_OF_SCOPE
+    """)
+    void shouldFindChargeWithExemption_fromBeforeWeRecordedExemption3dsType(Exemption3ds exemption3dsOutcome) {
+        newCharge.setExemption3ds(exemption3dsOutcome);
+        newCharge.setExemption3dsRequested(null);
+
+        ChargeResponse response = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockUriInfo).get();
+
+        assertThat(response.getExemption(), is(notNullValue()));
+        assertThat(response.getExemption().isRequested(), is(true));
+        assertThat(response.getExemption().getType(), is(nullValue()));
+        assertThat(response.getExemption().getOutcome(), is(notNullValue()));
+        assertThat(response.getExemption().getOutcome().getResult(), is(exemption3dsOutcome));
+    }
 }
