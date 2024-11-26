@@ -18,6 +18,7 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentException;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
 import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceException;
+import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
@@ -149,6 +150,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
@@ -331,7 +333,8 @@ public class ChargeService {
 
             chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
                 if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
-                    LOGGER.info(String.format("Gateway account %d is LIVE, but is configured to use a non-https return_url", accountId));
+                    throw new ChargeException(format("Gateway account %d is LIVE, but is configured to use a " +
+                            "non-https return_url", accountId), NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT, 422);
                 }
             });
 

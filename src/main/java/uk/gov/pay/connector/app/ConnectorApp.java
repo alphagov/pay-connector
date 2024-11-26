@@ -30,6 +30,7 @@ import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentEx
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdExceptionMapper;
 import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceExceptionMapper;
+import uk.gov.pay.connector.charge.exception.ChargeExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ConflictWebApplicationExceptionMapper;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledExceptionMapper;
 import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedExceptionMapper;
@@ -152,6 +153,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new JsonMappingExceptionMapper());
         environment.jersey().register(new ZeroAmountNotAllowedForGatewayAccountExceptionMapper());
         environment.jersey().register(new ConflictWebApplicationExceptionMapper());
+        environment.jersey().register(new ChargeExceptionMapper());
         environment.jersey().register(new MotoPaymentNotAllowedForGatewayAccountExceptionMapper());
         environment.jersey().register(new TelephonePaymentNotificationsNotAllowedExceptionMapper());
         environment.jersey().register(new NoCredentialsExistForProviderExceptionMapper());
