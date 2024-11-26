@@ -25,9 +25,6 @@ import uk.gov.pay.connector.agreement.exception.AgreementNotFoundExceptionMapper
 import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedExceptionMapper;
 import uk.gov.pay.connector.agreement.resource.AgreementsApiResource;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
-import uk.gov.pay.connector.charge.exception.AgreementIdWithIncompatibleOtherOptionsExceptionMapper;
-import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentExceptionMapper;
-import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestExceptionMapper;
 import uk.gov.pay.connector.charge.exception.AuthorisationModeAgreementRequiresAgreementIdExceptionMapper;
 import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceExceptionMapper;
 import uk.gov.pay.connector.charge.exception.ChargeExceptionMapper;
@@ -162,10 +159,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(new SavePaymentInstrumentToAgreementRequiresAgreementIdExceptionMapper());
         environment.jersey().register(new IncorrectAuthorisationModeForSavePaymentToAgreementExceptionMapper());
         environment.jersey().register(new AuthorisationModeAgreementRequiresAgreementIdExceptionMapper());
-        environment.jersey().register(new AgreementIdWithIncompatibleOtherOptionsExceptionMapper());
         environment.jersey().register(new AgreementNotFoundExceptionMapper());
-        environment.jersey().register(new AgreementNotFoundBadRequestExceptionMapper());
-        environment.jersey().register(new AgreementMissingPaymentInstrumentExceptionMapper());
         environment.jersey().register(new PaymentInstrumentNotActiveExceptionMapper());
         environment.jersey().register(new OneTimeTokenInvalidExceptionMapper());
         environment.jersey().register(new OneTimeTokenAlreadyUsedExceptionMapper());
