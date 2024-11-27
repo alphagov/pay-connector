@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
+import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -31,8 +31,10 @@ import javax.ws.rs.core.UriInfo;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
 
 @Path("/")
 @Tag(name = "Gateway accounts")
@@ -104,11 +106,11 @@ public class StripeAccountResource {
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, TEST));
 
         if (maybeSandboxTestAccount.getGatewayName().equalsIgnoreCase("stripe")) {
-            throw new ConflictWebApplicationException("Cannot request Stripe test account because a Stripe test account already exists.");
+            throw new ChargeException("Cannot request Stripe test account because a Stripe test account already exists.", GENERIC, SC_CONFLICT);
         }
 
         if (!maybeSandboxTestAccount.getGatewayName().equalsIgnoreCase("sandbox")) {
-            throw new ConflictWebApplicationException("Cannot request Stripe test account because existing test account is not a Sandbox one.");
+            throw new ChargeException("Cannot request Stripe test account because existing test account is not a Sandbox one.", GENERIC, SC_CONFLICT);
         }
         return maybeSandboxTestAccount;
     }

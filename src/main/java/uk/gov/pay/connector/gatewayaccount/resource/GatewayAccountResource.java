@@ -10,11 +10,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.charge.exception.ConflictWebApplicationException;
+import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
@@ -59,7 +60,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
 import static java.lang.String.format;
@@ -70,6 +70,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
 
 @Path("/")
 public class GatewayAccountResource {
@@ -287,7 +288,8 @@ public class GatewayAccountResource {
             String serviceId = gatewayAccountRequest.getServiceId();
             var existingGatewayAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType);
             if (existingGatewayAccount.isPresent()) {
-                throw new ConflictWebApplicationException(String.format("Gateway account with service id %s and account type '%s' already exists.", serviceId, accountType));
+                throw new ChargeException(String.format("Gateway account with service id %s and account type '%s' already exists.", serviceId, accountType),
+                        GENERIC, HttpStatus.SC_CONFLICT);
             }
         }
         CreateGatewayAccountResponse createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);

@@ -16,11 +16,9 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceException;
 import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
-import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
 import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
@@ -129,6 +127,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -151,6 +150,8 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_ACTIVE;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_FOUND;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.IDEMPOTENCY_KEY_USED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
@@ -158,7 +159,8 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 public class ChargeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
-
+    private static final ChargeException IDEMPOTENCY_EXCEPTION = 
+            new ChargeException("The Idempotency-Key has already been used to create a payment", IDEMPOTENCY_KEY_USED, SC_CONFLICT);
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
     private final ChargeDao chargeDao;
@@ -307,7 +309,7 @@ public class ChargeService {
         } catch (RollbackException e) {
             if (idempotencyKey != null && idempotencyDao.findByGatewayAccountIdAndKey(accountId, idempotencyKey).isPresent()) {
                 LOGGER.info("Race condition between two requests to create a charge with the same Idempotency Key handled");
-                throw new IdempotencyKeyUsedException();
+                throw IDEMPOTENCY_EXCEPTION;
             }
             throw e;
         }
@@ -417,7 +419,7 @@ public class ChargeService {
                                     kv("first_6_digits_reference", referenceWithOutSpaceAndHyphen.substring(0, 6)),
                                     kv("last_4_digits_reference", referenceWithOutSpaceAndHyphen.substring(referenceWithOutSpaceAndHyphen.length() - 4))
                             );
-                            throw new CardNumberInPaymentLinkReferenceException();
+                            throw new ChargeException("Card number entered in a payment link reference", CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED, HttpStatus.SC_BAD_REQUEST);
                         });
             }
         }
@@ -456,7 +458,7 @@ public class ChargeService {
                             idempotencyKey, idempotencyEntity.getResourceExternalId()),
                     kv("previous_request_body", previousChargeRequest.toStringWithoutPersonalIdentifiableInformation()),
                     kv("new_request_body", chargeRequest.toStringWithoutPersonalIdentifiableInformation()));
-            throw new IdempotencyKeyUsedException();
+            throw IDEMPOTENCY_EXCEPTION;
         });
     }
 
