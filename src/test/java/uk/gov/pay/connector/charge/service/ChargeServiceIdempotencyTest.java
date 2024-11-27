@@ -21,7 +21,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeResponse;

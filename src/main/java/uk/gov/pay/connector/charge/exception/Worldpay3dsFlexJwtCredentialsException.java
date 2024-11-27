@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.charge.exception;
 
-import javax.ws.rs.WebApplicationException;
-
 import static java.lang.String.format;
 
 public class Worldpay3dsFlexJwtCredentialsException extends ConflictWebApplicationException {
