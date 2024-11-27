@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
@@ -15,18 +16,12 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-import uk.gov.pay.connector.charge.exception.AgreementMissingPaymentInstrumentException;
-import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
-import uk.gov.pay.connector.charge.exception.CardNumberInPaymentLinkReferenceException;
 import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
 import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
-import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
-import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
-import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
@@ -130,6 +125,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -150,6 +147,12 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_ACTIVE;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_FOUND;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.IDEMPOTENCY_KEY_USED;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.MOTO_NOT_ALLOWED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
@@ -157,7 +160,6 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 public class ChargeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
-
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
     private final ChargeDao chargeDao;
@@ -343,7 +345,7 @@ public class ChargeService {
 
             var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
                     agreementDao.findByExternalIdAndGatewayAccountId(chargeRequest.getAgreementId(), gatewayAccount.getId())
-                            .orElseThrow(() -> new AgreementNotFoundBadRequestException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.")));
+                            .orElseThrow(() -> new ChargeException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.", AGREEMENT_NOT_FOUND, HttpStatus.SC_BAD_REQUEST)));
 
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
@@ -416,7 +418,7 @@ public class ChargeService {
                                     kv("first_6_digits_reference", referenceWithOutSpaceAndHyphen.substring(0, 6)),
                                     kv("last_4_digits_reference", referenceWithOutSpaceAndHyphen.substring(referenceWithOutSpaceAndHyphen.length() - 4))
                             );
-                            throw new CardNumberInPaymentLinkReferenceException();
+                            throw new ChargeException("Card number entered in a payment link reference", CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED, HttpStatus.SC_BAD_REQUEST);
                         });
             }
         }
@@ -1182,7 +1184,7 @@ public class ChargeService {
 
     private void checkIfMotoPaymentsAllowed(boolean moto, GatewayAccountEntity gatewayAccount) {
         if (moto && !gatewayAccount.isAllowMoto()) {
-            throw new MotoPaymentNotAllowedForGatewayAccountException(gatewayAccount.getId());
+            throw new ChargeException("MOTO payments are not enabled for this gateway account", MOTO_NOT_ALLOWED, SC_UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -1218,7 +1220,8 @@ public class ChargeService {
                     }
                 } else {
                     if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
-                        throw new SavePaymentInstrumentToAgreementRequiresAgreementIdException();
+                        throw new ChargeException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified", 
+                                GENERIC, HttpStatus.SC_BAD_REQUEST);
                     }
                 }
                 break;
@@ -1233,12 +1236,13 @@ public class ChargeService {
 
     private void checkAgreementHasActivePaymentInstrument(AgreementEntity agreementEntity) {
         var paymentInstrumentEntity = agreementEntity.getPaymentInstrument()
-                .orElseThrow(() -> new AgreementMissingPaymentInstrumentException("Agreement with ID [" + agreementEntity.getExternalId() +
-                        "] does not have a payment instrument"));
+                .orElseThrow(() -> new ChargeException("Agreement with ID [" + agreementEntity.getExternalId() +
+                        "] does not have a payment instrument", AGREEMENT_NOT_ACTIVE, HttpStatus.SC_BAD_REQUEST));
 
         if (paymentInstrumentEntity.getStatus() != PaymentInstrumentStatus.ACTIVE) {
-            throw new PaymentInstrumentNotActiveException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
-                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]");
+            throw new ChargeException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
+                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]" , 
+                    AGREEMENT_NOT_ACTIVE, HttpStatus.SC_BAD_REQUEST);
         }
     }
 

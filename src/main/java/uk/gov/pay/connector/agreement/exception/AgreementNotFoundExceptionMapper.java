@@ -2,7 +2,6 @@ package uk.gov.pay.connector.agreement.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.exception.AgreementNotFoundBadRequestException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 

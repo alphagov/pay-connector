@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.agreement.service;
 
 import com.google.inject.persist.Transactional;
+import org.apache.http.HttpStatus;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedException;
@@ -10,7 +11,7 @@ import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
 import uk.gov.pay.connector.charge.exception.AgreementNotFoundRuntimeException;
-import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
+import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
@@ -28,6 +29,7 @@ import java.time.InstantSource;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.agreement.model.AgreementEntity.AgreementEntityBuilder.anAgreementEntity;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_ACTIVE;
 
 public class AgreementService {
 
@@ -136,7 +138,7 @@ public class AgreementService {
                         ledgerService.postEvent(AgreementCancelledByService.from(agreement, now));
                     }
                 }, () -> {
-                    throw new PaymentInstrumentNotActiveException("Payment instrument not active.");
+                    throw new ChargeException("Payment instrument not active.", AGREEMENT_NOT_ACTIVE, HttpStatus.SC_BAD_REQUEST);
                 });
     }
 }
