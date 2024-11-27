@@ -19,11 +19,9 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.exception.GatewayAccountDisabledException;
+import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.exception.IncorrectAuthorisationModeForSavePaymentToAgreementException;
 import uk.gov.pay.connector.charge.exception.MissingMandatoryAttributeException;
-import uk.gov.pay.connector.charge.exception.MotoPaymentNotAllowedForGatewayAccountException;
-import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
-import uk.gov.pay.connector.charge.exception.SavePaymentInstrumentToAgreementRequiresAgreementIdException;
 import uk.gov.pay.connector.charge.exception.UnexpectedAttributeException;
 import uk.gov.pay.connector.charge.exception.ZeroAmountNotAllowedForGatewayAccountException;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationApiNotAllowedForGatewayAccountException;
@@ -128,6 +126,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -151,7 +150,9 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_ACTIVE;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_FOUND;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.IDEMPOTENCY_KEY_USED;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.MOTO_NOT_ALLOWED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
@@ -159,8 +160,6 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 public class ChargeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
-    private static final ChargeException IDEMPOTENCY_EXCEPTION = 
-            new ChargeException("The Idempotency-Key has already been used to create a payment", IDEMPOTENCY_KEY_USED, SC_CONFLICT);
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
 
     private final ChargeDao chargeDao;
@@ -309,7 +308,7 @@ public class ChargeService {
         } catch (RollbackException e) {
             if (idempotencyKey != null && idempotencyDao.findByGatewayAccountIdAndKey(accountId, idempotencyKey).isPresent()) {
                 LOGGER.info("Race condition between two requests to create a charge with the same Idempotency Key handled");
-                throw IDEMPOTENCY_EXCEPTION;
+                throw new IdempotencyKeyUsedException();
             }
             throw e;
         }
@@ -458,7 +457,7 @@ public class ChargeService {
                             idempotencyKey, idempotencyEntity.getResourceExternalId()),
                     kv("previous_request_body", previousChargeRequest.toStringWithoutPersonalIdentifiableInformation()),
                     kv("new_request_body", chargeRequest.toStringWithoutPersonalIdentifiableInformation()));
-            throw IDEMPOTENCY_EXCEPTION;
+            throw new IdempotencyKeyUsedException();
         });
     }
 
@@ -1185,7 +1184,7 @@ public class ChargeService {
 
     private void checkIfMotoPaymentsAllowed(boolean moto, GatewayAccountEntity gatewayAccount) {
         if (moto && !gatewayAccount.isAllowMoto()) {
-            throw new MotoPaymentNotAllowedForGatewayAccountException(gatewayAccount.getId());
+            throw new ChargeException("MOTO payments are not enabled for this gateway account", MOTO_NOT_ALLOWED, SC_UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -1221,7 +1220,8 @@ public class ChargeService {
                     }
                 } else {
                     if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
-                        throw new SavePaymentInstrumentToAgreementRequiresAgreementIdException();
+                        throw new ChargeException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified", 
+                                GENERIC, HttpStatus.SC_BAD_REQUEST);
                     }
                 }
                 break;
@@ -1240,8 +1240,9 @@ public class ChargeService {
                         "] does not have a payment instrument", AGREEMENT_NOT_ACTIVE, HttpStatus.SC_BAD_REQUEST));
 
         if (paymentInstrumentEntity.getStatus() != PaymentInstrumentStatus.ACTIVE) {
-            throw new PaymentInstrumentNotActiveException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
-                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]");
+            throw new ChargeException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
+                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]" , 
+                    AGREEMENT_NOT_ACTIVE, HttpStatus.SC_BAD_REQUEST);
         }
     }
 

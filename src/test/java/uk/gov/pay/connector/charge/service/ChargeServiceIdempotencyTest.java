@@ -22,6 +22,7 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.exception.ChargeException;
+import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -257,7 +258,7 @@ class ChargeServiceIdempotencyTest {
         
         when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.of(idempotencyEntity));
 
-        assertThrows(ChargeException.class, () -> chargeService.checkForChargeCreatedWithIdempotencyKey(newChargeCreateRequest, GATEWAY_ACCOUNT_ID, idempotencyKey, mockedUriInfo).get());
+        assertThrows(IdempotencyKeyUsedException.class, () -> chargeService.checkForChargeCreatedWithIdempotencyKey(newChargeCreateRequest, GATEWAY_ACCOUNT_ID, idempotencyKey, mockedUriInfo).get());
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent value = loggingEventArgumentCaptor.getValue();

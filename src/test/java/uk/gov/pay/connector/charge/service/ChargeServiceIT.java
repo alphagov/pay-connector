@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import uk.gov.pay.connector.charge.exception.ChargeException;
+import uk.gov.pay.connector.charge.exception.IdempotencyKeyUsedException;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequest;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -71,6 +72,6 @@ public class ChargeServiceIT {
                 .withAgreementId(agreementExternalId)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .build();
-        assertThrows(ChargeException.class, () -> chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockUriInfo, idempotencyKey));
+        assertThrows(IdempotencyKeyUsedException.class, () -> chargeService.create(chargeCreateRequest, GATEWAY_ACCOUNT_ID, mockUriInfo, idempotencyKey));
     }
 }
