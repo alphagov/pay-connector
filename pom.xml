@@ -7,7 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <pay-java-commons.version>1.0.20241125091008</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20241202110009</pay-java-commons.version>
         <surefire.version>3.5.2</surefire.version>
         <jjwt.version>0.12.6</jjwt.version>
         <pact.version>4.6.15</pact.version>
