@@ -46,7 +46,7 @@ class RefundStatusCorrectedToErrorByAdminTest {
         RefundStatusCorrectedToErrorByAdminEventDetails details = (RefundStatusCorrectedToErrorByAdminEventDetails)
                 refundStatusCorrectedToErrorByAdmin.getEventDetails();
 
-        assertThat(details.getUpdatedReason(), is("Correct refund status to match Stripe"));
+        assertThat(details.getUpdatedReason(), is("Correct refund status to match Stripe - Zendesk ticket " + zendeskId));
         assertThat(details.getAdminGithubId(), is("John Doe (JohnDoeGds)"));
         assertThat(details.getZendeskId(), is("1223333343"));
     }
