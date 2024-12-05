@@ -23,7 +23,7 @@ public class RefundStatusCorrectedToErrorByAdmin extends RefundEvent {
                 refund.getExternalId(),
                 refund.getChargeExternalId(),
                 new RefundStatusCorrectedToErrorByAdminEventDetails(
-                        "Correct refund status to match Stripe",
+                        "Correct refund status to match Stripe - zendesk ticket " + zendeskId,
                         githubId,
                         zendeskId
                 ),

@@ -102,9 +102,9 @@ public class RefundReversalService {
 
         try {
             ledgerService.postEvent(List.of(
-                            PaymentStatusCorrectedToSuccessByAdmin.from(correctionPaymentId, refund, charge, Instant.now(), githubUserId, zendeskUserId),
-                            RefundFailureFundsSentToConnectAccount.from(correctionPaymentId, refund, charge, githubUserId, zendeskUserId, transferId),
-                            RefundStatusCorrectedToErrorByAdmin.from(refund, charge, githubUserId, zendeskUserId)
+                    RefundFailureFundsSentToConnectAccount.from(correctionPaymentId, refund, charge, githubUserId, zendeskUserId, transferId),
+                    PaymentStatusCorrectedToSuccessByAdmin.from(correctionPaymentId, refund, charge, Instant.now(), githubUserId, zendeskUserId),
+                    RefundStatusCorrectedToErrorByAdmin.from(refund, charge, githubUserId, zendeskUserId)
                     )
             );
             return Response.ok().build();
