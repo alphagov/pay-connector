@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.builder.AbstractChargeResponseBuilder;
 import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
 import uk.gov.service.payments.commons.api.json.IsoInstantMillisecondSerializer;
@@ -193,6 +194,10 @@ public class ChargeResponse {
             description = "How the payment will be authorised. Payments created in `web` mode require the paying user to visit the `next_url` to complete the payment.")
     private AuthorisationMode authorisationMode;
 
+    @JsonProperty("exemption")
+    @Schema(example = "{\"exemption\":{ \"requested\": true}}", description = "Indicates if 3ds exemption was requested, and the outcome of the request, if applicable")
+    private Exemption exemption;
+
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
@@ -228,6 +233,7 @@ public class ChargeResponse {
         this.moto = builder.isMoto();
         this.agreementId = builder.getAgreementId();
         this.authorisationMode = builder.getAuthorisationMode();
+        this.exemption = builder.getExemption();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -374,6 +380,10 @@ public class ChargeResponse {
         return authorisationSummary;
     }
 
+    public Exemption getExemption() {
+        return exemption;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -410,7 +420,8 @@ public class ChargeResponse {
                 Objects.equals(netAmount, that.netAmount) &&
                 walletType == that.walletType &&
                 Objects.equals(externalMetadata, that.externalMetadata) &&
-                authorisationMode == that.authorisationMode;
+                authorisationMode == that.authorisationMode &&
+                Objects.equals(exemption, that.exemption);
     }
 
     @Override
@@ -419,7 +430,7 @@ public class ChargeResponse {
                 telephoneNumber, description, reference, providerName, processorId, providerId, createdDate,
                 authorisedDate, paymentOutcome, refundSummary, settlementSummary, authCode, auth3dsData, cardDetails,
                 language, delayedCapture, corporateCardSurcharge, fee, totalAmount, netAmount, walletType,
-                externalMetadata, moto, authorisationMode);
+                externalMetadata, moto, authorisationMode, exemption);
     }
 
     @Override
@@ -449,6 +460,7 @@ public class ChargeResponse {
                 ", moto=" + moto +
                 ", agreementId=" + agreementId +
                 ", authorisationMode=" + authorisationMode +
+                ", exemption=" + exemption +
                 '}';
     }
 
@@ -796,6 +808,111 @@ public class ChargeResponse {
         public String toString() {
             return "AuthorisationSummary{" +
                     "threeDSecure=" + threeDSecure +
+                    '}';
+        }
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    @Schema(description = "Object containing information about 3DS exemption request of the payment.")
+    public static class Exemption {
+        @JsonInclude(Include.NON_NULL)
+        public static class Outcome {
+            public Outcome(Exemption3ds result) {
+                this.result = result;
+            }
+
+            @JsonProperty("result")
+            @Schema(description = "Indicating the result if 3ds exemption was requested for the payment.", example = "honoured")
+            @JsonSerialize(using = ToStringSerializer.class)
+            private Exemption3ds result;
+
+            public Exemption3ds getResult() {
+                return result;
+            }
+
+            public void setResult(Exemption3ds result) {
+                this.result = result;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                Outcome that = (Outcome) o;
+                return Objects.equals(result, that.result);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(result);
+            }
+
+            @Override
+            public String toString() {
+                return "Outcome{" +
+                        "result='" + result + '\'' +
+                        '}';
+            }
+        }
+
+        @JsonProperty("requested")
+        @Schema(description = "Flag indicating whether 3ds exemption was requested for the payment.", example = "true")
+        private boolean requested;
+
+        @JsonProperty("type")
+        @Schema(description = "Indicating the type of the 3ds exemption was requested for the payment if applicable.", example = "corporate")
+        private String type;
+
+        @JsonProperty("outcome")
+        @Schema(description = "Object containing information about the outcome of the 3ds exemption request", example = "honoured")
+        private Outcome outcome;
+
+        public boolean isRequested() {
+            return requested;
+        }
+
+        public void setRequested(boolean requested) {
+            this.requested = requested;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public Outcome getOutcome() {
+            return outcome;
+        }
+
+        public void setOutcome(Outcome outcome) {
+            this.outcome = outcome;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Exemption that = (Exemption) o;
+            return Objects.equals(requested, that.requested)
+                    && Objects.equals(type, that.type)
+                    && Objects.equals(outcome, that.outcome);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(requested, type, outcome);
+        }
+
+        @Override
+        public String toString() {
+            return "Exemption{" +
+                    "requested='" + requested + '\'' +
+                    ", type='" + type + '\'' +
+                    ", outcome=" + (outcome == null ? "''" : outcome.toString()) +
                     '}';
         }
     }

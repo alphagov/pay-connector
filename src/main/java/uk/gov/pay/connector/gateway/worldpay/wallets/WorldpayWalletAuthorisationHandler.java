@@ -100,6 +100,7 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
 
     private GatewayOrder buildWalletAuthoriseOrder(AuthorisationGatewayRequest request, WalletPaymentInfo walletPaymentInfo, WorldpayOrderRequestBuilder builder) {
         boolean isSendPayerEmailToGateway = request.getGatewayAccount().isSendPayerEmailToGateway();
+        boolean isSendReferenceToGateway = request.getGatewayAccount().isSendReferenceToGateway();
 
         if (isSendPayerEmailToGateway) {
             Optional.ofNullable(walletPaymentInfo.getEmail()).ifPresent(builder::withPayerEmail);
@@ -109,7 +110,7 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
-                .withDescription(request.getDescription())
+                .withDescription(isSendReferenceToGateway ? request.getReference().toString() : request.getDescription())
                 .withAmount(request.getAmount())
                 .build();
     }

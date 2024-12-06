@@ -109,7 +109,7 @@ class ChargeParityCheckerTest {
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_BUT_3DS_DETAILS_NULL_FROM_CHARGE = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, false);
 
-
+    
     @BeforeEach
     void setUp() {
         ChargeEventEntity chargeEventCreated = createChargeEventEntity(CREATED, "2016-01-25T13:23:55Z");
@@ -490,7 +490,7 @@ class ChargeParityCheckerTest {
             } else {
                 chargeEntity.set3dsRequiredDetails(null);
             }
-
+            
             chargeEntity.setRequires3ds(isRequired);
             return chargeEntity;
         }

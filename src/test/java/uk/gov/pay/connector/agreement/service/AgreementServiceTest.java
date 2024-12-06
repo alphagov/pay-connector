@@ -15,7 +15,7 @@ import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
 import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
-import uk.gov.pay.connector.charge.exception.PaymentInstrumentNotActiveException;
+import uk.gov.pay.connector.charge.exception.ChargeException;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByService;
 import uk.gov.pay.connector.events.model.agreement.AgreementCancelledByUser;
@@ -118,7 +118,7 @@ public class AgreementServiceTest {
                         .build();
                 when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
                 when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreementWithoutPaymentInstrument));
-                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
+                assertThrows(ChargeException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
             }
 
             @ParameterizedTest()
@@ -132,7 +132,7 @@ public class AgreementServiceTest {
                         .build();
                 when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
                 when(mockedAgreementDao.findByExternalIdAndGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(agreement));
-                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
+                assertThrows(ChargeException.class, () -> agreementService.cancelByGatewayAccountId(VALID_AGREEMENT_ID, GATEWAY_ACCOUNT_ID, new AgreementCancelRequest()));
             }
 
             @Test
@@ -234,7 +234,7 @@ public class AgreementServiceTest {
                         .build();
                 when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
                 when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(agreementWithoutPaymentInstrument));
-                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest()));
+                assertThrows(ChargeException.class, () -> agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest()));
             }
 
             @ParameterizedTest()
@@ -248,7 +248,7 @@ public class AgreementServiceTest {
                         .build();
                 when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
                 when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(agreement));
-                assertThrows(PaymentInstrumentNotActiveException.class, () -> agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest()));
+                assertThrows(ChargeException.class, () -> agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest()));
             }
 
             @Test
