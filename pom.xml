@@ -7,12 +7,12 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <pay-java-commons.version>1.0.20241118085938</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20241202110009</pay-java-commons.version>
         <surefire.version>3.5.2</surefire.version>
         <jjwt.version>0.12.6</jjwt.version>
         <pact.version>4.6.15</pact.version>
         <eclipselink.version>2.7.13</eclipselink.version>
-        <swagger-version>2.2.25</swagger-version>
+        <swagger-version>2.2.26</swagger-version>
         <prometheus.version>0.16.0</prometheus.version>
 
         <PACT_BROKER_URL/>
@@ -27,7 +27,7 @@
             <dependency>
                 <groupId>io.dropwizard</groupId>
                 <artifactId>dropwizard-dependencies</artifactId>
-                <version>3.0.10</version>
+                <version>3.0.11</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -41,14 +41,14 @@
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-bom</artifactId>
-                <version>1.12.778</version>
+                <version>1.12.779</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
-                <version>1.20.3</version>
+                <version>1.20.4</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -445,13 +445,13 @@
         <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock-standalone</artifactId>
-            <version>3.9.2</version>
+            <version>3.10.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.dropwizard.modules</groupId>
             <artifactId>dropwizard-testing-junit4</artifactId>
-            <version>3.0.10</version>
+            <version>3.0.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>

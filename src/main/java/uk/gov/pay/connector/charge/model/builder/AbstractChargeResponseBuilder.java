@@ -50,9 +50,10 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected WalletType walletType;
     protected ExternalMetadata externalMetadata;
     protected boolean moto;
+    protected ChargeResponse.Exemption exemption;
     private String agreementId;
     private AuthorisationMode authorisationMode;
-    
+
     protected abstract T thisObject();
 
     public T withChargeId(String chargeId) {
@@ -235,7 +236,12 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         this.authorisationMode = authorisationMode;
         return thisObject();
     }
-    
+
+    public T withExemption(ChargeResponse.Exemption exemption) {
+        this.exemption = exemption;
+        return thisObject();
+    }
+
     public String getChargeId() {
         return chargeId;
     }
@@ -372,5 +378,9 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public AuthorisationMode getAuthorisationMode() {
         return authorisationMode;
+    }
+
+    public ChargeResponse.Exemption getExemption() {
+        return exemption;
     }
 }

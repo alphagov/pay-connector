@@ -95,6 +95,7 @@ class ChargeParityCheckerTest {
     private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL = ChargeEntityFactory.createWith3dsRequiredDetailsBut3dsRequiredNull();
     private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL = ChargeEntityFactory.createWith3dsRequiredDetailsNullAnd3dsRequired(false);
 
+
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_AUTHORISATION_SUMMARY_NULL_3D_SECURE = LedgerTransactionFactory.createWithAuthorisationSummaryButNull3dSecure(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_DISCREPANCY = LedgerTransactionFactory.createWith3dsRequiredFalse(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_NULL = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, null);
@@ -109,6 +110,7 @@ class ChargeParityCheckerTest {
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE_AND_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL_FROM_CHARGE = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL, false);
+
 
 
     @BeforeEach

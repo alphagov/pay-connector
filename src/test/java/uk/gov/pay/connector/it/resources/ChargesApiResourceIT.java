@@ -7,12 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
@@ -701,6 +703,85 @@ public class ChargesApiResourceIT {
                     .statusCode(OK.getStatusCode())
                     .contentType(JSON)
                     .body("card_details.card_type", is("debit"));
+        }
+
+        @Test
+        void shouldGetFullExemptionObject_whenAllRelevantFieldIsSet() {
+            long chargeId = nextInt();
+            String externalChargeId = RandomIdGenerator.newId();
+
+            databaseTestHelper.addCharge(anAddChargeParams()
+                    .withChargeId(chargeId)
+                    .withExternalChargeId(externalChargeId)
+                    .withGatewayAccountId(accountId)
+                    .withAmount(100)
+                    .withRequires3ds(true)
+                    .withExemption3ds(Exemption3ds.EXEMPTION_HONOURED)
+                    .withExemption3dsType(Exemption3dsType.CORPORATE)
+                    .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                    .build());
+
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(externalChargeId)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body("exemption", is(notNullValue()))
+                    .body("exemption.requested", is(true))
+                    .body("exemption.type", is("corporate"))
+                    .body("exemption.outcome", is(notNullValue()))
+                    .body("exemption.outcome.result", is("honoured"));
+        }
+
+        @Test
+        void shouldNotGetOutcome_whenExemption3dsOutcomeNotYetKnown() {
+            long chargeId = nextInt();
+            String externalChargeId = RandomIdGenerator.newId();
+
+            databaseTestHelper.addCharge(anAddChargeParams()
+                    .withChargeId(chargeId)
+                    .withExternalChargeId(externalChargeId)
+                    .withGatewayAccountId(accountId)
+                    .withAmount(100)
+                    .withRequires3ds(true)
+                    .withExemption3ds(null)
+                    .withExemption3dsType(Exemption3dsType.CORPORATE)
+                    .withStatus(ChargeStatus.AUTHORISATION_READY)
+                    .build());
+
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(externalChargeId)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body("exemption", is(notNullValue()))
+                    .body("exemption.requested", is(true))
+                    .body("exemption.type", is("corporate"))
+                    .body("exemption.outcome", is(nullValue()));
+        }
+
+        @Test
+        void shouldNotGetExemption_whenNotSet() {
+            long chargeId = nextInt();
+            String externalChargeId = RandomIdGenerator.newId();
+
+            databaseTestHelper.addCharge(anAddChargeParams()
+                    .withChargeId(chargeId)
+                    .withExternalChargeId(externalChargeId)
+                    .withGatewayAccountId(accountId)
+                    .withAmount(100)
+                    .withStatus(ChargeStatus.AUTHORISATION_SUCCESS)
+                    .build());
+
+            testBaseExtension.getConnectorRestApiClient()
+                    .withAccountId(accountId)
+                    .withChargeId(externalChargeId)
+                    .getCharge()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body("exemption", is(nullValue()));
         }
     }
     

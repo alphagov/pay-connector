@@ -26,6 +26,10 @@ updates:
         # Guice 7.x only works with Jakarta EE and not Java EE
         versions:
           - ">= 7"
+      - dependency-name: "com.stripe:stripe-java"
+        # Stripe SDK 22.x needs refactoring on our end
+        versions:
+          - ">= 22"
     open-pull-requests-limit: 10
     labels:
       - dependencies

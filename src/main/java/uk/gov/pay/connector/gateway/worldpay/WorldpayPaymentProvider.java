@@ -304,7 +304,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     public void updateChargeWithExemption3ds(Exemption3ds exemption3ds, ChargeEntity charge, String reason) {
         charge.setExemption3ds(exemption3ds);
         if (reason == null) {
-            LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds, charge.getExternalId());
+            LOGGER.info("Updated exemption_3ds of charge to {} - charge_external_id={}", exemption3ds.name(), charge.getExternalId());
         } else {
             LOGGER.info("Updated exemption_3ds of charge to {} (reason {}) - charge_external_id={}", exemption3ds.name(), reason, charge.getExternalId());
         }

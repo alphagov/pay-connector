@@ -2,7 +2,7 @@ package uk.gov.pay.connector.usernotification.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import uk.gov.pay.connector.util.validation.AllowedStrings;
+import uk.gov.service.payments.commons.api.validation.AllowedStrings;
 
 import javax.validation.Valid;
 import java.util.Arrays;

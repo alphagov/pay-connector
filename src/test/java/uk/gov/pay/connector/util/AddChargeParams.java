@@ -3,7 +3,9 @@ package uk.gov.pay.connector.util;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -45,7 +47,9 @@ public record AddChargeParams(
     Instant updatedDate,
     Long paymentInstrumentId,
     Boolean canRetry,
-    Boolean requires3ds) {
+    Boolean requires3ds,
+    Exemption3ds exemption3ds,
+    Exemption3dsType exemption3dsType) {
 
     public static final class AddChargeParamsBuilder {
         
@@ -57,7 +61,7 @@ public record AddChargeParams(
                     returnUrl, transactionId, description, reference, createdDate, version, email, providerId, language,
                     delayedCapture, corporateSurcharge, externalMetadata, parityCheckStatus, cardType, parityCheckDate,
                     gatewayCredentialId, serviceId, issuerUrl, agreementExternalId, savePaymentInstrumentToAgreement,
-                    authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds);
+                    authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds, exemption3ds, exemption3dsType);
         }
         
         private Long chargeId = new Random().nextLong();
@@ -91,6 +95,8 @@ public record AddChargeParams(
         private Long paymentInstrumentId;
         private Boolean canRetry;
         private Boolean requires3ds;
+        private Exemption3ds exemption3ds;
+        private Exemption3dsType exemption3dsType;
 
         private AddChargeParamsBuilder() {
         }
@@ -251,6 +257,16 @@ public record AddChargeParams(
 
         public AddChargeParamsBuilder withRequires3ds(Boolean requires3ds) {
             this.requires3ds = requires3ds;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withExemption3ds(Exemption3ds exemption3ds) {
+            this.exemption3ds = exemption3ds;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withExemption3dsType(Exemption3dsType exemption3dsType) {
+            this.exemption3dsType = exemption3dsType;
             return this;
         }
     }
