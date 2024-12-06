@@ -93,6 +93,8 @@ class ChargeParityCheckerTest {
     private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE = ChargeEntityFactory.createWith3dsRequired(true);
     private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE = ChargeEntityFactory.createWith3dsRequired(false);
     private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL = ChargeEntityFactory.createWith3dsRequiredDetailsBut3dsRequiredNull();
+    private static final ChargeEntity CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL = ChargeEntityFactory.createWith3dsRequiredDetailsNullAnd3dsRequired(false);
+
 
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_AUTHORISATION_SUMMARY_NULL_3D_SECURE = LedgerTransactionFactory.createWithAuthorisationSummaryButNull3dSecure(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_DISCREPANCY = LedgerTransactionFactory.createWith3dsRequiredFalse(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
@@ -107,7 +109,10 @@ class ChargeParityCheckerTest {
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3DS_DETAILS_BUT_REQUIRED_NULL = LedgerTransactionFactory.createWith3dsRequiredTrue(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
-    
+    private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE_AND_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL_FROM_CHARGE = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL, false);
+
+
+
     @BeforeEach
     void setUp() {
         ChargeEventEntity chargeEventCreated = createChargeEventEntity(CREATED, "2016-01-25T13:23:55Z");
@@ -407,7 +412,8 @@ class ChargeParityCheckerTest {
                 Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_CONFLICT, "[field_name=authorisation_summary.three_d_secure.required]"),
                 Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_CONFLICT, "[field_name=authorisation_summary.three_d_secure.required]"),
                 Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE, "[field_name=authorisation_summary.three_d_secure.version]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_TRUE, "[field_name=authorisation_summary.three_d_secure.version]")
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_TRUE, "[field_name=authorisation_summary.three_d_secure.version]"),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE_AND_REQUIRED_FALSE_BUT_3DS_DETAILS_NULL_FROM_CHARGE, "[field_name=authorisation_summary.three_d_secure.version]")
         );
     }
     
@@ -480,6 +486,13 @@ class ChargeParityCheckerTest {
             ChargeEntity chargeEntity = createChargeEntity();
             chargeEntity.setRequires3ds(isRequired);
             return chargeEntity; 
+        }
+
+        public static ChargeEntity createWith3dsRequiredDetailsNullAnd3dsRequired(boolean isRequired) {
+            ChargeEntity chargeEntity = createChargeEntity();
+            chargeEntity.set3dsRequiredDetails(null);
+            chargeEntity.setRequires3ds(isRequired);
+            return chargeEntity;
         }
         
         public static ChargeEntity createWith3dsRequiredNull() {
