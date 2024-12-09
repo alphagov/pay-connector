@@ -23,6 +23,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
+import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
@@ -32,6 +33,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static java.time.ZonedDateTime.parse;
@@ -341,6 +343,73 @@ class ChargeParityCheckerTest {
     }
 
     @Test
+    void parityCheck_shouldReturnDataMismatchIfAuthorisationSummaryNotOnLedgerTransaction() {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .withAuthorisationSummary(null)
+                .build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.required]"));
+    }
+
+    @Test
+    void parityCheck_shouldReturnDataMismatchIfAuthorisationSummaryDoesNotContainThreeDSecure() {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+
+        AuthorisationSummary authorisationSummary = new AuthorisationSummary();
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .withAuthorisationSummary(authorisationSummary)
+                .build();
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.required]"));
+    }
+
+    @Test
+    void parityCheck_shouldReturnDataMismatchIfThreeDSecureRequiredFalse() {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .build();
+        transaction.getAuthorisationSummary().getThreeDSecure().setRequired(false);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.required]"));
+    }
+
+    @Test
+    void parityCheck_shouldReturnDataMismatchIfThreeDSecureVersionMismatch() {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+
+        LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities)
+                .build();
+        transaction.getAuthorisationSummary().getThreeDSecure().setVersion("mismatch");
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=authorisation_summary.three_d_secure.version]"));
+    }
+
+    @Test
     void parityCheck_shouldMatchIfCreatedBeforeDateToCheckForAuthorisationSummaryParity() {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
 
@@ -359,6 +428,23 @@ class ChargeParityCheckerTest {
                 .build();
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeBeforeDate, transaction);
         
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    @Test
+    void parityCheck_shouldMatchIfChargeAuthorisationSummaryNotNullLedgerThreeDSecureNotNullAndLedgerThreeDSecureRequiredIsFalse() {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        AuthorisationSummary authorisationSummary = new AuthorisationSummary();
+        ThreeDSecure threeDSecure = new ThreeDSecure();
+        threeDSecure.setRequired(false);
+        authorisationSummary.setThreeDSecure(threeDSecure);
+
+        LedgerTransaction transaction = from(chargeEntity, Collections.emptyList())
+                .withAuthorisationSummary(authorisationSummary)
+                .build();
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
         assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
     }
 
