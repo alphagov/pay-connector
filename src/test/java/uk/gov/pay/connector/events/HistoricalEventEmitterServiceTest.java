@@ -29,7 +29,6 @@ import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
-import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -72,7 +71,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
@@ -726,48 +724,6 @@ class HistoricalEventEmitterServiceTest {
         verify(eventService, times(1)).emitAndRecordEvent(any(Gateway3dsInfoObtained.class), isNotNull());
     }
 
-    @Test
-    void shouldEmitGatewayDoesNotRequire3DSAuthorisation_whenRequires3DSSetToFalseAndChargeStatusAuthorised() throws QueueException {
-        chargeEntity.setRequires3ds(false);
-
-        ChargeEventEntity successEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
-                .withCharge(chargeEntity)
-                .withChargeStatus(AUTHORISATION_SUCCESS)
-                .build();
-
-        chargeEntity.getEvents().clear();
-        chargeEntity.getEvents().add(successEvent);
-
-        when(chargeDao.findMaxId()).thenReturn(1L);
-        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(emittedEventDao.hasBeenEmittedBefore(any())).thenReturn(false);
-
-        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
-        verify(eventService).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class), isNotNull());
-    }
-
-    @Test
-    void shouldEmitGatewayDoesNotRequire3DSAuthorisation_whenRequires3DSSetToFalseAndChargeStatusRejected() throws QueueException {
-        chargeEntity.setRequires3ds(false);
-
-        ChargeEventEntity successEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
-                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
-                .withCharge(chargeEntity)
-                .withChargeStatus(AUTHORISATION_REJECTED)
-                .build();
-
-        chargeEntity.getEvents().clear();
-        chargeEntity.getEvents().add(successEvent);
-
-        when(chargeDao.findMaxId()).thenReturn(1L);
-        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
-        when(emittedEventDao.hasBeenEmittedBefore(any())).thenReturn(false);
-
-        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
-        verify(eventService).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class), isNotNull());
-    }
-    
     private RefundHistory getRefundHistoryEntity(ChargeEntity chargeEntity, RefundStatus refundStatus) {
         return RefundHistoryEntityFixture
                 .aValidRefundHistoryEntity()

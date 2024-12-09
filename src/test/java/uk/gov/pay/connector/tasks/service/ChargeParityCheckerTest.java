@@ -8,9 +8,6 @@ import ch.qos.logback.core.Appender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
@@ -26,7 +23,6 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
-import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
@@ -36,9 +32,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static java.time.ZonedDateTime.parse;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -108,7 +102,6 @@ class ChargeParityCheckerTest {
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE = LedgerTransactionFactory.createWithNullAuthorisationSummary(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL);
     private static final LedgerTransaction LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_BUT_3DS_DETAILS_NULL_FROM_CHARGE = LedgerTransactionFactory.createWith3dSecureVersionMismatch(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, false);
-
     
     @BeforeEach
     void setUp() {
