@@ -16,7 +16,12 @@ import uk.gov.pay.connector.client.ledger.exception.LedgerException;
 import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
+import uk.gov.pay.connector.events.eventdetails.EventDetails;
+import uk.gov.pay.connector.events.eventdetails.refund.PaymentStatusCorrectedToSuccessByAdminEventDetails;
+import uk.gov.pay.connector.events.eventdetails.refund.RefundFailureFundsSentToConnectAccountEventDetails;
+import uk.gov.pay.connector.events.eventdetails.refund.RefundStatusCorrectedToErrorByAdminEventDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.refund.PaymentStatusCorrectedToSuccessByAdmin;
 import uk.gov.pay.connector.events.model.refund.RefundFailureFundsSentToConnectAccount;
@@ -41,9 +46,11 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -247,18 +254,37 @@ public class RefundReversalServiceTest {
         List<Event> postedEvents = eventsCaptor.getValue();
 
         assertThat(postedEvents, hasSize(3));
-        assertInstanceOf(PaymentStatusCorrectedToSuccessByAdmin.class, postedEvents.get(0));
-        assertInstanceOf(RefundFailureFundsSentToConnectAccount.class, postedEvents.get(1));
+        assertInstanceOf(RefundFailureFundsSentToConnectAccount.class, postedEvents.get(0));
+        assertInstanceOf(PaymentStatusCorrectedToSuccessByAdmin.class, postedEvents.get(1));
         assertInstanceOf(RefundStatusCorrectedToErrorByAdmin.class, postedEvents.get(2));
 
-        assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(0)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
-        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(1)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
+        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(0)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
+        assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
         assertThat(((RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
 
 
-        assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(0)).getServiceId(), is(charge.getServiceId()));
-        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(1)).getServiceId(), is(charge.getServiceId()));
+        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(0)).getServiceId(), is(charge.getServiceId()));
+        assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1)).getServiceId(), is(charge.getServiceId()));
         assertThat(((RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2)).getServiceId(), is(charge.getServiceId()));
+
+        RefundFailureFundsSentToConnectAccount refundFailureEvent = (RefundFailureFundsSentToConnectAccount) postedEvents.get(0);
+        PaymentStatusCorrectedToSuccessByAdmin paymentStatusEvent = (PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1);
+        RefundStatusCorrectedToErrorByAdmin refundStatusEvent = (RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2);
+
+        RefundFailureFundsSentToConnectAccountEventDetails refundFailureDetails =
+                (RefundFailureFundsSentToConnectAccountEventDetails) refundFailureEvent.getEventDetails();
+        assertThat(refundFailureDetails.getAmount(), is(refund.getAmount()));
+        assertThat(refundFailureDetails.getUpdatedReason(), containsString("Zendesk ticket " + zendeskId));
+
+        PaymentStatusCorrectedToSuccessByAdminEventDetails paymentStatusDetails =
+                (PaymentStatusCorrectedToSuccessByAdminEventDetails) paymentStatusEvent.getEventDetails();
+        assertThat(paymentStatusDetails.getRefundStatus(), is(ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE.getStatus()));
+        assertThat(paymentStatusDetails.getAdminGithubId(), is(githubUserId));
+
+        RefundStatusCorrectedToErrorByAdminEventDetails refundStatusDetails =
+                (RefundStatusCorrectedToErrorByAdminEventDetails) refundStatusEvent.getEventDetails();
+        assertThat(refundStatusDetails.getAdminGithubId(), is(githubUserId));
+        assertThat(refundStatusDetails.getUpdatedReason(), containsString("Zendesk ticket " + zendeskId));
     }
 
     @Test
@@ -283,7 +309,7 @@ public class RefundReversalServiceTest {
         ErrorResponse actualErrorResponse = (ErrorResponse) response.getEntity();
         assertEquals("Stripe transfer successful but error updating payment and refunds",
                 actualErrorResponse.messages().get(0));
-        
+
     }
-    
+
 }

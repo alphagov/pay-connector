@@ -29,7 +29,7 @@ public class PaymentStatusCorrectedToSuccessByAdmin extends PaymentEvent {
                         refund.getAmount(),
                         timestamp,
                         ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE.getStatus(),
-                        "A refund failed and we returned the recovered funds to the service",
+                        "A refund failed and we returned the recovered funds to the service - Zendesk ticket " + zendeskId,
                         githubId,
                         charge.getGatewayAccountId(),
                         timestamp,

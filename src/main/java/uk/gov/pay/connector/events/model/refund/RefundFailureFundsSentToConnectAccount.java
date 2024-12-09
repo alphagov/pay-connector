@@ -28,9 +28,9 @@ public class RefundFailureFundsSentToConnectAccount extends PaymentEvent {
                 new RefundFailureFundsSentToConnectAccountEventDetails(
                         refund.getAmount(),
                         charge.getReference(),
-                        "Failed refund correction for payment.",
+                        "Failed refund correction for payment " + charge.getExternalId() + ". Returning funds from GOV.UK Pay platform.",
                         githubUserId,
-                        "A refund failed and we returned the recovered funds to the service",
+                        "A refund failed and we returned the recovered funds to the service - Zendesk ticket " + zendeskId,
                         charge.getPaymentGatewayName(),
                         charge.getGatewayAccountId(),
                         gatewayTransactionId,

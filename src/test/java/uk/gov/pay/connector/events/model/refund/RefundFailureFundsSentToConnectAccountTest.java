@@ -49,11 +49,11 @@ class RefundFailureFundsSentToConnectAccountTest {
         assertThat(details.getAmount(), is(refund.getAmount()));
         assertThat(details.getAdminGithubId(), is("John Doe (JohnDoeGds)"));
         assertThat(details.getZendeskId(), is("1223333343"));
-        assertThat(details.getUpdatedReason(), is("A refund failed and we returned the recovered funds to the service"));
+        assertThat(details.getUpdatedReason(), is("A refund failed and we returned the recovered funds to the service - Zendesk ticket " + zendeskId));
         assertThat(details.getGatewayAccountId(), is(charge.getGatewayAccountId()));
         assertThat(details.getPaymentProvider(), is(charge.getPaymentGatewayName()));
         assertThat(details.getReference(), is(charge.getReference()));
-        assertThat(details.getDescription(), is("Failed refund correction for payment."));
+        assertThat(details.getDescription(), is("Failed refund correction for payment " + charge.getExternalId() + ". Returning funds from GOV.UK Pay platform."));
         assertThat(details.getGatewayTransactionId(), is(transferIdFromStripe));
     }
 }
