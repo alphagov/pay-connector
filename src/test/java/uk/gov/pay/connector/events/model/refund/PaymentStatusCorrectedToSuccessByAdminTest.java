@@ -49,7 +49,7 @@ class PaymentStatusCorrectedToSuccessByAdminTest {
         assertThat(details.getFee(), is(0L));
         assertThat(details.getAdminGithubId(), is("John Doe (JohnDoeGds)"));
         assertThat(details.getZendeskId(), is("1223333343"));
-        assertThat(details.getUpdatedReason(), is("A refund failed and we returned the recovered funds to the service"));
+        assertThat(details.getUpdatedReason(), is("A refund failed and we returned the recovered funds to the service - Zendesk ticket " + zendeskId));
         assertThat(details.getCapturedDate(), is(fixedTimestamp));
         assertThat(details.getNetAmount(), is(charge.getAmount()));
         assertThat(details.getRefundAmountAvailable(), is(0L));
