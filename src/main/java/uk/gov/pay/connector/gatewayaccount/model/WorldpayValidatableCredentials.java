@@ -3,14 +3,13 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotEmpty;
 import java.util.Objects;
 import java.util.Optional;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class WorldpayValidatableCredentials {
-
-    @NotEmpty(message = "Field [merchant_id] is required")
     private String merchantId;
     
     private String merchantCode;
@@ -36,6 +35,11 @@ public class WorldpayValidatableCredentials {
     }
     public Optional<String> getMerchantCode() {
         return Optional.ofNullable(merchantCode);
+    }
+
+    @AssertTrue(message = "One of fields [merchant_id, merchant_code] is required")
+    private boolean isValid() {
+        return this.merchantId != null || this.merchantCode != null;
     }
 
     public String getUsername() {
