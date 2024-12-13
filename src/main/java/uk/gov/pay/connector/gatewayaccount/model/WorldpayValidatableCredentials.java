@@ -5,12 +5,15 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class WorldpayValidatableCredentials {
 
     @NotEmpty(message = "Field [merchant_id] is required")
     private String merchantId;
+    
+    private String merchantCode;
 
     @NotEmpty(message = "Field [username] is required")
     private String username;
@@ -30,6 +33,9 @@ public class WorldpayValidatableCredentials {
 
     public String getMerchantId() {
         return merchantId;
+    }
+    public Optional<String> getMerchantCode() {
+        return Optional.ofNullable(merchantCode);
     }
 
     public String getUsername() {

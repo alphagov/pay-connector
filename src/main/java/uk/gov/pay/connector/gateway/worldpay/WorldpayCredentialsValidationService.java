@@ -44,7 +44,9 @@ public class WorldpayCredentialsValidationService implements WorldpayGatewayResp
     public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, WorldpayValidatableCredentials worldpayValidatableCredentials) {
         GatewayOrder order = aWorldpayInquiryRequestBuilder()
                 .withTransactionId("an-order-id-that-will-not-exist")
-                .withMerchantCode(worldpayValidatableCredentials.getMerchantId())
+                .withMerchantCode(
+                        worldpayValidatableCredentials.getMerchantCode().orElse(worldpayValidatableCredentials.getMerchantId())
+                )
                 .build();
 
         try {
