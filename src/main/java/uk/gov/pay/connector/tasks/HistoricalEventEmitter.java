@@ -20,11 +20,13 @@ import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.BackfillerGatewayTransactionIdSet;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
+import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.events.model.refund.RefundEvent;
 import uk.gov.pay.connector.queue.statetransition.PaymentStateTransition;
 import uk.gov.pay.connector.queue.statetransition.RefundStateTransition;
@@ -120,6 +122,42 @@ public class HistoricalEventEmitter {
         processGatewayTransactionIdSetEvent(charge, chargeEventEntities, forceEmission);
         process3DSVersionEvent(charge,chargeEventEntities, forceEmission);
         processGatewayDoesNotRequire3DSAuthorisation(charge, chargeEventEntities, forceEmission);
+        processCharges3dsExemptionData(charge, chargeEventEntities, forceEmission);
+        processCharges3dsExemptionResultData(charge, chargeEventEntities, forceEmission);
+    }
+
+    private void processCharges3dsExemptionResultData(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
+        if (charge.getExemption3ds() != null) {
+            var chargeEvent = chargeEventEntities
+                    .stream()
+                    .filter(event -> event.getStatus() == AUTHORISATION_SUCCESS || event.getStatus() == AUTHORISATION_REJECTED)
+                    .findFirst();
+
+            chargeEvent.ifPresent(event -> {
+                var threeDsInfoEvent = Gateway3dsExemptionResultObtained.from(charge, event.getUpdated().toInstant());
+                boolean hasBeenEmittedBefore = emittedEventDao.hasBeenEmittedBefore(threeDsInfoEvent);
+                if (forceEmission || !hasBeenEmittedBefore) {
+                    eventService.emitAndRecordEvent(threeDsInfoEvent, getDoNotRetryEmitUntilDate());
+                }
+            });
+        }
+    }
+
+    private void processCharges3dsExemptionData(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
+        if (charge.getExemption3dsRequested() != null) {
+            var chargeEvent = chargeEventEntities
+                    .stream()
+                    .filter(event -> TERMINAL_AUTHENTICATION_STATES.contains(event.getStatus()))
+                    .findFirst();
+
+            chargeEvent.ifPresent(event -> {
+                var requested3dsExemptionEvent = Requested3dsExemption.from(charge, event.getUpdated().toInstant());
+                boolean hasBeenEmittedBefore = emittedEventDao.hasBeenEmittedBefore(requested3dsExemptionEvent);
+                if (forceEmission || !hasBeenEmittedBefore) {
+                    eventService.emitAndRecordEvent(requested3dsExemptionEvent, getDoNotRetryEmitUntilDate());
+                }
+            });
+        }
     }
 
     private void processGatewayDoesNotRequire3DSAuthorisation(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
