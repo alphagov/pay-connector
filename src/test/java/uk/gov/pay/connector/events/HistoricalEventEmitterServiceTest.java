@@ -3,6 +3,9 @@ package uk.gov.pay.connector.events;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,11 +19,14 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.events.dao.EmittedEventDao;
+import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.Requested3dsExemptionEventDetails;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.AuthorisationSucceeded;
 import uk.gov.pay.connector.events.model.charge.BackfillerGatewayTransactionIdSet;
@@ -28,6 +34,7 @@ import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailColl
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
@@ -36,12 +43,14 @@ import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsSubmittedByAPI;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsTakenFromPaymentInstrument;
 import uk.gov.pay.connector.events.model.charge.PaymentStarted;
+import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.events.model.refund.RefundCreatedByService;
 import uk.gov.pay.connector.events.model.refund.RefundSucceeded;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.pact.RefundHistoryEntityFixture;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.queue.statetransition.StateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.refund.dao.RefundDao;
@@ -56,9 +65,11 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.AdditionalMatchers.and;
 import static org.mockito.AdditionalMatchers.geq;
 import static org.mockito.AdditionalMatchers.leq;
@@ -76,8 +87,14 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_REJECTED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
+import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.OPTIMISED;
+import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
 
 @ExtendWith(MockitoExtension.class)
 class HistoricalEventEmitterServiceTest {
@@ -704,9 +721,7 @@ class HistoricalEventEmitterServiceTest {
 
     @Test
     void shouldEmitGateway3dsInfoObtainedEvent_whenThreeDsVersionIsMissingFromLedger() throws QueueException {
-        var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
-        auth3dsRequiredEntity.setThreeDsVersion("2.1.1");
-        chargeEntity.set3dsRequiredDetails(auth3dsRequiredEntity);
+        chargeEntity.set3dsRequiredDetails(setupAuth3dsRequiredEntity());
 
         ChargeEventEntity successEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
@@ -767,6 +782,110 @@ class HistoricalEventEmitterServiceTest {
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
         verify(eventService).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class), isNotNull());
     }
+
+
+    @ParameterizedTest
+    @MethodSource
+    void shouldDoStuffWithRequested3dsExemptionObtained(Exemption3ds exemption3ds, ChargeStatus chargeStatus) throws QueueException {
+        ChargeEventEntity successEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(chargeStatus)
+                .build();
+
+        chargeEntity.setExemption3ds(exemption3ds);
+        chargeEntity.set3dsRequiredDetails(setupAuth3dsRequiredEntity());
+        chargeEntity.getEvents().add(successEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        ArgumentCaptor<Gateway3dsExemptionResultObtained> argument = ArgumentCaptor.forClass(Gateway3dsExemptionResultObtained.class);
+        verify(eventService, times(1)).emitAndRecordEvent(argument.capture(), isNotNull());
+
+        List<Gateway3dsExemptionResultObtained> capturedEvents = argument.getAllValues();
+        Gateway3dsExemptionResultObtainedEventDetails eventDetailsType = (Gateway3dsExemptionResultObtainedEventDetails) argument.getAllValues().get(0).getEventDetails();
+        
+        assertThat(capturedEvents.get(0).getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        assertThat(eventDetailsType.getExemption3ds(), is(exemption3ds.toString()));
+    }
+    
+    private static Stream<Arguments> shouldDoStuffWithRequested3dsExemptionObtained() {
+        return Stream.of(
+                Arguments.of(EXEMPTION_NOT_REQUESTED, AUTHORISATION_SUCCESS),
+                Arguments.of(EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
+                Arguments.of(EXEMPTION_REJECTED, AUTHORISATION_SUCCESS),
+                Arguments.of(EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void shouldEmitRequested3dsExemptionWithEventDetails(Exemption3dsType exemption3dsType, String eventType, String event3dsType, Exemption3ds exemption3ds, ChargeStatus chargeStatus) throws QueueException {
+        ChargeEventEntity successEvent = setupChargeEvent(chargeStatus);
+        chargeEntity.setExemption3dsRequested(exemption3dsType);
+        chargeEntity.setExemption3ds(exemption3ds);
+        chargeEntity.getEvents().add(successEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+        
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+        
+        ArgumentCaptor<Requested3dsExemption> requested3dsExemptionArgument = ArgumentCaptor.forClass(Requested3dsExemption.class);
+        ArgumentCaptor<Gateway3dsExemptionResultObtained> gateway3dsExemptionArgument = ArgumentCaptor.forClass(Gateway3dsExemptionResultObtained.class);
+
+        verify(eventService).emitAndRecordEvent(requested3dsExemptionArgument.capture(), isNotNull());
+        verify(eventService).emitAndRecordEvent(gateway3dsExemptionArgument.capture(), isNotNull());
+
+        Requested3dsExemption capturedRequestedExemption = requested3dsExemptionArgument.getValue();
+        Requested3dsExemptionEventDetails requestedExemptionDetails = (Requested3dsExemptionEventDetails) capturedRequestedExemption.getEventDetails();
+
+        Gateway3dsExemptionResultObtained capturedGatewayExemption = gateway3dsExemptionArgument.getValue();
+        Gateway3dsExemptionResultObtainedEventDetails gatewayExemptionDetails = (Gateway3dsExemptionResultObtainedEventDetails) capturedGatewayExemption.getEventDetails();
+
+        assertAll(
+                () -> assertThat(capturedRequestedExemption.getEventType(), is(eventType)),
+                () -> assertThat(requestedExemptionDetails.getType(), is(event3dsType)),
+                () -> assertThat(capturedGatewayExemption.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")),
+                () -> assertThat(gatewayExemptionDetails.getExemption3ds(), is(exemption3ds == null ? null : exemption3ds.toString()))
+        );
+    }
+    
+    private ChargeEventEntity setupChargeEvent(ChargeStatus chargeStatus) {
+        return ChargeEventEntityFixture.aValidChargeEventEntity()
+                .withTimestamp(ZonedDateTime.now().plusMinutes(2))
+                .withCharge(chargeEntity)
+                .withChargeStatus(chargeStatus)
+                .build();
+    }
+    
+    private Auth3dsRequiredEntity setupAuth3dsRequiredEntity() {
+        var auth3dsRequiredEntity = new Auth3dsRequiredEntity();
+        auth3dsRequiredEntity.setThreeDsVersion("2.1.1");
+        return auth3dsRequiredEntity;
+    }
+    
+    private static Stream<Arguments> shouldEmitRequested3dsExemptionWithEventDetails() {
+        return Stream.of(
+                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
+                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_NOT_REQUESTED, AUTHORISATION_SUCCESS),
+                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS),
+                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
+                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_REJECTED, AUTHORISATION_SUCCESS),
+                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS),
+                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
+                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_NOT_REQUESTED, AUTHORISATION_REJECTED),
+                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED),
+                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
+                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_REJECTED, AUTHORISATION_REJECTED),
+                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED)
+//                Arguments.of(null, "PAYMENT_DETAILS_ENTERED", "OPTIMISED", null, AUTHORISATION_SUCCESS)
+        );
+    }
+
     
     private RefundHistory getRefundHistoryEntity(ChargeEntity chargeEntity, RefundStatus refundStatus) {
         return RefundHistoryEntityFixture
