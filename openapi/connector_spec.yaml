@@ -5837,6 +5837,5 @@ components:
         username:
           type: string
       required:
-      - merchant_id
       - password
       - username
