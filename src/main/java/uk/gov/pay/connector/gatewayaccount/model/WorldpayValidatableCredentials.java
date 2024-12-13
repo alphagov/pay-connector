@@ -39,7 +39,7 @@ public class WorldpayValidatableCredentials {
 
     @AssertTrue(message = "One of fields [merchant_id, merchant_code] is required")
     private boolean isValid() {
-        return this.merchantId != null || this.merchantCode != null;
+        return (this.merchantId != null && !this.merchantId.isEmpty()) || (this.merchantCode != null  && !this.merchantCode.isEmpty());
     }
 
     public String getUsername() {

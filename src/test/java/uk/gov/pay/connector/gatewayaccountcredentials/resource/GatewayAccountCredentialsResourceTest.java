@@ -276,7 +276,7 @@ public class GatewayAccountCredentialsResourceTest {
             }
 
             @Test
-            void returns422WhenMerchantIdMissing() {
+            void returns422WhenMerchantIdOrMerchantCodeMissing() {
                 var payload = Map.of(
                         "username", "valid-username",
                         "password", "valid-password",
@@ -289,7 +289,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Field [merchant_id] is required"));
+                assertThat(extractErrorMessagesFromResponse(response).get(0), is("One of fields [merchant_id, merchant_code] is required"));
             }
 
             @Test
@@ -535,7 +535,7 @@ public class GatewayAccountCredentialsResourceTest {
         @Nested
         class ValidateWorldpayCredentials {
             @ParameterizedTest
-            @ValueSource(strings = { "username", "password", "merchant_id" })
+            @ValueSource(strings = { "username", "password" })
             void forMissingFields_shouldReturn422(String fieldName) {
                 var payload = new HashMap<String, String>();
                 payload.put("username", "valid-username");
@@ -550,6 +550,21 @@ public class GatewayAccountCredentialsResourceTest {
 
                 assertThat(response.getStatus(), is(422));
                 assertThat(extractErrorMessagesFromResponse(response).get(0), is(format("Field [%s] is required", fieldName)));
+            }
+            
+            void forMissingMerchantIdOrMerchantCode_shouldReturn422 () {
+                var payload = Map.of(
+                        "username", "valid-username",
+                        "password", "valid-password"
+                );
+
+                Response response = resources
+                        .target(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .request()
+                        .post(Entity.json(payload));
+
+                assertThat(response.getStatus(), is(422));
+                assertThat(extractErrorMessagesFromResponse(response).get(0), is("One of fields [merchant_id, merchant_code] is required"));
             }
         }
     }
