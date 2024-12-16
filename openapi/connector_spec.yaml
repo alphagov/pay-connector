@@ -5828,6 +5828,8 @@ components:
     WorldpayValidatableCredentials:
       type: object
       properties:
+        merchant_code:
+          type: string
         merchant_id:
           type: string
         password:
@@ -5835,6 +5837,5 @@ components:
         username:
           type: string
       required:
-      - merchant_id
       - password
       - username
