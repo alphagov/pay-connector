@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.Address;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
@@ -20,6 +21,7 @@ import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
@@ -78,6 +80,8 @@ public class LedgerTransactionFixture {
     private boolean disputed;
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
     private String agreementId;
+    private Exemption3ds exemption3ds;
+    private Exemption3dsType exemption3dsType;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
         return new LedgerTransactionFixture();
@@ -104,7 +108,9 @@ public class LedgerTransactionFixture {
                         .withCorporateCardSurcharge(chargeEntity.getCorporateSurcharge().orElse(null))
                         .withWalletType(chargeEntity.getWalletType())
                         .withTotalAmount(getTotalAmountFor(chargeEntity))
-                        .withNetAmount(chargeEntity.getNetAmount().orElse(null));
+                        .withNetAmount(chargeEntity.getNetAmount().orElse(null))
+                        .withExemption3ds(chargeEntity.getExemption3ds())
+                        .withExemption3dsRequested(chargeEntity.getExemption3dsRequested());
 
         ledgerTransactionFixture.withCreatedDate(getEventDate(chargeEntity.getEvents(), List.of(CREATED, PAYMENT_NOTIFICATION_CREATED)));
         if (chargeEntity.getGatewayAccount() != null) {
@@ -411,6 +417,16 @@ public class LedgerTransactionFixture {
     
     public LedgerTransactionFixture withAgreementId(String agreementId) {
         this.agreementId = agreementId;
+        return this;
+    }
+    
+    public LedgerTransactionFixture withExemption3ds(Exemption3ds exemption3ds) {
+        this.exemption3ds = exemption3ds;
+        return this;
+    }
+    
+    public LedgerTransactionFixture withExemption3dsRequested(Exemption3dsType exemption3dsType) {
+        this.exemption3dsType = exemption3dsType;
         return this;
     }
 }
