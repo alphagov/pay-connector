@@ -97,6 +97,8 @@ public class ChargeParityChecker {
             fieldsMatch = fieldsMatch && matchFeatureSpecificFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchAuthorisationSummary(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchExemption3dsFields(chargeEntity, transaction);
+            fieldsMatch = fieldsMatch && matchExemption3dsRequested(chargeEntity, transaction);
             if (!transaction.isDisputed()) {
                 fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
             }
@@ -359,6 +361,14 @@ public class ChargeParityChecker {
                 yield compareVersions(chargeEntity, transaction);
             }
         };
+    }
+    
+    private boolean matchExemption3dsFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        return isEquals(chargeEntity.getExemption3ds(), transaction.getExemption3ds(), "exemption");
+    }
+    
+    private boolean matchExemption3dsRequested(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        return isEquals(chargeEntity.getExemption3dsRequested(), transaction.getExemption3dsType(), "exemption");
     }
 
     private boolean compareVersions(ChargeEntity chargeEntity, LedgerTransaction transaction) {

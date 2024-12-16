@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -55,6 +57,8 @@ public class LedgerTransaction {
     private boolean disputed;
     private AuthorisationMode authorisationMode;
     private String agreementId;
+    private Exemption3ds exemption3ds;
+    private Exemption3dsType exemption3dsType;
 
     public LedgerTransaction() {
     }
@@ -333,4 +337,21 @@ public class LedgerTransaction {
     public void setAgreementId(String agreementId) {
         this.agreementId = agreementId;
     }
+
+    public Exemption3ds getExemption3ds() {
+        return exemption3ds;
+    }
+
+    public void setExemption3ds(Exemption3ds exemption3ds) {
+        this.exemption3ds = exemption3ds;
+    }
+
+    public Exemption3dsType getExemption3dsType() {
+        return exemption3dsType;
+    }
+
+    public void setExemption3dsType(Exemption3dsType exemption3dsType) {
+        this.exemption3dsType = exemption3dsType;
+    }
+
 }
