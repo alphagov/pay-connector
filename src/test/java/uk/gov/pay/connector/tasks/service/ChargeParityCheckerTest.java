@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -31,6 +32,7 @@ import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.refund.service.RefundService;
@@ -63,6 +65,10 @@ import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anA
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.aValidLedgerTransaction;
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_REJECTED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
+import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
 import static uk.gov.pay.connector.wallets.WalletType.APPLE_PAY;
 import static uk.gov.pay.connector.wallets.WalletType.GOOGLE_PAY;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
@@ -419,6 +425,29 @@ class ChargeParityCheckerTest {
     
     @ParameterizedTest
     @MethodSource
+    void parityCheck_shouldDoStuff(Exemption3ds exemption3ds) {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        chargeEntity.setExemption3ds(exemption3ds);
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
+        transaction.setExemption3ds(exemption3ds);
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    private static Stream<Arguments> parityCheck_shouldDoStuff() {
+        return Stream.of(
+                Arguments.of(EXEMPTION_HONOURED),
+                Arguments.of(EXEMPTION_REJECTED),
+                Arguments.of(EXEMPTION_NOT_REQUESTED),
+                Arguments.of(EXEMPTION_OUT_OF_SCOPE)
+        );
+    }
+    
+    
+    
+    @ParameterizedTest
+    @MethodSource
     void parityCheck_shouldReturnMatchIf3dsDataMatchesExactly(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction) {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, ledgerTransaction);
@@ -463,6 +492,12 @@ class ChargeParityCheckerTest {
         private static LedgerTransaction buildTransaction(ChargeEntity chargeEntity, AuthorisationSummary authorisationSummary) {
             return from(chargeEntity, Collections.emptyList())
                     .withAuthorisationSummary(authorisationSummary)
+                    .build();
+        }
+
+        private static LedgerTransaction buildTransactionWithExemption3ds(ChargeEntity chargeEntity) {
+            return from(chargeEntity, Collections.emptyList())
+                    .withExemption3ds(EXEMPTION_HONOURED)
                     .build();
         }
 
