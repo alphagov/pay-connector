@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.events;
 
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,8 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.AdditionalMatchers.and;
 import static org.mockito.AdditionalMatchers.geq;
 import static org.mockito.AdditionalMatchers.leq;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -821,9 +821,26 @@ class HistoricalEventEmitterServiceTest {
         );
     }
 
+    @Test
+    void shouldCheckEventTypeIsNot3dsWhen3dsDetailsSetToNull(){
+        ChargeEventEntity successEvent = setupChargeEvent(AUTHORISATION_SUCCESS);
+        chargeEntity.setExemption3dsRequested(null);
+        chargeEntity.setExemption3ds(null);
+        chargeEntity.getEvents().add(successEvent);
+
+        when(chargeDao.findMaxId()).thenReturn(1L);
+        when(chargeDao.findById(1L)).thenReturn(Optional.of(chargeEntity));
+
+        historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(eventService).emitAndRecordEvent(eventCaptor.capture(), any());
+        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+    }
+
     @ParameterizedTest
     @MethodSource
-    void shouldEmitRequested3dsExemptionWithEventDetails(Exemption3dsType exemption3dsType, String eventType, String event3dsType, Exemption3ds exemption3ds, ChargeStatus chargeStatus) throws QueueException {
+    void shouldEmitRequested3dsExemptionWithEventDetailsIfExemption3dsDetailsNotNull(Exemption3dsType exemption3dsType, String event3dsType, Exemption3ds exemption3ds, ChargeStatus chargeStatus) throws QueueException {
         ChargeEventEntity successEvent = setupChargeEvent(chargeStatus);
         chargeEntity.setExemption3dsRequested(exemption3dsType);
         chargeEntity.setExemption3ds(exemption3ds);
@@ -847,7 +864,7 @@ class HistoricalEventEmitterServiceTest {
         Gateway3dsExemptionResultObtainedEventDetails gatewayExemptionDetails = (Gateway3dsExemptionResultObtainedEventDetails) capturedGatewayExemption.getEventDetails();
 
         assertAll(
-                () -> assertThat(capturedRequestedExemption.getEventType(), is(eventType)),
+                () -> assertThat(capturedRequestedExemption.getEventType(), is("REQUESTED_3DS_EXEMPTION")),
                 () -> assertThat(requestedExemptionDetails.getType(), is(event3dsType)),
                 () -> assertThat(capturedGatewayExemption.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")),
                 () -> assertThat(gatewayExemptionDetails.getExemption3ds(), is(exemption3ds == null ? null : exemption3ds.toString()))
@@ -868,20 +885,20 @@ class HistoricalEventEmitterServiceTest {
         return auth3dsRequiredEntity;
     }
     
-    private static Stream<Arguments> shouldEmitRequested3dsExemptionWithEventDetails() {
+    private static Stream<Arguments> shouldEmitRequested3dsExemptionWithEventDetailsIfExemption3dsDetailsNotNull() {
         return Stream.of(
-                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
-                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_NOT_REQUESTED, AUTHORISATION_SUCCESS),
-                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS),
-                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
-                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_REJECTED, AUTHORISATION_SUCCESS),
-                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS),
-                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
-                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_NOT_REQUESTED, AUTHORISATION_REJECTED),
-                Arguments.of(OPTIMISED, "REQUESTED_3DS_EXEMPTION", "OPTIMISED", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED),
-                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
-                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_REJECTED, AUTHORISATION_REJECTED),
-                Arguments.of(CORPORATE, "REQUESTED_3DS_EXEMPTION", "CORPORATE", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED)
+                Arguments.of(OPTIMISED, "OPTIMISED", EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
+                Arguments.of(OPTIMISED, "OPTIMISED", EXEMPTION_NOT_REQUESTED, AUTHORISATION_SUCCESS),
+                Arguments.of(OPTIMISED, "OPTIMISED", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS),
+                Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
+                Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_REJECTED, AUTHORISATION_SUCCESS),
+                Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS),
+                Arguments.of(OPTIMISED, "OPTIMISED", EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
+                Arguments.of(OPTIMISED, "OPTIMISED", EXEMPTION_NOT_REQUESTED, AUTHORISATION_REJECTED),
+                Arguments.of(OPTIMISED, "OPTIMISED", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED),
+                Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
+                Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_REJECTED, AUTHORISATION_REJECTED),
+                Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED)
 //                Arguments.of(null, "PAYMENT_DETAILS_ENTERED", "OPTIMISED", null, AUTHORISATION_SUCCESS)
         );
     }
