@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
-import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -54,11 +53,10 @@ public class LedgerTransaction {
     private String parentTransactionId;
     private String serviceId;
     private AuthorisationSummary authorisationSummary;
+    private Exemption exemption;
     private boolean disputed;
     private AuthorisationMode authorisationMode;
     private String agreementId;
-    private Exemption3ds exemption3ds;
-    private Exemption3dsType exemption3dsType;
 
     public LedgerTransaction() {
     }
@@ -313,6 +311,14 @@ public class LedgerTransaction {
         this.authorisationSummary = authorisationSummary;
     }
 
+    public Exemption getExemption() {
+        return exemption;
+    }
+
+    public void setExemption(Exemption exemption) {
+        this.exemption = exemption;
+    }
+
     public boolean isDisputed() {
         return disputed;
     }
@@ -337,21 +343,4 @@ public class LedgerTransaction {
     public void setAgreementId(String agreementId) {
         this.agreementId = agreementId;
     }
-
-    public Exemption3ds getExemption3ds() {
-        return exemption3ds;
-    }
-
-    public void setExemption3ds(Exemption3ds exemption3ds) {
-        this.exemption3ds = exemption3ds;
-    }
-
-    public Exemption3dsType getExemption3dsType() {
-        return exemption3dsType;
-    }
-
-    public void setExemption3dsType(Exemption3dsType exemption3dsType) {
-        this.exemption3dsType = exemption3dsType;
-    }
-
 }

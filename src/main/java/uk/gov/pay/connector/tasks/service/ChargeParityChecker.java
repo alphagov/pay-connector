@@ -14,6 +14,7 @@ import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.Address;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -55,6 +57,12 @@ import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryStat
 import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_FALSE;
 import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
 import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS;
+import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsRequestedState.*;
+import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsState.CONNECTOR_HAS_EXEMPTION_HONOURED;
+import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsState.CONNECTOR_HAS_EXEMPTION_NOT_REQUESTED;
+import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsState.CONNECTOR_HAS_EXEMPTION_OUT_OF_SCOPE;
+import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsState.CONNECTOR_HAS_EXEMPTION_REJECTED;
+import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsState.CONNECTOR_HAS_EXEMPTION_NULL;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_NO_AUTHORISATION_SUMMARY;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
@@ -98,7 +106,6 @@ public class ChargeParityChecker {
             fieldsMatch = fieldsMatch && matchCaptureFields(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchAuthorisationSummary(chargeEntity, transaction);
             fieldsMatch = fieldsMatch && matchExemption3dsFields(chargeEntity, transaction);
-            fieldsMatch = fieldsMatch && matchExemption3dsRequested(chargeEntity, transaction);
             if (!transaction.isDisputed()) {
                 fieldsMatch = fieldsMatch && matchRefundSummary(chargeEntity, transaction);
             }
@@ -362,17 +369,92 @@ public class ChargeParityChecker {
             }
         };
     }
-    
-    private boolean matchExemption3dsFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
-        return isEquals(chargeEntity.getExemption3ds(), transaction.getExemption3ds(), "exemption");
+
+    private static ConnectExemption3dsRequestedState calculateConnectorExemption3dsRequested(ChargeEntity chargeEntity) {
+        if (chargeEntity.getExemption3dsRequested() == null) {
+            return CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
+        } else {
+            if (chargeEntity.getExemption3dsRequested() == Exemption3dsType.OPTIMISED) {
+                return CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
+            } else  {
+                return CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
+            }
+        }
     }
     
-    private boolean matchExemption3dsRequested(ChargeEntity chargeEntity, LedgerTransaction transaction) {
-        return isEquals(chargeEntity.getExemption3dsRequested(), transaction.getExemption3dsType(), "exemption");
+    private static ConnectExemption3dsState calculateConnectorExemption3ds(ChargeEntity chargeEntity) {
+        if (chargeEntity.getExemption3ds() == null) {
+            return CONNECTOR_HAS_EXEMPTION_NULL;
+        } else {
+            return switch (chargeEntity.getExemption3ds()) {
+                case EXEMPTION_HONOURED -> CONNECTOR_HAS_EXEMPTION_HONOURED;
+                case EXEMPTION_REJECTED -> CONNECTOR_HAS_EXEMPTION_REJECTED;
+                case EXEMPTION_NOT_REQUESTED -> CONNECTOR_HAS_EXEMPTION_NOT_REQUESTED;
+                case EXEMPTION_OUT_OF_SCOPE -> CONNECTOR_HAS_EXEMPTION_OUT_OF_SCOPE;
+            };
+        }
+    }
+
+    private static LedgerExemptionState calculateLedgerExemptionState(LedgerTransaction transaction) {
+        if (transaction.getExemption() == null) {
+            return LedgerExemptionState.LEDGER_EXEMPTION_NULL;
+        }
+
+        if (!transaction.getExemption().isRequested()) {
+            return LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_FALSE;
+        }
+
+        String result = transaction.getExemption().getOutcome() != null
+                ? transaction.getExemption().getOutcome().getResult()
+                : null;
+
+        if (result == null) {
+            throw new IllegalStateException("Outcome result is null");
+        }
+
+        boolean isCorporate = "corporate".equals(transaction.getExemption().getType());
+
+        return switch (result) {
+            case "honoured" -> isCorporate
+                    ? LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_HONOURED
+                    : LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_HONOURED;
+
+            case "rejected" -> isCorporate
+                    ? LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_REJECTED
+                    : LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_REJECTED;
+
+            case "out of scope" -> isCorporate
+                    ? LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_OUT_OF_SCOPE
+                    : LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_OUT_OF_SCOPE;
+
+            default -> throw new IllegalStateException("Unexpected outcome result: " + result);
+        };
+    }
+
+
+    private boolean matchExemption3dsFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
+        ConnectExemption3dsState connectorExemption3dsState = calculateConnectorExemption3ds(chargeEntity);
+        ConnectExemption3dsRequestedState connectExemption3dsRequestedState = calculateConnectorExemption3dsRequested(chargeEntity);
+        LedgerExemptionState ledgerExemptionState = calculateLedgerExemptionState(transaction);
+        
+        Set<Exemption3dsStateCombination> validCombinations = Set.of(
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_NULL, LedgerExemptionState.LEDGER_EXEMPTION_NULL),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_NOT_REQUESTED, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_FALSE),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_HONOURED, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_HONOURED),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_OUT_OF_SCOPE, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_OUT_OF_SCOPE),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED, CONNECTOR_HAS_EXEMPTION_NULL, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_FALSE),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED, CONNECTOR_HAS_EXEMPTION_REJECTED, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_REJECTED),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED, CONNECTOR_HAS_EXEMPTION_OUT_OF_SCOPE, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_OUT_OF_SCOPE),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE, CONNECTOR_HAS_EXEMPTION_HONOURED, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_HONOURED),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE, CONNECTOR_HAS_EXEMPTION_REJECTED, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_REJECTED),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE, CONNECTOR_HAS_EXEMPTION_OUT_OF_SCOPE, LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_OUT_OF_SCOPE)
+        );
+        
+        return validCombinations.contains(new Exemption3dsStateCombination(connectExemption3dsRequestedState, connectorExemption3dsState, ledgerExemptionState));
     }
 
     private boolean compareVersions(ChargeEntity chargeEntity, LedgerTransaction transaction) {
-        String connectorVersion = Optional.ofNullable(chargeEntity.get3dsRequiredDetails())
+        String connectorVersion = ofNullable(chargeEntity.get3dsRequiredDetails())
                 .map(Auth3dsRequiredEntity::getThreeDsVersion)
                 .orElse(null);
         String ledgerVersion = transaction.getAuthorisationSummary().getThreeDSecure().getVersion();
