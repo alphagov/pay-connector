@@ -840,7 +840,12 @@ class HistoricalEventEmitterServiceTest {
 
     @ParameterizedTest
     @MethodSource
-    void shouldEmitRequested3dsExemptionWithEventDetailsIfExemption3dsDetailsNotNull(Exemption3dsType exemption3dsType, String event3dsType, Exemption3ds exemption3ds, ChargeStatus chargeStatus) throws QueueException {
+    void shouldEmitRequested3dsExemptionWithEventDetailsIfExemption3dsDetailsNotNull(
+            Exemption3dsType exemption3dsType, 
+            String requestedExemptionDetailsType, 
+            Exemption3ds exemption3ds, 
+            ChargeStatus chargeStatus
+    ) throws QueueException {
         ChargeEventEntity successEvent = setupChargeEvent(chargeStatus);
         chargeEntity.setExemption3dsRequested(exemption3dsType);
         chargeEntity.setExemption3ds(exemption3ds);
@@ -865,7 +870,7 @@ class HistoricalEventEmitterServiceTest {
 
         assertAll(
                 () -> assertThat(capturedRequestedExemption.getEventType(), is("REQUESTED_3DS_EXEMPTION")),
-                () -> assertThat(requestedExemptionDetails.getType(), is(event3dsType)),
+                () -> assertThat(requestedExemptionDetails.getType(), is(requestedExemptionDetailsType)),
                 () -> assertThat(capturedGatewayExemption.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")),
                 () -> assertThat(gatewayExemptionDetails.getExemption3ds(), is(exemption3ds == null ? null : exemption3ds.toString()))
         );
@@ -899,7 +904,6 @@ class HistoricalEventEmitterServiceTest {
                 Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
                 Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_REJECTED, AUTHORISATION_REJECTED),
                 Arguments.of(CORPORATE, "CORPORATE", EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED)
-//                Arguments.of(null, "PAYMENT_DETAILS_ENTERED", "OPTIMISED", null, AUTHORISATION_SUCCESS)
         );
     }
 
