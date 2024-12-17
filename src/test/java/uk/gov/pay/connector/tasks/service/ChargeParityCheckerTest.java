@@ -428,11 +428,44 @@ class ChargeParityCheckerTest {
     
     @ParameterizedTest
     @MethodSource
+    void parityCheck_shouldNotReturnMismatchWhenExemption3dsRequestedIsOptimisedAndExemptions3dsNullAndExemptionOutcomeNotSet(
+            Exemption3dsType chargeExemption3dsRequested,
+            Exemption3ds chargeExemption3ds,
+            Exemption transactionExemption
+            ) {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+
+        chargeEntity.setExemption3ds(chargeExemption3ds);
+        chargeEntity.setExemption3dsRequested(chargeExemption3dsRequested);
+
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
+        transaction.setExemption(transactionExemption);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+
+    private static Stream<Arguments> parityCheck_shouldNotReturnMismatchWhenExemption3dsRequestedIsOptimisedAndExemptions3dsNullAndExemptionOutcomeNotSet() {
+        return Stream.of(
+                Arguments.of(null, null, null),
+                Arguments.of(null, EXEMPTION_NOT_REQUESTED, createExemption(false)),
+                Arguments.of(OPTIMISED, null, createExemption(true))
+        );
+    }
+    private static Exemption createExemption(boolean requested) {
+        Exemption exemption = new Exemption();
+        exemption.setRequested(requested);
+        return exemption;
+    }
+    
+    @ParameterizedTest
+    @MethodSource
     void parityCheck_shouldNotReturnMismatchIfExemption3dsDataMatches(
             Exemption3dsType chargeExemption3dsType,
             Exemption3ds chargeExemption3ds, 
             String transactionExemptionOutcomeResult, 
-            boolean setRequested
+            Boolean setRequested
     ) {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
         Exemption exemption = new Exemption();
@@ -447,6 +480,7 @@ class ChargeParityCheckerTest {
         
         LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
         transaction.setExemption(exemption);
+        
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
@@ -454,12 +488,9 @@ class ChargeParityCheckerTest {
     
     private static Stream<Arguments> parityCheck_shouldNotReturnMismatchIfExemption3dsDataMatches() {
         return Stream.of(
-//                Arguments.of(null, null, null, null),
-//                Arguments.of(null, EXEMPTION_NOT_REQUESTED, null, true),
-                Arguments.of(null, EXEMPTION_HONOURED, "rejected", true),
-//                Arguments.of(null, EXEMPTION_REJECTED, "not requested", true),
+                Arguments.of(null, EXEMPTION_HONOURED, "honoured", true),
+                Arguments.of(null, EXEMPTION_REJECTED, "rejected", true),
                 Arguments.of(null, EXEMPTION_OUT_OF_SCOPE, "out of scope", true),
-//                Arguments.of(OPTIMISED, null, null, true),
                 Arguments.of(OPTIMISED, EXEMPTION_HONOURED, "honoured", true),
                 Arguments.of(OPTIMISED, EXEMPTION_REJECTED, "rejected", true),
                 Arguments.of(OPTIMISED, EXEMPTION_OUT_OF_SCOPE, "out of scope", true)
