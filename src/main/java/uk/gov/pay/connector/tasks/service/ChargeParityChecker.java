@@ -69,7 +69,15 @@ import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT;
-import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.*;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_NULL;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_HONOURED;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_REJECTED;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_HONOURED;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_OUT_OF_SCOPE;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_REJECTED;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_FALSE;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_OUT_OF_SCOPE;
 import static uk.gov.pay.connector.tasks.service.ParityCheckService.FIELD_NAME;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -374,28 +382,21 @@ public class ChargeParityChecker {
     }
 
     private static ConnectExemption3dsRequestedState calculateConnectorExemption3dsRequested(ChargeEntity chargeEntity) {
-        if (chargeEntity.getExemption3dsRequested() == null) {
-            return CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
-        } else {
-            if (chargeEntity.getExemption3dsRequested() == Exemption3dsType.OPTIMISED) {
-                return CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
-            } else  {
-                return CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
-            }
-        }
+        return switch (chargeEntity.getExemption3dsRequested()) {
+            case null -> CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
+            case OPTIMISED -> CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
+            case CORPORATE -> CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
+        };
     }
     
     private static ConnectExemption3dsState calculateConnectorExemption3ds(ChargeEntity chargeEntity) {
-        if (chargeEntity.getExemption3ds() == null) {
-            return CONNECTOR_HAS_EXEMPTION_NULL;
-        } else {
-            return switch (chargeEntity.getExemption3ds()) {
-                case EXEMPTION_HONOURED -> CONNECTOR_HAS_EXEMPTION_HONOURED;
-                case EXEMPTION_REJECTED -> CONNECTOR_HAS_EXEMPTION_REJECTED;
-                case EXEMPTION_NOT_REQUESTED -> CONNECTOR_HAS_EXEMPTION_NOT_REQUESTED;
-                case EXEMPTION_OUT_OF_SCOPE -> CONNECTOR_HAS_EXEMPTION_OUT_OF_SCOPE;
-            };
-        }
+        return switch (chargeEntity.getExemption3ds()) {
+            case null -> CONNECTOR_HAS_EXEMPTION_NULL;
+            case EXEMPTION_HONOURED -> CONNECTOR_HAS_EXEMPTION_HONOURED;
+            case EXEMPTION_REJECTED -> CONNECTOR_HAS_EXEMPTION_REJECTED;
+            case EXEMPTION_NOT_REQUESTED -> CONNECTOR_HAS_EXEMPTION_NOT_REQUESTED;
+            case EXEMPTION_OUT_OF_SCOPE -> CONNECTOR_HAS_EXEMPTION_OUT_OF_SCOPE;
+        };
     }
 
     private static LedgerExemptionState calculateLedgerExemptionState(LedgerTransaction transaction) {
