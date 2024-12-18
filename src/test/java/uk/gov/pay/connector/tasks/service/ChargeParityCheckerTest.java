@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
+import org.apache.commons.validator.Arg;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,6 +61,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
+import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
 import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.OPTIMISED;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MISMATCH;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
@@ -495,6 +497,130 @@ class ChargeParityCheckerTest {
                 Arguments.of(OPTIMISED, EXEMPTION_REJECTED, "rejected", true),
                 Arguments.of(OPTIMISED, EXEMPTION_OUT_OF_SCOPE, "out of scope", true)
         );
+    }
+    
+    @ParameterizedTest
+    @MethodSource
+    void parityCheck_shouldNotReturnMismatchIfExemption3dsDataMatchesWithExemptionAndTypeCorporate(
+            Exemption3dsType chargeExemption3dsType,
+            Exemption3ds chargeExemption3ds,
+            String transactionExemptionOutcomeResult,
+            Boolean setRequested
+    ) {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        Exemption exemption = new Exemption();
+        ExemptionOutcome exemptionOutcome = new ExemptionOutcome();
+
+        exemptionOutcome.setResult(transactionExemptionOutcomeResult);
+        exemption.setRequested(setRequested);
+        exemption.setOutcome(exemptionOutcome);
+        exemption.setType("corporate");
+
+        chargeEntity.setExemption3ds(chargeExemption3ds);
+        chargeEntity.setExemption3dsRequested(chargeExemption3dsType);
+
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
+        transaction.setExemption(exemption);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    private static Stream<Arguments> parityCheck_shouldNotReturnMismatchIfExemption3dsDataMatchesWithExemptionAndTypeCorporate() {
+        return Stream.of(
+                Arguments.of(CORPORATE, EXEMPTION_HONOURED, "honoured", true),
+                Arguments.of(CORPORATE, EXEMPTION_REJECTED, "rejected", true),
+                Arguments.of(CORPORATE, EXEMPTION_OUT_OF_SCOPE, "out of scope", true)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatch(
+            Exemption3dsType chargeExemption3dsType,
+            Exemption3ds chargeExemption3ds,
+            String transactionExemptionOutcomeResult,
+            Boolean setRequested
+    ) {
+        Exemption exemption = new Exemption();
+        ExemptionOutcome exemptionOutcome = new ExemptionOutcome();
+
+        exemptionOutcome.setResult(transactionExemptionOutcomeResult);
+        exemption.setRequested(setRequested);
+        exemption.setOutcome(exemptionOutcome);
+
+        chargeEntity.setExemption3ds(chargeExemption3ds);
+        chargeEntity.setExemption3dsRequested(chargeExemption3dsType);
+
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
+        transaction.setExemption(exemption);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    private static Stream<Arguments> parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatch() {
+        return Stream.of(
+                Arguments.of(null, EXEMPTION_HONOURED, "rejected", true),
+                Arguments.of(null, EXEMPTION_REJECTED, "honoured", true),
+                Arguments.of(OPTIMISED, EXEMPTION_OUT_OF_SCOPE, "honoured", true),
+                Arguments.of(CORPORATE, EXEMPTION_HONOURED, "out of scope", true),
+                Arguments.of(OPTIMISED, EXEMPTION_REJECTED, "not requested", false),
+                Arguments.of(null, EXEMPTION_HONOURED, "out of scope", true),
+                Arguments.of(null, EXEMPTION_HONOURED, "out of scope", true)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatchWithExemptionTypeCorporate(
+            Exemption3dsType chargeExemption3dsType,
+            Exemption3ds chargeExemption3ds,
+            String transactionExemptionOutcomeResult,
+            Boolean setRequested
+    ) {
+        Exemption exemption = new Exemption();
+        ExemptionOutcome exemptionOutcome = new ExemptionOutcome();
+
+        exemptionOutcome.setResult(transactionExemptionOutcomeResult);
+        exemption.setRequested(setRequested);
+        exemption.setOutcome(exemptionOutcome);
+        exemption.setType("corporate");
+
+        chargeEntity.setExemption3ds(chargeExemption3ds);
+        chargeEntity.setExemption3dsRequested(chargeExemption3dsType);
+
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
+        transaction.setExemption(exemption);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    private static Stream<Arguments> parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatchWithExemptionTypeCorporate() {
+        return Stream.of(
+                Arguments.of(CORPORATE, EXEMPTION_HONOURED, "rejected", true),
+                Arguments.of(CORPORATE, EXEMPTION_REJECTED, "honoured", true),
+                Arguments.of(CORPORATE, EXEMPTION_OUT_OF_SCOPE, "not requested", false),
+                Arguments.of(CORPORATE, EXEMPTION_HONOURED, "out of scope", false),
+                Arguments.of(CORPORATE, EXEMPTION_REJECTED, "honoured", true)
+        );
+    }
+
+    @Test
+    void parityCheck_shouldReturnMismatchIfTransactionHasNoExemptionObject() {
+        chargeEntity.setExemption3ds(EXEMPTION_HONOURED);
+        chargeEntity.setExemption3dsRequested(OPTIMISED);
+
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
+        transaction.setExemption(null); 
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
     }
     
     @ParameterizedTest
