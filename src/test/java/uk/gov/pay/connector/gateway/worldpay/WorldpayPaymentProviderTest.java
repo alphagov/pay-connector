@@ -860,7 +860,7 @@ class WorldpayPaymentProviderTest {
 
         Requested3dsExemption exemptionRequested = (Requested3dsExemption) eventCaptor.getAllValues().get(0);
         assertThat(exemptionRequested.getResourceExternalId(), is(chargeEntity.getExternalId()));
-        assertThat(((Requested3dsExemptionEventDetails) exemptionRequested.getEventDetails()).getType(), is(exemption3dsRequestType.toString()));
+        assertThat(((Requested3dsExemptionEventDetails) exemptionRequested.getEventDetails()).getExemption3dsRequested(), is(exemption3dsRequestType.toString()));
         assertThat(exemptionRequested.getEventType(), is("REQUESTED_3DS_EXEMPTION"));
 
         Gateway3dsExemptionResultObtained exemptionResultObtainedEvent = (Gateway3dsExemptionResultObtained) eventCaptor.getAllValues().get(1);
