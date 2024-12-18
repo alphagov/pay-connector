@@ -128,35 +128,31 @@ public class HistoricalEventEmitter {
 
     private void processCharges3dsExemptionResultData(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
         if (charge.getExemption3ds() != null) {
-            var chargeEvent = chargeEventEntities
+            chargeEventEntities
                     .stream()
                     .filter(event -> event.getStatus() == AUTHORISATION_SUCCESS || event.getStatus() == AUTHORISATION_REJECTED)
-                    .findFirst();
-
-            chargeEvent.ifPresent(event -> {
-                var threeDsInfoEvent = Gateway3dsExemptionResultObtained.from(charge, event.getUpdated().toInstant());
-                boolean hasBeenEmittedBefore = emittedEventDao.hasBeenEmittedBefore(threeDsInfoEvent);
-                if (forceEmission || !hasBeenEmittedBefore) {
-                    eventService.emitAndRecordEvent(threeDsInfoEvent, getDoNotRetryEmitUntilDate());
-                }
-            });
+                    .findFirst()
+                    .map(event -> Gateway3dsExemptionResultObtained.from(charge, event.getUpdated().toInstant()))
+                    .filter(threeDsInfoEvent -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(threeDsInfoEvent))
+                    .ifPresent(threeDsInfoEvent -> {
+                        eventService.emitAndRecordEvent(threeDsInfoEvent, getDoNotRetryEmitUntilDate());
+                        logger.info("Charges 3ds Exemption Result data event emitted for [chargeExternalId={}]", charge.getExternalId());
+                    });
         }
     }
 
     private void processCharges3dsExemptionData(ChargeEntity charge, List<ChargeEventEntity> chargeEventEntities, boolean forceEmission) {
         if (charge.getExemption3dsRequested() != null) {
-            var chargeEvent = chargeEventEntities
+            chargeEventEntities
                     .stream()
                     .filter(event -> TERMINAL_AUTHENTICATION_STATES.contains(event.getStatus()))
-                    .findFirst();
-
-            chargeEvent.ifPresent(event -> {
-                var requested3dsExemptionEvent = Requested3dsExemption.from(charge, event.getUpdated().toInstant());
-                boolean hasBeenEmittedBefore = emittedEventDao.hasBeenEmittedBefore(requested3dsExemptionEvent);
-                if (forceEmission || !hasBeenEmittedBefore) {
-                    eventService.emitAndRecordEvent(requested3dsExemptionEvent, getDoNotRetryEmitUntilDate());
-                }
-            });
+                    .findFirst()
+                    .map(event -> Requested3dsExemption.from(charge, event.getUpdated().toInstant()))
+                    .filter(requested3dsExemptionEvent -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(requested3dsExemptionEvent))
+                    .ifPresent(requested3dsExemptionEvent -> {
+                        eventService.emitAndRecordEvent(requested3dsExemptionEvent, getDoNotRetryEmitUntilDate());
+                        logger.info("Charges 3ds Exemption data event emitted for [chargeExternalId={}]", charge.getExternalId());
+                    });
         }
     }
 

@@ -803,7 +803,7 @@ class HistoricalEventEmitterServiceTest {
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
         ArgumentCaptor<Gateway3dsExemptionResultObtained> argument = ArgumentCaptor.forClass(Gateway3dsExemptionResultObtained.class);
-        verify(eventService, times(1)).emitAndRecordEvent(argument.capture(), isNotNull());
+        verify(eventService).emitAndRecordEvent(argument.capture(), isNotNull());
 
         List<Gateway3dsExemptionResultObtained> capturedEvents = argument.getAllValues();
         Gateway3dsExemptionResultObtainedEventDetails eventDetailsType = (Gateway3dsExemptionResultObtainedEventDetails) argument.getAllValues().get(0).getEventDetails();
@@ -817,12 +817,16 @@ class HistoricalEventEmitterServiceTest {
                 Arguments.of(EXEMPTION_NOT_REQUESTED, AUTHORISATION_SUCCESS),
                 Arguments.of(EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
                 Arguments.of(EXEMPTION_REJECTED, AUTHORISATION_SUCCESS),
-                Arguments.of(EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS)
+                Arguments.of(EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_SUCCESS),
+                Arguments.of(EXEMPTION_NOT_REQUESTED, AUTHORISATION_REJECTED),
+                Arguments.of(EXEMPTION_HONOURED, AUTHORISATION_REJECTED),
+                Arguments.of(EXEMPTION_REJECTED, AUTHORISATION_REJECTED),
+                Arguments.of(EXEMPTION_OUT_OF_SCOPE, AUTHORISATION_REJECTED)
         );
     }
 
     @Test
-    void shouldCheckEventTypeIsNot3dsWhen3dsDetailsSetToNull(){
+    void shouldCheckRequested3dsExemptionEventIsNotEmittedWhenExemption3dsRequestedAndExemption3dsAreNull(){
         ChargeEventEntity successEvent = setupChargeEvent(AUTHORISATION_SUCCESS);
         chargeEntity.setExemption3dsRequested(null);
         chargeEntity.setExemption3ds(null);
