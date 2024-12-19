@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
@@ -24,6 +25,7 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
@@ -184,7 +186,8 @@ public class ContractTest {
 
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus,
                                    Instant createdDate, boolean delayedCapture, String cardHolderName,
-                                   String lastDigitsCardNumber, String firstDigitsCardNumber, String gatewayTransactionId, AuthorisationMode authorisationMode) {
+                                   String lastDigitsCardNumber, String firstDigitsCardNumber, String gatewayTransactionId,
+                                   AuthorisationMode authorisationMode, Exemption3ds exemption3dsm, Exemption3dsType exemption3dsType) {
         dbHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
                 .withExternalChargeId(chargeExternalId)
@@ -200,6 +203,8 @@ public class ContractTest {
                 .withEmail("test@test.com")
                 .withDelayedCapture(delayedCapture)
                 .withAuthorisationMode(authorisationMode)
+                .withExemption3ds(exemption3dsm)
+                .withExemption3dsType(exemption3dsType)
                 .build());
         dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName,
                 CardExpiryDate.valueOf("08/23"), String.valueOf(DEBIT),
@@ -208,7 +213,11 @@ public class ContractTest {
 
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, Instant createdDate, boolean delayedCapture, AuthorisationMode authorisationMode) {
         sqsMockClient.mockSuccessfulSendChargeToQueue(chargeExternalId);
-        setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456", "aGatewayTransactionId", authorisationMode);
+        setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456", "aGatewayTransactionId", authorisationMode, null, null);
+    }
+
+    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, Instant createdDate, Exemption3ds exemption3ds, Exemption3dsType exemption3dsType) {
+        setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, false, "aName", "0001", "123456", "aGatewayTransactionId", AuthorisationMode.WEB, exemption3ds, exemption3dsType);
     }
 
     private void setUpRefunds(int numberOfRefunds, Long chargeId,
@@ -498,7 +507,7 @@ public class ContractTest {
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED,
                 Instant.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber,
-                firstDigitsCardNumber, params.get("gateway_transaction_id"), AuthorisationMode.WEB);
+                firstDigitsCardNumber, params.get("gateway_transaction_id"), AuthorisationMode.WEB, null, null);
     }
     
     @State("Refunds exist for a charge")
@@ -858,5 +867,16 @@ public class ContractTest {
                 .withGatewayAccountId(gatewayAccountId)
                 .withExternalAgreementId(agreementExternalId)
                 .build());
+    }
+
+    @State("a charge with honoured corporate exemption exists")
+    public void createAChargeWithHonouredExemption(Map<String, String> params) {
+        String gatewayAccountId = params.get("gateway_account_id");
+        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        String chargeExternalId = params.get("charge_id");
+
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
+        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), Exemption3ds.EXEMPTION_HONOURED, Exemption3dsType.CORPORATE);
+        dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10), FeeType.TRANSACTION);
     }
 }
