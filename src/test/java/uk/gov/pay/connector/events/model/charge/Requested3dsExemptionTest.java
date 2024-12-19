@@ -15,7 +15,7 @@ import static uk.gov.service.payments.commons.api.json.MicrosecondPrecisionDateT
 class Requested3dsExemptionTest {
 
     @Test
-    void serializesRequest3dsExemptionEventDetails() throws JsonProcessingException {
+    void serializesRequest3dsOptimiseExemptionEventDetails() throws JsonProcessingException {
         var chargeEntity = ChargeEntityFixture
                 .aValidChargeEntity()
                 .withExemption3dsType(Exemption3dsType.OPTIMISED)
@@ -27,6 +27,22 @@ class Requested3dsExemptionTest {
         assertThat(actual, hasJsonPath("$.event_type", equalTo("REQUESTED_3DS_EXEMPTION")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
-        assertThat(actual, hasJsonPath("$.event_details.type", equalTo(chargeEntity.getExemption3dsRequested().toString())));
+        assertThat(actual, hasJsonPath("$.event_details.exemption_3ds_requested", equalTo("OPTIMISED")));
+    }
+
+    @Test
+    void serializesRequest3dsCorporateExemptionEventDetails() throws JsonProcessingException {
+        var chargeEntity = ChargeEntityFixture
+                .aValidChargeEntity()
+                .withExemption3dsType(Exemption3dsType.CORPORATE)
+                .build();
+        var eventDate = Instant.now();
+        String actual = Requested3dsExemption.from(chargeEntity, eventDate).toJsonString();
+
+        assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("REQUESTED_3DS_EXEMPTION")));
+        assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
+        assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
+        assertThat(actual, hasJsonPath("$.event_details.exemption_3ds_requested", equalTo("CORPORATE")));
     }
 }
