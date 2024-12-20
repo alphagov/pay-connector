@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -52,6 +53,7 @@ public class LedgerTransaction {
     private String parentTransactionId;
     private String serviceId;
     private AuthorisationSummary authorisationSummary;
+    private Exemption exemption;
     private boolean disputed;
     private AuthorisationMode authorisationMode;
     private String agreementId;
@@ -307,6 +309,14 @@ public class LedgerTransaction {
 
     public void setAuthorisationSummary(AuthorisationSummary authorisationSummary) {
         this.authorisationSummary = authorisationSummary;
+    }
+
+    public Exemption getExemption() {
+        return exemption;
+    }
+
+    public void setExemption(Exemption exemption) {
+        this.exemption = exemption;
     }
 
     public boolean isDisputed() {
