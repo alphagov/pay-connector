@@ -11,7 +11,7 @@
         <surefire.version>3.5.2</surefire.version>
         <jjwt.version>0.12.6</jjwt.version>
         <pact.version>4.6.16</pact.version>
-        <eclipselink.version>2.7.13</eclipselink.version>
+        <eclipselink.version>4.0.5</eclipselink.version>
         <swagger-version>2.2.27</swagger-version>
         <prometheus.version>0.16.0</prometheus.version>
 
