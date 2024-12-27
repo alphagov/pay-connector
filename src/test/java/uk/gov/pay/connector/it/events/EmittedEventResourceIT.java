@@ -20,7 +20,7 @@ import java.util.Optional;
 
 import static io.dropwizard.testing.ConfigOverride.config;
 import static java.time.temporal.ChronoUnit.MICROS;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;

@@ -3,8 +3,8 @@ package uk.gov.pay.connector.charge.model;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.domain.Address;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 

@@ -14,8 +14,8 @@ import uk.gov.pay.connector.app.config.RestClientConfig;
 import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Optional;

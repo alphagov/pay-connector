@@ -8,8 +8,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.ResponseUtil;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
 import java.util.Map;
 
 import static uk.gov.pay.connector.util.ResponseUtil.authorisationRejectedResponse;

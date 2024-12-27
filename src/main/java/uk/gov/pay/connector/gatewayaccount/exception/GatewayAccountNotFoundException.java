@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.exception;
 
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import static java.lang.String.format;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;

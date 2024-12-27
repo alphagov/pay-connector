@@ -19,7 +19,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.function.Supplier;
 

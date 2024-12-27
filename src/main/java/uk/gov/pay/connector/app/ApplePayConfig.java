@@ -2,7 +2,7 @@ package uk.gov.pay.connector.app;
 
 import io.dropwizard.core.Configuration;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 import static java.util.function.Predicate.not;

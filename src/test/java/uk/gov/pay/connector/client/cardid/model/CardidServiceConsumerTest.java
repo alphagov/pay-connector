@@ -15,7 +15,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.service.payments.commons.testing.pact.consumers.Pacts;
 import uk.gov.service.payments.commons.testing.pact.consumers.PayPactProviderRule;
 
-import javax.ws.rs.client.Client;
+import jakarta.ws.rs.client.Client;
 
 import java.util.Optional;
 

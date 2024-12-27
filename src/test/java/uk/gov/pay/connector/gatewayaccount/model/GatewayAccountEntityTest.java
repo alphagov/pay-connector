@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;

@@ -19,7 +19,7 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;

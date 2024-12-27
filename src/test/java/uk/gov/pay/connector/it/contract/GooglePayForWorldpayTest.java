@@ -17,13 +17,13 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import javax.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ClientBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;

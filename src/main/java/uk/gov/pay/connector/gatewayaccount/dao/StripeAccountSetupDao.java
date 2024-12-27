@@ -5,8 +5,8 @@ import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTaskEntity;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 
 public class StripeAccountSetupDao extends JpaDao<StripeAccountSetupTaskEntity> {

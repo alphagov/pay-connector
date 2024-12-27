@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.stripe;
 
 import com.stripe.exception.StripeException;
 import io.dropwizard.core.setup.Environment;
+import jakarta.inject.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -54,9 +55,8 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
 

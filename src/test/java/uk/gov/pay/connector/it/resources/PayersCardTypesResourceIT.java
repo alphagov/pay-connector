@@ -10,7 +10,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.cardtype.resource.CardTypesResource;
 
-import javax.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.GenericType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

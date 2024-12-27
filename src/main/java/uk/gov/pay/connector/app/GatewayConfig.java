@@ -2,8 +2,8 @@ package uk.gov.pay.connector.app;
 
 import io.dropwizard.core.Configuration;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.validation.constraints.Pattern;
-import javax.ws.rs.QueryParam;
+import jakarta.validation.constraints.Pattern;
+import jakarta.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

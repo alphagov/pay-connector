@@ -14,7 +14,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

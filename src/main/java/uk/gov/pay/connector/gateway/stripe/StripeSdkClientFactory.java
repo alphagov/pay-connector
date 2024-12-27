@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.stripe;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StripeSdkClientFactory {
 

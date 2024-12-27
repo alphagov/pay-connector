@@ -9,8 +9,8 @@ import uk.gov.pay.connector.charge.validation.telephone.ValidCardLastFourDigits;
 import uk.gov.pay.connector.charge.validation.telephone.ValidZonedDateTime;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)

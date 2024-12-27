@@ -11,7 +11,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.Map;

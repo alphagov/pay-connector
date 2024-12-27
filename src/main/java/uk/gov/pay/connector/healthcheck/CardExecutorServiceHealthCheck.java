@@ -5,7 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheck;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class CardExecutorServiceHealthCheck extends HealthCheck {

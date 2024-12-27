@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;

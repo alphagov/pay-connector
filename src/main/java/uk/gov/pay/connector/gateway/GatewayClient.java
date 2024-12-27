@@ -13,11 +13,11 @@ import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientGetRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.client.WebTarget;
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -29,9 +29,9 @@ import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptyList;
-import static javax.ws.rs.core.Response.Status.Family.SUCCESSFUL;
-import static javax.ws.rs.core.Response.Status.Family.familyOf;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static jakarta.ws.rs.core.Response.Status.Family.SUCCESSFUL;
+import static jakarta.ws.rs.core.Response.Status.Family.familyOf;
+import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 public class GatewayClient {
 
@@ -77,7 +77,7 @@ public class GatewayClient {
 
         String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName.getName(), gatewayAccountType, request.getOrderRequestType());
 
-        Supplier<javax.ws.rs.core.Response> requestCallable = () -> {
+        Supplier<jakarta.ws.rs.core.Response> requestCallable = () -> {
             LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
 
             Builder requestBuilder = client.target(url).request();
@@ -105,7 +105,7 @@ public class GatewayClient {
 
         String metricsPrefix = format("gateway-operations.get.%s.%s.%s", gatewayName.getName(), gatewayAccountType, orderRequestType);
 
-        Supplier<javax.ws.rs.core.Response> requestCallable = () -> {
+        Supplier<jakarta.ws.rs.core.Response> requestCallable = () -> {
             LOGGER.info("Making GET request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
 
             WebTarget target = client.target(url);
@@ -126,9 +126,9 @@ public class GatewayClient {
                                                   String gatewayAccountType,
                                                   OrderRequestType orderRequestType,
                                                   String metricsPrefix,
-                                                  Supplier<javax.ws.rs.core.Response> requestCallable)
+                                                  Supplier<jakarta.ws.rs.core.Response> requestCallable)
             throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-        javax.ws.rs.core.Response response = null;
+        jakarta.ws.rs.core.Response response = null;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
         Histogram.Timer responseTimeTimer = gatewayOperationsResponseTime.labels(
@@ -200,7 +200,7 @@ public class GatewayClient {
         private final String entity;
         private final Map<String, String> responseCookies = new HashMap<>();
 
-        protected Response(final javax.ws.rs.core.Response delegate) {
+        protected Response(final jakarta.ws.rs.core.Response delegate) {
             this.status = delegate.getStatus();
             this.entity = delegate.readEntity(String.class);
             delegate.getCookies().forEach((name, cookie) -> responseCookies.put(name, cookie.getValue()));

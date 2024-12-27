@@ -5,7 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.core.setup.Environment;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StateTransitionQueueMetricEmitter {
     private final MetricRegistry metricRegistry;

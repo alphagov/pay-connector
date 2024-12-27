@@ -3,8 +3,8 @@ package uk.gov.pay.connector.gatewayaccountcredentials.dao;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 
 @Transactional
 public class GatewayAccountCredentialsHistoryDao {

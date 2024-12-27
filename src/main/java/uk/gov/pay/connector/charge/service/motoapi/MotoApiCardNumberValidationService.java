@@ -14,7 +14,7 @@ import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.client.cardid.service.CardidService;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Locale;
 
 public class MotoApiCardNumberValidationService {

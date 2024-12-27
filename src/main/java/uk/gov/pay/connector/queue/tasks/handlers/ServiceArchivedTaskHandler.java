@@ -3,7 +3,7 @@ package uk.gov.pay.connector.queue.tasks.handlers;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ServiceArchivedTaskHandler {
     private final GatewayAccountService gatewayAccountService;

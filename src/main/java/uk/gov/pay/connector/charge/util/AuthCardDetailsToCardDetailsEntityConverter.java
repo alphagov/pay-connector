@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import java.util.Optional;
 

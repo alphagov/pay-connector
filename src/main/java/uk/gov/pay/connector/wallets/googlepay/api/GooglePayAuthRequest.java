@@ -5,8 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
 import uk.gov.pay.connector.wallets.WalletType;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 public class GooglePayAuthRequest implements WalletAuthorisationRequest {

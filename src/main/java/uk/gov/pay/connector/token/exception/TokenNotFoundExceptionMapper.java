@@ -7,10 +7,10 @@ import uk.gov.pay.connector.agreement.exception.AgreementNotFoundExceptionMapper
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 public class TokenNotFoundExceptionMapper implements ExceptionMapper<TokenNotFoundException> {
 

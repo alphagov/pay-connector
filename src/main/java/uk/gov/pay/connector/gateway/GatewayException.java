@@ -5,12 +5,12 @@ import uk.gov.pay.connector.gateway.model.GatewayError;
 
 import java.util.Optional;
 
-import javax.ws.rs.core.Response.Status.Family;
+import jakarta.ws.rs.core.Response.Status.Family;
 
-import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
-import static javax.ws.rs.core.Response.Status.Family.OTHER;
-import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.Family.familyOf;
+import static jakarta.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
+import static jakarta.ws.rs.core.Response.Status.Family.OTHER;
+import static jakarta.ws.rs.core.Response.Status.Family.SERVER_ERROR;
+import static jakarta.ws.rs.core.Response.Status.Family.familyOf;
 
 
 public abstract class GatewayException extends Exception {

@@ -3,8 +3,8 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
-import javax.validation.constraints.AssertTrue;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.Objects;
 import java.util.Optional;
 

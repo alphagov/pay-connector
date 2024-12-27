@@ -5,8 +5,8 @@ import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import java.util.Optional;
 
 public class AgreementDao extends JpaDao<AgreementEntity> {

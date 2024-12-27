@@ -3,14 +3,14 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
 
 @Entity
 @SequenceGenerator(name="worldpay_3ds_flex_credentials_id_seq",

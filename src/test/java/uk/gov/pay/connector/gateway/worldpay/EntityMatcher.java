@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Form;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Form;
 
 public class EntityMatcher implements org.mockito.ArgumentMatcher<Entity> {
     

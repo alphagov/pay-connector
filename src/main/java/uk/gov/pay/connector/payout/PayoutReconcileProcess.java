@@ -27,7 +27,7 @@ import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;

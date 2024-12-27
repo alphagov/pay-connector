@@ -19,8 +19,8 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;

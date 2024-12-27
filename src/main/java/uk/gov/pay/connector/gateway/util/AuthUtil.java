@@ -15,7 +15,7 @@ import java.util.Base64;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 
 public class AuthUtil {
     private static final String STRIPE_VERSION_HEADER = "Stripe-Version";

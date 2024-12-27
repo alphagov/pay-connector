@@ -2,7 +2,7 @@ package uk.gov.pay.connector.util;
 
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

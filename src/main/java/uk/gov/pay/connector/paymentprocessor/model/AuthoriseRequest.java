@@ -8,7 +8,7 @@ import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueException;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.Objects;

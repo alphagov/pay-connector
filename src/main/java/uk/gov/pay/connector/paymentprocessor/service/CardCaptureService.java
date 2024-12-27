@@ -22,8 +22,8 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
-import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
+import jakarta.inject.Inject;
+import jakarta.persistence.OptimisticLockException;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;

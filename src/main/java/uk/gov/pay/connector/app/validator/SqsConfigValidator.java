@@ -2,8 +2,8 @@ package uk.gov.pay.connector.app.validator;
 
 import uk.gov.pay.connector.app.SqsConfig;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 

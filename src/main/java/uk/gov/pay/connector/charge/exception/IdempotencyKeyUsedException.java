@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.exception;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 public class IdempotencyKeyUsedException extends WebApplicationException {
     public IdempotencyKeyUsedException() {

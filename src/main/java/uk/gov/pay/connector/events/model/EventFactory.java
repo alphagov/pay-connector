@@ -38,7 +38,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransition;
 import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.List;

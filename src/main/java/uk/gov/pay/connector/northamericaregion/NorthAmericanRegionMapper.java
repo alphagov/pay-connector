@@ -2,7 +2,7 @@ package uk.gov.pay.connector.northamericaregion;
 
 import uk.gov.pay.connector.common.model.domain.Address;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Locale;
 import java.util.Optional;
 

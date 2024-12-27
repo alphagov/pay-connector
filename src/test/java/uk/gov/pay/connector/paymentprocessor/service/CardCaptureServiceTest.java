@@ -49,7 +49,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.persistence.OptimisticLockException;
+import jakarta.persistence.OptimisticLockException;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.time.ZonedDateTime;

@@ -54,7 +54,7 @@ import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -68,7 +68,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
