@@ -82,9 +82,6 @@ public class WorldpayNotificationService {
             logger.debug("Payload: {}", payload);
             notification = XMLUnmarshaller.unmarshall(payload, WorldpayNotification.class);
             logger.info("Parsed {} notification: {}", PAYMENT_GATEWAY_NAME, notification);
-            if (isTemporaryLoggingRequiredOnTestOnly(notification)) {
-                logger.info("{} notification {} is being inspected (on test only) for PP-13416. Payload: {}", PAYMENT_GATEWAY_NAME, notification, payload);
-            }
         } catch (XMLUnmarshallerException e) {
             logger.error("{} notification parsing failed: {}", PAYMENT_GATEWAY_NAME, e);
             return true;
@@ -162,13 +159,6 @@ public class WorldpayNotificationService {
 
     private boolean isErrorNotification(WorldpayNotification notification) {
         return "ERROR".equals(notification.getStatus());
-    }
-
-    // TODO: Temporary logging for PP-13416
-    private boolean isTemporaryLoggingRequiredOnTestOnly(WorldpayNotification notification) {
-        return ("REFUND_FAILED".equals(notification.getStatus()) ||
-        "SENT_FOR_REFUND".equals(notification.getStatus()))
-        && "GBSRECABOFFGDSGBPTEST".equals(notification.getMerchantCode());
     }
 
     private RefundStatus newRefundStatus(WorldpayNotification notification) {
