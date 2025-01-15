@@ -18,6 +18,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDeta
 import uk.gov.pay.connector.events.eventdetails.charge.CaptureSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsInfoObtainedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.GatewayDoesNotRequire3dsAuthorisationEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.GatewayRequires3dsAuthorisationEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentCreatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.PaymentDetailsEnteredEventDetails;
@@ -34,6 +35,7 @@ import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
+import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentCreated;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -391,6 +393,24 @@ public class QueueMessageContractTest {
                 charge.getGatewayAccount().getId(),
                 resourceId,
                 Requested3dsExemptionEventDetails.from(charge),
+                Instant.now()
+        );
+
+        return var.toJsonString();
+    }
+
+    @PactVerifyProvider("a gateway does not require 3DS exemption message")
+    public String verifyGatewayDoesNotRequire3dsExemptionEvent() throws JsonProcessingException {
+        var charge = aValidChargeEntity()
+                .withRequires3ds(false)
+                .build();
+
+        var var = new GatewayDoesNotRequire3dsAuthorisation(
+                charge.getServiceId(),
+                charge.getGatewayAccount().isLive(),
+                charge.getGatewayAccount().getId(),
+                resourceId,
+                new GatewayDoesNotRequire3dsAuthorisationEventDetails(),
                 Instant.now()
         );
 
