@@ -399,8 +399,8 @@ public class QueueMessageContractTest {
         return var.toJsonString();
     }
 
-    @PactVerifyProvider("a gateway does not require 3DS exemption message")
-    public String verifyGatewayDoesNotRequire3dsExemptionEvent() throws JsonProcessingException {
+    @PactVerifyProvider("a gateway does not require 3DS authorisation message")
+    public String verifyGatewayDoesNotRequire3dsAuthorisationEvent() throws JsonProcessingException {
         var charge = aValidChargeEntity()
                 .withRequires3ds(false)
                 .build();
