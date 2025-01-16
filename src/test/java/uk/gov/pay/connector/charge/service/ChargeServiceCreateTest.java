@@ -102,6 +102,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
@@ -726,6 +727,26 @@ class ChargeServiceCreateTest {
 
         assertThrows(GatewayAccountDisabledException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+
+    @Test
+    void shouldThrowException_whenPaymentProviderIsStripeAndAmountUnder30Pence() {
+        GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaymentProvider("stripe")
+                .withCredentials(Map.of())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build();
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(29)
+                .withSource(CARD_API)
+                .build();
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(stripeGatewayAccountCredentialsEntity);
+        
+        assertThrows(ChargeException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
 

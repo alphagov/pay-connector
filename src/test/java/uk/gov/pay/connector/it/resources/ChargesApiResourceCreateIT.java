@@ -20,6 +20,7 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
+import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import javax.ws.rs.core.Response.Status;
@@ -27,6 +28,7 @@ import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -364,7 +366,7 @@ public class ChargesApiResourceCreateIT {
             }
             
             @Test
-            void when_amount_is_zero_and_account_does_not_allow_zero_zmount() {
+            void when_amount_is_zero_and_account_does_not_allow_zero_amount() {
                 //by default, gateway account does not have zero amount enabled
                 app.givenSetup()
                         .body(toJson(Map.of(
@@ -379,6 +381,30 @@ public class ChargesApiResourceCreateIT {
                         .contentType(JSON)
                         .body("message", contains("Zero amount charges are not enabled for this gateway account"))
                         .body("error_identifier", is(ErrorIdentifier.ZERO_AMOUNT_NOT_ALLOWED.toString()));
+            }
+
+            @Test
+            void when_amount_is_under_30p_for_api_payment_for_Stripe_account() {
+                DatabaseFixtures.TestAccount stripeTestAccount = app.getDatabaseFixtures()
+                        .aTestAccount()
+                        .withPaymentProvider("stripe")
+                        .withCredentials(Collections.singletonMap("stripe_account_id", "acct_123example123"))
+                        .insert();
+                
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "amount", 29,
+                                "reference", "Test reference",
+                                "description", "Test description",
+                                "return_url", "http://service.local/success-page/",
+                                "source", "CARD_API"
+                        )))
+                        .post(format("/v1/api/accounts/%s/charges", stripeTestAccount.getAccountId()))
+                        .then()
+                        .statusCode(422)
+                        .contentType(JSON)
+                        .body("message", contains("Payments under 30 pence are not allowed for Stripe accounts"))
+                        .body("error_identifier", is(ErrorIdentifier.AMOUNT_BELOW_MINIMUM.toString()));
             }
         }
 
