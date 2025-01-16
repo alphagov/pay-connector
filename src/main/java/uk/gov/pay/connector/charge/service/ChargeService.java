@@ -125,7 +125,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
@@ -149,18 +148,20 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_ACTIVE;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_FOUND;
+import static uk.gov.service.payments.commons.model.ErrorIdentifier.AMOUNT_BELOW_MINIMUM;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
-import static uk.gov.service.payments.commons.model.ErrorIdentifier.IDEMPOTENCY_KEY_USED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.MOTO_NOT_ALLOWED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
+import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class ChargeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChargeService.class);
     private static final List<ChargeStatus> CURRENT_STATUSES_ALLOWING_UPDATE_TO_NEW_STATUS = newArrayList(CREATED, ENTERING_CARD_DETAILS);
+    public static final int MINIMUM_STRIPE_PAYMENT_AMOUNT = 30;
 
     private final ChargeDao chargeDao;
     private final ChargeEventDao chargeEventDao;
@@ -319,8 +320,6 @@ public class ChargeService {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
             checkIfGatewayAccountDisabled(gatewayAccount);
 
-            checkIfZeroAmountAllowed(chargeRequest.getAmount(), gatewayAccount);
-
             var authorisationMode = chargeRequest.getAuthorisationMode();
 
             if (authorisationMode == MOTO_API) {
@@ -343,6 +342,8 @@ public class ChargeService {
             GatewayAccountCredentialsEntity gatewayAccountCredential =
                     getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
 
+            checkIfAmountBelowMinimum(chargeRequest.getSource(), chargeRequest.getAmount(), gatewayAccount, gatewayAccountCredential.getPaymentProvider());
+            
             var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
                     agreementDao.findByExternalIdAndGatewayAccountId(chargeRequest.getAgreementId(), gatewayAccount.getId())
                             .orElseThrow(() -> new ChargeException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.", AGREEMENT_NOT_FOUND, HttpStatus.SC_BAD_REQUEST)));
@@ -1168,14 +1169,20 @@ public class ChargeService {
             throw new AuthorisationApiNotAllowedForGatewayAccountException(gatewayAccount.getId());
         }
     }
-
-
+    
     private void checkIfGatewayAccountDisabled(GatewayAccountEntity gatewayAccount) {
         if (gatewayAccount.isDisabled()) {
             throw new GatewayAccountDisabledException("Attempt to create a charge for a disabled gateway account");
         }
     }
 
+    private void checkIfAmountBelowMinimum(Source source, Long amount, GatewayAccountEntity gatewayAccount, String paymentProvider) {
+        if (source == CARD_API && amount < MINIMUM_STRIPE_PAYMENT_AMOUNT && PaymentGatewayName.valueFrom(paymentProvider) == PaymentGatewayName.STRIPE) {
+            throw new ChargeException("Payments under 30 pence are not allowed for Stripe accounts", AMOUNT_BELOW_MINIMUM, SC_UNPROCESSABLE_ENTITY);
+        }
+        checkIfZeroAmountAllowed(amount, gatewayAccount);
+    }
+    
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());

@@ -522,9 +522,9 @@ class ChargeServiceCreateTest {
     void shouldThrowExceptionWhenCreateChargeWithZeroAmountIfGatewayAccountDoesNotAllowIt() {
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
-
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        
         assertThrows(ZeroAmountNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
-
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
@@ -729,6 +729,25 @@ class ChargeServiceCreateTest {
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
+    @Test
+    void shouldThrowException_whenPaymentProviderIsStripeAndAmountUnder30Pence() {
+        GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
+                .aGatewayAccountCredentialsEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withPaymentProvider("stripe")
+                .withCredentials(Map.of())
+                .withState(GatewayAccountCredentialState.ACTIVE)
+                .build();
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(29)
+                .withSource(CARD_API)
+                .build();
+        when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(stripeGatewayAccountCredentialsEntity);
+        assertThrows(ChargeException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
+        verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
+    }
+    
     @Test
     void shouldCreateNewChargeAndPersistIdempotency() throws URISyntaxException {
         String idempotencyKey = "idempotency-key";
