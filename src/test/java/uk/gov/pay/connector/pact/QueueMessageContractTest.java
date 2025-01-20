@@ -219,8 +219,8 @@ public class QueueMessageContractTest {
         ChargeEntity chargeEntity = aValidChargeEntity().build();
         Charge charge = Charge.from(chargeEntity);
         RefundHistory refundHistory = aValidRefundHistoryEntity()
-                .withUserExternalId(RandomStringUtils.randomAlphanumeric(10))
                 .withUserEmail("test@example.com")
+                .withUserExternalId("user_external_id")
                 .build();
         RefundCreatedByUser refundCreatedByUser = RefundCreatedByUser.from(refundHistory, charge);
 
