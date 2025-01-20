@@ -1,7 +1,10 @@
 FROM maven:3.9.7-eclipse-temurin-21-alpine@sha256:8b762a139e07e874e3830521d97bafaf963cce6bda92afe9fb532def5d011404 AS builder
 
+RUN ["adduser", "-D", "build"]
+USER build
+
 WORKDIR /home/build
-COPY . .
+COPY --chown=build . .
 
 RUN ["mvn", "clean", "--no-transfer-progress", "package", "-DskipTests"]
 
@@ -12,7 +15,7 @@ RUN ["apk", "--no-cache", "upgrade"]
 ARG DNS_TTL=15
 
 # Default to UTF-8 file.encoding
-ENV LANG C.UTF-8
+ENV LANG=C.UTF-8
 
 RUN echo networkaddress.cache.ttl=$DNS_TTL >> "$JAVA_HOME/conf/security/java.security"
 
@@ -21,17 +24,20 @@ RUN /import_aws_rds_cert_bundles.sh && rm /import_aws_rds_cert_bundles.sh
 
 RUN ["apk", "add", "--no-cache", "bash", "tini"]
 
-ENV PORT 8080
-ENV ADMIN_PORT 8081
+RUN ["adduser", "--system", "pay"]
+USER pay
+
+ENV PORT=8080
+ENV ADMIN_PORT=8081
 
 EXPOSE 8080
 EXPOSE 8081
 
 WORKDIR /app
 
-COPY --from=builder /home/build/docker-startup.sh .
-COPY --from=builder /home/build/target/*.yaml .
-COPY --from=builder /home/build/target/pay-*-allinone.jar .
+COPY --from=builder --chown=pay /home/build/docker-startup.sh .
+COPY --from=builder --chown=pay /home/build/target/*.yaml .
+COPY --from=builder --chown=pay /home/build/target/pay-*-allinone.jar .
 
 ENTRYPOINT ["tini", "-e", "143", "--"]
 
