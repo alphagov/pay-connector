@@ -130,7 +130,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountsListDTO'
+                $ref: "#/components/schemas/GatewayAccountsListDTO"
           description: OK
       summary: Search gateway accounts
       tags:
@@ -146,20 +146,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewayAccountRequest'
+              $ref: "#/components/schemas/GatewayAccountRequest"
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateGatewayAccountResponse'
+                $ref: "#/components/schemas/CreateGatewayAccountResponse"
           description: Created
         "422":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Missing required fields or invalid values
       summary: 'Create a new gateway account '
       tags:
@@ -184,7 +184,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsWithInternalIdResponse'
+                $ref: "#/components/schemas/GatewayAccountWithCredentialsWithInternalIdResponse"
           description: OK
         "404":
           description: Not found
@@ -226,7 +226,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -249,7 +249,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+              $ref: "#/components/schemas/Worldpay3dsFlexCredentialsRequest"
       responses:
         "200":
           description: OK
@@ -259,7 +259,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid or missing mandatory fields
       summary: Create or update 3DS flex credentials (worldpay accounts)
       tags:
@@ -280,13 +280,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AgreementCreateRequest'
+              $ref: "#/components/schemas/AgreementCreateRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AgreementResponse'
+                $ref: "#/components/schemas/AgreementResponse"
           description: OK
         "404":
           description: Not found
@@ -294,7 +294,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Missing required fields
       summary: Create an agreement
       tags:
@@ -320,7 +320,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AgreementCancelRequest'
+              $ref: "#/components/schemas/AgreementCancelRequest"
       responses:
         default:
           content:
@@ -348,14 +348,14 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/ChargeCreateRequest'
+              $ref: "#/components/schemas/ChargeCreateRequest"
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: Created
         "400":
           description: Bad Request
@@ -367,7 +367,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Missing required fields or invalid values
       summary: Create new charge for gateway account
       tags:
@@ -396,7 +396,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: OK
         "404":
           description: Not found
@@ -431,7 +431,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - charge is not in correct state
         "404":
           description: Not found - charge not found
@@ -497,7 +497,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeEventsResponse'
+                $ref: "#/components/schemas/ChargeEventsResponse"
           description: OK
       summary: Get transaction history for a charge
       tags:
@@ -548,7 +548,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefundRequest'
+              $ref: "#/components/schemas/RefundRequest"
       responses:
         "200":
           content:
@@ -673,20 +673,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewayAccountCredentialsRequest'
+              $ref: "#/components/schemas/GatewayAccountCredentialsRequest"
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountCredentialsWithInternalId'
+                $ref: "#/components/schemas/GatewayAccountCredentialsWithInternalId"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - Invalid or missing mandatory fields
         "404":
           description: Not found - account not found
@@ -727,13 +727,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountCredentialsWithInternalId'
+                $ref: "#/components/schemas/GatewayAccountCredentialsWithInternalId"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - Invalid or missing mandatory fields
         "404":
           description: Not found - account or credential not found
@@ -791,7 +791,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StripeAccountResponse'
+                $ref: "#/components/schemas/StripeAccountResponse"
           description: OK
         "404":
           description: "Not found - Account does not exist or not a stripe gateway\
@@ -817,7 +817,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StripeAccountSetup'
+                $ref: "#/components/schemas/StripeAccountSetup"
           description: OK
         "404":
           description: Not found
@@ -877,7 +877,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewayAccountSwitchPaymentProviderRequest'
+              $ref: "#/components/schemas/GatewayAccountSwitchPaymentProviderRequest"
         required: true
       responses:
         "200":
@@ -886,7 +886,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -914,20 +914,20 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/TelephoneChargeCreateRequest'
+              $ref: "#/components/schemas/TelephoneChargeCreateRequest"
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: OK - returns existing charge for provider_id
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: Created
         "403":
           content:
@@ -946,7 +946,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Missing required fields or invalid values
       summary: Create a new telephone charge for gateway account.
       tags:
@@ -967,13 +967,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+              $ref: "#/components/schemas/Worldpay3dsFlexCredentialsRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationResult'
+                $ref: "#/components/schemas/ValidationResult"
           description: OK
         "404":
           description: Not found - account not found or not a Worldpay gateway account
@@ -981,7 +981,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid or missing mandatory fields
         "503":
           description: Service unavailable
@@ -1002,13 +1002,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorldpayValidatableCredentials'
+              $ref: "#/components/schemas/WorldpayValidatableCredentials"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationResult'
+                $ref: "#/components/schemas/ValidationResult"
           description: OK
         "404":
           description: Not found - account not found or not a Worldpay gateway account
@@ -1016,7 +1016,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid or missing mandatory fields
         "500":
           description: Internal server error
@@ -1031,7 +1031,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CardTypesResponse'
+                $ref: "#/components/schemas/CardTypesResponse"
           description: OK
       summary: List all card types
   /v1/api/charges/authorise:
@@ -1041,7 +1041,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/AuthoriseRequest'
+              $ref: "#/components/schemas/AuthoriseRequest"
         required: true
       responses:
         "204":
@@ -1050,14 +1050,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - invalid one time token or one_time_token has
             already been used
         "402":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Authorisation declined
         "404":
           description: Not found - charge not found
@@ -1065,7 +1065,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid payload or missing mandatory
             attributes
         "500":
@@ -1089,7 +1089,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: OK
         "404":
           description: Not found
@@ -1115,7 +1115,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/GatewayStatusComparison'
+                  $ref: "#/components/schemas/GatewayStatusComparison"
           description: OK
         "500":
           description: Internal server error
@@ -1143,7 +1143,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/GatewayStatusComparison'
+                  $ref: "#/components/schemas/GatewayStatusComparison"
           description: OK
         "500":
           description: Internal server error
@@ -1265,7 +1265,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsResponse'
+                $ref: "#/components/schemas/GatewayAccountWithCredentialsResponse"
           description: OK
         "404":
           description: Not found
@@ -1316,7 +1316,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -1348,7 +1348,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+              $ref: "#/components/schemas/Worldpay3dsFlexCredentialsRequest"
       responses:
         "200":
           description: OK
@@ -1358,7 +1358,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid or missing mandatory fields
       summary: Create or update 3DS flex credentials (worldpay accounts)
       tags:
@@ -1388,13 +1388,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AgreementCreateRequest'
+              $ref: "#/components/schemas/AgreementCreateRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AgreementResponse'
+                $ref: "#/components/schemas/AgreementResponse"
           description: OK
         "404":
           description: Not found
@@ -1402,7 +1402,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Missing required fields
       summary: Create an agreement for a service ID and account type (test|live)
       tags:
@@ -1437,7 +1437,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AgreementCancelRequest'
+              $ref: "#/components/schemas/AgreementCancelRequest"
       responses:
         default:
           content:
@@ -1474,14 +1474,14 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/ChargeCreateRequest'
+              $ref: "#/components/schemas/ChargeCreateRequest"
         required: true
       responses:
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: Created
         "400":
           description: Bad Request
@@ -1493,7 +1493,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Missing required fields or invalid values
       summary: Create new charge for service ID and account type
       tags:
@@ -1531,7 +1531,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: OK
         "404":
           description: Not found
@@ -1575,7 +1575,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - charge is not in correct state
         "404":
           description: Not found - charge not found
@@ -1663,7 +1663,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeEventsResponse'
+                $ref: "#/components/schemas/ChargeEventsResponse"
           description: OK
       summary: Get transaction history for a charge
       tags:
@@ -1700,7 +1700,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefundRequest'
+              $ref: "#/components/schemas/RefundRequest"
       responses:
         "200":
           content:
@@ -1852,20 +1852,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewayAccountCredentialsRequest'
+              $ref: "#/components/schemas/GatewayAccountCredentialsRequest"
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountCredentials'
+                $ref: "#/components/schemas/GatewayAccountCredentials"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - Invalid or missing mandatory fields
         "404":
           description: Not found - account not found
@@ -1915,13 +1915,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountCredentials'
+                $ref: "#/components/schemas/GatewayAccountCredentials"
           description: OK
         "400":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - Invalid or missing mandatory fields
         "404":
           description: Not found - account or credential not found
@@ -1997,7 +1997,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StripeAccountResponse'
+                $ref: "#/components/schemas/StripeAccountResponse"
           description: OK
         "404":
           description: Not found - Service does not exist or service does not have
@@ -2032,7 +2032,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StripeAccountSetup'
+                $ref: "#/components/schemas/StripeAccountSetup"
           description: OK
         "404":
           description: Not found
@@ -2110,7 +2110,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GatewayAccountSwitchPaymentProviderRequest'
+              $ref: "#/components/schemas/GatewayAccountSwitchPaymentProviderRequest"
         required: true
       responses:
         "200":
@@ -2119,7 +2119,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -2157,20 +2157,20 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/TelephoneChargeCreateRequest'
+              $ref: "#/components/schemas/TelephoneChargeCreateRequest"
         required: true
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: OK - returns existing charge for provider_id
         "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ChargeResponse'
+                $ref: "#/components/schemas/ChargeResponse"
           description: Created
         "403":
           content:
@@ -2189,7 +2189,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Missing required fields or invalid values
       summary: Create a new telephone charge by service id and account type
       tags:
@@ -2219,13 +2219,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Worldpay3dsFlexCredentialsRequest'
+              $ref: "#/components/schemas/Worldpay3dsFlexCredentialsRequest"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationResult'
+                $ref: "#/components/schemas/ValidationResult"
           description: OK
         "404":
           description: Not found - account not found or not a Worldpay gateway account
@@ -2233,7 +2233,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid or missing mandatory fields
         "503":
           description: Service unavailable
@@ -2265,13 +2265,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorldpayValidatableCredentials'
+              $ref: "#/components/schemas/WorldpayValidatableCredentials"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationResult'
+                $ref: "#/components/schemas/ValidationResult"
           description: OK
         "404":
           description: Not found - account not found or not a Worldpay gateway account
@@ -2279,7 +2279,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid or missing mandatory fields
         "500":
           description: Internal server error
@@ -2326,7 +2326,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayAccountWithCredentialsWithInternalIdResponse'
+                $ref: "#/components/schemas/GatewayAccountWithCredentialsWithInternalIdResponse"
           description: OK
         "404":
           description: Not found
@@ -2359,7 +2359,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -2428,7 +2428,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -2466,7 +2466,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -2489,7 +2489,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FrontendChargeResponse'
+                $ref: "#/components/schemas/FrontendChargeResponse"
           description: OK
         "404":
           description: Not found - charge not found
@@ -2520,7 +2520,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FrontendChargeResponse'
+                $ref: "#/components/schemas/FrontendChargeResponse"
           description: OK
         "400":
           description: Bad request
@@ -2546,7 +2546,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Auth3dsResult'
+              $ref: "#/components/schemas/Auth3dsResult"
       responses:
         "200":
           description: OK
@@ -2557,13 +2557,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - invalid payload or the payment has been declined
         "402":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Gateway error
         "404":
           description: Not found - charge not found
@@ -2593,7 +2593,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - charge is not in correct state
         "404":
           description: Not found - charge not found
@@ -2640,7 +2640,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthCardDetails'
+              $ref: "#/components/schemas/AuthCardDetails"
       responses:
         "200":
           description: OK
@@ -2651,13 +2651,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - invalid payload or the payment has been declined
         "402":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Gateway error
         "404":
           description: Not found - charge not found
@@ -2665,7 +2665,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid payload or missing mandatory
             attributes
         "500":
@@ -2721,7 +2721,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApplePayAuthRequest'
+              $ref: "#/components/schemas/ApplePayAuthRequest"
         required: true
       responses:
         "200":
@@ -2733,13 +2733,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - invalid payload or the payment has been declined
         "402":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Gateway error
         "404":
           description: Not found
@@ -2747,7 +2747,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid payload or missing mandatory
             attributes
         "500":
@@ -2770,7 +2770,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GooglePayAuthRequest'
+              $ref: "#/components/schemas/GooglePayAuthRequest"
         required: true
       responses:
         "200":
@@ -2782,13 +2782,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request - invalid payload or the payment has been declined
         "402":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Gateway error
         "404":
           description: Not found
@@ -2796,7 +2796,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid payload or missing mandatory
             attributes
         "500":
@@ -2869,7 +2869,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -2957,7 +2957,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -2994,7 +2994,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
           description: Bad request
         "404":
           description: Not found
@@ -3033,7 +3033,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
+                $ref: "#/components/schemas/TokenResponse"
           description: OK
         "404":
           description: Not found
@@ -3410,7 +3410,7 @@ components:
             transactionId\":\"372c3858122b6bc39c6095eca2f994a8aa012f3b025d0d72ecfd449c2a5877f9\"\
             }}"
         payment_info:
-          $ref: '#/components/schemas/ApplePayPaymentInfo'
+          $ref: "#/components/schemas/ApplePayPaymentInfo"
       required:
       - payment_info
     ApplePayPaymentInfo:
@@ -3492,7 +3492,7 @@ components:
           type: string
           example: "fr;q=0.9, fr-CH;q=1.0, en;q=0.8, de;q=0.7, *;q=0.5"
         address:
-          $ref: '#/components/schemas/Address'
+          $ref: "#/components/schemas/Address"
         card_brand:
           type: string
           example: visa
@@ -3519,7 +3519,7 @@ components:
           type: string
           example: "123"
         expiry_date:
-          $ref: '#/components/schemas/CardExpiryDate'
+          $ref: "#/components/schemas/CardExpiryDate"
         ip_address:
           type: string
           example: 127.0.0.1
@@ -3556,7 +3556,7 @@ components:
       description: Object containing information about the authentication of the payment
       properties:
         three_d_secure:
-          $ref: '#/components/schemas/ThreeDSecure'
+          $ref: "#/components/schemas/ThreeDSecure"
     AuthoriseRequest:
       type: object
       properties:
@@ -3631,7 +3631,7 @@ components:
         card_types:
           type: array
           items:
-            $ref: '#/components/schemas/CardTypeEntity'
+            $ref: "#/components/schemas/CardTypeEntity"
     ChargeCreateRequest:
       type: object
       properties:
@@ -3677,13 +3677,13 @@ components:
           - cy
           example: en
         metadata:
-          $ref: '#/components/schemas/ExternalMetadata'
+          $ref: "#/components/schemas/ExternalMetadata"
         moto:
           type: boolean
           description: Mail Order / Telephone Order (MOTO) payment flag
           example: true
         prefilled_cardholder_details:
-          $ref: '#/components/schemas/PrefilledCardHolderDetails'
+          $ref: "#/components/schemas/PrefilledCardHolderDetails"
         reference:
           type: string
           description: The reference issued by the government service for this payment
@@ -3721,7 +3721,7 @@ components:
         events:
           type: array
           items:
-            $ref: '#/components/schemas/TransactionEvent'
+            $ref: "#/components/schemas/TransactionEvent"
     ChargeResponse:
       type: object
       properties:
@@ -3736,7 +3736,7 @@ components:
           description: Amount of this charge
           example: 100
         auth_3ds_data:
-          $ref: '#/components/schemas/Auth3dsData'
+          $ref: "#/components/schemas/Auth3dsData"
         auth_code:
           type: string
           description: Only applicable for telephone payments reported. Authorisation
@@ -3754,7 +3754,7 @@ components:
           - external
           example: web
         authorisation_summary:
-          $ref: '#/components/schemas/AuthorisationSummary'
+          $ref: "#/components/schemas/AuthorisationSummary"
         authorised_date:
           type: string
           format: date-time
@@ -3765,7 +3765,7 @@ components:
           type: string
           example: Visa
         card_details:
-          $ref: '#/components/schemas/PersistedCard'
+          $ref: "#/components/schemas/PersistedCard"
         charge_id:
           type: string
           description: Unique identifier for the charge
@@ -3788,7 +3788,7 @@ components:
           type: string
           example: Joe.Bogs@example.org
         exemption:
-          $ref: '#/components/schemas/Exemption'
+          $ref: "#/components/schemas/Exemption"
         fee:
           type: integer
           format: int64
@@ -3847,7 +3847,7 @@ components:
               method: GET
               rel: refunds
         metadata:
-          $ref: '#/components/schemas/ExternalMetadata'
+          $ref: "#/components/schemas/ExternalMetadata"
         moto:
           type: boolean
           description: Mail Order / Telephone Order (MOTO) payment flag
@@ -3858,7 +3858,7 @@ components:
             \ Available depending on payment service provider"
           example: 90
         payment_outcome:
-          $ref: '#/components/schemas/PaymentOutcome'
+          $ref: "#/components/schemas/PaymentOutcome"
         payment_provider:
           type: string
           description: The payment provider used for this transaction
@@ -3874,17 +3874,17 @@ components:
             ID
           example: "45678"
         reference:
-          $ref: '#/components/schemas/ServicePaymentReference'
+          $ref: "#/components/schemas/ServicePaymentReference"
         refund_summary:
-          $ref: '#/components/schemas/RefundSummary'
+          $ref: "#/components/schemas/RefundSummary"
         return_url:
           type: string
           description: service return url
           example: https://service-name.gov.uk/transactions/12345
         settlement_summary:
-          $ref: '#/components/schemas/SettlementSummary'
+          $ref: "#/components/schemas/SettlementSummary"
         state:
-          $ref: '#/components/schemas/ExternalTransactionState'
+          $ref: "#/components/schemas/ExternalTransactionState"
         telephone_number:
           type: string
           description: Only applicable for telephone payments reported. User's telephone
@@ -4041,7 +4041,7 @@ components:
           requested: true
       properties:
         outcome:
-          $ref: '#/components/schemas/Outcome'
+          $ref: "#/components/schemas/Outcome"
         requested:
           type: boolean
           description: Flag indicating whether 3ds exemption was requested for the
@@ -4092,7 +4092,7 @@ components:
       description: The charge associated with the token
       properties:
         agreement:
-          $ref: '#/components/schemas/AgreementResponse'
+          $ref: "#/components/schemas/AgreementResponse"
         agreement_id:
           type: string
           description: 'Application for Recurring card payments. Agreement ID that
@@ -4104,7 +4104,7 @@ components:
           description: Amount of this charge
           example: 100
         auth_3ds_data:
-          $ref: '#/components/schemas/Auth3dsData'
+          $ref: "#/components/schemas/Auth3dsData"
         auth_code:
           type: string
           description: Only applicable for telephone payments reported. Authorisation
@@ -4122,7 +4122,7 @@ components:
           - external
           example: web
         authorisation_summary:
-          $ref: '#/components/schemas/AuthorisationSummary'
+          $ref: "#/components/schemas/AuthorisationSummary"
         authorised_date:
           type: string
           format: date-time
@@ -4133,7 +4133,7 @@ components:
           type: string
           example: Visa
         card_details:
-          $ref: '#/components/schemas/PersistedCard'
+          $ref: "#/components/schemas/PersistedCard"
         charge_id:
           type: string
           description: Unique identifier for the charge
@@ -4156,7 +4156,7 @@ components:
           type: string
           example: Joe.Bogs@example.org
         exemption:
-          $ref: '#/components/schemas/Exemption'
+          $ref: "#/components/schemas/Exemption"
         fee:
           type: integer
           format: int64
@@ -4164,7 +4164,7 @@ components:
             \ Only available depending on payment service provider"
           example: 10
         gateway_account:
-          $ref: '#/components/schemas/FrontendGatewayAccountResponse'
+          $ref: "#/components/schemas/FrontendGatewayAccountResponse"
         gateway_transaction_id:
           type: string
           description: The reference number the payment gateway associated with the
@@ -4217,7 +4217,7 @@ components:
               method: GET
               rel: refunds
         metadata:
-          $ref: '#/components/schemas/ExternalMetadata'
+          $ref: "#/components/schemas/ExternalMetadata"
         moto:
           type: boolean
           description: Mail Order / Telephone Order (MOTO) payment flag
@@ -4228,7 +4228,7 @@ components:
             \ Available depending on payment service provider"
           example: 90
         payment_outcome:
-          $ref: '#/components/schemas/PaymentOutcome'
+          $ref: "#/components/schemas/PaymentOutcome"
         payment_provider:
           type: string
           description: The payment provider used for this transaction
@@ -4244,9 +4244,9 @@ components:
             ID
           example: "45678"
         reference:
-          $ref: '#/components/schemas/ServicePaymentReference'
+          $ref: "#/components/schemas/ServicePaymentReference"
         refund_summary:
-          $ref: '#/components/schemas/RefundSummary'
+          $ref: "#/components/schemas/RefundSummary"
         return_url:
           type: string
           description: service return url
@@ -4254,9 +4254,9 @@ components:
         save_payment_instrument_to_agreement:
           type: boolean
         settlement_summary:
-          $ref: '#/components/schemas/SettlementSummary'
+          $ref: "#/components/schemas/SettlementSummary"
         state:
-          $ref: '#/components/schemas/ExternalTransactionState'
+          $ref: "#/components/schemas/ExternalTransactionState"
         status:
           type: string
         telephone_number:
@@ -4307,7 +4307,7 @@ components:
           type: array
           description: The supported card types for the account
           items:
-            $ref: '#/components/schemas/CardTypeEntity'
+            $ref: "#/components/schemas/CardTypeEntity"
         corporate_credit_card_surcharge_amount:
           type: integer
           format: int64
@@ -4388,7 +4388,7 @@ components:
           format: date-time
           example: 2022-06-30T15:44:19.323Z
         credentials:
-          $ref: '#/components/schemas/GatewayCredentials'
+          $ref: "#/components/schemas/GatewayCredentials"
         external_id:
           type: string
           example: 787460d16d4a4d14b4c94787b8f427db
@@ -4441,7 +4441,7 @@ components:
           format: date-time
           example: 2022-06-30T15:44:19.323Z
         credentials:
-          $ref: '#/components/schemas/GatewayCredentials'
+          $ref: "#/components/schemas/GatewayCredentials"
         external_id:
           type: string
           example: 787460d16d4a4d14b4c94787b8f427db
@@ -4619,7 +4619,7 @@ components:
         email_notifications:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/EmailNotificationEntity'
+            $ref: "#/components/schemas/EmailNotificationEntity"
           description: The settings for the different emails (payments/refunds) that
             are sent out
           example:
@@ -4709,7 +4709,7 @@ components:
           description: Account type for the payment provider (test/live)
           example: test
         worldpay_3ds_flex:
-          $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
+          $ref: "#/components/schemas/Worldpay3dsFlexCredentials"
     GatewayAccountSwitchPaymentProviderRequest:
       type: object
       properties:
@@ -4828,7 +4828,7 @@ components:
         email_notifications:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/EmailNotificationEntity'
+            $ref: "#/components/schemas/EmailNotificationEntity"
           description: The settings for the different emails (payments/refunds) that
             are sent out
           example:
@@ -4848,7 +4848,7 @@ components:
           type: array
           description: Array of the credentials configured for this account
           items:
-            $ref: '#/components/schemas/GatewayAccountCredentials'
+            $ref: "#/components/schemas/GatewayAccountCredentials"
         gateway_account_id:
           type: integer
           format: int64
@@ -4874,7 +4874,7 @@ components:
           description: Indicates whether the card security code is masked when being
             input for MOTO payments.
         notificationCredentials:
-          $ref: '#/components/schemas/NotificationCredentials'
+          $ref: "#/components/schemas/NotificationCredentials"
         notifySettings:
           type: object
           additionalProperties:
@@ -4933,7 +4933,7 @@ components:
           description: Account type for the payment provider (test/live)
           example: test
         worldpay_3ds_flex:
-          $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
+          $ref: "#/components/schemas/Worldpay3dsFlexCredentials"
     GatewayAccountWithCredentialsWithInternalIdResponse:
       type: object
       properties:
@@ -5038,7 +5038,7 @@ components:
         email_notifications:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/EmailNotificationEntity'
+            $ref: "#/components/schemas/EmailNotificationEntity"
           description: The settings for the different emails (payments/refunds) that
             are sent out
           example:
@@ -5058,7 +5058,7 @@ components:
           type: array
           description: Array of the credentials configured for this account
           items:
-            $ref: '#/components/schemas/GatewayAccountCredentialsWithInternalId'
+            $ref: "#/components/schemas/GatewayAccountCredentialsWithInternalId"
         gateway_account_id:
           type: integer
           format: int64
@@ -5084,7 +5084,7 @@ components:
           description: Indicates whether the card security code is masked when being
             input for MOTO payments.
         notificationCredentials:
-          $ref: '#/components/schemas/NotificationCredentials'
+          $ref: "#/components/schemas/NotificationCredentials"
         notifySettings:
           type: object
           additionalProperties:
@@ -5143,20 +5143,20 @@ components:
           description: Account type for the payment provider (test/live)
           example: test
         worldpay_3ds_flex:
-          $ref: '#/components/schemas/Worldpay3dsFlexCredentials'
+          $ref: "#/components/schemas/Worldpay3dsFlexCredentials"
     GatewayAccountsListDTO:
       type: object
       properties:
         accounts:
           type: array
           items:
-            $ref: '#/components/schemas/GatewayAccountResponse'
+            $ref: "#/components/schemas/GatewayAccountResponse"
     GatewayCredentials:
       type: object
       oneOf:
-      - $ref: '#/components/schemas/WorldpayCredentials'
-      - $ref: '#/components/schemas/StripeCredentials'
-      - $ref: '#/components/schemas/EpdqCredentials'
+      - $ref: "#/components/schemas/WorldpayCredentials"
+      - $ref: "#/components/schemas/StripeCredentials"
+      - $ref: "#/components/schemas/EpdqCredentials"
     GatewayStatusComparison:
       type: object
       properties:
@@ -5275,9 +5275,9 @@ components:
       type: object
       properties:
         encrypted_payment_data:
-          $ref: '#/components/schemas/GooglePayEncryptedPaymentData'
+          $ref: "#/components/schemas/GooglePayEncryptedPaymentData"
         payment_info:
-          $ref: '#/components/schemas/GooglePayPaymentInfo'
+          $ref: "#/components/schemas/GooglePayPaymentInfo"
         token_id:
           type: string
           description: only required for Stripe payments
@@ -5392,12 +5392,12 @@ components:
           type: string
           example: failed
         supplemental:
-          $ref: '#/components/schemas/Supplemental'
+          $ref: "#/components/schemas/Supplemental"
     PersistedCard:
       type: object
       properties:
         billing_address:
-          $ref: '#/components/schemas/Address'
+          $ref: "#/components/schemas/Address"
         card_brand:
           type: string
           example: Visa
@@ -5412,11 +5412,11 @@ components:
           description: The cardholder name the user entered when they paid.
           example: Joe B
         expiry_date:
-          $ref: '#/components/schemas/CardExpiryDate'
+          $ref: "#/components/schemas/CardExpiryDate"
         first_digits_card_number:
-          $ref: '#/components/schemas/FirstDigitsCardNumber'
+          $ref: "#/components/schemas/FirstDigitsCardNumber"
         last_digits_card_number:
-          $ref: '#/components/schemas/LastDigitsCardNumber'
+          $ref: "#/components/schemas/LastDigitsCardNumber"
     PrefilledAddress:
       type: object
       description: A structure representing the billing address of a card
@@ -5453,7 +5453,7 @@ components:
       type: object
       properties:
         billing_address:
-          $ref: '#/components/schemas/PrefilledAddress'
+          $ref: "#/components/schemas/PrefilledAddress"
         cardholder_name:
           type: string
           description: prefilled cardholder name
@@ -5575,7 +5575,7 @@ components:
     StripeGatewayAccountRequest:
       type: object
       allOf:
-      - $ref: '#/components/schemas/GatewayAccountRequest'
+      - $ref: "#/components/schemas/GatewayAccountRequest"
       - type: object
         properties:
           allow_apple_pay:
@@ -5588,7 +5588,7 @@ components:
             type: string
             writeOnly: true
           credentials:
-            $ref: '#/components/schemas/StripeCredentials'
+            $ref: "#/components/schemas/StripeCredentials"
           description:
             type: string
           payment_provider:
@@ -5646,7 +5646,7 @@ components:
           example: 2022-06-28T16:05:33Z
           maxLength: 50
         card_expiry:
-          $ref: '#/components/schemas/CardExpiryDate'
+          $ref: "#/components/schemas/CardExpiryDate"
         card_type:
           type: string
           description: "card_type and must be one of the following strings: master-card,\
@@ -5680,7 +5680,7 @@ components:
           description: user's name on the front of their payment card
           example: Joe B
         payment_outcome:
-          $ref: '#/components/schemas/PaymentOutcome'
+          $ref: "#/components/schemas/PaymentOutcome"
         processor_id:
           type: string
           description: unique supplier internal reference number associated with the
@@ -5724,7 +5724,7 @@ components:
       type: object
       properties:
         charge:
-          $ref: '#/components/schemas/FrontendChargeResponse'
+          $ref: "#/components/schemas/FrontendChargeResponse"
         used:
           type: boolean
           description: true or false depending on whether the token has been marked
@@ -5739,7 +5739,7 @@ components:
         refund_reference:
           type: string
         state:
-          $ref: '#/components/schemas/State'
+          $ref: "#/components/schemas/State"
         submitted_by:
           type: string
         type:
@@ -5814,11 +5814,11 @@ components:
         gateway_merchant_id:
           type: string
         one_off_customer_initiated:
-          $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
+          $ref: "#/components/schemas/WorldpayMerchantCodeCredentials"
         recurring_customer_initiated:
-          $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
+          $ref: "#/components/schemas/WorldpayMerchantCodeCredentials"
         recurring_merchant_initiated:
-          $ref: '#/components/schemas/WorldpayMerchantCodeCredentials'
+          $ref: "#/components/schemas/WorldpayMerchantCodeCredentials"
     WorldpayMerchantCodeCredentials:
       type: object
       properties:
