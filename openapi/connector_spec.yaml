@@ -2272,7 +2272,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationResult"
-          description: OK
+          description: The response body will contain either 'valid' or 'invalid'
+            to indicate if the supplied credentials are valid or not.
         "404":
           description: Not found - account not found or not a Worldpay gateway account
         "422":
@@ -2282,7 +2283,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Unprocessable Entity - Invalid or missing mandatory fields
         "500":
-          description: Internal server error
+          description: "Indicates an internal server error in connector, or an upstream\
+            \ Worldpay 5xx error."
       summary: Validate Worldpay credentials by service ID and account type
       tags:
       - Gateway account credentials

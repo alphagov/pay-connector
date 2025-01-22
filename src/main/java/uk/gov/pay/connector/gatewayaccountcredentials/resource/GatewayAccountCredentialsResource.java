@@ -369,12 +369,20 @@ public class GatewayAccountCredentialsResource {
     @Operation(
             summary = "Validate Worldpay credentials by service ID and account type",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "OK",
+                    @ApiResponse(
+                            responseCode = "200", 
+                            description = "The response body will contain either 'valid' or 'invalid' to indicate if the supplied credentials are valid or not.",
                             content = @Content(schema = @Schema(implementation = ValidationResult.class))),
-                    @ApiResponse(responseCode = "422", description = "Unprocessable Entity - Invalid or missing mandatory fields",
+                    @ApiResponse(
+                            responseCode = "422", 
+                            description = "Unprocessable Entity - Invalid or missing mandatory fields",
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-                    @ApiResponse(responseCode = "404", description = "Not found - account not found or not a Worldpay gateway account"),
-                    @ApiResponse(responseCode = "500", description = "Internal server error")
+                    @ApiResponse(
+                            responseCode = "404", 
+                            description = "Not found - account not found or not a Worldpay gateway account"),
+                    @ApiResponse(
+                            responseCode = "500", 
+                            description = "Indicates an internal server error in connector, or an upstream Worldpay 5xx error.")
             }
     )
     public ValidationResult validateWorldpayCredentialsByServiceIdAndAccountType(
