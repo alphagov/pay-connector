@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.util;
 
 import uk.gov.pay.connector.app.StripeAuthTokens;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
-import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
@@ -89,14 +88,6 @@ public class AuthUtil {
 
     public static Map<String, String> getWorldpayCredentialsCheckAuthHeader(WorldpayValidatableCredentials worldpayValidatableCredentials) {
         return getAuthHeader(worldpayValidatableCredentials.getUsername(), worldpayValidatableCredentials.getPassword());
-    }
-
-    public static Map<String, String> getEpdqAuthHeader(GatewayCredentials credentials) {
-        if (!(credentials instanceof EpdqCredentials)) {
-            throw new IllegalArgumentException("Expected provided GatewayCredentials to be of type EpdqCredentials");
-        }
-        var epdqCredentials = (EpdqCredentials) credentials;
-        return getAuthHeader(epdqCredentials.getUsername(), epdqCredentials.getPassword());
     }
 
     private static Map<String, String> getAuthHeader(String username, String password) {
