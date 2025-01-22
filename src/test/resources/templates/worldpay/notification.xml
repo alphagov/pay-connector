@@ -30,6 +30,7 @@
                     <amount value="5000" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
                 </accountTx>
                 <journalReference type="capture" reference="{{refund-ref}}"/>
+                <journalReference type="refund_authorisation" reference="{{refund-authorisation-reference}}"/>
             </journal>
         </orderStatusEvent>
     </notify>

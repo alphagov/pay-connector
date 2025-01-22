@@ -16,7 +16,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
     public WorldpayNotification() {
     }
 
-    public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year, String transactionId, String reference) {
+    public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year, String transactionId, String reference, String refundAuthorisationReference) {
         this.merchantCode = merchantCode;
         this.status = status;
         this.dayOfMonth = dayOfMonth;
@@ -24,6 +24,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
         this.year = year;
         this.transactionId = transactionId;
         this.reference = reference;
+        this.refundAuthorisationReference = refundAuthorisationReference;
     }
 
     @XmlPath("@merchantCode")
@@ -43,6 +44,9 @@ public class WorldpayNotification implements ChargeStatusRequest {
 
     @XmlPath("notify/orderStatusEvent/@orderCode")
     private String transactionId;
+
+    @XmlPath("notify/orderStatusEvent/journal/journalReference[@type='refund_authorisation']/@reference")
+    private String refundAuthorisationReference;
 
     @XmlPath("notify/orderStatusEvent/journal/journalReference/@reference")
     private String reference;
@@ -79,6 +83,10 @@ public class WorldpayNotification implements ChargeStatusRequest {
         return reference;
     }
 
+    public String getRefundAuthorisationReference() {
+        return refundAuthorisationReference;
+    }
+
     public LocalDate getBookingDate() {
         return LocalDate.of(year, month, dayOfMonth);
     }
@@ -93,6 +101,8 @@ public class WorldpayNotification implements ChargeStatusRequest {
                 ", year=" + year +
                 ", transactionId='" + transactionId + '\'' +
                 ", reference='" + reference + '\'' +
+                ", captureReference='" + reference + '\'' +
+                ", refundAuthorisationReference='" + refundAuthorisationReference + '\'' +
                 ", chargeStatus=" + chargeStatus +
                 '}';
     }
