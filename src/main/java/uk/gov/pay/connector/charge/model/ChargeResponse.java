@@ -824,6 +824,7 @@ public class ChargeResponse {
 
             @JsonProperty("result")
             @Schema(description = "Indicating the result if 3ds exemption was requested for the payment.", example = "honoured")
+            @JsonSerialize(using = ToStringSerializer.class)
             private Exemption3ds result;
 
             public Exemption3ds getResult() {
@@ -850,7 +851,7 @@ public class ChargeResponse {
             @Override
             public String toString() {
                 return "Outcome{" +
-                        "result='" + result.getDisplayName() + '\'' +
+                        "result='" + result + '\'' +
                         '}';
             }
         }
