@@ -64,6 +64,7 @@ class WorldpayXMLUnmarshallerTest {
                 .replace("{{status}}", status)
                 .replace("{{refund-ref}}", "REFUND-REF")
                 .replace("{{refund-authorisation-reference}}", "REFUND-AUTHORISATION-REFERENCE")
+                .replace("{{refund-response-reference}}", "REFUND-RESPONSE-REFERENCE")
                 .replace("{{bookingDateDay}}", "10")
                 .replace("{{bookingDateMonth}}", "01")
                 .replace("{{bookingDateYear}}", "2017");
@@ -73,6 +74,7 @@ class WorldpayXMLUnmarshallerTest {
         assertThat(response.getMerchantCode(), is("MERCHANTCODE"));
         assertThat(response.getReference(), is("REFUND-REF"));
         assertThat(response.getRefundAuthorisationReference(), is("REFUND-AUTHORISATION-REFERENCE"));
+        assertThat(response.getRefundResponseReference(), is("REFUND-RESPONSE-REFERENCE"));
         assertThat(response.getBookingDate(), is(LocalDate.parse("2017-01-10")));
     }
 

@@ -16,7 +16,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
     public WorldpayNotification() {
     }
 
-    public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year, String transactionId, String reference, String refundAuthorisationReference) {
+    public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year, String transactionId, String reference, String refundAuthorisationReference, String refundResponseReference) {
         this.merchantCode = merchantCode;
         this.status = status;
         this.dayOfMonth = dayOfMonth;
@@ -25,6 +25,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
         this.transactionId = transactionId;
         this.reference = reference;
         this.refundAuthorisationReference = refundAuthorisationReference;
+        this.refundResponseReference = refundResponseReference;
     }
 
     @XmlPath("@merchantCode")
@@ -48,8 +49,11 @@ public class WorldpayNotification implements ChargeStatusRequest {
     @XmlPath("notify/orderStatusEvent/journal/journalReference[@type='refund_authorisation']/@reference")
     private String refundAuthorisationReference;
 
-    @XmlPath("notify/orderStatusEvent/journal/journalReference/@reference")
+    @XmlPath("notify/orderStatusEvent/journal/journalReference[@type='capture']/@reference")
     private String reference;
+
+    @XmlPath("notify/orderStatusEvent/journal/journalReference[@type='refund_response']/@reference")
+    private String refundResponseReference;
 
     private Optional<ChargeStatus> chargeStatus = Optional.empty();
 
@@ -87,6 +91,10 @@ public class WorldpayNotification implements ChargeStatusRequest {
         return refundAuthorisationReference;
     }
 
+    public String getRefundResponseReference() {
+        return refundResponseReference;
+    }
+
     public LocalDate getBookingDate() {
         return LocalDate.of(year, month, dayOfMonth);
     }
@@ -103,6 +111,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
                 ", reference='" + reference + '\'' +
                 ", captureReference='" + reference + '\'' +
                 ", refundAuthorisationReference='" + refundAuthorisationReference + '\'' +
+                ", refundResponseReference='" + refundResponseReference + '\'' +
                 ", chargeStatus=" + chargeStatus +
                 '}';
     }
