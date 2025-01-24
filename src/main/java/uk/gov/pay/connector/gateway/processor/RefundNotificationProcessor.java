@@ -67,6 +67,18 @@ public class RefundNotificationProcessor {
         RefundEntity refundEntity = optionalRefundEntity.get();
         RefundStatus oldStatus = refundEntity.getStatus();
 
+        if (isRefundTransitionRedundant(oldStatus, newStatus)) {
+            logger.info("Notification received for refund [{}] is redundant and therefore ignored because refund is already in state [{}]",
+                    refundEntity.getExternalId(), oldStatus);
+            return;
+        }
+
+        if (isRefundTransitionIllegal(oldStatus, newStatus)) {
+            logger.error("Notification received for refund [{}] is unexpected and therefore ignored because it would cause an illegal state transition to [{}] as refund is already in state [{}]",
+                    refundEntity.getExternalId(), newStatus, oldStatus);
+            return;
+        }
+
         refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
 
         if (RefundStatus.REFUNDED.equals(newStatus)) {
@@ -83,5 +95,21 @@ public class RefundNotificationProcessor {
                 gatewayAccountEntity.getId(),
                 charge.getPaymentGatewayName(),
                 gatewayAccountEntity.getType());
+    }
+
+    private boolean isRefundTransitionRedundant(RefundStatus oldStatus, RefundStatus newStatus) {
+            return oldStatus.equals(newStatus);
+    }
+
+    private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
+            return isRefundTransitionFromRefundedToFailed(oldStatus, newStatus) || isRefundTransitionFromFailedToRefunded(oldStatus, newStatus);
+    }
+
+    private boolean isRefundTransitionFromRefundedToFailed(RefundStatus oldStatus, RefundStatus newStatus) {
+            return RefundStatus.REFUNDED.equals(oldStatus) && RefundStatus.REFUND_ERROR.equals(newStatus);
+    }
+
+    private boolean isRefundTransitionFromFailedToRefunded(RefundStatus oldStatus, RefundStatus newStatus) {
+        return RefundStatus.REFUND_ERROR.equals(oldStatus) && RefundStatus.REFUNDED.equals(newStatus);
     }
 }

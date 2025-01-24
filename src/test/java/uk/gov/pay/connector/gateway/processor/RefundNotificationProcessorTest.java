@@ -92,6 +92,26 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
+    void shouldNotInvokeSendEmailNotifications_WhenRefundStatusWasAlreadySetAsRefunded() {
+        refundEntity.setStatus(RefundStatus.REFUNDED);
+        Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
+    }
+
+    @Test
+    void shouldNotInvokeSendEmailNotifications_WhenRefundStatusWasSetAsRefundError() {
+        refundEntity.setStatus(RefundStatus.REFUND_ERROR);
+        Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
+    }
+
+    @Test
      void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, charge);
 
