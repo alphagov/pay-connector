@@ -244,8 +244,7 @@ class WorldpayNotificationServiceTest {
                 "REFUSED",
                 "REFUSED_BY_BANK",
                 "SETTLED",
-                "SETTLED_BY_MERCHANT",
-                "SENT_FOR_REFUND"
+                "SETTLED_BY_MERCHANT"
         );
 
         for (String status : ignoredStatuses) {
@@ -261,6 +260,39 @@ class WorldpayNotificationServiceTest {
             verifyNoInteractions(mockChargeNotificationProcessor);
             verifyNoInteractions(mockRefundNotificationProcessor);
         }
+    }
+
+    @Test
+    void shouldIgnoreNotificationWhenStatusIsSentForRefundWithoutAuthorisationCode() {
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        String status = "SENT_FOR_REFUND";
+        String refundAuthorisationCode = "";
+        final String payload = sampleWorldpayNotification(
+                transactionId, referenceId, refundAuthorisationCode, "", status,
+                "10", "03", "2017");
+
+        assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+        }
+
+    @Test
+    void shouldNotIgnoreNotificationWhenStatusIsSentForRefundWithAuthorisationCode() {
+        String refundAuthorisationCode = "987654321";
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        String status = "SENT_FOR_REFUND";
+        final String payload = sampleWorldpayNotification(
+                transactionId, referenceId, refundAuthorisationCode, "", status,
+                "10", "03", "2017");
+
+        assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verify(mockRefundNotificationProcessor).invoke(WORLDPAY, RefundStatus.REFUNDED,
+                gatewayAccountEntity, referenceId, transactionId, charge);
     }
 
     @Test

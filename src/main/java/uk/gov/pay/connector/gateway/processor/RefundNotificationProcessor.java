@@ -16,6 +16,8 @@ import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
@@ -67,9 +69,21 @@ public class RefundNotificationProcessor {
         RefundEntity refundEntity = optionalRefundEntity.get();
         RefundStatus oldStatus = refundEntity.getStatus();
 
+        if (isRefundTransitionRedundant(oldStatus, newStatus)) {
+            logger.info("Notification received for refund [{}] is redundant and therefore ignored because refund is already in state [{}]",
+                    refundEntity.getExternalId(), oldStatus);
+            return;
+        }
+
+        if (isRefundTransitionIllegal(oldStatus, newStatus)) {
+            logger.error("Notification received for refund [{}] is unexpected and therefore ignored because it would cause an illegal state transition to [{}] as refund is already in state [{}]",
+                    refundEntity.getExternalId(), newStatus, oldStatus);
+            return;
+        }
+
         refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
 
-        if (RefundStatus.REFUNDED.equals(newStatus)) {
+        if (newStatus == REFUNDED) {
             userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         }
 
@@ -83,5 +97,13 @@ public class RefundNotificationProcessor {
                 gatewayAccountEntity.getId(),
                 charge.getPaymentGatewayName(),
                 gatewayAccountEntity.getType());
+    }
+
+    private boolean isRefundTransitionRedundant(RefundStatus oldStatus, RefundStatus newStatus) {
+            return newStatus == oldStatus;
+    }
+
+    private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
+            return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
     }
 }

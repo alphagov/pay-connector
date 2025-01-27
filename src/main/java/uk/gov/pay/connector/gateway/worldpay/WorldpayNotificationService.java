@@ -38,10 +38,9 @@ public class WorldpayNotificationService {
             "REFUSED",
             "REFUSED_BY_BANK",
             "SETTLED",
-            "SETTLED_BY_MERCHANT",
-            "SENT_FOR_REFUND"
+            "SETTLED_BY_MERCHANT"
     );
-    private static final List<String> REFUND_STATUSES = ImmutableList.of("REFUNDED", "REFUNDED_BY_MERCHANT", "REFUND_FAILED");
+    private static final List<String> REFUND_STATUSES = ImmutableList.of("REFUNDED", "REFUNDED_BY_MERCHANT", "REFUND_FAILED", "SENT_FOR_REFUND");
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final ChargeService chargeService;
@@ -146,8 +145,7 @@ public class WorldpayNotificationService {
             }
             chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, CAPTURED, notification.getGatewayEventDate());
         } else if (isRefundNotification(notification)) {
-            refundNotificationProcessor.invoke(PaymentGatewayName.WORLDPAY, newRefundStatus(notification), gatewayAccountEntity,
-                    notification.getReference(), notification.getTransactionId(), charge);
+            processRefundNotification(notification, charge, gatewayAccountEntity);
         } else if (isErrorNotification(notification)) {
             if (gatewayAccountEntity.isLive()) {
                 logger.error("{} error notification received for live account {}", PAYMENT_GATEWAY_NAME, notification);
@@ -160,11 +158,20 @@ public class WorldpayNotificationService {
         return true;
     }
 
+    private void processRefundNotification(WorldpayNotification notification, Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+        if(isOfflineRefund(notification)) {
+            logger.info("{} notification {} ignored (SENT_FOR_REFUND without refund authorisation code)", PAYMENT_GATEWAY_NAME, notification);
+        } else {
+            refundNotificationProcessor.invoke(PaymentGatewayName.WORLDPAY, newRefundStatus(notification), gatewayAccountEntity,
+                notification.getReference(), notification.getTransactionId(), charge);
+        }
+    }
+
     private boolean isErrorNotification(WorldpayNotification notification) {
         return "ERROR".equals(notification.getStatus());
     }
 
-    // TODO: Temporary logging for PP-13416
+    // TODO: Remove temporary logging for PP-13416 (by June 2025)
     private boolean isTemporaryLoggingRequiredOnTestOnly(WorldpayNotification notification) {
         return ("REFUND_FAILED".equals(notification.getStatus()) ||
         "SENT_FOR_REFUND".equals(notification.getStatus()))
@@ -193,6 +200,21 @@ public class WorldpayNotificationService {
 
     private boolean isIgnored(WorldpayNotification notification) {
         return IGNORED_STATUSES.contains(notification.getStatus());
+    }
+
+    private boolean isOfflineRefund(WorldpayNotification notification) {
+        if (!"SENT_FOR_REFUND".equals(notification.getStatus())) {
+            return false;
+        }
+
+        boolean hasRefundAuthorisationCode = false;
+        try {
+            Integer.parseInt(notification.getRefundAuthorisationReference());
+            hasRefundAuthorisationCode = true;
+        } catch (NumberFormatException e) {
+            hasRefundAuthorisationCode = false;
+        }
+        return !hasRefundAuthorisationCode;
     }
 
     public String notificationDomain() {
