@@ -145,13 +145,7 @@ public class WorldpayNotificationService {
             }
             chargeNotificationProcessor.invoke(notification.getTransactionId(), charge, CAPTURED, notification.getGatewayEventDate());
         } else if (isRefundNotification(notification)) {
-            if(isOfflineRefund(notification)){
-                logger.info("{} notification {} ignored (SENT_FOR_REFUND without refund authorisation code)", PAYMENT_GATEWAY_NAME, notification);
-                return true;
-            } else {
-                refundNotificationProcessor.invoke(PaymentGatewayName.WORLDPAY, newRefundStatus(notification), gatewayAccountEntity,
-                notification.getReference(), notification.getTransactionId(), charge);
-            }
+            processRefundNotification(notification, charge, gatewayAccountEntity);
         } else if (isErrorNotification(notification)) {
             if (gatewayAccountEntity.isLive()) {
                 logger.error("{} error notification received for live account {}", PAYMENT_GATEWAY_NAME, notification);
@@ -162,6 +156,15 @@ public class WorldpayNotificationService {
             logger.error("{} notification {} unknown", PAYMENT_GATEWAY_NAME, notification);
         }
         return true;
+    }
+
+    private void processRefundNotification(WorldpayNotification notification, Charge charge, GatewayAccountEntity gatewayAccountEntity) {
+        if(isOfflineRefund(notification)) {
+            logger.info("{} notification {} ignored (SENT_FOR_REFUND without refund authorisation code)", PAYMENT_GATEWAY_NAME, notification);
+        } else {
+            refundNotificationProcessor.invoke(PaymentGatewayName.WORLDPAY, newRefundStatus(notification), gatewayAccountEntity,
+                notification.getReference(), notification.getTransactionId(), charge);
+        }
     }
 
     private boolean isErrorNotification(WorldpayNotification notification) {
