@@ -16,6 +16,8 @@ import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
@@ -81,7 +83,7 @@ public class RefundNotificationProcessor {
 
         refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
 
-        if (RefundStatus.REFUNDED.equals(newStatus)) {
+        if (newStatus == REFUNDED) {
             userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         }
 
@@ -98,18 +100,10 @@ public class RefundNotificationProcessor {
     }
 
     private boolean isRefundTransitionRedundant(RefundStatus oldStatus, RefundStatus newStatus) {
-            return oldStatus.equals(newStatus);
+            return newStatus == oldStatus;
     }
 
     private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
-            return isRefundTransitionFromRefundedToFailed(oldStatus, newStatus) || isRefundTransitionFromFailedToRefunded(oldStatus, newStatus);
-    }
-
-    private boolean isRefundTransitionFromRefundedToFailed(RefundStatus oldStatus, RefundStatus newStatus) {
-            return RefundStatus.REFUNDED.equals(oldStatus) && RefundStatus.REFUND_ERROR.equals(newStatus);
-    }
-
-    private boolean isRefundTransitionFromFailedToRefunded(RefundStatus oldStatus, RefundStatus newStatus) {
-        return RefundStatus.REFUND_ERROR.equals(oldStatus) && RefundStatus.REFUNDED.equals(newStatus);
+            return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
     }
 }
