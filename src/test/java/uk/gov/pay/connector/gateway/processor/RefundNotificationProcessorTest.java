@@ -25,6 +25,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
+import static org.hamcrest.CoreMatchers.containsString;
 
 import java.util.List;
 import java.util.Optional;
@@ -109,6 +110,34 @@ import static org.mockito.Mockito.when;
 
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
+    }
+
+    @Test
+    void shouldLogIllegalStateTransition_IfRefundedWhenRefundStatusWasSetAsRefundError() {
+        refundEntity.setStatus(RefundStatus.REFUND_ERROR);
+        Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessageForSplunkAlert = "Notification received for refund would cause an illegal state transition";
+        assertThat(logStatement.get(0).getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
+    }
+
+    @Test
+    void shouldLogIllegalStateTransition_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
+        refundEntity.setStatus(RefundStatus.REFUNDED);
+        Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessageForSplunkAlert = "Notification received for refund would cause an illegal state transition";
+        assertThat(logStatement.get(0).getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
     }
 
     @Test
