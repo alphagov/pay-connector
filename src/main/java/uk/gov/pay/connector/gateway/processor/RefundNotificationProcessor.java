@@ -76,7 +76,7 @@ public class RefundNotificationProcessor {
         }
 
         if (isRefundTransitionIllegal(oldStatus, newStatus)) {
-            logger.error("Notification received for refund [{}] is unexpected and therefore ignored because it would cause an illegal state transition to [{}] as refund is already in state [{}]",
+            logger.info("Notification received for refund would cause an illegal state transition: refund [{}] cannot be set as [{}] because it is already in state [{}].",
                     refundEntity.getExternalId(), newStatus, oldStatus);
             return;
         }
