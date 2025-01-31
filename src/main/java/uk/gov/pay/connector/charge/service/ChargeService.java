@@ -142,6 +142,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
@@ -155,6 +156,7 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.MOTO_NOT_ALL
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
+import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 public class ChargeService {
@@ -1177,7 +1179,7 @@ public class ChargeService {
     }
 
     private void checkIfAmountBelowMinimum(Source source, Long amount, GatewayAccountEntity gatewayAccount, String paymentProvider) {
-        if (source == CARD_API && amount < MINIMUM_STRIPE_PAYMENT_AMOUNT && PaymentGatewayName.valueFrom(paymentProvider) == PaymentGatewayName.STRIPE) {
+        if (source != CARD_EXTERNAL_TELEPHONE && amount < MINIMUM_STRIPE_PAYMENT_AMOUNT && PaymentGatewayName.valueFrom(paymentProvider) == STRIPE) {
             throw new ChargeException("Payments under 30 pence are not allowed for Stripe accounts", AMOUNT_BELOW_MINIMUM, SC_UNPROCESSABLE_ENTITY);
         }
         checkIfZeroAmountAllowed(amount, gatewayAccount);

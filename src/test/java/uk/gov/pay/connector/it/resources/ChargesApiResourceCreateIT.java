@@ -16,12 +16,16 @@ import org.junit.jupiter.api.DisplayNameGenerator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
+import uk.gov.service.payments.commons.model.Source;
 
 import javax.ws.rs.core.Response.Status;
 import java.sql.Timestamp;
@@ -383,8 +387,9 @@ public class ChargesApiResourceCreateIT {
                         .body("error_identifier", is(ErrorIdentifier.ZERO_AMOUNT_NOT_ALLOWED.toString()));
             }
 
-            @Test
-            void when_amount_is_under_30p_for_api_payment_for_Stripe_account() {
+            @ParameterizedTest
+            @ValueSource( strings = { "CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO" })
+            void when_amount_is_under_30p_for_api_payment_for_Stripe_account(String source) {
                 DatabaseFixtures.TestAccount stripeTestAccount = app.getDatabaseFixtures()
                         .aTestAccount()
                         .withPaymentProvider("stripe")
@@ -397,7 +402,7 @@ public class ChargesApiResourceCreateIT {
                                 "reference", "Test reference",
                                 "description", "Test description", 
                                 "return_url", "http://service.local/success-page/",
-                                "source", "CARD_API"
+                                "source", source
                         )))
                         .post(format("/v1/api/accounts/%s/charges", stripeTestAccount.getAccountId()))
                         .then()
@@ -900,8 +905,9 @@ public class ChargesApiResourceCreateIT {
                         .body("error_identifier", is(ErrorIdentifier.ZERO_AMOUNT_NOT_ALLOWED.toString()));
             }
 
-            @Test
-            void when_amount_is_under_30p_for_api_payment_for_Stripe_account() {
+            @ParameterizedTest
+            @ValueSource( strings = { "CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO" })
+            void when_amount_is_under_30p_for_api_payment_for_Stripe_account(String source) {
                 DatabaseFixtures.TestAccount stripeTestAccount = app.getDatabaseFixtures()
                         .aTestAccount()
                         .withPaymentProvider("stripe")
@@ -915,7 +921,7 @@ public class ChargesApiResourceCreateIT {
                                 "reference", "Test reference",
                                 "description", "Test description",
                                 "return_url", "http://service.local/success-page/",
-                                "source", "CARD_API"
+                                "source", source
                         )))
                         .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .then()
