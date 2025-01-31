@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -729,8 +730,9 @@ class ChargeServiceCreateTest {
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
-    @Test
-    void shouldThrowException_whenPaymentProviderIsStripeAndAmountUnder30Pence() {
+    @ParameterizedTest
+    @EnumSource(value = Source.class, names = { "CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO" })
+    void shouldThrowException_whenPaymentProviderIsStripeAndAmountUnder30Pence(Source source) {
         GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -740,7 +742,7 @@ class ChargeServiceCreateTest {
                 .build();
         ChargeCreateRequest request = requestBuilder
                 .withAmount(29)
-                .withSource(CARD_API)
+                .withSource(source)
                 .build();
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(stripeGatewayAccountCredentialsEntity);
