@@ -16,7 +16,9 @@ public class WorldpayNotification implements ChargeStatusRequest {
     public WorldpayNotification() {
     }
 
-    public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year, String transactionId, String reference, String refundAuthorisationReference, String refundResponseReference) {
+    public WorldpayNotification(String merchantCode, String status, int dayOfMonth, int month, int year,
+            String transactionId, String reference, String refundAuthorisationReference,
+            String refundResponseReference, String description) {
         this.merchantCode = merchantCode;
         this.status = status;
         this.dayOfMonth = dayOfMonth;
@@ -26,6 +28,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
         this.reference = reference;
         this.refundAuthorisationReference = refundAuthorisationReference;
         this.refundResponseReference = refundResponseReference;
+        this.description = description;
     }
 
     @XmlPath("@merchantCode")
@@ -33,6 +36,13 @@ public class WorldpayNotification implements ChargeStatusRequest {
 
     @XmlPath("notify/orderStatusEvent/journal/@journalType")
     private String status;
+
+    @XmlPath("notify/orderStatusEvent/journal/@description")
+    private String description;
+
+    public String getRefundFailedDescription() {
+        return "REFUND_FAILED".equals(status) ? description : null;
+    }
 
     @XmlPath("notify/orderStatusEvent/journal/bookingDate/date/@dayOfMonth")
     private int dayOfMonth;
@@ -95,6 +105,10 @@ public class WorldpayNotification implements ChargeStatusRequest {
         return refundResponseReference;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public LocalDate getBookingDate() {
         return LocalDate.of(year, month, dayOfMonth);
     }
@@ -104,6 +118,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
         return "WorldpayNotification{" +
                 "merchantCode='" + merchantCode + '\'' +
                 ", status='" + status + '\'' +
+                ", description='" + description + '\'' +
                 ", dayOfMonth=" + dayOfMonth +
                 ", month=" + month +
                 ", year=" + year +
@@ -112,6 +127,7 @@ public class WorldpayNotification implements ChargeStatusRequest {
                 ", captureReference='" + reference + '\'' +
                 ", refundAuthorisationReference='" + refundAuthorisationReference + '\'' +
                 ", refundResponseReference='" + refundResponseReference + '\'' +
+                ", refundFailedDescription='" + getRefundFailedDescription() + '\'' +
                 ", chargeStatus=" + chargeStatus +
                 '}';
     }

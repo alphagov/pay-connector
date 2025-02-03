@@ -19,7 +19,7 @@
                 </balance>
                 <riskScore value="66"/>
             </payment>
-            <journal journalType="{{status}}">
+            <journal journalType="{{status}}" description="{{description}}">
                 <bookingDate>
                     <date dayOfMonth="{{bookingDateDay}}" month="{{bookingDateMonth}}" year="{{bookingDateYear}}"/>
                 </bookingDate>
