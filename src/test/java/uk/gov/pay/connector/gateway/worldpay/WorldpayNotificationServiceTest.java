@@ -55,6 +55,7 @@ class WorldpayNotificationServiceTest {
     private final String refundAuthorisationReference = "refund-authorisation-reference";
     private final String refundResponseReference = "refund-response-reference";
     private final String transactionId = "transaction-reference";
+    private final String description = "description";
 
     @BeforeEach
     void setup() {
@@ -76,6 +77,7 @@ class WorldpayNotificationServiceTest {
                 referenceId,
                 "",
                 "",
+                "",
                 "CAPTURED",
                 "10",
                 "03",
@@ -93,6 +95,7 @@ class WorldpayNotificationServiceTest {
                 transactionId,
                 referenceId,
                 "",
+                "",
                 ""
         );
         verify(mockChargeNotificationProcessor).invoke(expectedNotification.getTransactionId(), charge, CAPTURED, expectedNotification.getGatewayEventDate());
@@ -109,6 +112,7 @@ class WorldpayNotificationServiceTest {
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
+                "",
                 "",
                 "",
                 "CAPTURED",
@@ -134,7 +138,7 @@ class WorldpayNotificationServiceTest {
 
         for (String status : refundSuccessStatuses) {
             final String payload = sampleWorldpayNotification(
-                    transactionId, referenceId, "", "", status,
+                    transactionId, referenceId, "", "", "", status,
                     "10", "03", "2017");
 
             final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
@@ -151,7 +155,7 @@ class WorldpayNotificationServiceTest {
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         final String payload = sampleWorldpayNotification(
-                transactionId, referenceId, "", refundResponseReference, "REFUND_FAILED",
+                transactionId, referenceId, "", refundResponseReference, description, "REFUND_FAILED",
                 "10", "03", "2017");
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
@@ -170,6 +174,7 @@ class WorldpayNotificationServiceTest {
                 referenceId,
                 "",
                 "",
+                "",
                 "CHARGED",
                 "10",
                 "03",
@@ -186,7 +191,7 @@ class WorldpayNotificationServiceTest {
     void ifChargeNotFound_shouldIgnoreForNonTelephonePaymentAccount() {
         when(mockGatewayAccountService.isATelephonePaymentNotificationAccount("MERCHANTCODE")).thenReturn(false);
         final String payload = sampleWorldpayNotification(
-                transactionId, referenceId, "", "", "CHARGED", "10", "03", "2017");
+                transactionId, referenceId, "", "", "", "CHARGED", "10", "03", "2017");
         setUpChargeServiceToReturnCharge(Optional.empty());
 
         final boolean result = notificationService.handleNotificationFor(ipAddress, payload);
@@ -202,6 +207,7 @@ class WorldpayNotificationServiceTest {
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
+                "",
                 "",
                 "",
                 "CHARGED",
@@ -221,6 +227,7 @@ class WorldpayNotificationServiceTest {
         final String payload = sampleWorldpayNotification(
                 "",
                 referenceId,
+                "",
                 "",
                 "",
                 "CHARGED",
@@ -253,6 +260,7 @@ class WorldpayNotificationServiceTest {
                     referenceId,
                     refundAuthorisationReference,
                     refundResponseReference,
+                    description,
                     status);
 
             assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
@@ -269,7 +277,7 @@ class WorldpayNotificationServiceTest {
         String status = "SENT_FOR_REFUND";
         String refundAuthorisationCode = "";
         final String payload = sampleWorldpayNotification(
-                transactionId, referenceId, refundAuthorisationCode, "", status,
+                transactionId, referenceId, refundAuthorisationCode, "", "", status,
                 "10", "03", "2017");
 
         assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
@@ -285,7 +293,7 @@ class WorldpayNotificationServiceTest {
         setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         String status = "SENT_FOR_REFUND";
         final String payload = sampleWorldpayNotification(
-                transactionId, referenceId, refundAuthorisationCode, "", status,
+                transactionId, referenceId, refundAuthorisationCode, "", "", status,
                 "10", "03", "2017");
 
         assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
@@ -302,7 +310,7 @@ class WorldpayNotificationServiceTest {
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(mockGatewayAccountEntity));
 
-        final String payload = sampleWorldpayNotification(transactionId, referenceId, "", "", "ERROR");
+        final String payload = sampleWorldpayNotification(transactionId, referenceId, "", "", "", "ERROR");
 
         assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
         verify(mockGatewayAccountEntity, times(1)).isLive();
@@ -315,6 +323,7 @@ class WorldpayNotificationServiceTest {
         final String payload = sampleWorldpayNotification(
                 transactionId,
                 referenceId,
+                "",
                 "",
                 "",
                 "CAPTURED",
@@ -348,6 +357,7 @@ class WorldpayNotificationServiceTest {
             String referenceId,
             String refundAuthorisationReference,
             String refundResponseReference,
+            String description,
             String status,
             String bookingDateDay,
             String bookingDateMonth,
@@ -360,7 +370,8 @@ class WorldpayNotificationServiceTest {
                 .replace("{{status}}", status)
                 .replace("{{bookingDateDay}}", bookingDateDay)
                 .replace("{{bookingDateMonth}}", bookingDateMonth)
-                .replace("{{bookingDateYear}}", bookingDateYear);
+                .replace("{{bookingDateYear}}", bookingDateYear)
+                .replace("{{description}}", description);
     }
 
     private static String sampleWorldpayNotification(
@@ -368,8 +379,9 @@ class WorldpayNotificationServiceTest {
             String referenceId,
             String refundAuthorisationReference,
             String refundResponseReference,
+            String description,
             String status) {
-        return sampleWorldpayNotification(transactionId, referenceId, refundAuthorisationReference, refundResponseReference, status, "2017", "10", "22");
+        return sampleWorldpayNotification(transactionId, referenceId, refundAuthorisationReference, refundResponseReference, description, status, "2017", "10", "22");
     }
 
     private void setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional<GatewayAccountEntity> gatewayAccountEntity) {

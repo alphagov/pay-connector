@@ -59,9 +59,11 @@ class WorldpayXMLUnmarshallerTest {
     void shouldUnmarshallANotification() throws Exception {
         String transactionId = "MyUniqueTransactionId!";
         String status = "CAPTURED";
+        String description = "CAPTURED DESCRIPTION";
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
                 .replace("{{transactionId}}", transactionId)
                 .replace("{{status}}", status)
+                .replace("{{description}}", description)
                 .replace("{{refund-ref}}", "REFUND-REF")
                 .replace("{{refund-authorisation-reference}}", "REFUND-AUTHORISATION-REFERENCE")
                 .replace("{{refund-response-reference}}", "REFUND-RESPONSE-REFERENCE")
@@ -70,6 +72,7 @@ class WorldpayXMLUnmarshallerTest {
                 .replace("{{bookingDateYear}}", "2017");
         WorldpayNotification response = XMLUnmarshaller.unmarshall(successPayload, WorldpayNotification.class);
         assertThat(response.getStatus(), is(status));
+        assertThat(response.getDescription(), is(description));
         assertThat(response.getTransactionId(), is(transactionId));
         assertThat(response.getMerchantCode(), is("MERCHANTCODE"));
         assertThat(response.getReference(), is("REFUND-REF"));
