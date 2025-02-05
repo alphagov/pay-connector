@@ -83,10 +83,6 @@ public class WorldpayNotificationService {
             logger.info("Parsed {} notification: {}", PAYMENT_GATEWAY_NAME, notification);
             if (isTemporaryLoggingRequiredOnTestOnly(notification)) {
                 logger.info("{} notification {} is being inspected (on test only) for PP-13416. Payload: {}", PAYMENT_GATEWAY_NAME, notification, payload);
-                //TODO: Remove - Needed for PP-13497
-                if (isOfflineRefund(notification)) {
-                    logger.info("{} notification {} PP-13497 TEST: Notification received for refund would cause an illegal state transition ", PAYMENT_GATEWAY_NAME, notification);
-                }
             }
         } catch (XMLUnmarshallerException e) {
             logger.error("{} notification parsing failed: {}", PAYMENT_GATEWAY_NAME, e);
