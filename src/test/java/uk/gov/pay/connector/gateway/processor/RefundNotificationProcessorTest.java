@@ -113,6 +113,19 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
+    void shouldLogFailedRefund_WhenRefundStatusWasSetAsRefundError() {
+        Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessageForSplunkAlert = "Refund request record set as failed (REFUND_ERROR)";
+        assertThat(logStatement.get(0).getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
+    }
+
+    @Test
     void shouldLogIllegalStateTransition_IfRefundedWhenRefundStatusWasSetAsRefundError() {
         refundEntity.setStatus(RefundStatus.REFUND_ERROR);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);

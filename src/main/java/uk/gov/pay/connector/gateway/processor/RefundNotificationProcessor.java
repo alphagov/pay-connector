@@ -87,8 +87,11 @@ public class RefundNotificationProcessor {
             userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
         }
 
-        logger.info("Notification received for refund. Updating refund - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
+        String stateTransitionMessage = newStatus == REFUND_ERROR ? "Refund request record set as failed (REFUND_ERROR)" : "Refund request record set as successful (REFUNDED)";
+
+        logger.info("Notification received for refund. Updating refund: {} - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
                         + "status_to={}, account_id={}, provider={}, provider_type={}",
+                stateTransitionMessage,
                 refundEntity.getChargeExternalId(),
                 gatewayTransactionId,
                 transactionId,
