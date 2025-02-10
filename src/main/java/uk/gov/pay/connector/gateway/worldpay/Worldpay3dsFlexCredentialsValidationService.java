@@ -43,12 +43,14 @@ public class Worldpay3dsFlexCredentialsValidationService {
     }
 
     public boolean validateCredentials(GatewayAccountEntity gatewayAccountEntity, Worldpay3dsFlexCredentials flexCredentials) {
-        if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName()) && !gatewayAccountEntity.hasPendingWorldpayCredential()) {
+        // validation of 3ds flex creds for a non-worldpay gateway account is allowed in the context of a service switching to worldpay 
+        if (!gatewayAccountEntity.getGatewayName().equals(WORLDPAY.getName())  
+                && !gatewayAccountEntity.hasPendingWorldpayCredential()) {
             throw new NotAWorldpayGatewayAccountException(gatewayAccountEntity.getId());
         }
         
         String ddcToken = worldpay3dsFlexJwtService.generateDdcToken(GatewayAccount.valueOf(gatewayAccountEntity),
-                flexCredentials, Instant.now(), WORLDPAY.getName()); // we've already checked that the gateway account has a valid worldpay credential
+                flexCredentials, Instant.now(), WORLDPAY.getName());
 
         var formData = new MultivaluedHashMap<String, String>();
         formData.add("JWT", ddcToken);
