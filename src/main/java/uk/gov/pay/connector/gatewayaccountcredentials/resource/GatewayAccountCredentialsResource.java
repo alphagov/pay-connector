@@ -316,10 +316,16 @@ public class GatewayAccountCredentialsResource {
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Update a gateway account credential by service ID and account Type",
+            description = "A generic endpoint that allows the patching of credentials, " +
+                    "credentials/worldpay/one_off_customer_initiated " +
+                    "credentials/worldpay/recurring_customer_initiated, " +
+                    "credentials/worldpay/recurring_merchant_initiated, " +
+                    "last_updated_by_user_external_id, state, gateway_merchant_id, credentials/gateway_merchant_id, " +
+                    "using a JSON Patch-esque message body.",
             requestBody = @RequestBody(content = @Content(schema = @Schema(example = "[" +
                     "    {" +
                     "        \"op\": \"replace\"," +
-                    "        \"path\": \"state\"," +
+                    "        \"path\": \"credentials/worldpay/one_off_customer_initiated\"," +
                     "        \"value\": \"VERIFIED_WITH_LIVE_PAYMENT\"" +
                     "    }" +
                     "]"))),
