@@ -23,6 +23,7 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
@@ -70,6 +71,8 @@ public class ParityCheckServiceTest {
     private HistoricalEventEmitter mockHistoricalEventEmitter;
     @Mock
     private PaymentProviders mockProviders;
+    @Mock
+    private RefundEntityFactory mockRefundEntityFactory;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
     @Mock
@@ -112,7 +115,7 @@ public class ParityCheckServiceTest {
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .build();
         when(mockLedgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
 
         ParityCheckStatus chargeAndRefundsParityCheckStatus = parityCheckService.getChargeAndRefundsParityCheckStatus(chargeEntity);
@@ -141,7 +144,7 @@ public class ParityCheckServiceTest {
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .build();
         when(mockLedgerService.getTransaction(chargeEntity.getExternalId())).thenReturn(Optional.of(transaction));
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         boolean matchesWithLedger = parityCheckService.parityCheckChargeForExpunger(chargeEntity);
 

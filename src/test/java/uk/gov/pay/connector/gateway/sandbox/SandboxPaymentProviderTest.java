@@ -26,6 +26,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.Instant;
@@ -60,7 +61,7 @@ public class SandboxPaymentProviderTest {
     void setup() {
         chargeService = mock(ChargeService.class);
         paymentInstrumentService = mock(PaymentInstrumentService.class);
-        provider = new SandboxPaymentProvider();
+        provider = new SandboxPaymentProvider(mock(RefundEntityFactory.class));
         credentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of())
                 .withPaymentProvider(SANDBOX.getName())

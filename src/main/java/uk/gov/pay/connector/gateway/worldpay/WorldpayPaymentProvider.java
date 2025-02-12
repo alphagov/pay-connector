@@ -46,6 +46,7 @@ import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.refund.model.domain.Refund;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 
@@ -66,14 +67,14 @@ import static java.util.UUID.randomUUID;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeaderForManagingRecurringAuthTokens;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_CORPORATE_EXEMPTION_REQUEST;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_EXEMPTION_ENGINE_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCancelOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_CORPORATE_EXEMPTION_REQUEST;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_EXEMPTION_ENGINE_REQUEST;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_HONOURED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
@@ -102,6 +103,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     private final WorldpayRefundHandler worldpayRefundHandler;
     private final WorldpayWalletAuthorisationHandler worldpayWalletAuthorisationHandler;
     private final WorldpayAuthoriseHandler worldpayAuthoriseHandler;
+    private final RefundEntityFactory refundEntityFactory;
     private final Map<String, URI> gatewayUrlMap;
     private final AuthorisationService authorisationService;
     private final AuthorisationLogger authorisationLogger;
@@ -119,6 +121,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
                                    WorldpayAuthoriseHandler worldpayAuthoriseHandler,
                                    WorldpayCaptureHandler worldpayCaptureHandler,
                                    WorldpayRefundHandler worldpayRefundHandler,
+                                   @Named("WorldpayRefundEntityFactory") RefundEntityFactory refundEntityFactory,
                                    AuthorisationService authorisationService,
                                    AuthorisationLogger authorisationLogger,
                                    ChargeDao chargeDao,
@@ -134,6 +137,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         this.worldpayRefundHandler = worldpayRefundHandler;
         this.worldpayWalletAuthorisationHandler = worldpayWalletAuthorisationHandler;
         this.worldpayAuthoriseHandler = worldpayAuthoriseHandler;
+        this.refundEntityFactory = refundEntityFactory;
         this.authorisationService = authorisationService;
         this.authorisationLogger = authorisationLogger;
         this.chargeDao = chargeDao;
@@ -424,7 +428,10 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, isSetUpAgreement);
     }
 
-    
+    @Override
+    public RefundEntityFactory getRefundEntityFactory() {
+        return refundEntityFactory;
+    }
     
     private GatewayOrder build3dsResponseAuthOrder(Auth3dsResponseGatewayRequest request) {
         return aWorldpay3dsResponseAuthOrderRequestBuilder()

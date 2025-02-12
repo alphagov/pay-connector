@@ -49,6 +49,7 @@ import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.queue.tasks.dispute.BalanceTransaction;
 import uk.gov.pay.connector.queue.tasks.dispute.EvidenceDetails;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
@@ -147,6 +148,8 @@ class StripePaymentProviderTest {
     @Mock
     private GatewayClient.Response tokenResponse;
     @Mock
+    private RefundEntityFactory refundEntityFactory;
+    @Mock
     private StripeSdkClient stripeSDKClient;
 
     private final JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
@@ -159,7 +162,7 @@ class StripePaymentProviderTest {
         when(gatewayClientFactory.createGatewayClient(eq(STRIPE), any(MetricRegistry.class))).thenReturn(gatewayClient);
         when(environment.metrics()).thenReturn(metricRegistry);
 
-        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment, stripeSDKClient);
+        provider = new StripePaymentProvider(gatewayClientFactory, configuration, objectMapper, environment, refundEntityFactory, stripeSDKClient);
     }
 
     @Test

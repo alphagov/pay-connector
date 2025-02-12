@@ -48,6 +48,7 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.service.WorldpayRefundEntityFactory;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -659,6 +660,7 @@ class WorldpayPaymentProviderTest {
                 new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser()),
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()),
+                new WorldpayRefundEntityFactory(),
                 new AuthorisationService(mockCardExecutorService, mockEnvironment, mockConnectorConfiguration),
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 mock(ChargeDao.class),

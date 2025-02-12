@@ -30,9 +30,12 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,11 +50,14 @@ public class SandboxPaymentProvider implements PaymentProvider {
 
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final SandboxWalletAuthorisationHandler sandboxWalletAuthorisationHandler;
+    private final RefundEntityFactory refundEntityFactory;
     private final SandboxGatewayResponseGenerator fullCardNumberSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxFullCardNumbers());
     private final SandboxGatewayResponseGenerator walletSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxLast4DigitsCardNumbers());
     private final SandboxGatewayResponseGenerator recurringSandboxResponseGenerator = new SandboxGatewayResponseGenerator(new SandboxFirst6AndLast4CardNumbers());
 
-    public SandboxPaymentProvider() {
+    @Inject
+    public SandboxPaymentProvider(@Named("DefaultRefundEntityFactory") RefundEntityFactory refundEntityFactory) {
+        this.refundEntityFactory = refundEntityFactory;
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         this.sandboxWalletAuthorisationHandler = new SandboxWalletAuthorisationHandler(walletSandboxResponseGenerator);
     }
@@ -186,5 +192,10 @@ public class SandboxPaymentProvider implements PaymentProvider {
     @Override
     public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) {
         //No action needs to be taken in sandbox in response to a deleteStoredPaymentDetails task
+    }
+
+    @Override
+    public RefundEntityFactory getRefundEntityFactory() {
+        return refundEntityFactory;
     }
 }
