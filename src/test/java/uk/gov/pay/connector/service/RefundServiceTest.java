@@ -54,11 +54,11 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -83,6 +83,8 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternal
 import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixture.aValidRefundTransactionsForPayment;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundServiceTest {
@@ -864,6 +866,48 @@ public class RefundServiceTest {
         when(mockRefundDao.findByExternalId("refund-external-id")).thenReturn(Optional.empty());
         Optional<RefundEntity> refund = refundService.findRefundByExternalId("refund-external-id");
         assertThat(refund.isPresent(), is(false));
+    }
+
+    @Test
+    void shouldNotTransitionWhenRefundIsInTerminalStateRefunded() {
+        ChargeEntity charge = aValidChargeEntity().build();
+        RefundEntity refundEntity = aValidRefundEntity()
+                .withAmount(100L)
+                .withStatus(REFUNDED)
+                .build();
+
+        refundService.transitionRefundState(refundEntity, charge.getGatewayAccount(), REFUND_SUBMITTED, Charge.from(charge));
+
+        verify(mockStateTransitionService, never()).offerRefundStateTransition(any(), any());
+        assertThat(refundEntity.getStatus(), is(REFUNDED));
+    }
+
+    @Test
+    void shouldNotTransitionWhenRefundIsInTerminalStateError() {
+        ChargeEntity charge = aValidChargeEntity().build();
+        RefundEntity refundEntity = aValidRefundEntity()
+                .withAmount(100L)
+                .withStatus(REFUND_ERROR)
+                .build();
+
+        refundService.transitionRefundState(refundEntity, charge.getGatewayAccount(), REFUND_SUBMITTED, Charge.from(charge));
+
+        verify(mockStateTransitionService, never()).offerRefundStateTransition(any(), any());
+        assertThat(refundEntity.getStatus(), is(REFUND_ERROR));
+    }
+
+    @Test
+    void shouldTransitionWhenRefundIsNotInTerminalState() {
+        ChargeEntity charge = aValidChargeEntity().build();
+        RefundEntity refundEntity = aValidRefundEntity()
+                .withAmount(100L)
+                .withStatus(CREATED)
+                .build();
+
+        refundService.transitionRefundState(refundEntity, charge.getGatewayAccount(), REFUND_SUBMITTED, Charge.from(charge));
+
+        verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, REFUND_SUBMITTED);
+        assertThat(refundEntity.getStatus(), is(REFUND_SUBMITTED));
     }
 
     private ArgumentMatcher<RefundEntity> aRefundEntity(long amount, ChargeEntity chargeEntity) {
