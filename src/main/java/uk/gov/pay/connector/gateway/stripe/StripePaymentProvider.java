@@ -48,12 +48,14 @@ import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
@@ -78,6 +80,7 @@ public class StripePaymentProvider implements PaymentProvider {
     private final StripeFailedPaymentFeeCollectionHandler stripeFailedPaymentFeeCollectionHandler;
     private final StripeQueryPaymentStatusHandler stripeQueryPaymentStatusHandler;
     private final StripeDisputeHandler stripeDisputeHandler;
+    private final RefundEntityFactory refundEntityFactory;
     private final StripeSdkClient stripeSDKClient;
 
     @Inject
@@ -85,6 +88,7 @@ public class StripePaymentProvider implements PaymentProvider {
                                  ConnectorConfiguration configuration,
                                  JsonObjectMapper jsonObjectMapper,
                                  Environment environment,
+                                 @Named("DefaultRefundEntityFactory") RefundEntityFactory refundEntityFactory,
                                  StripeSdkClient stripeSDKClient) {
         this.stripeGatewayConfig = configuration.getStripeConfig();
         this.stripeSDKClient = stripeSDKClient;
@@ -98,6 +102,7 @@ public class StripePaymentProvider implements PaymentProvider {
         stripeFailedPaymentFeeCollectionHandler = new StripeFailedPaymentFeeCollectionHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeQueryPaymentStatusHandler = new StripeQueryPaymentStatusHandler(client, stripeGatewayConfig, jsonObjectMapper);
         stripeDisputeHandler = new StripeDisputeHandler(client, stripeGatewayConfig, jsonObjectMapper);
+        this.refundEntityFactory = refundEntityFactory;
     }
 
     @Override
@@ -207,6 +212,11 @@ public class StripePaymentProvider implements PaymentProvider {
                     customerId, e.getStatusCode(), e.getCode(), e.getMessage());
             throw new GatewayException.GenericGatewayException(message);
         }
+    }
+
+    @Override
+    public RefundEntityFactory getRefundEntityFactory() {
+        return refundEntityFactory;
     }
 
     public List<Fee> calculateAndTransferFeesForFailedPayments(ChargeEntity charge) throws GatewayException {

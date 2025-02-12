@@ -27,6 +27,7 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
@@ -89,6 +90,8 @@ class ParityCheckerServiceTest {
     private PaymentProviders mockProviders;
     @Mock
     private HistoricalEventEmitter historicalEventEmitter;
+    @Mock
+    private RefundEntityFactory refundEntityFactory;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
 
@@ -102,7 +105,7 @@ class ParityCheckerServiceTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        lenient().when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(refundEntityFactory));
         refundParityChecker = new RefundParityChecker(refundDao);
         parityCheckService = new ParityCheckService(ledgerService, chargeService, historicalEventEmitter,
                 chargeParityChecker, refundParityChecker, refundService);

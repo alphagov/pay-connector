@@ -26,6 +26,9 @@ import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidat
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
+import uk.gov.pay.connector.refund.service.DefaultRefundEntityFactory;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
+import uk.gov.pay.connector.refund.service.WorldpayRefundEntityFactory;
 import uk.gov.pay.connector.usernotification.govuknotify.NotifyClientFactory;
 import uk.gov.pay.connector.util.CidrUtils;
 import uk.gov.pay.connector.util.HashUtil;
@@ -183,6 +186,20 @@ public class ConnectorModule extends AbstractModule {
     @Named("WorldpayValidateCredentialsGatewayClient")
     public GatewayClient worldpayValidateCredentialsGatewayClient(GatewayClientFactory gatewayClientFactory) {
         return gatewayClientFactory.createGatewayClient(WORLDPAY, VALIDATE_CREDENTIALS, environment.metrics());
+    }
+
+    @Provides
+    @Singleton
+    @Named("DefaultRefundEntityFactory")
+    public RefundEntityFactory defaultRefundEntityFactory() {
+        return new DefaultRefundEntityFactory();
+    }
+
+    @Provides
+    @Singleton
+    @Named("WorldpayRefundEntityFactory")
+    public RefundEntityFactory worldpayRefundEntityFactory() {
+        return new WorldpayRefundEntityFactory();
     }
 
     @Provides

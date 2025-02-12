@@ -88,10 +88,11 @@ public class RefundService {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity)
                 .orElseThrow(() -> new GatewayAccountCredentialsNotFoundException("Unable to find gateway account credentials to use to refund charge."));
 
-        RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest);
+        var paymentProvider = providers.byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()));
 
-        GatewayRefundResponse gatewayRefundResponse = providers
-                .byName(PaymentGatewayName.valueFrom(charge.getPaymentGatewayName()))
+        RefundEntity refundEntity = createRefund(charge, gatewayAccountEntity, refundRequest, paymentProvider.getRefundEntityFactory());
+
+        GatewayRefundResponse gatewayRefundResponse = paymentProvider
                 .refund(RefundGatewayRequest.valueOf(charge, refundEntity, gatewayAccountEntity, gatewayAccountCredentialsEntity));
 
         RefundStatus refundStatus = determineRefundStatus(gatewayRefundResponse);
@@ -111,10 +112,10 @@ public class RefundService {
 
     @Transactional
     @SuppressWarnings("WeakerAccess")
-    public RefundEntity createRefund(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundRequest refundRequest) {
+    public RefundEntity createRefund(Charge charge, GatewayAccountEntity gatewayAccountEntity, RefundRequest refundRequest, RefundEntityFactory refundEntityFactory) {
         List<Refund> refundList = findRefunds(charge);
         long availableAmount = validateRefundAndGetAvailableAmount(charge, gatewayAccountEntity, refundRequest, refundList);
-        RefundEntity refundEntity = createRefundEntity(refundRequest, gatewayAccountEntity, charge);
+        RefundEntity refundEntity = createRefundEntity(refundRequest, gatewayAccountEntity, charge, refundEntityFactory);
 
         logger.info("Card refund request sent - charge_external_id={}, status={}, amount={}, transaction_id={}, account_id={}, operation_type=Refund, amount_available_refund={}, amount_requested_refund={}, provider={}, provider_type={}, user_external_id={}",
                 charge.getExternalId(),
@@ -184,8 +185,8 @@ public class RefundService {
 
     @Transactional
     @SuppressWarnings("WeakerAccess")
-    public RefundEntity createRefundEntity(RefundRequest refundRequest, GatewayAccountEntity gatewayAccountEntity, Charge charge) {
-        RefundEntity refundEntity = new RefundEntity(refundRequest.getAmount(),
+    public RefundEntity createRefundEntity(RefundRequest refundRequest, GatewayAccountEntity gatewayAccountEntity, Charge charge, RefundEntityFactory refundEntityFactory) {
+        var refundEntity = refundEntityFactory.create(refundRequest.getAmount(),
                 refundRequest.getUserExternalId(), refundRequest.getUserEmail(), charge.getExternalId());
         transitionRefundState(refundEntity, gatewayAccountEntity, RefundStatus.CREATED, charge);
         refundDao.persist(refundEntity);
@@ -253,9 +254,8 @@ public class RefundService {
 
     /**
      * <p>Worldpay -> Worldpay doesn't return reference. We use our externalId because that's what we sent in the
-     * request as our reference and it will be sent by Worldpay with the notification.</p>
-     * <p>ePDQ -> We construct PAYID/PAYIDSUB and use that as the reference. PAYID and PAYIDSUB will be sent with the
-     * notification.</p>
+     * request as our reference and it will be sent by Worldpay with the notification. We should have already set
+     * this when the refund was created (see {@link uk.gov.pay.connector.refund.service.WorldpayRefundEntityFactory)}).</p>
      * if not successful (and the fact that we have got a proper response from Gateway, we have to assume
      * no refund has not gone through and no reference returned(or needed) to be stored.
      *

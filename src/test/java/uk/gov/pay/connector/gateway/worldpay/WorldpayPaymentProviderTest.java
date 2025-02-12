@@ -50,6 +50,7 @@ import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
@@ -96,11 +97,11 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_CORPORATE_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_EXEMPTION_ENGINE_REQUEST;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
+import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -168,6 +169,8 @@ class WorldpayPaymentProviderTest {
     @Mock
     private WorldpayRefundHandler worldpayRefundHandler;
     @Mock
+    private RefundEntityFactory refundEntityFactory;
+    @Mock
     private GatewayClient.Response response = mock(GatewayClient.Response.class);
     @Mock
     private Appender<ILoggingEvent> mockAppender;
@@ -196,6 +199,7 @@ class WorldpayPaymentProviderTest {
                 worldpayAuthoriseHandler,
                 worldpayCaptureHandler,
                 worldpayRefundHandler,
+                refundEntityFactory,
                 new AuthorisationService(mock(CardExecutorService.class), mock(Environment.class), mock(ConnectorConfiguration.class)),
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 chargeDao,

@@ -32,6 +32,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.refund.service.RefundService;
 
 import java.time.Instant;
@@ -78,6 +79,8 @@ class ChargeParityCheckerTest {
     private RefundService mockRefundService;
     @Mock
     private PaymentProviders mockProviders;
+    @Mock
+    private RefundEntityFactory mockRefundEntityFactory;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
     @Mock
@@ -146,7 +149,7 @@ class ChargeParityCheckerTest {
     @Test
     void parityCheck_shouldMatchIfChargeMatchesWithLedgerTransaction() {
 
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
@@ -156,7 +159,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchIfBillingAddressIsNotAvailableInConnectorButOnLedgerTransaction() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
         chargeEntity.getCardDetails().setBillingAddress(null);
@@ -170,7 +173,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchIfCardHolderNameIsNotAvailableInConnectorButOnLedgerTransaction() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
         chargeEntity.getCardDetails().setCardHolderName(null);
@@ -183,7 +186,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchIfEmailIsNotAvailableInConnectorButOnLedgerTransaction() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
         chargeEntity.setEmail(null);
@@ -196,7 +199,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchForTelephonePaymentNotificationIgnoringTotalAmount() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         ChargeEventEntity chargeEventPaymentNotification = createChargeEventEntity(PAYMENT_NOTIFICATION_CREATED, "2016-01-25T13:23:55Z");
         ChargeEventEntity chargeEventAuthSuccess = createChargeEventEntity(AUTHORISATION_SUCCESS, "2016-01-26T14:23:55Z");
@@ -277,7 +280,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldReturnDataMismatchIfRefundSummaryStatusDoesnotMatchWithLedger() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .withRefundSummary(null)
@@ -311,7 +314,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchIfLedgerCreatedDateWithin5sAfterConnectorDate() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .withCreatedDate(ZonedDateTime.parse("2016-01-25T13:23:59Z"))
@@ -323,7 +326,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchIfLedgerCreatedDateWithin5sBeforeConnectorDate() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities)
                 .withCreatedDate(ZonedDateTime.parse("2016-01-25T13:23:51Z"))
@@ -359,7 +362,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldReturnMatchWhenHas3dsRequiredDetails() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntityWith3ds, refundEntities).build();
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntityWith3ds, transaction);
@@ -369,7 +372,7 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchIfCreatedBeforeDateToCheckForAuthorisationSummaryParity() {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         String createdDate = "2021-08-31T00:00:00Z";
         Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity()
@@ -417,7 +420,7 @@ class ChargeParityCheckerTest {
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldReturnMatchIf3dsDataMatchesExactly(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction) {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, ledgerTransaction);
         assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
     }
