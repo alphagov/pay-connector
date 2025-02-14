@@ -1,10 +1,5 @@
 package uk.gov.pay.connector.app;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -14,6 +9,12 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.db.DataSourceFactory;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.awscore.client.builder.AwsSyncClientBuilder;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.common.validator.RequestValidator;
@@ -306,34 +307,28 @@ public class ConnectorModule extends AbstractModule {
     }
 
     @Provides
-    public AmazonSQS sqsClient(ConnectorConfiguration connectorConfiguration) {
-
-        AmazonSQSClientBuilder clientBuilder = AmazonSQSClientBuilder
-                .standard();
+    public SqsClient sqsClient(ConnectorConfiguration connectorConfiguration) {
+        
+        SqsClientBuilder clientBuilder = SqsClient.builder();
 
         if (connectorConfiguration.getSqsConfig().isNonStandardServiceEndpoint()) {
 
-            BasicAWSCredentials basicAWSCredentials = new BasicAWSCredentials(
-                    connectorConfiguration.getSqsConfig().getAccessKey(),
-                    connectorConfiguration.getSqsConfig().getSecretKey());
-
+            AwsBasicCredentials basicAWSCredentials = AwsBasicCredentials.create(connectorConfiguration.getSqsConfig().getAccessKey(), connectorConfiguration.getSqsConfig().getSecretKey());
+            
             clientBuilder
-                    .withCredentials(new AWSStaticCredentialsProvider(basicAWSCredentials))
-                    .withEndpointConfiguration(
-                            new AwsClientBuilder.EndpointConfiguration(
-                                    connectorConfiguration.getSqsConfig().getEndpoint(),
-                                    connectorConfiguration.getSqsConfig().getRegion())
-                    );
+                    .credentialsProvider(StaticCredentialsProvider.create(basicAWSCredentials))
+                    .endpointOverride(URI.create(connectorConfiguration.getSqsConfig().getEndpoint()))
+                    .region(Region.of(connectorConfiguration.getSqsConfig().getRegion()));
         } else {
             // uses AWS SDK's DefaultAWSCredentialsProviderChain to obtain credentials
-            clientBuilder.withRegion(connectorConfiguration.getSqsConfig().getRegion());
+            clientBuilder.region(Region.of(connectorConfiguration.getSqsConfig().getRegion()));
         }
 
         return clientBuilder.build();
     }
 
     @Provides
-    public SqsQueueService provideSqsQueueService(AmazonSQS amazonSQS, ConnectorConfiguration connectorConfiguration) {
+    public SqsQueueService provideSqsQueueService(SqsClient amazonSQS, ConnectorConfiguration connectorConfiguration) {
         return new SqsQueueService(
                 amazonSQS,
                 connectorConfiguration.getSqsConfig().getMessageMaximumWaitTimeInSeconds(),
