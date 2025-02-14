@@ -1,9 +1,5 @@
 package uk.gov.pay.connector.it.events;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -13,6 +9,10 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
@@ -62,7 +62,7 @@ public class StateTransitionsIT {
         assertThat(messages.size(), is(2));
 
         JsonObject cancelledMessage = messages.stream()
-                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
                 .filter(e -> e.get("event_type").getAsString().equals("CANCELLED_BY_EXTERNAL_SERVICE"))
                 .findFirst().get();
 
@@ -72,7 +72,7 @@ public class StateTransitionsIT {
         assertThat(cancelledMessage.get("live").getAsBoolean(), is(false));
 
         Optional<JsonObject> refundMessage = messages.stream()
-                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
                 .filter(e -> e.get("event_type").getAsString().equals("REFUND_AVAILABILITY_UPDATED"))
                 .findFirst();
         assertThat(refundMessage.isPresent(), is(true));
@@ -109,7 +109,7 @@ public class StateTransitionsIT {
         assertThat(messages.size(), is(4));
 
         JsonObject message1 = messages.stream()
-                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_CREATED_BY_SERVICE".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
         assertThat(message1.get("event_type").getAsString(), is("REFUND_CREATED_BY_SERVICE"));
@@ -120,7 +120,7 @@ public class StateTransitionsIT {
         assertThat(message1.get("event_details").getAsJsonObject().get("amount").getAsInt(), is(50));
 
         JsonObject message2 = messages.stream()
-                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_AVAILABILITY_UPDATED".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
         assertThat(message2.get("event_type").getAsString(), is("REFUND_AVAILABILITY_UPDATED"));
@@ -132,7 +132,7 @@ public class StateTransitionsIT {
         assertThat(message2.get("event_details").getAsJsonObject().get("refund_status").getAsString(), is("available"));
 
         JsonObject message3 = messages.stream()
-                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_SUBMITTED".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
         assertThat(message3.get("event_type").getAsString(), is("REFUND_SUBMITTED"));
@@ -141,7 +141,7 @@ public class StateTransitionsIT {
         assertThat(message3.get("live").getAsBoolean(), is(false));
 
         JsonObject message4 = messages.stream()
-                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_SUCCEEDED".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
 
@@ -153,16 +153,17 @@ public class StateTransitionsIT {
     }
 
     private List<Message> readMessagesFromEventQueue() {
-        AmazonSQS sqsClient = app.getInstanceFromGuiceContainer(AmazonSQS.class);
+        SqsClient sqsClient = app.getInstanceFromGuiceContainer(SqsClient.class);
 
-        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(app.getEventQueueUrl());
-        receiveMessageRequest
-                .withMessageAttributeNames()
-                .withWaitTimeSeconds(1)
-                .withMaxNumberOfMessages(10);
+        ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
+                .queueUrl(app.getEventQueueUrl())
+                .messageAttributeNames()
+                .waitTimeSeconds(1)
+                .maxNumberOfMessages(10)
+                .build();
 
-        ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
+        ReceiveMessageResponse receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
-        return receiveMessageResult.getMessages();
+        return receiveMessageResult.messages();
     }
 }

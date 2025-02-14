@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.wallets.googlepay.api;
 
-import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +13,7 @@ class GooglePayAuthRequestTest {
 
     @Test
     void shouldDeserializeFromJsonCorrectly() throws JsonProcessingException {
-        ObjectMapper objectMapper = Jackson.getObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode expected = objectMapper.readTree(load("googlepay/example-3ds-auth-request.json"));
         GooglePayAuthRequest actual = objectMapper.readValue(
                 load("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);

@@ -86,7 +86,7 @@ taskQueue:
 
 sqsConfig:
   nonStandardServiceEndpoint: ${AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT:-true}
-  endpoint: ${AWS_SQS_ENDPOINT:-localhost}
+  endpoint: ${AWS_SQS_ENDPOINT:-http://localhost}
   region: ${AWS_SQS_REGION:-region-1}
   captureQueueUrl: ${AWS_SQS_CAPTURE_QUEUE_URL}
   eventQueueUrl: ${AWS_SQS_PAYMENT_EVENT_QUEUE_URL}

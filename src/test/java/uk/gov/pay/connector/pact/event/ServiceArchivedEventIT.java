@@ -10,6 +10,7 @@ import au.com.dius.pact.core.model.messaging.MessagePact;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.queue.tasks.TaskType;
 import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
@@ -80,7 +81,12 @@ public class ServiceArchivedEventIT {
                         .build()
         );
 
-        app.getSqsClient().sendMessage(SqsTestDocker.getQueueUrl("tasks-queue"), new String(currentMessage));
+        SendMessageRequest sendMessageRequest = SendMessageRequest.builder()
+                .queueUrl(SqsTestDocker.getQueueUrl("tasks-queue"))
+                .messageBody(new String(currentMessage))
+                .build();
+
+        app.getSqsClient().sendMessage(sendMessageRequest);
 
         await().atMost(2, TimeUnit.SECONDS).until(() ->
                 Boolean.valueOf(app.getDatabaseTestHelper().getGatewayAccount(gatewayAccountId).get("disabled").toString())

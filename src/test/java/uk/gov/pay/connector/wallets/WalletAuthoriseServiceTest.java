@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
@@ -290,8 +289,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
+        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+                objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 
@@ -326,8 +326,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
+        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
+                objectMapper.readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 

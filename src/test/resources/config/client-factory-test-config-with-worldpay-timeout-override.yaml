@@ -91,7 +91,7 @@ captureProcessConfig:
 
 sqsConfig:
   nonStandardServiceEndpoint: ${AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT:-true}
-  endpoint: ${AWS_SQS_ENDPOINT:-localhost}
+  endpoint: ${AWS_SQS_ENDPOINT:-http://localhost}
   region: ${AWS_SQS_REGION:-region}
   secretKey: ${AWS_SECRET_KEY:-secret-key}
   accessKey: ${AWS_ACCESS_KEY:-access-key}
