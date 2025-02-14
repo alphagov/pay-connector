@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.rules;
 
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.db.DataSourceFactory;
@@ -18,6 +17,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.sqs.SqsClient;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
@@ -42,7 +42,7 @@ public class AppWithPostgresAndSqsRule implements TestRule {
 
     private final String configFilePath;
     private final PostgresDockerRule postgres;
-    private final AmazonSQS sqsClient;
+    private final SqsClient sqsClient;
     private final DropwizardAppRule<ConnectorConfiguration> app;
     private final RuleChain rules;
     private DatabaseTestHelper databaseTestHelper;
@@ -113,7 +113,7 @@ public class AppWithPostgresAndSqsRule implements TestRule {
         return databaseTestHelper;
     }
 
-    public AmazonSQS getSqsClient() {
+    public SqsClient getSqsClient() {
         return sqsClient;
     }
 

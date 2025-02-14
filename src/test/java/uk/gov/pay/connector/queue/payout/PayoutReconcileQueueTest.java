@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.queue.payout;
 
-import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.app.config.PayoutReconcileProcessConfig;
@@ -51,7 +51,7 @@ class PayoutReconcileQueueTest {
     @Test
     void shouldParsePayoutFromQueueGivenWellFormattedJSON() throws QueueException {
         String validJsonMessage = "{ \"gateway_payout_id\": \"payout-id\", \"connect_account_id\": \"connect-accnt-id\",\"created_date\":\"2020-05-01T10:30:00.000000Z\"}";
-        SendMessageResult messageResult = mock(SendMessageResult.class);
+        SendMessageResponse messageResult = mock(SendMessageResponse.class);
 
         List<QueueMessage> messages = Arrays.asList(
                 QueueMessage.of(messageResult, validJsonMessage)

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.wallets;
 
-import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -98,7 +98,8 @@ public class WalletServiceTest {
     @Test
     void shouldAuthoriseAValidChargeForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
@@ -116,7 +117,8 @@ public class WalletServiceTest {
     @Test
     void shouldReturnAuthorise3dsRequiredForAValid3dsChargeForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuth3dsRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        GooglePayAuthRequest googlePayAuth3dsRequest = objectMapper.readValue(load("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
                 .withSessionIdentifier(ProviderSessionIdentifier.of("234"))
@@ -134,7 +136,8 @@ public class WalletServiceTest {
     @Test
     void shouldReturn402_ifGatewayErrorsForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
         GatewayResponse gatewayResponse = responseBuilder()
                 .withGatewayError(gatewayError)
@@ -155,7 +158,8 @@ public class WalletServiceTest {
     @Test
     void shouldReturn402_ifResponseHasAuthorisationStatusError() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
 
         
@@ -176,7 +180,8 @@ public class WalletServiceTest {
     @Test
     void shouldReturn400_ifResponseHasAuthorisationStatusRejected() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+        ObjectMapper objectMapper = new ObjectMapper();
+        GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)

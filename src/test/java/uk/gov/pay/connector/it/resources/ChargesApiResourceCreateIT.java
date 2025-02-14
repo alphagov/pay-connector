@@ -1,9 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -19,6 +15,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -1040,14 +1040,14 @@ public class ChargesApiResourceCreateIT {
         final Message message = messages.get(0);
         ZonedDateTime eventTimestamp = ZonedDateTime.parse(
                 new JsonParser()
-                        .parse(message.getBody())
+                        .parse(message.body())
                         .getAsJsonObject()
                         .get("timestamp")
                         .getAsString()
         );
 
         Optional<JsonObject> createdMessage = messages.stream()
-                .map(m -> new JsonParser().parse(m.getBody()).getAsJsonObject())
+                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
                 .filter(e -> e.get("event_type").getAsString().equals("PAYMENT_CREATED"))
                 .findFirst();
         assertThat(createdMessage.isPresent(), is(true));
@@ -1055,17 +1055,19 @@ public class ChargesApiResourceCreateIT {
     }
 
     private List<Message> readMessagesFromEventQueue() {
-        AmazonSQS sqsClient = app.getInstanceFromGuiceContainer(AmazonSQS.class);
+        SqsClient sqsClient = app.getInstanceFromGuiceContainer(SqsClient.class);
 
-        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(app.getEventQueueUrl());
-        receiveMessageRequest
-                .withMessageAttributeNames()
-                .withWaitTimeSeconds(1)
-                .withMaxNumberOfMessages(10);
+        ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
+                .queueUrl(app.getEventQueueUrl())
+                .messageAttributeNames("All")
+                .waitTimeSeconds(1)
+                .maxNumberOfMessages(10)
+                .build();
 
-        ReceiveMessageResult receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
 
-        return receiveMessageResult.getMessages();
+        ReceiveMessageResponse receiveMessageResult = sqsClient.receiveMessage(receiveMessageRequest);
+
+        return receiveMessageResult.messages();
     }
 
     private String expectedChargeLocationFor(String accountId, String chargeId) {

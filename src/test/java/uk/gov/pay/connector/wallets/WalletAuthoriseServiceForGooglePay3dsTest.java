@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.wallets;
 
-import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
@@ -140,8 +140,9 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);
 
+        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+                objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         walletAuthoriseService.authorise(chargeEntity.getExternalId(), authorisationData);
 

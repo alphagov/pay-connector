@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.extension;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.google.inject.Injector;
@@ -19,6 +17,8 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
 import uk.gov.pay.connector.app.ConnectorApp;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
@@ -51,7 +51,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private static final String JPA_UNIT = "ConnectorUnit";
     private static String CONFIG_PATH = resourceFilePath("config/test-it-config.yaml");
     private final Jdbi jdbi;
-    private final AmazonSQS sqsClient;
+    private final SqsClient sqsClient;
     private final DropwizardAppExtension<ConnectorConfiguration> dropwizardAppExtension;
     private Injector injector;
     private final int wireMockPort;
@@ -255,7 +255,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         return jdbi;
     }
 
-    public AmazonSQS getSqsClient() {
+    public SqsClient getSqsClient() {
         return sqsClient;
     }
 
@@ -308,7 +308,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     }
 
     public void purgeEventQueue() {
-        AmazonSQS sqsClient = getInstanceFromGuiceContainer(AmazonSQS.class);
-        sqsClient.purgeQueue(new PurgeQueueRequest(getEventQueueUrl()));
+        SqsClient sqsClient = getInstanceFromGuiceContainer(SqsClient.class);
+        sqsClient.purgeQueue(
+                PurgeQueueRequest.builder()
+                        .queueUrl(getEventQueueUrl())
+                        .build()
+        );
     }
 }
