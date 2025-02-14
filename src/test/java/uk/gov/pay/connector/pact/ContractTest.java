@@ -436,8 +436,14 @@ public class ContractTest {
     @State("a charge exists")
     public void aChargeExists(Map<String, String> params) throws Exception {
         String gatewayAccountId = params.get("gateway_account_id");
+        if (gatewayAccountId == null) {
+            gatewayAccountId = "123456";
+        }
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
+        if (chargeExternalId == null) {
+            chargeExternalId = "ch_123abc456def";
+        }
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         dbHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -872,8 +878,14 @@ public class ContractTest {
     @State("a charge with honoured corporate exemption exists")
     public void createAChargeWithHonouredExemption(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
+        if (gatewayAccountId == null) {
+            gatewayAccountId = "123456";
+        }
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
+        if (chargeExternalId == null) {
+            chargeExternalId = "ch_123abc456def";
+        }
 
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), Exemption3ds.EXEMPTION_HONOURED, Exemption3dsType.CORPORATE);
