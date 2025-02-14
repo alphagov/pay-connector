@@ -313,7 +313,7 @@ public class StripeAccountSetupResourceIT {
                         .get("/v1/api/service/unknown-service-id/account/TEST/stripe-setup")
                         .then()
                         .statusCode(404)
-                        .body("message[0]", is("Gateway account not found for service ID [unknown-service-id] and account type [test]"));
+                        .body("message[0]", is("Gateway account not found for service external id [unknown-service-id] and account type [test]"));
             }
 
             @Test

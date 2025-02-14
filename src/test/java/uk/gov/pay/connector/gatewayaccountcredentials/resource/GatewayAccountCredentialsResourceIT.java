@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.postgresql.util.PGobject;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
@@ -31,6 +32,7 @@ import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
@@ -38,12 +40,13 @@ public class GatewayAccountCredentialsResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private static final String PATCH_CREDENTIALS_URL = "/v1/api/accounts/%s/credentials/%s";
-    
+
     @Nested
     class ByAccountId {
         private Long credentialsId;
         private Long accountId;
         private DatabaseFixtures.TestAccount testAccount;
+
         @BeforeEach
         void setUp() {
             Map<String, Object> credentials = Map.of(
@@ -246,7 +249,7 @@ public class GatewayAccountCredentialsResourceIT {
             }
         }
     }
-    
+
     @Nested
     class ByServiceIdAndAccountType {
         private final String VALID_SERVICE_ID = "a-valid-service-id";
@@ -277,7 +280,8 @@ public class GatewayAccountCredentialsResourceIT {
                         .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(OK.getStatusCode())
-                        .body(not(hasKey("gateway_account_credential_id")));;
+                        .body(not(hasKey("gateway_account_credential_id")));
+                ;
 
                 app.givenSetup()
                         .get("/v1/api/accounts/" + gatewayAccountId)
@@ -296,7 +300,7 @@ public class GatewayAccountCredentialsResourceIT {
                         .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(404)
-                        .body("message[0]", is("Gateway account not found for service ID [a-valid-service-id] and account type [test]"));
+                        .body("message[0]", is("Gateway account not found for service external id [a-valid-service-id] and account type [test]"));
             }
 
             @Test
@@ -315,64 +319,13 @@ public class GatewayAccountCredentialsResourceIT {
             @Test
             void forValidRequest_shouldUpdateCredentials_andReturn200() {
                 app.givenSetup()
-                    .body(toJson(Map.of(
-                        "payment_provider", "stripe",
-                        "service_id", VALID_SERVICE_ID,
-                        "service_name", VALID_SERVICE_NAME,
-                        "type", "test"
-                    )))
-                    .post("/v1/api/accounts");
-
-                String credentialsId = app.givenSetup()
-                    .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
-                    .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
-                    .then()
-                    .statusCode(OK.getStatusCode())
-                    .extract().path("external_id");
-
-                Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
-                app.givenSetup()
-                    .body(toJson(List.of(
-                        Map.of("op", "replace",
-                                "path", "credentials",
-                                "value", newCredentials),
-                        Map.of("op", "replace",
-                                "path", "last_updated_by_user_external_id",
-                                "value", "a-new-user-external-id"),
-                        Map.of("op", "replace",
-                                "path", "state",
-                                "value", "VERIFIED_WITH_LIVE_PAYMENT")
-                    )))
-                    .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
-                    .then()
-                    .statusCode(200)
-                    .body("$", hasKey("credentials"))
-                    .body("credentials.stripe_account_id", is("new-account-id"))
-                    .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
-                    .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
-                    .body("external_id", is(credentialsId))
-                    .body("payment_provider", is("stripe"))
-                    .body(not(hasKey("gateway_account_credential_id")));
-
-                app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/%s", VALID_SERVICE_ID, TEST))
-                    .then()
-                    .statusCode(OK.getStatusCode())
-                    .body("gateway_account_credentials[1].last_updated_by_user_external_id", is("a-new-user-external-id"))
-                    .body("gateway_account_credentials[1].state", is("VERIFIED_WITH_LIVE_PAYMENT"))
-                    .body("gateway_account_credentials[1].credentials.stripe_account_id", is("new-account-id"));
-            }
-
-            @Test
-            void forInvalidRequestBody_shouldReturn400() {
-                app.givenSetup()
-                    .body(toJson(Map.of(
-                        "payment_provider", "stripe",
-                        "service_id", VALID_SERVICE_ID,
-                        "service_name", VALID_SERVICE_NAME,
-                        "type", "test"
-                    )))
-                    .post("/v1/api/accounts");
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
 
                 String credentialsId = app.givenSetup()
                         .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
@@ -380,15 +333,66 @@ public class GatewayAccountCredentialsResourceIT {
                         .then()
                         .statusCode(OK.getStatusCode())
                         .extract().path("external_id");
-                
+
+                Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
                 app.givenSetup()
-                    .body(toJson(singletonList(
-                        Map.of("op", "replace",
-                                "path", "credentials"))))
-                    .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
-                    .then()
-                    .statusCode(400)
-                    .body("message[0]", is("Field [value] is required"));
+                        .body(toJson(List.of(
+                                Map.of("op", "replace",
+                                        "path", "credentials",
+                                        "value", newCredentials),
+                                Map.of("op", "replace",
+                                        "path", "last_updated_by_user_external_id",
+                                        "value", "a-new-user-external-id"),
+                                Map.of("op", "replace",
+                                        "path", "state",
+                                        "value", "VERIFIED_WITH_LIVE_PAYMENT")
+                        )))
+                        .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .then()
+                        .statusCode(200)
+                        .body("$", hasKey("credentials"))
+                        .body("credentials.stripe_account_id", is("new-account-id"))
+                        .body("last_updated_by_user_external_id", is("a-new-user-external-id"))
+                        .body("state", is("VERIFIED_WITH_LIVE_PAYMENT"))
+                        .body("external_id", is(credentialsId))
+                        .body("payment_provider", is("stripe"))
+                        .body(not(hasKey("gateway_account_credential_id")));
+
+                app.givenSetup()
+                        .get(format("/v1/api/service/%s/account/%s", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .body("gateway_account_credentials[1].last_updated_by_user_external_id", is("a-new-user-external-id"))
+                        .body("gateway_account_credentials[1].state", is("VERIFIED_WITH_LIVE_PAYMENT"))
+                        .body("gateway_account_credentials[1].credentials.stripe_account_id", is("new-account-id"));
+            }
+
+            @Test
+            void forInvalidRequestBody_shouldReturn400() {
+                app.givenSetup()
+                        .body(toJson(Map.of(
+                                "payment_provider", "stripe",
+                                "service_id", VALID_SERVICE_ID,
+                                "service_name", VALID_SERVICE_NAME,
+                                "type", "test"
+                        )))
+                        .post("/v1/api/accounts");
+
+                String credentialsId = app.givenSetup()
+                        .body(toJson(Map.of("payment_provider", "stripe", "credentials", validStripeCredentials)))
+                        .post(format("/v1/api/service/%s/account/%s/credentials", VALID_SERVICE_ID, TEST))
+                        .then()
+                        .statusCode(OK.getStatusCode())
+                        .extract().path("external_id");
+
+                app.givenSetup()
+                        .body(toJson(singletonList(
+                                Map.of("op", "replace",
+                                        "path", "credentials"))))
+                        .patch(format("/v1/api/service/%s/account/%s/credentials/%s", VALID_SERVICE_ID, TEST, credentialsId))
+                        .then()
+                        .statusCode(400)
+                        .body("message[0]", is("Field [value] is required"));
             }
 
             @Test
@@ -401,7 +405,7 @@ public class GatewayAccountCredentialsResourceIT {
                                 "type", "test"
                         )))
                         .post("/v1/api/accounts");
-                
+
                 Map<String, String> newCredentials = Map.of("username", "new-username",
                         "password", "new-password",
                         "merchant_id", "new-merchant-id");
@@ -432,7 +436,7 @@ public class GatewayAccountCredentialsResourceIT {
                 long gatewayAccountInternalId = (long) app.getDatabaseTestHelper().getGatewayAccountByExternalId(gatewayAccountId).get("id");
                 app.getDatabaseTestHelper().updateCredentialsFor(gatewayAccountInternalId, toJson(validWorldpayCredentials));
                 String credentialsId = (String) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountInternalId).stream().findFirst().get().get("external_id");
-                
+
                 app.givenSetup()
                         .body(toJson(List.of(
                                 Map.of("op", "replace",
@@ -496,12 +500,12 @@ public class GatewayAccountCredentialsResourceIT {
                         )))
                         .post("/v1/api/accounts")
                         .then().extract().path("external_id");
-                
+
                 // This is necessary as it is not possible to create credentials with type Map<String, Object> via the API
                 long gatewayAccountInternalId = (long) app.getDatabaseTestHelper().getGatewayAccountByExternalId(gatewayAccountId).get("id");
                 app.getDatabaseTestHelper().updateCredentialsFor(gatewayAccountInternalId, toJson(validWorldpayCredentials));
                 String credentialsId = (String) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountInternalId).stream().findFirst().get().get("external_id");
-                
+
                 // Update to gateway_merchant_id should not change one_off_customer_initiated
                 app.givenSetup()
                         .body(toJson(List.of(
@@ -559,7 +563,7 @@ public class GatewayAccountCredentialsResourceIT {
                     "merchant_id", "a-merchant-id",
                     "username", "a-username",
                     "password", "a-password");
-            
+
             @Test
             void forNonExistentGatewayAccount_shouldReturn404() {
                 app.givenSetup()
@@ -567,7 +571,7 @@ public class GatewayAccountCredentialsResourceIT {
                         .post(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(404)
-                        .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", VALID_SERVICE_ID, TEST)));
+                        .body("message[0]", is(format("Gateway account not found for service external id [%s] and account type [%s]", VALID_SERVICE_ID, TEST)));
             }
 
             @Test
@@ -631,6 +635,38 @@ public class GatewayAccountCredentialsResourceIT {
                         .then()
                         .statusCode(404)
                         .body("message[0]", is(format("Gateway account for service ID [%s] and account type [%s] is not a Worldpay account.", VALID_SERVICE_ID, TEST)));
+            }
+
+            @Test
+            void forNonWorldpayAccount_switchingToWorldpay_shouldReturn200() {
+                app.getWorldpayMockClient().mockCredentialsValidationValid();
+
+                withDatabaseTestHelper(app.getDatabaseTestHelper())
+                        .aTestAccount()
+                        .withAccountId(1337L)
+                        .withProviderSwitchEnabled(true)
+                        .withType(GatewayAccountType.TEST)
+                        .withServiceId(VALID_SERVICE_ID)
+                        .withGatewayAccountCredentials(List.of(
+                                anAddGatewayAccountCredentialsParams()
+                                        .withGatewayAccountId(1337L)
+                                        .withState(GatewayAccountCredentialState.ACTIVE)
+                                        .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                                        .build(),
+                                anAddGatewayAccountCredentialsParams()
+                                        .withGatewayAccountId(1337L)
+                                        .withState(GatewayAccountCredentialState.CREATED)
+                                        .withPaymentProvider(PaymentGatewayName.WORLDPAY.getName())
+                                        .build()
+                        ))
+                        .insert();
+
+                app.givenSetup()
+                        .body(toJson(worldpayCredentials))
+                        .post(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, GatewayAccountType.TEST))
+                        .then()
+                        .statusCode(200)
+                        .body("result", is("valid"));
             }
         }
     }

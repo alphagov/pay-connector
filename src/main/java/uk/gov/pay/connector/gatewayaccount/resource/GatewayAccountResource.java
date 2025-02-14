@@ -74,6 +74,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
+    private static final String SWITCHING_PROVIDER_ERROR = "Switching Payment Provider failure: {}";
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
@@ -628,7 +629,7 @@ public class GatewayAccountResource {
     }
 
     @POST
-    @Path("/v1/api/service/{serviceId}/account/{accountType}/switch-psp")
+    @Path("/v1/api/service/{serviceExternalId}/account/{accountType}/switch-psp")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Operation(
@@ -641,28 +642,34 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response switchPaymentProviderByServiceIdAndAcountType(
-            @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
+    public Response switchPaymentProviderByServiceIdAndAccountType(
+            @Parameter(example = "1", description = "Service External Id") @PathParam("serviceExternalId") String serviceExternalId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType, 
             @NotNull @Valid GatewayAccountSwitchPaymentProviderRequest request) {
 
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceExternalId, accountType)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
                         return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
                     }
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
-                    } catch (BadRequestException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
-                        return badRequestResponse(ex.getMessage());
-                    } catch (NotFoundException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
-                        return notFoundResponse(ex.getMessage());
+                        // if the gateway account type is live, we need to clean up the test account as well
+                        if (GatewayAccountType.LIVE.equals(GatewayAccountType.fromString(gatewayAccountEntity.getType()))) {
+                            Optional<GatewayAccountEntity> maybeTestAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceExternalId, GatewayAccountType.TEST);
+                            maybeTestAccountEntity.ifPresent(testAccountEntity -> {
+                                if (testAccountEntity.isStripeTestAccount()) {
+                                    gatewayAccountSwitchPaymentProviderService.revertStripeTestAccountToSandbox(testAccountEntity, request);
+                                }
+                            });
+                        }
+                    } catch (BadRequestException | NotFoundException ex) {
+                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
+                        return ex instanceof BadRequestException ? badRequestResponse(ex.getMessage()) : notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
                 })
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceExternalId, accountType));
     }
 
     @POST

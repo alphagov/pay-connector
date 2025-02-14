@@ -147,7 +147,7 @@ public class ChargesApiResourceTest {
                         .request()
                         .post(Entity.json(Collections.emptyMap()))) {
 
-                    assertGenericErrorResponse(response, 404, format("Gateway account not found for service ID [%s] and account type [%s]", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE));
+                    assertGenericErrorResponse(response, 404, format("Gateway account not found for service external id [%s] and account type [%s]", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE));
                 }
             }
 

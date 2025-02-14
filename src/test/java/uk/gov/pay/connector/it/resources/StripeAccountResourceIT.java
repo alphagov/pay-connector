@@ -61,9 +61,9 @@ public class StripeAccountResourceIT {
         app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts")));
         app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/external_accounts")));
         app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/accounts/acct_123/persons")));
-
+        
         // Assert Stripe test account created in connector
-        var externalId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
+        var gatewayAccountId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
                 .then()
                 .statusCode(200)
                 .body("gateway_account_id", not(createGatewayAccountResponse.gatewayAccountId()))
@@ -82,7 +82,7 @@ public class StripeAccountResourceIT {
                 .body("gateway_account_credentials[0].state", is("ACTIVE"))
                 .body("gateway_account_credentials[0].credentials.stripe_account_id", is("acct_123"))
                 .body("gateway_account_credentials[0].external_id", is(notNullValue(String.class)))
-                .extract().path("external_id");
+                .extract().path("gateway_account_id");
         
         // Assert all setup tasks are completed
         app.givenSetup().get(format("/v1/api/service/%s/account/test/stripe-setup", serviceId))
@@ -100,7 +100,7 @@ public class StripeAccountResourceIT {
         var oldSandboxAccount = app.getDatabaseTestHelper().getGatewayAccount(Long.valueOf(createGatewayAccountResponse.gatewayAccountId()));
         
         assertTrue((Boolean) oldSandboxAccount.get("disabled"));
-        assertEquals(String.format("Superseded by Stripe test account [ext id: %s]", externalId), oldSandboxAccount.get("disabled_reason"));
+        assertEquals(String.format("Superseded by newer test account [gateway_account_id: %s]", gatewayAccountId), oldSandboxAccount.get("disabled_reason"));
     }
 
     private CreateGatewayAccountResponse setupSandboxGatewayAccount(String serviceId, String serviceName) {
@@ -238,7 +238,7 @@ public class StripeAccountResourceIT {
                     .get("/v1/api/service/unknown-service-id/account/TEST/stripe-account")
                     .then()
                     .statusCode(404)
-                    .body("message[0]", is("Gateway account not found for service ID [unknown-service-id] and account type [test]"));
+                    .body("message[0]", is("Gateway account not found for service external id [unknown-service-id] and account type [test]"));
         }
 
         @Test

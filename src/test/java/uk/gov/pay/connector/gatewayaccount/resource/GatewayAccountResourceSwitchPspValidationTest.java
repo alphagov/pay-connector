@@ -86,7 +86,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(400));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Account credential with ACTIVE state not found."));
+            assertThat(errorMessage, is("Credential with ACTIVE state not found"));
         }
 
         @Test
@@ -127,17 +127,17 @@ class GatewayAccountResourceSwitchPspValidationTest {
             when(gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST))
                     .thenReturn(Optional.of(gatewayAccountEntity));
 
-            String nonExistentCredentialsId = randomUuid();
+            String nonExistentCredentialExternalId = randomUuid();
             Response response = resources.client()
                     .target(format("/v1/api/service/%s/account/test/switch-psp", serviceId))
                     .request()
                     .post(Entity.json(Map.of("user_external_id", "some-user-external-id",
-                            "gateway_account_credential_external_id", nonExistentCredentialsId)));
+                            "gateway_account_credential_external_id", nonExistentCredentialExternalId)));
 
             assertThat(response.getStatus(), is(404));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Account credential with id [" + nonExistentCredentialsId + "] not found."));
+            assertThat(errorMessage, is("Credential with external id [" + nonExistentCredentialExternalId + "] not found"));
         }
 
         @Test
@@ -165,7 +165,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(400));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in the VERIFIED_WITH_LIVE_PAYMENT state."));
+            assertThat(errorMessage, is("Credential with VERIFIED_WITH_LIVE_PAYMENT state not found"));
         }
 
         @Test
@@ -182,7 +182,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(404));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is(format("Gateway account not found for service ID [%s] and account type [test]", serviceId)));
+            assertThat(errorMessage, is(format("Gateway account not found for service external id [%s] and account type [test]", serviceId)));
         }
 
         @Test
@@ -252,7 +252,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(400));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Account credential with ACTIVE state not found."));
+            assertThat(errorMessage, is("Credential with ACTIVE state not found"));
         }
 
         @Test
@@ -302,7 +302,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(404));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Account credential with id [" + switchToExtId + "] not found."));
+            assertThat(errorMessage, is("Credential with external id [" + switchToExtId + "] not found"));
         }
 
         @Test
@@ -329,7 +329,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(400));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("Credential with id [" + switchToExtId + "] is not in the VERIFIED_WITH_LIVE_PAYMENT state."));
+            assertThat(errorMessage, is("Credential with VERIFIED_WITH_LIVE_PAYMENT state not found"));
         }
 
         @Test
