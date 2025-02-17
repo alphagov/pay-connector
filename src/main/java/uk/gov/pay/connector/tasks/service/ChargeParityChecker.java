@@ -70,6 +70,7 @@ import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT;
 import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_NULL;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_NO_RESULT;
 import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_HONOURED;
 import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_REJECTED;
 import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_HONOURED;
@@ -416,7 +417,7 @@ public class ChargeParityChecker {
                     : null;
     
             if (result == null) {
-                throw new IllegalStateException("Outcome result is null");
+                return LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_NO_RESULT;
             }
     
             boolean isCorporate = "corporate".equals(transaction.getExemption().getType());
