@@ -45,6 +45,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
@@ -59,9 +60,11 @@ import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_STRIPE_ACCOUNT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -96,7 +99,7 @@ public class ContractTest {
     private static ObjectMapper objectMapper = new ObjectMapper();
     private static LedgerStub ledgerStub;
     private static StripeMockClient stripeMockClient;
-    
+
     @BeforeClass
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
@@ -515,7 +518,7 @@ public class ContractTest {
                 Instant.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber,
                 firstDigitsCardNumber, params.get("gateway_transaction_id"), AuthorisationMode.WEB, null, null);
     }
-    
+
     @State("Refunds exist for a charge")
     public void refundsExistForACharge(Map<String, String> params) {
         String accountId = params.get("account_id");
@@ -675,40 +678,39 @@ public class ContractTest {
 
     @State("a Worldpay gateway account with id 444 with two credentials ready to be switched")
     public void anAccountWithTwoCredentialsReadyForSwitchPsp() {
-        String gatewayAccountId = "444";
-        String activeExtId = "555aaa000";
-        String switchToExtId = "switchto1234";
+        long gatewayAccountId = 444L;
+        String activeCredentialExternalId = "555aaa000";
+        String switchingCredentialExternalId = "switchto1234";
         dbHelper.addGatewayAccount(
                 anAddGatewayAccountParams()
-                        .withAccountId(gatewayAccountId)
-                        .withPaymentGateway("epdq")
+                        .withAccountId(Long.toString(gatewayAccountId))
                         .withServiceName("a cool service")
                         .withProviderSwitchEnabled(true)
+                        .withGatewayAccountCredentials(List.of(
+                                anAddGatewayAccountCredentialsParams()
+                                        .withGatewayAccountId(gatewayAccountId)
+                                        .withCredentials(Map.of(
+                                                ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                                        CREDENTIALS_MERCHANT_CODE, "merchant-code",
+                                                        CREDENTIALS_USERNAME, "username",
+                                                        CREDENTIALS_PASSWORD, "password")))
+                                        .withExternalId(activeCredentialExternalId)
+                                        .withState(ACTIVE)
+                                        .withPaymentProvider(WORLDPAY.getName())
+                                        .build(),
+                                anAddGatewayAccountCredentialsParams()
+                                        .withGatewayAccountId(gatewayAccountId)
+                                        .withCredentials(Map.of(
+                                                CREDENTIALS_STRIPE_ACCOUNT_ID, "acct_0000000000000000"
+                                        ))
+                                        .withExternalId(switchingCredentialExternalId)
+                                        .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                                        .withPaymentProvider(STRIPE.getName())
+                                        .build()
+                                ))
                         .build());
-
-        AddGatewayAccountCredentialsParams activeParams =
-                AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder
-                        .anAddGatewayAccountCredentialsParams()
-                        .withGatewayAccountId(Long.valueOf(gatewayAccountId))
-                        .withCredentials(Map.of())
-                        .withExternalId(activeExtId)
-                        .withState(ACTIVE)
-                        .withPaymentProvider("epdq")
-                        .build();
-        dbHelper.insertGatewayAccountCredentials(activeParams);
-
-        AddGatewayAccountCredentialsParams switchToParams =
-                AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder
-                        .anAddGatewayAccountCredentialsParams()
-                        .withGatewayAccountId(Long.valueOf(gatewayAccountId))
-                        .withCredentials(Map.of())
-                        .withExternalId(switchToExtId)
-                        .withState(VERIFIED_WITH_LIVE_PAYMENT)
-                        .withPaymentProvider("worldpay")
-                        .build();
-        dbHelper.insertGatewayAccountCredentials(switchToParams);
     }
-    
+
     @State("an active agreement exists")
     public void anActiveAgreementExists(Map<String, String> params) {
         var agreementExternalId = params.get("agreement_external_id");
@@ -750,7 +752,7 @@ public class ContractTest {
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .withCreatedDate(createdDate)
                 .build());
-        
+
         dbHelper.insertIdempotency(idempotencyKey, Long.valueOf(gatewayAccountId), chargeExternalId, Map.of(
                 "amount", amount,
                 "reference", reference,

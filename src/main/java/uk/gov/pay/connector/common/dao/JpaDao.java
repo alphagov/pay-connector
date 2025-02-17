@@ -4,6 +4,7 @@ import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
 
 import javax.persistence.EntityManager;
+import java.util.Collection;
 import java.util.Optional;
 
 @Transactional
@@ -33,6 +34,12 @@ public abstract class JpaDao<T> {
 
     public T merge(final T object) {
         return entityManager.get().merge(object);
+    }
+
+    public void mergeInSequence(final Collection<T> objects) {
+        for (T object : objects) {
+            entityManager.get().merge(object);
+        }
     }
 
     public void forceRefresh(final T object) {

@@ -77,7 +77,6 @@ public class StripeAccountResource {
         stripeCredentials.setStripeAccountId(stripeTestConnectAccount.getId());
         StripeGatewayAccountRequest stripeGatewayAccountRequest = StripeGatewayAccountRequest.Builder.aStripeGatewayAccountRequest()
                 .withProviderAccountType(TEST.toString())
-                .withDescription(String.format("Stripe test account for service %s", sandboxGatewayAccount.getServiceName()))
                 .withServiceName(sandboxGatewayAccount.getServiceName())
                 .withServiceId(sandboxGatewayAccount.getServiceId())
                 .withDescription(sandboxGatewayAccount.getDescription())
@@ -91,7 +90,7 @@ public class StripeAccountResource {
         
         GatewayAccountEntity stripeTestGatewayAccount = gatewayAccountService.createGatewayAccount(stripeGatewayAccountRequest);
         stripeAccountSetupService.completeTestAccountSetup(stripeTestGatewayAccount);
-        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by Stripe test account [ext id: %s]", stripeTestGatewayAccount.getExternalId()));
+        gatewayAccountService.disableAccount(sandboxGatewayAccount.getId(), String.format("Superseded by newer test account [gateway_account_id: %s]", stripeTestGatewayAccount.getId()));
 
         Map<String, String> response = Map.of("stripe_connect_account_id", stripeTestConnectAccount.getId(),
                 "gateway_account_id", stripeTestGatewayAccount.getId().toString(),

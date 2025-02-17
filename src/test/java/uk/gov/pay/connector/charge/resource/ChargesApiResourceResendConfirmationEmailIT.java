@@ -140,8 +140,8 @@ public class ChargesApiResourceResendConfirmationEmailIT {
 
             private Stream<Arguments> shouldReturn404_argsProvider() {
                 return Stream.of(
-                        Arguments.of("not-this-service-id", GatewayAccountType.TEST, "Gateway account not found for service ID [not-this-service-id] and account type [test]"),
-                        Arguments.of(SERVICE_ID, GatewayAccountType.LIVE, format("Gateway account not found for service ID [%s] and account type [live]", SERVICE_ID))
+                        Arguments.of("not-this-service-id", GatewayAccountType.TEST, "Gateway account not found for service external id [not-this-service-id] and account type [test]"),
+                        Arguments.of(SERVICE_ID, GatewayAccountType.LIVE, format("Gateway account not found for service external id [%s] and account type [live]", SERVICE_ID))
                 );
             }
         }

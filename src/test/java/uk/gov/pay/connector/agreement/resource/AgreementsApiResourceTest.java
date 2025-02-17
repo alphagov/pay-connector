@@ -99,7 +99,7 @@ class AgreementsApiResourceTest {
         @Test
         void returnsNotFoundResponse_whenGatewayAccountNotFound() {
             when(agreementService.createByServiceIdAndAccountType(aValidAgreementCreateRequest(), VALID_SERVICE_ID, GatewayAccountType.TEST))
-                    .thenThrow(new GatewayAccountNotFoundException((String.format("Gateway account not found for service ID [%s] and account type [%s]", VALID_SERVICE_ID, GatewayAccountType.TEST))));
+                    .thenThrow(new GatewayAccountNotFoundException((String.format("Gateway account not found for service external id [%s] and account type [%s]", VALID_SERVICE_ID, GatewayAccountType.TEST))));
             Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
 
             Response response = resources.client()

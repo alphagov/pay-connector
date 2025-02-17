@@ -1236,6 +1236,47 @@ paths:
       summary: Handle Worldpay notifications
       tags:
       - Notifications
+  /v1/api/service/{serviceExternalId}/account/{accountType}/switch-psp:
+    post:
+      operationId: switchPaymentProviderByServiceIdAndAccountType
+      parameters:
+      - description: Service External Id
+        example: 1
+        in: path
+        name: serviceExternalId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GatewayAccountSwitchPaymentProviderRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad request
+        "404":
+          description: Not found
+      summary: Switch payment provider of a gateway account
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}:
     get:
       description: "Get gateway account by service external ID and account type (test|live).\
@@ -2089,47 +2130,6 @@ paths:
         given service ID and account type
       tags:
       - Gateway accounts
-  /v1/api/service/{serviceId}/account/{accountType}/switch-psp:
-    post:
-      operationId: switchPaymentProviderByServiceIdAndAcountType
-      parameters:
-      - description: Service ID
-        example: 1
-        in: path
-        name: serviceId
-        required: true
-        schema:
-          type: string
-      - description: Account type
-        example: test
-        in: path
-        name: accountType
-        required: true
-        schema:
-          type: string
-          enum:
-          - test
-          - live
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GatewayAccountSwitchPaymentProviderRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-          description: Bad request
-        "404":
-          description: Not found
-      summary: Switch payment provider of a gateway account
-      tags:
-      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/telephone-charges:
     post:
       description: "Create a new telephone charge for a service and account type.\
@@ -2279,7 +2279,8 @@ paths:
           description: The response body will contain either 'valid' or 'invalid'
             to indicate if the supplied credentials are valid or not.
         "404":
-          description: Not found - account not found or not a Worldpay gateway account
+          description: "Not found - account not found, not a Worldpay gateway account\
+            \ or not a gateway account switching to Worldpay"
         "422":
           content:
             application/json:

@@ -971,7 +971,7 @@ public class ChargesApiResourceCreateIT {
                     .post(format("/v1/api/service/%s/account/%s/charges", "non-existent-service-id", GatewayAccountType.TEST))
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
-                    .body("message[0]", CoreMatchers.is("Gateway account not found for service ID [non-existent-service-id] and account type [test]"));
+                    .body("message[0]", CoreMatchers.is("Gateway account not found for service external id [non-existent-service-id] and account type [test]"));
         }
 
         @Test
@@ -986,7 +986,7 @@ public class ChargesApiResourceCreateIT {
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.LIVE))
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
-                    .body("message[0]", CoreMatchers.is("Gateway account not found for service ID [valid-service-id] and account type [live]"));;
+                    .body("message[0]", CoreMatchers.is("Gateway account not found for service external id [valid-service-id] and account type [live]"));;
         }
         
         @Test

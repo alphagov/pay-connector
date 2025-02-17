@@ -206,7 +206,7 @@ public class EmailNotificationResourceIT {
                     .patch(format("/v1/api/service/%s/account/%s/email-notification", nonExistentServiceId, TEST))
                     .then()
                     .statusCode(404)
-                    .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", nonExistentServiceId, TEST)))
+                    .body("message[0]", is(format("Gateway account not found for service external id [%s] and account type [%s]", nonExistentServiceId, TEST)))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
 
