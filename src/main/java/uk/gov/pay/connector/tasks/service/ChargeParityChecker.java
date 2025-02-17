@@ -68,7 +68,7 @@ import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT;
-import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_NULL;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_HAS_NO_EXEMPTION;
 import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_NO_RESULT;
 import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_HONOURED;
 import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_REJECTED;
@@ -401,7 +401,7 @@ public class ChargeParityChecker {
 
     private static LedgerExemptionState calculateLedgerExemptionState(LedgerTransaction transaction) {
         if (transaction.getExemption() == null) {
-            return LEDGER_EXEMPTION_NULL;
+            return LEDGER_HAS_NO_EXEMPTION;
         }
 
         if (!transaction.getExemption().isRequested()) {
@@ -446,7 +446,7 @@ public class ChargeParityChecker {
         LedgerExemptionState ledgerExemptionState = calculateLedgerExemptionState(transaction);
         
         Set<Exemption3dsStateCombination> validCombinations = Set.of(
-                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_NULL, LEDGER_EXEMPTION_NULL),
+                new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_NULL, LEDGER_HAS_NO_EXEMPTION),
                 new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_NOT_REQUESTED, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_FALSE),
                 new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_HONOURED, LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_HONOURED),
                 new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_REJECTED, LEDGER_EXEMPTION_REQUESTED_TRUE_AND_OUTCOME_REJECTED),
