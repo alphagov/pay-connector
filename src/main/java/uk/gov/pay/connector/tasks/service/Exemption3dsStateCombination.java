@@ -4,10 +4,10 @@ import java.util.Objects;
 
 public class Exemption3dsStateCombination {
     private final ConnectExemption3dsRequestedState requestedState;
-    private final ConnectExemption3dsState connectorState;
+    private final Connector3dsExemptionResultState connectorState;
     private final LedgerExemptionState ledgerState;
 
-    public Exemption3dsStateCombination(ConnectExemption3dsRequestedState requestedState, ConnectExemption3dsState connectorState, LedgerExemptionState ledgerState) {
+    public Exemption3dsStateCombination(ConnectExemption3dsRequestedState requestedState, Connector3dsExemptionResultState connectorState, LedgerExemptionState ledgerState) {
         this.requestedState = requestedState;
         this.connectorState = connectorState;
         this.ledgerState = ledgerState;
