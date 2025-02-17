@@ -634,7 +634,7 @@ public class GatewayAccountCredentialsResourceIT {
                         .post(format("/v1/api/service/%s/account/%s/worldpay/check-credentials", VALID_SERVICE_ID, TEST))
                         .then()
                         .statusCode(404)
-                        .body("message[0]", is(format("Gateway account for service ID [%s] and account type [%s] is not a Worldpay account.", VALID_SERVICE_ID, TEST)));
+                        .body("message[0]", is(format("Gateway account for service external id [%s] and account type [%s] is not a Worldpay account and does not have a pending Worldpay credential.", VALID_SERVICE_ID, TEST)));
             }
 
             @Test
