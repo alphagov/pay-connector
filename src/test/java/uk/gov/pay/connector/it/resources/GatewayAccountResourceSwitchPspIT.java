@@ -13,6 +13,9 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +58,85 @@ public class GatewayAccountResourceSwitchPspIT {
                     .withServiceId(serviceExternalId);
             worldpayCredentialExternalId = randomUuid();
             stripeCredentialExternalId = randomUuid();
+        }
+        
+        @Test
+        void shouldSwitchPaymentProviderFromStripeToWorldpay_andHandlePreexistingSandboxAccount() {
+            var sandboxTestCredentialExternalId = randomUuid();
+            var stripeTestCredentialExternalId = randomUuid();
+            
+            testGatewayAccount
+                    .withDescription("A Stripe TEST account")
+                    .withGatewayAccountCredentials(List.of(
+                            anAddGatewayAccountCredentialsParams()
+                                    .withGatewayAccountId(testGatewayAccount.getAccountId())
+                                    .withState(GatewayAccountCredentialState.ACTIVE)
+                                    .withExternalId(stripeTestCredentialExternalId)
+                                    .withCreatedDate(Instant.now())
+                                    .withActiveStartDate(Instant.now())
+                                    .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                                    .build(),
+                            anAddGatewayAccountCredentialsParams()
+                                    .withGatewayAccountId(testGatewayAccount.getAccountId())
+                                    .withState(GatewayAccountCredentialState.ACTIVE)
+                                    .withExternalId(sandboxTestCredentialExternalId)
+                                    .withCreatedDate(Instant.now().minus(30L, ChronoUnit.DAYS))
+                                    .withActiveStartDate(Instant.now().minus(30L, ChronoUnit.DAYS))
+                                    .withPaymentProvider(PaymentGatewayName.SANDBOX.getName())
+                                    .build()
+                    ))
+                    .insert();
+
+            liveGatewayAccount
+                    .withDescription("A Stripe LIVE account")
+                    .withProviderSwitchEnabled(true)
+                    .withGatewayAccountCredentials(List.of(
+                            anAddGatewayAccountCredentialsParams()
+                                    .withGatewayAccountId(liveGatewayAccount.getAccountId())
+                                    .withState(GatewayAccountCredentialState.ACTIVE)
+                                    .withExternalId(stripeCredentialExternalId)
+                                    .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                                    .build(),
+                            anAddGatewayAccountCredentialsParams()
+                                    .withGatewayAccountId(liveGatewayAccount.getAccountId())
+                                    .withState(GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT)
+                                    .withExternalId(worldpayCredentialExternalId)
+                                    .withPaymentProvider(PaymentGatewayName.WORLDPAY.getName())
+                                    .build()
+                    ))
+                    .insert();
+
+            String switchPspPayload = toJson(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", worldpayCredentialExternalId));
+
+            app.givenSetup()
+                    .body(switchPspPayload)
+                    .post(format("/v1/api/service/%s/account/%s/switch-psp", serviceExternalId, GatewayAccountType.LIVE))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/%s", serviceExternalId, GatewayAccountType.LIVE))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("provider_switch_enabled", is(false))
+                    .body("description", is("A Worldpay LIVE account"))
+                    .body("gateway_account_credentials.size()", is(2))
+                    .body(String.format("gateway_account_credentials.find { it.external_id == '%s' }.state", worldpayCredentialExternalId),
+                            is(GatewayAccountCredentialState.ACTIVE.toString()))
+                    .body(String.format("gateway_account_credentials.find { it.external_id == '%s' }.state", stripeCredentialExternalId),
+                            is(GatewayAccountCredentialState.RETIRED.toString()));
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/%s", serviceExternalId, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("description", is("A Sandbox TEST account"))
+                    .body("gateway_account_credentials.size()", is(2))
+                    .body(String.format("gateway_account_credentials.find { it.external_id == '%s' }.state", stripeTestCredentialExternalId),
+                            is(GatewayAccountCredentialState.RETIRED.toString()))
+                    .body(String.format("gateway_account_credentials.find { it.external_id == '%s' }.state", sandboxTestCredentialExternalId),
+                            is(GatewayAccountCredentialState.ACTIVE.toString()));
         }
 
         @Test

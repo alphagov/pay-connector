@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -98,47 +99,58 @@ public class GatewayAccountSwitchPaymentProviderService {
             throw new IllegalArgumentException(format("Gateway account cannot be live [gateway account id: %s]", gatewayAccountEntity.getId()));
         }
         
-        List<GatewayAccountCredentialsEntity> credentials = gatewayAccountEntity.getGatewayAccountCredentials();
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentials = gatewayAccountEntity.getGatewayAccountCredentials();
         
-        var activeCredentialEntity = findSingleCredentialEntityByState(credentials, ACTIVE);
-
-        if (!PaymentGatewayName.STRIPE.getName().equals(activeCredentialEntity.getPaymentProvider())) {
+        // there could be more than one active credential for a test account depending on when it was created
+        var activeStripeCredentialEntities =  gatewayAccountCredentials.stream()
+                .filter(this::isActiveStripeCredential)
+                .collect(Collectors.toCollection(ArrayList::new));
+        
+        if (activeStripeCredentialEntities.isEmpty()) {
             throw new BadRequestException(format("Stripe credential with ACTIVE state not found for account [gateway account id: %s]",
                     gatewayAccountEntity.getId()));
         }
 
-        activeCredentialEntity.setState(RETIRED);
-        activeCredentialEntity.setLastUpdatedByUserExternalId(request.getUserExternalId());
-        activeCredentialEntity.setActiveEndDate(Instant.now());
+        activeStripeCredentialEntities.forEach(cred -> {
+            cred.setState(RETIRED);
+            cred.setLastUpdatedByUserExternalId(request.getUserExternalId());
+            cred.setActiveEndDate(Instant.now());
+        });
 
-
-        var sandboxCredentialEntity = new GatewayAccountCredentialsEntity(
-                gatewayAccountEntity,
-                PaymentGatewayName.SANDBOX.getName(),
-                Map.of(),
-                ACTIVE
-        );
-
-        sandboxCredentialEntity.setExternalId(randomUuid());
-        sandboxCredentialEntity.setLastUpdatedByUserExternalId(request.getUserExternalId());
-        sandboxCredentialEntity.setActiveStartDate(Instant.now());
+        var hasActiveSandboxCredential = gatewayAccountCredentials.stream()
+                .anyMatch(this::isActiveSandboxCredential);
 
         gatewayAccountEntity.setDescription(
                 replaceAllCaseInsensitive(
                         gatewayAccountEntity.getDescription(),
-                        activeCredentialEntity.getPaymentProvider(),
-                        sandboxCredentialEntity.getPaymentProvider()
+                        PaymentGatewayName.STRIPE.getName(),
+                        PaymentGatewayName.SANDBOX.getName()
                 )
         );
 
-        gatewayAccountCredentialsDao.mergeInSequence(Arrays.asList(sandboxCredentialEntity, activeCredentialEntity));
+        if (!hasActiveSandboxCredential) {
+            var sandboxCredentialEntity = new GatewayAccountCredentialsEntity(
+                    gatewayAccountEntity,
+                    PaymentGatewayName.SANDBOX.getName(),
+                    Map.of(),
+                    ACTIVE
+            );
+
+            sandboxCredentialEntity.setExternalId(randomUuid());
+            sandboxCredentialEntity.setLastUpdatedByUserExternalId(request.getUserExternalId());
+            sandboxCredentialEntity.setActiveStartDate(Instant.now());
+
+            gatewayAccountCredentialsDao.merge(sandboxCredentialEntity);
+        }
+        
+        gatewayAccountCredentialsDao.mergeInSequence(activeStripeCredentialEntities);
         gatewayAccountDao.merge(gatewayAccountEntity);
 
         LOGGER.info("Gateway account [id={}] reverted to sandbox", gatewayAccountEntity.getId(),
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
                 kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                kv(PROVIDER, activeCredentialEntity.getPaymentProvider()),
-                kv("new_payment_provider", sandboxCredentialEntity.getPaymentProvider()),
+                kv(PROVIDER, PaymentGatewayName.STRIPE.getName()),
+                kv("new_payment_provider", PaymentGatewayName.SANDBOX.getName()),
                 kv(USER_EXTERNAL_ID, request.getUserExternalId())
         );
     }
@@ -168,5 +180,15 @@ public class GatewayAccountSwitchPaymentProviderService {
                             return list.getFirst();
                         }
                 ));
+    }
+
+    private boolean isActiveSandboxCredential(GatewayAccountCredentialsEntity credential) {
+        return credential.getPaymentProvider().equals(PaymentGatewayName.SANDBOX.getName()) &&
+                credential.getState().equals(ACTIVE);
+    }
+
+    private boolean isActiveStripeCredential(GatewayAccountCredentialsEntity credential) {
+        return credential.getPaymentProvider().equals(PaymentGatewayName.STRIPE.getName()) &&
+                credential.getState().equals(ACTIVE);
     }
 }

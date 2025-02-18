@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -21,6 +20,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -61,6 +61,23 @@ class GatewayAccountSwitchPaymentProviderServiceTest {
 
     @Nested
     class switchPaymentProviderForAccount {
+        @Test
+        void shouldThrowExceptionWhenMultipleActiveCredentialsArePresent() {
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(
+                    aGatewayAccountCredentialsEntity()
+                            .withState(ACTIVE)
+                            .build(),
+                    aGatewayAccountCredentialsEntity()
+                            .withState(ACTIVE)
+                            .build(),
+                    aGatewayAccountCredentialsEntity()
+                            .withState(VERIFIED_WITH_LIVE_PAYMENT)
+                            .build()
+                    ));
+            var thrown = assertThrows(BadRequestException.class, () -> gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, null));
+            assertThat(thrown.getMessage(), is("Multiple ACTIVE credentials found"));
+        }
+
         @Test
         void shouldThrowExceptionWhenCredentialIsMissing() {
             var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
@@ -187,12 +204,17 @@ class GatewayAccountSwitchPaymentProviderServiceTest {
     @Nested
     class revertStripeTestAccountToSandbox {
         @Test
-        void shouldRevertStripeTestGatewayToSandbox() {
+        void shouldRevertStripeTestGatewayWithPreExistingActiveSandboxCredential() {
+            var sandboxTestCredential = aGatewayAccountCredentialsEntity()
+                    .withState(ACTIVE)
+                    .withPaymentProvider(PaymentGatewayName.SANDBOX.getName())
+                    .build();
+
             var stripeTestCredential = aGatewayAccountCredentialsEntity()
                     .withState(ACTIVE)
                     .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                     .build();
-            gatewayAccountEntity.setGatewayAccountCredentials(List.of(stripeTestCredential));
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(stripeTestCredential, sandboxTestCredential));
             gatewayAccountEntity.setDescription("I am a Stripe test account");
 
             ArgumentCaptor<List<GatewayAccountCredentialsEntity>> credentialArgumentCaptor = ArgumentCaptor.forClass(List.class);
@@ -205,10 +227,42 @@ class GatewayAccountSwitchPaymentProviderServiceTest {
 
             List<GatewayAccountCredentialsEntity> credentialList = credentialArgumentCaptor.getValue();
 
-            Optional<GatewayAccountCredentialsEntity> activeCredential = credentialList.stream().filter(credential -> ACTIVE.equals(credential.getState())).findFirst();
-            assertThat(activeCredential.get().getPaymentProvider(), is(PaymentGatewayName.SANDBOX.getName()));
+            assertThat(credentialList.size(), is(1));
 
             Optional<GatewayAccountCredentialsEntity> retiredCredential = credentialList.stream().filter(credential -> RETIRED.equals(credential.getState())).findFirst();
+            assertThat(retiredCredential.get().getExternalId(), is(stripeTestCredential.getExternalId()));
+
+            GatewayAccountEntity gatewayAccount = gatewayArgumentCaptor.getValue();
+            assertThat(gatewayAccount.getDescription(), is("I am a Sandbox test account"));
+        }
+
+        @Test
+        void shouldRevertStripeTestGatewayToSandbox() {
+            var stripeTestCredential = aGatewayAccountCredentialsEntity()
+                    .withState(ACTIVE)
+                    .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(stripeTestCredential));
+            gatewayAccountEntity.setDescription("I am a Stripe test account");
+
+            ArgumentCaptor<GatewayAccountCredentialsEntity> credentialArgumentCaptor = ArgumentCaptor.forClass(GatewayAccountCredentialsEntity.class);
+            ArgumentCaptor<List<GatewayAccountCredentialsEntity>> credentialsArgumentCaptor = ArgumentCaptor.forClass(List.class);
+            ArgumentCaptor<GatewayAccountEntity> gatewayArgumentCaptor = ArgumentCaptor.forClass(GatewayAccountEntity.class);
+
+            gatewayAccountSwitchPaymentProviderService.revertStripeTestAccountToSandbox(gatewayAccountEntity, request);
+
+            verify(mockGatewayAccountCredentialsDao, times(1)).merge(credentialArgumentCaptor.capture());
+            verify(mockGatewayAccountCredentialsDao, times(1)).mergeInSequence(credentialsArgumentCaptor.capture());
+            verify(mockGatewayAccountDao, times(1)).merge(gatewayArgumentCaptor.capture());
+
+            List<GatewayAccountCredentialsEntity> allCredentials = new ArrayList<>();
+            allCredentials.add(credentialArgumentCaptor.getValue());
+            allCredentials.addAll(credentialsArgumentCaptor.getValue());
+
+            Optional<GatewayAccountCredentialsEntity> activeCredential = allCredentials.stream().filter(credential -> ACTIVE.equals(credential.getState())).findFirst();
+            assertThat(activeCredential.get().getPaymentProvider(), is(PaymentGatewayName.SANDBOX.getName()));
+
+            Optional<GatewayAccountCredentialsEntity> retiredCredential = allCredentials.stream().filter(credential -> RETIRED.equals(credential.getState())).findFirst();
             assertThat(retiredCredential.get().getExternalId(), is(stripeTestCredential.getExternalId()));
 
             GatewayAccountEntity gatewayAccount = gatewayArgumentCaptor.getValue();
