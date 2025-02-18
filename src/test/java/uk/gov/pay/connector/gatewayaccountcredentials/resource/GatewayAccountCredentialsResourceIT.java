@@ -281,7 +281,6 @@ public class GatewayAccountCredentialsResourceIT {
                         .then()
                         .statusCode(OK.getStatusCode())
                         .body(not(hasKey("gateway_account_credential_id")));
-                ;
 
                 app.givenSetup()
                         .get("/v1/api/accounts/" + gatewayAccountId)

@@ -58,6 +58,73 @@ public class GatewayAccountResourceSwitchPspIT {
         }
 
         @Test
+        void shouldSwitchPaymentProviderFromStripeToWorldpay_andHandleNonStripeTestAccount() {
+            var sandboxTestCredentialExternalId = randomUuid();
+
+            testGatewayAccount
+                    .withDescription("A Sandbox TEST account, not a Stripe TEST account")
+                    .withGatewayAccountCredentials(List.of(
+                            anAddGatewayAccountCredentialsParams()
+                                    .withGatewayAccountId(testGatewayAccount.getAccountId())
+                                    .withState(GatewayAccountCredentialState.ACTIVE)
+                                    .withExternalId(sandboxTestCredentialExternalId)
+                                    .withPaymentProvider(PaymentGatewayName.SANDBOX.getName())
+                                    .build()
+                    ))
+                    .insert();
+
+            liveGatewayAccount
+                    .withDescription("A Stripe LIVE account")
+                    .withProviderSwitchEnabled(true)
+                    .withGatewayAccountCredentials(List.of(
+                            anAddGatewayAccountCredentialsParams()
+                                    .withGatewayAccountId(liveGatewayAccount.getAccountId())
+                                    .withState(GatewayAccountCredentialState.ACTIVE)
+                                    .withExternalId(stripeCredentialExternalId)
+                                    .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                                    .build(),
+                            anAddGatewayAccountCredentialsParams()
+                                    .withGatewayAccountId(liveGatewayAccount.getAccountId())
+                                    .withState(GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT)
+                                    .withExternalId(worldpayCredentialExternalId)
+                                    .withPaymentProvider(PaymentGatewayName.WORLDPAY.getName())
+                                    .build()
+                    ))
+                    .insert();
+
+            String switchPspPayload = toJson(Map.of("user_external_id", "some-user-external-id",
+                    "gateway_account_credential_external_id", worldpayCredentialExternalId));
+
+            app.givenSetup()
+                    .body(switchPspPayload)
+                    .post(format("/v1/api/service/%s/account/%s/switch-psp", serviceExternalId, GatewayAccountType.LIVE))
+                    .then()
+                    .statusCode(OK.getStatusCode());
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/%s", serviceExternalId, GatewayAccountType.LIVE))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("provider_switch_enabled", is(false))
+                    .body("description", is("A Worldpay LIVE account"))
+                    .body("gateway_account_credentials.size()", is(2))
+                    .body(String.format("gateway_account_credentials.find { it.external_id == '%s' }.state", worldpayCredentialExternalId),
+                            is(GatewayAccountCredentialState.ACTIVE.toString()))
+                    .body(String.format("gateway_account_credentials.find { it.external_id == '%s' }.state", stripeCredentialExternalId),
+                            is(GatewayAccountCredentialState.RETIRED.toString()));
+
+            app.givenSetup()
+                    .get(format("/v1/api/service/%s/account/%s", serviceExternalId, GatewayAccountType.TEST))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .body("description", is("A Sandbox TEST account, not a Stripe TEST account"))
+                    .body("gateway_account_credentials.size()", is(1))
+                    .body(String.format("gateway_account_credentials.find { it.external_id == '%s' }.state", sandboxTestCredentialExternalId),
+                            is(GatewayAccountCredentialState.ACTIVE.toString()));
+            
+        }
+
+        @Test
         void shouldSwitchPaymentProviderFromStripeToWorldpay_andHandleStripeTestAccount() {
             var stripeTestCredentialExternalId = randomUuid();
 
