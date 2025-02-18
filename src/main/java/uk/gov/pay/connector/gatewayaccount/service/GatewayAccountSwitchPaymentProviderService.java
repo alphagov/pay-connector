@@ -101,7 +101,6 @@ public class GatewayAccountSwitchPaymentProviderService {
         
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentials = gatewayAccountEntity.getGatewayAccountCredentials();
         
-        // there could be more than one active credential for a test account depending on when it was created
         var activeStripeCredentialEntities =  gatewayAccountCredentials.stream()
                 .filter(this::isActiveStripeCredential)
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -117,9 +116,6 @@ public class GatewayAccountSwitchPaymentProviderService {
             cred.setActiveEndDate(Instant.now());
         });
 
-        var hasActiveSandboxCredential = gatewayAccountCredentials.stream()
-                .anyMatch(this::isActiveSandboxCredential);
-
         gatewayAccountEntity.setDescription(
                 replaceAllCaseInsensitive(
                         gatewayAccountEntity.getDescription(),
@@ -127,6 +123,9 @@ public class GatewayAccountSwitchPaymentProviderService {
                         PaymentGatewayName.SANDBOX.getName()
                 )
         );
+
+        var hasActiveSandboxCredential = gatewayAccountCredentials.stream()
+                .anyMatch(this::isActiveSandboxCredential);
 
         if (!hasActiveSandboxCredential) {
             var sandboxCredentialEntity = new GatewayAccountCredentialsEntity(
