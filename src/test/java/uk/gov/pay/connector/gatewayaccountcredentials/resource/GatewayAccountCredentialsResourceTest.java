@@ -527,7 +527,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .method("PATCH", Entity.json(payload));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway account not found for service ID [a-valid-service-id] and account type [test]"));
+                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway account not found for service external id [a-valid-service-id] and account type [test]"));
             }
         }
 
@@ -552,6 +552,7 @@ public class GatewayAccountCredentialsResourceTest {
                 assertThat(extractErrorMessagesFromResponse(response).get(0), is(format("Field [%s] is required", fieldName)));
             }
             
+            @Test
             void forMissingMerchantIdOrMerchantCode_shouldReturn422 () {
                 var payload = Map.of(
                         "username", "valid-username",

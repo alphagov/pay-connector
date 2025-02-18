@@ -289,7 +289,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                         .put(format("/v1/api/service/%s/account/%s/3ds-flex-credentials", serviceId, TEST))
                         .then()
                         .statusCode(404)
-                        .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, TEST)));
+                        .body("message[0]", is(format("Gateway account not found for service external id [%s] and account type [%s]", serviceId, TEST)));
             }
 
             @Test
@@ -430,7 +430,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                         .post(format("/v1/api/service/%s/account/%s/worldpay/check-3ds-flex-config", NON_EXISTENT_SERVICE_ID, TEST))
                         .then()
                         .statusCode(404)
-                        .body("message[0]", is(format("Gateway account not found for service ID [%s] and account type [%s]", NON_EXISTENT_SERVICE_ID, TEST)));
+                        .body("message[0]", is(format("Gateway account not found for service external id [%s] and account type [%s]", NON_EXISTENT_SERVICE_ID, TEST)));
             }
 
             @Test

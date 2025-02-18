@@ -385,7 +385,7 @@ public class GatewayAccountCredentialsResource {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
                     @ApiResponse(
                             responseCode = "404", 
-                            description = "Not found - account not found or not a Worldpay gateway account"),
+                            description = "Not found - account not found, not a Worldpay gateway account or not a gateway account switching to Worldpay"),
                     @ApiResponse(
                             responseCode = "500", 
                             description = "Indicates an internal server error in connector, or an upstream Worldpay 5xx error.")
@@ -399,7 +399,7 @@ public class GatewayAccountCredentialsResource {
                 .or(() -> {
                     throw new GatewayAccountNotFoundException(serviceId, accountType);
                 })
-                .filter(GatewayAccountEntity::isWorldpayGatewayAccount)
+                .filter(gatewayAccountEntity -> gatewayAccountEntity.isWorldpayGatewayAccount() || gatewayAccountEntity.hasPendingWorldpayCredential())
                 .or(() -> {
                     throw GatewayAccountNotFoundException.forNonWorldpayAccount(serviceId, accountType);
                 })
@@ -409,7 +409,7 @@ public class GatewayAccountCredentialsResource {
     }
 
 
-    private final class ValidationResult {
+    public static final class ValidationResult {
         @Schema(example = "valid", description = "valid/invalid result for Worldpay flex credentials")
         private final String result;
 

@@ -74,6 +74,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 public class GatewayAccountResource {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAccountResource.class);
+    private static final String SWITCHING_PROVIDER_ERROR = "Switching Payment Provider failure: {}";
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
@@ -111,7 +112,7 @@ public class GatewayAccountResource {
             }
     )
     public GatewayAccountWithCredentialsWithInternalIdResponse getGatewayAccount(@Parameter(example = "1", description = "Gateway account ID")
-                                                                   @PathParam("accountId") Long gatewayAccountId) {
+                                                                                 @PathParam("accountId") Long gatewayAccountId) {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(GatewayAccountWithCredentialsWithInternalIdResponse::new)
@@ -323,13 +324,13 @@ public class GatewayAccountResource {
             JsonNode payload) {
 
         validator.validatePatchRequest(payload);
-        
+
         return gatewayAccountServicesFactory.getUpdateService()
                 .doPatch(serviceId, accountType, JsonPatchRequest.from(payload))
                 .map(gatewayAccount -> Response.ok().build())
                 .orElseGet(() -> Response.status(NOT_FOUND).build());
     }
-    
+
     @PATCH
     @Path("/v1/api/accounts/{accountId}")
     @Consumes(APPLICATION_JSON)
@@ -354,7 +355,7 @@ public class GatewayAccountResource {
             }
     )
     public Response patchGatewayAccountByGatewayAccountId(
-            @Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId, 
+            @Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
             JsonNode payload) {
         validator.validatePatchRequest(payload);
 
@@ -385,21 +386,21 @@ public class GatewayAccountResource {
     public Response updateGatewayAccountServiceNameByServiceId(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Valid UpdateServiceNameRequest updateServiceNameRequest) {
-        
+
         Optional<GatewayAccountEntity> testAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.TEST);
         Optional<GatewayAccountEntity> liveAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, GatewayAccountType.LIVE);
-        
+
         testAccount.ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
         liveAccount.ifPresent(gatewayAccount -> gatewayAccount.setServiceName(updateServiceNameRequest.getServiceName()));
-        
+
         if (testAccount.isPresent() || liveAccount.isPresent()) {
             return Response.ok().build();
         } else {
-            
+
             throw new GatewayAccountNotFoundException(String.format("No gateway accounts found for service ID [%s]", serviceId));
         }
     }
-    
+
     @PATCH
     @Path("/v1/frontend/accounts/{accountId}/servicename")
     @Consumes(APPLICATION_JSON)
@@ -419,7 +420,7 @@ public class GatewayAccountResource {
             }
     )
     public Response updateGatewayAccountServiceNameByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long gatewayAccountId,
-                                                    Map<String, String> payload) {
+                                                                      Map<String, String> payload) {
         if (!payload.containsKey(SERVICE_NAME_FIELD_NAME)) {
             return fieldsMissingResponse(Collections.singletonList(SERVICE_NAME_FIELD_NAME));
         }
@@ -463,7 +464,7 @@ public class GatewayAccountResource {
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             Update3dsToggleRequest update3dsToggleRequest) {
-        
+
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .map(gatewayAccount ->
                         {
@@ -476,7 +477,7 @@ public class GatewayAccountResource {
                 )
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
-    
+
     @PATCH
     @Path("/v1/frontend/accounts/{accountId}/3ds-toggle")
     @Consumes(APPLICATION_JSON)
@@ -628,7 +629,7 @@ public class GatewayAccountResource {
     }
 
     @POST
-    @Path("/v1/api/service/{serviceId}/account/{accountType}/switch-psp")
+    @Path("/v1/api/service/{serviceExternalId}/account/{accountType}/switch-psp")
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
     @Operation(
@@ -641,28 +642,34 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response switchPaymentProviderByServiceIdAndAcountType(
-            @Parameter(example = "1", description = "Service ID") @PathParam("serviceId") String serviceId,
-            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType, 
+    public Response switchPaymentProviderByServiceIdAndAccountType(
+            @Parameter(example = "1", description = "Service External Id") @PathParam("serviceExternalId") String serviceExternalId,
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @NotNull @Valid GatewayAccountSwitchPaymentProviderRequest request) {
 
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceExternalId, accountType)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
                         return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
                     }
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
-                    } catch (BadRequestException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
-                        return badRequestResponse(ex.getMessage());
-                    } catch (NotFoundException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
-                        return notFoundResponse(ex.getMessage());
+                        // if the gateway account type is live, we need to clean up the test account as well
+                        if (GatewayAccountType.LIVE.equals(GatewayAccountType.fromString(gatewayAccountEntity.getType()))) {
+                            gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceExternalId, GatewayAccountType.TEST)
+                                    .ifPresent(testAccountEntity -> {
+                                        if (testAccountEntity.isStripeTestAccount()) {
+                                            gatewayAccountSwitchPaymentProviderService.revertStripeTestAccountToSandbox(testAccountEntity, request);
+                                        }
+                                    });
+                        }
+                    } catch (BadRequestException | NotFoundException ex) {
+                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
+                        return ex instanceof BadRequestException ? badRequestResponse(ex.getMessage()) : notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
                 })
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceExternalId, accountType));
     }
 
     @POST
@@ -680,9 +687,9 @@ public class GatewayAccountResource {
             }
     )
     public Response switchPaymentProviderByGatewayAccountId(@Parameter(example = "1", description = "Gateway account ID")
-                                          @PathParam("accountId") Long gatewayAccountId,
+                                                            @PathParam("accountId") Long gatewayAccountId,
                                                             @NotNull GatewayAccountSwitchPaymentProviderRequest request) {
-        
+
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {

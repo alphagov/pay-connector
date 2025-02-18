@@ -16,11 +16,11 @@ public class GatewayAccountNotFoundException extends WebApplicationException {
         super(notFoundResponse(message));
     }
     
-    public GatewayAccountNotFoundException(String serviceId, GatewayAccountType accountType) {
-        this(format("Gateway account not found for service ID [%s] and account type [%s]", serviceId, accountType));
+    public GatewayAccountNotFoundException(String serviceExternalId, GatewayAccountType accountType) {
+        this(format("Gateway account not found for service external id [%s] and account type [%s]", serviceExternalId, accountType));
     }
     
-    public static GatewayAccountNotFoundException forNonWorldpayAccount(String serviceId, GatewayAccountType accountType) {
-        return new GatewayAccountNotFoundException(format("Gateway account for service ID [%s] and account type [%s] is not a Worldpay account.", serviceId, accountType));
+    public static GatewayAccountNotFoundException forNonWorldpayAccount(String serviceExternalId, GatewayAccountType accountType) {
+        return new GatewayAccountNotFoundException(format("Gateway account for service external id [%s] and account type [%s] is not a Worldpay account and does not have a pending Worldpay credential.", serviceExternalId, accountType));
     }
 }

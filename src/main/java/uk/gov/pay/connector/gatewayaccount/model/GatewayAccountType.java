@@ -9,6 +9,7 @@ public enum GatewayAccountType {
         this.value = value;
     }
 
+    @Override
     public String toString() {
         return value;
     }
