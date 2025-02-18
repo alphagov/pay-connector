@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.tasks.service;
 
 public enum Connector3dsExemptionResultState {
-        CONNECTOR_HAS_EXEMPTION_NULL,
+    CONNECTOR_HAS_EXEMPTION_RESULT_NULL,
         CONNECTOR_HAS_EXEMPTION_NOT_REQUESTED,
         CONNECTOR_HAS_EXEMPTION_HONOURED,
         CONNECTOR_HAS_EXEMPTION_REJECTED,
