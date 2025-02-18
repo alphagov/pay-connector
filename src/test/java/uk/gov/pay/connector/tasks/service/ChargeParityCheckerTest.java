@@ -410,7 +410,7 @@ class ChargeParityCheckerTest {
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logStatement.getFirst().getFormattedMessage(), is("Field value does not match between ledger and connector " + fieldName));
+        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector " + fieldName));
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepencies() {
@@ -435,7 +435,7 @@ class ChargeParityCheckerTest {
             Exemption3ds chargeExemption3ds,
             Exemption transactionExemption
             ) {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         chargeEntity.setExemption3ds(chargeExemption3ds);
         chargeEntity.setExemption3dsRequested(chargeExemption3dsRequested);
@@ -469,7 +469,7 @@ class ChargeParityCheckerTest {
             String transactionExemptionOutcomeResult, 
             Boolean setRequested
     ) {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
         Exemption exemption = new Exemption();
         ExemptionOutcome exemptionOutcome = new ExemptionOutcome();
         
@@ -507,7 +507,7 @@ class ChargeParityCheckerTest {
             String transactionExemptionOutcomeResult,
             Boolean setRequested
     ) {
-        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider());
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
         Exemption exemption = new Exemption();
         ExemptionOutcome exemptionOutcome = new ExemptionOutcome();
 
