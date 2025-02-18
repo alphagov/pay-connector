@@ -56,9 +56,9 @@ import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryStat
 import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_FALSE;
 import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
 import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS;
-import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
-import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
-import static uk.gov.pay.connector.tasks.service.ConnectExemption3dsRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
+import static uk.gov.pay.connector.tasks.service.ConnectorExemption3dsRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
+import static uk.gov.pay.connector.tasks.service.ConnectorExemption3dsRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
+import static uk.gov.pay.connector.tasks.service.ConnectorExemption3dsRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_HONOURED;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_REQUESTED;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_OUT_OF_SCOPE;
@@ -381,7 +381,7 @@ public class ChargeParityChecker {
         };
     }
 
-    private static ConnectExemption3dsRequestedState calculateConnectorExemption3dsRequested(ChargeEntity chargeEntity) {
+    private static ConnectorExemption3dsRequestedState calculateConnectorExemption3dsRequested(ChargeEntity chargeEntity) {
         return switch (chargeEntity.getExemption3dsRequested()) {
             case null -> CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
             case OPTIMISED -> CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
@@ -442,7 +442,7 @@ public class ChargeParityChecker {
 
     private boolean matchExemption3dsFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
         Connector3dsExemptionResultState connectorExemption3dsState = calculateConnectorExemption3ds(chargeEntity);
-        ConnectExemption3dsRequestedState connectExemption3dsRequestedState = calculateConnectorExemption3dsRequested(chargeEntity);
+        ConnectorExemption3dsRequestedState connectorExemption3DsRequestedState = calculateConnectorExemption3dsRequested(chargeEntity);
         LedgerExemptionState ledgerExemptionState = calculateLedgerExemptionState(transaction);
         
         Set<Exemption3dsStateCombination> validCombinations = Set.of(
@@ -460,7 +460,7 @@ public class ChargeParityChecker {
                 new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE, CONNECTOR_HAS_EXEMPTION_RESULT_OUT_OF_SCOPE, LEDGER_EXEMPTION_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_OUT_OF_SCOPE)
         );
         
-        return validCombinations.contains(new Exemption3dsStateCombination(connectExemption3dsRequestedState, connectorExemption3dsState, ledgerExemptionState));
+        return validCombinations.contains(new Exemption3dsStateCombination(connectorExemption3DsRequestedState, connectorExemption3dsState, ledgerExemptionState));
     }
 
     private boolean compareVersions(ChargeEntity chargeEntity, LedgerTransaction transaction) {
