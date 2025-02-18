@@ -874,7 +874,7 @@ class HistoricalEventEmitterServiceTest {
 
         assertAll(
                 () -> assertThat(capturedRequestedExemption.getEventType(), is("REQUESTED_3DS_EXEMPTION")),
-                () -> assertThat(requestedExemptionDetails.getType(), is(requestedExemptionDetailsType)),
+                () -> assertThat(requestedExemptionDetails.getExemption3dsRequested(), is(requestedExemptionDetailsType)),
                 () -> assertThat(capturedGatewayExemption.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")),
                 () -> assertThat(gatewayExemptionDetails.getExemption3ds(), is(exemption3ds == null ? null : exemption3ds.toString()))
         );
