@@ -786,7 +786,7 @@ class HistoricalEventEmitterServiceTest {
 
     @ParameterizedTest
     @MethodSource
-    void shouldDoStuffWithRequested3dsExemptionObtained(Exemption3ds exemption3ds, ChargeStatus chargeStatus) throws QueueException {
+    void shouldEmitEventWithRequested3dsExemptionObtained(Exemption3ds exemption3ds, ChargeStatus chargeStatus) throws QueueException {
         ChargeEventEntity successEvent = ChargeEventEntityFixture.aValidChargeEventEntity()
                 .withTimestamp(ZonedDateTime.now().plusMinutes(2))
                 .withCharge(chargeEntity)
@@ -812,7 +812,7 @@ class HistoricalEventEmitterServiceTest {
         assertThat(eventDetailsType.getExemption3ds(), is(exemption3ds.toString()));
     }
     
-    private static Stream<Arguments> shouldDoStuffWithRequested3dsExemptionObtained() {
+    private static Stream<Arguments> shouldEmitEventWithRequested3dsExemptionObtained() {
         return Stream.of(
                 Arguments.of(EXEMPTION_NOT_REQUESTED, AUTHORISATION_SUCCESS),
                 Arguments.of(EXEMPTION_HONOURED, AUTHORISATION_SUCCESS),
