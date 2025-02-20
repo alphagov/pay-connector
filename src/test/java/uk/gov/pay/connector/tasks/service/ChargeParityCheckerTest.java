@@ -452,7 +452,8 @@ class ChargeParityCheckerTest {
         return Stream.of(
                 Arguments.of(null, null, null),
                 Arguments.of(null, EXEMPTION_NOT_REQUESTED, createExemption(false)),
-                Arguments.of(OPTIMISED, null, createExemption(true))
+                Arguments.of(OPTIMISED, null, createExemption(true)),
+                Arguments.of(CORPORATE, null, createExemption(true))
         );
     }
     private static Exemption createExemption(boolean requested) {
@@ -568,7 +569,7 @@ class ChargeParityCheckerTest {
                 Arguments.of(OPTIMISED, EXEMPTION_OUT_OF_SCOPE, "honoured", true),
                 Arguments.of(CORPORATE, EXEMPTION_HONOURED, "out of scope", true),
                 Arguments.of(OPTIMISED, EXEMPTION_REJECTED, "not requested", false),
-                Arguments.of(null, EXEMPTION_HONOURED, "out of scope", true),
+                Arguments.of(OPTIMISED, EXEMPTION_HONOURED, "out of scope", true),
                 Arguments.of(null, EXEMPTION_HONOURED, "out of scope", true)
         );
     }

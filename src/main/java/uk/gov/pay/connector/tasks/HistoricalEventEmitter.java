@@ -20,7 +20,7 @@ import uk.gov.pay.connector.events.model.EventFactory;
 import uk.gov.pay.connector.events.model.charge.BackfillerGatewayTransactionIdSet;
 import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailCollected;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
-import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtainedEvent;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.PaymentDetailsEntered;
@@ -132,11 +132,11 @@ public class HistoricalEventEmitter {
                     .stream()
                     .filter(event -> event.getStatus() == AUTHORISATION_SUCCESS || event.getStatus() == AUTHORISATION_REJECTED)
                     .findFirst()
-                    .map(event -> Gateway3dsExemptionResultObtained.from(charge, event.getUpdated().toInstant()))
+                    .map(event -> Gateway3dsExemptionResultObtainedEvent.from(charge, event.getUpdated().toInstant()))
                     .filter(threeDsInfoEvent -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(threeDsInfoEvent))
                     .ifPresent(threeDsInfoEvent -> {
                         eventService.emitAndRecordEvent(threeDsInfoEvent, getDoNotRetryEmitUntilDate());
-                        logger.info("Charges 3ds Exemption Result data event emitted for [chargeExternalId={}]", charge.getExternalId());
+                        logger.info("3DS Exemption Result event emitted for [chargeExternalId={}]", charge.getExternalId());
                     });
         }
     }
@@ -151,7 +151,7 @@ public class HistoricalEventEmitter {
                     .filter(requested3dsExemptionEvent -> forceEmission || !emittedEventDao.hasBeenEmittedBefore(requested3dsExemptionEvent))
                     .ifPresent(requested3dsExemptionEvent -> {
                         eventService.emitAndRecordEvent(requested3dsExemptionEvent, getDoNotRetryEmitUntilDate());
-                        logger.info("Charges 3ds Exemption data event emitted for [chargeExternalId={}]", charge.getExternalId());
+                        logger.info("3DS Exemption Result event emitted for [chargeExternalId={}]", charge.getExternalId());
                     });
         }
     }

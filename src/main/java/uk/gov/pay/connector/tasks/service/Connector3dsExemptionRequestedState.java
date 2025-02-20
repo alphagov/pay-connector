@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.tasks.service;
 
-public enum ConnectorExemption3dsRequestedState {
+public enum Connector3dsExemptionRequestedState {
     CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL,
     CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED,
     CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE

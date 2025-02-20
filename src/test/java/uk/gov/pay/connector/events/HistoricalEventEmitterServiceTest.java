@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.events;
 
-import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +34,7 @@ import uk.gov.pay.connector.events.model.charge.BackfillerRecreatedUserEmailColl
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
-import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtainedEvent;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
@@ -802,13 +801,13 @@ class HistoricalEventEmitterServiceTest {
 
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
 
-        ArgumentCaptor<Gateway3dsExemptionResultObtained> argument = ArgumentCaptor.forClass(Gateway3dsExemptionResultObtained.class);
+        ArgumentCaptor<Gateway3dsExemptionResultObtainedEvent> argument = ArgumentCaptor.forClass(Gateway3dsExemptionResultObtainedEvent.class);
         verify(eventService).emitAndRecordEvent(argument.capture(), isNotNull());
 
-        List<Gateway3dsExemptionResultObtained> capturedEvents = argument.getAllValues();
+        List<Gateway3dsExemptionResultObtainedEvent> capturedEvents = argument.getAllValues();
         Gateway3dsExemptionResultObtainedEventDetails eventDetailsType = (Gateway3dsExemptionResultObtainedEventDetails) argument.getAllValues().get(0).getEventDetails();
         
-        assertThat(capturedEvents.get(0).getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        assertThat(capturedEvents.get(0).getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT"));
         assertThat(eventDetailsType.getExemption3ds(), is(exemption3ds.toString()));
     }
     
@@ -839,6 +838,7 @@ class HistoricalEventEmitterServiceTest {
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventService).emitAndRecordEvent(eventCaptor.capture(), any());
+        assertThat(eventCaptor.getAllValues().size(), is(1));
         assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
@@ -861,7 +861,7 @@ class HistoricalEventEmitterServiceTest {
         historicalEventEmitterService.emitHistoricEventsById(1L, OptionalLong.empty(), 1L);
         
         ArgumentCaptor<Requested3dsExemption> requested3dsExemptionArgument = ArgumentCaptor.forClass(Requested3dsExemption.class);
-        ArgumentCaptor<Gateway3dsExemptionResultObtained> gateway3dsExemptionArgument = ArgumentCaptor.forClass(Gateway3dsExemptionResultObtained.class);
+        ArgumentCaptor<Gateway3dsExemptionResultObtainedEvent> gateway3dsExemptionArgument = ArgumentCaptor.forClass(Gateway3dsExemptionResultObtainedEvent.class);
 
         verify(eventService).emitAndRecordEvent(requested3dsExemptionArgument.capture(), isNotNull());
         verify(eventService).emitAndRecordEvent(gateway3dsExemptionArgument.capture(), isNotNull());
@@ -869,14 +869,14 @@ class HistoricalEventEmitterServiceTest {
         Requested3dsExemption capturedRequestedExemption = requested3dsExemptionArgument.getValue();
         Requested3dsExemptionEventDetails requestedExemptionDetails = (Requested3dsExemptionEventDetails) capturedRequestedExemption.getEventDetails();
 
-        Gateway3dsExemptionResultObtained capturedGatewayExemption = gateway3dsExemptionArgument.getValue();
+        Gateway3dsExemptionResultObtainedEvent capturedGatewayExemption = gateway3dsExemptionArgument.getValue();
         Gateway3dsExemptionResultObtainedEventDetails gatewayExemptionDetails = (Gateway3dsExemptionResultObtainedEventDetails) capturedGatewayExemption.getEventDetails();
 
         assertAll(
                 () -> assertThat(capturedRequestedExemption.getEventType(), is("REQUESTED_3DS_EXEMPTION")),
                 () -> assertThat(requestedExemptionDetails.getExemption3dsRequested(), is(requestedExemptionDetailsType)),
-                () -> assertThat(capturedGatewayExemption.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")),
-                () -> assertThat(gatewayExemptionDetails.getExemption3ds(), is(exemption3ds == null ? null : exemption3ds.toString()))
+                () -> assertThat(capturedGatewayExemption.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT")),
+                () -> assertThat(gatewayExemptionDetails.getExemption3ds(), is(exemption3ds == null ? null : exemption3ds.name()))
         );
     }
     

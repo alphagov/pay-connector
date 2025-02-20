@@ -6,15 +6,15 @@ import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResult
 import java.time.Instant;
 import java.util.Objects;
 
-public class Gateway3dsExemptionResultObtained extends PaymentEvent {
+public class Gateway3dsExemptionResultObtainedEvent extends PaymentEvent {
 
-    public Gateway3dsExemptionResultObtained(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
-                                             Gateway3dsExemptionResultObtainedEventDetails eventDetails, Instant timestamp) {
+    public Gateway3dsExemptionResultObtainedEvent(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
+                                                  Gateway3dsExemptionResultObtainedEventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 
-    public static Gateway3dsExemptionResultObtained from(ChargeEntity charge, Instant eventDate) {
-        return new Gateway3dsExemptionResultObtained(
+    public static Gateway3dsExemptionResultObtainedEvent from(ChargeEntity charge, Instant eventDate) {
+        return new Gateway3dsExemptionResultObtainedEvent(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
                 charge.getGatewayAccount().getId(),
@@ -27,7 +27,7 @@ public class Gateway3dsExemptionResultObtained extends PaymentEvent {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Gateway3dsExemptionResultObtained that = (Gateway3dsExemptionResultObtained) o;
+        Gateway3dsExemptionResultObtainedEvent that = (Gateway3dsExemptionResultObtainedEvent) o;
         return  isLive() == that.isLive() &&
                 Objects.equals(getServiceId(), that.getServiceId()) &&
                 Objects.equals(getGatewayAccountId(), that.getGatewayAccountId()) &&

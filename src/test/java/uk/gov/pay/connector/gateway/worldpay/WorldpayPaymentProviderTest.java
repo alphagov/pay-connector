@@ -26,7 +26,7 @@ import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.eventdetails.charge.Gateway3dsExemptionResultObtainedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.Requested3dsExemptionEventDetails;
 import uk.gov.pay.connector.events.model.Event;
-import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtainedEvent;
 import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
 import uk.gov.pay.connector.gateway.ChargeQueryResponse;
@@ -262,7 +262,7 @@ class WorldpayPaymentProviderTest {
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 1);
-        var exemptionNotRequestedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionNotRequestedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -349,7 +349,7 @@ class WorldpayPaymentProviderTest {
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 1);
 
-        var exemptionNotRequestedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionNotRequestedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -379,7 +379,7 @@ class WorldpayPaymentProviderTest {
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 1);
-        var exemptionNonRequestedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionNonRequestedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -414,7 +414,7 @@ class WorldpayPaymentProviderTest {
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
         verifyLoggingWithOutExemptionReason(EXEMPTION_NOT_REQUESTED, chargeEntity.getExternalId(), 1);
 
-        var exemptionNotRequestedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionNotRequestedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -474,7 +474,7 @@ class WorldpayPaymentProviderTest {
         assertThat(chargeEntity.getExemption3dsRequested(), is(nullValue()));
 
         verifyChargeUpdatedWith(EXEMPTION_NOT_REQUESTED);
-        var exemptionNonRequestedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionNonRequestedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -509,7 +509,7 @@ class WorldpayPaymentProviderTest {
         verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_REJECTED, CORPORATE);
         verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "HIGH_RISK", chargeEntity.getExternalId(), 3);
 
-        var exemptionRejectedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionRejectedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(), 
                 chargeEntity.getGatewayAccount().isLive(), 
                 chargeEntity.getGatewayAccount().getId(), 
@@ -543,7 +543,7 @@ class WorldpayPaymentProviderTest {
         verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_HONOURED, CORPORATE);
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, CORPORATE);
         verifyLoggingTypeOf3dsExemption(CORPORATE, chargeEntity.getExternalId());
-        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -575,7 +575,7 @@ class WorldpayPaymentProviderTest {
         verifyChargeUpdatedWith3dsAndExemptionRequested(EXEMPTION_HONOURED, CORPORATE);
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, CORPORATE);
         verifyLoggingTypeOf3dsExemption(CORPORATE, chargeEntity.getExternalId());
-        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -608,7 +608,7 @@ class WorldpayPaymentProviderTest {
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, OPTIMISED);
         verifyLoggingTypeOf3dsExemption(OPTIMISED, chargeEntity.getExternalId());
 
-        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -644,7 +644,7 @@ class WorldpayPaymentProviderTest {
         verify3dsExemptionEventsEmitted(chargeEntity, EXEMPTION_HONOURED, OPTIMISED);
         verifyLoggingTypeOf3dsExemption(OPTIMISED, chargeEntity.getExternalId());
 
-        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionHonouredEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -824,7 +824,7 @@ class WorldpayPaymentProviderTest {
 
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
         verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "HIGH_RISK", chargeEntity.getExternalId(), 2);
-        var exemptionRejectedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionRejectedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(),
                 chargeEntity.getGatewayAccount().isLive(),
                 chargeEntity.getGatewayAccount().getId(),
@@ -848,7 +848,7 @@ class WorldpayPaymentProviderTest {
         verifyChargeUpdatedWith(EXEMPTION_REJECTED);
         verifyLoggingWithOutExemptionReason(EXEMPTION_REJECTED, chargeEntity.getExternalId(), 2);
 
-        var exemptionRejectedEvent = new Gateway3dsExemptionResultObtained(
+        var exemptionRejectedEvent = new Gateway3dsExemptionResultObtainedEvent(
                 chargeEntity.getServiceId(), 
                 chargeEntity.getGatewayAccount().isLive(), 
                 chargeEntity.getGatewayAccount().getId(), 
@@ -867,10 +867,10 @@ class WorldpayPaymentProviderTest {
         assertThat(((Requested3dsExemptionEventDetails) exemptionRequested.getEventDetails()).getExemption3dsRequested(), is(exemption3dsRequestType.toString()));
         assertThat(exemptionRequested.getEventType(), is("REQUESTED_3DS_EXEMPTION"));
 
-        Gateway3dsExemptionResultObtained exemptionResultObtainedEvent = (Gateway3dsExemptionResultObtained) eventCaptor.getAllValues().get(1);
+        Gateway3dsExemptionResultObtainedEvent exemptionResultObtainedEvent = (Gateway3dsExemptionResultObtainedEvent) eventCaptor.getAllValues().get(1);
         assertThat(exemptionResultObtainedEvent.getResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(((Gateway3dsExemptionResultObtainedEventDetails) exemptionResultObtainedEvent.getEventDetails()).getExemption3ds(), is(exemption3ds.toString()));
-        assertThat(exemptionResultObtainedEvent.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED"));
+        assertThat(exemptionResultObtainedEvent.getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT"));
     }
 
     @Test

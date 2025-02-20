@@ -19,10 +19,10 @@ class Gateway3dsExemptionResultObtainedTest {
     void serializesEventDetailsWithExemption3dsHonoured() throws JsonProcessingException {
         var chargeEntity = ChargeEntityFixture.aValidChargeEntity().withExemption3ds(Exemption3ds.EXEMPTION_HONOURED).build();
         var eventDate = Instant.now();
-        String actual = Gateway3dsExemptionResultObtained.from(chargeEntity, eventDate).toJsonString();
+        String actual = Gateway3dsExemptionResultObtainedEvent.from(chargeEntity, eventDate).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.event_details.exemption3ds", equalTo("EXEMPTION_HONOURED")));
@@ -32,10 +32,10 @@ class Gateway3dsExemptionResultObtainedTest {
     void serializesEventDetailsWithExemption3dsNotRequested() throws JsonProcessingException {
         var chargeEntity = ChargeEntityFixture.aValidChargeEntity().withExemption3ds(Exemption3ds.EXEMPTION_NOT_REQUESTED).build();
         var eventDate = Instant.now();
-        String actual = Gateway3dsExemptionResultObtained.from(chargeEntity, eventDate).toJsonString();
+        String actual = Gateway3dsExemptionResultObtainedEvent.from(chargeEntity, eventDate).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.event_details.exemption3ds", equalTo("EXEMPTION_NOT_REQUESTED")));
@@ -45,10 +45,10 @@ class Gateway3dsExemptionResultObtainedTest {
     void serializesEventDetailsWithExemption3dsOutOfScope() throws JsonProcessingException {
         var chargeEntity = ChargeEntityFixture.aValidChargeEntity().withExemption3ds(Exemption3ds.EXEMPTION_OUT_OF_SCOPE).build();
         var eventDate = Instant.now();
-        String actual = Gateway3dsExemptionResultObtained.from(chargeEntity, eventDate).toJsonString();
+        String actual = Gateway3dsExemptionResultObtainedEvent.from(chargeEntity, eventDate).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.event_details.exemption3ds", equalTo("EXEMPTION_OUT_OF_SCOPE")));
@@ -58,10 +58,10 @@ class Gateway3dsExemptionResultObtainedTest {
     void serializesEventDetailsWithExemption3dsRejected() throws JsonProcessingException {
         var chargeEntity = ChargeEntityFixture.aValidChargeEntity().withExemption3ds(Exemption3ds.EXEMPTION_REJECTED).build();
         var eventDate = Instant.now();
-        String actual = Gateway3dsExemptionResultObtained.from(chargeEntity, eventDate).toJsonString();
+        String actual = Gateway3dsExemptionResultObtainedEvent.from(chargeEntity, eventDate).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasJsonPath("$.event_details.exemption3ds", equalTo("EXEMPTION_REJECTED")));
@@ -71,10 +71,10 @@ class Gateway3dsExemptionResultObtainedTest {
     void serializesEventDetailsWithExemption3dsNull() throws JsonProcessingException {
         var chargeEntity = ChargeEntityFixture.aValidChargeEntity().withExemption3ds(null).build();
         var eventDate = Instant.now();
-        String actual = Gateway3dsExemptionResultObtained.from(chargeEntity, eventDate).toJsonString();
+        String actual = Gateway3dsExemptionResultObtainedEvent.from(chargeEntity, eventDate).toJsonString();
 
         assertThat(actual, hasJsonPath("$.timestamp", equalTo(MICROSECOND_FORMATTER.format(eventDate))));
-        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED")));
+        assertThat(actual, hasJsonPath("$.event_type", equalTo("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT")));
         assertThat(actual, hasJsonPath("$.resource_type", equalTo("payment")));
         assertThat(actual, hasJsonPath("$.resource_external_id", equalTo(chargeEntity.getExternalId())));
         assertThat(actual, hasNoJsonPath("$.event_details.exemption3ds"));
