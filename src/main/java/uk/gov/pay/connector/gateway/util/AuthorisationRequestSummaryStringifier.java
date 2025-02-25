@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.util;
 
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -15,7 +16,7 @@ public class AuthorisationRequestSummaryStringifier {
         if (authorisationRequestSummary.setUpAgreement() == PRESENT) {
             stringJoiner.add("with set up agreement");
         }
-        
+
         switch (authorisationRequestSummary.billingAddress()) {
             case PRESENT:
                 stringJoiner.add("with billing address");
@@ -26,6 +27,17 @@ public class AuthorisationRequestSummaryStringifier {
             default:
                 break;
         }
+
+        if (authorisationRequestSummary.corporateCard()) {
+            stringJoiner.add("with corporate card");
+        }
+
+        authorisationRequestSummary.corporateExemptionRequested()
+                .filter(corporateExemptionRequested -> corporateExemptionRequested)
+                .ifPresent(corporateExemptionRequestedTrue -> {
+            stringJoiner.add("with corporate exemption requested");
+            authorisationRequestSummary.corporateExemptionResult().map(Exemption3ds::getDisplayName).ifPresent(stringJoiner::add);
+        });
 
         switch (authorisationRequestSummary.dataFor3ds()) {
             case PRESENT:
@@ -55,17 +67,6 @@ public class AuthorisationRequestSummaryStringifier {
                 break;
             case NOT_PRESENT:
                 stringJoiner.add("without device data collection result");
-                break;
-            default:
-                break;
-        }
-
-        switch (authorisationRequestSummary.exemptionRequest()) {
-            case PRESENT:
-                stringJoiner.add("with exemption");
-                break;
-            case NOT_PRESENT:
-                stringJoiner.add("without exemption");
                 break;
             default:
                 break;

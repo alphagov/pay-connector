@@ -242,7 +242,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
 
         if (authorisationWithExemptionRequestSoftDeclinedButRetryableWithoutExemption(response, corporateExemptionsEnabledAndCorporateCardUsed)) {
 
-            var authorisationRequestSummary = generateAuthorisationRequestSummary(request.getGatewayAccount(), request.getAuthCardDetails(), request.isSavePaymentInstrumentToAgreement());
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, request.getAuthCardDetails(), request.isSavePaymentInstrumentToAgreement());
 
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
@@ -424,8 +424,8 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement) {
-        return new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, isSetUpAgreement);
+    public WorldpayAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, boolean isSetupAgreement) {
+        return new WorldpayAuthorisationRequestSummary(chargeEntity, authCardDetails, isSetupAgreement);
     }
 
     @Override

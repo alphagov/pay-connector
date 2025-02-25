@@ -34,6 +34,7 @@ import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
 import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
@@ -50,10 +51,10 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 public class CardAuthoriseService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CardAuthoriseService.class);
-    private static final Counter authorisationResultCounter = Counter.build()
+    private static final Counter AUTHORISATION_RESULT_COUNTER = Counter.build()
             .name("gateway_operations_authorisation_result_total")
             .help("Counter of results of card authorisations")
-            .labelNames("paymentProvider", "gatewayAccountType", "billingAddressPresent", "authorisationResult")
+            .labelNames("paymentProvider", "gatewayAccountType", "billingAddressPresent", "corporateCardUsed", "corporateExemption", "authorisationResult")
             .register();
 
     private final CardTypeDao cardTypeDao;
@@ -239,10 +240,14 @@ public class CardAuthoriseService {
     }
 
     private void incrementMetricsPostAuthorisation(ChargeStatus newStatus, ChargeEntity updatedCharge, AuthorisationRequestSummary authorisationRequestSummary) {
-        authorisationResultCounter.labels(
-                updatedCharge.getPaymentProvider().toString().toLowerCase(),
-                updatedCharge.getGatewayAccount().getType().toString().toLowerCase(),
+        AUTHORISATION_RESULT_COUNTER.labels(
+                updatedCharge.getPaymentProvider().toLowerCase(),
+                updatedCharge.getGatewayAccount().getType().toLowerCase(),
                 authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
+                authorisationRequestSummary.corporateCard() ? "with corporate card" : "with non-corporate card",
+                authorisationRequestSummary.corporateExemptionResult()
+                        .map(Exemption3ds::getDisplayName)
+                        .orElse(Exemption3ds.EXEMPTION_NOT_REQUESTED.getDisplayName()),
                 newStatus.toString().toLowerCase()).inc();
 
         metricRegistry.counter(String.format(
@@ -250,7 +255,7 @@ public class CardAuthoriseService {
                 updatedCharge.getPaymentProvider(),
                 updatedCharge.getGatewayAccount().getType(),
                 authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
-                newStatus.toString())).inc();
+                newStatus)).inc();
     }
 
     @Transactional
@@ -293,7 +298,7 @@ public class CardAuthoriseService {
     }
 
     private AuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails) {
-        return getPaymentProviderFor(chargeEntity).generateAuthorisationRequestSummary(chargeEntity.getGatewayAccount(), authCardDetails, chargeEntity.isSavePaymentInstrumentToAgreement());
+        return getPaymentProviderFor(chargeEntity).generateAuthorisationRequestSummary(chargeEntity, authCardDetails, chargeEntity.isSavePaymentInstrumentToAgreement());
     }
 
 }

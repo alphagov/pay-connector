@@ -28,9 +28,7 @@ import uk.gov.pay.connector.charge.util.PaymentInstrumentEntityToAuthCardDetails
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
-import uk.gov.pay.connector.events.model.charge.PaymentEvent;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
@@ -56,7 +54,6 @@ import java.time.InstantSource;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -162,8 +159,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockedProviders.byName(WORLDPAY)).thenReturn(mockedWorldpayPaymentProvider);
         when(mockedWorldpayPaymentProvider.generateTransactionId()).thenReturn(Optional.of(TRANSACTION_ID));
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails, false))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, false));
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails, false));
 
         Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
         root.setLevel(Level.INFO);
@@ -176,8 +173,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
         gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails, false))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, false));
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails, false));
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
@@ -201,8 +198,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
         gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
-        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(gatewayAccount, authCardDetails, false))
-                .thenReturn(new WorldpayAuthorisationRequestSummary(gatewayAccount, authCardDetails, false));
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails, false));
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 

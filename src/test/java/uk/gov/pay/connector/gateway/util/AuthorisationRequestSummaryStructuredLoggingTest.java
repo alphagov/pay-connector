@@ -6,17 +6,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+
+import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.collection.ArrayMatching.arrayContaining;
-import static org.hamcrest.collection.IsArrayWithSize.emptyArray;
 import static org.mockito.BDDMockito.given;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_APPLICABLE;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_PRESENT;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.BILLING_ADDRESS;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.CORPORATE_CARD;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.CORPORATE_EXEMPTION_REQUESTED;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.CORPORATE_EXEMPTION_RESULT;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS2;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.IP_ADDRESS;
@@ -36,6 +41,9 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
+        given(mockAuthorisationRequestSummary.corporateCard()).willReturn(true);
+        given(mockAuthorisationRequestSummary.corporateExemptionRequested()).willReturn(Optional.of(Boolean.TRUE));
+        given(mockAuthorisationRequestSummary.corporateExemptionResult()).willReturn(Optional.of(Exemption3ds.EXEMPTION_HONOURED));
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -44,7 +52,10 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(DATA_FOR_3DS, true),
                 kv(DATA_FOR_3DS2, true),
                 kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, true),
-                kv(IP_ADDRESS, "1.1.1.1")
+                kv(IP_ADDRESS, "1.1.1.1"),
+                kv(CORPORATE_CARD, true),
+                kv(CORPORATE_EXEMPTION_REQUESTED, true),
+                kv(CORPORATE_EXEMPTION_RESULT, Exemption3ds.EXEMPTION_HONOURED.name())
         ));
     }
 
@@ -61,7 +72,8 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(BILLING_ADDRESS, false),
                 kv(DATA_FOR_3DS, false),
                 kv(DATA_FOR_3DS2, false),
-                kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false)
+                kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false),
+                kv(CORPORATE_CARD, false)
         )));
     }
 
@@ -74,7 +86,9 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
-        assertThat(result, is(emptyArray()));
+        assertThat(result, is(arrayContaining(
+                kv(CORPORATE_CARD, false)
+        )));
     }
 
     @Test
@@ -91,7 +105,8 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(BILLING_ADDRESS, true),
                 kv(DATA_FOR_3DS, true),
                 kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false),
-                kv(IP_ADDRESS, "1.1.1.1")
+                kv(IP_ADDRESS, "1.1.1.1"),
+                kv(CORPORATE_CARD, false)
         )));
     }
 

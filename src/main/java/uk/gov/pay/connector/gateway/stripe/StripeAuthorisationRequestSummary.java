@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe;
 
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 
@@ -10,13 +11,15 @@ public class StripeAuthorisationRequestSummary implements AuthorisationRequestSu
 
     private final Presence billingAddress;
     private final String ipAddress;
+    private final boolean isCorporateCard;
     
-    private Presence isSetupAgreement;
+    private Presence isSetUpAgreement;
 
-    public StripeAuthorisationRequestSummary(AuthCardDetails authCardDetails, boolean isSetupAgreement) {
+    public StripeAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, boolean isSetUpAgreement) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
         ipAddress = authCardDetails.getIpAddress().orElse(null);
-        this.isSetupAgreement = isSetupAgreement ? PRESENT: NOT_PRESENT;
+        isCorporateCard = authCardDetails.isCorporateCard();
+        this.isSetUpAgreement = isSetUpAgreement ? PRESENT: NOT_PRESENT;
     }
 
     @Override
@@ -31,6 +34,12 @@ public class StripeAuthorisationRequestSummary implements AuthorisationRequestSu
 
     @Override
     public Presence setUpAgreement() {
-        return isSetupAgreement;
+        return isSetUpAgreement;
     }
+
+    @Override
+    public boolean corporateCard() {
+        return isCorporateCard;
+    }
+ 
 }
