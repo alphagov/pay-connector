@@ -1,15 +1,15 @@
 package uk.gov.pay.connector.gateway.model;
 
+import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+
+import java.util.Optional;
+
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_APPLICABLE;
 
 public interface AuthorisationRequestSummary {
     
     enum Presence {
         PRESENT, NOT_PRESENT, NOT_APPLICABLE
-    }
-    
-    default Presence exemptionRequest() {
-        return NOT_APPLICABLE;
     }
 
     default Presence billingAddress() {
@@ -33,5 +33,17 @@ public interface AuthorisationRequestSummary {
     };
     
     default Presence setUpAgreement() { return NOT_APPLICABLE; }
+
+    default boolean corporateCard() {
+        return false;
+    }
+
+    default Optional<Boolean> corporateExemptionRequested() {
+        return Optional.empty();
+    }
+
+    default Optional<Exemption3ds> corporateExemptionResult() {
+        return Optional.empty();
+    }
 
 }

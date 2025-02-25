@@ -198,8 +198,8 @@ public class StripePaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public StripeAuthorisationRequestSummary generateAuthorisationRequestSummary(GatewayAccountEntity gatewayAccount, AuthCardDetails authCardDetails, boolean isSetUpAgreement) {
-        return new StripeAuthorisationRequestSummary(authCardDetails, isSetUpAgreement);
+    public StripeAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, boolean isSetUpAgreement) {
+        return new StripeAuthorisationRequestSummary(chargeEntity, authCardDetails, isSetUpAgreement);
     }
 
     @Override
