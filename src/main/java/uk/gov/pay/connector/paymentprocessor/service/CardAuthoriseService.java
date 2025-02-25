@@ -222,7 +222,7 @@ public class CardAuthoriseService {
                 mayBeCanRetry.orElse(null),
                 mayBeRejectedReason.orElse(null));
 
-        var authorisationRequestSummary = generateAuthorisationRequestSummary(charge, authCardDetails);
+        var authorisationRequestSummary = generateAuthorisationRequestSummary(updatedCharge, authCardDetails);
 
         authorisationLogger.logChargeAuthorisation(
                 LOGGER,
