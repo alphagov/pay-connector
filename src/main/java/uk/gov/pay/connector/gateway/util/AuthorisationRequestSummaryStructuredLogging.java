@@ -14,7 +14,7 @@ public class AuthorisationRequestSummaryStructuredLogging {
     public static final String BILLING_ADDRESS = "billing_address";
     public static final String CORPORATE_CARD = "corporate_card";
     public static final String CORPORATE_EXEMPTION_REQUESTED = "corporate_exemption_requested";
-    public static final String CORPORATE_EXEMPTION_RESULT = "exemption_result";
+    public static final String CORPORATE_EXEMPTION_RESULT = "corporate_exemption_result";
     public static final String DATA_FOR_3DS = "data_for_3ds";
     public static final String DATA_FOR_3DS2 = "data_for_3ds2";
     public static final String WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT = "worldpay_3ds_flex_device_data_collection_result";
