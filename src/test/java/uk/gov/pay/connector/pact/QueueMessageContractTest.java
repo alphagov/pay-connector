@@ -33,7 +33,7 @@ import uk.gov.pay.connector.events.model.charge.CancelledByUser;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmed;
 import uk.gov.pay.connector.events.model.charge.CaptureSubmitted;
 import uk.gov.pay.connector.events.model.charge.FeeIncurredEvent;
-import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtainedEvent;
 import uk.gov.pay.connector.events.model.charge.Gateway3dsInfoObtained;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.events.model.charge.GatewayRequires3dsAuthorisation;
@@ -349,7 +349,7 @@ public class QueueMessageContractTest {
                 .withExemption3ds(Exemption3ds.EXEMPTION_HONOURED)
                 .build();
 
-        var gateway3dsExemptionResultObtained = new Gateway3dsExemptionResultObtained(
+        var gateway3dsExemptionResultObtained = new Gateway3dsExemptionResultObtainedEvent(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),
                 charge.getGatewayAccount().getId(),

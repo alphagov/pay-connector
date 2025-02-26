@@ -10,7 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtained;
+import uk.gov.pay.connector.events.model.charge.Gateway3dsExemptionResultObtainedEvent;
 import uk.gov.pay.connector.events.model.charge.Requested3dsExemption;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.ChargeQueryGatewayRequest;
@@ -313,7 +313,7 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
             LOGGER.info("Updated exemption_3ds of charge to {} (reason {}) - charge_external_id={}", exemption3ds.name(), reason, charge.getExternalId());
         }
         chargeDao.merge(charge);
-        eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtained.from(charge, instantSource.instant()));
+        eventService.emitAndRecordEvent(Gateway3dsExemptionResultObtainedEvent.from(charge, instantSource.instant()));
     }
 
     @Transactional
