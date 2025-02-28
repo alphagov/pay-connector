@@ -1,14 +1,9 @@
 package uk.gov.pay.connector.service;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.google.inject.persist.UnitOfWork;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
@@ -16,12 +11,13 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.MultipleLiveGatewayAccountsException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
-import uk.gov.pay.connector.gatewayaccount.service.StripeAccountSetupService;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsHistoryDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +30,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 
 @ExtendWith(MockitoExtension.class)
 public class GetGatewayAccountByServiceIdAndAccountTypeTest {
@@ -111,6 +108,32 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
                 gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, TEST);
         assertTrue(gatewayAccount.isPresent());
         assertTrue(gatewayAccount.get().isSandboxGatewayAccount());
+    }
+
+    @Test
+    void shouldIgnoreDisabledGatewayAccounts() {
+        var gatewayAccount = new GatewayAccountEntity(TEST);
+        gatewayAccount.setId(10L);
+        var stripeCreds = new GatewayAccountCredentialsEntity(gatewayAccount, "stripe", Map.of(), RETIRED);
+        stripeCreds.setActiveEndDate(Instant.now());
+        stripeCreds.setActiveStartDate(Instant.now().minus(Duration.ofDays(1)));
+        var worldpayCreds = new GatewayAccountCredentialsEntity(gatewayAccount, "worldpay", Map.of(), ACTIVE);
+        worldpayCreds.setActiveStartDate(Instant.now());
+        gatewayAccount.setGatewayAccountCredentials(List.of(stripeCreds, worldpayCreds));
+        
+        var disabledSandboxGatewayAccount = new GatewayAccountEntity(TEST);
+        disabledSandboxGatewayAccount.setDisabled(true);
+        disabledSandboxGatewayAccount.setDisabledReason("Superseded by newer test account [gateway_account_id: 10]");
+        var sandboxCreds = new GatewayAccountCredentialsEntity(disabledSandboxGatewayAccount, "sandbox", Map.of(), ACTIVE);
+        sandboxCreds.setActiveStartDate(Instant.now().minus(Duration.ofDays(1)));
+        disabledSandboxGatewayAccount.setGatewayAccountCredentials(List.of(sandboxCreds));
+
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, TEST))
+                .thenReturn(List.of(gatewayAccount, disabledSandboxGatewayAccount));
+
+        var retrievedGatewayAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, TEST);
+        assertTrue(retrievedGatewayAccount.isPresent());
+        assertTrue(retrievedGatewayAccount.get().isWorldpayGatewayAccount());
     }
     
     @Test

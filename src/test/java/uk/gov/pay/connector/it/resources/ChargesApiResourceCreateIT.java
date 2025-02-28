@@ -990,7 +990,7 @@ public class ChargesApiResourceCreateIT {
         }
         
         @Test
-        void should_return_403_when_account_disabled() {
+        void should_return_404_when_account_disabled() {
             app.givenSetup()
                     .body(toJson(Map.of("op", "replace", "path", "disabled", "value", true)))
                     .patch(format("/v1/api/service/%s/account/%s", VALID_SERVICE_ID, GatewayAccountType.TEST))
@@ -1006,9 +1006,9 @@ public class ChargesApiResourceCreateIT {
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
-                    .statusCode(403)
+                    .statusCode(404)
                     .contentType(JSON)
-                    .body("message", contains("This gateway account is disabled"));
+                    .body("message", contains(format("Gateway account not found for service external id [%s] and account type [test]", VALID_SERVICE_ID)));
         }
     }
         /*

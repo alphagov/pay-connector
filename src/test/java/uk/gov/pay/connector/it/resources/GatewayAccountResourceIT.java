@@ -211,8 +211,6 @@ public class GatewayAccountResourceIT {
             app.getDatabaseTestHelper().allowZeroAmount(accountId);
             app.getDatabaseTestHelper().blockPrepaidCards(accountId);
             app.getDatabaseTestHelper().enableProviderSwitch(accountId);
-            app.getDatabaseTestHelper().setDisabled(accountId);
-            app.getDatabaseTestHelper().setDisabledReason(accountId, "Disabled because reasons");
             app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(accountId, "macKey", "issuer", "org_unit_id", 2L);
 
             String url = ACCOUNTS_API_SERVICE_ID_URL.replace("{serviceId}", "valid-external-service-id").replace("{accountType}", GatewayAccountType.TEST.name());
@@ -248,8 +246,8 @@ public class GatewayAccountResourceIT {
                     .body("recurring_enabled", is(true))
                     .body("requires3ds", is(true))
                     .body("block_prepaid_cards", is(true))
-                    .body("disabled", is(true))
-                    .body("disabled_reason", is("Disabled because reasons"))
+                    .body("disabled", is(false))
+                    .body("disabled_reason", nullValue())
                     .body("gateway_account_credentials.size()", is(1))
                     .body("gateway_account_credentials[0].payment_provider", is("worldpay"))
                     .body("gateway_account_credentials[0].state", is("ACTIVE"))
@@ -307,8 +305,6 @@ public class GatewayAccountResourceIT {
             app.getDatabaseTestHelper().allowZeroAmount(accountId);
             app.getDatabaseTestHelper().blockPrepaidCards(accountId);
             app.getDatabaseTestHelper().enableProviderSwitch(accountId);
-            app.getDatabaseTestHelper().setDisabled(accountId);
-            app.getDatabaseTestHelper().setDisabledReason(accountId, "Disabled because reasons");
 
             String url = ACCOUNTS_API_SERVICE_ID_URL.replace("{serviceId}", "valid-external-service-id").replace("{accountType}", GatewayAccountType.TEST.name());
             app.givenSetup()
@@ -343,8 +339,8 @@ public class GatewayAccountResourceIT {
                     .body("recurring_enabled", is(true))
                     .body("requires3ds", is(true))
                     .body("block_prepaid_cards", is(true))
-                    .body("disabled", is(true))
-                    .body("disabled_reason", is("Disabled because reasons"))
+                    .body("disabled", is(false))
+                    .body("disabled_reason", nullValue())
                     .body("gateway_account_credentials.size()", is(1))
                     .body("gateway_account_credentials[0].payment_provider", is("stripe"))
                     .body("gateway_account_credentials[0].state", is("ACTIVE"))

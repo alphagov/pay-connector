@@ -332,7 +332,7 @@ public class GatewayAccountResourceUpdateIT {
         }
 
         @Test
-        void updatingDisabledToFalseShouldClearDisabledReason() {
+        void returnNotFoundWhenUpdatingADisabledAccount() {
             app.givenSetup()
                     .get(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
@@ -349,39 +349,13 @@ public class GatewayAccountResourceUpdateIT {
                     .then()
                     .statusCode(OK.getStatusCode());
 
-            payload = Map.of("op", "replace",
-                    "path", "disabled_reason",
-                    "value", "Disabled because Dolores Umbridge is evil");
-
             app.givenSetup()
-                    .body(toJson(payload))
+                    .body(toJson(Map.of("op", "replace",
+                            "path", "allow_telephone_payment_notifications",
+                            "value", true)))
                     .patch(format("/v1/api/service/%s/account/test", serviceId))
                     .then()
-                    .statusCode(OK.getStatusCode());
-
-            app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/test", serviceId))
-                    .then()
-                    .statusCode(OK.getStatusCode())
-                    .body("disabled", is(true))
-                    .body("disabled_reason", is("Disabled because Dolores Umbridge is evil"));
-
-            payload = Map.of("op", "replace",
-                    "path", "disabled",
-                    "value", false);
-
-            app.givenSetup()
-                    .body(toJson(payload))
-                    .patch(format("/v1/api/service/%s/account/test", serviceId))
-                    .then()
-                    .statusCode(OK.getStatusCode());
-
-            app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/test", serviceId))
-                    .then()
-                    .statusCode(OK.getStatusCode())
-                    .body("disabled", is(false))
-                    .body("disabled_reason", is(nullValue()));
+                    .statusCode(NOT_FOUND.getStatusCode());
         }
     }
 

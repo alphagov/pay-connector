@@ -34,6 +34,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.eclipse.jetty.http.HttpStatus.FORBIDDEN_403;
+import static org.eclipse.jetty.http.HttpStatus.NOT_FOUND_404;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -436,11 +437,10 @@ public class SandboxRefundsResourceIT  {
         class SubmitRefund {
             @Test
             @DisplayName("Should return 403 when gateway account is disabled")
-            void shouldRespond_403_WhenGatewayAccountDisabled() {
+            void shouldRespond_404_WhenGatewayAccountDisabled() {
                 int refundAmount = 50;
                 app.getDatabaseTestHelper().setDisabled(defaultTestAccount.getAccountId());
 
-                // Attempt to submit refund
                 app.givenSetup()
                     .body(toJson(Map.of(
                             "amount", refundAmount,
@@ -449,9 +449,9 @@ public class SandboxRefundsResourceIT  {
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
                     .then()
-                    .statusCode(FORBIDDEN_403)
-                    .body("message", contains("This gateway account is disabled"))
-                    .body("error_identifier", is(ErrorIdentifier.ACCOUNT_DISABLED.toString()));
+                    .statusCode(NOT_FOUND_404)
+                    .body("message", contains(format("Gateway account not found for service external id [%s] and account type [test]", SERVICE_ID)))
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
             }
 
             @Test

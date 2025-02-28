@@ -195,16 +195,17 @@ public class GatewayAccountService {
     }
 
     public Optional<GatewayAccountEntity> getGatewayAccountByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
-        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType);
+        List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
+                .stream().filter(gwe -> !gwe.isDisabled()).toList();
 
         if (accountType.equals(LIVE) && gatewayAccounts.size() > 1) {
             throw MultipleLiveGatewayAccountsException.multipleLiveGatewayAccounts(serviceId);
         }
 
-        return gatewayAccounts.stream().filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
+        return gatewayAccounts.stream()
+                .filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isSandboxGatewayAccount).findFirst())
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isWorldpayGatewayAccount).findFirst());
-
     }
 
     public boolean isATelephonePaymentNotificationAccount(String merchantCode) {
