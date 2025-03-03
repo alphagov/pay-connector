@@ -25,6 +25,7 @@ import uk.gov.pay.connector.client.ledger.model.LedgerTransaction;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.events.EventService;
+import uk.gov.pay.connector.events.eventdetails.charge.RefundAvailabilityUpdatedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeEvidenceSubmittedEventDetails;
 import uk.gov.pay.connector.events.eventdetails.dispute.DisputeLostEventDetails;
 import uk.gov.pay.connector.events.model.ResourceType;
@@ -181,21 +182,23 @@ public class StripeWebhookTaskHandlerTest {
                 .withGatewayTransactionId("gateway-transaction-id")
                 .isLive(true)
                 .build();
-        Charge charge = Charge.from(transaction);
         StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "won", true);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
-        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
 
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
-        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated().toInstant())).thenReturn(refundAvailabilityUpdated);
         stripeWebhookTaskHandler.process(stripeNotification);
-        ArgumentCaptor<DisputeWon> argumentCaptor = ArgumentCaptor.forClass(DisputeWon.class);
+        ArgumentCaptor<RefundAvailabilityUpdated> argumentCaptor = ArgumentCaptor.forClass(RefundAvailabilityUpdated.class);
 
         var disputeWon = DisputeWon.from(resourceExternalId, stripeNotification.getCreated().toInstant(), transaction);
         verify(eventService).emitEvent(disputeWon);
-        verify(eventService).emitEvent(refundAvailabilityUpdated);
+
+        verify(eventService).emitEvent(argumentCaptor.capture());
+        var refundAvailabilityUpdatedEvent = argumentCaptor.getValue();
+        assertThat(refundAvailabilityUpdatedEvent.getEventType(), is("REFUND_AVAILABILITY_UPDATED"));
+        var eventDetails = (RefundAvailabilityUpdatedEventDetails)refundAvailabilityUpdatedEvent.getEventDetails();
+        assertThat(eventDetails.getRefundStatus(), is("available"));
     }
 
     @Test
@@ -204,7 +207,7 @@ public class StripeWebhookTaskHandlerTest {
                 .withExternalId("external-id")
                 .withGatewayAccountId(1000L)
                 .withGatewayTransactionId("gateway-transaction-id")
-                .isLive(true)
+                .isLive(false)
                 .build();
         Charge charge = Charge.from(transaction);
         StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "won", false);
@@ -214,13 +217,17 @@ public class StripeWebhookTaskHandlerTest {
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
-        when(chargeService.createRefundAvailabilityUpdatedEvent(charge, stripeNotification.getCreated().plusSeconds(1).toInstant())).thenReturn(refundAvailabilityUpdated);
         stripeWebhookTaskHandler.process(stripeNotification);
-        ArgumentCaptor<DisputeWon> argumentCaptor = ArgumentCaptor.forClass(DisputeWon.class);
+        ArgumentCaptor<RefundAvailabilityUpdated> argumentCaptor = ArgumentCaptor.forClass(RefundAvailabilityUpdated.class);
 
         var disputeWon = DisputeWon.from(resourceExternalId, stripeNotification.getCreated().plusSeconds(1).toInstant(), transaction);
         verify(eventService).emitEvent(disputeWon);
-        verify(eventService).emitEvent(refundAvailabilityUpdated);
+
+        verify(eventService).emitEvent(argumentCaptor.capture());
+        var refundAvailabilityUpdatedEvent = argumentCaptor.getValue();
+        assertThat(refundAvailabilityUpdatedEvent.getEventType(), is("REFUND_AVAILABILITY_UPDATED"));
+        var eventDetails = (RefundAvailabilityUpdatedEventDetails)refundAvailabilityUpdatedEvent.getEventDetails();
+        assertThat(eventDetails.getRefundStatus(), is("available"));
     }
 
     @Test
