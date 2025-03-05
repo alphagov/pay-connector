@@ -44,6 +44,7 @@ import java.util.Optional;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.stripe.StripeDisputeStatus.LOST;
@@ -159,9 +160,8 @@ public class StripeWebhookTaskHandler {
 
                         if (disputeStatus == WON) {
                             disputeEvent = DisputeWon.from(disputeExternalId, disputeClosedEventTimestamp, transaction);
-                            Charge charge = Charge.from(transaction);
-                            RefundAvailabilityUpdated refundAvailabilityUpdatedEvent = chargeService.createRefundAvailabilityUpdatedEvent(charge,
-                                    disputeClosedEventTimestamp);
+                            var refundAvailabilityUpdatedEvent = RefundAvailabilityUpdated.from(
+                                    transaction, EXTERNAL_AVAILABLE, disputeClosedEventTimestamp);
                             emitEvent(refundAvailabilityUpdatedEvent);
                         } else if (disputeStatus == LOST) {
                             disputeEvent = handleDisputeLost(stripeDisputeData, transaction, disputeExternalId, disputeClosedEventTimestamp);
