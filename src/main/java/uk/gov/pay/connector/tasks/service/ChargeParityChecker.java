@@ -428,51 +428,36 @@ public class ChargeParityChecker {
     }
 
     private static LedgerExemptionState calculateLedgerExemptionState(LedgerTransaction transaction) {
-        Exemption exemption = transaction.getExemption();
-
-        if (exemption == null) {
-            return LEDGER_HAS_NO_EXEMPTION;
-        }
-
-        if (!exemption.requested()) {
-            return LEDGER_HAS_EXEMPTION_WITH_REQUESTED_FALSE;
-        }
-
-        ExemptionOutcome outcome = exemption.outcome();
-        if (outcome == null) {
-            return LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_AND_NO_OUTCOME;
-        }
-
-        String result = outcome.result();
-        String exemptionType = exemption.type();
-
-        return switch (result) {
-            case null -> LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_NO_RESULT;
-            case "honoured" -> switch (exemptionType) {
-                case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_HONOURED;
-                case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_HONOURED;
-                default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_HONOURED;
+        return switch (transaction.getExemption()) {
+            case null -> LEDGER_HAS_NO_EXEMPTION;
+            case Exemption(boolean requested, String type, ExemptionOutcome outcome) when !requested -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_FALSE;
+            case Exemption(boolean requested, String type, ExemptionOutcome outcome) when outcome == null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_AND_NO_OUTCOME;
+            case Exemption(boolean requested, String type, ExemptionOutcome(String result)) -> switch (result) {
+                case null -> LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_NO_RESULT;   
+                case "honoured" -> switch (type) {
+                    case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_HONOURED;
+                    case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_HONOURED;
+                    default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_HONOURED;
+                };
+                case "rejected" -> switch (type) {
+                    case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_REJECTED;
+                    case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_REJECTED;
+                    default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_REJECTED;
+                };
+                case "out of scope" -> switch (type) {
+                    case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
+                    case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
+                    default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
+                };
+                default -> LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_UNEXPECTED_RESULT;
             };
-            case "rejected" -> switch (exemptionType) {
-                case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_REJECTED;
-                case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_REJECTED;
-                default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_REJECTED;
-            };
-            case "out of scope" -> switch (exemptionType) {
-                case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
-                case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
-                default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
-            };
-            default -> LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_UNEXPECTED_RESULT;
         };
     }
-
 
     private boolean matchExemption3dsFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
         Connector3dsExemptionResultState connectorExemption3dsState = calculateConnectorExemption3ds(chargeEntity);
         Connector3dsExemptionRequestedState connectorExemption3DsRequestedState = calculateConnectorExemption3dsRequested(chargeEntity);
         LedgerExemptionState ledgerExemptionState = calculateLedgerExemptionState(transaction);
-        
         return validCombinations.contains(new Exemption3dsStateCombination(connectorExemption3DsRequestedState, connectorExemption3dsState, ledgerExemptionState));
     }
 
