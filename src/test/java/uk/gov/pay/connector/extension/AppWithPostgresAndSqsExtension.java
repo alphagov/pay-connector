@@ -215,9 +215,9 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
     private JpaPersistModule createJpaModule() {
         final Properties properties = new Properties();
-        properties.put("javax.persistence.jdbc.url", getConnectionUrl());
-        properties.put("javax.persistence.jdbc.user", getDbUsername());
-        properties.put("javax.persistence.jdbc.password", getDbPassword());
+        properties.put("jakarta.persistence.jdbc.url", getConnectionUrl());
+        properties.put("jakarta.persistence.jdbc.user", getDbUsername());
+        properties.put("jakarta.persistence.jdbc.password", getDbPassword());
 
         final JpaPersistModule jpaModule = new JpaPersistModule(JPA_UNIT);
         jpaModule.properties(properties);

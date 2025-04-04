@@ -7,8 +7,8 @@ import org.postgresql.util.PGobject;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.pay.connector.charge.exception.ExternalMetadataConverterException;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;

@@ -11,7 +11,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;

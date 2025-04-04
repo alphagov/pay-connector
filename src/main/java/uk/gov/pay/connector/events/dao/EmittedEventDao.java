@@ -8,8 +8,8 @@ import uk.gov.pay.connector.events.EmittedEventEntity;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.ResourceType;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;

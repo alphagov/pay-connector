@@ -9,7 +9,7 @@ import io.dropwizard.validation.ValidationMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;

@@ -39,8 +39,8 @@ import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
-import javax.inject.Singleton;
-import javax.ws.rs.client.Client;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.client.Client;
 import java.net.URI;
 import java.time.InstantSource;
 import java.util.Map;
@@ -87,10 +87,10 @@ public class ConnectorModule extends AbstractModule {
         DataSourceFactory dbConfig = configuration.getDataSourceFactory();
 
         final Properties properties = new Properties();
-        properties.put("javax.persistence.jdbc.driver", dbConfig.getDriverClass());
-        properties.put("javax.persistence.jdbc.url", dbConfig.getUrl());
-        properties.put("javax.persistence.jdbc.user", dbConfig.getUser());
-        properties.put("javax.persistence.jdbc.password", dbConfig.getPassword());
+        properties.put("jakarta.persistence.jdbc.driver", dbConfig.getDriverClass());
+        properties.put("jakarta.persistence.jdbc.url", dbConfig.getUrl());
+        properties.put("jakarta.persistence.jdbc.user", dbConfig.getUser());
+        properties.put("jakarta.persistence.jdbc.password", dbConfig.getPassword());
 
         JPAConfiguration jpaConfiguration = configuration.getJpaConfiguration();
         properties.put("eclipselink.logging.level", jpaConfiguration.getJpaLoggingLevel());

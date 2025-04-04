@@ -28,8 +28,8 @@ import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredenti
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.UriInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

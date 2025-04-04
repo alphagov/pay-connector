@@ -7,7 +7,7 @@ import uk.gov.pay.connector.charge.exception.motoapi.OneTimeTokenUsageInvalidFor
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 

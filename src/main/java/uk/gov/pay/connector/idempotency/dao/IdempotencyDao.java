@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Optional;
 

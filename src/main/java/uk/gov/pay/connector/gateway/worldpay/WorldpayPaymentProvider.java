@@ -50,9 +50,9 @@ import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.WebApplicationException;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.WebApplicationException;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.time.InstantSource;

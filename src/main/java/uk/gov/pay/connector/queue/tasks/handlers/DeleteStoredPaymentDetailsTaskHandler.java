@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DeleteStoredPaymentDetailsTaskHandler {
 

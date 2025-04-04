@@ -3,9 +3,9 @@ package uk.gov.pay.connector.cardtype.model.domain;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "card_types")

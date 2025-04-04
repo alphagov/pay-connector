@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.exception.motoapi;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 public class OneTimeTokenUsageInvalidForMotoApiException extends BadRequestException {
     public OneTimeTokenUsageInvalidForMotoApiException() {

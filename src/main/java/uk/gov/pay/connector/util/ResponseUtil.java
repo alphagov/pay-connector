@@ -6,20 +6,20 @@ import org.slf4j.LoggerFactory;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.Response.Status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.ACCEPTED;
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static javax.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.status;
+import static jakarta.ws.rs.core.Response.Status;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.ACCEPTED;
+import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static jakarta.ws.rs.core.Response.Status.PAYMENT_REQUIRED;
+import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.noContent;
+import static jakarta.ws.rs.core.Response.status;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AUTHORISATION_REJECTED;
 
 public class ResponseUtil {

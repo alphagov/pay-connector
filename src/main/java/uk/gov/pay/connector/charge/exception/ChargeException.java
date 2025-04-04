@@ -2,7 +2,7 @@ package uk.gov.pay.connector.charge.exception;
 
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 public class ChargeException extends WebApplicationException {
 

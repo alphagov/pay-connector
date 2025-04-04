@@ -5,7 +5,7 @@ import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import javax.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.SecurityContext;
 import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;

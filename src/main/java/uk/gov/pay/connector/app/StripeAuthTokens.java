@@ -2,8 +2,8 @@ package uk.gov.pay.connector.app;
 
 import io.dropwizard.core.Configuration;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 public class StripeAuthTokens extends Configuration {
 

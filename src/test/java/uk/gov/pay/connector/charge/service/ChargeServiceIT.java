@@ -15,7 +15,7 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;

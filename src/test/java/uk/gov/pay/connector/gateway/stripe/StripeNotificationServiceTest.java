@@ -37,7 +37,7 @@ import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;

@@ -9,7 +9,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Locale;
 import java.util.Optional;
 

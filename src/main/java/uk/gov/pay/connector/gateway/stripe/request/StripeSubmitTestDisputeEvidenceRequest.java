@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;

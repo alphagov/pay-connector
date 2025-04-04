@@ -9,7 +9,7 @@ import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.service.ChargeService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.concurrent.TimeUnit;
 
 public class ChargesAwaitingCaptureMetricEmitter {

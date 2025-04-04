@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.Optional;
 
 public class Worldpay3dsFlexCredentialsDao extends JpaDao<Worldpay3dsFlexCredentialsEntity> {

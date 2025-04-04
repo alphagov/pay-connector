@@ -19,16 +19,16 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 

@@ -1,5 +1,5 @@
 package uk.gov.pay.connector.agreement.exception;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 public class AgreementNotFoundException extends WebApplicationException {
 

@@ -3,7 +3,7 @@ package uk.gov.pay.connector.expunge.service;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.ExpungeConfig;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ExpungeService {
 

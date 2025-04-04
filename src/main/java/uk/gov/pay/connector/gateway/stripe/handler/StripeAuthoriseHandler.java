@@ -33,8 +33,8 @@ import uk.gov.service.payments.commons.api.exception.ValidationException;
 
 import java.util.List;
 
-import static javax.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
-import static javax.ws.rs.core.Response.Status.Family.SERVER_ERROR;
+import static jakarta.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
+import static jakarta.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;

@@ -2,8 +2,8 @@ package uk.gov.pay.connector.gateway;
 
 import com.codahale.metrics.MetricRegistry;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
 
 public class GatewayClientFactory {
 

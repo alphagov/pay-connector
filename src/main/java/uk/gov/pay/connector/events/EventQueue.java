@@ -6,7 +6,7 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class EventQueue {
 

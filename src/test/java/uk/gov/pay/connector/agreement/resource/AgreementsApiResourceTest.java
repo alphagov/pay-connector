@@ -12,8 +12,8 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;

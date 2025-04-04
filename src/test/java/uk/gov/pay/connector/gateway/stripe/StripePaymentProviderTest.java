@@ -270,7 +270,7 @@ class StripePaymentProviderTest {
 
             when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
             when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                    .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
+                    .thenThrow(new GatewayConnectionTimeoutException("jakarta.ws.rs.ProcessingException: java.io.IOException"));
             when(paymentMethodResponse.getEntity()).thenReturn(successCreatePaymentMethodResponse());
 
             ChargeEntity charge = buildTestCharge();
@@ -278,7 +278,7 @@ class StripePaymentProviderTest {
 
             assertThat(authoriseResponse.isFailed(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-            assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
+            assertEquals("jakarta.ws.rs.ProcessingException: java.io.IOException",
                     authoriseResponse.getGatewayError().get().getMessage());
             assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
         }
@@ -546,7 +546,7 @@ class StripePaymentProviderTest {
         @Test
         void shouldNotAuthorise_forUserNotPresentPayment_whenProcessingExceptionIsThrown() throws Exception {
             when(gatewayClient.postRequestFor(any(StripePaymentIntentRequest.class)))
-                    .thenThrow(new GatewayConnectionTimeoutException("javax.ws.rs.ProcessingException: java.io.IOException"));
+                    .thenThrow(new GatewayConnectionTimeoutException("jakarta.ws.rs.ProcessingException: java.io.IOException"));
 
             ChargeEntity charge = buildTestAuthorisationModeAgreementCharge();
             RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
@@ -554,7 +554,7 @@ class StripePaymentProviderTest {
 
             assertThat(authoriseResponse.isFailed(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
-            assertEquals("javax.ws.rs.ProcessingException: java.io.IOException",
+            assertEquals("jakarta.ws.rs.ProcessingException: java.io.IOException",
                     authoriseResponse.getGatewayError().get().getMessage());
             assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
         }

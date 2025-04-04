@@ -12,9 +12,9 @@ import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredenti
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;

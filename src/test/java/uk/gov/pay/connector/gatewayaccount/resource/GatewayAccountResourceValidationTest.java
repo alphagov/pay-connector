@@ -11,8 +11,8 @@ import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

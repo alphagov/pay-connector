@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gatewayaccount.exception;
 
 import uk.gov.pay.connector.util.ResponseUtil;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 public class MissingWorldpay3dsFlexCredentialsEntityException extends BadRequestException {
     public MissingWorldpay3dsFlexCredentialsEntityException(Long accountId,

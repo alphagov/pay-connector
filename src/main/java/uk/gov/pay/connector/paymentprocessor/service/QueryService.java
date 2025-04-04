@@ -15,8 +15,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;

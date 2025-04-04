@@ -2,8 +2,8 @@ package uk.gov.pay.connector.rules;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.GsonBuilder;
+import jakarta.xml.bind.DatatypeConverter;
 
-import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -11,8 +11,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.SQS_SEND_MESSAGE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 

@@ -2,8 +2,8 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import java.util.HashSet;
 
 public class PaymentOutcomeValidator implements ConstraintValidator<ValidPaymentOutcome, PaymentOutcome> {

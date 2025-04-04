@@ -1,10 +1,10 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.StringJoiner;
 
 @XmlRootElement(name = "paymentService")

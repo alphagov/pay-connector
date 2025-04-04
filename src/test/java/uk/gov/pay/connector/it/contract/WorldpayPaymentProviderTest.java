@@ -53,7 +53,7 @@ import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import javax.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;

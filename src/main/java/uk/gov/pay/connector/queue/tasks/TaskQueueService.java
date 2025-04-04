@@ -19,7 +19,7 @@ import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
 import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isEmpty;

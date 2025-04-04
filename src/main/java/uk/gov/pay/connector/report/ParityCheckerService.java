@@ -18,7 +18,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 

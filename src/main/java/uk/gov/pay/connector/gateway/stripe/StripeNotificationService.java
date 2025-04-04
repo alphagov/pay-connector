@@ -32,7 +32,7 @@ import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;

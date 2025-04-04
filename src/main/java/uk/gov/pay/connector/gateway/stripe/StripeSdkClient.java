@@ -7,7 +7,7 @@ import com.stripe.net.RequestOptions;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

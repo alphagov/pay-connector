@@ -38,7 +38,7 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 

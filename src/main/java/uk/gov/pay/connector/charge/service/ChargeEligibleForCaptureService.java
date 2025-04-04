@@ -13,8 +13,8 @@ import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 
 import java.util.List;
 

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.charge.model.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class Auth3dsRequiredEntity {

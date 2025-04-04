@@ -8,7 +8,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.TaskQueueConfig;
 import uk.gov.pay.connector.queue.tasks.TaskQueueMessageHandler;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 

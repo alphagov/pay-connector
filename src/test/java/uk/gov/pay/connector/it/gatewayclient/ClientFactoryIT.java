@@ -17,8 +17,8 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.service.payments.commons.testing.port.PortFactory;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Invocation;
 import java.net.SocketTimeoutException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -108,7 +108,7 @@ public class ClientFactoryIT {
         try {
             request.get();
             fail();
-        } catch (javax.ws.rs.ProcessingException e) {
+        } catch (jakarta.ws.rs.ProcessingException e) {
             long endTime = System.currentTimeMillis();
 
             Throwable timeoutException = e.getCause();
@@ -186,7 +186,7 @@ public class ClientFactoryIT {
         try {
             request.get();
             fail();
-        } catch (javax.ws.rs.ProcessingException e) {
+        } catch (jakarta.ws.rs.ProcessingException e) {
             long endTime = System.currentTimeMillis();
 
             Throwable timeoutException = e.getCause();

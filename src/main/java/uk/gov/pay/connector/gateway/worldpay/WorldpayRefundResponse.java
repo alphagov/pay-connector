@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.gateway.model.response.BaseRefundResponse;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.util.Optional;
 import java.util.StringJoiner;
 

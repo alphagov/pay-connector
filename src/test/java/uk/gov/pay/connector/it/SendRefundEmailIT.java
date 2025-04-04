@@ -14,7 +14,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.RestAssured.given;
-import static javax.ws.rs.core.MediaType.TEXT_XML;
+import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;

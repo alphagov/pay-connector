@@ -1,7 +1,8 @@
 package uk.gov.pay.connector.util;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlValue;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlValue;
+
 
 @XmlRootElement(name = "foo")
 public class XMLUnmarshallingAttackTest {

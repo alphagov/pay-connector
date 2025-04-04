@@ -4,9 +4,8 @@ import com.google.inject.Injector;
 import io.dropwizard.core.Application;
 import io.dropwizard.core.Configuration;
 import io.dropwizard.testing.ConfigOverride;
+import jakarta.annotation.Nullable;
 import uk.gov.pay.connector.app.InjectorLookup;
-
-import javax.annotation.Nullable;
 
 public class DropwizardAppRule<C extends Configuration> extends io.dropwizard.testing.junit.DropwizardAppRule<C> implements AppRule<C> {
 

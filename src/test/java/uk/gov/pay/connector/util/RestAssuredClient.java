@@ -3,7 +3,7 @@ package uk.gov.pay.connector.util;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 
-import javax.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Entity;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

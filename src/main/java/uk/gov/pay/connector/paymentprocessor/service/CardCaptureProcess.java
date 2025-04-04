@@ -11,7 +11,7 @@ import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.capture.ChargeCaptureMessage;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;

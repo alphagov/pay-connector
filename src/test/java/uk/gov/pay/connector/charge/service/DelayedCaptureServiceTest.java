@@ -17,7 +17,7 @@ import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;

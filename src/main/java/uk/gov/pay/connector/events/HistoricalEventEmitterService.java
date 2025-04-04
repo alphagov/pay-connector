@@ -20,7 +20,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;

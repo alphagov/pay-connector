@@ -5,16 +5,16 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.Map;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
-import static javax.ws.rs.client.ClientBuilder.newClient;
+import static jakarta.ws.rs.client.ClientBuilder.newClient;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Disabled

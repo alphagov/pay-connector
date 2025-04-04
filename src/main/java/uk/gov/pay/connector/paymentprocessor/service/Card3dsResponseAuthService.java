@@ -17,7 +17,7 @@ import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Locale;
 import java.util.Optional;
 

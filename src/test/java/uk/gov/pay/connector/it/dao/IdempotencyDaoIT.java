@@ -10,7 +10,7 @@ import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
-import javax.persistence.RollbackException;
+import jakarta.persistence.RollbackException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;

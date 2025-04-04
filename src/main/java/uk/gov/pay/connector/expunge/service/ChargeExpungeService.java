@@ -16,8 +16,8 @@ import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
+import jakarta.inject.Inject;
+import jakarta.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;

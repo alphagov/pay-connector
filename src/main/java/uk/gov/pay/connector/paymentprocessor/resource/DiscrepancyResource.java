@@ -11,14 +11,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.paymentprocessor.service.DiscrepancyService;
 import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
-import javax.validation.constraints.NotEmpty;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import java.util.List;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Path("/")
 @Tag(name = "Discrepancies")

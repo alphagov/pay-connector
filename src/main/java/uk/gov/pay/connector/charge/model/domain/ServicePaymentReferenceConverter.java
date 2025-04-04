@@ -2,8 +2,8 @@ package uk.gov.pay.connector.charge.model.domain;
 
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 @Converter
 public class ServicePaymentReferenceConverter implements AttributeConverter<ServicePaymentReference, String> {

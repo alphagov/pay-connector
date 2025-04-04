@@ -8,7 +8,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransition;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionQueue;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 

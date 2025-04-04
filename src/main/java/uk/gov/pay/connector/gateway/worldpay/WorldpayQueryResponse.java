@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.util.StringJoiner;
 
 import static org.apache.commons.lang3.StringUtils.trim;

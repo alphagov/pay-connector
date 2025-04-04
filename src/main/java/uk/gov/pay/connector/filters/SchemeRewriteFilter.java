@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.filters;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.PreMatching;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.PreMatching;
 import java.net.URI;
 
 import static org.eclipse.jetty.http.HttpScheme.HTTPS;

@@ -4,7 +4,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.NotifyConfiguration;
 import uk.gov.service.notify.NotificationClient;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class NotifyClientFactory {
 

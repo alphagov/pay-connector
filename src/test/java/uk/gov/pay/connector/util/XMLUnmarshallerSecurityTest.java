@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.util;
 
+import org.eclipse.persistence.exceptions.XMLMarshalException;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -8,9 +9,10 @@ import org.xml.sax.SAXParseException;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
 
-import javax.xml.bind.UnmarshalException;
+import jakarta.xml.bind.UnmarshalException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -91,9 +93,10 @@ class XMLUnmarshallerSecurityTest {
             protected boolean matchesSafely(Throwable throwable) {
                 if (throwable instanceof UnmarshalException) {
                     UnmarshalException ex = (UnmarshalException) throwable;
-                    Throwable linkedException = ex.getLinkedException();
-                    if (linkedException instanceof SAXParseException) {
-                        return expectedMessage.equals(linkedException.getMessage());
+                    XMLMarshalException linkedException = (XMLMarshalException) ex.getLinkedException();
+                    Throwable internalException = linkedException.getInternalException();
+                    if (internalException instanceof SAXParseException) {
+                        return expectedMessage.equals(internalException.getMessage());
                     }
                 }
                 return false;

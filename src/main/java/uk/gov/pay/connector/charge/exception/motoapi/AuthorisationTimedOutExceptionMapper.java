@@ -2,10 +2,10 @@ package uk.gov.pay.connector.charge.exception.motoapi;
 
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AUTHORISATION_TIMEOUT;
 
 public class AuthorisationTimedOutExceptionMapper implements ExceptionMapper<AuthorisationTimedOutException> {

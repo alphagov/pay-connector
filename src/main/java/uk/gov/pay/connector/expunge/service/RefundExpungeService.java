@@ -14,8 +14,8 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
-import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
+import jakarta.inject.Inject;
+import jakarta.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;

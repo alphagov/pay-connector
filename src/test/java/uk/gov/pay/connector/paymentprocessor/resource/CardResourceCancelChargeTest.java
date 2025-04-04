@@ -26,8 +26,8 @@ import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuil
 import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.wallets.WalletService;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.Optional;
 

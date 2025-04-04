@@ -2,8 +2,8 @@ package uk.gov.pay.connector.gateway.worldpay.exception;
 
 import org.apache.http.HttpStatus;
 
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
 
 public class ThreeDsFlexDdcServiceUnavailableException extends WebApplicationException {
 

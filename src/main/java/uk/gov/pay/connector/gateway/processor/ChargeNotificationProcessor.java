@@ -13,8 +13,8 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmedByGatewayNotification;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
-import javax.inject.Inject;
-import javax.persistence.OptimisticLockException;
+import jakarta.inject.Inject;
+import jakarta.persistence.OptimisticLockException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 

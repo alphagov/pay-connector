@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.charge.validation.telephone;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 

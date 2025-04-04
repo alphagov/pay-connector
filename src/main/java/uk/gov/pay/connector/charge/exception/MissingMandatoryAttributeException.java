@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.exception;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 import static java.lang.String.format;
 

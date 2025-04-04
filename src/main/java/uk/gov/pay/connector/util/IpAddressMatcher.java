@@ -2,7 +2,7 @@ package uk.gov.pay.connector.util;
 
 import org.apache.commons.validator.routines.InetAddressValidator;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;

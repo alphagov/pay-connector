@@ -11,7 +11,7 @@ import uk.gov.pay.connector.gateway.worldpay.exception.UnexpectedValidateCredent
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayValidatableCredentials;
 
-import javax.inject.Named;
+import jakarta.inject.Named;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
