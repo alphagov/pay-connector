@@ -170,6 +170,10 @@
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
 
         <!-- Main dependencies that need explicit versions -->
         <dependency>
@@ -294,11 +298,6 @@
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger-version}</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
-            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
