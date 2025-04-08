@@ -42,7 +42,7 @@ public class SQSMockClient {
 
     private void sqsSuccessResponse(String responseBody) {
         stubFor(
-                post(urlPathEqualTo("/capture-queue"))
+                post(urlPathEqualTo("/"))
                         .willReturn(
                                 aResponse()
                                         .withHeader(CONTENT_TYPE, TEXT_XML)
