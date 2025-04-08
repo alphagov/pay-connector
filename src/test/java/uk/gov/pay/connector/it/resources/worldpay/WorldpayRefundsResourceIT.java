@@ -12,30 +12,23 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.lang.String.format;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
@@ -96,56 +89,7 @@ public class WorldpayRefundsResourceIT {
     
     @Nested
     class ByAccountId {        
-        @Nested
-        class GetRefunds {
-            @Test
-            void shouldBeAbleToRetrieveAllRefundsForACharge() {
 
-                DatabaseFixtures.TestRefund testRefund1 = DatabaseFixtures
-                        .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                        .aTestRefund()
-                        .withAmount(10L)
-                        .withCreatedDate(ZonedDateTime.of(2016, 8, 1, 0, 0, 0, 0, ZoneId.of("UTC")))
-                        .withTestCharge(defaultTestCharge)
-                        .withType(RefundStatus.REFUND_SUBMITTED)
-                        .withChargeExternalId(defaultTestCharge.getExternalChargeId())
-                        .insert();
-
-                DatabaseFixtures.TestRefund testRefund2 = DatabaseFixtures
-                        .withDatabaseTestHelper(app.getDatabaseTestHelper())
-                        .aTestRefund()
-                        .withAmount(20L)
-                        .withCreatedDate(ZonedDateTime.of(2016, 8, 2, 0, 0, 0, 0, ZoneId.of("UTC")))
-                        .withTestCharge(defaultTestCharge)
-                        .withType(RefundStatus.REFUND_SUBMITTED)
-                        .withChargeExternalId(defaultTestCharge.getExternalChargeId())
-                        .insert();
-
-                String paymentUrl = format("https://localhost:%s/v1/api/accounts/%s/charges/%s",
-                        app.getLocalPort(), defaultTestAccount.getAccountId(), defaultTestCharge.getExternalChargeId());
-
-                getRefundsFor(defaultTestAccount.getAccountId(),
-                        defaultTestCharge.getExternalChargeId())
-                        .statusCode(OK.getStatusCode())
-                        .body("payment_id", is(defaultTestCharge.getExternalChargeId()))
-                        .body("_links.self.href", is(paymentUrl + "/refunds"))
-                        .body("_links.payment.href", is(paymentUrl))
-                        .body("_embedded.refunds", hasSize(2))
-                        .body("_embedded.refunds[0].refund_id", is(testRefund1.getExternalRefundId()))
-                        .body("_embedded.refunds[0].amount", is(10))
-                        .body("_embedded.refunds[0].status", is("submitted"))
-                        .body("_embedded.refunds[0].created_date", is("2016-08-01T00:00:00.000Z"))
-                        .body("_embedded.refunds[0]._links.self.href", is(paymentUrl + "/refunds/" + testRefund1.getExternalRefundId()))
-                        .body("_embedded.refunds[0]._links.payment.href", is(paymentUrl))
-                        .body("_embedded.refunds[1].refund_id", is(testRefund2.getExternalRefundId()))
-                        .body("_embedded.refunds[1].amount", is(20))
-                        .body("_embedded.refunds[1].status", is("submitted"))
-                        .body("_embedded.refunds[1].created_date", is("2016-08-02T00:00:00.000Z"))
-                        .body("_embedded.refunds[1]._links.self.href", is(paymentUrl + "/refunds/" + testRefund2.getExternalRefundId()))
-                        .body("_embedded.refunds[1]._links.payment.href", is(paymentUrl));
-            }
-        }
-        
         @Nested
         class GetRefund {
             @Test
@@ -322,16 +266,6 @@ public class WorldpayRefundsResourceIT {
                         .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
             }
         }
-    }
-
-    private ValidatableResponse getRefundsFor(Long accountId, String chargeId) {
-        return app.givenSetup()
-                .accept(ContentType.JSON)
-                .contentType(ContentType.JSON)
-                .get("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds"
-                        .replace("{accountId}", accountId.toString())
-                        .replace("{chargeId}", chargeId))
-                .then();
     }
 
     private ValidatableResponse getRefundFor(Long accountId, String chargeId, String refundId) {

@@ -503,29 +503,6 @@ paths:
       tags:
       - Charge events
   /v1/api/accounts/{accountId}/charges/{chargeId}/refunds:
-    get:
-      deprecated: true
-      operationId: getRefunds
-      parameters:
-      - in: path
-        name: accountId
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - in: path
-        name: chargeId
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-        "404":
-          description: Not found - charge or refund not found
-      summary: Get all refund for a charge
-      tags:
-      - Refunds
     post:
       operationId: submitRefund
       parameters:
