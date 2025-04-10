@@ -242,29 +242,6 @@ public class RefundsResource {
                 .orElseGet(() -> responseWithChargeNotFound(chargeId));
     }
 
-    /**
-     * Not used anymore - public api now only uses ledger, this can be removed once public api code is tidied up.
-     */
-    @GET
-    @Path("/v1/api/accounts/{accountId}/charges/{chargeId}/refunds")
-    @Produces(APPLICATION_JSON)
-    @Operation(
-            deprecated = true,
-            summary = "Get all refund for a charge",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
-                    @ApiResponse(responseCode = "404", description = "Not found - charge or refund not found")
-            }
-    )
-    public Response getRefunds(@PathParam("accountId") Long accountId, @PathParam("chargeId") String chargeId, @Context UriInfo uriInfo) {
-        return chargeDao.findByExternalIdAndGatewayAccount(chargeId, accountId)
-                .map(chargeEntity -> {
-                    List<RefundEntity> refundEntityList = refundService.findNotExpungedRefunds(chargeId);
-                    return Response.ok(RefundsResponse.valueOf(chargeEntity, refundEntityList, uriInfo).serialize()).build();
-                })
-                .orElse(responseWithChargeNotFound(chargeId));
-    }
-
     private Response getRefundResponse(ChargeEntity chargeEntity, String refundId, Long accountId, UriInfo uriInfo) {
         return refundService.findNotExpungedRefunds(chargeEntity.getExternalId()).stream()
                 .filter(refundEntity -> refundEntity.getExternalId().equals(refundId))
