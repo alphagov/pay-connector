@@ -379,10 +379,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
     }
 
     public void setStatus(ChargeStatus targetStatus) {
-        setStatus(targetStatus, new UnspecifiedEvent());
-    }
-
-    private void setStatus(ChargeStatus targetStatus, Event event) {
+        Event event = new UnspecifiedEvent();
         if (isValidTransition(fromString(this.status), targetStatus, event)) {
             var logMessage = format("Changing charge status for externalId [%s] [%s]->[%s] [event=%s]",
                     this.externalId, this.status, targetStatus.getValue(), event);
