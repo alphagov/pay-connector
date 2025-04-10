@@ -37,6 +37,7 @@ public class WorldpayAuthoriseGooglePayIT {
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @BeforeEach
     void setUpLogger() {
@@ -50,7 +51,6 @@ public class WorldpayAuthoriseGooglePayIT {
         app.getWorldpayMockClient().mockAuthorisationSuccess();
 
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode googlePayload = objectMapper.readTree(load("googlepay/example-auth-request.json"));
 
         testBaseExtension.givenSetup()
@@ -70,7 +70,6 @@ public class WorldpayAuthoriseGooglePayIT {
         app.getWorldpayMockClient().mockAuthorisationRequires3ds();
 
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode googlePayload = objectMapper.readTree(load("googlepay/example-3ds-auth-request.json"));
 
         testBaseExtension.givenSetup()
@@ -85,7 +84,6 @@ public class WorldpayAuthoriseGooglePayIT {
     @Test
     void should_reject_authorisation_for_a_worldpay_error_card() throws JsonProcessingException {
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode validPayload = objectMapper.readTree(load("googlepay/example-auth-request.json"));
         app.getWorldpayMockClient().mockAuthorisationFailure();
 
@@ -104,7 +102,6 @@ public class WorldpayAuthoriseGooglePayIT {
     @Test
     void should_not_authorise_charge_for_invalid_google_pay_request() throws JsonProcessingException {
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode invalidPayload = objectMapper.readTree(
                 load("googlepay/invalid-empty-signature-auth-request.json"));
 

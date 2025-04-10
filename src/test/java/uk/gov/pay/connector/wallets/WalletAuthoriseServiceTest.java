@@ -115,7 +115,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     private static final String TRANSACTION_ID = "transaction-id";
     
     private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("01/30");
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
 
@@ -288,8 +288,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-
-        ObjectMapper objectMapper = new ObjectMapper();
+        
         GooglePayAuthRequest authorisationData =
                 objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
@@ -325,8 +324,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-
-        ObjectMapper objectMapper = new ObjectMapper();
+        
         GooglePayAuthRequest authorisationData =
                 objectMapper.readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
 

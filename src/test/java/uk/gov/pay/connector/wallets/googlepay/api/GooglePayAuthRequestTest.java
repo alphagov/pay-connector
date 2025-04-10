@@ -10,10 +10,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 class GooglePayAuthRequestTest {
-
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     @Test
     void shouldDeserializeFromJsonCorrectly() throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode expected = objectMapper.readTree(load("googlepay/example-3ds-auth-request.json"));
         GooglePayAuthRequest actual = objectMapper.readValue(
                 load("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);

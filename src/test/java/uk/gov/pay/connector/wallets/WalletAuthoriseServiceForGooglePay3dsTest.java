@@ -62,6 +62,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 class WalletAuthoriseServiceForGooglePay3dsTest {
 
     private WalletAuthoriseService walletAuthoriseService;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @Mock
     private PaymentProviders mockedProviders;
@@ -139,8 +140,7 @@ class WalletAuthoriseServiceForGooglePay3dsTest {
         String successPayload = TestTemplateResourceLoader.load(WORLDPAY_3DS_RESPONSE);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(successPayload, WorldpayOrderStatusResponse.class);
         providerRequestsFor3dsAuthorisation(worldpayOrderStatusResponse);
-
-        ObjectMapper objectMapper = new ObjectMapper();
+        
         GooglePayAuthRequest authorisationData =
                 objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 

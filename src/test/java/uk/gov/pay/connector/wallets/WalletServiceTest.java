@@ -38,6 +38,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(MockitoExtension.class)
 public class WalletServiceTest {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private WalletAuthoriseService mockWalletAuthoriseService;
@@ -98,7 +99,6 @@ public class WalletServiceTest {
     @Test
     void shouldAuthoriseAValidChargeForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
@@ -117,7 +117,6 @@ public class WalletServiceTest {
     @Test
     void shouldReturnAuthorise3dsRequiredForAValid3dsChargeForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest googlePayAuth3dsRequest = objectMapper.readValue(load("googlepay/example-3ds-auth-request.json"), GooglePayAuthRequest.class);
         GatewayResponse<BaseAuthoriseResponse> gatewayResponse = responseBuilder()
                 .withResponse(worldpayResponse)
@@ -136,7 +135,6 @@ public class WalletServiceTest {
     @Test
     void shouldReturn402_ifGatewayErrorsForGooglePay() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
         GatewayResponse gatewayResponse = responseBuilder()
@@ -158,7 +156,6 @@ public class WalletServiceTest {
     @Test
     void shouldReturn402_ifResponseHasAuthorisationStatusError() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
         GatewayError gatewayError = mock(GatewayError.class);
 
@@ -180,7 +177,6 @@ public class WalletServiceTest {
     @Test
     void shouldReturn400_ifResponseHasAuthorisationStatusRejected() throws JsonProcessingException {
         String externalChargeId = "external-charge-id";
-        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse gatewayResponse = responseBuilder()

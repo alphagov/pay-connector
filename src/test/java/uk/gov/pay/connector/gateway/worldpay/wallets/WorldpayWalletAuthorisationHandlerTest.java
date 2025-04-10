@@ -85,6 +85,7 @@ class WorldpayWalletAuthorisationHandlerTest {
     private static final String GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS = "uniqueSessionId";
     private static final String username = "worldpay-username";
     private static final String password = "password";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() throws Exception {
@@ -363,7 +364,6 @@ class WorldpayWalletAuthorisationHandlerTest {
 
     private GooglePayAuthorisationGatewayRequest getGooglePayAuthorisationGatewayRequest(boolean withPayerEmail) throws IOException {
         String fixturePath = withPayerEmail ? "googlepay/example-auth-request.json" : "googlepay/example-auth-request-without-email.json";
-        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load(fixturePath), GooglePayAuthRequest.class);
         return new GooglePayAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
@@ -374,7 +374,6 @@ class WorldpayWalletAuthorisationHandlerTest {
         String fixturePath = withDDCResult ? "googlepay/example-3ds-auth-request-with-ddc.json" :
                 withPayerEmail ? "googlepay/example-3ds-auth-request.json" :
                         "googlepay/example-3ds-auth-request-without-email.json";
-        ObjectMapper objectMapper = new ObjectMapper();
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load(fixturePath), GooglePayAuthRequest.class);
         chargeEntity.getGatewayAccount().setRequires3ds(isRequires3ds);
         chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(withIpAddress);

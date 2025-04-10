@@ -124,6 +124,7 @@ class CardResourceAuthoriseTest {
     private TokenEntity tokenEntity;
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     public void setUp() {
@@ -416,7 +417,6 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -429,7 +429,7 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
-        ObjectMapper objectMapper = new ObjectMapper();
+        
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -442,7 +442,6 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfSignedMessageIsEmpty() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request.json").replace("aSignedMessage", "");
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -455,7 +454,6 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfSignatureIsEmpty() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request.json").replace("MEYCIQC+a+AzSpQGr42UR1uTNX91DQM2r7SeKwzNs0UPoeSrrQIhAPpSzHjYTvvJGGzWwli8NRyHYE/diQMLL8aXqm9VIrwl", "");
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -468,7 +466,6 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseGooglePayStripeShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("Example Name", "A".repeat(256));
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -481,7 +478,6 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
-        ObjectMapper objectMapper = new ObjectMapper();
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
