@@ -1084,6 +1084,7 @@ paths:
               items:
                 type: string
                 example: charge-external-id
+                minLength: 1
         required: true
       responses:
         "200":
@@ -1112,6 +1113,7 @@ paths:
               items:
                 type: string
                 example: charge-external-id
+                minLength: 1
         required: true
       responses:
         "200":
@@ -3554,6 +3556,7 @@ components:
           description: Cardholder name
           example: Joe B
           maxLength: 255
+          minLength: 1
         cvc:
           type: string
           example: "123"
@@ -3570,6 +3573,7 @@ components:
           description: the one time token provided in the `auth_url_post` link of
             the create payment API response
           example: 123abc123
+          minLength: 1
       required:
       - card_number
       - cardholder_name
@@ -5277,6 +5281,7 @@ components:
         signature:
           type: string
           example: MEQCIB54h8T/hWY3864Ufkwo4SF5IjhoMV9hjpJRIsqbAn4LAiBZz1VBZ+aiaduX8MN3dBtzyDOZVstwG/8bqJZDbrhKfQ=
+          minLength: 1
         signed_message:
           type: string
           example: aSignedMessage
@@ -5335,8 +5340,6 @@ components:
           type: string
           description: Only `ENTERING CARD DETAILS` is allowed
           example: ENTERING CARD DETAILS
-      required:
-      - new_status
     NotificationCredentials:
       type: object
       description: The gateway credentials for receiving notifications. Only present
@@ -5819,8 +5822,10 @@ components:
           type: string
         password:
           type: string
+          minLength: 1
         username:
           type: string
+          minLength: 1
       required:
       - password
       - username
