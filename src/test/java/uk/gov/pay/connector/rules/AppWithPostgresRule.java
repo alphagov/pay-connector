@@ -134,6 +134,7 @@ abstract public class AppWithPostgresRule implements TestRule {
     
     private ConfigOverride[] overrideSqsConfig(ConfigOverride[] configOverrides) {
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
+        newConfigOverride.add(config("sqsConfig.endpoint", "http://localhost:" + wireMockPort));
         newConfigOverride.add(config("sqsConfig.captureQueueUrl", "http://localhost:" + wireMockPort + "/capture-queue"));
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }

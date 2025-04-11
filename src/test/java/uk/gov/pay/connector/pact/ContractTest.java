@@ -27,10 +27,10 @@ import uk.gov.pay.connector.pact.util.GatewayAccountUtil;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.rules.AppWithPostgresAndSqsRule;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.LedgerStub;
-import uk.gov.pay.connector.rules.SQSMockClient;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
 import uk.gov.pay.connector.util.AddChargeParams;
@@ -83,13 +83,8 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 public class ContractTest {
 
     @ClassRule
-    public static DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+    public static AppWithPostgresAndSqsRule app = new AppWithPostgresAndSqsRule(
             ConfigOverride.config("captureProcessConfig.backgroundProcessingEnabled", "false"));
-
-    @ClassRule
-    public static WireMockRule wireMockRule = new WireMockRule(app.getWireMockPort());
-
-    private SQSMockClient sqsMockClient = new SQSMockClient();
 
     @TestTarget
     public static Target target;
@@ -104,11 +99,11 @@ public class ContractTest {
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
         dbHelper = app.getDatabaseTestHelper();
-        worldpayMockClient = new WorldpayMockClient(wireMockRule);
-        mockCardidService = new CardidStub(wireMockRule);
-        ledgerStub = new LedgerStub(wireMockRule);
-        stripeMockClient = new StripeMockClient(wireMockRule);
-        Stripe.overrideApiBase("http://localhost:" + wireMockRule.port());
+        worldpayMockClient = new WorldpayMockClient(app.getWireMockServer());
+        mockCardidService = new CardidStub(app.getWireMockServer());
+        ledgerStub = new LedgerStub(app.getWireMockServer());
+        stripeMockClient = new StripeMockClient(app.getWireMockServer());
+        Stripe.overrideApiBase("http://localhost:" + app.getWireMockPort());
     }
 
     @Before
@@ -215,7 +210,6 @@ public class ContractTest {
     }
 
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, Instant createdDate, boolean delayedCapture, AuthorisationMode authorisationMode) {
-        sqsMockClient.mockSuccessfulSendChargeToQueue(chargeExternalId);
         setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456", "aGatewayTransactionId", authorisationMode, null, null);
     }
 

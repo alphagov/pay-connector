@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay.wallets;
 
-import com.amazonaws.util.json.Jackson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -85,6 +85,7 @@ class WorldpayWalletAuthorisationHandlerTest {
     private static final String GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS = "uniqueSessionId";
     private static final String username = "worldpay-username";
     private static final String password = "password";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() throws Exception {
@@ -363,7 +364,7 @@ class WorldpayWalletAuthorisationHandlerTest {
 
     private GooglePayAuthorisationGatewayRequest getGooglePayAuthorisationGatewayRequest(boolean withPayerEmail) throws IOException {
         String fixturePath = withPayerEmail ? "googlepay/example-auth-request.json" : "googlepay/example-auth-request-without-email.json";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load(fixturePath), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load(fixturePath), GooglePayAuthRequest.class);
         return new GooglePayAuthorisationGatewayRequest(chargeEntity, googlePayAuthRequest);
     }
 
@@ -373,7 +374,7 @@ class WorldpayWalletAuthorisationHandlerTest {
         String fixturePath = withDDCResult ? "googlepay/example-3ds-auth-request-with-ddc.json" :
                 withPayerEmail ? "googlepay/example-3ds-auth-request.json" :
                         "googlepay/example-3ds-auth-request-without-email.json";
-        GooglePayAuthRequest googlePayAuthRequest = Jackson.getObjectMapper().readValue(load(fixturePath), GooglePayAuthRequest.class);
+        GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load(fixturePath), GooglePayAuthRequest.class);
         chargeEntity.getGatewayAccount().setRequires3ds(isRequires3ds);
         chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(withIpAddress);
         chargeEntity.setExternalId(GOOGLE_PAY_3DS_WITHOUT_IP_ADDRESS);

@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.queue;
 
-import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
@@ -52,7 +52,7 @@ class CaptureQueueTest {
     @Test
     void shouldParseChargeIdReceivedFromQueueGivenWellFormattedJSON() throws QueueException {
                 String validJsonMessage = "{ \"chargeId\": \"my-charge-id\"}";
-        SendMessageResult messageResult = mock(SendMessageResult.class);
+        SendMessageResponse messageResult = mock(SendMessageResponse.class);
 
         List<QueueMessage> messages = Arrays.asList(
                 QueueMessage.of(messageResult, validJsonMessage)

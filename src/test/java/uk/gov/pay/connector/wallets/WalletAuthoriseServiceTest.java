@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.amazonaws.util.json.Jackson;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
@@ -116,7 +115,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     private static final String TRANSACTION_ID = "transaction-id";
     
     private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("01/30");
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
 
@@ -289,9 +288,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-
+        
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
+                objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 
@@ -325,9 +324,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-
+        
         GooglePayAuthRequest authorisationData =
-                Jackson.getObjectMapper().readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
+                objectMapper.readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 

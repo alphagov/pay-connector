@@ -20,6 +20,6 @@ public class SelfServiceContractTest extends ContractTest {
 
     @BeforeClass
     public static void setUpBeforeClass() {
-        wireMockRule.stubFor(post(urlPathEqualTo("/shopper/3ds/ddc.html")).willReturn(aResponse().withStatus(200)));
+        app.getWireMockServer().stubFor(post(urlPathEqualTo("/shopper/3ds/ddc.html")).willReturn(aResponse().withStatus(200)));
     }
 }

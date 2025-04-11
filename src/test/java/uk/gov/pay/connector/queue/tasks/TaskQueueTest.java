@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
 import uk.gov.pay.connector.app.config.TaskQueueConfig;
@@ -71,7 +71,7 @@ class TaskQueueTest {
     @Test
     void shouldParseChargeIdReceivedFromQueueGivenWellFormattedJSON() throws QueueException {
         String validJsonMessage = "{ \"data\": \"payload data\",\"task\":\"collect_fee_for_stripe_failed_payment\"}";
-        SendMessageResult messageResult = mock(SendMessageResult.class);
+        SendMessageResponse messageResult = mock(SendMessageResponse.class);
         List<QueueMessage> messages = List.of(QueueMessage.of(messageResult, validJsonMessage));
         when(sqsQueueService.receiveMessages(anyString(), anyString())).thenReturn(messages);
         TaskQueue queue = new TaskQueue(sqsQueueService, connectorConfiguration, objectMapper);
@@ -85,7 +85,7 @@ class TaskQueueTest {
     @Test
     void shouldParseChargeIdReceivedFromQueueGivenWellFormattedJSON_OldFormat() throws QueueException {
         String validJsonMessage = "{ \"payment_external_id\": \"external-id-123\",\"task\":\"collect_fee_for_stripe_failed_payment\"}";
-        SendMessageResult messageResult = mock(SendMessageResult.class);
+        SendMessageResponse messageResult = mock(SendMessageResponse.class);
         List<QueueMessage> messages = List.of(QueueMessage.of(messageResult, validJsonMessage));
         when(sqsQueueService.receiveMessages(anyString(), anyString())).thenReturn(messages);
         TaskQueue queue = new TaskQueue(sqsQueueService, connectorConfiguration, objectMapper);
@@ -100,7 +100,7 @@ class TaskQueueTest {
     void shouldLogErrorWhenTaskTypeDoesntExist() throws QueueException {
         String invalidJsonMessage = "{ \"data\": \"payload data\",\"task\":\"foo\"}";
         String validJsonMessage = "{ \"data\": \"payload data\",\"task\":\"collect_fee_for_stripe_failed_payment\"}";
-        SendMessageResult messageResult = mock(SendMessageResult.class);
+        SendMessageResponse messageResult = mock(SendMessageResponse.class);
         List<QueueMessage> messages = List.of(QueueMessage.of(messageResult, invalidJsonMessage), QueueMessage.of(messageResult, validJsonMessage));
         when(sqsQueueService.receiveMessages(anyString(), anyString())).thenReturn(messages);
         TaskQueue queue = new TaskQueue(sqsQueueService, connectorConfiguration, objectMapper);

@@ -4,9 +4,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import com.amazonaws.util.json.Jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -37,6 +37,7 @@ public class WorldpayAuthoriseGooglePayIT {
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     
     @BeforeEach
     void setUpLogger() {
@@ -50,7 +51,7 @@ public class WorldpayAuthoriseGooglePayIT {
         app.getWorldpayMockClient().mockAuthorisationSuccess();
 
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode googlePayload = Jackson.getObjectMapper().readTree(load("googlepay/example-auth-request.json"));
+        JsonNode googlePayload = objectMapper.readTree(load("googlepay/example-auth-request.json"));
 
         testBaseExtension.givenSetup()
                 .body(googlePayload)
@@ -69,7 +70,7 @@ public class WorldpayAuthoriseGooglePayIT {
         app.getWorldpayMockClient().mockAuthorisationRequires3ds();
 
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode googlePayload = Jackson.getObjectMapper().readTree(load("googlepay/example-3ds-auth-request.json"));
+        JsonNode googlePayload = objectMapper.readTree(load("googlepay/example-3ds-auth-request.json"));
 
         testBaseExtension.givenSetup()
                 .body(googlePayload)
@@ -83,7 +84,7 @@ public class WorldpayAuthoriseGooglePayIT {
     @Test
     void should_reject_authorisation_for_a_worldpay_error_card() throws JsonProcessingException {
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode validPayload = Jackson.getObjectMapper().readTree(load("googlepay/example-auth-request.json"));
+        JsonNode validPayload = objectMapper.readTree(load("googlepay/example-auth-request.json"));
         app.getWorldpayMockClient().mockAuthorisationFailure();
 
         testBaseExtension.givenSetup()
@@ -101,7 +102,7 @@ public class WorldpayAuthoriseGooglePayIT {
     @Test
     void should_not_authorise_charge_for_invalid_google_pay_request() throws JsonProcessingException {
         String chargeId = testBaseExtension.createNewChargeWithNoTransactionId(ENTERING_CARD_DETAILS);
-        JsonNode invalidPayload = Jackson.getObjectMapper().readTree(
+        JsonNode invalidPayload = objectMapper.readTree(
                 load("googlepay/invalid-empty-signature-auth-request.json"));
 
         testBaseExtension.givenSetup()
