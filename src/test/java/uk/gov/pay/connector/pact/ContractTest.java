@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.stripe.Stripe;
 import io.dropwizard.testing.ConfigOverride;
+import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -48,13 +49,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
-import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
@@ -69,6 +71,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
+import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
@@ -175,11 +178,8 @@ public class ContractTest {
                 .build());
     }
 
-    private void setUpCharges(int numberOfCharges, String accountId, Instant createdDate) {
-        for (int i = 0; i < numberOfCharges; i++) {
-            long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
-            setUpSingleCharge(accountId, chargeId, Long.toString(chargeId), ChargeStatus.CREATED, createdDate, false, AuthorisationMode.WEB);
-        }
+    public void setUpCharge(AddChargeParams params) {
+        dbHelper.addCharge(params);
     }
 
     private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus,
@@ -373,6 +373,26 @@ public class ContractTest {
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10), FeeType.TRANSACTION);
     }
 
+    @State("a charge with service external id 'a-service-id', account type 'test' and charge external id 'a-charge-id-1a2b3c' exists")
+    public void createChargeWithServiceExternalIdAndAccountType() {
+        long gatewayAccountId = new Random().nextLong(1000);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId);
+        setUpCharge(anAddChargeParams()
+                .withServiceId("a-service-id")
+                .withGatewayAccountId(String.valueOf(gatewayAccountId))
+                .withExternalChargeId("a-charge-id-1a2b3c")
+                .build());
+        
+        System.out.println(dbHelper.getChargeByExternalId("a-charge-id-1a2b3c"));
+
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+//                .get("/v1/api/service/a-service-id/account/test/charges/a-charge-id-1a2b3c")
+                .get("/v1/api/accounts/" + gatewayAccountId + "/charges/a-charge-id-1a2b3c")
+                .then().log().body()
+                .statusCode(200);
+    }
+    
     @State("a charge with gateway account id 42 and charge id abcdef1234 exists")
     public void createChargeWithHardCodedParams() {
         String gatewayAccountId = "42";
