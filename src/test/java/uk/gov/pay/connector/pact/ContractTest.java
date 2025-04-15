@@ -376,21 +376,12 @@ public class ContractTest {
     @State("a charge with service external id 'a-service-id', account type 'test' and charge external id 'a-charge-id-1a2b3c' exists")
     public void createChargeWithServiceExternalIdAndAccountType() {
         long gatewayAccountId = new Random().nextLong(1000);
-        GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId);
+        GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId, "a-service-id");
         setUpCharge(anAddChargeParams()
                 .withServiceId("a-service-id")
                 .withGatewayAccountId(String.valueOf(gatewayAccountId))
                 .withExternalChargeId("a-charge-id-1a2b3c")
                 .build());
-        
-        System.out.println(dbHelper.getChargeByExternalId("a-charge-id-1a2b3c"));
-
-        given().port(app.getLocalPort())
-                .contentType(JSON)
-//                .get("/v1/api/service/a-service-id/account/test/charges/a-charge-id-1a2b3c")
-                .get("/v1/api/accounts/" + gatewayAccountId + "/charges/a-charge-id-1a2b3c")
-                .then().log().body()
-                .statusCode(200);
     }
     
     @State("a charge with gateway account id 42 and charge id abcdef1234 exists")
