@@ -6,10 +6,8 @@ import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.stripe.Stripe;
 import io.dropwizard.testing.ConfigOverride;
-import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -30,7 +28,6 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.rules.AppWithPostgresAndSqsRule;
 import uk.gov.pay.connector.rules.CardidStub;
-import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.StripeMockClient;
 import uk.gov.pay.connector.rules.WorldpayMockClient;
@@ -71,7 +68,6 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
-import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNT_FRONTEND_EXTERNAL_ID_URL;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
@@ -182,41 +178,6 @@ public class ContractTest {
         dbHelper.addCharge(params);
     }
 
-    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus,
-                                   Instant createdDate, boolean delayedCapture, String cardHolderName,
-                                   String lastDigitsCardNumber, String firstDigitsCardNumber, String gatewayTransactionId,
-                                   AuthorisationMode authorisationMode, Exemption3ds exemption3dsm, Exemption3dsType exemption3dsType) {
-        dbHelper.addCharge(anAddChargeParams()
-                .withChargeId(chargeId)
-                .withExternalChargeId(chargeExternalId)
-                .withGatewayAccountId(accountId)
-                .withAmount(100)
-                .withStatus(chargeStatus)
-                .withReturnUrl("aReturnUrl")
-                .withTransactionId(gatewayTransactionId)
-                .withDescription("Test description")
-                .withReference(ServicePaymentReference.of("aReference"))
-                .withCreatedDate(createdDate)
-                .withCardType(DEBIT)
-                .withEmail("test@test.com")
-                .withDelayedCapture(delayedCapture)
-                .withAuthorisationMode(authorisationMode)
-                .withExemption3ds(exemption3dsm)
-                .withExemption3dsType(exemption3dsType)
-                .build());
-        dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName,
-                CardExpiryDate.valueOf("08/23"), String.valueOf(DEBIT),
-                "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
-    }
-
-    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, Instant createdDate, boolean delayedCapture, AuthorisationMode authorisationMode) {
-        setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, delayedCapture, "aName", "0001", "123456", "aGatewayTransactionId", authorisationMode, null, null);
-    }
-
-    private void setUpSingleCharge(String accountId, Long chargeId, String chargeExternalId, ChargeStatus chargeStatus, Instant createdDate, Exemption3ds exemption3ds, Exemption3dsType exemption3dsType) {
-        setUpSingleCharge(accountId, chargeId, chargeExternalId, chargeStatus, createdDate, false, "aName", "0001", "123456", "aGatewayTransactionId", AuthorisationMode.WEB, exemption3ds, exemption3dsType);
-    }
-
     private void setUpRefunds(int numberOfRefunds, Long chargeId,
                               ZonedDateTime createdDate, RefundStatus refundStatus, String chargeExternalId) {
         for (int i = 0; i < numberOfRefunds; i++) {
@@ -235,7 +196,17 @@ public class ContractTest {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), false, AuthorisationMode.WEB);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CREATED)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(false)
+                .withTransactionId(params.get("gateway_transaction_id"))
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .build();
+        setUpCharge(addChargeParams);
         cancelCharge(gatewayAccountId, chargeExternalId);
     }
 
@@ -367,9 +338,20 @@ public class ContractTest {
         String gatewayAccountId = params.get("gateway_account_id");
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
-
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), false, AuthorisationMode.WEB);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withAmount(100)
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CAPTURED)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(false)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .withTransactionId("aGatewayTransactionId")
+                .build();
+        setUpCharge(addChargeParams);
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10), FeeType.TRANSACTION);
     }
 
@@ -389,9 +371,17 @@ public class ContractTest {
         String gatewayAccountId = "42";
         String chargeExternalId = "abcdef1234";
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
-
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), false, AuthorisationMode.WEB);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CAPTURED)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(false)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .build();
+        setUpCharge(addChargeParams);
     }
 
     @State("a charge with delayed capture true exists")
@@ -400,7 +390,17 @@ public class ContractTest {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), true, AuthorisationMode.WEB);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withAmount(100)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CREATED)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(true)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .build();
+        setUpCharge(addChargeParams);
     }
 
     @State("a charge with authorisation mode moto_api exists")
@@ -409,7 +409,16 @@ public class ContractTest {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), true, AuthorisationMode.MOTO_API);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CREATED)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(true)
+                .withAuthorisationMode(AuthorisationMode.MOTO_API)
+                .build();
+        setUpCharge(addChargeParams);
     }
 
     @State("a charge with wallet type APPLE_PAY exists")
@@ -418,7 +427,20 @@ public class ContractTest {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURE_READY, Instant.now(), true, AuthorisationMode.WEB);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withAmount(100)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CAPTURE_READY)
+                .withCreatedDate(Instant.now())
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .build();
+        setUpCharge(addChargeParams);
+//        dbHelper.updateChargeCardDetails();
+        dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "123456", "aName",
+                CardExpiryDate.valueOf("08/23"), String.valueOf(DEBIT),
+                "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
         dbHelper.addWalletType(chargeId, WalletType.APPLE_PAY);
     }
 
@@ -437,7 +459,16 @@ public class ContractTest {
         String chargeExternalId = params.get("charge_id");
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), true, AuthorisationMode.MOTO_API);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CREATED)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(true)
+                .withAuthorisationMode(AuthorisationMode.MOTO_API)
+                .build();
+        setUpCharge(addChargeParams);
         dbHelper.addToken(chargeId, oneTimeToken, Boolean.valueOf(oneTimeTokenUsed));
     }
 
@@ -479,7 +510,16 @@ public class ContractTest {
         Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.AWAITING_CAPTURE_REQUEST, Instant.now(), true, AuthorisationMode.WEB);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.AWAITING_CAPTURE_REQUEST)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(true)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .build();
+        setUpCharge(addChargeParams);
     }
 
     @State("Gateway account 42 exists and has a charge for £1 with id abc123")
@@ -504,7 +544,15 @@ public class ContractTest {
         String chargeExternalId = "abc123";
         long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED, Instant.now(), false, AuthorisationMode.WEB);
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CREATED)
+                .withCreatedDate(Instant.now())
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .build();
+        setUpCharge(addChargeParams);
 
         dbHelper.addEvent(chargeId, ChargeStatus.CREATED.toString());
         dbHelper.addEvent(chargeId, ChargeStatus.AUTHORISATION_REJECTED.toString());
@@ -519,9 +567,18 @@ public class ContractTest {
         String lastDigitsCardNumber = params.get("last_digits_card_number");
         String firstDigitsCardNumber = params.get("first_digits_card_number");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CREATED,
-                Instant.parse("2018-09-22T10:13:16.067Z"), true, cardHolderName, lastDigitsCardNumber,
-                firstDigitsCardNumber, params.get("gateway_transaction_id"), AuthorisationMode.WEB, null, null);
+        AddChargeParams addChargeParams = anAddChargeParams().withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CREATED)
+                .withCreatedDate(Instant.parse("2018-09-22T10:13:16.067Z"))
+                .withDelayedCapture(true)
+                .withTransactionId(params.get("gateway_transaction_id"))
+                .withAuthorisationMode(AuthorisationMode.WEB).build();
+        setUpCharge(addChargeParams);
+        dbHelper.updateChargeCardDetails(chargeId, "visa", lastDigitsCardNumber, firstDigitsCardNumber, cardHolderName,
+                CardExpiryDate.valueOf("08/23"), String.valueOf(DEBIT),
+                "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
     }
 
     @State("Refunds exist for a charge")
@@ -531,7 +588,17 @@ public class ContractTest {
 
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(accountId));
         long chargeId = 1234L;
-        setUpSingleCharge(accountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), false, AuthorisationMode.WEB);
+
+        AddChargeParams addChargeParams = anAddChargeParams()
+                .withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(accountId)
+                .withStatus(ChargeStatus.CAPTURED)
+                .withCreatedDate(Instant.now())
+                .withDelayedCapture(false)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .build();
+        setUpCharge(addChargeParams);
         setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T13:23:55Z"), REFUNDED, chargeExternalId);
         setUpRefunds(1, chargeId, ZonedDateTime.parse("2016-01-25T16:23:55Z"), REFUND_ERROR, chargeExternalId);
     }
@@ -895,7 +962,19 @@ public class ContractTest {
         }
 
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
-        setUpSingleCharge(gatewayAccountId, chargeId, chargeExternalId, ChargeStatus.CAPTURED, Instant.now(), Exemption3ds.EXEMPTION_HONOURED, Exemption3dsType.CORPORATE);
+        AddChargeParams addChargeParams = anAddChargeParams().withExternalChargeId(chargeExternalId)
+                .withChargeId(chargeId)
+                .withGatewayAccountId(gatewayAccountId)
+                .withStatus(ChargeStatus.CAPTURED)
+                .withReference(ServicePaymentReference.of("aReference"))
+                .withCreatedDate(Instant.now())
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .withExemption3ds(Exemption3ds.EXEMPTION_HONOURED)
+                .withExemption3dsType(Exemption3dsType.CORPORATE)
+                .withAmount(100)
+                .withTransactionId("aGatewayTransactionId")
+                .build();
+        setUpCharge(addChargeParams);
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10), FeeType.TRANSACTION);
     }
 }
