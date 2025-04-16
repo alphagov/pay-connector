@@ -73,7 +73,7 @@ public class FrontendContractTest {
         worldpayMockClient = new WorldpayMockClient(wireMockRule);
     }
     
-    @State(("an unused token testToken exists with external charge id chargeExternalId associated with it"))
+    @State("an unused token testToken exists with external charge id chargeExternalId associated with it")
     public void anUnusedTokenExists() {
         long gatewayAccountId = 666L;
         setUpGatewayAccount(dbHelper, gatewayAccountId);

@@ -64,42 +64,41 @@ public record AddChargeParams(
                     authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds, exemption3ds, exemption3dsType);
         }
         
-        private Long chargeId = new Random().nextLong();
-        private String externalChargeId = "anExternalChargeId";
-        private String gatewayAccountId;
-        private String paymentProvider = "sandbox";
-        private long amount = 1000;
-        private ChargeStatus status = ChargeStatus.CAPTURED;
-        private String returnUrl = "http://somereturn.gov.uk";
-        private String transactionId;
-        private String description = "Test description";
-        private ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
-        private Instant createdDate = Instant.now();
-        private long version = 1;
-        private String email = "test@example.com";
-        private String providerId = "providerId";
-        private SupportedLanguage language = SupportedLanguage.ENGLISH;
-        private boolean delayedCapture = false;
-        private Long corporateSurcharge;
-        private ExternalMetadata externalMetadata;
-        private ParityCheckStatus parityCheckStatus;
-        private CardType cardType;
-        private ZonedDateTime parityCheckDate;
-        private Long gatewayCredentialId;
-        private String serviceId;
-        private String issuerUrl;
         private String agreementExternalId;
-        private boolean savePaymentInstrumentToAgreement;
+        private long amount = 1000;
         private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
-        private Instant updatedDate;
-        private Long paymentInstrumentId;
         private Boolean canRetry;
-        private Boolean requires3ds;
+        private CardType cardType;
+        private Long chargeId = new Random().nextLong();
+        private Long corporateSurcharge;
+        private Instant createdDate = Instant.now();
+        private boolean delayedCapture = false;
+        private String description = "Test description";
+        private String email = "test@example.com";
         private Exemption3ds exemption3ds;
         private Exemption3dsType exemption3dsType;
+        private String externalChargeId = "anExternalChargeId";
+        private ExternalMetadata externalMetadata;
+        private String gatewayAccountId;
+        private Long gatewayCredentialId;
+        private String issuerUrl;
+        private SupportedLanguage language = SupportedLanguage.ENGLISH;
+        private ZonedDateTime parityCheckDate;
+        private ParityCheckStatus parityCheckStatus;
+        private String paymentProvider = "sandbox";
+        private Long paymentInstrumentId;
+        private String providerId = "providerId";
+        private ServicePaymentReference reference = ServicePaymentReference.of("Test reference");
+        private Boolean requires3ds;
+        private String returnUrl = "http://somereturn.gov.uk";
+        private boolean savePaymentInstrumentToAgreement;
+        private String serviceId;
+        private ChargeStatus status = ChargeStatus.CAPTURED;
+        private String transactionId;
+        private Instant updatedDate;
+        private long version = 1;
 
-        private AddChargeParamsBuilder() {
-        }
+        private AddChargeParamsBuilder() {}
 
         public static AddChargeParamsBuilder anAddChargeParams() {
             return new AddChargeParamsBuilder();
