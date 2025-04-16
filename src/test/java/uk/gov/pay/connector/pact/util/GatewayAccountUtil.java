@@ -8,6 +8,10 @@ import java.util.Collections;
 public class GatewayAccountUtil {
 
     public static void setUpGatewayAccount(DatabaseTestHelper dbHelper, long accountId) {
+        setUpGatewayAccount(dbHelper, accountId, "a-valid-external-service-id");
+    }
+    
+    public static void setUpGatewayAccount(DatabaseTestHelper dbHelper, long accountId, String serviceExternalId) {
         if (dbHelper.getGatewayAccount(accountId) == null) {
             DatabaseFixtures
                     .withDatabaseTestHelper(dbHelper)
@@ -17,7 +21,7 @@ public class GatewayAccountUtil {
                     .withDescription("aDescription")
                     .withAnalyticsId("8b02c7e542e74423aa9e6d0f0628fd58")
                     .withServiceName("a cool service")
-                    .withServiceId("a-valid-external-service-id")
+                    .withServiceId(serviceExternalId)
                     .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
                     .insert();
         } else {
