@@ -54,7 +54,14 @@ public class CardAuthoriseService {
     private static final Counter AUTHORISATION_RESULT_COUNTER = Counter.build()
             .name("gateway_operations_authorisation_result_total")
             .help("Counter of results of card authorisations")
-            .labelNames("paymentProvider", "gatewayAccountType", "billingAddressPresent", "corporateCardUsed", "corporateExemption", "authorisationResult")
+            .labelNames(
+                    "paymentProvider", 
+                    "gatewayAccountType", 
+                    "billingAddressPresent", 
+                    "corporateCardUsed", 
+                    "corporateExemption", 
+                    "emailPresent", 
+                    "authorisationResult")
             .register();
 
     private final CardTypeDao cardTypeDao;
@@ -248,6 +255,7 @@ public class CardAuthoriseService {
                 authorisationRequestSummary.corporateExemptionResult()
                         .map(Exemption3ds::getDisplayName)
                         .orElse(Exemption3ds.EXEMPTION_NOT_REQUESTED.getDisplayName()),
+                authorisationRequestSummary.email() == PRESENT ? "with email address" : "without email address",
                 newStatus.toString().toLowerCase()).inc();
 
         metricRegistry.counter(String.format(

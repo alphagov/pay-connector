@@ -19,6 +19,7 @@ public class AuthorisationRequestSummaryStructuredLogging {
     public static final String DATA_FOR_3DS2 = "data_for_3ds2";
     public static final String WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT = "worldpay_3ds_flex_device_data_collection_result";
     public static final String IP_ADDRESS = "remote_ip_address";
+    public static final String EMAIL = "email_address";
 
     public StructuredArgument[] createArgs(AuthorisationRequestSummary authorisationRequestSummary) {
         var structuredArguments = new ArrayList<StructuredArgument>();
@@ -36,6 +37,11 @@ public class AuthorisationRequestSummaryStructuredLogging {
         switch (authorisationRequestSummary.dataFor3ds2()) {
             case PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS2, true));
             case NOT_PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS2, false));
+        }
+        
+        switch (authorisationRequestSummary.email()) {
+            case PRESENT -> structuredArguments.add(kv(EMAIL, true));
+            case NOT_PRESENT -> structuredArguments.add(kv(EMAIL, false));
         }
 
         switch (authorisationRequestSummary.deviceDataCollectionResult()) {

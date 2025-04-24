@@ -32,6 +32,7 @@ public class AuthorisationLogger {
                                        GatewayResponse gatewayResponse,
                                        ChargeStatus oldStatus,
                                        ChargeStatus newStatus) {
+
         var logMessage = String.format(Locale.UK, "Authorisation%s for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
                 Optional.ofNullable(authorisationRequestSummary).map(authorisationRequestSummaryStringifier::stringify).orElse(""),
                 charge.getExternalId(),

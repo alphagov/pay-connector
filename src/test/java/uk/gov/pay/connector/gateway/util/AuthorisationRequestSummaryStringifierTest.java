@@ -27,6 +27,7 @@ class AuthorisationRequestSummaryStringifierTest {
     void stringifySummarises() {
         given(mockAuthorisationRequestSummary.setUpAgreement()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.billingAddress()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.email()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.corporateCard()).willReturn(true);
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(PRESENT);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
@@ -35,12 +36,29 @@ class AuthorisationRequestSummaryStringifierTest {
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
-        assertThat(result, is(" with set up agreement and with billing address and with corporate card and with 3DS data and without device data collection result and with remote IP 1.1.1.1"));
+        assertThat(result, is(" with set up agreement and with billing address and with email address and with corporate card and with 3DS data and without device data collection result and with remote IP 1.1.1.1"));
+    }
+
+    @Test
+    void stringifySummarisesWithoutEmail() {
+        given(mockAuthorisationRequestSummary.setUpAgreement()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.billingAddress()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.email()).willReturn(NOT_PRESENT);
+        given(mockAuthorisationRequestSummary.corporateCard()).willReturn(true);
+        given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
+        given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
+        given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
+
+        String result = stringifier.stringify(mockAuthorisationRequestSummary);
+
+        assertThat(result, is(" with set up agreement and with billing address and without email address and with corporate card and with 3DS data and without device data collection result and with remote IP 1.1.1.1"));
     }
 
     @Test
     void stringifySummariesCorporateExemptionHonoured() {
         given(mockAuthorisationRequestSummary.billingAddress()).willReturn(NOT_APPLICABLE);
+        given(mockAuthorisationRequestSummary.email()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.corporateCard()).willReturn(true);
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
@@ -56,6 +74,7 @@ class AuthorisationRequestSummaryStringifierTest {
     @Test
     void stringifySummariesCorporateExemptionRejected() {
         given(mockAuthorisationRequestSummary.billingAddress()).willReturn(NOT_APPLICABLE);
+        given(mockAuthorisationRequestSummary.email()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.corporateCard()).willReturn(true);
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
@@ -71,6 +90,7 @@ class AuthorisationRequestSummaryStringifierTest {
     @Test
     void stringifySummariesCorporateExemptionOutOfScope() {
         given(mockAuthorisationRequestSummary.billingAddress()).willReturn(NOT_APPLICABLE);
+        given(mockAuthorisationRequestSummary.email()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.corporateCard()).willReturn(true);
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
@@ -86,6 +106,7 @@ class AuthorisationRequestSummaryStringifierTest {
     @Test
     void stringifyWithEverythingNotApplicableReturnsSingleSpace() {
         given(mockAuthorisationRequestSummary.billingAddress()).willReturn(NOT_APPLICABLE);
+        given(mockAuthorisationRequestSummary.email()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
