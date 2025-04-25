@@ -13,19 +13,27 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 public class StripePaymentMethodRequest extends StripePostRequest {
     private final AuthCardDetails authCardDetails;
     private final NorthAmericanRegionMapper northAmericanRegionMapper;
+    private final boolean isSendPayerEmailToGateway;
+    private final String email;
 
     public StripePaymentMethodRequest(
             GatewayAccountEntity gatewayAccount,
             String idempotencyKey,
             StripeGatewayConfig stripeGatewayConfig,
             AuthCardDetails authCardDetails,
-            GatewayCredentials credentials) {
+            GatewayCredentials credentials,
+            boolean isSendPayerEmailToGateway,
+            String email) {
         super(gatewayAccount, idempotencyKey, stripeGatewayConfig, credentials);
         this.authCardDetails = authCardDetails;
         this.northAmericanRegionMapper = new NorthAmericanRegionMapper();
+        this.isSendPayerEmailToGateway = isSendPayerEmailToGateway;
+        this.email = email;
     }
 
     public static StripePaymentMethodRequest of(CardAuthorisationGatewayRequest request, StripeGatewayConfig config) {
@@ -34,7 +42,9 @@ public class StripePaymentMethodRequest extends StripePostRequest {
                 request.getGovUkPayPaymentId(),
                 config,
                 request.getAuthCardDetails(),
-                request.getGatewayCredentials()
+                request.getGatewayCredentials(),
+                request.getGatewayAccount().isSendPayerEmailToGateway(),
+                request.getEmail()
         );
     }
 
@@ -50,7 +60,7 @@ public class StripePaymentMethodRequest extends StripePostRequest {
 
         authCardDetails.getAddress().ifPresent(address -> {
             localParams.put("billing_details[address[line1]]", address.getLine1());
-            if (StringUtils.isNotBlank(address.getLine2())) {
+            if (isNotBlank(address.getLine2())) {
                 localParams.put("billing_details[address[line2]]", address.getLine2());
             }
             northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
@@ -60,6 +70,10 @@ public class StripePaymentMethodRequest extends StripePostRequest {
             localParams.put("billing_details[address[country]]", address.getCountry());
             localParams.put("billing_details[address[postal_code]]", address.getPostcode());
         });
+        
+        if (isSendPayerEmailToGateway && isNotBlank(email)) {
+            localParams.put("billing_details[email]", email);
+        }
 
         return Map.copyOf(localParams);
     }
