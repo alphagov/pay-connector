@@ -692,7 +692,6 @@ public class ChargeService {
                 builderOfResponse.withCorporateCardSurcharge(corporateSurcharge)
                         .withTotalAmount(CorporateCardSurchargeCalculator.getTotalAmountFor(chargeEntity)));
 
-        // @TODO(sfount) consider if total and net columns could be calculation columns in postgres (single source of truth)
         chargeEntity.getNetAmount().ifPresent(builderOfResponse::withNetAmount);
 
         if (needsNextUrl(chargeEntity)) {

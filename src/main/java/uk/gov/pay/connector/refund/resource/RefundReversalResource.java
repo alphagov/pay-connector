@@ -54,8 +54,7 @@ public class RefundReversalResource {
     @Operation(
             summary = "Fix failed refund charge",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(example = "{ TODO -next pr}"))),
+                    @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "400", description = "‘Operation not available for Worldpay’"),
                     @ApiResponse(responseCode = "404", description = "Not found - gateway account or charge not found"),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
