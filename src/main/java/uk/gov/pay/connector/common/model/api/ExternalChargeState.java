@@ -70,7 +70,6 @@ public enum ExternalChargeState {
     }
 
     public static List<ExternalChargeState> fromStatusStringV2(String status) {
-        //Todo remove once self service change has been released to use the v2 states
         if (status.equals(EXTERNAL_FAILED_REJECTED.oldStatus)) {
             return fromStatusString(status);
         }

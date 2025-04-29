@@ -181,7 +181,6 @@ public class UserNotificationService {
     }
 
     private NotifyClientSettings getNotifyClientSettings(EmailNotificationType emailNotificationType, GatewayAccountEntity gatewayAccountEntity) {
-        // todo introduce type for notify settings instead of Map
         Map<String, String> notifySettings = gatewayAccountEntity.getNotifySettings();
         switch (emailNotificationType) {
             case REFUND_ISSUED:
