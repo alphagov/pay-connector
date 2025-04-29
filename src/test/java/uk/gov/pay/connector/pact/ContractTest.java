@@ -437,7 +437,6 @@ public class ContractTest {
                 .withAuthorisationMode(AuthorisationMode.WEB)
                 .build();
         setUpCharge(addChargeParams);
-//        dbHelper.updateChargeCardDetails();
         dbHelper.updateChargeCardDetails(chargeId, "visa", "0001", "123456", "aName",
                 CardExpiryDate.valueOf("08/23"), String.valueOf(DEBIT),
                 "aFirstAddress", "aSecondLine", "aPostCode", "aCity", "aCounty", "aCountry");
