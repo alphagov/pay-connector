@@ -24,6 +24,7 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.CORPORATE_EXEMPTION_RESULT;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS2;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.EMAIL;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.IP_ADDRESS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT;
 
@@ -44,6 +45,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.corporateCard()).willReturn(true);
         given(mockAuthorisationRequestSummary.corporateExemptionRequested()).willReturn(Optional.of(Boolean.TRUE));
         given(mockAuthorisationRequestSummary.corporateExemptionResult()).willReturn(Optional.of(Exemption3ds.EXEMPTION_HONOURED));
+        given(mockAuthorisationRequestSummary.email()).willReturn(PRESENT);
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -51,6 +53,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(BILLING_ADDRESS, true),
                 kv(DATA_FOR_3DS, true),
                 kv(DATA_FOR_3DS2, true),
+                kv(EMAIL, true),
                 kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, true),
                 kv(IP_ADDRESS, "1.1.1.1"),
                 kv(CORPORATE_CARD, true),
@@ -65,6 +68,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
+        given(mockAuthorisationRequestSummary.email()).willReturn(NOT_PRESENT);
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -72,6 +76,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(BILLING_ADDRESS, false),
                 kv(DATA_FOR_3DS, false),
                 kv(DATA_FOR_3DS2, false),
+                kv(EMAIL, false),
                 kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false),
                 kv(CORPORATE_CARD, false)
         )));
@@ -83,6 +88,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
+        given(mockAuthorisationRequestSummary.email()).willReturn(NOT_APPLICABLE);
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -98,16 +104,17 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
+        given(mockAuthorisationRequestSummary.email()).willReturn(PRESENT);
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
         assertThat(result, is(arrayContaining(
                 kv(BILLING_ADDRESS, true),
                 kv(DATA_FOR_3DS, true),
+                kv(EMAIL, true),
                 kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false),
                 kv(IP_ADDRESS, "1.1.1.1"),
                 kv(CORPORATE_CARD, false)
         )));
     }
-
 }

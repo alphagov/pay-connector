@@ -18,16 +18,15 @@ public class AuthorisationRequestSummaryStringifier {
         }
 
         switch (authorisationRequestSummary.billingAddress()) {
-            case PRESENT:
-                stringJoiner.add("with billing address");
-                break;
-            case NOT_PRESENT:
-                stringJoiner.add("without billing address");
-                break;
-            default:
-                break;
+            case PRESENT -> stringJoiner.add("with billing address");
+            case NOT_PRESENT -> stringJoiner.add("without billing address");
         }
 
+        switch (authorisationRequestSummary.email()) {
+            case PRESENT -> stringJoiner.add("with email address");
+            case NOT_PRESENT -> stringJoiner.add("without email address");
+        }
+        
         if (authorisationRequestSummary.corporateCard()) {
             stringJoiner.add("with corporate card");
         }
@@ -40,36 +39,18 @@ public class AuthorisationRequestSummaryStringifier {
         });
 
         switch (authorisationRequestSummary.dataFor3ds()) {
-            case PRESENT:
-                stringJoiner.add("with 3DS data");
-                break;
-            case NOT_PRESENT:
-                stringJoiner.add("without 3DS data");
-                break;
-            default:
-                break;
+            case PRESENT -> stringJoiner.add("with 3DS data");
+            case NOT_PRESENT -> stringJoiner.add("without 3DS data");
         }
 
         switch (authorisationRequestSummary.dataFor3ds2()) {
-            case PRESENT:
-                stringJoiner.add("with 3DS2 data");
-                break;
-            case NOT_PRESENT:
-                stringJoiner.add("without 3DS2 data");
-                break;
-            default:
-                break;
+            case PRESENT -> stringJoiner.add("with 3DS2 data");
+            case NOT_PRESENT -> stringJoiner.add("without 3DS2 data");
         }
 
         switch (authorisationRequestSummary.deviceDataCollectionResult()) {
-            case PRESENT:
-                stringJoiner.add("with device data collection result");
-                break;
-            case NOT_PRESENT:
-                stringJoiner.add("without device data collection result");
-                break;
-            default:
-                break;
+            case PRESENT -> stringJoiner.add("with device data collection result");
+            case NOT_PRESENT -> stringJoiner.add("without device data collection result");
         }
 
         Optional.ofNullable(authorisationRequestSummary.ipAddress())

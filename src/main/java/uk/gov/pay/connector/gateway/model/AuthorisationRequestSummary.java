@@ -30,7 +30,7 @@ public interface AuthorisationRequestSummary {
 
     default String ipAddress() { 
         return null; 
-    };
+    }
     
     default Presence setUpAgreement() { return NOT_APPLICABLE; }
 
@@ -44,6 +44,10 @@ public interface AuthorisationRequestSummary {
 
     default Optional<Exemption3ds> corporateExemptionResult() {
         return Optional.empty();
+    }
+    
+    default Presence email() { 
+        return NOT_APPLICABLE; 
     }
 
 }
