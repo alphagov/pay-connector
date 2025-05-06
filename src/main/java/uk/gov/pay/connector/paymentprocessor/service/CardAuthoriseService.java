@@ -259,11 +259,10 @@ public class CardAuthoriseService {
                 newStatus.toString().toLowerCase()).inc();
 
         metricRegistry.counter(String.format(
-                "gateway-operations.%s.%s.authorise.%s.result.%s.%s",
+                "gateway-operations.%s.%s.authorise.%s.result.%s",
                 updatedCharge.getPaymentProvider(),
                 updatedCharge.getGatewayAccount().getType(),
                 authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
-                authorisationRequestSummary.email() == PRESENT ? "with email address" : "without email address",
                 newStatus)).inc();
     }
 
