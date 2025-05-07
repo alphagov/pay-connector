@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -21,6 +22,7 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     private final boolean isCorporateCard;
     private final boolean isCorporateExemptionRequested;
     private Exemption3ds corporateExemptionResult;
+    private final Presence email;
 
     public WorldpayAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, boolean isSetupAgreement) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
@@ -33,6 +35,7 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
         if (isCorporateExemptionRequested) {
             corporateExemptionResult = chargeEntity.getExemption3ds();
         }
+        email = StringUtils.isBlank(chargeEntity.getEmail()) ? PRESENT : NOT_PRESENT;
     }
 
     @Override
@@ -74,5 +77,8 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     public Optional<Exemption3ds> corporateExemptionResult() {
         return Optional.ofNullable(corporateExemptionResult);
     }
+    
+    @Override
+    public Presence email() { return email; }
 
 }

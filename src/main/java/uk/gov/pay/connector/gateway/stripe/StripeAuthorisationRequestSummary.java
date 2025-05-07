@@ -41,5 +41,8 @@ public class StripeAuthorisationRequestSummary implements AuthorisationRequestSu
     public boolean corporateCard() {
         return isCorporateCard;
     }
+    
+    @Override
+    public Presence email() { return NOT_PRESENT; }
  
 }
