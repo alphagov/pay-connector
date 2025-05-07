@@ -781,7 +781,7 @@ class WorldpayPaymentProviderTest {
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Authorisation with billing address and with 3DS data and without device data " +
+            String log = format("Authorisation with billing address and without email address and with 3DS data and without device data " +
                     "collection result for %s", chargeEntity.getExternalId());
             return loggingEvent.getMessage().contains(log);
         }));

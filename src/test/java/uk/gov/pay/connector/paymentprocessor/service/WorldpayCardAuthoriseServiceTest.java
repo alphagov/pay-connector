@@ -186,7 +186,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
-        assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
+        assertTrue(log.contains("Authorisation with billing address and without email address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, exemptionResponse result: HONOURED, exemptionResponse reason: HIGH_RISK)"));
 
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
@@ -211,7 +211,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
-        assertTrue(log.contains("Authorisation with billing address and with 3DS data and without device data collection result"));
+        assertTrue(log.contains("Authorisation with billing address and without email address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED, exemptionResponse result: HONOURED, exemptionResponse reason: ISSUER_HONOURED)"));
 
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
