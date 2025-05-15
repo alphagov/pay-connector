@@ -545,6 +545,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add force-3ds-flag-to-gateway-account" author="">
+        <addColumn tableName="gateway_accounts">
+            <column name="force_3ds" type="boolean" defaultValue="false"/>
+        </addColumn>
+    </changeSet>
+
     <changeSet id="add 3ds details to charge table" author="">
         <addColumn tableName="charges">
             <column name="pa_request_3ds" type="text">
