@@ -61,6 +61,7 @@ public class CardAuthoriseService {
                     "corporateCardUsed", 
                     "corporateExemption", 
                     "emailPresent", 
+                    "ipAddressPresent",
                     "authorisationResult")
             .register();
 
@@ -256,14 +257,16 @@ public class CardAuthoriseService {
                         .map(Exemption3ds::getDisplayName)
                         .orElse(Exemption3ds.EXEMPTION_NOT_REQUESTED.getDisplayName()),
                 authorisationRequestSummary.email() == PRESENT ? "with email address" : "without email address",
+                authorisationRequestSummary.ipAddress() != null ? "with ip address" : "without ip address",
                 newStatus.toString().toLowerCase()).inc();
 
         metricRegistry.counter(String.format(
-                "gateway-operations.%s.%s.authorise.%s.result.%s.%s",
+                "gateway-operations.%s.%s.authorise.%s.result.%s.%s.%s",
                 updatedCharge.getPaymentProvider(),
                 updatedCharge.getGatewayAccount().getType(),
                 authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
                 authorisationRequestSummary.email() == PRESENT ? "with email address" : "without email address",
+                authorisationRequestSummary.ipAddress() != null ? "with ip address" : "without ip address",
                 newStatus)).inc();
     }
 

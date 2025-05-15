@@ -152,6 +152,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
             "corporateCardUsed",
             "corporateExemption",
             "emailPresent",
+            "ipAddressPresent",
             "authorisationResult"
     };
 
@@ -437,7 +438,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
         
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with corporate card", "not requested", "without email address", "authorisation success"
+                "sandbox", "test", "without-billing-address", "with corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
         
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
@@ -456,7 +457,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(false));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with corporate card", "not requested", "without email address", "authorisation success"
+                "sandbox", "test", "without-billing-address", "with corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
         
@@ -613,7 +614,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillReject(charge.getPaymentGatewayName());
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation rejected"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation rejected"
         });
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -626,7 +627,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation rejected"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation rejected"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -642,7 +643,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseWith(authResponse, charge.getPaymentGatewayName());
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation cancelled"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation error"
         });
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -655,7 +656,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation cancelled"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation cancelled"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -668,7 +669,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillError(charge.getPaymentGatewayName());
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation error"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation error"
         });
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -681,7 +682,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getGatewayTransactionId(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation error"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation error"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -819,7 +820,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondWithError(new GatewayException.GatewayConnectionTimeoutException("Connection timed out"));
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation timeout"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation timeout"
         });
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -832,7 +833,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation timeout"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation timeout"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -845,7 +846,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondWithError(new GatewayException.GatewayErrorException("Malformed response received"));
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation unexpected error"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation unexpected error"
         });
 
         AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
@@ -857,7 +858,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation unexpected error"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation unexpected error"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -923,7 +924,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseForMotoApiPayment();
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation success"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
 
         String generatedTransactionId = "this-will-be-override-to-TRANSACTION-ID-from-provider";
@@ -945,7 +946,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         verify(mockedChargeEventDao, times(2)).persistChargeEventOf(eq(charge), isNull());
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation success"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -977,7 +978,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         charge.setAuthorisationMode(MOTO_API);
         AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation rejected"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation rejected"
         });
 
         mockRecordAuthorisationResult();
@@ -994,7 +995,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(false));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address",  "authorisation rejected"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address",  "authorisation rejected"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -1007,7 +1008,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation cancelled"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation cancelled"
         });
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
@@ -1026,7 +1027,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation cancelled"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation cancelled"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -1042,7 +1043,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation error"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation error"
         });
 
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
@@ -1055,7 +1056,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(nullValue()));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation error"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation error"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -1214,7 +1215,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         mockRecordAuthorisationResult();
         providerWillAuthoriseForUserNotPresentPayment(WORLDPAY);
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation success"
+                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
 
         var paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-12T10:00:00Z"))
@@ -1244,7 +1245,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(chargeLocal.getCorporateSurcharge().isPresent(), is(false));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation success"
+                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
         assertThat(chargeLocal.getRequires3ds(), is(false));
@@ -1257,7 +1258,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         mockRecordAuthorisationResult();
         providerWillRejectUserNotPresent(WORLDPAY);
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation rejected"
+                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation rejected"
         });
 
         var paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-12T10:00:00Z"))
@@ -1287,7 +1288,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(chargeLocal.getCardDetails(), is(cardDetailsEntity));
         assertThat(chargeLocal.getCorporateSurcharge().isPresent(), is(false));
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation rejected"
+                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation rejected"
         });
         assertThat(counterAfter, is(counterBefore + 1));
         assertThat(chargeLocal.getRequires3ds(), is(false));
@@ -1300,7 +1301,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         mockRecordAuthorisationResult();
         providerWillAuthoriseForUserNotPresentPayment(WORLDPAY);
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation success"
+                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
 
         var paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-12T10:00:00Z"))
@@ -1331,7 +1332,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(chargeLocal.getCorporateSurcharge().isPresent(), is(false));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "authorisation success"
+                "worldpay", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
         assertThat(chargeLocal.getRequires3ds(), is(false));
