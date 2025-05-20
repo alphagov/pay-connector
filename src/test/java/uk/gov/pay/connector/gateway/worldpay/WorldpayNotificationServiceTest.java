@@ -29,7 +29,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService.NULL_AUTHORISATION_CODE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 @ExtendWith(MockitoExtension.class)
@@ -272,23 +271,24 @@ class WorldpayNotificationServiceTest {
     }
 
     @Test
-    void shouldIgnoreNotificationWhenStatusIsSentForRefundWithStringOfNullAuthorisationCode() {
+    void shouldIgnoreNotificationWhenStatusIsSentForRefundWithoutAuthorisationCode() {
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         String status = "SENT_FOR_REFUND";
+        String refundAuthorisationCode = "";
         final String payload = sampleWorldpayNotification(
-                transactionId, referenceId, NULL_AUTHORISATION_CODE, "", "", status,
+                transactionId, referenceId, refundAuthorisationCode, "", "", status,
                 "10", "03", "2017");
 
         assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
 
         verifyNoInteractions(mockChargeNotificationProcessor);
         verifyNoInteractions(mockRefundNotificationProcessor);
-    }
+        }
 
     @Test
-    void shouldNotIgnoreNotificationWhenStatusIsSentForRefundWithAlphanumericAuthorisationCode() {
-        String refundAuthorisationCode = "ALPHANUM3R1C";
+    void shouldNotIgnoreNotificationWhenStatusIsSentForRefundWithAuthorisationCode() {
+        String refundAuthorisationCode = "987654321";
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         String status = "SENT_FOR_REFUND";
