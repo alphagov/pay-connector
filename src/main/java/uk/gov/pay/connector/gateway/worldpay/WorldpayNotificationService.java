@@ -196,15 +196,11 @@ public class WorldpayNotificationService {
         if (!"SENT_FOR_REFUND".equals(notification.getStatus())) {
             return false;
         }
-
-        boolean hasRefundAuthorisationCode = false;
-        try {
-            Integer.parseInt(notification.getRefundAuthorisationReference());
-            hasRefundAuthorisationCode = true;
-        } catch (NumberFormatException e) {
-            hasRefundAuthorisationCode = false;
-        }
-        return !hasRefundAuthorisationCode;
+        return switch (notification.getRefundAuthorisationReference()) {
+            case null -> true;
+            case "null" -> true;
+            default -> false;
+        };
     }
 
     public String notificationDomain() {
