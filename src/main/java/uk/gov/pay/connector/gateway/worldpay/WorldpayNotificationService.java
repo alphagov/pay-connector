@@ -40,7 +40,6 @@ public class WorldpayNotificationService {
             "SETTLED",
             "SETTLED_BY_MERCHANT"
     );
-    public static final String NULL_AUTHORISATION_CODE = "null";
     private static final List<String> REFUND_STATUSES = ImmutableList.of("REFUNDED", "REFUNDED_BY_MERCHANT", "REFUND_FAILED", "SENT_FOR_REFUND");
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -197,10 +196,15 @@ public class WorldpayNotificationService {
         if (!"SENT_FOR_REFUND".equals(notification.getStatus())) {
             return false;
         }
-        if (NULL_AUTHORISATION_CODE.equals(notification.getRefundAuthorisationReference())) {
-            return true;
+
+        boolean hasRefundAuthorisationCode = false;
+        try {
+            Integer.parseInt(notification.getRefundAuthorisationReference());
+            hasRefundAuthorisationCode = true;
+        } catch (NumberFormatException e) {
+            hasRefundAuthorisationCode = false;
         }
-        return false;
+        return !hasRefundAuthorisationCode;
     }
 
     public String notificationDomain() {
