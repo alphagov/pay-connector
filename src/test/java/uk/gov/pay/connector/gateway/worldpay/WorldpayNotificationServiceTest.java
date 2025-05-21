@@ -271,11 +271,11 @@ class WorldpayNotificationServiceTest {
     }
 
     @Test
-    void shouldIgnoreNotificationWhenStatusIsSentForRefundWithoutAuthorisationCode() {
+    void shouldIgnoreNotificationWhenStatusIsSentForRefundWithNullAuthorisationCode() {
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         String status = "SENT_FOR_REFUND";
-        String refundAuthorisationCode = "";
+        String refundAuthorisationCode = null;
         final String payload = sampleWorldpayNotification(
                 transactionId, referenceId, refundAuthorisationCode, "", "", status,
                 "10", "03", "2017");
@@ -287,8 +287,24 @@ class WorldpayNotificationServiceTest {
         }
 
     @Test
-    void shouldNotIgnoreNotificationWhenStatusIsSentForRefundWithAuthorisationCode() {
-        String refundAuthorisationCode = "987654321";
+    void shouldIgnoreNotificationWhenStatusIsSentForRefundWithNullStringAuthorisationCode() {
+        setUpChargeServiceToReturnCharge(Optional.of(charge));
+        setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
+        String status = "SENT_FOR_REFUND";
+        String refundAuthorisationCode = "null";
+        final String payload = sampleWorldpayNotification(
+                transactionId, referenceId, refundAuthorisationCode, "", "", status,
+                "10", "03", "2017");
+
+        assertTrue(notificationService.handleNotificationFor(ipAddress, payload));
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        verifyNoInteractions(mockRefundNotificationProcessor);
+    }
+
+    @Test
+    void shouldNotIgnoreNotificationWhenStatusIsSentForRefundWithAlphanumericAuthorisationCode() {
+        String refundAuthorisationCode = "ALPHANUM3R1C";
         setUpChargeServiceToReturnCharge(Optional.of(charge));
         setUpGatewayAccountServiceToReturnGatewayAccountEntity(Optional.of(gatewayAccountEntity));
         String status = "SENT_FOR_REFUND";
@@ -362,16 +378,26 @@ class WorldpayNotificationServiceTest {
             String bookingDateDay,
             String bookingDateMonth,
             String bookingDateYear) {
-        return TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION)
-                .replace("{{transactionId}}", transactionId)
-                .replace("{{refund-ref}}", referenceId)
-                .replace("{{refund-authorisation-reference}}", refundAuthorisationReference)
-                .replace("{{refund-response-reference}}", refundResponseReference)
-                .replace("{{status}}", status)
-                .replace("{{bookingDateDay}}", bookingDateDay)
-                .replace("{{bookingDateMonth}}", bookingDateMonth)
-                .replace("{{bookingDateYear}}", bookingDateYear)
-                .replace("{{description}}", description);
+
+            String notificationXml = TestTemplateResourceLoader.load(WORLDPAY_NOTIFICATION);
+
+            if (refundAuthorisationReference == null) {
+                notificationXml = notificationXml.replaceAll(
+                    "<journalReference type=\"refund_authorisation\" reference=\"\\{\\{refund-authorisation-reference}}\"\\/>\\s*",
+                    "");
+            }
+
+            return notificationXml
+                    .replace("{{transactionId}}", transactionId)
+                    .replace("{{refund-ref}}", referenceId)
+                    .replace("{{refund-authorisation-reference}}",
+                            refundAuthorisationReference != null ? refundAuthorisationReference : "")
+                    .replace("{{refund-response-reference}}", refundResponseReference)
+                    .replace("{{status}}", status)
+                    .replace("{{bookingDateDay}}", bookingDateDay)
+                    .replace("{{bookingDateMonth}}", bookingDateMonth)
+                    .replace("{{bookingDateYear}}", bookingDateYear)
+                    .replace("{{description}}", description);
     }
 
     private static String sampleWorldpayNotification(
