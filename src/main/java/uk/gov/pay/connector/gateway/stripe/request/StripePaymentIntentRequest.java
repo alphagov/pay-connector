@@ -28,6 +28,7 @@ public class StripePaymentIntentRequest extends StripePostRequest {
     private final String customerId;
     private boolean offSession;
     private String tokenId;
+    private boolean required3ds;
 
     private StripePaymentIntentRequest(
             GatewayAccountEntity gatewayAccount,
@@ -55,6 +56,7 @@ public class StripePaymentIntentRequest extends StripePostRequest {
         this.customerId = customerId;
         this.offSession = offSession;
         this.tokenId = tokenId;
+        this.required3ds = gatewayAccount.isForce3ds() || gatewayAccount.isRequires3ds();
     }
 
     public static StripePaymentIntentRequest createOneOffPaymentIntentRequest(
@@ -203,6 +205,9 @@ public class StripePaymentIntentRequest extends StripePostRequest {
             params.put("payment_method_data[type]", "card");
             params.put("payment_method_data[card][token]", tokenId);
         }
+        if (required3ds) {
+            params.put("payment_method_options[card][request_three_d_secure]", "any");
+        }
 
         return params;
     }
@@ -211,7 +216,6 @@ public class StripePaymentIntentRequest extends StripePostRequest {
     protected String idempotencyKeyType() {
         return "payment_intent";
     }
-
     @Override
     protected List<String> expansionFields() {
         return List.of("payment_method.card");
