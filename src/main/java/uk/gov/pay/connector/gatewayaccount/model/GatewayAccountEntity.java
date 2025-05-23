@@ -1,17 +1,5 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -31,6 +19,17 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.ws.rs.WebApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -44,11 +43,7 @@ import static java.util.Comparator.comparing;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ENTERED;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
-import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.VERIFIED_WITH_LIVE_PAYMENT;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.*;
 import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
@@ -134,9 +129,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "email_collection_mode")
     @Enumerated(EnumType.STRING)
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
-
-    @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST, orphanRemoval = true)
-    private NotificationCredentials notificationCredentials;
 
     @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
@@ -291,10 +283,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return emailCollectionMode;
     }
     
-    public NotificationCredentials getNotificationCredentials() {
-        return notificationCredentials;
-    }
-    
     public Optional<Worldpay3dsFlexCredentialsEntity> getWorldpay3dsFlexCredentialsEntity() {
         return Optional.ofNullable(worldpay3dsFlexCredentialsEntity);
     }
@@ -385,10 +373,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     
     public String getDisabledReason() {
         return disabledReason;
-    }
-
-    public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
-        this.notificationCredentials = notificationCredentials;
     }
 
     public void addNotification(EmailNotificationType type, EmailNotificationEntity emailNotificationEntity) {

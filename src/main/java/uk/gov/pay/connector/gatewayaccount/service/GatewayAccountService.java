@@ -355,7 +355,6 @@ public class GatewayAccountService {
 
         gatewayAccounts.forEach(ga -> {
             ga.setDisabled(true);
-            ga.setNotificationCredentials(null);
             gatewayAccountDao.merge(ga);
             ga.getGatewayAccountCredentials().forEach(creds -> {
                 creds.setState(RETIRED);
