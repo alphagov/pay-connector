@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +38,6 @@ public final class GatewayAccountEntityFixture {
     private Map<String, String> notifySettings;
     private Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
-    private NotificationCredentials notificationCredentials;
     private List<CardTypeEntity> cardTypes = newArrayList();
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
     private boolean sendPayerIpAddressToGateway;
@@ -150,11 +148,6 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
-    public GatewayAccountEntityFixture withNotificationCredentials(NotificationCredentials notificationCredentials) {
-        this.notificationCredentials = notificationCredentials;
-        return this;
-    }
-
     public GatewayAccountEntityFixture withCardTypes(List<CardTypeEntity> cardTypes) {
         this.cardTypes = cardTypes;
         return this;
@@ -218,7 +211,6 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setNotifySettings(notifySettings);
         gatewayAccountEntity.setEmailNotifications(emailNotifications);
         gatewayAccountEntity.setEmailCollectionMode(emailCollectionMode);
-        gatewayAccountEntity.setNotificationCredentials(notificationCredentials);
         gatewayAccountEntity.setCardTypes(cardTypes);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
