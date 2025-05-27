@@ -12,7 +12,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountSearchParams;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
 import java.util.Arrays;
@@ -29,12 +28,8 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -508,72 +503,7 @@ public class GatewayAccountDaoIT {
             assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
         }
     }
-
-    @Test
-    void shouldSaveNotificationCredentials() {
-        String paymentProvider = "test provider";
-        app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway(paymentProvider)
-                .withServiceName("a cool service")
-                .build());
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount.isPresent(), is(true));
-        GatewayAccountEntity gatewayAccount = maybeGatewayAccount.get();
-
-        NotificationCredentials notificationCredentials = new NotificationCredentials(gatewayAccount);
-        notificationCredentials.setPassword("password");
-        notificationCredentials.setUserName("username");
-        gatewayAccount.setNotificationCredentials(notificationCredentials);
-
-        gatewayAccountDao.merge(gatewayAccount);
-
-        final Optional<GatewayAccountEntity> maybeGatewayAccount_2 = gatewayAccountDao.findById(gatewayAccountId);
-        assertThat(maybeGatewayAccount_2.isPresent(), is(true));
-        GatewayAccountEntity retrievedGatewayAccount = maybeGatewayAccount.get();
-
-        assertNotNull(retrievedGatewayAccount.getNotificationCredentials());
-        assertThat(retrievedGatewayAccount.getNotificationCredentials().getUserName(), is("username"));
-        assertThat(retrievedGatewayAccount.getNotificationCredentials().getPassword(), is("password"));
-    }
-
-    @Test
-    void shouldUpdateGatewayAccount_ToDisabled_NotificationCredentialsRemoved() {
-        GatewayAccountEntity account = new GatewayAccountEntity(TEST);
-        account.setExternalId(randomUuid());
-        GatewayAccountCredentialsEntity gatewayAccountCredentials = aGatewayAccountCredentialsEntity()
-                .withGatewayAccountEntity(account)
-                .withPaymentProvider(WORLDPAY.getName())
-                .withCredentials(Map.of())
-                .withState(ACTIVE)
-                .build();
-        account.setGatewayAccountCredentials(List.of(gatewayAccountCredentials));
-
-        NotificationCredentials notificationCredentials = new NotificationCredentials(account);
-        notificationCredentials.setPassword("password");
-        notificationCredentials.setUserName("username");
-        account.setNotificationCredentials(notificationCredentials);
-
-        gatewayAccountDao.persist(account);
-
-        GatewayAccountEntity accountToUpdate = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
-
-        assertFalse(accountToUpdate.isDisabled());
-        var gatewayAccountCredentialsEntity = accountToUpdate.getGatewayAccountCredentialsEntity(WORLDPAY.getName());
-        assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
-        assertThat(accountToUpdate.getNotificationCredentials(), not(nullValue()));
-
-        accountToUpdate.setDisabled(true);
-        accountToUpdate.setNotificationCredentials(null);
-
-        gatewayAccountDao.merge(accountToUpdate);
-
-        GatewayAccountEntity updatedAccount = gatewayAccountDao.findByExternalId(account.getExternalId()).get();
-        assertTrue(updatedAccount.isDisabled());
-        assertNull(updatedAccount.getNotificationCredentials());
-    }
-
+    
     @Test
     void persist_shouldCreateAnAccount() {
         final CardTypeEntity masterCardCredit = app.getDatabaseTestHelper().getMastercardCreditCard();
@@ -591,7 +521,6 @@ public class GatewayAccountDaoIT {
         assertThat(account.getEmailNotifications().isEmpty(), is(true));
         assertThat(account.getDescription(), is(nullValue()));
         assertThat(account.getAnalyticsId(), is(nullValue()));
-        assertThat(account.getNotificationCredentials(), is(nullValue()));
         assertThat(account.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));

@@ -10,7 +10,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -134,9 +133,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     @Column(name = "email_collection_mode")
     @Enumerated(EnumType.STRING)
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
-
-    @OneToOne(mappedBy = "accountEntity", cascade = CascadeType.PERSIST, orphanRemoval = true)
-    private NotificationCredentials notificationCredentials;
 
     @OneToOne(mappedBy = "gatewayAccountEntity", cascade = CascadeType.PERSIST)
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
@@ -291,10 +287,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return emailCollectionMode;
     }
     
-    public NotificationCredentials getNotificationCredentials() {
-        return notificationCredentials;
-    }
-    
     public Optional<Worldpay3dsFlexCredentialsEntity> getWorldpay3dsFlexCredentialsEntity() {
         return Optional.ofNullable(worldpay3dsFlexCredentialsEntity);
     }
@@ -385,10 +377,6 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     
     public String getDisabledReason() {
         return disabledReason;
-    }
-
-    public void setNotificationCredentials(NotificationCredentials notificationCredentials) {
-        this.notificationCredentials = notificationCredentials;
     }
 
     public void addNotification(EmailNotificationType type, EmailNotificationEntity emailNotificationEntity) {

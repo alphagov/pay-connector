@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +38,6 @@ public final class GatewayAccountEntityFixture {
     private Map<String, String> notifySettings;
     private Map<EmailNotificationType, EmailNotificationEntity> emailNotifications = new HashMap<>();
     private EmailCollectionMode emailCollectionMode = EmailCollectionMode.MANDATORY;
-    private NotificationCredentials notificationCredentials;
     private List<CardTypeEntity> cardTypes = newArrayList();
     private Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity;
     private boolean sendPayerIpAddressToGateway;
@@ -95,63 +93,8 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
-    public GatewayAccountEntityFixture withAllowGooglePay(boolean allowGooglePay) {
-        this.allowGooglePay = allowGooglePay;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withAllowApplePay(boolean allowApplePay) {
-        this.allowApplePay = allowApplePay;
-        return this;
-    }
-
     public GatewayAccountEntityFixture withAllowMoto(boolean allowMoto) {
         this.allowMoto = allowMoto;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withCorporateCreditCardSurchargeAmount(long corporateCreditCardSurchargeAmount) {
-        this.corporateCreditCardSurchargeAmount = corporateCreditCardSurchargeAmount;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withCorporateDebitCardSurchargeAmount(long corporateDebitCardSurchargeAmount) {
-        this.corporateDebitCardSurchargeAmount = corporateDebitCardSurchargeAmount;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withCorporatePrepaidDebitCardSurchargeAmount(long corporatePrepaidDebitCardSurchargeAmount) {
-        this.corporatePrepaidDebitCardSurchargeAmount = corporatePrepaidDebitCardSurchargeAmount;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withAllowZeroAmount(boolean allowZeroAmount) {
-        this.allowZeroAmount = allowZeroAmount;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withIntegrationVersion3ds(int integrationVersion3ds) {
-        this.integrationVersion3ds = integrationVersion3ds;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withNotifySettings(Map<String, String> notifySettings) {
-        this.notifySettings = notifySettings;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withEmailNotifications(Map<EmailNotificationType, EmailNotificationEntity> emailNotifications) {
-        this.emailNotifications = emailNotifications;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withEmailCollectionMode(EmailCollectionMode emailCollectionMode) {
-        this.emailCollectionMode = emailCollectionMode;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withNotificationCredentials(NotificationCredentials notificationCredentials) {
-        this.notificationCredentials = notificationCredentials;
         return this;
     }
 
@@ -162,11 +105,6 @@ public final class GatewayAccountEntityFixture {
 
     public GatewayAccountEntityFixture withWorldpay3dsFlexCredentialsEntity(Worldpay3dsFlexCredentialsEntity worldpay3dsFlexCredentialsEntity) {
         this.worldpay3dsFlexCredentialsEntity = worldpay3dsFlexCredentialsEntity;
-        return this;
-    }
-
-    public GatewayAccountEntityFixture withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
-        this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
         return this;
     }
 
@@ -218,7 +156,6 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setNotifySettings(notifySettings);
         gatewayAccountEntity.setEmailNotifications(emailNotifications);
         gatewayAccountEntity.setEmailCollectionMode(emailCollectionMode);
-        gatewayAccountEntity.setNotificationCredentials(notificationCredentials);
         gatewayAccountEntity.setCardTypes(cardTypes);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);

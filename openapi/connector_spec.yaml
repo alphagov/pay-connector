@@ -4861,8 +4861,6 @@ components:
           default: false
           description: Indicates whether the card security code is masked when being
             input for MOTO payments.
-        notificationCredentials:
-          $ref: "#/components/schemas/NotificationCredentials"
         notifySettings:
           type: object
           additionalProperties:
@@ -5071,8 +5069,6 @@ components:
           default: false
           description: Indicates whether the card security code is masked when being
             input for MOTO payments.
-        notificationCredentials:
-          $ref: "#/components/schemas/NotificationCredentials"
         notifySettings:
           type: object
           additionalProperties:
@@ -5340,16 +5336,6 @@ components:
           type: string
           description: Only `ENTERING CARD DETAILS` is allowed
           example: ENTERING CARD DETAILS
-    NotificationCredentials:
-      type: object
-      description: The gateway credentials for receiving notifications. Only present
-        for Smartpay accounts
-      properties:
-        userName:
-          type: string
-        version:
-          type: integer
-          format: int64
     Outcome:
       type: object
       description: Object containing information about the outcome of the 3ds exemption

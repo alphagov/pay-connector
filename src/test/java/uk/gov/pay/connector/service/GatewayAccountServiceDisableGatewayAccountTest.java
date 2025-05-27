@@ -23,7 +23,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredenti
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsHistoryDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.usernotification.model.domain.NotificationCredentials;
 
 import java.util.List;
 import java.util.Map;
@@ -32,7 +31,6 @@ import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -186,14 +184,12 @@ class GatewayAccountServiceDisableGatewayAccountTest {
         verify(mockGatewayAccountDao).merge(updatedGatewayAccountEntity.capture());
         var capturedGatewayAccountEntity = updatedGatewayAccountEntity.getValue();
         assertTrue(capturedGatewayAccountEntity.isDisabled());
-        assertNull(capturedGatewayAccountEntity.getNotificationCredentials());
     }
 
     private static GatewayAccountEntity setupGatewayAccountEntity(PaymentGatewayName paymentGatewayName, Map<String, Object> creds) {
         GatewayAccountEntity account1 = new GatewayAccountEntity(TEST);
         account1.setExternalId(randomUuid());
         account1.setDisabled(false);
-        account1.setNotificationCredentials(new NotificationCredentials(account1));
         account1.setGatewayAccountCredentials(List.of(
                 new GatewayAccountCredentialsEntity(account1, paymentGatewayName.getName(), creds, ACTIVE)));
         return account1;
