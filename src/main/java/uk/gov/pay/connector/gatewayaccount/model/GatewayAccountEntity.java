@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
