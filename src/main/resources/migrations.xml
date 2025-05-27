@@ -2061,8 +2061,4 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="remove notification credentials table" author="">
-        <dropTable cascadeConstraints="true" tableName="notification_credentials" />
-    </changeSet>
-
 </databaseChangeLog>
