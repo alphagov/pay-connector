@@ -314,7 +314,7 @@ class ChargeExpungeServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED"})
+    @ValueSource( strings = {"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED", "AUTHORISATION_UNEXPECTED_ERROR"})
     void expunge_shouldExpungeChargeIfInSubmittedStateAndChargeIsOlderThanHistoric(String state) {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(2);
 
@@ -439,15 +439,16 @@ class ChargeExpungeServiceTest {
 
     @ParameterizedTest
     @CsvSource( {"AUTHORISATION_ERROR", "AUTHORISATION_TIMEOUT", "AUTHORISATION_UNEXPECTED_ERROR"})
-    void shouldNotExpungeEpdqChargeWithState(String state) {
+    void shouldNotExpungeChargeWithExemptChargeAuthorisationErrorStatuses(String state) {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
                 .withStatus(ChargeStatus.valueOf(state))
-                .withPaymentProvider("epdq")
-                .withGatewayAccountEntity(aGatewayAccountEntity().withGatewayName("epdq").build())
+                .withPaymentProvider("worldpay")
+                .withGatewayAccountEntity(aGatewayAccountEntity().withGatewayName("worldpay").build())
                 .build();
 
         when(mockExpungeConfig.isExpungeChargesEnabled()).thenReturn(true);
+        when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(7);
         when(mockExpungeConfig.getMinimumAgeOfChargeInDays()).thenReturn(minimumAgeOfChargeInDays);
         when(mockChargeDao.findChargeToExpunge(minimumAgeOfChargeInDays, defaultExcludeChargesParityCheckedWithInDays))
                 .thenReturn(Optional.of(chargeEntity));
