@@ -62,7 +62,8 @@ public class ChargeExpungeService {
             CAPTURE_SUBMITTED,
             EXPIRE_CANCEL_SUBMITTED,
             SYSTEM_CANCEL_SUBMITTED,
-            USER_CANCEL_SUBMITTED);
+            USER_CANCEL_SUBMITTED,
+            AUTHORISATION_UNEXPECTED_ERROR);
 
     private final List<ChargeStatus> terminalStatesFor0pPayments = List.of(CAPTURE_SUBMITTED);
 
