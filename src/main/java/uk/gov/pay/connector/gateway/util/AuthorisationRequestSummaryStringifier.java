@@ -52,6 +52,11 @@ public class AuthorisationRequestSummaryStringifier {
             case PRESENT -> stringJoiner.add("with device data collection result");
             case NOT_PRESENT -> stringJoiner.add("without device data collection result");
         }
+        
+        switch (authorisationRequestSummary.shouldForce3ds()) {
+            case PRESENT -> stringJoiner.add("with forced 3ds");
+            case NOT_PRESENT -> stringJoiner.add("without forced 3ds");
+        }
 
         Optional.ofNullable(authorisationRequestSummary.ipAddress())
                 .map(ipAddress -> stringJoiner.add("with remote IP " + ipAddress));
