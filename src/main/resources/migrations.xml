@@ -2065,4 +2065,23 @@
         <dropTable cascadeConstraints="true" tableName="notification_credentials"/>
     </changeSet>
 
+    <changeSet id="create stored columns for gateway_account_credentials credentials json fields" author="">
+        <sql>
+            ALTER TABLE gateway_account_credentials
+                ADD COLUMN stripe_account_id TEXT GENERATED ALWAYS AS ((credentials :: jsonb)->> 'stripe_account_id') STORED,
+                ADD COLUMN one_off_merchant_code TEXT GENERATED ALWAYS AS ((credentials :: jsonb)-> 'one_off_customer_initiated' ->> 'merchant_code') STORED,
+                ADD COLUMN recurring_cit_merchant_code TEXT GENERATED ALWAYS AS ((credentials :: jsonb)-> 'recurring_customer_initiated' ->> 'merchant_code') STORED,
+                ADD COLUMN recurring_mit_merchant_code TEXT GENERATED ALWAYS AS ((credentials :: jsonb)-> 'recurring_merchant_initiated' ->> 'merchant_code') STORED;
+        </sql>
+    </changeSet>
+
+    <changeSet id="create indexes on gateway_account_credentials stored fields" runInTransaction="false" author="">
+        <sql>
+            CREATE INDEX CONCURRENTLY idx_stripe_account_id ON gateway_account_credentials (stripe_account_id);
+            CREATE INDEX CONCURRENTLY idx_one_off_merchant_code ON gateway_account_credentials (one_off_merchant_code);
+            CREATE INDEX CONCURRENTLY idx_recurring_cit_merchant_code ON gateway_account_credentials (recurring_cit_merchant_code);
+            CREATE INDEX CONCURRENTLY idx_recurring_mit_merchant_code ON gateway_account_credentials (recurring_mit_merchant_code);
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
