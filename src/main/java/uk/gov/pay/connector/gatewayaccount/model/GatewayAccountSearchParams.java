@@ -221,10 +221,10 @@ public class GatewayAccountSearchParams {
                     "  from ( " +
                     "    select gateway_account_id " +
                     "    from gateway_account_credentials gac " +
-                    "    where gac.gateway_account_id = ga.id and gac.credentials->>'stripe_account_id' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
-                    "    or gac.credentials->'one_off_customer_initiated'->>'merchant_code' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
-                    "    or gac.credentials->'recurring_customer_initiated'->>'merchant_code' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
-                    "    or gac.credentials->'recurring_merchant_initiated'->>'merchant_code' = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD + ") a" +
+                    "    where gac.gateway_account_id = ga.id and gac.stripe_account_id = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
+                    "    or gac.one_off_merchant_code = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
+                    "    or gac.recurring_cit_merchant_code = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD +
+                    "    or gac.recurring_mit_merchant_code = #" + PAYMENT_PROVIDER_ACCOUNT_ID_SQL_FIELD + ") a" +
                     ")");
         }
         if (StringUtils.isNotEmpty(providerSwitchEnabled)) {
