@@ -4,6 +4,7 @@ import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Charge;
 import com.stripe.model.Payout;
 import com.stripe.model.Transfer;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -25,9 +26,9 @@ import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileMessage;
 import uk.gov.pay.connector.queue.payout.PayoutReconcileQueue;
+import uk.gov.pay.connector.util.MDCUtils;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,12 +73,14 @@ public class PayoutReconcileProcess {
             try {
                 MDC.put(GATEWAY_PAYOUT_ID, payoutReconcileMessage.getGatewayPayoutId());
                 MDC.put(CONNECT_ACCOUNT_ID, payoutReconcileMessage.getConnectAccountId());
-                LOGGER.info("Processing payout [{}] for connect account [{}]",
-                        payoutReconcileMessage.getGatewayPayoutId(),
-                        payoutReconcileMessage.getConnectAccountId());
 
                 GatewayAccountEntity gatewayAccountEntity = gatewayAccountCredentialsService
                         .findStripeGatewayAccountForCredentialKeyAndValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, payoutReconcileMessage.getConnectAccountId());
+                MDCUtils.addGatewayAccountDetailsToMDC(gatewayAccountEntity);
+
+                LOGGER.info("Processing payout [{}] for connect account [{}]",
+                        payoutReconcileMessage.getGatewayPayoutId(),
+                        payoutReconcileMessage.getConnectAccountId());
 
                 AtomicInteger payments = new AtomicInteger();
                 AtomicInteger transfers = new AtomicInteger();
@@ -124,6 +127,7 @@ public class PayoutReconcileProcess {
             } finally {
                 MDC.remove(GATEWAY_PAYOUT_ID);
                 MDC.remove(CONNECT_ACCOUNT_ID);
+                MDCUtils.removeGatewayAccountDetailsFromMDC();
             }
         }
     }
