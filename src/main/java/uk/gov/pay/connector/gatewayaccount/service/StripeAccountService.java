@@ -102,6 +102,12 @@ public class StripeAccountService {
                 .setPhone("+441212345678")
                 .setTaxId("000000000")
                 .setVatId("NOTAPPLI")
+                .setOwnershipDeclaration(
+                        Company.OwnershipDeclaration.builder()
+                                .setIp("0.0.0.0")
+                                .setDate(System.currentTimeMillis() / 1000)
+                                .build()
+                )
                 .setOwnersProvided(true)
                 .setDirectorsProvided(true)
                 .setExecutivesProvided(true);
