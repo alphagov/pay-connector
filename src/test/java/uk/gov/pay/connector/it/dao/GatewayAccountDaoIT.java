@@ -514,6 +514,8 @@ public class GatewayAccountDaoIT {
         account.setExternalId(randomUuid());
         account.setCardTypes(Arrays.asList(masterCardCredit, visaCardDebit));
         account.setSendReferenceToGateway(true);
+        account.setSendPayerEmailToGateway(true);
+        account.setSendPayerIpAddressToGateway(true);
 
         gatewayAccountDao.persist(account);
 
@@ -524,8 +526,8 @@ public class GatewayAccountDaoIT {
         assertThat(account.getCorporateNonPrepaidCreditCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporateNonPrepaidDebitCardSurchargeAmount(), is(0L));
         assertThat(account.getCorporatePrepaidDebitCardSurchargeAmount(), is(0L));
-        assertThat(account.isSendPayerIpAddressToGateway(), is(false));
-        assertThat(account.isSendPayerEmailToGateway(), is(false));
+        assertThat(account.isSendPayerIpAddressToGateway(), is(true));
+        assertThat(account.isSendPayerEmailToGateway(), is(true));
         assertThat(account.isProviderSwitchEnabled(), is(false));
         assertThat(account.isSendReferenceToGateway(), is(true));
 

@@ -31,6 +31,8 @@ public class GatewayAccountObjectConverter {
         gatewayAccountEntity.setAllowApplePay(gatewayAccountRequest.isAllowApplePay());
         gatewayAccountEntity.setAllowGooglePay(gatewayAccountRequest.isAllowGooglePay());
         gatewayAccountEntity.setIntegrationVersion3ds(DEFAULT_INTEGRATION_VERSION_3_DS);
+        gatewayAccountEntity.setSendPayerEmailToGateway(gatewayAccountRequest.isSendPayerEmailToGateway());
+        gatewayAccountEntity.setSendPayerIpAddressToGateway(gatewayAccountRequest.isSendPayerIpAddressToGateway());
 
         gatewayAccountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, new EmailNotificationEntity(gatewayAccountEntity));
         gatewayAccountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, new EmailNotificationEntity(gatewayAccountEntity));
@@ -50,6 +52,8 @@ public class GatewayAccountObjectConverter {
                 .analyticsId(entity.getAnalyticsId())
                 .providerAccountType(entity.getType())
                 .requires3ds(entity.isRequires3ds())
+                .sendPayerEmailToGateway(entity.isSendPayerEmailToGateway())
+                .sendPayerIpAddressToGateway(entity.isSendPayerIpAddressToGateway())
                 .location(uri)
                 .generateLinks(uri)
                 .build();

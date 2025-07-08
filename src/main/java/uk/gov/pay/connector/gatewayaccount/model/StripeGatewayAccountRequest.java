@@ -20,9 +20,12 @@ public class StripeGatewayAccountRequest extends GatewayAccountRequest {
                                        @JsonProperty("credentials") StripeCredentials credentials,
                                        @JsonProperty("requires_3ds") boolean requires3ds,
                                        @JsonProperty("allow_apple_pay") boolean allowApplePay,
-                                       @JsonProperty("allow_google_pay") boolean allowGooglePay
+                                       @JsonProperty("allow_google_pay") boolean allowGooglePay,
+                                       @JsonProperty("send_payer_email_to_gateway") boolean sendPayerEmailToGateway,
+                                       @JsonProperty("send_payer_ip_address_to_gateway") boolean sendPayerIPAddressToGateway
     ) {
-        super(providerAccountType, paymentProvider, serviceName, serviceId, description, analyticsId, requires3ds, allowApplePay, allowGooglePay);
+        super(providerAccountType, paymentProvider, serviceName, serviceId, description, analyticsId, requires3ds, allowApplePay, 
+                allowGooglePay, sendPayerEmailToGateway, sendPayerIPAddressToGateway);
         this.credentials = credentials;
     }
 
@@ -42,6 +45,8 @@ public class StripeGatewayAccountRequest extends GatewayAccountRequest {
         private boolean requires3ds;
         private boolean allowApplePay;
         private boolean allowGooglePay;
+        private boolean sendPayerEmailToGateway;
+        private boolean sendPayerIpAddressToGateway;
 
         private Builder() {
         }
@@ -99,9 +104,20 @@ public class StripeGatewayAccountRequest extends GatewayAccountRequest {
             this.allowGooglePay = allowGooglePay;
             return this;
         }
+        
+        public Builder withSendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
+            this.sendPayerEmailToGateway = sendPayerEmailToGateway;
+            return this;
+        }
+        
+        public Builder withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+            this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
+            return this;
+        }
 
         public StripeGatewayAccountRequest build() {
-            return new StripeGatewayAccountRequest(providerAccountType, paymentProvider, serviceName, serviceId, description, analyticsId, credentials, requires3ds, allowApplePay, allowGooglePay);
+            return new StripeGatewayAccountRequest(providerAccountType, paymentProvider, serviceName, serviceId, description, analyticsId, credentials, requires3ds, 
+                    allowApplePay, allowGooglePay, sendPayerEmailToGateway, sendPayerIpAddressToGateway);
         }
     }
 }

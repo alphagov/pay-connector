@@ -53,8 +53,9 @@ public class DatabaseTestHelper {
                                 "corporate_debit_card_surcharge_amount, " +
                                 "corporate_prepaid_debit_card_surcharge_amount, allow_moto, moto_mask_card_number_input, " +
                                 "moto_mask_card_security_code_input, allow_apple_pay, allow_google_pay, requires_3ds, " +
-                                "allow_telephone_payment_notifications, allow_authorisation_api, recurring_enabled," +
-                                "disabled, disabled_reason, provider_switch_enabled, service_id) " +
+                                "allow_telephone_payment_notifications, allow_authorisation_api, recurring_enabled, " +
+                                "disabled, disabled_reason, provider_switch_enabled, service_id, send_payer_email_to_gateway, " +
+                                "send_payer_ip_address_to_gateway) " +
                                 "VALUES (:id, :external_id, :service_name, :type, " +
                                 ":description, :analytics_id, :email_collection_mode, :integration_version_3ds, " +
                                 ":corporate_credit_card_surcharge_amount, :corporate_debit_card_surcharge_amount, " +
@@ -62,7 +63,8 @@ public class DatabaseTestHelper {
                                 ":allow_moto, :moto_mask_card_number_input, :moto_mask_card_security_code_input, " +
                                 ":allow_apple_pay, :allow_google_pay, :requires_3ds, " +
                                 ":allow_telephone_payment_notifications, :allow_authorisation_api, :recurring_enabled," +
-                                ":disabled, :disabled_reason, :provider_switch_enabled, :service_id)")
+                                ":disabled, :disabled_reason, :provider_switch_enabled, :service_id, :send_payer_email_to_gateway," +
+                                ":send_payer_ip_address_to_gateway)")
                         .bind("id", Long.valueOf(params.getAccountId()))
                         .bind("external_id", params.getExternalId())
                         .bind("service_name", params.getServiceName())
@@ -87,6 +89,8 @@ public class DatabaseTestHelper {
                         .bind("disabled_reason", params.getDisabledReason())
                         .bind("provider_switch_enabled", params.isProviderSwitchEnabled())
                         .bind("service_id", params.getServiceId())
+                        .bind("send_payer_email_to_gateway", params.isSendPayerEmailToGateway())
+                        .bind("send_payer_ip_address_to_gateway", params.isSendPayerIpAddressToGateway())
                         .execute());
         if (params.getCredentials() != null) {
             params.getCredentials().forEach(this::insertGatewayAccountCredentials);

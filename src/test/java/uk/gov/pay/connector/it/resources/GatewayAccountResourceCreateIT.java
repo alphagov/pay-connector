@@ -53,6 +53,8 @@ public class GatewayAccountResourceCreateIT {
                     .withServiceId("my-service-id")
                     .withDescription("my test service")
                     .withAnalyticsId("analytics")
+                    .withSendPayerIpAddressToGateway(true)
+                    .withSendPayerEmailToGateway(true)
                     .build();
             
             Map<String, String> requestForSecondAccountPayload = aCreateGatewayAccountPayloadBuilder()
@@ -60,6 +62,8 @@ public class GatewayAccountResourceCreateIT {
                     .withServiceId("my-service-id")
                     .withDescription("my extra test service")
                     .withAnalyticsId("more analytics")
+                    .withSendPayerEmailToGateway(true)
+                    .withSendPayerIpAddressToGateway(true)
                     .build();
             
             ValidatableResponse response = app.givenSetup()
@@ -77,7 +81,7 @@ public class GatewayAccountResourceCreateIT {
                     .contentType(JSON)
                     .body("message", contains("Gateway account with service id my-service-id and account type 'test' already exists."));
             
-            assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, true, true);
         }
     }
 
@@ -92,6 +96,8 @@ public class GatewayAccountResourceCreateIT {
                     .withServiceId("my-service-id")
                     .withDescription("my test service")
                     .withAnalyticsId("analytics")
+                    .withSendPayerEmailToGateway(true)
+                    .withSendPayerIpAddressToGateway(true)
                     .build();
 
             Map<String, String> requestForSecondAccountPayload = aCreateGatewayAccountPayloadBuilder()
@@ -99,6 +105,8 @@ public class GatewayAccountResourceCreateIT {
                     .withServiceId("my-service-id")
                     .withDescription("my extra test service")
                     .withAnalyticsId("more analytics")
+                    .withSendPayerEmailToGateway(true)
+                    .withSendPayerIpAddressToGateway(true)
                     .build();
 
             app.givenSetup()
@@ -118,23 +126,26 @@ public class GatewayAccountResourceCreateIT {
         
         @Test
         public void createASandboxGatewayAccount() {
-            Map<String, Object> payload = Map.of("payment_provider", "sandbox", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
+            Map<String, Object> payload = Map.of("payment_provider", "sandbox", "service_id", "a-valid-service-id", "description","my test service", 
+                    "analytics_id", "analytics", "send_payer_email_to_gateway", true, "send_payer_ip_address_to_gateway", true);
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
-            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, true, true);
         }
 
         @Test
         public void createAWorldpaySandboxGatewayAccount() {
-            Map<String, Object> payload = Map.of("payment_provider", "worldpay", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
+            Map<String, Object> payload = Map.of("payment_provider", "worldpay", "service_id", "a-valid-service-id", "description","my test service", 
+                    "analytics_id", "analytics", "send_payer_email_to_gateway", true, "send_payer_ip_address_to_gateway", true);
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
-            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, true, true);
         }
 
         @Test
         public void createAWorldpayStripeGatewayAccount() {
-            Map<String, Object> payload = Map.of("payment_provider", "stripe", "service_id", "a-valid-service-id", "description","my test service", "analytics_id", "analytics");
+            Map<String, Object> payload = Map.of("payment_provider", "stripe", "service_id", "a-valid-service-id", "description","my test service", 
+                    "analytics_id", "analytics", "send_payer_email_to_gateway", false, "send_payer_ip_address_to_gateway", false);
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
-            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, false, false);
         }
 
         @Test
@@ -218,7 +229,8 @@ public class GatewayAccountResourceCreateIT {
 
         @Test
         public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
-            String payload = toJson(Map.of("name", "test account", "type", "test", "service_id", "a-valid-service-id"));
+            String payload = toJson(Map.of("name", "test account", "type", "test", "service_id", "a-valid-service-id",
+                    "send_payer_email_to_gateway", true, "send_payer_ip_address_to_gateway", true));
 
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201);
 
@@ -246,7 +258,7 @@ public class GatewayAccountResourceCreateIT {
         }
 
         private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
-            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, type, null, null, null);
+            GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, type, null, null, null, true, true);
         }
     }
 

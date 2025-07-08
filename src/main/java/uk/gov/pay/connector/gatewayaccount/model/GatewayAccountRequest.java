@@ -55,6 +55,12 @@ public class GatewayAccountRequest {
     
     @JsonIgnore
     private boolean allowGooglePay;
+    
+    @JsonIgnore
+    private boolean sendPayerEmailToGateway;
+    
+    @JsonIgnore
+    private boolean sendPayerIpAddressToGateway;
 
     public GatewayAccountRequest(@JsonProperty("type") @Schema(example = "live", description = "Account type for this provider (test/live)", defaultValue = "test") String providerAccountType,
                                  @JsonProperty("payment_provider") @Schema(example = "stripe", description = "The payment provider for which this account is created", defaultValue = "sandbox")
@@ -66,7 +72,9 @@ public class GatewayAccountRequest {
                                  String analyticsId,
                                  @JsonProperty("requires_3ds") @Schema(description = "Set to 'true' to enable 3DS for this account") boolean requires3ds,
                                  @JsonProperty("allow_apple_pay") @Schema(description = "Set to 'true' to enable Apple Pay for this account") boolean allowApplePay,
-                                 @JsonProperty("allow_google_pay") @Schema(description = "Set to 'true' to enable Google Pay for this account") boolean allowGooglePay
+                                 @JsonProperty("allow_google_pay") @Schema(description = "Set to 'true' to enable Google Pay for this account") boolean allowGooglePay,
+                                 @JsonProperty("send_payer_email_to_gateway") @Schema(description = "Set to 'true' to enable send payer's email for this account") boolean sendPayerEmailToGateway,
+                                 @JsonProperty("send_payer_ip_address_to_gateway") @Schema(description = "Set to 'true' to enable send payer's IP address for this account") boolean sendPayerIpAddressToGateway
     ) {
         this.serviceName = serviceName;
         this.serviceId = serviceId;
@@ -75,6 +83,8 @@ public class GatewayAccountRequest {
         this.requires3ds = requires3ds;
         this.allowApplePay = allowApplePay;
         this.allowGooglePay = allowGooglePay;
+        this.sendPayerEmailToGateway = sendPayerEmailToGateway;
+        this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
 
         this.providerAccountType = (providerAccountType == null || providerAccountType.isEmpty()) ?
                 TEST.toString() : providerAccountType;
@@ -139,5 +149,13 @@ public class GatewayAccountRequest {
 
     public boolean isAllowGooglePay() {
         return allowGooglePay;
+    }
+
+    public boolean isSendPayerEmailToGateway() {
+        return sendPayerEmailToGateway;
+    }
+
+    public boolean isSendPayerIpAddressToGateway() {
+        return sendPayerIpAddressToGateway;
     }
 }

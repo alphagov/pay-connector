@@ -205,6 +205,8 @@ public class GatewayAccountResourceIT {
                     .withDefaultCredentials()
                     .withGatewayAccountCredentials(List.of(credentialsParams))
                     .withRequires3ds(true)
+                    .withSendPayerEmailToGateway(false)
+                    .withSendPayerIpAddressToGateway(false)
                     .insert();
 
             app.getDatabaseTestHelper().allowApplePay(accountId);
@@ -299,6 +301,8 @@ public class GatewayAccountResourceIT {
                     .withRecurringEnabled(true)
                     .withGatewayAccountCredentials(List.of(credentialsParams))
                     .withRequires3ds(true)
+                    .withSendPayerEmailToGateway(false)
+                    .withSendPayerIpAddressToGateway(false)
                     .insert();
 
             app.getDatabaseTestHelper().allowApplePay(accountId);
@@ -511,6 +515,8 @@ public class GatewayAccountResourceIT {
                     .withPaymentProvider(WORLDPAY.getName())
                     .withDefaultCredentials()
                     .withGatewayAccountCredentials(List.of(credentialsParams))
+                    .withSendPayerEmailToGateway(false)
+                    .withSendPayerIpAddressToGateway(false)
                     .insert();
 
             app.getDatabaseTestHelper().allowApplePay(accountId);

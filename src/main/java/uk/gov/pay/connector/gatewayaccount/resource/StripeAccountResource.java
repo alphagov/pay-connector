@@ -85,6 +85,8 @@ public class StripeAccountResource {
                 .withRequires3ds(sandboxGatewayAccount.isRequires3ds())
                 .withAllowApplePay(sandboxGatewayAccount.isAllowApplePay())
                 .withAllowGooglePay(sandboxGatewayAccount.isAllowGooglePay())
+                .withSendPayerEmailToGateway(sandboxGatewayAccount.isSendPayerEmailToGateway())
+                .withSendPayerIpAddressToGateway(sandboxGatewayAccount.isSendPayerIpAddressToGateway())
                 .withCredentials(stripeCredentials)
                 .build();
         

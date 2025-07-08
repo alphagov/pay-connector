@@ -49,7 +49,8 @@ public class GatewayAccountResourceITHelpers {
                 .statusCode(200);
     }
 
-    public static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type, String description, String analyticsId, String name) {
+    public static void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type, String description, String analyticsId,
+                                                   String name, boolean sendPayerEmailToGateway, boolean sendPayerIpAddressToGateway) {
         String accountId = response.extract().path("gateway_account_id");
         String urlSlug = "api/accounts/" + accountId;
 
@@ -62,6 +63,8 @@ public class GatewayAccountResourceITHelpers {
                 .body("analytics_id", is(analyticsId))
                 .body("corporate_credit_card_surcharge_amount", is(nullValue()))
                 .body("corporate_debit_card_surcharge_amount", is(nullValue()))
+                .body("send_payer_email_to_gateway", is(sendPayerEmailToGateway))
+                .body("send_payer_ip_address_to_gateway", is(sendPayerIpAddressToGateway))
                 .body("links[0].href", containsString(urlSlug))
                 .body("links[0].rel", is("self"))
                 .body("links[0].method", is("GET"));
@@ -119,6 +122,16 @@ public class GatewayAccountResourceITHelpers {
 
         public CreateGatewayAccountPayloadBuilder withType(GatewayAccountType type) {
             payload.put("type", type.name());
+            return this;
+        }
+
+        public CreateGatewayAccountPayloadBuilder withSendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
+            payload.put("send_payer_email_to_gateway", String.valueOf(sendPayerEmailToGateway));
+            return this;
+        }
+
+        public CreateGatewayAccountPayloadBuilder withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+            payload.put("send_payer_ip_address_to_gateway", String.valueOf(sendPayerIpAddressToGateway));
             return this;
         }
     }

@@ -3928,6 +3928,12 @@ components:
         requires_3ds:
           type: boolean
           example: true
+        send_payer_email_to_gateway:
+          type: boolean
+          example: true
+        send_payer_ip_address_to_gateway:
+          type: boolean
+          example: true
         service_name:
           type: string
           example: service name
@@ -4488,6 +4494,14 @@ components:
         requires_3ds:
           type: boolean
           description: Set to 'true' to enable 3DS for this account
+          writeOnly: true
+        send_payer_email_to_gateway:
+          type: boolean
+          description: Set to 'true' to enable send payer's email for this account
+          writeOnly: true
+        send_payer_ip_address_to_gateway:
+          type: boolean
+          description: Set to 'true' to enable send payer's IP address for this account
           writeOnly: true
         service_id:
           type: string
@@ -5568,6 +5582,12 @@ components:
             type: string
             writeOnly: true
           requires_3ds:
+            type: boolean
+            writeOnly: true
+          send_payer_email_to_gateway:
+            type: boolean
+            writeOnly: true
+          send_payer_ip_address_to_gateway:
             type: boolean
             writeOnly: true
           service_id:

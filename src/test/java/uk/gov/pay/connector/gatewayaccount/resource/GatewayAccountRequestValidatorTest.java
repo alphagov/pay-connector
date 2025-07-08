@@ -228,6 +228,34 @@ class GatewayAccountRequestValidatorTest {
         assertThat(validationException.getErrors(), hasItems("Value [] is not valid for path [corporate_prepaid_debit_card_surcharge_amount]"));
     }
 
+    @Test
+    void shouldThrow_whenNotBooleanValueForSendPayerEmailToGateway() {
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "send_payer_email_to_gateway",
+                        FIELD_VALUE, "true"));
+
+        var validationException = assertThrows(ValidationException.class,
+                () -> validator.validatePatchRequest(jsonNode));
+
+        assertThat(validationException.getErrors().size(), is(1));
+        assertThat(validationException.getErrors(), hasItems("Value [true] must be of type boolean for path [send_payer_email_to_gateway]"));
+    }
+
+    @Test
+    void shouldThrow_whenNotBooleanValueForSendPayerIPAddressToGateway() {
+        JsonNode jsonNode = objectMapper.valueToTree(
+                Map.of(FIELD_OPERATION, "replace",
+                        FIELD_OPERATION_PATH, "send_payer_ip_address_to_gateway",
+                        FIELD_VALUE, "true"));
+
+        var validationException = assertThrows(ValidationException.class,
+                () -> validator.validatePatchRequest(jsonNode));
+
+        assertThat(validationException.getErrors().size(), is(1));
+        assertThat(validationException.getErrors(), hasItems("Value [true] must be of type boolean for path [send_payer_ip_address_to_gateway]"));
+    }
+
     static Stream<Arguments> provider() {
         return Stream.of(
                 arguments("bad", "allow_apple_pay", "true", "Operation [bad] is not valid for path [allow_apple_pay]"),
