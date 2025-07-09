@@ -33,6 +33,7 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
@@ -49,6 +50,7 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
@@ -65,6 +67,7 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.corporateExemptionRequested()).willReturn(Optional.of(Boolean.TRUE));
         given(mockAuthorisationRequestSummary.corporateExemptionResult()).willReturn(Optional.of(Exemption3ds.EXEMPTION_HONOURED));
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
@@ -81,6 +84,7 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.corporateExemptionRequested()).willReturn(Optional.of(Boolean.TRUE));
         given(mockAuthorisationRequestSummary.corporateExemptionResult()).willReturn(Optional.of(Exemption3ds.EXEMPTION_REJECTED));
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
@@ -97,6 +101,7 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.corporateExemptionRequested()).willReturn(Optional.of(Boolean.TRUE));
         given(mockAuthorisationRequestSummary.corporateExemptionResult()).willReturn(Optional.of(Exemption3ds.EXEMPTION_OUT_OF_SCOPE));
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
@@ -110,6 +115,7 @@ class AuthorisationRequestSummaryStringifierTest {
         given(mockAuthorisationRequestSummary.dataFor3ds()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
 
         String result = stringifier.stringify(mockAuthorisationRequestSummary);
 
