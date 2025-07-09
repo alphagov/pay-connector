@@ -109,7 +109,7 @@ class GatewayAccountServiceTest {
         
         var gatewayAccountRequest = new GatewayAccountRequest("test","stripe",
                 "a-service-name","a-service-id","description","analyticsId",
-                false,false,false);
+                false,false,false, true, true);
         
         assertThrows(MultipleStripeTestGatewayAccountsException.class, 
                 () -> gatewayAccountService.createGatewayAccount(gatewayAccountRequest, null));

@@ -50,6 +50,8 @@ public class AddGatewayAccountParams {
     private boolean disabled;
     private String disabledReason;
     private boolean providerSwitchEnabled;
+    private boolean sendPayerEmailToGateway;
+    private boolean sendPayerIpAddressToGateway;
 
     public int getIntegrationVersion3ds() {
         return integrationVersion3ds;
@@ -150,6 +152,14 @@ public class AddGatewayAccountParams {
     public boolean isProviderSwitchEnabled() {
         return providerSwitchEnabled;
     }
+    
+    public boolean isSendPayerEmailToGateway() {
+        return sendPayerEmailToGateway;
+    }
+    
+    public boolean isSendPayerIpAddressToGateway() {
+        return sendPayerIpAddressToGateway;
+    }
 
     public static final class AddGatewayAccountParamsBuilder {
         private String accountId;
@@ -179,6 +189,8 @@ public class AddGatewayAccountParams {
         private boolean disabled;
         private String disabledReason;
         private boolean providerSwitchEnabled = false;
+        private boolean sendPayerEmailToGateway = true;
+        private boolean sendPayerIpAddressToGateway = true;
 
         private AddGatewayAccountParamsBuilder() {
         }
@@ -348,6 +360,16 @@ public class AddGatewayAccountParams {
             return this;
         }
 
+        public AddGatewayAccountParamsBuilder withSendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
+            this.sendPayerEmailToGateway = sendPayerEmailToGateway;
+            return this;
+        }
+
+        public AddGatewayAccountParamsBuilder withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+            this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
+            return this;
+        }
+
         public AddGatewayAccountParams build() {
             if (gatewayAccountCredentialsParams == null) {
                 gatewayAccountCredentialsParams = Collections.singletonList(
@@ -383,6 +405,8 @@ public class AddGatewayAccountParams {
             addGatewayAccountParams.disabledReason = this.disabledReason;
             addGatewayAccountParams.providerSwitchEnabled = this.providerSwitchEnabled;
             addGatewayAccountParams.serviceId = this.serviceId;
+            addGatewayAccountParams.sendPayerEmailToGateway = this.sendPayerEmailToGateway;
+            addGatewayAccountParams.sendPayerIpAddressToGateway = this.sendPayerIpAddressToGateway;
             return addGatewayAccountParams;
         }
 

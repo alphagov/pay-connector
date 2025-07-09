@@ -363,6 +363,8 @@ public class DatabaseFixtures {
                 CREDENTIALS_USERNAME, "username",
                 CREDENTIALS_PASSWORD, "password"
         );
+        private boolean sendPayerEmailToGateway;
+        private boolean sendPayerIpAddressToGateway;
 
         public long getAccountId() {
             return accountId;
@@ -428,6 +430,14 @@ public class DatabaseFixtures {
 
         public void setRecurringEnabled(boolean recurringEnabled) {
             this.recurringEnabled = recurringEnabled;
+        }
+
+        public boolean isSendPayerEmailToGateway() {
+            return sendPayerEmailToGateway;
+        }
+
+        public boolean isSendPayerIpAddressToGateway() {
+            return sendPayerIpAddressToGateway;
         }
 
         public TestAccount withAccountId(long accountId) {
@@ -559,6 +569,16 @@ public class DatabaseFixtures {
             this.providerSwitchEnabled = providerSwitchEnabled;
             return this;
         }
+        
+        public TestAccount withSendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
+            this.sendPayerEmailToGateway = sendPayerEmailToGateway;
+            return this;
+        }
+        
+        public TestAccount withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+            this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
+            return this;
+        }
 
         public TestAccount insert() {
             if (gatewayAccountCredentialsParams == null) {
@@ -593,6 +613,8 @@ public class DatabaseFixtures {
                     .withRequires3ds(requires3ds)
                     .withRecurringEnabled(recurringEnabled)
                     .withProviderSwitchEnabled(providerSwitchEnabled)
+                    .withSendPayerEmailToGateway(sendPayerEmailToGateway)
+                    .withSendPayerIpAddressToGateway(sendPayerIpAddressToGateway)
                     .build());
             for (TestCardType cardType : cardTypes) {
                 databaseTestHelper.addAcceptedCardType(this.getAccountId(), cardType.getId());

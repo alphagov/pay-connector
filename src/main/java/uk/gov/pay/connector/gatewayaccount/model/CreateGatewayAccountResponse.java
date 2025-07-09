@@ -48,7 +48,15 @@ public record CreateGatewayAccountResponse (
 
     @JsonProperty("requires_3ds")
     @Schema(example = "true")
-    boolean requires3ds
+    boolean requires3ds,
+
+    @JsonProperty("send_payer_email_to_gateway")
+    @Schema(example = "true")
+    boolean sendPayerEmailToGateway,
+
+    @JsonProperty("send_payer_ip_address_to_gateway")
+    @Schema(example = "true")
+    boolean sendPayerIpAddressToGateway
 ) {    
 
     public CreateGatewayAccountResponse(GatewayAccountResponseBuilder gatewayAccountResponseBuilder) {
@@ -61,7 +69,9 @@ public record CreateGatewayAccountResponse (
             gatewayAccountResponseBuilder.analyticsId,
             gatewayAccountResponseBuilder.links,
             gatewayAccountResponseBuilder.location,
-            gatewayAccountResponseBuilder.requires3ds
+            gatewayAccountResponseBuilder.requires3ds, 
+            gatewayAccountResponseBuilder.sendPayerEmailToGateway, 
+            gatewayAccountResponseBuilder.sendPayerIpAddressToGateway
         );
     }
 
@@ -74,6 +84,8 @@ public record CreateGatewayAccountResponse (
         private String gatewayAccountId;
         private String externalId;
         private boolean requires3ds;
+        private boolean sendPayerEmailToGateway;
+        private boolean sendPayerIpAddressToGateway;
         private URI location;
         private List<Map<String, Object>> links;
 
@@ -123,6 +135,16 @@ public record CreateGatewayAccountResponse (
 
         public GatewayAccountResponseBuilder requires3ds(boolean requires3ds) {
             this.requires3ds = requires3ds;
+            return this;
+        }
+        
+        public GatewayAccountResponseBuilder sendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
+            this.sendPayerEmailToGateway = sendPayerEmailToGateway;
+            return this;
+        }
+        
+        public GatewayAccountResponseBuilder sendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+            this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
             return this;
         }
     }
