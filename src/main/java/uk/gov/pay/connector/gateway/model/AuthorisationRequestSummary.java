@@ -49,5 +49,9 @@ public interface AuthorisationRequestSummary {
     default Presence email() { 
         return NOT_APPLICABLE; 
     }
+    
+    default Presence shouldForce3ds() {
+        return NOT_APPLICABLE;
+    }
 
 }
