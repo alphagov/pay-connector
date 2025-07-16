@@ -3942,17 +3942,7 @@ components:
           example: live
     EmailNotificationEntity:
       type: object
-      description: The settings for the different emails (payments/refunds) that are
-        sent out
-      example:
-        REFUND_ISSUED:
-          version: 1
-          enabled: true
-          template_body: null
-        PAYMENT_CONFIRMED:
-          version: 1
-          enabled: true
-          template_body: null
+      description: Whether email notification is sent
       properties:
         enabled:
           type: boolean
@@ -4319,6 +4309,11 @@ components:
           - MANDATORY
           - OPTIONAL
           - "OFF"
+        email_notifications:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/EmailNotificationEntity"
+          description: Whether email notification is sent
         external_id:
           type: string
           description: External ID for the gateway account
