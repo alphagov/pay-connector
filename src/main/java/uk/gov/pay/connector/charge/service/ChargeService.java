@@ -95,6 +95,7 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
@@ -145,6 +146,7 @@ import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORAT
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
+import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.AGREEMENT;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.AGREEMENT_NOT_ACTIVE;
@@ -1278,7 +1280,6 @@ public class ChargeService {
 
     public FrontendChargeResponse buildChargeResponse(UriInfo uriInfo, ChargeEntity charge) {
         String chargeId = charge.getExternalId();
-
         FrontendChargeResponse.FrontendChargeResponseBuilder responseBuilder = aFrontendChargeResponse()
                 .withStatus(charge, externalTransactionStateFactory)
                 .withChargeId(chargeId)
@@ -1300,7 +1301,12 @@ public class ChargeService {
                 .withLink("cardCapture", POST, locationUriFor("/v1/frontend/charges/{chargeId}/capture", uriInfo, chargeId))
                 .withWalletType(charge.getWalletType())
                 .withMoto(charge.isMoto())
-                .withAuthorisationMode(charge.getAuthorisationMode());
+                .withAuthorisationMode(charge.getAuthorisationMode())
+                .withPaymentConfirmationEmailEnabled(
+                        Optional.ofNullable(charge.getGatewayAccount()
+                                        .getEmailNotifications().get(PAYMENT_CONFIRMED))
+                                .map(EmailNotificationEntity::isEnabled)
+                                .orElse(false));
 
         if (charge.getCardDetails() != null) {
             var persistedCard = charge.getCardDetails().toCard();

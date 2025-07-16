@@ -15,6 +15,7 @@ public class FrontendChargeResponse extends ChargeResponse {
         private FrontendGatewayAccountResponse gatewayAccount;
         private AgreementResponse agreement;
         private boolean savePaymentInstrumentToAgreement;
+        private boolean paymentConfirmationEmailEnabled;
 
         public FrontendChargeResponseBuilder withStatus(ChargeEntity chargeEntity,
                                                         ExternalTransactionStateFactory externalTransactionStateFactory) {
@@ -25,6 +26,11 @@ public class FrontendChargeResponse extends ChargeResponse {
 
         public FrontendChargeResponseBuilder withGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
             this.gatewayAccount = new FrontendGatewayAccountResponse(gatewayAccountEntity);
+            return this;
+        }
+        
+        public FrontendChargeResponseBuilder withPaymentConfirmationEmailEnabled(boolean enabled) {
+            this.paymentConfirmationEmailEnabled = enabled;
             return this;
         }
 
@@ -65,12 +71,21 @@ public class FrontendChargeResponse extends ChargeResponse {
     @JsonProperty
     private AgreementResponse agreement;
 
+    @JsonProperty("payment_confirmation_email_enabled")
+    private boolean paymentConfirmationEmailEnabled;
+    
+    @JsonProperty("payment_confirmation_email_enabled")
+    public boolean isPaymentConfirmationEmailEnabled() {
+        return paymentConfirmationEmailEnabled;
+    }
+
     private FrontendChargeResponse(FrontendChargeResponseBuilder builder) {
         super(builder);
         this.status = builder.status;
         this.gatewayAccount = builder.gatewayAccount;
         this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
         this.agreement = builder.agreement;
+        this.paymentConfirmationEmailEnabled = builder.paymentConfirmationEmailEnabled;
     }
 
     @Override

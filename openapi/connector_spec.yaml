@@ -4221,6 +4221,8 @@ components:
           description: "amount including all surcharges and less all fees, in pence.\
             \ Available depending on payment service provider"
           example: 90
+        payment_confirmation_email_enabled:
+          type: boolean
         payment_outcome:
           $ref: "#/components/schemas/PaymentOutcome"
         payment_provider:
