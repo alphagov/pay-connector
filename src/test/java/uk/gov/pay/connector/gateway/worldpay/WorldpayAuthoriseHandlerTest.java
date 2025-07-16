@@ -1,8 +1,19 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.NewCookie;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +22,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -39,12 +51,6 @@ import uk.gov.pay.connector.util.XPathUtils;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.NewCookie;
-import jakarta.ws.rs.core.Response;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 import java.net.URI;
@@ -67,18 +73,17 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider.WORLDPAY_MACHINE_COOKIE_NAME;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_CORPORATE_EXEMPTION_REQUEST;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.SEND_EXEMPTION_ENGINE_REQUEST;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -95,7 +100,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS_WITH_EMAIL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_EMAIL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS;
@@ -115,6 +119,8 @@ class WorldpayAuthoriseHandlerTest {
     private GatewayClient authoriseClient;
     @Mock
     private GatewayClient.Response authorisationSuccessResponse;
+    @Mock
+    private Appender<ILoggingEvent> mockAppender;
 
     private ChargeEntityFixture chargeEntityFixture;
     private GatewayAccountEntity gatewayAccountEntity;
@@ -148,6 +154,10 @@ class WorldpayAuthoriseHandlerTest {
         chargeEntityFixture = aValidChargeEntity()
                 .withGatewayAccountCredentialsEntity(creds)
                 .withGatewayAccountEntity(gatewayAccountEntity);
+
+        Logger root = (Logger) LoggerFactory.getLogger(WorldpayAuthoriseHandler.class);
+        root.setLevel(Level.INFO);
+        root.addAppender(mockAppender);
     }
 
     @Test
@@ -193,6 +203,14 @@ class WorldpayAuthoriseHandlerTest {
         verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = "Authorisation request will be posted not MOTO and with billing address and without email address and with IP address and with 3DS data for uniqueSessionId (worldpay 1)";
+            return loggingEvent.getFormattedMessage().contains(log);
+        }));
     }
 
     @Test
@@ -218,6 +236,14 @@ class WorldpayAuthoriseHandlerTest {
         verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = "Authorisation request will be posted not MOTO and with billing address and without email address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)";
+            return loggingEvent.getFormattedMessage().contains(log);
+        }));
     }
 
     @ParameterizedTest
@@ -356,7 +382,7 @@ class WorldpayAuthoriseHandlerTest {
     }
 
     @Test
-    void should_include_email_when_present_and_send_email_to_gateway_enabled_and_3ds_disabled() throws Exception {
+    void should_not_include_email_when_present_and_3ds_disabled() throws Exception {
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         ChargeEntity chargeEntity = chargeEntityFixture
@@ -377,7 +403,7 @@ class WorldpayAuthoriseHandlerTest {
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
         verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
-        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS_WITH_EMAIL),
+        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
@@ -405,6 +431,14 @@ class WorldpayAuthoriseHandlerTest {
         verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_EMAIL),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
+        assertTrue(logs.stream().anyMatch(loggingEvent -> {
+            String log = "Authorisation request will be posted not MOTO and with billing address and with email address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)";
+            return loggingEvent.getFormattedMessage().contains(log);
+        }));
     }
 
     @Test

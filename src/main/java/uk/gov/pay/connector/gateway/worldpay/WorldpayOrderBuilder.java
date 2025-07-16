@@ -16,17 +16,19 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.
 
 public interface WorldpayOrderBuilder {
 
-    static GatewayOrder buildAuthoriseOrder(CardAuthorisationGatewayRequest request,
+    static WorldpayOrderRequestBuilder buildAuthoriseOrder(CardAuthorisationGatewayRequest request,
                                             SendWorldpayExemptionRequest sendExemptionEngineRequest,
                                             AcceptLanguageHeaderParser acceptLanguageHeaderParser) {
-
+        boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
+                request.getGatewayAccount().isRequires3ds();
+        
         WorldpayOrderRequestBuilder builder = aWorldpayAuthoriseOrderRequestBuilder();
 
-        if (request.getGatewayAccount().isSendPayerIpAddressToGateway()) {
+        if (request.getGatewayAccount().isSendPayerIpAddressToGateway() && is3dsRequired && !request.isMoto()) {
             request.getAuthCardDetails().getIpAddress().ifPresent(builder::withPayerIpAddress);
         }
 
-        if (request.getGatewayAccount().isSendPayerEmailToGateway()) {
+        if (request.getGatewayAccount().isSendPayerEmailToGateway() && is3dsRequired && !request.isMoto()) {
             Optional.ofNullable(request.getEmail()).ifPresent(builder::withPayerEmail);
         }
 
@@ -36,10 +38,7 @@ public interface WorldpayOrderBuilder {
             builder.withDescription(request.getDescription());
         }
 
-        boolean is3dsRequired = request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isPresent() ||
-                request.getGatewayAccount().isRequires3ds();
-
-        return builder
+        return (WorldpayOrderRequestBuilder) builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
                 .with3dsRequired(is3dsRequired)
                 .withRequestExemption(sendExemptionEngineRequest)
@@ -51,8 +50,7 @@ public interface WorldpayOrderBuilder {
                 .withAuthorisationDetails(request.getAuthCardDetails())
                 .withIntegrationVersion3ds(request.getGatewayAccount().getIntegrationVersion3ds())
                 .withPaymentPlatformReference(request.getGovUkPayPaymentId())
-                .withBrowserLanguage(acceptLanguageHeaderParser.getPreferredLanguageFromAcceptLanguageHeader(request.getAuthCardDetails().getAcceptLanguageHeader()))
-                .build();
+                .withBrowserLanguage(acceptLanguageHeaderParser.getPreferredLanguageFromAcceptLanguageHeader(request.getAuthCardDetails().getAcceptLanguageHeader()));
     }
 
     static GatewayOrder buildAuthoriseRecurringOrder(RecurringPaymentAuthorisationGatewayRequest request) {

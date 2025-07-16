@@ -1,13 +1,16 @@
 package uk.gov.pay.connector.gateway.util;
 
 import net.logstash.logback.argument.StructuredArgument;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 
 import java.util.ArrayList;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class AuthorisationRequestSummaryStructuredLogging {
     
@@ -20,6 +23,8 @@ public class AuthorisationRequestSummaryStructuredLogging {
     public static final String WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT = "worldpay_3ds_flex_device_data_collection_result";
     public static final String IP_ADDRESS = "remote_ip_address";
     public static final String EMAIL = "email_address";
+    public static final String THREE_DS_REQUIRED = "3ds_required";
+    public static final String MOTO = "moto";
 
     public StructuredArgument[] createArgs(AuthorisationRequestSummary authorisationRequestSummary) {
         var structuredArguments = new ArrayList<StructuredArgument>();
@@ -63,5 +68,21 @@ public class AuthorisationRequestSummaryStructuredLogging {
  
         return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
     }
-
+    
+    public StructuredArgument[] createArgsForPreAuthorisationLogging(WorldpayOrderRequestBuilder orderRequestBuilder, AuthCardDetails authCardDetails, boolean isMoto) {
+        var structuredArguments = new ArrayList<StructuredArgument>();
+        
+        structuredArguments.add(kv(MOTO, isMoto));
+        
+        structuredArguments.add(kv(BILLING_ADDRESS, authCardDetails.getAddress().isPresent()));
+        
+        structuredArguments.add(kv(EMAIL, !isBlank(orderRequestBuilder.getWorldpayTemplateData().getPayerEmail())));
+        
+        Optional.ofNullable(orderRequestBuilder.getWorldpayTemplateData().getPayerIpAddress())
+                .map(ipAddress -> structuredArguments.add(kv(IP_ADDRESS, ipAddress)));
+        
+        structuredArguments.add(kv(THREE_DS_REQUIRED, orderRequestBuilder.getWorldpayTemplateData().isRequires3ds()));
+        
+        return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
+    }
 }
