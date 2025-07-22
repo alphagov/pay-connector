@@ -3,8 +3,11 @@ package uk.gov.pay.connector.gatewayaccount.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
 import java.util.List;
+import java.util.Map;
 
 @Schema(description = "Representation of a gateway account for use by the card frontend application")
 public record FrontendGatewayAccountResponse (
@@ -65,6 +68,10 @@ public record FrontendGatewayAccountResponse (
     @JsonProperty("email_collection_mode")
     @Schema(description = "Whether email address is required from paying users. Can be MANDATORY, OPTIONAL or OFF")
     EmailCollectionMode emailCollectionMode,
+    
+    @JsonProperty("email_notifications")
+    @Schema(description = "Whether email notification is sent")
+    Map<EmailNotificationType, EmailNotificationEntity> emailNotifications,
 
     @JsonProperty("requires3ds")
     @Schema(example = "true", description = "Flag to indicate whether 3DS is enabled")
@@ -104,6 +111,7 @@ public record FrontendGatewayAccountResponse (
                 gatewayAccountEntity.isAllowGooglePay(),
                 gatewayAccountEntity.isBlockPrepaidCards(),
                 gatewayAccountEntity.getEmailCollectionMode(),
+                gatewayAccountEntity.getEmailNotifications(),
                 gatewayAccountEntity.isRequires3ds(),
                 gatewayAccountEntity.getIntegrationVersion3ds(),
                 gatewayAccountEntity.isMotoMaskCardNumberInput(),
