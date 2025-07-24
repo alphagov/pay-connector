@@ -356,7 +356,7 @@ class WorldpayAuthoriseHandlerTest {
     }
 
     @Test
-    void should_include_email_when_present_and_send_email_to_gateway_enabled_and_3ds_disabled() throws Exception {
+    void should_not_include_email_when_present_and_3ds_disabled() throws Exception {
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
         ChargeEntity chargeEntity = chargeEntityFixture
@@ -377,7 +377,7 @@ class WorldpayAuthoriseHandlerTest {
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
         verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
-        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS_WITH_EMAIL),
+        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
 
