@@ -87,7 +87,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
 
     @Column(name = "requires_3ds")
     private boolean requires3ds;
-
+    
+    @Column(name = "force_3ds")
+    private boolean force3ds;
+    
     @Column(name = "allow_google_pay")
     private boolean allowGooglePay;
 
@@ -299,6 +302,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return requires3ds;
     }
     
+    public boolean isForce3ds() {
+        return force3ds;
+    }
+    
     public boolean isAllowGooglePay() {
         Boolean hasCredentialsConfiguredForGooglePay = getCurrentOrActiveGatewayAccountCredential()
                 .map(GatewayAccountCredentialsEntity::getCredentialsObject)
@@ -406,7 +413,11 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public void setRequires3ds(boolean requires3ds) {
         this.requires3ds = requires3ds;
     }
-
+    
+    public void setForce3ds(boolean force3ds) {
+        this.force3ds = force3ds;
+    }
+    
     public void setType(GatewayAccountType type) {
         this.type = type;
     }

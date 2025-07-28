@@ -26,6 +26,7 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS2;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.EMAIL;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.IP_ADDRESS;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.SHOULD_FORCE_3DS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +47,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.corporateExemptionRequested()).willReturn(Optional.of(Boolean.TRUE));
         given(mockAuthorisationRequestSummary.corporateExemptionResult()).willReturn(Optional.of(Exemption3ds.EXEMPTION_HONOURED));
         given(mockAuthorisationRequestSummary.email()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(PRESENT);
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -55,6 +57,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(DATA_FOR_3DS2, true),
                 kv(EMAIL, true),
                 kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, true),
+                kv(SHOULD_FORCE_3DS, true),
                 kv(IP_ADDRESS, "1.1.1.1"),
                 kv(CORPORATE_CARD, true),
                 kv(CORPORATE_EXEMPTION_REQUESTED, true),
@@ -69,6 +72,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.email()).willReturn(NOT_PRESENT);
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_PRESENT);
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -78,6 +82,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(DATA_FOR_3DS2, false),
                 kv(EMAIL, false),
                 kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false),
+                kv(SHOULD_FORCE_3DS, false),
                 kv(CORPORATE_CARD, false)
         )));
     }
@@ -89,7 +94,8 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.dataFor3ds2()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_APPLICABLE);
         given(mockAuthorisationRequestSummary.email()).willReturn(NOT_APPLICABLE);
-
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
+        
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
         assertThat(result, is(arrayContaining(
@@ -105,6 +111,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.deviceDataCollectionResult()).willReturn(NOT_PRESENT);
         given(mockAuthorisationRequestSummary.ipAddress()).willReturn("1.1.1.1");
         given(mockAuthorisationRequestSummary.email()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.shouldForce3ds()).willReturn(NOT_APPLICABLE);
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
