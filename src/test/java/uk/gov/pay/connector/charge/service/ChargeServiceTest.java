@@ -21,6 +21,7 @@ import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder;
 import uk.gov.pay.connector.charge.model.ChargeResponse;
+import uk.gov.pay.connector.charge.model.FrontendChargeResponse;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -65,10 +66,14 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
 import jakarta.ws.rs.core.UriInfo;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+
 import java.time.Instant;
 import java.time.InstantSource;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -107,6 +112,7 @@ import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.Ch
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.paymentprocessor.model.OperationType.AUTHORISATION_3DS;
+import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceTest {
@@ -690,6 +696,52 @@ class ChargeServiceTest {
         assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure(), is(notNullValue()));
         assertThat(chargeResponse.getAuthorisationSummary().getThreeDSecure().getRequired(), is(false));
     }
+
+    @Test
+    void shouldSetPaymentConfirmationEmailEnabledFalseWhenNotificationIsDisabled() {
+        EmailNotificationEntity emailNotification = new EmailNotificationEntity();
+        emailNotification.setEnabled(false);
+        Map<EmailNotificationType, EmailNotificationEntity> notifications = Map.of(PAYMENT_CONFIRMED, emailNotification);
+
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
+        gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
+        gatewayAccount.setEmailNotifications(notifications);
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        FrontendChargeResponse frontendChargeResponse = FrontendChargeResponse.aFrontendChargeResponse()
+                .withPaymentConfirmationEmailEnabled(
+                        Optional.ofNullable(charge.getGatewayAccount().getEmailNotifications().get(PAYMENT_CONFIRMED))
+                                .map(EmailNotificationEntity::isEnabled)
+                                .orElse(false)
+                )
+                .build();
+
+        assertThat(frontendChargeResponse.isPaymentConfirmationEmailEnabled(), is(false));
+    }
+
+    @Test
+    void shouldSetPaymentConfirmationEmailEnabledFalseWhenNotificationIsNotSet() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
+        gatewayAccount.setEmailNotifications(Collections.emptyMap());
+
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .build();
+
+        FrontendChargeResponse frontendChargeResponse = FrontendChargeResponse.aFrontendChargeResponse()
+                .withPaymentConfirmationEmailEnabled(
+                        Optional.ofNullable(charge.getGatewayAccount().getEmailNotifications().get(PAYMENT_CONFIRMED))
+                                .map(EmailNotificationEntity::isEnabled)
+                                .orElse(false)
+                )
+                .build();
+
+        assertThat(frontendChargeResponse.isPaymentConfirmationEmailEnabled(), is(false));
+    }
+
 
     @Nested
     class TestGetLongestDurationOfChargesAwaitingCaptureInMinutes {
