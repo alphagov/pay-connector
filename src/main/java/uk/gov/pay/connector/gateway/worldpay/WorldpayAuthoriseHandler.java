@@ -1,24 +1,29 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.inject.name.Named;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
-import jakarta.inject.Inject;
 import java.net.URI;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
 
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static jakarta.ws.rs.core.Response.Status.Family.SERVER_ERROR;
+import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
@@ -73,14 +78,17 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
         logMissingDdcResultFor3dsFlexIntegration(request);
 
-        try {
+        var worldpayOrderBuilder  = WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionRequest, acceptLanguageHeaderParser);
+        logAuthorisationRequestToBePosted(request, worldpayOrderBuilder);
+
+        try {            
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
-                    WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionRequest, acceptLanguageHeaderParser),
+                    worldpayOrderBuilder.build(),
                     getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
-
+            
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required: %s", sanitiseMessage(response.getEntity())));
             }
@@ -109,6 +117,19 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         }
     }
 
+    private void logAuthorisationRequestToBePosted(CardAuthorisationGatewayRequest request, WorldpayOrderRequestBuilder worldpayOrderBuilder) {
+        var structuredLoggingArguments = new AuthorisationRequestSummaryStructuredLogging()
+                .createArgsForPreAuthorisationLogging(worldpayOrderBuilder, request.getAuthCardDetails(), request.isMoto());
+        var logMessage = String.format(Locale.UK, "Authorisation request will be posted%s for %s (%s %s)",
+                stringifyLogMessage(worldpayOrderBuilder, request.getAuthCardDetails(), request.isMoto()),
+                request.getGovUkPayPaymentId(),
+                WORLDPAY.getName(),
+                request.getGatewayAccount().getId()
+        );
+
+        LOGGER.info(logMessage, structuredLoggingArguments);
+    }
+
     private String sanitiseMessage(String message) {
         return message.replaceAll("<cardHolderName>.*</cardHolderName>", "<cardHolderName>REDACTED</cardHolderName>");
     }
@@ -119,5 +140,27 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                 request.getAuthCardDetails().getWorldpay3dsFlexDdcResult().isEmpty()) {
             LOGGER.info("[3DS Flex] Missing device data collection result for {}", gatewayAccount.getId());
         }
+    }
+    
+    private String stringifyLogMessage(WorldpayOrderRequestBuilder orderRequestBuilder, AuthCardDetails authCardDetails, boolean isMoto) {
+        var stringJoiner = new StringJoiner(" and ", " ", "");
+        
+        stringJoiner.add(isMoto ? "MOTO" : "not MOTO");
+
+        authCardDetails.getAddress()
+                .map(address -> stringJoiner.add("with billing address"))
+                .orElseGet(() -> stringJoiner.add("without billing address"));
+
+        Optional.ofNullable(orderRequestBuilder.getWorldpayTemplateData().getPayerEmail())
+                .map(email -> stringJoiner.add("with email address"))
+                .orElseGet(() ->stringJoiner.add("without email address"));
+
+        Optional.ofNullable(orderRequestBuilder.getWorldpayTemplateData().getPayerIpAddress())
+                .map(ipAddress -> stringJoiner.add("with IP address"))
+                .orElseGet(() ->stringJoiner.add("without IP address"));
+
+        stringJoiner.add(orderRequestBuilder.getWorldpayTemplateData().isRequires3ds() ? "with 3DS data" : "without 3DS data");
+        
+        return stringJoiner.toString();
     }
 }

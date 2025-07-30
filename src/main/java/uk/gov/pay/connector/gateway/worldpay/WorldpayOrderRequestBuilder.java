@@ -366,4 +366,8 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
     public MediaType getMediaType() {
         return MediaType.APPLICATION_XML_TYPE;
     }
+
+    public WorldpayTemplateData getWorldpayTemplateData() {
+        return worldpayTemplateData;
+    }
 }

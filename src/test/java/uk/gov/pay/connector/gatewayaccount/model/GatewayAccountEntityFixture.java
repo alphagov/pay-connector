@@ -45,6 +45,7 @@ public final class GatewayAccountEntityFixture {
     private boolean providerSwitchEnabled = false;
     private boolean blockPrepaidCards;
     private boolean disabled = false;
+    private boolean sendPayerEmailAddressToGateway;
 
     private GatewayAccountEntityFixture() {
     }
@@ -138,6 +139,16 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
+    public GatewayAccountEntityFixture withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
+        this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
+        return this;
+    }
+    
+    public GatewayAccountEntityFixture withSendPayerEmailAddressToGateway(boolean sendPayerEmailAddressToGateway) {
+        this.sendPayerEmailAddressToGateway = sendPayerEmailAddressToGateway;
+        return this;
+    }
+
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(id);
@@ -159,6 +170,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setCardTypes(cardTypes);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
         gatewayAccountEntity.setSendPayerIpAddressToGateway(sendPayerIpAddressToGateway);
+        gatewayAccountEntity.setSendPayerEmailToGateway(sendPayerEmailAddressToGateway);
         gatewayAccountEntity.setProviderSwitchEnabled(providerSwitchEnabled);
         gatewayAccountEntity.setBlockPrepaidCards(blockPrepaidCards);
         gatewayAccountEntity.setDisabled(disabled);

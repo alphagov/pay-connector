@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.xml.sax.SAXException;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -16,9 +17,11 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayEncryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayPaymentInfo;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
+import java.io.IOException;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseGooglePayOrderRequestBuilder;
@@ -28,7 +31,6 @@ import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayCaptureOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayDeleteTokenOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
-import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayDecryptedPaymentDataFixture.anApplePayDecryptedPaymentData;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixture.anApplePayPaymentInfo;
 import static uk.gov.pay.connector.model.domain.googlepay.GooglePayPaymentInfoFixture.aGooglePayPaymentInfo;
@@ -513,6 +515,49 @@ class WorldpayOrderRequestBuilderTest {
 
         assertXMLEqual(TestTemplateResourceLoader.load(testTemplatePath), actualRequest.getPayload());
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+    }
+    
+    @ParameterizedTest
+    @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
+            3ds_enabled, send_payer_ip_address_to_gateway, send_payer_email_to_gateway, email_address, template_path
+            true, true, true, citizen@example.org, templates/worldpay/valid-authorise-worldpay-request-including-3ds-with-email-and-ip.xml
+            true, false, true, test@email.invalid, templates/worldpay/valid-authorise-worldpay-request-including-3ds-with-email.xml
+            true, true, false, citizen@example.org, templates/worldpay/valid-authorise-worldpay-request-including-3ds-with-ip-address.xml
+            true, false, false, citizen@example.org, templates/worldpay/valid-authorise-worldpay-request-including-3ds.xml
+            false, true, true, null, templates/worldpay/valid-authorise-worldpay-request-excluding-3ds.xml
+            """)
+    void testVariationsOfSendPayerEmailAndSendPayerIPAddress(boolean is3dsEnabled, boolean sendIPAddress, boolean sendEmail, String emailAddress, String testTemplatePath) throws IOException, SAXException {
+        
+        Address minAddress = new Address("123 My Street", "This road", "SW8URR", "London", null, "GB");
+
+        AuthCardDetails authCardDetails = getValidTestCard(minAddress);
+
+        var builder = aWorldpayAuthoriseOrderRequestBuilder()
+                .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
+                .with3dsRequired(is3dsEnabled)
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withRequestExemption(DO_NOT_SEND_EXEMPTION_REQUEST);
+                
+                builder
+                .withTransactionId("transaction-id")
+                .withMerchantCode("MERCHANTCODE")
+                .withDescription("This is a description")
+                .withAmount("500")
+                .withAuthorisationDetails(authCardDetails);
+        
+        if (sendEmail) {
+            builder.withPayerEmail(emailAddress);
+        }
+        
+        if (sendIPAddress) {
+            builder.withPayerIpAddress("127.0.0.1");
+        }
+
+        GatewayOrder actualRequest =  builder.build();
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+
+        assertXMLEqual(TestTemplateResourceLoader.load(testTemplatePath), actualRequest.getPayload());
     }
 
     private AuthCardDetails getValidTestCard(Address address) {
