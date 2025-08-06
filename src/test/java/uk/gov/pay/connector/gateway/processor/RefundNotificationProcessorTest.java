@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -103,13 +104,13 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-    void shouldNotInvokeSendEmailNotifications_WhenRefundStatusWasSetAsRefundError() {
+    void shouldInvokeSendEmailNotifications_IfRefunded_WhenRefundStatusWasSetAsRefundError() {
         refundEntity.setStatus(RefundStatus.REFUND_ERROR);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
 
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
-        verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
+        verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
@@ -126,7 +127,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-    void shouldLogIllegalStateTransition_IfRefundedWhenRefundStatusWasSetAsRefundError() {
+    void shouldNotLogIllegalStateTransition_IfRefundedWhenRefundStatusWasSetAsRefundError() {
         refundEntity.setStatus(RefundStatus.REFUND_ERROR);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
@@ -136,7 +137,7 @@ import static org.mockito.Mockito.when;
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessageForSplunkAlert = "Notification received for refund would cause an illegal state transition";
-        assertThat(logStatement.get(0).getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
+        assertThat(logStatement.get(0).getFormattedMessage(), not(containsString(expectedLogMessageForSplunkAlert)));
     }
 
     @Test

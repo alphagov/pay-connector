@@ -107,6 +107,6 @@ public class RefundNotificationProcessor {
     }
 
     private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
-            return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
+            return (oldStatus == REFUNDED && newStatus == REFUND_ERROR);
     }
 }
