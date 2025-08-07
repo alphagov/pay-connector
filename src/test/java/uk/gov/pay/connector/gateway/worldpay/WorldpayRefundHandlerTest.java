@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -182,6 +184,67 @@ class WorldpayRefundHandlerTest {
         GatewayOrder gatewayOrder = gatewayOrderCaptor.getValue();
         assertThat(gatewayOrder.getPayload(), is(expectedRefundRequest));
         assertThat(gatewayOrder.getOrderRequestType(), is(OrderRequestType.REFUND));
+    }
+
+    @Test
+    void test_refund_returns_pending_on_connection_timeout() throws Exception {
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "worldpay-password",
+                                CREDENTIALS_PASSWORD, "password")
+                ))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withTransactionId("transaction-id")
+                .withGatewayAccountCredentialsEntity(credentialsEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+        when(refundGatewayClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenThrow(new GatewayException.GatewayConnectionTimeoutException("Gateway connection timeout error"));
+
+        GatewayRefundResponse response = worldpayRefundHandler.refund(
+                RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity, credentialsEntity));
+
+        assertThat(response.state(), is(PENDING));
+    }
+
+    @Test
+    void test_refund_returns_error_on_gateway_exception() throws Exception {
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity().build();
+        GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
+                                CREDENTIALS_USERNAME, "worldpay-password",
+                                CREDENTIALS_PASSWORD, "password")
+                ))
+                .withGatewayAccountEntity(gatewayAccountEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .withState(ACTIVE)
+                .build();
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withTransactionId("transaction-id")
+                .withGatewayAccountCredentialsEntity(credentialsEntity)
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+        gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntity));
+
+        when(refundGatewayClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenThrow(new GatewayException.GatewayErrorException("Unexpected HTTP status code 400 from gateway"));
+
+        GatewayRefundResponse response = worldpayRefundHandler.refund(
+                RefundGatewayRequest.valueOf(Charge.from(chargeEntity), refundEntity, gatewayAccountEntity, credentialsEntity));
+
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getError().isPresent(), is(true));
     }
 
     private GatewayAccountEntity aServiceAccount() {
