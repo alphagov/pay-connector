@@ -44,11 +44,11 @@
             </paymentDetails>
             <#if requires3ds || payerEmail?? || savePaymentInstrumentToAgreement>
             <shopper>
-                <#if savePaymentInstrumentToAgreement>
-                <authenticatedShopperID>${agreementId?xml}</authenticatedShopperID>
-                </#if>
                 <#if payerEmail??>
                 <shopperEmailAddress>${payerEmail?xml}</shopperEmailAddress>
+                </#if>
+                <#if savePaymentInstrumentToAgreement>
+                <authenticatedShopperID>${agreementId?xml}</authenticatedShopperID>
                 </#if>
                 <#if requires3ds>
                 <browser>
