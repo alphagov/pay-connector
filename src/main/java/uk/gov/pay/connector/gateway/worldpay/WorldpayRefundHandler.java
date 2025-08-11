@@ -18,11 +18,13 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayRefundOrderRequestBuilder;
+import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class WorldpayRefundHandler implements RefundHandler {
 
@@ -49,7 +51,7 @@ public class WorldpayRefundHandler implements RefundHandler {
             return GatewayRefundResponse.fromBaseRefundResponse(unmarshallResponse(response, WorldpayRefundResponse.class), PENDING);
         } catch (GatewayConnectionTimeoutException e) {
             logger.info("Despite a Worldpay Gateway connection timeout error, we are optimistically setting refund {} as SUBMITTED.",
-                    request.getRefundExternalId());
+                    request.getRefundExternalId(), kv(REFUND_EXTERNAL_ID, request.getRefundExternalId()));
             BaseRefundResponse refundResponse = BaseRefundResponse.fromReference(request.getRefundExternalId(), WORLDPAY);
             return GatewayRefundResponse.fromBaseRefundResponse(refundResponse, PENDING);
         } catch (GatewayException e) {
