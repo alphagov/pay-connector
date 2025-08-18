@@ -6,7 +6,6 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,27 +28,23 @@ public class ApiValidators {
                 return email == null || email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
             }
         },
-
         AMOUNT(AMOUNT_KEY) {
             @Override
             boolean validate(String amount) {
-                int amountValue;
                 try {
-                    amountValue  = Integer.parseInt(amount);
+                    int amountValue = Integer.parseInt(amount);
+                    return amountValue >= MIN_AMOUNT && amountValue <= MAX_AMOUNT;
                 } catch (NumberFormatException e) {
                     return false;
                 }
-                return MIN_AMOUNT <= amountValue && MAX_AMOUNT >= amountValue;
             }
         },
-        
         DELAYED_CAPTURE(DELAYED_CAPTURE_KEY) {
             @Override
             boolean validate(String delayedCapture) {
-                return Boolean.TRUE.toString().equals(delayedCapture) || Boolean.FALSE.toString().equals(delayedCapture);
+                return "true".equalsIgnoreCase(delayedCapture) || "false".equalsIgnoreCase(delayedCapture);
             }
         },
-
         LANGUAGE(LANGUAGE_KEY) {
             @Override
             boolean validate(String iso639AlphaTwoCode) {
@@ -58,29 +53,19 @@ public class ApiValidators {
             }
         };
 
-        private final String type;
+        private final String key;
 
-        ChargeParamValidator(String type) {
-            this.type = type;
-        }
-
-        @Override
-        public String toString() {
-            return type;
+        ChargeParamValidator(String key) {
+            this.key = key;
         }
 
         abstract boolean validate(String candidate);
 
-        private static final Map<String, ChargeParamValidator> stringToEnum = new HashMap<>();
+        private static final Map<String, ChargeParamValidator> VALIDATORS =
+                Arrays.stream(values()).collect(Collectors.toMap(v -> v.key, v -> v));
 
-        static {
-            for (ChargeParamValidator val : values()) {
-                stringToEnum.put(val.toString(), val);
-            }
-        }
-
-        public static Optional<ChargeParamValidator> fromString(String type) {
-            return Optional.ofNullable(stringToEnum.get(type));
+        public static Optional<ChargeParamValidator> fromString(String key) {
+            return Optional.ofNullable(VALIDATORS.get(key));
         }
     }
 
@@ -98,11 +83,9 @@ public class ApiValidators {
     }
 
     public static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
-        boolean invalid = ChargeParamValidator.fromString(chargePatchRequest.getPath())
-                .map(validator -> !validator.validate(chargePatchRequest.getValue()))
+        return ChargeParamValidator.fromString(chargePatchRequest.getPath())
+                .map(validator -> validator.validate(chargePatchRequest.getValue()))
                 .orElse(false);
-
-        return !invalid;
     }
 
     public static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {
