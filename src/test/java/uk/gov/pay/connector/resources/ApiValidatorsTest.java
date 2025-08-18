@@ -23,6 +23,7 @@ import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.LANGUAGE_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
 import static uk.gov.pay.connector.common.validator.ApiValidators.parseZonedDateTime;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargeParams;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargePatchParams;
@@ -90,6 +91,43 @@ class ApiValidatorsTest {
         Optional<List<String>> result = validateChargeParams(inputData);
 
         assertThat(result, is(Optional.of(Collections.singletonList(EMAIL_KEY))));
+    }
+
+
+    @Test
+    void validateChargeParams_shouldReturnTrue_whenEmailIsNull() {
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(EMAIL_KEY, null);
+        Optional<List<String>> result = validateChargeParams(inputData);
+        assertThat(result, is(Optional.empty()));
+    }
+
+    @Test
+    void validateChargeParams_shouldReturnTrue_whenEmailIsValidLength() {
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(EMAIL_KEY, "user@example.com");
+        Optional<List<String>> result = validateChargeParams(inputData);
+        assertThat(result, is(Optional.empty()));
+    }
+
+    @Test
+    void validateChargeParams_shouldReturnFalse_whenEmailIsTooLong() {
+        String longEmail = "a".repeat(MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY) + 1);
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(EMAIL_KEY, longEmail);
+        Optional<List<String>> result = validateChargeParams(inputData);
+        assertThat(result, is(Optional.of(Collections.singletonList(EMAIL_KEY))));
+    }
+
+    @Test
+    void validateChargeParams_shouldRejectEmailAndAmount_whenBothInvalid() {
+        Map<String, String> inputData = new HashMap<>();
+        inputData.put(EMAIL_KEY, randomAlphanumeric(255));
+        inputData.put(AMOUNT_KEY, String.valueOf(MAX_AMOUNT + 1));
+
+        Optional<List<String>> result = validateChargeParams(inputData);
+
+        assertThat(result.get().containsAll(Arrays.asList(AMOUNT_KEY, EMAIL_KEY)), is(true));
     }
 
     @Test
@@ -202,14 +240,4 @@ class ApiValidatorsTest {
         assertThat(result, is(Optional.of(Collections.singletonList("delayed_capture"))));
     }
     
-    @Test
-    void validateChargeParams_shouldRejectEmailAndAmount_whenBothInvalid() {
-        Map<String, String> inputData = new HashMap<>();
-        inputData.put(EMAIL_KEY, randomAlphanumeric(255));
-        inputData.put(AMOUNT_KEY, String.valueOf(MAX_AMOUNT + 1));
-
-        Optional<List<String>> result = validateChargeParams(inputData);
-
-        assertThat(result.get().containsAll(Arrays.asList(AMOUNT_KEY, EMAIL_KEY)), is(true));
-    }
 }

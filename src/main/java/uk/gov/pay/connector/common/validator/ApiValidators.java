@@ -26,7 +26,7 @@ public class ApiValidators {
         EMAIL(EMAIL_KEY) {
             @Override
             boolean validate(String email) {
-                return email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
+                return email == null || email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
             }
         },
 
