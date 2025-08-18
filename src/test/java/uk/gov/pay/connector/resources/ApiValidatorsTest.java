@@ -127,7 +127,8 @@ class ApiValidatorsTest {
 
         Optional<List<String>> result = validateChargeParams(inputData);
 
-        assertThat(result.get().containsAll(Arrays.asList(AMOUNT_KEY, EMAIL_KEY)), is(true));
+        List<String> invalidKeys = result.orElseThrow();
+        assertThat(invalidKeys.containsAll(Arrays.asList(AMOUNT_KEY, EMAIL_KEY)), is(true));
     }
 
     @Test
