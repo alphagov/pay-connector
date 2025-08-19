@@ -7,7 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <pay-java-commons.version>1.0.20250818082133</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20250818155451</pay-java-commons.version>
         <surefire.version>3.5.3</surefire.version>
         <jjwt.version>0.12.7</jjwt.version>
         <pact.version>4.6.17</pact.version>
@@ -204,7 +204,7 @@
         </dependency>
         <dependency>
             <groupId>uk.gov.service.payments</groupId>
-            <artifactId>queue-dropwizard-4-aws-sdk-v2</artifactId>
+            <artifactId>queue-dropwizard-4</artifactId>
             <version>${pay-java-commons.version}</version>
         </dependency>
         <dependency>
