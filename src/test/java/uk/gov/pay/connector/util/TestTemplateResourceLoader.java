@@ -53,6 +53,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-3ds-without-ip-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-3ds-with-ip-address.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_EMAIL = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-3ds-with-email.xml";
+    public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS_AND_EMAIL = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-3ds-with-ip-address-and-email.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-3ds-flex-non-js.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-exemption-optimised.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_CORPORATE_EXEMPTION_AUTHORISATION = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml";
