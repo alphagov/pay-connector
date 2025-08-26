@@ -10,7 +10,7 @@
                 <TOKEN-SSL tokenScope="shopper">
                     <paymentTokenID>test-payment-token-123456</paymentTokenID>
                 </TOKEN-SSL>
-                <storedCredentials usage="USED" merchantInitiatedReason="UNSCHEDULED">
+                <storedCredentials usage="USED" merchantInitiatedReason="RECURRING">
                         <schemeTransactionIdentifier>test-transaction-id-999999</schemeTransactionIdentifier>
                 </storedCredentials>
             </paymentDetails>
