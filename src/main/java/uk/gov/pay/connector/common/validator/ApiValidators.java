@@ -25,7 +25,7 @@ public class ApiValidators {
         EMAIL(EMAIL_KEY) {
             @Override
             boolean validate(String email) {
-                return email == null || email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
+                return email != null && email.length() <= MAXIMUM_FIELDS_SIZE.get(EMAIL_KEY);
             }
         },
         AMOUNT(AMOUNT_KEY) {
@@ -83,9 +83,10 @@ public class ApiValidators {
     }
 
     public static boolean validateChargePatchParams(PatchRequestBuilder.PatchRequest chargePatchRequest) {
-        return ChargeParamValidator.fromString(chargePatchRequest.getPath())
-                .map(validator -> validator.validate(chargePatchRequest.getValue()))
+        boolean invalid = ChargeParamValidator.fromString(chargePatchRequest.getPath())
+                .map(validator -> !validator.validate(chargePatchRequest.getValue()))
                 .orElse(false);
+        return !invalid;
     }
 
     public static Optional<ZonedDateTime> parseZonedDateTime(String zdt) {

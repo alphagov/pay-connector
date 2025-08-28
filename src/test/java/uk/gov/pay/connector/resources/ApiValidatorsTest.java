@@ -95,11 +95,11 @@ class ApiValidatorsTest {
 
 
     @Test
-    void validateChargeParams_shouldReturnTrue_whenEmailIsNull() {
+    void validateChargeParams_shouldReturnFalse_whenEmailIsNull() {
         Map<String, String> inputData = new HashMap<>();
         inputData.put(EMAIL_KEY, null);
         Optional<List<String>> result = validateChargeParams(inputData);
-        assertThat(result, is(Optional.empty()));
+        assertThat(result, is(Optional.of(Collections.singletonList(EMAIL_KEY))));
     }
 
     @Test
