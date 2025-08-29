@@ -29,6 +29,7 @@ import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
@@ -48,6 +49,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -104,6 +106,11 @@ public class ChargesApiResourceIT {
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
+
+        await().atMost(30, TimeUnit.SECONDS).until(() ->
+                testBaseExtension.getCharge(chargeId)
+                        .extract().path("settlement_summary.capture_submit_time") != null
+        );
 
         testBaseExtension.getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
