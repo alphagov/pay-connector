@@ -106,12 +106,7 @@ public class ChargesApiResourceIT {
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
-
-        await().atMost(30, TimeUnit.SECONDS).until(() ->
-                testBaseExtension.getCharge(chargeId)
-                        .extract().path("settlement_summary.capture_submit_time") != null
-        );
-
+        
         testBaseExtension.getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
