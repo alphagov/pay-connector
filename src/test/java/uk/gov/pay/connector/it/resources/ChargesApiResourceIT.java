@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
@@ -77,6 +79,7 @@ import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_LOCAL_DATE_IN_UTC;
 
 public class ChargesApiResourceIT {
+    private static final Logger log = LoggerFactory.getLogger(ChargesApiResourceIT.class);
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
@@ -105,6 +108,8 @@ public class ChargesApiResourceIT {
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
         System.out.println(testBaseExtension.getCharge(chargeId).extract().asPrettyString());
+        log.info(testBaseExtension.getCharge(chargeId).extract().asPrettyString());
+        log.info("testbasees");
         System.out.println("testbasees");
         testBaseExtension.getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
