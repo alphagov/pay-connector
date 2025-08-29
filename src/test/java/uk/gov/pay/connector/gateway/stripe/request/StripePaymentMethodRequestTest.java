@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.stripe.request;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeAuthTokens;
@@ -19,8 +21,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -178,5 +182,30 @@ class StripePaymentMethodRequestTest {
         when(stripeGatewayConfig.getUrl()).thenReturn(stripeBaseUrl);
 
         assertThat(stripePaymentMethodRequest.getUrl(), is(URI.create(stripeBaseUrl + "/v1/payment_methods")));
+    }
+
+    @ParameterizedTest
+    @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
+        isSendPayerEmailToGateway, email
+        true, example
+        true, null
+        false, example
+        false, null
+    """)
+    void shouldHaveCorrectlySetEmailAddress(String isSendPayerEmail, String email) {
+        boolean isSendPayerEmailToGateway = Boolean.parseBoolean(isSendPayerEmail);
+        gatewayAccount.setSendPayerEmailToGateway(isSendPayerEmailToGateway);
+        
+        when(charge.getEmail()).thenReturn(email);
+        
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
+
+        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+        if (isSendPayerEmailToGateway && isNotBlank(email)) {
+            assertThat(payload, containsString("billing_details%5Bemail%5D=" + email));
+        } else {
+            assertThat(payload, not(containsString("billing_details%5Bemail%5D=" + email)));
+        }
     }
 }
