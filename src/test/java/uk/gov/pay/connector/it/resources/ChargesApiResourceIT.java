@@ -106,8 +106,8 @@ public class ChargesApiResourceIT {
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
 
         testBaseExtension.getCharge(chargeId)
-                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
+                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
                 .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
     }
 
