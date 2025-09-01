@@ -108,8 +108,8 @@ public class ChargesApiResourceIT {
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
         System.out.println(testBaseExtension.getCharge(chargeId).extract().asPrettyString());
-        log.info(testBaseExtension.getCharge(chargeId).extract().asPrettyString());
-        log.info("testbasees");
+        log.error(testBaseExtension.getCharge(chargeId).extract().asPrettyString());
+        log.error("testbasees");
         System.out.println("testbasees");
         testBaseExtension.getCharge(chargeId)
                 .body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
