@@ -1016,7 +1016,6 @@ public class ChargesApiResourceIT {
         log.error(testBaseExtension.getCharge(chargeId).extract().asPrettyString());
         log.error("testbasees");
         System.out.println("testbasees");
-        Assertions.fail();
         int maxAttempts = 30;
         ValidatableResponse t = null;
         for (int i = 0; i < maxAttempts; i++) {
