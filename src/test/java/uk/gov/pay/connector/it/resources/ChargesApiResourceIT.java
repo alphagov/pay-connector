@@ -1006,7 +1006,7 @@ public class ChargesApiResourceIT {
         String chargeId = testBaseExtension.authoriseNewCharge();
 
         app.givenSetup()
-                .post(testBaseExtension.captureChargeUrlFor(chargeId))
+                .post(ITestBaseExtension.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
 
