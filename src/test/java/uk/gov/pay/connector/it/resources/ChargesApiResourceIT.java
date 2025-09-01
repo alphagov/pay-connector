@@ -1031,6 +1031,9 @@ public class ChargesApiResourceIT {
         if (t == null || t.extract().path("settlement_summary.capture_submit_time") == null) {
             Assertions.fail("settlement_summary.capture_submit_time was not set after polling");
         }
+        t.body("settlement_summary.capture_submit_time", isWithin(20, SECONDS))
+                .body("settlement_summary.capture_submit_time", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
+                .body("settlement_summary.captured_date", equalTo(expectedDayOfCapture));
     }
     
     private void createCharge(String externalChargeId, long chargeId) {
