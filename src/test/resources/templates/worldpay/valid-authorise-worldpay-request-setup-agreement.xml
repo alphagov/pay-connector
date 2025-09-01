@@ -24,7 +24,7 @@
                         </address>
                     </cardAddress>
                 </CARD-SSL>
-                <storedCredentials usage="FIRST"/>
+                <storedCredentials usage="FIRST" customerInitiatedReason="RECURRING"/>
             </paymentDetails>
             <shopper>
                 <authenticatedShopperID>test-agreement-123456</authenticatedShopperID>
