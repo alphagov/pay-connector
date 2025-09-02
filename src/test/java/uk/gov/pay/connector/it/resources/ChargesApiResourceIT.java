@@ -92,7 +92,6 @@ public class ChargesApiResourceIT {
     private final String accountId = testBaseExtension.getAccountId();
     
     @Test
-    @Disabled
     void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
         Instant startOfTest = Instant.now();
         String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
