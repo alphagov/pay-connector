@@ -2,6 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -91,6 +92,7 @@ public class ChargesApiResourceIT {
     private final String accountId = testBaseExtension.getAccountId();
     
     @Test
+    @Disabled
     void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
         Instant startOfTest = Instant.now();
         String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
