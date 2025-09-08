@@ -605,6 +605,44 @@ class WorldpayAuthoriseHandlerTest {
     }
 
     @Test
+    void should_not_send_email_and_IP_address_to_worldpay_when_a_MIT_recurring_payment_is_initiated() throws Exception {
+        when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        PaymentInstrumentEntity paymentInstrument = new PaymentInstrumentEntity.PaymentInstrumentEntityBuilder()
+                .withRecurringAuthToken(Map.of(
+                        WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY, "test-payment-token-123456",
+                        WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "test-transaction-id-999999"
+                ))
+                .build();
+        
+        ChargeEntity chargeEntity = chargeEntityFixture
+                .withExternalId("test-chargeId-789")
+                .withAmount(500L)
+                .withDescription("This is the description")
+                .withReference(ServicePaymentReference.of("service-payment-reference"))
+                .withTransactionId("test-transaction-id-123")
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withPaymentInstrument(paymentInstrument)
+                .withEmail("test@email.com")
+                .withAgreementEntity(anAgreementEntity().withExternalId("test-agreement-123456").build())
+                .build();
+
+        gatewayAccountEntity.setSendPayerEmailToGateway(true);
+        gatewayAccountEntity.setSendPayerIpAddressToGateway(true);
+
+        when(authoriseClient.postRequestFor(any(URI.class), eq(WORLDPAY), eq("test"), any(GatewayOrder.class), anyMap()))
+                .thenReturn(authorisationSuccessResponse);
+
+        worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity));
+
+        ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
+        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        
+
+        assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER),
+                gatewayOrderArgumentCaptor.getValue().getPayload());
+    }
+
+    @Test
     void should_send_reference_to_worldpay_instead_of_description_when_send_reference_to_gateway_is_enabled() throws Exception {
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
