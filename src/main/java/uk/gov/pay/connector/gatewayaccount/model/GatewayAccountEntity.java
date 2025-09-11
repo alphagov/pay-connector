@@ -557,4 +557,8 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
                 .filter(credential -> credential.getPaymentProvider().equals(WORLDPAY.getName()))
                 .anyMatch(credential -> pendingCredentialStates.contains(credential.getState()));
     }
+    
+    public boolean isLiveOrEnabled() {
+        return this.isLive() || !this.isDisabled();
+    }
 }

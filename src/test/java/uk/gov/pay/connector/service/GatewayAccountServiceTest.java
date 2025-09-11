@@ -11,6 +11,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
@@ -49,6 +50,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED;
 import static uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator.FIELD_DISABLED_REASON;
@@ -138,6 +140,42 @@ class GatewayAccountServiceTest {
 
         assertTrue(result.isPresent());
         assertThat(result.get(), is(gatewayAccount));
+    }
+
+    @Test
+    void shouldGetGatewayAccountByServiceIdAndAccountTypeAndFilterDisabledTestAccounts() {
+        String serviceId = "service123abc";
+        GatewayAccountEntity disabledLiveGatewayAccount = new GatewayAccountEntity(LIVE); // we still want to return a disabled live account
+        GatewayAccountEntity testGatewayAccount = new GatewayAccountEntity(TEST);
+        GatewayAccountEntity disabledTestGatewayAccount = new GatewayAccountEntity(TEST);
+
+        disabledTestGatewayAccount.setDisabled(true);
+        disabledLiveGatewayAccount.setDisabled(true);
+        
+        var gatewayAccountEntities =  List.of(disabledLiveGatewayAccount, testGatewayAccount, disabledTestGatewayAccount);
+        
+        gatewayAccountEntities.forEach(gatewayAccountEntity -> {
+            var credentials = new GatewayAccountCredentialsEntity(gatewayAccountEntity, PaymentGatewayName.STRIPE.getName(), Map.of(), ACTIVE);
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentials));
+        });
+        
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(serviceId, TEST))
+                .thenReturn(List.of(testGatewayAccount, disabledTestGatewayAccount));
+
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(serviceId, LIVE))
+                .thenReturn(List.of(disabledLiveGatewayAccount));
+
+        Optional<GatewayAccountEntity> testResult =
+                gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST);
+
+        Optional<GatewayAccountEntity> liveResult =
+                gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, LIVE);
+
+        assertTrue(testResult.isPresent());
+        assertThat(testResult.get(), is(testGatewayAccount));
+
+        assertTrue(liveResult.isPresent());
+        assertThat(liveResult.get(), is(disabledLiveGatewayAccount));
     }
 
     @Test
