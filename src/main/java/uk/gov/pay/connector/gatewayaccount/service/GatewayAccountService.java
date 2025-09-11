@@ -193,11 +193,13 @@ public class GatewayAccountService {
     public Optional<GatewayAccountEntity> getGatewayAccountByExternal(String gatewayAccountExternalId) {
         return gatewayAccountDao.findByExternalId(gatewayAccountExternalId);
     }
-
+    
     public Optional<GatewayAccountEntity> getGatewayAccountByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
-                .stream().filter(gwe -> !gwe.isDisabled()).toList();
-
+                .stream()
+                .filter(GatewayAccountEntity::isLiveOrEnabled) // filter out any test accounts that are disabled
+                .toList();
+         
         if (accountType.equals(LIVE) && gatewayAccounts.size() > 1) {
             throw MultipleLiveGatewayAccountsException.multipleLiveGatewayAccounts(serviceId);
         }
