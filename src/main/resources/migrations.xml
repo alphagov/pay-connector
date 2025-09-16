@@ -2084,4 +2084,12 @@
         </sql>
     </changeSet>
 
+    <changeSet id="add agreement_payment_type to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="agreement_payment_type" type="varchar(30)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
