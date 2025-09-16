@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
+import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,11 +20,11 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.it.dao.DatabaseFixtures.TestCharge;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import jakarta.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -1111,6 +1112,22 @@ public class ChargeDaoIT {
     }
 
     @Test
+    void shouldReturnRecurringValueForAgreementPaymentTypeWhenRecurringPersisted() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
+                .build();
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> optionalCharge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(optionalCharge.isPresent(), is(true));
+        assertThat(optionalCharge.get().getAgreementPaymentType().getName(), is("recurring"));
+    }
+
+    @Test
     void shouldReturnNullValueForRequires3dsWhenNoValuePersisted() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)
@@ -1123,6 +1140,21 @@ public class ChargeDaoIT {
 
         assertThat(optionalCharge.isPresent(), is(true));
         assertThat(optionalCharge.get().getRequires3ds(), is(nullValue()));
+    }
+
+    @Test
+    void shouldReturnNullValueForAgreementPaymentTypeWhenNoValuePersisted() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .build();
+
+        chargeDao.persist(chargeEntity);
+
+        Optional<ChargeEntity> optionalCharge = chargeDao.findById(chargeEntity.getId());
+
+        assertThat(optionalCharge.isPresent(), is(true));
+        assertThat(optionalCharge.get().getAgreementPaymentType(), is(nullValue()));
     }
 
     private void insertTestAccount() {

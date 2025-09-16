@@ -1,5 +1,25 @@
 package uk.gov.pay.connector.charge.model.domain;
 
+import jakarta.persistence.Access;
+import jakarta.persistence.AccessType;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,32 +42,13 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.SupportedLanguageJpaConverter;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import jakarta.persistence.Access;
-import jakarta.persistence.AccessType;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
-import jakarta.validation.Valid;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -209,6 +210,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "requires_3ds")
     private Boolean requires3ds;
+    
+    @Column(name = "agreement_payment_type")
+    @Enumerated(EnumType.STRING)
+    private AgreementPaymentType agreementPaymentType;
 
     public ChargeEntity() {
         //for jpa
@@ -238,7 +243,8 @@ public class ChargeEntity extends AbstractVersionedEntity {
             boolean savePaymentInstrumentToAgreement,
             AuthorisationMode authorisationMode,
             Boolean canRetry,
-            Boolean requires3ds
+            Boolean requires3ds, 
+            AgreementPaymentType  agreementPaymentType
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -264,6 +270,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.authorisationMode = authorisationMode;
         this.canRetry = canRetry;
         this.requires3ds = requires3ds;
+        this.agreementPaymentType = agreementPaymentType;
     }
 
     public Long getId() {
@@ -609,6 +616,14 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return updatedDate;
     }
 
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
+    }
+
+    public void setAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        this.agreementPaymentType = agreementPaymentType;
+    }
+
     public static final class WebChargeEntityBuilder {
         private Long amount;
         private String returnUrl;
@@ -745,6 +760,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     savePaymentInstrumentToAgreement,
                     authorisationMode,
                     null,
+                    null,
                     null);
         }
     }
@@ -860,6 +876,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     agreementEntity,
                     savePaymentInstrumentToAgreement,
                     AuthorisationMode.EXTERNAL,
+                    null,
                     null,
                     null);
         }
