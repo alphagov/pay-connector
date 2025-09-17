@@ -7,6 +7,7 @@ import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.common.model.domain.PaymentGatewayStateTransitions;
 import uk.gov.pay.connector.events.eventdetails.EventDetails;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -47,6 +48,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private String paymentInstrumentId;
     private boolean savePaymentInstrumentToAgreement;
     private final AuthorisationMode authorisationMode;
+    private final AgreementPaymentType agreementPaymentType;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -74,6 +76,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.paymentInstrumentId = builder.paymentInstrumentId;
         this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
         this.authorisationMode = builder.authorisationMode;
+        this.agreementPaymentType = builder.agreementPaymentType;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -92,7 +95,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withSource(charge.getSource())
                 .withMoto(charge.isMoto())
                 .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
-                .withAuthorisationMode(charge.getAuthorisationMode());
+                .withAuthorisationMode(charge.getAuthorisationMode())
+                .withAgreementPaymentType(charge.getAgreementPaymentType());
 
         charge.getAgreement().ifPresent(agreementEntity -> builder.withAgreementId(agreementEntity.getExternalId()));
         charge.getPaymentInstrument().map(PaymentInstrumentEntity::getExternalId).ifPresent(builder::withPaymentInstrumentId);
@@ -243,6 +247,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return authorisationMode;
     }
 
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -306,6 +314,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private String paymentInstrumentId;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode;
+        private AgreementPaymentType agreementPaymentType;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -433,6 +442,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
 
         public Builder withAuthorisationMode(AuthorisationMode authorisationMode) {
             this.authorisationMode = authorisationMode;
+            return this;
+        }
+
+        public Builder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+            this.agreementPaymentType = agreementPaymentType;
             return this;
         }
     }
