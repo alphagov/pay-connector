@@ -63,6 +63,7 @@ import uk.gov.pay.connector.gateway.stripe.json.StripePayout;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
@@ -98,6 +99,7 @@ public class QueueMessageContractTest {
                 .withSource(CARD_API)
                 .withCardDetails(anAuthCardDetails().getCardDetailsEntity())
                 .withAgreementEntity(anAgreementEntity().build())
+                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
                 .build();
 
         PaymentCreated paymentCreatedEvent = new PaymentCreated(

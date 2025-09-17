@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.pact.ChargeEventEntityFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -128,9 +129,10 @@ class PaymentCreatedTest {
     }
 
     @Test
-    void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreement() throws JsonProcessingException {
+    void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreementAndAgreementPaymentType() throws JsonProcessingException {
         chargeEntityFixture
                 .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
                 .withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build());
 
         var paymentCreatedEvent = preparePaymentCreatedEvent();
@@ -139,14 +141,16 @@ class PaymentCreatedTest {
         assertDoesNotContainCardDetails(paymentCreatedEvent);
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id", equalTo(AGREEMENT_EXTERNAL_ID)));
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.save_payment_instrument_to_agreement", equalTo(true)));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_payment_type", equalTo("recurring")));
     }
 
     @Test
-    void serializesPayloadWithAgreementIdAndPaymentInstrumentId() throws JsonProcessingException {
+    void serializesPayloadWithAgreementIdAndPaymentInstrumentIdAndAgreementPaymentType() throws JsonProcessingException {
         PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-26T11:22:25Z")).build();
 
         chargeEntityFixture
                 .withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build())
+                .withAgreementPaymentType(AgreementPaymentType.UNSCHEDULED)
                 .withPaymentInstrument(paymentInstrumentEntity);
 
         var paymentCreatedEvent = preparePaymentCreatedEvent();
@@ -155,6 +159,7 @@ class PaymentCreatedTest {
         assertDoesNotContainCardDetails(paymentCreatedEvent);
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id", equalTo(AGREEMENT_EXTERNAL_ID)));
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.payment_instrument_id", equalTo(paymentInstrumentEntity.getExternalId())));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_payment_type", equalTo("unscheduled")));
     }
 
     @ParameterizedTest
