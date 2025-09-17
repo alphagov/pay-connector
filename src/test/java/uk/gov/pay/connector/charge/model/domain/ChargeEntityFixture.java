@@ -20,6 +20,7 @@ import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntit
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
@@ -77,6 +78,7 @@ public class ChargeEntityFixture {
     private Instant updatedDate;
     private Boolean requires3ds;
     private ChargeResponse.AuthorisationSummary authorisationSummary;
+    private AgreementPaymentType agreementPaymentType;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -164,7 +166,8 @@ public class ChargeEntityFixture {
                 savePaymentInstrumentToAgreement,
                 authorisationMode,
                 canRetry,
-                requires3ds);
+                requires3ds,
+                agreementPaymentType);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
@@ -394,6 +397,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withRequires3ds(Boolean requires3ds) {
         this.requires3ds = requires3ds;
+        return this;
+    }
+
+    public ChargeEntityFixture withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        this.agreementPaymentType = agreementPaymentType;
         return this;
     }
 }
