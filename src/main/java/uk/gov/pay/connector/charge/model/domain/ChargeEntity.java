@@ -642,6 +642,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private AgreementEntity agreementEntity;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode;
+        private AgreementPaymentType agreementPaymentType;
 
         private WebChargeEntityBuilder() {
         }
@@ -735,6 +736,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
             this.authorisationMode = authorisationMode;
             return this;
         }
+        
+        public WebChargeEntityBuilder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+            this.agreementPaymentType = agreementPaymentType;
+            return this;
+        }
 
         public ChargeEntity build() {
             return new ChargeEntity(
@@ -761,7 +767,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     authorisationMode,
                     null,
                     null,
-                    null);
+                    agreementPaymentType);
         }
     }
 
