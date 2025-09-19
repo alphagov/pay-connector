@@ -18,6 +18,7 @@ import uk.gov.pay.connector.queue.tasks.TaskQueue;
 import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Arrays;
@@ -79,6 +80,7 @@ public class ChargesApiResourceCreateAgreementIT {
     private static final String JSON_TOO_SHORT_AGREEMENT_ID_VALUE = "12345678901234567890";
     private static final String JSON_TOO_LONG_AGREEMENT_ID_VALUE = "123456789012345678901234567890";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
+    private static final String JSON_AGREEMENT_PAYMENT_TYPE = "agreement_payment_type";
     
     @BeforeEach
     void setUpLogger() {
@@ -102,7 +104,8 @@ public class ChargesApiResourceCreateAgreementIT {
                 JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
                 JSON_RETURN_URL_KEY, RETURN_URL,
                 JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
-                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true"
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true",
+                JSON_AGREEMENT_PAYMENT_TYPE, AgreementPaymentType.INSTALMENT.getName()
         ));
 
         String chargeId = testBaseExtension.getConnectorRestApiClient()
@@ -114,6 +117,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_CREATED.getStatus());
+        testBaseExtension.assertAgreementPaymentTypeIs(chargeId, AgreementPaymentType.INSTALMENT);
     }
 
     @Test
@@ -150,6 +154,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+        testBaseExtension.assertAgreementPaymentTypeIs(chargeId, AgreementPaymentType.RECURRING);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
@@ -300,6 +305,33 @@ public class ChargesApiResourceCreateAgreementIT {
                 .statusCode(SC_CONFLICT)
                 .contentType(JSON)
                 .body("message", contains("The Idempotency-Key has already been used to create a payment"));
+    }
+
+    @Test
+    void shouldReturn400_whenCreatePaymentWithAgreementIdAndSavePaymentInstrumentToAgreement_withInvalidAgreementPaymentTypeValue() {
+        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(String.valueOf(testBaseExtension.getAccountId()))
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .build();
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true",
+                JSON_AGREEMENT_PAYMENT_TYPE, "fantasy-value"
+        ));
+
+        testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody)
+                .statusCode(SC_BAD_REQUEST)
+                .contentType(JSON)
+                .body("message", contains("Invalid attribute value: agreement_payment_type. Must be one of instalment, recurring, unscheduled"))
+                .body("error_identifier", is(ErrorIdentifier.INVALID_ATTRIBUTE_VALUE.toString()));
     }
 
     @Test
