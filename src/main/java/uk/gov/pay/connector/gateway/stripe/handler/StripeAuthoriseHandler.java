@@ -30,6 +30,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.service.payments.commons.api.exception.ValidationException;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.List;
 
@@ -72,6 +73,9 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
         try {
+            if (request.getAuthorisationMode() == AuthorisationMode.MOTO_API) {
+                logger.info("Calling Stripe for authorisation of moto_api, createPaymentMethod");
+            }
             StripePaymentMethod stripePaymentMethodResponse = createPaymentMethod(request);
 
             StripePaymentIntent stripePaymentIntent;
@@ -174,7 +178,10 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
 
     private StripePaymentMethod createPaymentMethod(CardAuthorisationGatewayRequest request)
             throws GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException, GatewayException.GatewayErrorException {
-        String jsonResponse = client.postRequestFor(StripePaymentMethodRequest.of(request, stripeGatewayConfig)).getEntity();
+        if (request.getAuthorisationMode() == AuthorisationMode.MOTO_API) {
+            logger.info("Posting for authorisation of moto_api, createPaymentMethod");
+        }
+        String jsonResponse = client.postRequestFor(StripePaymentMethodRequest.of(request, stripeGatewayConfig), (request.getAuthorisationMode() == AuthorisationMode.MOTO_API)).getEntity();
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentMethod.class);
     }
 
