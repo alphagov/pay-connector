@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Stopwatch;
 import io.prometheus.client.Histogram;
 import io.prometheus.client.Counter;
-import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
@@ -19,8 +18,6 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.client.WebTarget;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
-
 import java.net.HttpCookie;
 import java.net.SocketTimeoutException;
 import java.net.URI;
@@ -60,87 +57,51 @@ public class GatewayClient {
         this.metricRegistry = metricRegistry;
     }
 
-    public Response postRequestFor(URI url, PaymentGatewayName gatewayName, String gatewayAccountType, GatewayOrder request, Map<String, String> headers)
-            throws GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
+    public GatewayClient.Response postRequestFor(URI url, PaymentGatewayName gatewayName, String gatewayAccountType, GatewayOrder request, Map<String, String> headers)
+            throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         return postRequestFor(url, gatewayName, gatewayAccountType, request, emptyList(), headers);
     }
 
-    public Response postRequestFor(GatewayClientPostRequest request)
-            throws GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
+    public GatewayClient.Response postRequestFor(GatewayClientPostRequest request)
+            throws GatewayException.GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
         return postRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(), request.getGatewayOrder(), emptyList(), request.getHeaders());
     }
 
-    public Response postRequestFor(GatewayClientPostRequest request, boolean moto_api)
-            throws GenericGatewayException, GatewayErrorException, GatewayConnectionTimeoutException {
-        return postRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(), request.getGatewayOrder(), emptyList(), request.getHeaders(), moto_api);
-    }
-
-    public Response postRequestFor(URI url,
+    public GatewayClient.Response postRequestFor(URI url,
                                                  PaymentGatewayName gatewayName,
                                                  String gatewayAccountType,
                                                  GatewayOrder request,
                                                  List<HttpCookie> cookies,
                                                  Map<String, String> headers)
-            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
-
-        return  postRequestFor(url, gatewayName, gatewayAccountType, request, cookies, headers, false);
-    }
-
-    public Response postRequestFor(URI url,
-                                                 PaymentGatewayName gatewayName,
-                                                 String gatewayAccountType,
-                                                 GatewayOrder request,
-                                                 List<HttpCookie> cookies,
-                                                 Map<String, String> headers,
-                                                 boolean moto_api)
-            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException{
+            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
 
         String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName.getName(), gatewayAccountType, request.getOrderRequestType());
-        Supplier<jakarta.ws.rs.core.Response> requestCallable = null;
-        if (moto_api) {
-            LOGGER.info("Posting for authorisation of moto_api, createPaymentMethod");
-            try {
-                requestCallable = () -> {
-                    LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
 
-                    Builder requestBuilder = client.target(url).request();
-                    headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
-                    cookies.forEach(cookie -> requestBuilder.header("Cookie", cookie.getName() + "=" + cookie.getValue()));
-                    return requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
-                };
-                LOGGER.info("Posted for authorisation of moto_api, createPaymentMethod");
-            } catch (Exception ex) {
-                LOGGER.info("Caught exception while posting for authorisation of moto_api {}", ex.getMessage());
-                throw ex;
-            }
-        } else {
-            requestCallable = () -> {
-                LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
+        Supplier<jakarta.ws.rs.core.Response> requestCallable = () -> {
+            LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
 
-                Builder requestBuilder = client.target(url).request();
-                headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
-                cookies.forEach(cookie -> requestBuilder.header("Cookie", cookie.getName() + "=" + cookie.getValue()));
-                return requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
-            };
-        }
-       
-        return executeRequest(url, gatewayName, gatewayAccountType, request.getOrderRequestType(), metricsPrefix, requestCallable, moto_api);
+            Builder requestBuilder = client.target(url).request();
+            headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
+            cookies.forEach(cookie -> requestBuilder.header("Cookie", cookie.getName() + "=" + cookie.getValue()));
+            return requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
+        };
+        return executeRequest(url, gatewayName, gatewayAccountType, request.getOrderRequestType(), metricsPrefix, requestCallable);
     }
 
-    public Response getRequestFor(GatewayClientGetRequest request)
-            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+    public GatewayClient.Response getRequestFor(GatewayClientGetRequest request)
+            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
         return getRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(),
                 request.getOrderRequestType(), emptyList(), request.getHeaders(), request.getQueryParams());
     }
 
-    public Response getRequestFor(URI url,
+    public GatewayClient.Response getRequestFor(URI url,
                                                 PaymentGatewayName gatewayName,
                                                 String gatewayAccountType,
                                                 OrderRequestType orderRequestType,
                                                 List<HttpCookie> cookies,
                                                 Map<String, String> headers,
                                                 Map<String, String> queryParams)
-            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
 
         String metricsPrefix = format("gateway-operations.get.%s.%s.%s", gatewayName.getName(), gatewayAccountType, orderRequestType);
 
@@ -157,17 +118,16 @@ public class GatewayClient {
             return requestBuilder.get();
         };
 
-        return executeRequest(url, gatewayName, gatewayAccountType, orderRequestType, metricsPrefix, requestCallable, false);
+        return executeRequest(url, gatewayName, gatewayAccountType, orderRequestType, metricsPrefix, requestCallable);
     }
 
-    private Response executeRequest(URI url,
+    private GatewayClient.Response executeRequest(URI url,
                                                   PaymentGatewayName gatewayName,
                                                   String gatewayAccountType,
                                                   OrderRequestType orderRequestType,
                                                   String metricsPrefix,
-                                                  Supplier<jakarta.ws.rs.core.Response> requestCallable,
-                                                  boolean moto_api)
-            throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
+                                                  Supplier<jakarta.ws.rs.core.Response> requestCallable)
+            throws GatewayException.GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
         jakarta.ws.rs.core.Response response = null;
 
         Stopwatch responseTimeStopwatch = Stopwatch.createStarted();
@@ -178,14 +138,8 @@ public class GatewayClient {
         ).startTimer();
 
         try {
-            if (moto_api) {
-                LOGGER.info("requestCallable.get()");
-            }
             response = requestCallable.get();
             int statusCode = response.getStatus();
-            if (moto_api) {
-                LOGGER.info("statusCode: {}", statusCode);
-            }
             Response gatewayResponse = new Response(response);
             if (familyOf(statusCode) == SUCCESSFUL) {
                 return gatewayResponse;
@@ -218,7 +172,7 @@ public class GatewayClient {
             incrementFailureCounter(metricRegistry, metricsPrefix);
             incrementPrometheusFailureCounter(gatewayName, gatewayAccountType, orderRequestType);
             LOGGER.error(format("Exception for gateway url=%s", url), e);
-            throw new GenericGatewayException(e.getMessage());
+            throw new GatewayException.GenericGatewayException(e.getMessage());
         } finally {
             responseTimeStopwatch.stop();
             metricRegistry.histogram(metricsPrefix + ".response_time").update(responseTimeStopwatch.elapsed(TimeUnit.MILLISECONDS));
