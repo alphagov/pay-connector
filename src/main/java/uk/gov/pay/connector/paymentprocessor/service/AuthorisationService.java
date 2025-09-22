@@ -67,6 +67,8 @@ public class AuthorisationService {
             case IN_PROGRESS:
                 throw new AuthorisationExecutorTimedOutException("Timeout while waiting for authorisation to complete");
             default:
+                logger.info("Exception occurred while doing authorisation left: {}", executeResult.getLeft());
+                logger.info("Exception occurred while doing authorisation right: {}", executeResult.getRight());
                 throw new GenericGatewayRuntimeException("Exception occurred while doing authorisation");
         }
     }

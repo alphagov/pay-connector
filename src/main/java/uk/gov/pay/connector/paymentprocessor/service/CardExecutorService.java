@@ -117,6 +117,7 @@ public class CardExecutorService {
             } else if (exception.getCause() instanceof UnsupportedOperationException) {
                 throw (UnsupportedOperationException) exception.getCause();
             }
+            logger.info("Failed executing card operation", exception);
             return Pair.of(FAILED, null);
         } catch (TimeoutException timeoutException) {
             return Pair.of(IN_PROGRESS, null);

@@ -98,7 +98,7 @@ public class GatewayClient {
         String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName.getName(), gatewayAccountType, request.getOrderRequestType());
         Supplier<jakarta.ws.rs.core.Response> requestCallable = null;
         if (moto_api) {
-            LOGGER.info("Posting for authorisation of moto_api, createPaymentMethod");
+            LOGGER.info("Posting for authorisation of moto_api, postRequestFor");
             try {
                 requestCallable = () -> {
                     LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
@@ -108,7 +108,7 @@ public class GatewayClient {
                     cookies.forEach(cookie -> requestBuilder.header("Cookie", cookie.getName() + "=" + cookie.getValue()));
                     return requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
                 };
-                LOGGER.info("Posted for authorisation of moto_api, createPaymentMethod");
+                LOGGER.info("Posted for authorisation of moto_api, postRequestFor");
             } catch (Exception ex) {
                 LOGGER.info("Caught exception while posting for authorisation of moto_api {}", ex.getMessage());
                 throw ex;

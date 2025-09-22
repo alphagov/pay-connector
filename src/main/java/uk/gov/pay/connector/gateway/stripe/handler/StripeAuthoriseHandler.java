@@ -182,6 +182,7 @@ public class StripeAuthoriseHandler implements AuthoriseHandler {
             logger.info("Posting for authorisation of moto_api, createPaymentMethod");
         }
         String jsonResponse = client.postRequestFor(StripePaymentMethodRequest.of(request, stripeGatewayConfig), (request.getAuthorisationMode() == AuthorisationMode.MOTO_API)).getEntity();
+        logger.info("Posted for authorisation of moto_api, createPaymentMethod");
         return jsonObjectMapper.getObject(jsonResponse, StripePaymentMethod.class);
     }
 
