@@ -8,19 +8,20 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataDeserialiser;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.SupportedLanguageJsonDeserializer;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 import static java.util.function.Predicate.not;
@@ -107,6 +108,11 @@ public class ChargeCreateRequest {
     @Valid
     @Schema(description = "Credential external ID to which charge to be associated. Used when verifying a live payment during PSP switch")
     private String credentialId;
+    
+    @JsonProperty("agreement_payment_type")
+    @Valid
+    @Schema(description = "Reason for taking a recurring payment")
+    private AgreementPaymentType agreementPaymentType;
 
     public ChargeCreateRequest() {
         // For Jackson
@@ -126,7 +132,8 @@ public class ChargeCreateRequest {
                         String agreementId,
                         boolean savePaymentInstrumentToAgreement,
                         AuthorisationMode authorisationMode,
-                        String credentialId) {
+                        String credentialId,
+                        AgreementPaymentType agreementPaymentType) {
         this.amount = amount;
         this.description = description;
         this.reference = reference;
@@ -142,6 +149,7 @@ public class ChargeCreateRequest {
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
         this.credentialId = credentialId;
+        this.agreementPaymentType = agreementPaymentType;
     }
 
     @JsonIgnore
@@ -214,6 +222,11 @@ public class ChargeCreateRequest {
         return Optional.ofNullable(authorisationMode).orElse(AuthorisationMode.WEB);
     }
 
+    @JsonIgnore
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
+    }
+
     public String getCredentialId() {
         return credentialId;
     }
@@ -237,6 +250,7 @@ public class ChargeCreateRequest {
                 (getPrefilledCardHolderDetails().isPresent() && prefilledCardHolderDetails.getCardHolderName().isPresent() ? ", prefilled_cardholder_name=true" : "") +
                 (getEmail().isPresent() ? ", prefilled_email=true" : "") +
                 (getExternalMetadata().isPresent() ? ", metadata=true" : "") +
+                (getAgreementPaymentType() != null ? ", agreement_payment_type=" + agreementPaymentType : "") +
                 '}';
     }
 }

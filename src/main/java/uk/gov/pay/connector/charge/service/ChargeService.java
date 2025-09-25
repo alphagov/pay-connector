@@ -97,6 +97,7 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -352,6 +353,9 @@ public class ChargeService {
                     agreementDao.findByExternalIdAndGatewayAccountId(chargeRequest.getAgreementId(), gatewayAccount.getId())
                             .orElseThrow(() -> new ChargeException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.", AGREEMENT_NOT_FOUND, HttpStatus.SC_BAD_REQUEST)));
 
+            var agreementPaymentType = chargeRequest.getAgreementPaymentType() != null ? chargeRequest.getAgreementPaymentType() : 
+                     chargeRequest.getSavePaymentInstrumentToAgreement() || chargeRequest.getAuthorisationMode() == AGREEMENT ? AgreementPaymentType.RECURRING : null;
+            
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
                     .withDescription(chargeRequest.getDescription())
@@ -368,7 +372,8 @@ public class ChargeService {
                     .withServiceId(gatewayAccount.getServiceId())
                     .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
                     .withAgreementEntity(agreementEntity.orElse(null))
-                    .withAuthorisationMode(chargeRequest.getAuthorisationMode());
+                    .withAuthorisationMode(chargeRequest.getAuthorisationMode())
+                    .withAgreementPaymentType(agreementPaymentType);
 
             chargeRequest.getReturnUrl().ifPresent(chargeEntityBuilder::withReturnUrl);
             ChargeEntity chargeEntity = chargeEntityBuilder.build();

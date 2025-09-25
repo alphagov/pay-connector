@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.model;
 
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -21,6 +22,7 @@ public final class ChargeCreateRequestBuilder {
     private boolean savePaymentInstrumentToAgreement;
     private AuthorisationMode authorisationMode;
     private String credentialExternalId;
+    private AgreementPaymentType agreementPaymentType;
 
     private ChargeCreateRequestBuilder() {
     }
@@ -104,9 +106,14 @@ public final class ChargeCreateRequestBuilder {
         return this;
     }
 
+    public ChargeCreateRequestBuilder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        this.agreementPaymentType = agreementPaymentType;
+        return this;
+    }
+
     public ChargeCreateRequest build() {
         return new ChargeCreateRequest(amount, description, reference, returnUrl, email, delayedCapture, language,
                 prefilledCardHolderDetails, externalMetadata, source, moto, agreementId, savePaymentInstrumentToAgreement, authorisationMode,
-                credentialExternalId);
+                credentialExternalId, agreementPaymentType);
     }
 }
