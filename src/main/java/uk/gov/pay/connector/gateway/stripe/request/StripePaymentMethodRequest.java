@@ -56,9 +56,15 @@ public class StripePaymentMethodRequest extends StripePostRequest {
             northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
                     .map(NorthAmericaRegion::getFullName)
                     .ifPresent(stateOrProvince -> localParams.put("billing_details[address[state]]", stateOrProvince));
-            localParams.put("billing_details[address[city]]", address.getCity());
-            localParams.put("billing_details[address[country]]", address.getCountry());
-            localParams.put("billing_details[address[postal_code]]", address.getPostcode());
+            if (StringUtils.isNotBlank(address.getCity())) {
+                localParams.put("billing_details[address[city]]", address.getCity());
+            }
+            if (StringUtils.isNotBlank(address.getCountry())) {
+                localParams.put("billing_details[address[country]]", address.getCountry());
+            }
+            if (StringUtils.isNotBlank(address.getPostcode())) {
+                localParams.put("billing_details[address[postal_code]]", address.getPostcode());
+            }
         });
 
         return Map.copyOf(localParams);
