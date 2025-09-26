@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -162,6 +163,26 @@ class StripePaymentMethodRequestTest {
         assertThat(payload, containsString("billing_details%5Bname%5D=" + cardHolder));
         assertThat(payload, containsString("card%5Bexp_year%5D=" + endYear));
         assertThat(payload, containsString("card%5Bexp_month%5D=" + endMonth));
+    }
+    
+    @Test
+    void shouldCreateWithPartiallyFieldCardHolderDetail() {
+        Address address = new Address();
+        address.setLine1(line1);
+        address.setLine2(line2);
+        address.setCity(null);
+        address.setCountry(null);
+        address.setPostcode(null);
+        authCardDetails.setAddress(address);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+
+        stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
+
+        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+        assertThat(payload, containsString("card%5Bcvc%5D=" + cvc));
+        assertThat(payload, not(containsString("city")));
+        assertThat(payload, not(containsString("country")));
+        assertThat(payload, not(containsString("postal_code")));
     }
 
     @Test
