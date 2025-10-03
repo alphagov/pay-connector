@@ -2,6 +2,8 @@ package uk.gov.pay.connector.charge.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,8 +19,6 @@ import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +79,7 @@ public class ChargesApiResourceValidationTest {
                 "reference", randomAlphabetic(256),
                 "description", randomAlphabetic(256),
                 "email", randomAlphabetic(256),
-                "return_url", "http://service.local/success-page/");
+                "return_url", "https://service.example/success-page/");
         
         try (Response response = chargesApiResource
                 .target(url)
@@ -102,7 +102,7 @@ public class ChargesApiResourceValidationTest {
                 "reference", "Test reference",
                 "description", "Test description",
                 "email", "test@example.com",
-                "return_url", "http://service.local/success-page/");
+                "return_url", "https://service.example/success-page/");
         
         try (Response response = chargesApiResource
                 .target("/v1/api/accounts/invalidAccountId/charges")
@@ -125,7 +125,7 @@ public class ChargesApiResourceValidationTest {
                 "amount", 6234L,
                 "reference", "Test reference",
                 "description", "Test description",
-                "return_url", "http://service.local/success-page/",
+                "return_url", "https://service.example/success-page/",
                 "language", "not a supported language");
         
         try (Response response = chargesApiResource
@@ -156,7 +156,7 @@ public class ChargesApiResourceValidationTest {
                 "amount", 6234L,
                 "reference", "Test reference",
                 "description", "Test description",
-                "return_url", "http://service.local/success-page/",
+                "return_url", "https://service.example/success-page/",
                 "metadata", metadata
         );
         
@@ -187,7 +187,7 @@ public class ChargesApiResourceValidationTest {
                 "amount", 6234L,
                 "reference", "Test reference",
                 "description", "Test description",
-                "return_url", "http://service.local/success-page/",
+                "return_url", "https://service.example/success-page/",
                 "metadata", "metadata cannot be a string"
         );
         
@@ -211,7 +211,7 @@ public class ChargesApiResourceValidationTest {
                 "amount", 6234L,
                 "reference", "Test reference",
                 "description", "Test description",
-                "return_url", "http://service.local/success-page/",
+                "return_url", "https://service.example/success-page/",
                 "metadata", new Object[1]
         );
         
@@ -235,7 +235,7 @@ public class ChargesApiResourceValidationTest {
                 "amount", 100,
                 "reference", "ref",
                 "description", "desc",
-                "return_url", "http://service.url/success-page/",
+                "return_url", "https://service.example/success-page/",
                 "authorisation_mode", "foo"
         );
 
@@ -248,6 +248,57 @@ public class ChargesApiResourceValidationTest {
         }
     }
 
+    @DisplayName("Should return 400 if authorisation_payment_type is invalid for initial payment")
+    @ParameterizedTest
+    @ValueSource( strings = {
+            "/v1/api/accounts/1234/charges",
+            "/v1/api/service/my-service-id/account/test/charges"
+    })
+    void invalidAuthorisationPaymentTypeForInitialPayment_shouldReturn400(String url) {
+        var payload = Map.of(
+                "amount", 100,
+                "reference", "ref",
+                "description", "desc",
+                "return_url", "https://service.example/success-page/",
+                "save_payment_instrument_to_agreement", true,
+                "agreement_id", "agreement_id",
+                "agreement_payment_type", "fantasy-value"
+        );
+
+        try (Response response = chargesApiResource
+                .target(url)
+                .request()
+                .post(Entity.json(payload))) {
+
+            assertGenericErrorResponse(response, 400, "Cannot deserialize value of type `uk.gov.service.payments.commons.model.AgreementPaymentType`");
+        }
+    }
+
+    @DisplayName("Should return 400 if authorisation_payment_type is invalid for subsequent payment")
+    @ParameterizedTest
+    @ValueSource( strings = {
+            "/v1/api/accounts/1234/charges",
+            "/v1/api/service/my-service-id/account/test/charges"
+    })
+    void invalidAuthorisationPaymentTypeForSubsequentPayment_shouldReturn400(String url) {
+        var payload = Map.of(
+                "amount", 100,
+                "reference", "ref",
+                "description", "desc",
+                "return_url", "https://service.example/success-page/",
+                "agreement_id", "agreement_id",
+                "agreement_payment_type", "fantasy-value"
+        );
+
+        try (Response response = chargesApiResource
+                .target(url)
+                .request()
+                .post(Entity.json(payload))) {
+
+            assertGenericErrorResponse(response, 400, "Cannot deserialize value of type `uk.gov.service.payments.commons.model.AgreementPaymentType`");
+        }
+    }
+    
     @DisplayName("Should return 422 if idempotency key is above maximum length")
     @ParameterizedTest
     @ValueSource( strings = {
@@ -472,7 +523,7 @@ public class ChargesApiResourceValidationTest {
                 "amount", 6234L,
                 "reference", "Test reference",
                 "description", "Test description",
-                "return_url", "http://service.local/success-page/",
+                "return_url", "https://service.example/success-page/",
                 "prefilled_cardholder_details", Map.of(
                         "cardholder_name", cardholderName,
                         "billing_address", Map.of(
@@ -504,11 +555,7 @@ public class ChargesApiResourceValidationTest {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(response.getStatus(), is(status));
         assertThat(errorResponse.identifier(), is(ErrorIdentifier.GENERIC));
-        var errorIsPresentInMessages = errorResponse
-                .messages()
-                .stream()
-                .anyMatch(message -> message
-                        .contains(errorMessage));
-        assertThat(errorIsPresentInMessages, is(true));
+        assertThat(errorResponse.messages().stream().anyMatch(message -> message.contains(errorMessage)), is(true));
     }
+
 }
