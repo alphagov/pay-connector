@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -128,11 +129,13 @@ class PaymentCreatedTest {
         assertThat(paymentCreatedEvent, hasJsonPath("$.service_id", equalTo("test-service-id")));
     }
 
-    @Test
-    void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreementAndAgreementPaymentType() throws JsonProcessingException {
+    @ParameterizedTest
+    @CsvSource({"INSTALMENT,instalment", "RECURRING,recurring", "UNSCHEDULED,unscheduled"})
+    void serializesPayloadWithAgreementIdAndSavePaymentInstrumentToAgreementAndAgreementPaymentType(
+            AgreementPaymentType agreementPaymentType, String stringifiedAgreementPaymentType) throws JsonProcessingException {
         chargeEntityFixture
                 .withSavePaymentInstrumentToAgreement(true)
-                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
+                .withAgreementPaymentType(agreementPaymentType)
                 .withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build());
 
         var paymentCreatedEvent = preparePaymentCreatedEvent();
@@ -141,16 +144,18 @@ class PaymentCreatedTest {
         assertDoesNotContainCardDetails(paymentCreatedEvent);
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id", equalTo(AGREEMENT_EXTERNAL_ID)));
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.save_payment_instrument_to_agreement", equalTo(true)));
-        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_payment_type", equalTo("recurring")));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_payment_type", equalTo(stringifiedAgreementPaymentType)));
     }
 
-    @Test
-    void serializesPayloadWithAgreementIdAndPaymentInstrumentIdAndAgreementPaymentType() throws JsonProcessingException {
+    @ParameterizedTest
+    @CsvSource({"INSTALMENT,instalment", "RECURRING,recurring", "UNSCHEDULED,unscheduled"})
+    void serializesPayloadWithAgreementIdAndPaymentInstrumentIdAndAgreementPaymentType(
+            AgreementPaymentType agreementPaymentType, String stringifiedAgreementPaymentType) throws JsonProcessingException {
         PaymentInstrumentEntity paymentInstrumentEntity = aPaymentInstrumentEntity(Instant.parse("2022-07-26T11:22:25Z")).build();
 
         chargeEntityFixture
                 .withAgreementEntity(anAgreementEntity().withExternalId(AGREEMENT_EXTERNAL_ID).build())
-                .withAgreementPaymentType(AgreementPaymentType.UNSCHEDULED)
+                .withAgreementPaymentType(agreementPaymentType)
                 .withPaymentInstrument(paymentInstrumentEntity);
 
         var paymentCreatedEvent = preparePaymentCreatedEvent();
@@ -159,7 +164,7 @@ class PaymentCreatedTest {
         assertDoesNotContainCardDetails(paymentCreatedEvent);
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_id", equalTo(AGREEMENT_EXTERNAL_ID)));
         assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.payment_instrument_id", equalTo(paymentInstrumentEntity.getExternalId())));
-        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_payment_type", equalTo("unscheduled")));
+        assertThat(paymentCreatedEvent, hasJsonPath("$.event_details.agreement_payment_type", equalTo(stringifiedAgreementPaymentType)));
     }
 
     @ParameterizedTest

@@ -405,6 +405,7 @@ class ChargeServiceCreateTest {
         assertThat(createdChargeEntity.getWalletType(), is(nullValue()));
         assertThat(createdChargeEntity.isMoto(), is(false));
         assertThat(createdChargeEntity.getAuthorisationMode(), is(AuthorisationMode.WEB));
+        assertThat(createdChargeEntity.getAgreementPaymentType(), is(nullValue()));
 
         verify(mockedChargeEventDao).persistChargeEventOf(eq(createdChargeEntity), isNull());
     }

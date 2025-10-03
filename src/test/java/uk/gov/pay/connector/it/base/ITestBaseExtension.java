@@ -25,6 +25,7 @@ import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RestAssuredClient;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
@@ -40,6 +41,7 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
@@ -263,6 +265,11 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
 
     public void assertApiStateIs(String chargeId, String stateString) {
         getCharge(chargeId).body("state.status", is(stateString));
+    }
+    
+    public void assertAgreementPaymentTypeIs(String chargeId, AgreementPaymentType agreementPaymentType) {
+        var charge = databaseTestHelper.getChargeByExternalId(chargeId);
+        assertThat(charge.get("agreement_payment_type"), is(agreementPaymentType.toString()));
     }
 
     public String authoriseNewCharge() {

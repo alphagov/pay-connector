@@ -3627,6 +3627,13 @@ components:
           type: string
           description: Agreement ID to associate charge with
           example: md1mjge8gb6p4qndfs8mf8gto5
+        agreement_payment_type:
+          type: string
+          description: Reason for taking a recurring payment
+          enum:
+          - instalment
+          - recurring
+          - unscheduled
         amount:
           type: integer
           format: int64
