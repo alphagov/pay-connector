@@ -163,11 +163,11 @@ public class ChargeEntityFixture {
                 moto,
                 serviceId,
                 agreementEntity,
+                agreementPaymentType,
                 savePaymentInstrumentToAgreement,
                 authorisationMode,
                 canRetry,
-                requires3ds,
-                agreementPaymentType);
+                requires3ds);
         chargeEntity.setId(id);
         chargeEntity.setExternalId(externalId);
         chargeEntity.setCorporateSurcharge(corporateSurcharge);
