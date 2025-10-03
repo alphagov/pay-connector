@@ -52,7 +52,8 @@
           "transaction_id": "e8eq11mi2ndmauvb51qsg8hccn",
           "disputed": false,
           "authorisation_mode": "agreement",
-          "agreement_id": "r4ou8b7fb52is55fp4iiav5bon"
+          "agreement_id": "r4ou8b7fb52is55fp4iiav5bon",
+          "agreement_payment_type": "recurring"
         },
         "matchingRules": {
           "body": {
