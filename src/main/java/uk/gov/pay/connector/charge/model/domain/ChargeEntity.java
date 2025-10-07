@@ -189,7 +189,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     @ManyToOne
     @JoinColumn(name = "agreement_external_id", referencedColumnName="external_id", updatable = false, nullable = true)
     private AgreementEntity agreementEntity;
-    
+
+    @Column(name = "agreement_payment_type")
+    @Enumerated(EnumType.STRING)
+    private AgreementPaymentType agreementPaymentType;
+
     @Column(name = "save_payment_instrument_to_agreement")
     private boolean savePaymentInstrumentToAgreement;
 
@@ -210,10 +214,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "requires_3ds")
     private Boolean requires3ds;
-    
-    @Column(name = "agreement_payment_type")
-    @Enumerated(EnumType.STRING)
-    private AgreementPaymentType agreementPaymentType;
 
     public ChargeEntity() {
         //for jpa
@@ -240,11 +240,12 @@ public class ChargeEntity extends AbstractVersionedEntity {
             boolean moto,
             String serviceId,
             AgreementEntity agreementEntity,
+            AgreementPaymentType agreementPaymentType,
             boolean savePaymentInstrumentToAgreement,
             AuthorisationMode authorisationMode,
             Boolean canRetry,
-            Boolean requires3ds, 
-            AgreementPaymentType  agreementPaymentType
+            Boolean requires3ds
+   
     ) {
         this.amount = amount;
         this.status = status.getValue();
@@ -266,11 +267,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
         this.moto = moto;
         this.serviceId = serviceId;
         this.agreementEntity = agreementEntity;
+        this.agreementPaymentType = agreementPaymentType;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
         this.authorisationMode = authorisationMode;
         this.canRetry = canRetry;
         this.requires3ds = requires3ds;
-        this.agreementPaymentType = agreementPaymentType;
     }
 
     public Long getId() {
@@ -579,7 +580,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public Optional<AgreementEntity> getAgreement() {
         return Optional.ofNullable(agreementEntity);
     }
-    
+
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
+    }
+
     public boolean isSavePaymentInstrumentToAgreement() {
         return savePaymentInstrumentToAgreement;
     }
@@ -616,14 +621,6 @@ public class ChargeEntity extends AbstractVersionedEntity {
         return updatedDate;
     }
 
-    public AgreementPaymentType getAgreementPaymentType() {
-        return agreementPaymentType;
-    }
-
-    public void setAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
-        this.agreementPaymentType = agreementPaymentType;
-    }
-
     public static final class WebChargeEntityBuilder {
         private Long amount;
         private String returnUrl;
@@ -642,6 +639,7 @@ public class ChargeEntity extends AbstractVersionedEntity {
         private AgreementEntity agreementEntity;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode;
+        private AgreementPaymentType agreementPaymentType;
 
         private WebChargeEntityBuilder() {
         }
@@ -735,6 +733,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
             this.authorisationMode = authorisationMode;
             return this;
         }
+        
+        public WebChargeEntityBuilder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+            this.agreementPaymentType = agreementPaymentType;
+            return this;
+        }
 
         public ChargeEntity build() {
             return new ChargeEntity(
@@ -757,9 +760,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     moto,
                     serviceId,
                     agreementEntity,
+                    agreementPaymentType,
                     savePaymentInstrumentToAgreement,
                     authorisationMode,
-                    null,
                     null,
                     null);
         }
@@ -874,9 +877,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
                     false,
                     serviceId,
                     agreementEntity,
+                    null,
                     savePaymentInstrumentToAgreement,
                     AuthorisationMode.EXTERNAL,
-                    null,
                     null,
                     null);
         }

@@ -3,6 +3,10 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
+import jakarta.persistence.RollbackException;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,14 +101,11 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import jakarta.inject.Inject;
-import jakarta.persistence.RollbackException;
-import jakarta.ws.rs.core.UriBuilder;
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -118,11 +119,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.String.format;
 import static jakarta.ws.rs.HttpMethod.GET;
 import static jakarta.ws.rs.HttpMethod.POST;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
@@ -157,7 +158,6 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.GENERIC;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.MOTO_NOT_ALLOWED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_AGENT_INITIATED_MOTO;
-import static uk.gov.service.payments.commons.model.Source.CARD_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHONE;
 import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
@@ -347,11 +347,16 @@ public class ChargeService {
                     getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
 
             checkIfAmountBelowMinimum(chargeRequest.getSource(), chargeRequest.getAmount(), gatewayAccount, gatewayAccountCredential.getPaymentProvider());
-            
+
             var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
                     agreementDao.findByExternalIdAndGatewayAccountId(chargeRequest.getAgreementId(), gatewayAccount.getId())
                             .orElseThrow(() -> new ChargeException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.", AGREEMENT_NOT_FOUND, HttpStatus.SC_BAD_REQUEST)));
 
+            AgreementPaymentType agreementPaymentType = null;
+            if (chargeRequest.getSavePaymentInstrumentToAgreement() || chargeRequest.getAuthorisationMode() == AGREEMENT) {
+                agreementPaymentType = chargeRequest.getAgreementPaymentType().orElse(AgreementPaymentType.RECURRING);
+            }
+ 
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
                     .withDescription(chargeRequest.getDescription())
@@ -368,7 +373,8 @@ public class ChargeService {
                     .withServiceId(gatewayAccount.getServiceId())
                     .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
                     .withAgreementEntity(agreementEntity.orElse(null))
-                    .withAuthorisationMode(chargeRequest.getAuthorisationMode());
+                    .withAuthorisationMode(chargeRequest.getAuthorisationMode())
+                    .withAgreementPaymentType(agreementPaymentType);
 
             chargeRequest.getReturnUrl().ifPresent(chargeEntityBuilder::withReturnUrl);
             ChargeEntity chargeEntity = chargeEntityBuilder.build();
@@ -1200,7 +1206,7 @@ public class ChargeService {
 
     private void checkAgreementOptions(ChargeCreateRequest chargeCreateRequest, GatewayAccountEntity gatewayAccount) {
         switch (chargeCreateRequest.getAuthorisationMode()) {
-            case AGREEMENT:
+            case AGREEMENT -> {
                 if (!gatewayAccount.isRecurringEnabled()) {
                     throw new RecurringCardPaymentsNotAllowedException(
                             "Attempt to use authorisation mode 'agreement' for gateway account " +
@@ -1217,8 +1223,8 @@ public class ChargeService {
                 } else if (chargeCreateRequest.getPrefilledCardHolderDetails().isPresent()) {
                     throw new UnexpectedAttributeException("prefilled_cardholder_details");
                 }
-                break;
-            case WEB:
+            }
+            case WEB -> {
                 if (chargeCreateRequest.getAgreementId() != null) {
                     if (!chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
                         throw new UnexpectedAttributeException("agreement_id");
@@ -1230,17 +1236,22 @@ public class ChargeService {
                     }
                 } else {
                     if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
-                        throw new ChargeException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified", 
+                        throw new ChargeException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified",
                                 GENERIC, HttpStatus.SC_BAD_REQUEST);
+                    } else if (chargeCreateRequest.getAgreementPaymentType().isPresent()) {
+                        throw new UnexpectedAttributeException("agreement_payment_type");
                     }
                 }
-                break;
-            default:
+            }
+            default -> {
                 if (chargeCreateRequest.getAgreementId() != null) {
                     throw new UnexpectedAttributeException("agreement_id");
                 } else if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
                     throw new IncorrectAuthorisationModeForSavePaymentToAgreementException();
+                } else if (chargeCreateRequest.getAgreementPaymentType().isPresent()) {
+                    throw new UnexpectedAttributeException("agreement_payment_type");
                 }
+            }
         }
     }
 

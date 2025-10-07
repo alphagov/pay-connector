@@ -44,11 +44,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
     private final String addressCountry;
     private final Source source;
     private final boolean moto;
-    private String agreementId;
-    private String paymentInstrumentId;
-    private boolean savePaymentInstrumentToAgreement;
-    private final AuthorisationMode authorisationMode;
+    private final String agreementId;
     private final AgreementPaymentType agreementPaymentType;
+    private final String paymentInstrumentId;
+    private final boolean savePaymentInstrumentToAgreement;
+    private final AuthorisationMode authorisationMode;
 
     public PaymentCreatedEventDetails(Builder builder) {
         this.amount = builder.amount;
@@ -73,10 +73,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
         this.source = builder.source;
         this.moto = builder.moto;
         this.agreementId = builder.agreementId;
+        this.agreementPaymentType = builder.agreementPaymentType;
         this.paymentInstrumentId = builder.paymentInstrumentId;
         this.savePaymentInstrumentToAgreement = builder.savePaymentInstrumentToAgreement;
         this.authorisationMode = builder.authorisationMode;
-        this.agreementPaymentType = builder.agreementPaymentType;
     }
 
     public static PaymentCreatedEventDetails from(ChargeEntity charge) {
@@ -94,9 +94,9 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 .withEmail(charge.getEmail())
                 .withSource(charge.getSource())
                 .withMoto(charge.isMoto())
+                .withAgreementPaymentType(charge.getAgreementPaymentType())
                 .withSavePaymentInstrumentToAgreement(charge.isSavePaymentInstrumentToAgreement())
-                .withAuthorisationMode(charge.getAuthorisationMode())
-                .withAgreementPaymentType(charge.getAgreementPaymentType());
+                .withAuthorisationMode(charge.getAuthorisationMode());
 
         charge.getAgreement().ifPresent(agreementEntity -> builder.withAgreementId(agreementEntity.getExternalId()));
         charge.getPaymentInstrument().map(PaymentInstrumentEntity::getExternalId).ifPresent(builder::withPaymentInstrumentId);
@@ -243,14 +243,14 @@ public class PaymentCreatedEventDetails extends EventDetails {
         return savePaymentInstrumentToAgreement;
     }
 
-    public AuthorisationMode getAuthorisationMode() {
-        return authorisationMode;
-    }
-
     public AgreementPaymentType getAgreementPaymentType() {
         return agreementPaymentType;
     }
 
+    public AuthorisationMode getAuthorisationMode() {
+        return authorisationMode;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -276,6 +276,7 @@ public class PaymentCreatedEventDetails extends EventDetails {
                 Objects.equals(addressCounty, that.addressCounty) &&
                 Objects.equals(addressCountry, that.addressCountry) &&
                 Objects.equals(agreementId, that.agreementId) &&
+                Objects.equals(agreementPaymentType, that.agreementPaymentType) &&
                 Objects.equals(paymentInstrumentId, that.paymentInstrumentId) &&
                 Objects.equals(savePaymentInstrumentToAgreement, that.savePaymentInstrumentToAgreement) &&
                 Objects.equals(source, that.source);
@@ -284,8 +285,8 @@ public class PaymentCreatedEventDetails extends EventDetails {
     @Override
     public int hashCode() {
         return Objects.hash(amount, description, reference, returnUrl, gatewayAccountId, credentialExternalId,
-                paymentProvider, language, delayedCapture, live, externalMetadata, agreementId, paymentInstrumentId,
-                savePaymentInstrumentToAgreement, source);
+                paymentProvider, language, delayedCapture, live, externalMetadata, agreementId, agreementPaymentType,
+                paymentInstrumentId, savePaymentInstrumentToAgreement, source);
     }
 
     public static class Builder {
@@ -311,10 +312,10 @@ public class PaymentCreatedEventDetails extends EventDetails {
         private boolean moto;
         private String credentialExternalId;
         private String agreementId;
+        private AgreementPaymentType agreementPaymentType;
         private String paymentInstrumentId;
         private boolean savePaymentInstrumentToAgreement;
         private AuthorisationMode authorisationMode;
-        private AgreementPaymentType agreementPaymentType;
 
         public PaymentCreatedEventDetails build() {
             return new PaymentCreatedEventDetails(this);
@@ -425,6 +426,11 @@ public class PaymentCreatedEventDetails extends EventDetails {
             return this;
         }
 
+        public Builder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+            this.agreementPaymentType = agreementPaymentType;
+            return this;
+        }
+
         public Builder withPaymentInstrumentId(String paymentInstrumentId) {
             this.paymentInstrumentId = paymentInstrumentId;
             return this;
@@ -445,9 +451,5 @@ public class PaymentCreatedEventDetails extends EventDetails {
             return this;
         }
 
-        public Builder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
-            this.agreementPaymentType = agreementPaymentType;
-            return this;
-        }
     }
 }
