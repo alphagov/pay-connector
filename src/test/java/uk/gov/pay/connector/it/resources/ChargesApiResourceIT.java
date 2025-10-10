@@ -92,8 +92,7 @@ public class ChargesApiResourceIT {
     private final String accountId = testBaseExtension.getAccountId();
     
     @Test
-    @Disabled
-    void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException {
+    void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException, InterruptedException {
         Instant startOfTest = Instant.now();
         String expectedDayOfCapture = ISO_LOCAL_DATE_IN_UTC.format(startOfTest);
 
@@ -103,6 +102,8 @@ public class ChargesApiResourceIT {
                 .post(testBaseExtension.captureChargeUrlFor(chargeId))
                 .then()
                 .statusCode(204);
+
+        Thread.sleep(500);
 
         // Trigger the capture process programmatically which normally would be invoked by the scheduler.
         app.getInstanceFromGuiceContainer(CardCaptureProcess.class).handleCaptureMessages();
