@@ -7,6 +7,7 @@ import uk.gov.pay.connector.charge.model.domain.PersistedCard;
 import uk.gov.pay.connector.charge.model.telephone.PaymentOutcome;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionState;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -51,6 +52,7 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
     protected ExternalMetadata externalMetadata;
     protected boolean moto;
     protected ChargeResponse.Exemption exemption;
+    protected AgreementPaymentType agreementPaymentType;
     private String agreementId;
     private AuthorisationMode authorisationMode;
 
@@ -242,6 +244,11 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
         return thisObject();
     }
 
+    public T withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        this.agreementPaymentType = agreementPaymentType;
+        return thisObject();
+    }
+
     public String getChargeId() {
         return chargeId;
     }
@@ -382,5 +389,9 @@ public abstract class AbstractChargeResponseBuilder<T extends AbstractChargeResp
 
     public ChargeResponse.Exemption getExemption() {
         return exemption;
+    }
+
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
     }
 }

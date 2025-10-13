@@ -4,7 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
+import jakarta.ws.rs.core.Response.Status;
+import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.CoreMatchers;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -13,7 +16,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -24,10 +27,12 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.util.AddAgreementParams;
+import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
-import uk.gov.service.payments.commons.model.Source;
 
-import jakarta.ws.rs.core.Response.Status;
 import java.sql.Timestamp;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -40,12 +45,12 @@ import java.util.Optional;
 
 import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
-import static java.time.temporal.ChronoUnit.MILLIS;
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.MILLIS;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -61,6 +66,8 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
+import static uk.gov.pay.connector.events.model.ResourceType.AGREEMENT;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_CHARGE_KEY;
@@ -73,6 +80,8 @@ import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_RETURN_URL_KE
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.matcher.ResponseContainsLinkMatcher.containsLink;
 import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isWithin;
+import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
+import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
@@ -209,7 +218,8 @@ public class ChargesApiResourceCreateIT {
                     .body("settlement_summary.captured_time", nullValue())
                     .body("refund_summary.amount_submitted", is(0))
                     .body("refund_summary.amount_available", isNumber(AMOUNT))
-                    .body("refund_summary.status", is("pending"));
+                    .body("refund_summary.status", is("pending"))
+                    .body("agreement_payment_type", is(nullValue()));
 
             // Reload the charge token as it should have changed
             String newChargeTokenId = app.getDatabaseTestHelper().getChargeTokenByExternalChargeId(testChargeId);
@@ -302,6 +312,80 @@ public class ChargesApiResourceCreateIT {
                     .statusCode(Status.CREATED.getStatusCode())
                     .body("reference", is(VALID_CARD_NUMBER))
                     .contentType(JSON);
+        }
+
+        @ParameterizedTest
+        @CsvSource(nullValues = "null", textBlock = """
+        instalment,INSTALMENT, 
+        recurring,RECURRING, 
+        unscheduled,UNSCHEDULED
+        null, RECURRING
+        """)
+        void should_create_recurring_charge_with_agreement_type_and_retrieve_details_successfully(String requestAgreementPaymentType, AgreementPaymentType expectedAgreementPaymentType) {
+            app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testGatewayAccountId));
+            Long paymentInstrumentId = RandomUtils.nextLong();
+
+            AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                    .withPaymentInstrumentId(paymentInstrumentId)
+                    .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
+            app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
+
+            String agreementId = "12345678901234567890123456";
+            AddAgreementParams agreementParams = anAddAgreementParams()
+                    .withGatewayAccountId(testGatewayAccountId)
+                    .withExternalAgreementId(agreementId)
+                    .withPaymentInstrumentId(paymentInstrumentId)
+                    .build();
+            app.getDatabaseTestHelper().addAgreement(agreementParams);
+
+            Map<String, Object> payloadMap = new HashMap<>();
+            
+            payloadMap.put("amount", 6234L);
+            payloadMap.put("reference", "Test reference");
+            payloadMap.put("description", "Test description");
+            payloadMap.put("authorisation_mode", "agreement");
+            payloadMap.put("agreement_id", agreementId);
+            payloadMap.put("agreement_payment_type", requestAgreementPaymentType);
+            
+            ValidatableResponse createResponse = app.givenSetup()
+                    .body(toJson(payloadMap))
+                    .post(format("/v1/api/accounts/%s/charges", testGatewayAccountId))
+                    .then()
+                    .statusCode(Status.CREATED.getStatusCode())
+                    .body("charge_id", is(notNullValue()))
+                    .body("amount", isNumber(6234L))
+                    .body("reference", is("Test reference"))
+                    .body("description", is("Test description"))
+                    .body("payment_provider", is("sandbox"))
+                    .body("delayed_capture", is(false))
+                    .body("moto", is(false))
+                    .body("state.status", is(CREATED.toExternal().getStatus()))
+                    .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
+                    .body("authorisation_mode", is("agreement"))
+                    .body("containsKey('card_details')", is(false))
+                    .body("agreement_payment_type", is(expectedAgreementPaymentType.getName()))
+                    .contentType(JSON);
+
+            String testChargeId = createResponse.extract().path("charge_id");
+
+            app.givenSetup()
+                    .get(format("/v1/api/accounts/%s/charges/%s", testGatewayAccountId, testChargeId))
+                    .then()
+                    .statusCode(OK.getStatusCode())
+                    .contentType(JSON)
+                    .body("charge_id", is(notNullValue()))
+                    .body("amount", isNumber(6234L))
+                    .body("reference", is("Test reference"))
+                    .body("description", is("Test description"))
+                    .body("payment_provider", is("sandbox"))
+                    .body("$", not(hasKey("metadata")))
+                    .body("delayed_capture", is(false))
+                    .body("moto", is(false))
+                    .body("state.status", is(EXTERNAL_STARTED.getStatus()))
+                    .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
+                    .body("authorisation_mode", is(AGREEMENT.getLowercase()))
+                    .body("containsKey('card_details')", is(false))
+                    .body("agreement_payment_type", is(expectedAgreementPaymentType.getName()));
         }
         
         @Nested
