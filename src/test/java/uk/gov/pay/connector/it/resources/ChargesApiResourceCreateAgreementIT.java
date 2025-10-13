@@ -9,6 +9,9 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -18,12 +21,12 @@ import uk.gov.pay.connector.queue.tasks.TaskQueue;
 import uk.gov.pay.connector.util.AddAgreementParams;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -79,6 +82,7 @@ public class ChargesApiResourceCreateAgreementIT {
     private static final String JSON_TOO_SHORT_AGREEMENT_ID_VALUE = "12345678901234567890";
     private static final String JSON_TOO_LONG_AGREEMENT_ID_VALUE = "123456789012345678901234567890";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
+    private static final String JSON_AGREEMENT_PAYMENT_TYPE = "agreement_payment_type";
     
     @BeforeEach
     void setUpLogger() {
@@ -88,8 +92,8 @@ public class ChargesApiResourceCreateAgreementIT {
     }
 
     @Test
-    void shouldCreatePaymentWithAgreementIdAndSavePaymentInstrumentToAgreementTrue() {
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
+    void shouldCreatePaymentWithAgreementIdAndSavePaymentInstrumentToAgreementTrueAndNoExplicitAgreementPaymentType() {
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(String.valueOf(testBaseExtension.getAccountId()))
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
@@ -114,11 +118,46 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_CREATED.getStatus());
+        testBaseExtension.assertAgreementPaymentTypeIs(chargeId, AgreementPaymentType.RECURRING);
     }
 
+    @ParameterizedTest
+    @CsvSource({"instalment,INSTALMENT", "recurring,RECURRING", "unscheduled,UNSCHEDULED"})
+    void shouldCreatePaymentWithAgreementIdAndSavePaymentInstrumentToAgreementTrueAndExplicitAgreementPaymentType(
+            String requestAgreementPaymentType, AgreementPaymentType expectedAgreementPaymentType) {
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(String.valueOf(testBaseExtension.getAccountId()))
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .build();
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, "true",
+                JSON_AGREEMENT_PAYMENT_TYPE, requestAgreementPaymentType
+        ));
+
+        String chargeId = testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody)
+                .statusCode(SC_CREATED)
+                .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
+                .contentType(JSON)
+                .extract().path("charge_id");
+
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CREATED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_CREATED.getStatus());
+        testBaseExtension.assertAgreementPaymentTypeIs(chargeId, expectedAgreementPaymentType);
+    }
+
+
     @Test
-    void shouldCreatePaymentWithAgreementIdAndAuthorisationModeAgreement() {
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
+    void shouldCreatePaymentWithAgreementIdAndAuthorisationModeAgreementAndNoExplicitAgreementPaymentType() {
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -150,21 +189,163 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+        testBaseExtension.assertAgreementPaymentTypeIs(chargeId, AgreementPaymentType.RECURRING);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
 
         LoggingEvent log = logEvents.get(0);
-        List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).collect(Collectors.toUnmodifiableList());
+        List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).toList();
         assertThat(log.getMessage(), is("Task added to queue"));
         assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"instalment,INSTALMENT", "recurring,RECURRING", "unscheduled,UNSCHEDULED"})
+    void shouldCreatePaymentWithAgreementIdAndAuthorisationModeAgreementAndExplicitAgreementPaymentType(
+            String requestAgreementPaymentType, AgreementPaymentType expectedAgreementPaymentType) {
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
+        Long paymentInstrumentId = RandomUtils.nextLong();
+
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
+        app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
+
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(testBaseExtension.getAccountId())
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .build();
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT,
+                JSON_AGREEMENT_PAYMENT_TYPE, requestAgreementPaymentType
+        ));
+
+        String chargeId = testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody)
+                .statusCode(SC_CREATED)
+                .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
+                .contentType(JSON)
+                .extract().path("charge_id");
+
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+        testBaseExtension.assertAgreementPaymentTypeIs(chargeId, expectedAgreementPaymentType);
+
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
+
+        LoggingEvent log = logEvents.get(0);
+        List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).toList();
+        assertThat(log.getMessage(), is("Task added to queue"));
+        assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void shouldReturn422WhenAgreementPaymentTypeUsedWithoutSavePaymentInstrumentToAgreement(AgreementPaymentType agreementPaymentType) {
+        String requestAgreementPaymentType = agreementPaymentType.getName();
+
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(String.valueOf(testBaseExtension.getAccountId()))
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .build();
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
+    
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_PAYMENT_TYPE, requestAgreementPaymentType
+        ));
+
+        testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: agreement_payment_type"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+    }
+
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void shouldReturn422WhenAgreementPaymentTypeUsedWithSavePaymentInstrumentToAgreementFalse(AgreementPaymentType agreementPaymentType) {
+        String requestAgreementPaymentType = agreementPaymentType.getName();
+
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(String.valueOf(testBaseExtension.getAccountId()))
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .build();
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY, false,
+                JSON_AGREEMENT_PAYMENT_TYPE, requestAgreementPaymentType
+        ));
+
+        testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: agreement_payment_type"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+    }
+    
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void shouldReturn422WhenAgreementPaymentTypeUsedWithoutAuthorisationModeAgreement(AgreementPaymentType agreementPaymentType) {
+        String requestAgreementPaymentType = agreementPaymentType.getName();
+
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
+        Long paymentInstrumentId = RandomUtils.nextLong();
+    
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
+        app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
+    
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(testBaseExtension.getAccountId())
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .build();
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
+    
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_PAYMENT_TYPE, requestAgreementPaymentType
+        ));
+
+        testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: agreement_payment_type"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
     @Test
     void shouldReturn200_whenChargeAlreadyCreatedForIdempotencyKeyWithMatchingRequestBody_whenRequestBodyHasMinimalValues() {
         String idempotencyKey = "an-idempotency-key";
 
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -209,7 +390,7 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldReturn200_whenChargeAlreadyCreatedForIdempotencyKeyWithMatchingRequestBody_whenRequestBodyHasValuesForAllProperties() {
         String idempotencyKey = "an-idempotency-key";
 
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -259,7 +440,7 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldReturn409_whenChargeAlreadyCreatedForIdempotencyKey_andRequestBodyDoesNotMatch() {
         String idempotencyKey = "an-idempotency-key";
 
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
         Long paymentInstrumentId = RandomUtils.nextLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
@@ -595,7 +776,7 @@ public class ChargesApiResourceCreateAgreementIT {
     }
 
     @Test
-    void shouldReturn400WhenAuthorisationModeMotoApiAndAgreementId() {
+    void shouldReturn422WhenAuthorisationModeMotoApiAndAgreementId() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
@@ -618,6 +799,36 @@ public class ChargesApiResourceCreateAgreementIT {
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_id"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+    }
+
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void shouldReturn422WhenAuthorisationModeMotoApiAndAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        String requestAgreementPaymentType = agreementPaymentType.getName();
+
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .withAllowMoto(true)
+                .withAllowAuthApi(true)
+                .build();
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AUTH_MODE_KEY, "moto_api",
+                JSON_AGREEMENT_PAYMENT_TYPE, requestAgreementPaymentType
+        ));
+
+        testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody, accountId)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: agreement_payment_type"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
@@ -649,7 +860,7 @@ public class ChargesApiResourceCreateAgreementIT {
     }
 
     @Test
-    void shouldReturn400WhenAgreementIdIsProvidedButNotSavePaymentInstrumentToAgreementNorAuthorisationModeAgreement() {
+    void shouldReturn422WhenAgreementIdIsProvidedButNotSavePaymentInstrumentToAgreementNorAuthorisationModeAgreement() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
@@ -673,8 +884,38 @@ public class ChargesApiResourceCreateAgreementIT {
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
 
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void shouldReturn422WhenAgreementIdAndAgreementPaymentTypeIsProvidedButNotSavePaymentInstrumentToAgreementNorAuthorisationModeAgreement(
+            AgreementPaymentType agreementPaymentType) {
+        String requestAgreementPaymentType = agreementPaymentType.getName();
+        
+        String accountId = String.valueOf(RandomUtils.nextInt());
+        AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
+                .withPaymentGateway("worldpay")
+                .withAccountId(accountId)
+                .build();
+        app.getDatabaseTestHelper().addGatewayAccount(gatewayAccountParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_RETURN_URL_KEY, RETURN_URL,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_AGREEMENT_PAYMENT_TYPE, requestAgreementPaymentType
+        ));
+
+        testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody, accountId)
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .contentType(JSON)
+                .body("message", contains("Unexpected attribute: agreement_id"))
+                .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
+    }
+
     @Test
-    void shouldReturn400WhenAgreementIdIsProvidedButSavePaymentInstrumentToAgreementFalse() {
+    void shouldReturn422WhenAgreementIdIsProvidedButSavePaymentInstrumentToAgreementFalse() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
@@ -700,7 +941,7 @@ public class ChargesApiResourceCreateAgreementIT {
     }
 
     @Test
-    void shouldReturn422WhenAgreementIdIdExceed26Characters() {
+    void shouldReturn422WhenAgreementIdExceeds26Characters() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
@@ -730,7 +971,7 @@ public class ChargesApiResourceCreateAgreementIT {
     }
 
     @Test
-    void shouldReturn422WhenAgreementIdIdFewerThan26Characters() {
+    void shouldReturn422WhenAgreementIdFewerThan26Characters() {
         String accountId = String.valueOf(RandomUtils.nextInt());
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")

@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,9 +50,9 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.ws.rs.core.UriInfo;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.Collections;
@@ -197,8 +198,9 @@ class ChargeServiceCreateAgreementTest {
                 mockExternalTransactionStateFactory, objectMapper, null, fixedInstantSource);
     }
 
-    @Test
-    void shouldCreateChargeWithSavePaymentInstrumentToAgreement() {
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void shouldCreateChargeWithSavePaymentInstrumentToAgreement(AgreementPaymentType agreementPaymentType) {
         when(mockAgreementDao.findByExternalIdAndGatewayAccountId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
         when(mockedUriInfo.getBaseUriBuilder()).thenReturn(fromUri(SERVICE_HOST));
         when(mockLinksConfig.getFrontendUrl()).thenReturn(FRONTEND_URL);
@@ -206,7 +208,12 @@ class ChargeServiceCreateAgreementTest {
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
         when(mockPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), eq(Collections.emptyList()))).thenReturn(EXTERNAL_AVAILABLE);
 
-        ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(1000)
+                .withAgreementId(AGREEMENT_ID)
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementPaymentType(agreementPaymentType)
+                .build();
 
         Optional<ChargeResponse> chargeResponse = chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
 
@@ -220,10 +227,76 @@ class ChargeServiceCreateAgreementTest {
         assertThat(createdChargeEntity.getAgreement().isPresent(), is(true));
         assertThat(createdChargeEntity.getAgreement().get(), is(mockAgreementEntity));
         assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(true));
+        assertThat(createdChargeEntity.getAgreementPaymentType(), is(agreementPaymentType));
     }
 
     @Test
-    void shouldCreateChargeWithAuthorisationModeAgreement() {
+    void shouldCreateChargeWithSavePaymentInstrumentToAgreementAndAgreementPaymentTypeDefaultedToRecurringWhenNotSpecified() {
+        when(mockAgreementDao.findByExternalIdAndGatewayAccountId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
+        when(mockedUriInfo.getBaseUriBuilder()).thenReturn(fromUri(SERVICE_HOST));
+        when(mockLinksConfig.getFrontendUrl()).thenReturn(FRONTEND_URL);
+        when(mockProviders.byName(PaymentGatewayName.SANDBOX)).thenReturn(mockPaymentProvider);
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), eq(Collections.emptyList()))).thenReturn(EXTERNAL_AVAILABLE);
+
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(1000)
+                .withAgreementId(AGREEMENT_ID)
+                .withSavePaymentInstrumentToAgreement(true)
+                .build();
+
+        Optional<ChargeResponse> chargeResponse = chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+        assertThat(chargeResponse.isPresent(), is(true));
+        assertThat(chargeResponse.get().getLink("next_url"), is(notNullValue()));
+        assertThat(chargeResponse.get().getLink("next_url_post"), is(notNullValue()));
+
+        verify(mockChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getAgreement().isPresent(), is(true));
+        assertThat(createdChargeEntity.getAgreement().get(), is(mockAgreementEntity));
+        assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(true));
+        assertThat(createdChargeEntity.getAgreementPaymentType(), is(AgreementPaymentType.RECURRING));
+    }
+
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void shouldCreateChargeWithAuthorisationModeAgreement(AgreementPaymentType agreementPaymentType) {
+        when(mockAgreementDao.findByExternalIdAndGatewayAccountId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
+        when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
+        when(mockPaymentInstrumentEntity.getStatus()).thenReturn(PaymentInstrumentStatus.ACTIVE);
+        when(mockedUriInfo.getBaseUriBuilder()).thenReturn(fromUri(SERVICE_HOST));
+        when(mockProviders.byName(PaymentGatewayName.SANDBOX)).thenReturn(mockPaymentProvider);
+        when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
+        when(mockPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), eq(Collections.emptyList()))).thenReturn(EXTERNAL_AVAILABLE);
+
+        ChargeCreateRequest request = requestBuilder
+                .withAmount(1000)
+                .withAgreementId(AGREEMENT_ID)
+                .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withAgreementPaymentType(agreementPaymentType)
+                .build();
+
+        Optional<ChargeResponse> chargeResponse = chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null);
+
+        assertThat(chargeResponse.isPresent(), is(true));
+        assertThat(chargeResponse.get().getDataLinks().stream().anyMatch(link -> "next_url".equals(link.get("rel"))), is(false));
+        assertThat(chargeResponse.get().getDataLinks().stream().anyMatch(link -> "next_url_post".equals(link.get("rel"))), is(false));
+
+        verify(mockChargeDao).persist(chargeEntityArgumentCaptor.capture());
+
+        ChargeEntity createdChargeEntity = chargeEntityArgumentCaptor.getValue();
+        assertThat(createdChargeEntity.getAgreement().isPresent(), is(true));
+        assertThat(createdChargeEntity.getAgreement().get(), is(mockAgreementEntity));
+        assertThat(createdChargeEntity.getAuthorisationMode(), is(AuthorisationMode.AGREEMENT));
+        assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(false));
+        assertThat(createdChargeEntity.getPaymentInstrument(), is(Optional.of(mockPaymentInstrumentEntity)));
+        assertThat(createdChargeEntity.getAgreementPaymentType(), is(agreementPaymentType));
+    }
+
+    @Test
+    void shouldCreateChargeWithAuthorisationModeAgreementAndAgreementPaymentTypeDefaultedToRecurringWhenNotSpecified() {
         when(mockAgreementDao.findByExternalIdAndGatewayAccountId(AGREEMENT_ID, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(mockAgreementEntity));
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
         when(mockPaymentInstrumentEntity.getStatus()).thenReturn(PaymentInstrumentStatus.ACTIVE);
@@ -248,6 +321,7 @@ class ChargeServiceCreateAgreementTest {
         assertThat(createdChargeEntity.getAuthorisationMode(), is(AuthorisationMode.AGREEMENT));
         assertThat(createdChargeEntity.isSavePaymentInstrumentToAgreement(), is(false));
         assertThat(createdChargeEntity.getPaymentInstrument(), is(Optional.of(mockPaymentInstrumentEntity)));
+        assertThat(createdChargeEntity.getAgreementPaymentType(), is(AgreementPaymentType.RECURRING));
     }
 
     @Test
