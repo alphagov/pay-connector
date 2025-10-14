@@ -16,6 +16,7 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.api.json.ExternalMetadataSerialiser;
 import uk.gov.service.payments.commons.api.json.IsoInstantMillisecondSerializer;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -198,6 +199,10 @@ public class ChargeResponse {
     @Schema(example = "{\"exemption\":{ \"requested\": true}}", description = "Indicates if 3ds exemption was requested, and the outcome of the request, if applicable")
     private Exemption exemption;
 
+    @JsonProperty("agreement_payment_type")
+    @Schema(description = "Reason for taking a recurring payment")
+    private AgreementPaymentType agreementPaymentType;
+
     ChargeResponse(AbstractChargeResponseBuilder<?, ? extends ChargeResponse> builder) {
         this.dataLinks = builder.getLinks();
         this.chargeId = builder.getChargeId();
@@ -234,6 +239,7 @@ public class ChargeResponse {
         this.agreementId = builder.getAgreementId();
         this.authorisationMode = builder.getAuthorisationMode();
         this.exemption = builder.getExemption();
+        this.agreementPaymentType = builder.getAgreementPaymentType();
     }
 
     public List<Map<String, Object>> getDataLinks() {
@@ -384,6 +390,10 @@ public class ChargeResponse {
         return exemption;
     }
 
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -421,7 +431,8 @@ public class ChargeResponse {
                 walletType == that.walletType &&
                 Objects.equals(externalMetadata, that.externalMetadata) &&
                 authorisationMode == that.authorisationMode &&
-                Objects.equals(exemption, that.exemption);
+                Objects.equals(exemption, that.exemption) && 
+                Objects.equals(agreementPaymentType, that.agreementPaymentType);
     }
 
     @Override
@@ -430,7 +441,7 @@ public class ChargeResponse {
                 telephoneNumber, description, reference, providerName, processorId, providerId, createdDate,
                 authorisedDate, paymentOutcome, refundSummary, settlementSummary, authCode, auth3dsData, cardDetails,
                 language, delayedCapture, corporateCardSurcharge, fee, totalAmount, netAmount, walletType,
-                externalMetadata, moto, authorisationMode, exemption);
+                externalMetadata, moto, authorisationMode, exemption, agreementPaymentType);
     }
 
     @Override
@@ -461,6 +472,7 @@ public class ChargeResponse {
                 ", agreementId=" + agreementId +
                 ", authorisationMode=" + authorisationMode +
                 ", exemption=" + exemption +
+                ", agreementPaymentType=" + agreementPaymentType +
                 '}';
     }
 

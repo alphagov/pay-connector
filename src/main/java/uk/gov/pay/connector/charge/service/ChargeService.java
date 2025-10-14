@@ -686,7 +686,8 @@ public class ChargeService {
                 .withWalletType(chargeEntity.getWalletType())
                 .withMoto(chargeEntity.isMoto())
                 .withAuthorisationMode(chargeEntity.getAuthorisationMode())
-                .withExemption(buildExemptionResponseObject(chargeEntity.getExemption3ds(), chargeEntity.getExemption3dsRequested()));
+                .withExemption(buildExemptionResponseObject(chargeEntity.getExemption3ds(), chargeEntity.getExemption3dsRequested()))
+                .withAgreementPaymentType(chargeEntity.getAgreementPaymentType());
 
         chargeEntity.getFeeAmount().ifPresent(builderOfResponse::withFee);
         chargeEntity.getAgreement().ifPresent(agreement -> builderOfResponse.withAgreementId(agreement.getExternalId()));

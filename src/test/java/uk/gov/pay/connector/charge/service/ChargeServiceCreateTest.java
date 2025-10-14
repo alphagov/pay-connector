@@ -72,6 +72,7 @@ import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.pay.connector.token.model.domain.TokenEntity;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
@@ -757,6 +758,7 @@ class ChargeServiceCreateTest {
         ChargeCreateRequest chargeCreateRequest = requestBuilder
                 .withAgreementId(AGREEMENT_ID)
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
+                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
                 .withReturnUrl(null)
                 .build();
 
@@ -826,7 +828,8 @@ class ChargeServiceCreateTest {
                 .withReturnUrl(chargeEntity.getReturnUrl())
                 .withLanguage(chargeEntity.getLanguage())
                 .withMoto(chargeEntity.isMoto())
-                .withAuthorisationMode(chargeEntity.getAuthorisationMode());
+                .withAuthorisationMode(chargeEntity.getAuthorisationMode())
+                .withAgreementPaymentType(chargeEntity.getAgreementPaymentType());
     }
 
     private void populateChargeEntity() {

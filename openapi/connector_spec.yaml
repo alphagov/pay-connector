@@ -3725,6 +3725,13 @@ components:
           description: 'Application for Recurring card payments. Agreement ID that
             the payment is associated with '
           example: md1mjge8gb6p4qndfs8mf8gto5
+        agreement_payment_type:
+          type: string
+          description: Reason for taking a recurring payment
+          enum:
+          - instalment
+          - recurring
+          - unscheduled
         amount:
           type: integer
           format: int64
@@ -4099,6 +4106,13 @@ components:
           description: 'Application for Recurring card payments. Agreement ID that
             the payment is associated with '
           example: md1mjge8gb6p4qndfs8mf8gto5
+        agreement_payment_type:
+          type: string
+          description: Reason for taking a recurring payment
+          enum:
+          - instalment
+          - recurring
+          - unscheduled
         amount:
           type: integer
           format: int64
