@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -17,39 +18,40 @@ import java.util.Objects;
 import java.util.Random;
 
 public record AddChargeParams(
-    Long chargeId,
-    String externalChargeId,
-    String gatewayAccountId,
-    String paymentProvider,
-    long amount,
-    ChargeStatus status,
-    String returnUrl,
-    String transactionId,
-    String description,
-    ServicePaymentReference reference,
-    Instant createdDate,
-    long version,
-    String email,
-    String providerId,
-    SupportedLanguage language,
-    boolean delayedCapture,
-    Long corporateSurcharge,
-    ExternalMetadata externalMetadata,
-    ParityCheckStatus parityCheckStatus,
-    CardType cardType,
-    ZonedDateTime parityCheckDate,
-    Long gatewayCredentialId,
-    String serviceId,
-    String issuerUrl,
-    String agreementExternalId,
-    boolean savePaymentInstrumentToAgreement,
-    AuthorisationMode authorisationMode,
-    Instant updatedDate,
-    Long paymentInstrumentId,
-    Boolean canRetry,
-    Boolean requires3ds,
-    Exemption3ds exemption3ds,
-    Exemption3dsType exemption3dsType) {
+        Long chargeId,
+        String externalChargeId,
+        String gatewayAccountId,
+        String paymentProvider,
+        long amount,
+        ChargeStatus status,
+        String returnUrl,
+        String transactionId,
+        String description,
+        ServicePaymentReference reference,
+        Instant createdDate,
+        long version,
+        String email,
+        String providerId,
+        SupportedLanguage language,
+        boolean delayedCapture,
+        Long corporateSurcharge,
+        ExternalMetadata externalMetadata,
+        ParityCheckStatus parityCheckStatus,
+        CardType cardType,
+        ZonedDateTime parityCheckDate,
+        Long gatewayCredentialId,
+        String serviceId,
+        String issuerUrl,
+        String agreementExternalId,
+        boolean savePaymentInstrumentToAgreement,
+        AuthorisationMode authorisationMode,
+        Instant updatedDate,
+        Long paymentInstrumentId,
+        Boolean canRetry,
+        Boolean requires3ds,
+        Exemption3ds exemption3ds,
+        Exemption3dsType exemption3dsType,
+        AgreementPaymentType agreementPaymentType) {
 
     public static final class AddChargeParamsBuilder {
         
@@ -61,7 +63,8 @@ public record AddChargeParams(
                     returnUrl, transactionId, description, reference, createdDate, version, email, providerId, language,
                     delayedCapture, corporateSurcharge, externalMetadata, parityCheckStatus, cardType, parityCheckDate,
                     gatewayCredentialId, serviceId, issuerUrl, agreementExternalId, savePaymentInstrumentToAgreement,
-                    authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds, exemption3ds, exemption3dsType);
+                    authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds, exemption3ds, exemption3dsType,
+                    agreementPaymentType);
         }
         
         private String agreementExternalId;
@@ -97,6 +100,7 @@ public record AddChargeParams(
         private String transactionId;
         private Instant updatedDate;
         private long version = 1;
+        private AgreementPaymentType agreementPaymentType;
 
         private AddChargeParamsBuilder() {}
 
@@ -231,6 +235,11 @@ public record AddChargeParams(
 
         public AddChargeParamsBuilder withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
             this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+            this.agreementPaymentType = agreementPaymentType;
             return this;
         }
 
