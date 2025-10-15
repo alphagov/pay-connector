@@ -35,6 +35,7 @@ import uk.gov.pay.connector.util.AddChargeParams;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
@@ -816,6 +817,7 @@ public class ContractTest {
                 .withExternalChargeId(chargeExternalId)
                 .withGatewayAccountId(gatewayAccountId)
                 .withAgreementExternalId(agreementExternalId)
+                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
                 .withAmount(amount)
                 .withReference(ServicePaymentReference.of(reference))
                 .withDescription(description)
