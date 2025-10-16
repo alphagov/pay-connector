@@ -166,6 +166,7 @@ public class ChargeParityChecker {
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getReference().toString(), transaction.getReference(), "reference");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getLanguage(), transaction.getLanguage(), "language");
         fieldsMatch = fieldsMatch && isEquals(chargeEntity.getPaymentProvider(), transaction.getPaymentProvider(), "payment_provider");
+        fieldsMatch = fieldsMatch && isEquals(chargeEntity.getAgreementPaymentType(), transaction.getAgreementPaymentType(), "agreement_payment_type");
 
         // email may be empty in connector but not in ledger, if service provides email but turns off email address collection
         fieldsMatch = fieldsMatch && (
