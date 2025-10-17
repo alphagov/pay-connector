@@ -26,6 +26,7 @@ import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.util.DateTimeUtils;
 import uk.gov.pay.connector.wallets.WalletType;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.service.payments.commons.model.Source;
@@ -81,6 +82,7 @@ public class LedgerTransactionFixture {
     private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
     private String agreementId;
     private Exemption3ds exemption3ds;
+    private AgreementPaymentType agreementPaymentType;
     private Exemption3dsType exemption3dsType;
 
     public static LedgerTransactionFixture aValidLedgerTransaction() {
@@ -110,6 +112,7 @@ public class LedgerTransactionFixture {
                         .withTotalAmount(getTotalAmountFor(chargeEntity))
                         .withNetAmount(chargeEntity.getNetAmount().orElse(null))
                         .withExemption3ds(chargeEntity.getExemption3ds())
+                        .withAgreementPaymentType(chargeEntity.getAgreementPaymentType())
                         .withExemption3dsRequested(chargeEntity.getExemption3dsRequested());
 
         ledgerTransactionFixture.withCreatedDate(getEventDate(chargeEntity.getEvents(), List.of(CREATED, PAYMENT_NOTIFICATION_CREATED)));
@@ -246,6 +249,7 @@ public class LedgerTransactionFixture {
         ledgerTransaction.setDisputed(disputed);
         ledgerTransaction.setAuthorisationMode(authorisationMode);
         ledgerTransaction.setAgreementId(agreementId);
+        ledgerTransaction.setAgreementPaymentType(agreementPaymentType);
 
         return ledgerTransaction;
     }
@@ -422,6 +426,11 @@ public class LedgerTransactionFixture {
     
     public LedgerTransactionFixture withExemption3ds(Exemption3ds exemption3ds) {
         this.exemption3ds = exemption3ds;
+        return this;
+    }
+    
+    public LedgerTransactionFixture withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        this.agreementPaymentType = agreementPaymentType;
         return this;
     }
     
