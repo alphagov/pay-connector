@@ -19,6 +19,10 @@ updates:
         # Stripe SDK 22.x needs refactoring on our end
         versions:
           - ">= 22"
+      - dependency-name: "org.testcontainers:testcontainers-bom"
+        # testcontainers v2 needs refactoring on our end
+        versions:
+          - ">= 2"
     open-pull-requests-limit: 10
     labels:
       - dependencies
