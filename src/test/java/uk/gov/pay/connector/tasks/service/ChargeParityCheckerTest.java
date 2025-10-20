@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -38,6 +40,7 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -603,6 +606,60 @@ class ChargeParityCheckerTest {
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
     }
+
+    @ParameterizedTest
+    @EnumSource(AgreementPaymentType.class)
+    void parityCheck_shouldAllowMatchingRecurringAgreementPaymentTypeFields(AgreementPaymentType agreementPaymentType) {
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
+        
+        ChargeEntity chargeEntity = ChargeEntityFactory.createWithAgreementPaymentType(agreementPaymentType);
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithAgreementPaymentType(chargeEntity);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    @Test
+    void parityCheck_shouldAllowNullAgreementPaymentTypeFields(){
+        when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
+
+        ChargeEntity chargeEntity = ChargeEntityFactory.createWithAgreementPaymentType(null);
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithAgreementPaymentType(chargeEntity);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+        assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
+    }
+    
+    @ParameterizedTest
+    @CsvSource(nullValues = "null", textBlock = """ 
+            INSTALMENT,null,  
+            null,INSTALMENT 
+            """)
+    void parityCheck_shouldThrowForUnexpectedMatchingAgreementPaymentTypeFields(AgreementPaymentType connectorType, AgreementPaymentType transactionType) {
+        ChargeEntity chargeEntity = ChargeEntityFactory.createWithAgreementPaymentType(connectorType);
+
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithAgreementPaymentType(chargeEntity);
+        transaction.setAgreementPaymentType(transactionType);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
+
+    @ParameterizedTest
+    @CsvSource(nullValues = "null", textBlock = """ 
+            INSTALMENT,RECURRING, 
+            UNSCHEDULED,INSTALMENT,
+            RECURRING, INSTALMENT 
+            """)
+    void parityChecker_shouldThrowForNonMatchingAgreementPaymentTypeFields(AgreementPaymentType connectorType, AgreementPaymentType transactionType) {
+        ChargeEntity chargeEntity = ChargeEntityFactory.createWithAgreementPaymentType(connectorType);
+        
+        LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithAgreementPaymentType(chargeEntity);
+        transaction.setAgreementPaymentType(transactionType);
+
+        ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
+        assertThat(parityCheckStatus, is(DATA_MISMATCH));
+    }
     
     @ParameterizedTest
     @MethodSource
@@ -656,6 +713,12 @@ class ChargeParityCheckerTest {
         private static LedgerTransaction buildTransactionWithExemption3ds(ChargeEntity chargeEntity) {
             return from(chargeEntity, Collections.emptyList())
                     .withExemption3ds(EXEMPTION_HONOURED)
+                    .build();
+        }
+        
+        private static LedgerTransaction buildTransactionWithAgreementPaymentType(ChargeEntity chargeEntity) {
+            return from(chargeEntity, Collections.emptyList())
+                    .withAgreementPaymentType(chargeEntity.getAgreementPaymentType())
                     .build();
         }
 
@@ -733,6 +796,16 @@ class ChargeParityCheckerTest {
                     .build();
 
             return List.of(chargeEventEntity);
+        }
+        
+        private static ChargeEntity createWithAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+            List<ChargeEventEntity> chargeEvents = createChargeEvents();
+            
+            return aValidChargeEntity()
+                    .withStatus(CAPTURED)
+                    .withEvents(chargeEvents)
+                    .withAgreementPaymentType(agreementPaymentType)
+                    .build();
         }
     }
 
