@@ -11,6 +11,8 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 
 import jakarta.inject.Inject;
 
+import java.util.Optional;
+
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
@@ -44,10 +46,9 @@ public class StripeAccountUpdatedHandler {
     }
 
     private boolean canBeActivated(DataObject dataObject) {
-        return (!dataObject.getRequirements().hasCurrentlyDue() &&
-                !dataObject.getRequirements().hasPastDue() &&
-                dataObject.isChargesEnabled() &&
-                dataObject.isPayoutsEnabled());
+        return Optional.ofNullable(dataObject.getRequirements()).map(reqs -> !reqs.hasCurrentlyDue() && !reqs.hasPastDue()).orElse(true)
+                && dataObject.isChargesEnabled()
+                && dataObject.isPayoutsEnabled();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
