@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
     private GatewayCredentials credentials;
     private GatewayAccountEntity gatewayAccountEntity;
     private String govUkPayPaymentId;
+    private final AgreementPaymentType agreementPaymentType;
 
     private RecurringPaymentAuthorisationGatewayRequest(GatewayAccountEntity gatewayAccountEntity,
                                                         GatewayCredentials credentials,
@@ -29,7 +31,8 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
                                                         String gatewayTransactionId,
                                                         String description,
                                                         PaymentInstrumentEntity paymentInstrument, 
-                                                        String govUkPayPaymentId) {
+                                                        String govUkPayPaymentId, 
+                                                        AgreementPaymentType agreementPaymentType) {
         this.gatewayAccountEntity = gatewayAccountEntity;
         this.credentials = credentials;
         this.agreementId = agreementId;
@@ -38,6 +41,7 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
         this.description = description;
         this.paymentInstrument = paymentInstrument;
         this.govUkPayPaymentId = govUkPayPaymentId;
+        this.agreementPaymentType = agreementPaymentType;
     }
 
     public static RecurringPaymentAuthorisationGatewayRequest valueOf(ChargeEntity charge) {
@@ -50,7 +54,8 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
                 charge.getGatewayTransactionId(),
                 charge.getDescription(),
                 charge.getPaymentInstrument().orElse(null),
-                charge.getExternalId());
+                charge.getExternalId(),
+                charge.getAgreementPaymentType());
     }
 
     public Optional<PaymentInstrumentEntity> getPaymentInstrument() {
@@ -101,4 +106,10 @@ public class RecurringPaymentAuthorisationGatewayRequest implements GatewayReque
     public boolean isForRecurringPayment() {
         return true;
     }
+
+    
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
+    }
+
 }

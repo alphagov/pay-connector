@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class AuthorisationRequestSummaryStructuredLogging {
     public static final String IP_ADDRESS = "remote_ip_address";
     public static final String EMAIL = "email_address";
     public static final String THREE_DS_REQUIRED = "3ds_required";
+    public static final String AGREEMENT_PAYMENT_TYPE = "agreement_payment_type";
     public static final String MOTO = "moto";
 
     public StructuredArgument[] createArgs(AuthorisationRequestSummary authorisationRequestSummary) {
@@ -65,6 +67,9 @@ public class AuthorisationRequestSummaryStructuredLogging {
         authorisationRequestSummary.corporateExemptionResult()
                 .map(Exemption3ds::name)
                 .ifPresent(exemption3dsResult -> structuredArguments.add(kv(CORPORATE_EXEMPTION_RESULT, exemption3dsResult)));
+        
+        authorisationRequestSummary.agreementPaymentType()
+                .map(AgreementPaymentType::name).ifPresent(agreementPaymentTypeName -> structuredArguments.add(kv(AGREEMENT_PAYMENT_TYPE, agreementPaymentTypeName)));
  
         return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
     }
