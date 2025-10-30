@@ -44,6 +44,7 @@ public interface WorldpayOrderBuilder {
                 .withRequestExemption(sendExemptionEngineRequest)
                 .withSavePaymentInstrumentToAgreement(request.isSavePaymentInstrumentToAgreement())
                 .withAgreementId(request.getAgreement().map(AgreementEntity::getExternalId).orElse(null))
+                .withAgreementPaymentType(request.getAgreementPaymentType())
                 .withTransactionId(request.getTransactionId().orElse(""))
                 .withMerchantCode(AuthUtil.getWorldpayMerchantCode(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()))
                 .withAmount(request.getAmount())
@@ -61,6 +62,7 @@ public interface WorldpayOrderBuilder {
                 request.getAuthorisationMode(), request.isForRecurringPayment());
         WorldpayOrderRequestBuilder builder = (WorldpayOrderRequestBuilder) aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withAgreementId(request.getAgreementId())
+                .withAgreementPaymentType(request.getAgreementPaymentType())
                 .withPaymentTokenId(Optional.ofNullable(recurringAuthToken.get(WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY)).orElse(""))
                 .withMerchantCode(merchantCode)
                 .withAmount(request.getAmount())

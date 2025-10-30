@@ -10,7 +10,11 @@
                 <TOKEN-SSL tokenScope="shopper">
                     <paymentTokenID>${paymentTokenId}</paymentTokenID>
                 </TOKEN-SSL>
-                <storedCredentials usage="USED" merchantInitiatedReason="RECURRING">
+                <#if agreementPaymentType??>
+                <storedCredentials usage="USED" merchantInitiatedReason="${agreementPaymentType}">
+                <#else>
+                <storedCredentials usage="USED">
+                </#if>
                     <#if schemeTransactionIdentifier??>
                         <schemeTransactionIdentifier>${schemeTransactionIdentifier}</schemeTransactionIdentifier>
                     </#if>

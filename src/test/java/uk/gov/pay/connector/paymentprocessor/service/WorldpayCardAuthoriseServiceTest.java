@@ -12,6 +12,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,13 +50,16 @@ import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.time.Instant;
 import java.time.InstantSource;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -79,6 +84,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentia
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_FLEX_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_3DS_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_EXEMPTION_REQUEST_HONOURED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -152,7 +158,8 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 new AuthorisationService(mockExecutorService, environment, mockConfiguration),
                 chargeService,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
-                mockChargeEligibleForCaptureService, mock(PaymentInstrumentEntityToAuthCardDetailsConverter.class),
+                mockChargeEligibleForCaptureService,
+                mock(PaymentInstrumentEntityToAuthCardDetailsConverter.class),
                 environment);
 
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
@@ -304,6 +311,61 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(true));
 
         verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
+    }
+    
+    @Test
+    void agreement_payment_type_not_logged_if_null() throws Exception {
+        worldpayRespondsWith(null, load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        charge.setAgreementPaymentType(null);
+        var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
+        gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails, false));
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
+        assertTrue(log.contains("Authorisation with billing address and without email address and with 3DS data and without device data collection result "));
+        assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED) .'. AUTHORISATION SUCCESS -> AUTHORISATION SUCCESS"));
+    }
+
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            RECURRING
+            INSTALMENT
+            UNSCHEDULED
+            """)
+    void authorise_with_agreement_payment_type_if_present(AgreementPaymentType agreementPaymentType) throws Exception {
+        worldpayRespondsWith(null, load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+        charge.setAgreementPaymentType(agreementPaymentType);
+        var worldpay3dsFlexCredentialsEntity = aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build();
+        gatewayAccount.setWorldpay3dsFlexCredentialsEntity(worldpay3dsFlexCredentialsEntity);
+        when(mockedWorldpayPaymentProvider.generateAuthorisationRequestSummary(charge, authCardDetails, false))
+                .thenReturn(new WorldpayAuthorisationRequestSummary(charge, authCardDetails, false));
+
+        AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
+
+        assertTrue(response.getAuthoriseStatus().isPresent());
+        assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
+        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
+        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
+        assertTrue(log.contains("and with agreement payment type of " + agreementPaymentType.getName()));
+
+        var structuredLoggingArgs = Arrays.stream(loggingEventArgumentCaptor.getAllValues().get(0).getArgumentArray())
+                .map(Object::toString)
+                .toList();
+        assertThat(structuredLoggingArgs, hasItem("agreement_payment_type=" + agreementPaymentType.name()));
     }
 
     private void verifyGatewayDoesNotRequire3dsEventWasEmitted(ChargeEntity chargeEntity) {

@@ -32,7 +32,11 @@
                     </#if>
                 </CARD-SSL>
                 <#if savePaymentInstrumentToAgreement>
-                <storedCredentials usage="FIRST" customerInitiatedReason="RECURRING"/>
+                <#if agreementPaymentType??>
+                <storedCredentials usage="FIRST" customerInitiatedReason="${agreementPaymentType}"/>
+                <#else>
+                <storedCredentials usage="FIRST"/>
+                </#if>
                 </#if>
                 <#if requires3ds>
                 <#if payerIpAddress??>
