@@ -3,6 +3,9 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -11,8 +14,10 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -156,4 +161,20 @@ class WorldpayAuthorisationRequestSummaryTest {
         assertThat(worldpayAuthorisationRequestSummary.corporateExemptionResult(), is(Optional.empty()));
     }
 
+    @ParameterizedTest
+    @MethodSource
+    void agreementPaymentType(AgreementPaymentType agreementPaymentType, AgreementPaymentType expected) {
+        given(mockChargeEntity.getAgreementPaymentType()).willReturn(agreementPaymentType);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails, false);
+        assertThat(worldpayAuthorisationRequestSummary.agreementPaymentType(), is(Optional.of(expected)));
+    }
+    
+    private static Stream<Arguments> agreementPaymentType() {
+        return Stream.of(
+                Arguments.of(AgreementPaymentType.RECURRING, AgreementPaymentType.RECURRING),
+                Arguments.of(AgreementPaymentType.INSTALMENT, AgreementPaymentType.INSTALMENT),
+                Arguments.of(AgreementPaymentType.UNSCHEDULED, AgreementPaymentType.UNSCHEDULED),
+                Arguments.of(null, AgreementPaymentType.RECURRING)
+        );
+    }
 }

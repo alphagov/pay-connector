@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.model;
 
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.Optional;
 
@@ -48,6 +49,10 @@ public interface AuthorisationRequestSummary {
     
     default Presence email() { 
         return NOT_APPLICABLE; 
+    }
+    
+    default Optional<AgreementPaymentType> agreementPaymentType() { 
+        return Optional.empty();
     }
 
 }

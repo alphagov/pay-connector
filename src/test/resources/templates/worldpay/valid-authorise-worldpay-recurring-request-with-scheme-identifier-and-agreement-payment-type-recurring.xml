@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="MIT-MERCHANTCODE">
+    <submit>
+        <order orderCode="test-transaction-id-123">
+            <description>This is the description</description>
+            <amount currencyCode="GBP" exponent="2" value="500"/>
+            <paymentDetails>
+                <TOKEN-SSL tokenScope="shopper">
+                    <paymentTokenID>test-payment-token-123456</paymentTokenID>
+                </TOKEN-SSL>
+                <storedCredentials usage="USED" merchantInitiatedReason="RECURRING">
+                        <schemeTransactionIdentifier>test-transaction-id-999999</schemeTransactionIdentifier>
+                </storedCredentials>
+            </paymentDetails>
+            <shopper>
+                <authenticatedShopperID>test-agreement-123456</authenticatedShopperID>
+            </shopper>
+        </order>
+    </submit>
+</paymentService>

@@ -55,6 +55,9 @@ public class AuthorisationRequestSummaryStringifier {
 
         Optional.ofNullable(authorisationRequestSummary.ipAddress())
                 .map(ipAddress -> stringJoiner.add("with remote IP " + ipAddress));
+        
+        authorisationRequestSummary.agreementPaymentType()
+                .ifPresent(agreementPaymentType -> stringJoiner.add("with agreement payment type of " + agreementPaymentType.getName()));
 
         return stringJoiner.toString();
     }
