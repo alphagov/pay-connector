@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 
@@ -26,6 +27,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final GatewayAccountEntity gatewayAccount;
     private final AuthorisationMode authorisationMode;
     private final boolean savePaymentInstrumentToAgreement;
+    private final AgreementPaymentType agreementPaymentType;
     private final Optional<AgreementEntity> agreement;
     
     protected AuthorisationGatewayRequest(ChargeEntity charge) {
@@ -45,6 +47,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.gatewayAccount = charge.getGatewayAccount();
         this.authorisationMode = charge.getAuthorisationMode();
         this.savePaymentInstrumentToAgreement = charge.isSavePaymentInstrumentToAgreement();
+        this.agreementPaymentType = charge.getAgreementPaymentType();
         this.agreement = charge.getAgreement();
     }
 
@@ -59,7 +62,8 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        GatewayCredentials credentials,
                                        GatewayAccountEntity gatewayAccount,
                                        AuthorisationMode authorisationMode,
-                                       boolean savePaymentInstrumentToAgreement,
+                                       boolean savePaymentInstrumentToAgreement, 
+                                       AgreementPaymentType agreementPaymentType,
                                        AgreementEntity agreement) {
         this.gatewayTransactionId = gatewayTransactionId;
         this.email = email;
@@ -73,6 +77,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
         this.gatewayAccount = gatewayAccount;
         this.authorisationMode = authorisationMode;
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        this.agreementPaymentType = agreementPaymentType;
         this.agreement = Optional.ofNullable(agreement);
     }
 
@@ -130,6 +135,10 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
 
     public boolean isSavePaymentInstrumentToAgreement() {
         return savePaymentInstrumentToAgreement;
+    }
+
+    public AgreementPaymentType getAgreementPaymentType() {
+        return agreementPaymentType;
     }
 
     public Optional<AgreementEntity> getAgreement() {

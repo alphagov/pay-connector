@@ -24,7 +24,7 @@
                         </address>
                     </cardAddress>
                 </CARD-SSL>
-                <storedCredentials usage="FIRST" customerInitiatedReason="RECURRING"/>
+                <storedCredentials usage="FIRST" customerInitiatedReason="UNSCHEDULED"/>
                 <session id="test-chargeId-789" shopperIPAddress="127.0.0.1"/>
             </paymentDetails>
             <shopper>

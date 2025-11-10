@@ -11,6 +11,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.Optional;
 
@@ -155,5 +156,14 @@ class WorldpayAuthorisationRequestSummaryTest {
         var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails, false);
         assertThat(worldpayAuthorisationRequestSummary.corporateExemptionResult(), is(Optional.empty()));
     }
+    
+    @Test
+    void agreementPaymentTypePresent() {
+        given(mockChargeEntity.getAgreementPaymentType()).willReturn(AgreementPaymentType.UNSCHEDULED);
+        var worldpayAuthorisationRequestSummary = new WorldpayAuthorisationRequestSummary(mockChargeEntity, mockAuthCardDetails, true);
+        assertThat(worldpayAuthorisationRequestSummary.setUpAgreement(), is(PRESENT));
+        assertThat(worldpayAuthorisationRequestSummary.agreementPaymentType().isPresent(), is(true));
+        assertThat(worldpayAuthorisationRequestSummary.agreementPaymentType().get(), is(AgreementPaymentType.UNSCHEDULED));
 
+    }
 }

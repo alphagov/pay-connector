@@ -15,6 +15,7 @@ import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayEncryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayPaymentInfo;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.io.IOException;
@@ -112,6 +113,7 @@ class WorldpayOrderRequestBuilderTest {
                 .withPaymentTokenId("test-payment-token-123456")
                 .withSchemeTransactionIdentifier("test-transaction-id-999999")
                 .withAgreementId("test-agreement-123456")
+                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
                 .withTransactionId("test-transaction-id-123")
                 .withMerchantCode("MIT-MERCHANTCODE")
                 .withDescription("This is the description")
@@ -127,6 +129,7 @@ class WorldpayOrderRequestBuilderTest {
         GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withPaymentTokenId("test-payment-token-123456")
                 .withAgreementId("test-agreement-123456")
+                .withAgreementPaymentType(AgreementPaymentType.RECURRING)
                 .withTransactionId("test-transaction-id-123")
                 .withMerchantCode("MIT-MERCHANTCODE")
                 .withDescription("This is the description")
@@ -559,7 +562,7 @@ class WorldpayOrderRequestBuilderTest {
 
         assertXMLEqual(TestTemplateResourceLoader.load(testTemplatePath), actualRequest.getPayload());
     }
-
+    
     private AuthCardDetails getValidTestCard(Address address) {
         return AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("Mr. Payment")

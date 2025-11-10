@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.mock;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_APPLICABLE;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_PRESENT;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.AGREEMENT_PAYMENT_TYPE;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.BILLING_ADDRESS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.CORPORATE_CARD;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.CORPORATE_EXEMPTION_REQUESTED;
@@ -57,6 +59,7 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
         given(mockAuthorisationRequestSummary.corporateExemptionRequested()).willReturn(Optional.of(Boolean.TRUE));
         given(mockAuthorisationRequestSummary.corporateExemptionResult()).willReturn(Optional.of(Exemption3ds.EXEMPTION_HONOURED));
         given(mockAuthorisationRequestSummary.email()).willReturn(PRESENT);
+        given(mockAuthorisationRequestSummary.agreementPaymentType()).willReturn(Optional.of(AgreementPaymentType.RECURRING));
 
         StructuredArgument[] result = structuredLogging.createArgs(mockAuthorisationRequestSummary);
 
@@ -69,7 +72,8 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(IP_ADDRESS, "1.1.1.1"),
                 kv(CORPORATE_CARD, true),
                 kv(CORPORATE_EXEMPTION_REQUESTED, true),
-                kv(CORPORATE_EXEMPTION_RESULT, Exemption3ds.EXEMPTION_HONOURED.name())
+                kv(CORPORATE_EXEMPTION_RESULT, Exemption3ds.EXEMPTION_HONOURED.name()),
+                kv(AGREEMENT_PAYMENT_TYPE, AgreementPaymentType.RECURRING.name())
         ));
     }
 

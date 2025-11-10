@@ -584,6 +584,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public AgreementPaymentType getAgreementPaymentType() {
         return agreementPaymentType;
     }
+    
+    public void setAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        this.agreementPaymentType = agreementPaymentType;
+    }
 
     public boolean isSavePaymentInstrumentToAgreement() {
         return savePaymentInstrumentToAgreement;

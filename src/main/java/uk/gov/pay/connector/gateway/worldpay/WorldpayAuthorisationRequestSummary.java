@@ -6,6 +6,7 @@ import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     private final boolean isCorporateExemptionRequested;
     private Exemption3ds corporateExemptionResult;
     private final Presence email;
+    private final AgreementPaymentType agreementPaymentType;
 
     public WorldpayAuthorisationRequestSummary(ChargeEntity chargeEntity, AuthCardDetails authCardDetails, boolean isSetupAgreement) {
         billingAddress = authCardDetails.getAddress().map(address -> PRESENT).orElse(NOT_PRESENT);
@@ -32,6 +34,7 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
         isCorporateCard = authCardDetails.isCorporateCard();
         this.isSetupAgreement = isSetupAgreement ? PRESENT: NOT_PRESENT;
         isCorporateExemptionRequested = chargeEntity.getExemption3dsRequested() == Exemption3dsType.CORPORATE;
+        agreementPaymentType = chargeEntity.getAgreementPaymentType();
         if (isCorporateExemptionRequested) {
             corporateExemptionResult = chargeEntity.getExemption3ds();
         }
@@ -80,5 +83,9 @@ public class WorldpayAuthorisationRequestSummary implements AuthorisationRequest
     
     @Override
     public Presence email() { return email; }
-
+    
+    @Override
+    public Optional<AgreementPaymentType> agreementPaymentType() { 
+        return Optional.ofNullable(agreementPaymentType); 
+    }
 }

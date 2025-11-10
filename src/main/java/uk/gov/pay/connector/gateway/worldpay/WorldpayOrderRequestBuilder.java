@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import jakarta.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder;
@@ -11,8 +12,8 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
-import jakarta.ws.rs.core.MediaType;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -43,6 +44,7 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
         private String paymentTokenId;
         private AppleDecryptedPaymentData appleDecryptedPaymentData;
         private GooglePayAuthRequest googlePayPaymentData;
+        private AgreementPaymentType agreementPaymentType;
 
         public int getIntegrationVersion3ds() {
             return integrationVersion3ds;
@@ -165,6 +167,14 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
         public void setAgreementId(String agreementId) {
             this.agreementId = agreementId;
+        }
+        
+        public void setAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+            this.agreementPaymentType = agreementPaymentType;
+        }
+        
+        public AgreementPaymentType getAgreementPaymentType() {
+            return agreementPaymentType;
         }
 
         public String getSchemeTransactionIdentifier() {
@@ -339,6 +349,11 @@ public class WorldpayOrderRequestBuilder extends OrderRequestBuilder {
 
     public WorldpayOrderRequestBuilder withAgreementId(String agreementId) {
         worldpayTemplateData.setAgreementId(agreementId);
+        return this;
+    }
+    
+    public WorldpayOrderRequestBuilder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        worldpayTemplateData.setAgreementPaymentType(agreementPaymentType);
         return this;
     }
 
