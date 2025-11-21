@@ -36,7 +36,8 @@ public interface SandboxCardNumbers {
 
     Set<String> GOOD_CORPORATE_CARDS = Set.of(
             "4988080000000000",
-            "4000620000000007",
+            "4000620000000007", // deprecated, soon to be removed
+            "4111111111111111",
             "4293189100000008",
             GOOD_CORPORATE_PREPAID_UNKNOWN_CREDIT_CARD);
 
@@ -60,5 +61,4 @@ public interface SandboxCardNumbers {
     boolean isErrorCard(String cardNumber);
 
     CardError cardErrorFor(String cardNumber);
-
 }
