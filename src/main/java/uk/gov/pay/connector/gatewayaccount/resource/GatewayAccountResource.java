@@ -63,7 +63,6 @@ import java.util.stream.Collectors;
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
 import static java.lang.String.format;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
@@ -271,7 +270,7 @@ public class GatewayAccountResource {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             }
     )
-    public CreateGatewayAccountResponse createNewGatewayAccount(@Valid @NotNull GatewayAccountRequest gatewayAccountRequest,
+    public Response createNewGatewayAccount(@Valid @NotNull GatewayAccountRequest gatewayAccountRequest,
                                             @Context UriInfo uriInfo,
                                             @QueryParam("degatewayification") boolean degatewayification) {
 
@@ -287,8 +286,9 @@ public class GatewayAccountResource {
                 throw new ConflictWebApplicationException(String.format("Gateway account with service id %s and account type '%s' already exists.", serviceId, accountType));
             }
         }
+        CreateGatewayAccountResponse createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
 
-        return gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
+        return Response.created(createGatewayAccountResponse.location()).entity(createGatewayAccountResponse).build();
     }
 
     @PATCH
@@ -324,7 +324,7 @@ public class GatewayAccountResource {
         return gatewayAccountServicesFactory.getUpdateService()
                 .doPatch(serviceId, accountType, JsonPatchRequest.from(payload))
                 .map(gatewayAccount -> Response.ok().build())
-                .orElseGet(() -> Response.status(NOT_FOUND).build());
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
     @PATCH
@@ -358,7 +358,7 @@ public class GatewayAccountResource {
         return gatewayAccountServicesFactory.getUpdateService()
                 .doPatch(gatewayAccountId, JsonPatchRequest.from(payload))
                 .map(gatewayAccount -> Response.ok().build())
-                .orElseGet(() -> Response.status(NOT_FOUND).build());
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @PATCH
@@ -510,8 +510,7 @@ public class GatewayAccountResource {
                             return Response.ok().build();
                         }
                 )
-                .orElseGet(() ->
-                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @POST
@@ -548,7 +547,7 @@ public class GatewayAccountResource {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccountEntity -> updateGatewayAccountAcceptedCardTypes(cardTypeIds, gatewayAccountEntity))
-                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @POST
@@ -694,10 +693,10 @@ public class GatewayAccountResource {
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
                     } catch (BadRequestException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
                         return badRequestResponse(ex.getMessage());
                     } catch (NotFoundException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
                         return notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
