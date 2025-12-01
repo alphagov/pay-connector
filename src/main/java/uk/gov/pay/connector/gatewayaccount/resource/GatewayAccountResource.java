@@ -68,7 +68,6 @@ import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
 public class GatewayAccountResource {
@@ -153,7 +152,7 @@ public class GatewayAccountResource {
                             ))
             }
     )
-    public Response searchGatewayAccounts(
+    public GatewayAccountsListDTO searchGatewayAccounts(
             @Valid @BeanParam
             @Parameter(in = QUERY, schema = @Schema(implementation = GatewayAccountSearchParams.class))
             GatewayAccountSearchParams gatewayAccountSearchParams,
@@ -161,15 +160,13 @@ public class GatewayAccountResource {
         return getGatewayAccounts(gatewayAccountSearchParams, uriInfo);
     }
 
-    private Response getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
+    private GatewayAccountsListDTO getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
         logger.info(format("Searching gateway accounts by parameters %s", gatewayAccountSearchParams.toString()));
 
         List<GatewayAccountResponse> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
         gatewayAccounts.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
 
-        return Response
-                .ok(GatewayAccountsListDTO.of(gatewayAccounts))
-                .build();
+        return GatewayAccountsListDTO.of(gatewayAccounts);
     }
 
     private URI buildUri(UriInfo uriInfo, long accountId) {
@@ -221,11 +218,11 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getGatewayAccountAcceptedCardTypes(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long accountId) {
+    public ImmutableMap<String, List<CardTypeEntity>> getGatewayAccountAcceptedCardTypes(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long accountId) {
         logger.info("Getting accepted card types for gateway account with account id {}", accountId);
         return gatewayAccountService.getGatewayAccount(accountId)
-                .map(gatewayAccount -> successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
-                .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
+                .map(gatewayAccount -> ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
+                .orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
     }
 
     @GET
@@ -250,12 +247,12 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getAcceptedCardTypesByServiceIdAndAccountType(
+    public ImmutableMap<String, List<CardTypeEntity>> getAcceptedCardTypesByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .map(gatewayAccount -> successResponseWithEntity(Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
+                .map(gatewayAccount -> ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
@@ -274,7 +271,7 @@ public class GatewayAccountResource {
                             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
             }
     )
-    public Response createNewGatewayAccount(@Valid @NotNull GatewayAccountRequest gatewayAccountRequest,
+    public CreateGatewayAccountResponse createNewGatewayAccount(@Valid @NotNull GatewayAccountRequest gatewayAccountRequest,
                                             @Context UriInfo uriInfo,
                                             @QueryParam("degatewayification") boolean degatewayification) {
 
@@ -290,9 +287,8 @@ public class GatewayAccountResource {
                 throw new ConflictWebApplicationException(String.format("Gateway account with service id %s and account type '%s' already exists.", serviceId, accountType));
             }
         }
-        CreateGatewayAccountResponse createGatewayAccountResponse = gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
 
-        return Response.created(createGatewayAccountResponse.location()).entity(createGatewayAccountResponse).build();
+        return gatewayAccountService.createGatewayAccount(gatewayAccountRequest, uriInfo);
     }
 
     @PATCH

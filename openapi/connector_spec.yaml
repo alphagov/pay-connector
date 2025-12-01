@@ -5356,6 +5356,15 @@ components:
           description: SessionId returned by Worldpay/CardinalCommerce as part of
             device data collection. Applicable for Google Pay payments only
           example: 1f1154b7-620d-4654-801b-893b5bb22db1
+    ImmutableMapStringListCardTypeEntity:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          $ref: "#/components/schemas/CardTypeEntity"
+      properties:
+        empty:
+          type: boolean
     JsonNode:
       type: object
     LastDigitsCardNumber:
