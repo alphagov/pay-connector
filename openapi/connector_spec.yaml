@@ -3243,6 +3243,72 @@ paths:
       summary: Emit events for charges or refunds by date
       tags:
       - Tasks
+  /v1/tasks/parity-checker:
+    post:
+      description: "Task to parity check charges or refunds with ledger for a given\
+        \ start_id and max_id range or by parity_check_status. Parity checker compares\
+        \ fields of ledger transaction to charge/refund record in connector. <br>When\
+        \ parity check fails, new events are emitted even when the events have been\
+        \ emitted previously. <br> Note: Task is executed in the background. "
+      operationId: parityCheck
+      parameters:
+      - description: Charge/Refund ID (from database) to start with for parity checking.
+          Defaults to 0
+        example: 1
+        in: query
+        name: start_id
+        schema:
+          type: integer
+          format: int64
+      - description: "Charge/Refund ID until which the records to be parity checked.\
+          \ If not provided, this is set to maximum ID available."
+        example: 10
+        in: query
+        name: max_id
+        schema:
+          type: integer
+          format: int64
+      - description: Set to true to skip parity checking the records which were previously
+          parity checked and matches with ledger transaction. Defaults to false
+        example: true
+        in: query
+        name: do_not_reprocess_valid_records
+        schema:
+          type: boolean
+      - description: "Parity check the records, which were parity checked and marked\
+          \ with parity_check_status. start_id and max_id are ignored if parity checking\
+          \ by parity check status"
+        example: DATA_MISMATCH
+        in: query
+        name: parity_check_status
+        schema:
+          type: string
+      - description: Duration (in seconds) until which emitted event sweeper should
+          ignore retrying emitting events
+        example: 7200
+        in: query
+        name: do_not_retry_emit_until
+        schema:
+          type: integer
+          format: int64
+      - description: Type of records (charge/refund) to be parity checked. Defaults
+          to 'charge'
+        example: charge
+        in: query
+        name: record_type
+        schema:
+          type: string
+          enum:
+          - charge
+          - refund
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal server error
+      summary: Parity check charges or refunds with ledger
+      tags:
+      - Tasks
 components:
   schemas:
     Address:
