@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.tasks.service;
 
-public enum ConnectAuthorisationSummaryState {
+public enum ConnectorAuthorisationSummaryState {
         CONNECTOR_HAS_REQUIRES_3DS_TRUE,
         CONNECTOR_HAS_REQUIRES_3DS_FALSE,
         CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS,
