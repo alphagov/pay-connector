@@ -615,7 +615,7 @@ public class GatewayAccountResource {
     private List<String> extractNotFoundCardTypeIds(List<UUID> cardTypeIds, List<CardTypeEntity> cardTypeEntities) {
         List<UUID> foundIds = cardTypeEntities.stream()
                 .map(UuidAbstractEntity::getId)
-                .collect(Collectors.toList());
+                .toList();
 
         return cardTypeIds.stream()
                 .filter(cardTypeId -> !foundIds.contains(cardTypeId))
