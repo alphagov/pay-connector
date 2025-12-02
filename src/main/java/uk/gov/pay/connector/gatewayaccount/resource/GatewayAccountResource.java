@@ -433,8 +433,7 @@ public class GatewayAccountResource {
                             return Response.ok().build();
                         }
                 )
-                .orElseGet(() ->
-                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("The gateway account id '%s' does not exist", gatewayAccountId)));
     }
 
     @PATCH
@@ -701,6 +700,6 @@ public class GatewayAccountResource {
                     }
                     return Response.ok().build();
                 })
-                .orElseGet(() -> notFoundResponse(format("The gateway account id [%s] does not exist.", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("The gateway account id [%s] does not exist.", gatewayAccountId)));
     }
 }
