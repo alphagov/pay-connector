@@ -76,6 +76,7 @@ public class GatewayAccountResource {
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
+    private static final String INVALID_ACCOUNT_PSP_SWITCH_ERROR = "Account is not configured to switch PSP or already switched PSP.";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
     private final GatewayAccountService gatewayAccountService;
     private final CardTypeDao cardTypeDao;
@@ -644,7 +645,7 @@ public class GatewayAccountResource {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceExternalId, accountType)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
-                        return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
+                        return badRequestResponse(INVALID_ACCOUNT_PSP_SWITCH_ERROR);
                     }
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
@@ -658,7 +659,7 @@ public class GatewayAccountResource {
                                     });
                         }
                     } catch (BadRequestException | NotFoundException ex) {
-                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
+                        logSwitchingProviderError(ex.getMessage());
                         return ex instanceof BadRequestException ? badRequestResponse(ex.getMessage()) : notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
@@ -687,19 +688,20 @@ public class GatewayAccountResource {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
-                        return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
+                        return badRequestResponse(INVALID_ACCOUNT_PSP_SWITCH_ERROR);
                     }
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
-                    } catch (BadRequestException ex) {
-                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
-                        return badRequestResponse(ex.getMessage());
-                    } catch (NotFoundException ex) {
-                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
-                        return notFoundResponse(ex.getMessage());
+                    } catch (BadRequestException | NotFoundException ex) {
+                        logSwitchingProviderError(ex.getMessage());
+                        return ex instanceof BadRequestException ? badRequestResponse(ex.getMessage()) : notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
                 })
                 .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("The gateway account id [%s] does not exist.", gatewayAccountId)));
+    }
+
+    private static void logSwitchingProviderError(String ex) {
+        logger.error(SWITCHING_PROVIDER_ERROR, ex);
     }
 }
