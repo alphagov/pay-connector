@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.report;
+package uk.gov.pay.connector.tasks;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundHistory;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.refund.service.RefundService;
-import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 import uk.gov.pay.connector.tasks.service.ParityCheckerService;
