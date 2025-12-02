@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import io.swagger.v3.oas.annotations.Operation;
@@ -218,10 +217,10 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public ImmutableMap<String, List<CardTypeEntity>> getGatewayAccountAcceptedCardTypes(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long accountId) {
+    public Map<String, List<CardTypeEntity>> getGatewayAccountAcceptedCardTypes(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long accountId) {
         logger.info("Getting accepted card types for gateway account with account id {}", accountId);
         return gatewayAccountService.getGatewayAccount(accountId)
-                .map(gatewayAccount -> ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
+                .map(gatewayAccount -> Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
                 .orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
     }
 
@@ -247,12 +246,12 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public ImmutableMap<String, List<CardTypeEntity>> getAcceptedCardTypesByServiceIdAndAccountType(
+    public Map<String, List<CardTypeEntity>> getAcceptedCardTypesByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .map(gatewayAccount -> ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
+                .map(gatewayAccount -> Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
