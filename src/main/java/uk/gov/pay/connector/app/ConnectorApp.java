@@ -77,7 +77,6 @@ import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
 import uk.gov.pay.connector.queue.managed.TaskQueueMessageReceiver;
 import uk.gov.pay.connector.refund.resource.RefundReversalResource;
 import uk.gov.pay.connector.refund.resource.RefundsResource;
-import uk.gov.pay.connector.report.resource.ParityCheckerResource;
 import uk.gov.pay.connector.token.exception.TokenNotFoundExceptionMapper;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;
@@ -189,7 +188,6 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(EmittedEventResource.class));
         environment.jersey().register(injector.getInstance(GatewayAccountCredentialsResource.class));
         environment.jersey().register(injector.getInstance(GatewayCleanupResource.class));
-        environment.jersey().register(injector.getInstance(ParityCheckerResource.class));
         environment.jersey().register(injector.getInstance(LoggingMDCRequestFilter.class));
         environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
         environment.jersey().register(injector.getInstance(AgreementsApiResource.class));

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.report;
+package uk.gov.pay.connector.tasks.service;
 
 import com.google.inject.persist.Transactional;
 import org.apache.commons.lang3.RandomUtils;
@@ -16,7 +16,6 @@ import uk.gov.pay.connector.refund.dao.RefundDao;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
-import uk.gov.pay.connector.tasks.service.ParityCheckService;
 
 import jakarta.inject.Inject;
 import java.util.List;

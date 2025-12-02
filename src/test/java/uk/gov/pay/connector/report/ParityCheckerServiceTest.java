@@ -32,6 +32,7 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 import uk.gov.pay.connector.tasks.service.ChargeParityChecker;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
+import uk.gov.pay.connector.tasks.service.ParityCheckerService;
 import uk.gov.pay.connector.tasks.service.RefundParityChecker;
 
 import java.time.ZoneOffset;

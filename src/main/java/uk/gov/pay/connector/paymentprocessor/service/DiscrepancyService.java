@@ -10,7 +10,6 @@ import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
-import uk.gov.pay.connector.report.model.GatewayStatusComparison;
 
 import jakarta.inject.Inject;
 import java.time.Duration;
