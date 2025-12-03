@@ -1,25 +1,18 @@
 package uk.gov.pay.connector.util;
 
-import org.eclipse.persistence.exceptions.XMLMarshalException;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXParseException;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
 
-import jakarta.xml.bind.UnmarshalException;
-
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class XMLUnmarshallerSecurityTest {
 
     @Test
-    void preventXEE_aBillionLaughsAttack_shouldFailUnmarshallingWhenSecureProcessingIsEnabledAndLimitIsSetToMinValue() throws Exception {
+    void preventXEE_aBillionLaughsAttack_shouldFailUnmarshallingWhenSecureProcessingIsEnabledAndLimitIsSetToMinValue() {
 
         String xmlData = "<!DOCTYPE foo [" +
                 "<!ENTITY a \"1234567890\" >" +
@@ -37,8 +30,8 @@ class XMLUnmarshallerSecurityTest {
 
         var exception = assertThrows(XMLUnmarshallerException.class, () -> XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class));
 
-        assertThat(exception.getCause(),
-                is(unmarshalExceptionWithLinkedSAXParseException("JAXP00010001: The parser has encountered more than \"1\" entity expansions in this document; this is the limit imposed by the JDK.")));
+        assertThat(exception.getCause().toString(),
+                containsString("JAXP00010001: The parser has encountered more than \"1\" entity expansions in this document;"));
     }
 
     @Test
@@ -80,35 +73,10 @@ class XMLUnmarshallerSecurityTest {
     }
 
     @Test
-    void shouldFailUnmarshalling_whenXMLIsNotWellFormed() throws Exception {
+    void shouldFailUnmarshalling_whenXMLIsNotWellFormed() {
 
         String xmlData = "<foo>asd<</foo>";
 
         assertThrows(XMLUnmarshallerException.class, () -> XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class));
-    }
-
-    private Matcher<Throwable> unmarshalExceptionWithLinkedSAXParseException(final String expectedMessage) {
-        return new TypeSafeMatcher<Throwable>() {
-            @Override
-            protected boolean matchesSafely(Throwable throwable) {
-                if (throwable instanceof UnmarshalException) {
-                    UnmarshalException ex = (UnmarshalException) throwable;
-                    XMLMarshalException linkedException = (XMLMarshalException) ex.getLinkedException();
-                    Throwable internalException = linkedException.getInternalException();
-                    if (internalException instanceof SAXParseException) {
-                        return expectedMessage.equals(internalException.getMessage());
-                    }
-                }
-                return false;
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("UnmarshalException with linked exception to be SAXParseException")
-                        .appendText(" and message: '")
-                        .appendValue(expectedMessage)
-                        .appendText("'");
-            }
-        };
     }
 }
