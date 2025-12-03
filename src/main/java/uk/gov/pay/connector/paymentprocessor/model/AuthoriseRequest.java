@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.Objects;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static uk.gov.pay.connector.common.validator.AuthCardDetailsValidator.isBetween3To4Digits;
@@ -24,27 +25,27 @@ import static uk.gov.service.payments.commons.model.CardExpiryDate.CARD_EXPIRY_D
 public class AuthoriseRequest {
 
     @NotBlank(message = "Missing mandatory attribute: one_time_token")
-    @Schema(example = "123abc123", required = true,
+    @Schema(example = "123abc123", requiredMode = REQUIRED,
             description = "the one time token provided in the `auth_url_post` link of the create payment API response")
     private String oneTimeToken;
 
     @NotBlank(message = "Missing mandatory attribute: card_number")
     @Length(min = 12, max = 19, message = "Invalid attribute value: card_number. Must be between {min} and {max} characters long")
-    @Schema(example = "4242424242424242", minLength = 12, maxLength = 19, required = true)
+    @Schema(example = "4242424242424242", minLength = 12, maxLength = 19, requiredMode = REQUIRED)
     private String cardNumber;
 
     @NotBlank(message = "Missing mandatory attribute: cvc")
     @Length(min = 3, max = 4, message = "Invalid attribute value: cvc. Must be between {min} and {max} characters long")
-    @Schema(example = "123", minLength = 3, maxLength = 4, required = true)
+    @Schema(example = "123", minLength = 3, maxLength = 4, requiredMode = REQUIRED)
     private String cvc;
 
     @NotBlank(message = "Missing mandatory attribute: expiry_date")
-    @Schema(example = "01/99", minLength = 5, maxLength = 5, description = "5 character string in MM/YY format", required = true)
+    @Schema(example = "01/99", minLength = 5, maxLength = 5, description = "5 character string in MM/YY format", requiredMode = REQUIRED)
     private String expiryDate;
 
     @NotBlank(message = "Missing mandatory attribute: cardholder_name")
     @Length(min = 1, max = 255, message = "Invalid attribute value: cardholder_name. Must be less than or equal to {max} characters length")
-    @Schema(example = "Joe B", maxLength = 255, description = "Cardholder name", required = true)
+    @Schema(example = "Joe B", maxLength = 255, description = "Cardholder name", requiredMode = REQUIRED)
     private String cardholderName;
 
     public AuthoriseRequest() {

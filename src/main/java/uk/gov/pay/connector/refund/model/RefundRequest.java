@@ -3,6 +3,8 @@ package uk.gov.pay.connector.refund.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 /**
  * The refund_amount_available field is a mechanism that acts as idempotency-lite, which is especially important when 
  * performing partial refunds. By having the consumer specify the amount available to refund at the time of the call, 
@@ -33,11 +35,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class RefundRequest {
 
     @JsonProperty("amount")
-    @Schema(example = "3444", required = true, description = "Amount to refund in pence")
+    @Schema(example = "3444", requiredMode = REQUIRED, description = "Amount to refund in pence")
     private long amount;
 
     @JsonProperty("refund_amount_available")
-    @Schema(example = "30000", required = true, description = "Total amount still available before issuing the refund")
+    @Schema(example = "30000", requiredMode = REQUIRED, description = "Total amount still available before issuing the refund")
     private long amountAvailableForRefund;
 
     @JsonProperty("user_external_id")

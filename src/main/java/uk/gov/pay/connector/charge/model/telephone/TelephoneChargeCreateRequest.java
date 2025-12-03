@@ -13,19 +13,21 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
+
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class TelephoneChargeCreateRequest {
 
     @NotNull(message = "Field [amount] cannot be null")
-    @Schema(example = "100", description = "Amount in pence", required = true, maximum = "10000000")
+    @Schema(example = "100", description = "Amount in pence", requiredMode = REQUIRED, maximum = "10000000")
     private Long amount;
 
     @NotNull(message = "Field [reference] cannot be null")
-    @Schema(example = "payment reference", description = "service payment reference", required = true, maxLength = 255)
+    @Schema(example = "payment reference", description = "service payment reference", requiredMode = REQUIRED, maxLength = 255)
     private String reference;
 
     @NotNull(message = "Field [description] cannot be null")
-    @Schema(example = "payment description", description = "The payment description", required = true, maxLength = 255)
+    @Schema(example = "payment description", description = "The payment description", requiredMode = REQUIRED, maxLength = 255)
     private String description;
 
     @ValidZonedDateTime(message = "Field [created_date] must be a valid ISO-8601 time and date format")
@@ -39,11 +41,11 @@ public class TelephoneChargeCreateRequest {
     private String authorisedDate;
 
     @NotNull(message = "Field [processor_id] cannot be null")
-    @Schema(example = "12345", description = "unique supplier internal reference number associated with the payment", required = true)
+    @Schema(example = "12345", description = "unique supplier internal reference number associated with the payment", requiredMode = REQUIRED)
     private String processorId;
 
     @NotNull(message = "Field [provider_id] cannot be null")
-    @Schema(example = "45678", description = "Gateway transaction ID", required = true)
+    @Schema(example = "45678", description = "Gateway transaction ID", requiredMode = REQUIRED)
     private String providerId;
 
     @Schema(example = "91011", description = "Authorisation ID received from payment provider when the payment was authorised", maxLength = 50)
@@ -51,7 +53,7 @@ public class TelephoneChargeCreateRequest {
 
     @NotNull(message = "Field [payment_outcome] cannot be null")
     @Valid
-    @Schema(description = "Outcome after the payment has been authorised with payment provider", required = true)
+    @Schema(description = "Outcome after the payment has been authorised with payment provider", requiredMode = REQUIRED)
     private PaymentOutcome paymentOutcome;
 
     @ValidCardBrand(message = "Field [card_type] must be either master-card, visa, maestro, diners-club, american-express or jcb")

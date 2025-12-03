@@ -24,6 +24,7 @@ import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
 import java.util.Optional;
 
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 import static java.util.function.Predicate.not;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -34,21 +35,21 @@ public class ChargeCreateRequest {
     @Min(value = 0, message = "Field [amount] can be between 0 and 10_000_000")
     @Max(value = 10_000_000, message = "Field [amount] can be between 0 and 10_000_000")
     @JsonProperty("amount")
-    @Schema(description = "Amount in pence", example = "100", required = true,
+    @Schema(description = "Amount in pence", example = "100", requiredMode = REQUIRED,
             minimum = "0", maximum = "10000000")
     private Long amount;
 
     @NotNull(message = "Field [description] cannot be null")
     @Length(max = 255, message = "Field [description] can have a size between 0 and 255")
     @JsonProperty("description")
-    @Schema(example = "payment description", description = "The payment description (shown to the user on the payment pages)", required = true,
+    @Schema(example = "payment description", description = "The payment description (shown to the user on the payment pages)", requiredMode = REQUIRED,
             maximum = "255")
     private String description;
 
     @NotNull(message = "Field [reference] cannot be null")
     @Length(max = 255, message = "Field [reference] can have a size between 0 and 255")
     @JsonProperty("reference")
-    @Schema(example = "payment reference", description = "The reference issued by the government service for this payment", required = true,
+    @Schema(example = "payment reference", description = "The reference issued by the government service for this payment",requiredMode = REQUIRED,
             maximum = "255")
     private String reference;
 

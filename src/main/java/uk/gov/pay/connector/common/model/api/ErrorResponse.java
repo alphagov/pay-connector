@@ -9,6 +9,7 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
+import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.NOT_REQUIRED;
 
 @JsonInclude(Include.NON_NULL)
 public record ErrorResponse (
@@ -21,7 +22,7 @@ public record ErrorResponse (
     List<String> messages,
     
     @JsonProperty("reason")
-    @Schema(required = false, example = "Optional - ex: amount_not_available")
+    @Schema(requiredMode = NOT_REQUIRED, example = "Optional - ex: amount_not_available")
     String reason
 ) {
     public ErrorResponse(ErrorIdentifier identifier, List<String> messages) {
