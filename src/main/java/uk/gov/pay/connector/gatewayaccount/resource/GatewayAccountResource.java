@@ -433,7 +433,7 @@ public class GatewayAccountResource {
                             return Response.ok().build();
                         }
                 )
-                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @PATCH
@@ -691,16 +691,19 @@ public class GatewayAccountResource {
                     }
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
-                    } catch (BadRequestException | NotFoundException ex) {
+                    } catch (BadRequestException ex) {
                         logSwitchingProviderError(ex.getMessage());
-                        return ex instanceof BadRequestException ? badRequestResponse(ex.getMessage()) : notFoundResponse(ex.getMessage());
+                        return badRequestResponse(ex.getMessage());
+                    } catch (NotFoundException ex) {
+                        logSwitchingProviderError(ex.getMessage());
+                        return notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
                 })
-                .orElseThrow(() -> new GatewayAccountNotFoundException(String.format("The gateway account id [%s] does not exist.", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
-    private static void logSwitchingProviderError(String ex) {
-        logger.error(SWITCHING_PROVIDER_ERROR, ex);
+    private static void logSwitchingProviderError(String exceptionMessage) {
+        logger.error(SWITCHING_PROVIDER_ERROR, exceptionMessage);
     }
 }
