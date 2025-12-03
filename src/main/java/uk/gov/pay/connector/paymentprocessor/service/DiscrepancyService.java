@@ -12,6 +12,8 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import jakarta.inject.Inject;
+import uk.gov.pay.connector.paymentprocessor.model.GatewayStatusComparison;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
