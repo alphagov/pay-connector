@@ -76,6 +76,24 @@ import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_OUT_OF_SCOPE;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_REJECTED;
+import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
+import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
+import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
+import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_HONOURED;
+import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_OUT_OF_SCOPE;
+import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_REJECTED;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_FALSE;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_TRUE;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_NO_AUTHORISATION_SUMMARY;
+import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_HAS_EXEMPTION_WITH_REQUESTED_FALSE;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_HONOURED;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
+import static uk.gov.pay.connector.tasks.service.LedgerExemptionState.LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_REJECTED;
 import static uk.gov.pay.connector.wallets.WalletType.APPLE_PAY;
 import static uk.gov.pay.connector.wallets.WalletType.GOOGLE_PAY;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
@@ -407,26 +425,41 @@ class ChargeParityCheckerTest {
     
     @ParameterizedTest
     @MethodSource
-    void parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepencies(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction, String fieldName) {
+    void parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepancies(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction, String fieldName,
+                                                                     ConnectorAuthorisationSummaryState connectorAuthorisationSummaryState, LedgerAuthorisationSummaryState ledgerAuthorisationSummaryState) {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, ledgerTransaction);
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector " + fieldName));
+        StringBuilder expectedLogMessage = new StringBuilder("Field value does not match between ledger and connector [field_name=").append(fieldName).append(']');
+        if (connectorAuthorisationSummaryState != null || ledgerAuthorisationSummaryState != null) {
+            expectedLogMessage.append(" [calculated_states=").append(connectorAuthorisationSummaryState).append(",").append(ledgerAuthorisationSummaryState).append(']');
+        }
+        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage.toString()));
     }
 
-    private static Stream<Arguments> parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepencies() {
+    private static Stream<Arguments> parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepancies() {
         return Stream.of(
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE, "[field_name=authorisation_summary.three_d_secure.required]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_AUTHORISATION_SUMMARY_NULL_3D_SECURE, "[field_name=authorisation_summary.three_d_secure.required]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_DISCREPANCY, "[field_name=authorisation_summary.three_d_secure.required]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_NULL, "[field_name=authorisation_summary.three_d_secure.required]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_DISCREPANCY, "[field_name=authorisation_summary.three_d_secure.required]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_CONFLICT, "[field_name=authorisation_summary.three_d_secure.required]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_CONFLICT, "[field_name=authorisation_summary.three_d_secure.required]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE, "[field_name=authorisation_summary.three_d_secure.version]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_TRUE, "[field_name=authorisation_summary.three_d_secure.version]"),
-                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_BUT_3DS_DETAILS_NULL_FROM_CHARGE, "[field_name=authorisation_summary.three_d_secure.version]")
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_NULL_AUTHORISATION_SUMMARY_AND_3DS_DETAILS_FROM_CHARGE,
+                        "authorisation_summary.three_d_secure.required", CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS, LEDGER_HAS_NO_AUTHORISATION_SUMMARY),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_AUTHORISATION_SUMMARY_NULL_3D_SECURE,
+                        "authorisation_summary.three_d_secure.required", CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS, LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_DISCREPANCY,
+                        "authorisation_summary.three_d_secure.required", CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS, LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_DETAILS_BUT_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_NULL,
+                        "authorisation_summary.three_d_secure.required", CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS, LEDGER_HAS_SOMETHING_COMPLETELY_DIFFERENT),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_NULL, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_DISCREPANCY,
+                        "authorisation_summary.three_d_secure.required", CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS, LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_FALSE_CONFLICT,
+                        "authorisation_summary.three_d_secure.required", CONNECTOR_HAS_REQUIRES_3DS_TRUE, LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE_CONFLICT,
+                        "authorisation_summary.three_d_secure.required", CONNECTOR_HAS_REQUIRES_3DS_FALSE, LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_FALSE,
+                        "authorisation_summary.three_d_secure.version", null, null),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_TRUE,
+                        "authorisation_summary.three_d_secure.version", null, null),
+                Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_FALSE, LEDGER_TRANSACTION_WITH_3D_SECURE_VERSION_MISMATCH_BUT_3DS_DETAILS_NULL_FROM_CHARGE,
+                        "authorisation_summary.three_d_secure.version", null, null)
         );
     }
     
@@ -533,7 +566,10 @@ class ChargeParityCheckerTest {
             Exemption3dsType chargeExemption3dsType,
             Exemption3ds chargeExemption3ds,
             String transactionExemptionOutcomeResult,
-            Boolean setRequested
+            Boolean setRequested,
+            Connector3dsExemptionResultState  connectorExemption3dsState,
+            Connector3dsExemptionRequestedState connectorExemption3DsRequestedState,
+            LedgerExemptionState ledgerExemptionState
     ) {
         Exemption exemption = new Exemption(setRequested, "corporate", new ExemptionOutcome(transactionExemptionOutcomeResult));
 
@@ -547,17 +583,29 @@ class ChargeParityCheckerTest {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
+        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        String expectedLogMessage = "Field value does not match between ledger and connector [field_name=exemption] " +
+                "[calculated_states=" + connectorExemption3dsState + ',' + connectorExemption3DsRequestedState + ',' + ledgerExemptionState + ']';
+        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatch() {
         return Stream.of(
-                Arguments.of(null, EXEMPTION_HONOURED, "rejected", true),
-                Arguments.of(null, EXEMPTION_REJECTED, "honoured", true),
-                Arguments.of(OPTIMISED, EXEMPTION_OUT_OF_SCOPE, "honoured", true),
-                Arguments.of(CORPORATE, EXEMPTION_HONOURED, "out of scope", true),
-                Arguments.of(OPTIMISED, EXEMPTION_REJECTED, "not requested", false),
-                Arguments.of(OPTIMISED, EXEMPTION_HONOURED, "out of scope", true),
-                Arguments.of(null, EXEMPTION_HONOURED, "out of scope", true)
+                Arguments.of(null, EXEMPTION_HONOURED, "rejected", true,
+                        CONNECTOR_HAS_EXEMPTION_RESULT_HONOURED, CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_REJECTED),
+                Arguments.of(null, EXEMPTION_REJECTED, "honoured", true,
+                        CONNECTOR_HAS_EXEMPTION_RESULT_REJECTED, CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_HONOURED),
+                Arguments.of(OPTIMISED, EXEMPTION_OUT_OF_SCOPE, "honoured", true,
+                        CONNECTOR_HAS_EXEMPTION_RESULT_OUT_OF_SCOPE, CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_HONOURED),
+                Arguments.of(CORPORATE, EXEMPTION_HONOURED, "out of scope", true,
+                        CONNECTOR_HAS_EXEMPTION_RESULT_HONOURED, CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE),
+                Arguments.of(OPTIMISED, EXEMPTION_REJECTED, "not requested", false,
+                        CONNECTOR_HAS_EXEMPTION_RESULT_REJECTED, CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_FALSE),
+                Arguments.of(OPTIMISED, EXEMPTION_HONOURED, "out of scope", true,
+                        CONNECTOR_HAS_EXEMPTION_RESULT_HONOURED, CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE),
+                Arguments.of(null, EXEMPTION_HONOURED, "out of scope", true,
+                        CONNECTOR_HAS_EXEMPTION_RESULT_HONOURED, CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE)
         );
     }
 

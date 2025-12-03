@@ -345,7 +345,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
             assertThat(response.getStatus(), is(404));
 
             String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
-            assertThat(errorMessage, is("The gateway account id [1] does not exist."));
+            assertThat(errorMessage, is("Gateway Account with id [1] not found."));
         }
 
         @Test
