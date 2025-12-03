@@ -1,17 +1,19 @@
 package uk.gov.pay.connector.util;
 
+import org.eclipse.persistence.exceptions.XMLMarshalException;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshallerException;
 
 import jakarta.xml.bind.UnmarshalException;
 
-import static org.hamcrest.CoreMatchers.anyOf;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class XMLUnmarshallerSecurityTest {
@@ -33,41 +35,10 @@ class XMLUnmarshallerSecurityTest {
                 "]> " +
                 "<foo>&mrdanger;</foo>";
 
-        XMLUnmarshallerException exception = assertThrows(XMLUnmarshallerException.class,
-                () -> XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class));
+        var exception = assertThrows(XMLUnmarshallerException.class, () -> XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class));
 
-        Throwable cause = exception.getCause() != null ? exception.getCause() : exception;
-
-        if (cause instanceof UnmarshalException) {
-            Throwable linked = ((UnmarshalException) cause).getLinkedException();
-            if (linked == null) {
-                linked = cause.getCause();
-            }
-
-            // Walk cause chain to see if a SAX exception is present
-            boolean hasSax = false;
-            Throwable t = linked;
-            while (t != null) {
-                if (t instanceof SAXParseException || t instanceof SAXException) {
-                    hasSax = true;
-                    break;
-                }
-                t = t.getCause();
-            }
-
-            // Also be tolerant of wrapper implementations (EclipseLink) that embed the SAX info in messages/toString
-            String linkedText = linked == null ? "" : (linked.getMessage() != null ? linked.getMessage() : linked.toString());
-
-            assertThat(hasSax || linkedText.contains("JAXP00010001") || linkedText.contains("entity expansion") || linkedText.contains("entity expansions") || linkedText.contains("Internal Exception"), is(true));
-        } else {
-            // Fallback: check message on the cause for the same indicators
-            String msg = cause.getMessage() == null ? "" : cause.getMessage();
-            assertThat(msg, anyOf(
-                    containsString("JAXP00010001"),
-                    containsString("entity expansion"),
-                    containsString("entity expansions")
-            ));
-        }
+        assertThat(exception.getCause(),
+                is(unmarshalExceptionWithLinkedSAXParseException("JAXP00010001: The parser has encountered more than \"1\" entity expansions in this document; this is the limit imposed by the JDK.")));
     }
 
     @Test
@@ -81,6 +52,7 @@ class XMLUnmarshallerSecurityTest {
         XMLUnmarshallingAttackTest unmarshall = XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class);
 
         assertThat(unmarshall.getValue(), is(""));
+
     }
 
     @Test
@@ -113,5 +85,30 @@ class XMLUnmarshallerSecurityTest {
         String xmlData = "<foo>asd<</foo>";
 
         assertThrows(XMLUnmarshallerException.class, () -> XMLUnmarshaller.unmarshall(xmlData, XMLUnmarshallingAttackTest.class));
+    }
+
+    private Matcher<Throwable> unmarshalExceptionWithLinkedSAXParseException(final String expectedMessage) {
+        return new TypeSafeMatcher<Throwable>() {
+            @Override
+            protected boolean matchesSafely(Throwable throwable) {
+                if (throwable instanceof UnmarshalException) {
+                    UnmarshalException ex = (UnmarshalException) throwable;
+                    XMLMarshalException linkedException = (XMLMarshalException) ex.getLinkedException();
+                    Throwable internalException = linkedException.getInternalException();
+                    if (internalException instanceof SAXParseException) {
+                        return expectedMessage.equals(internalException.getMessage());
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("UnmarshalException with linked exception to be SAXParseException")
+                        .appendText(" and message: '")
+                        .appendValue(expectedMessage)
+                        .appendText("'");
+            }
+        };
     }
 }
