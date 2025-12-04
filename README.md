@@ -9,8 +9,6 @@ examples.
 
 [View the API specification for connector in Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/alphagov/pay-connector/master/openapi/connector_spec.yaml).
 
-Alternatively, docs can be generated using [Pay API Docs generator](https://github.com/alphagov/pay-api-docs-generator)
-
 ## Environment Variables
 
 | Variable                                                        | Default                                    | Purpose                                                                                                                                                                                                                                                                                                                              |
