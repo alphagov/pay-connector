@@ -54,10 +54,6 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.DATA_MI
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.EXISTS_IN_LEDGER;
 import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING_IN_LEDGER;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getTotalAmountFor;
-import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_FALSE;
-import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
-import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS;
-import static uk.gov.pay.connector.tasks.service.ConnectAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_TRUE;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionRequestedState.CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_OPTIMISED;
@@ -66,6 +62,10 @@ import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultStat
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_NULL;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_OUT_OF_SCOPE;
 import static uk.gov.pay.connector.tasks.service.Connector3dsExemptionResultState.CONNECTOR_HAS_EXEMPTION_RESULT_REJECTED;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_FALSE;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS;
+import static uk.gov.pay.connector.tasks.service.ConnectorAuthorisationSummaryState.CONNECTOR_HAS_REQUIRES_3DS_TRUE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE;
 import static uk.gov.pay.connector.tasks.service.LedgerAuthorisationSummaryState.LEDGER_HAS_NO_AUTHORISATION_SUMMARY;
@@ -342,7 +342,7 @@ public class ChargeParityChecker {
                 ofNullable(transaction.getRefundSummary()).map(ChargeResponse.RefundSummary::getStatus).orElse(null), "refund_summary.status");
     }
 
-    private static ConnectAuthorisationSummaryState calculateConnectorAuthorisationSummaryState(ChargeEntity chargeEntity) {
+    private static ConnectorAuthorisationSummaryState calculateConnectorAuthorisationSummaryState(ChargeEntity chargeEntity) {
         if (chargeEntity.getRequires3ds() == null) {
             if (chargeEntity.get3dsRequiredDetails() == null) {
                 return CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS;
@@ -377,23 +377,20 @@ public class ChargeParityChecker {
             return true;
         }
 
-        ConnectAuthorisationSummaryState connectorAuthorisationSummaryState = calculateConnectorAuthorisationSummaryState(chargeEntity);
+        ConnectorAuthorisationSummaryState connectorAuthorisationSummaryState = calculateConnectorAuthorisationSummaryState(chargeEntity);
         LedgerAuthorisationSummaryState ledgerAuthorisationSummaryState = calculateLedgerAuthorisationSummaryState(transaction);
 
         return switch (connectorAuthorisationSummaryState) {
             case CONNECTOR_HAS_REQUIRES_3DS_NULL_AND_NO_3DS_REQUIRED_DETAILS -> {
                 if (ledgerAuthorisationSummaryState != LEDGER_HAS_NO_AUTHORISATION_SUMMARY) {
-                    logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary.three_d_secure.required",
-                            kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
+                    log3dsRequiredMismatch(connectorAuthorisationSummaryState, ledgerAuthorisationSummaryState);
                     yield false;
                 }
                 yield true;
             }
             case CONNECTOR_HAS_REQUIRES_3DS_FALSE -> {
                 if (ledgerAuthorisationSummaryState != LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_FALSE) {
-                    logger.info("Field value does not match between ledger and connector [field_name={}]",
-                            "authorisation_summary.three_d_secure.required",
-                            kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
+                    log3dsRequiredMismatch(connectorAuthorisationSummaryState, ledgerAuthorisationSummaryState);
                     yield false;
                 }
                 yield compareVersions(chargeEntity, transaction);
@@ -401,13 +398,18 @@ public class ChargeParityChecker {
 
             case CONNECTOR_HAS_REQUIRES_3DS_TRUE, CONNECTOR_HAS_REQUIRES_3DS_NULL_BUT_HAS_3DS_REQUIRED_DETAILS -> {
                 if (ledgerAuthorisationSummaryState != LEDGER_HAS_AUTHORISATION_SUMMARY_WITH_THREE_D_S_REQUIRED_TRUE) {
-                    logger.info("Field value does not match between ledger and connector [field_name={}]", "authorisation_summary.three_d_secure.required",
-                            kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
+                    log3dsRequiredMismatch(connectorAuthorisationSummaryState, ledgerAuthorisationSummaryState);
                     yield false;
                 }
                 yield compareVersions(chargeEntity, transaction);
             }
         };
+    }
+
+    private static void log3dsRequiredMismatch(ConnectorAuthorisationSummaryState connectorAuthorisationSummaryState, LedgerAuthorisationSummaryState ledgerAuthorisationSummaryState) {
+        logger.info("Field value does not match between ledger and connector [field_name={}] [calculated_states={},{}]",
+                "authorisation_summary.three_d_secure.required", connectorAuthorisationSummaryState, ledgerAuthorisationSummaryState,
+                kv(FIELD_NAME, "authorisation_summary.three_d_secure.required"));
     }
 
     private static Connector3dsExemptionRequestedState calculateConnectorExemption3dsRequested(ChargeEntity chargeEntity) {
@@ -457,9 +459,16 @@ public class ChargeParityChecker {
 
     private boolean matchExemption3dsFields(ChargeEntity chargeEntity, LedgerTransaction transaction) {
         Connector3dsExemptionResultState connectorExemption3dsState = calculateConnectorExemption3ds(chargeEntity);
-        Connector3dsExemptionRequestedState connectorExemption3DsRequestedState = calculateConnectorExemption3dsRequested(chargeEntity);
+        Connector3dsExemptionRequestedState connectorExemption3dsRequestedState = calculateConnectorExemption3dsRequested(chargeEntity);
         LedgerExemptionState ledgerExemptionState = calculateLedgerExemptionState(transaction);
-        return validCombinations.contains(new Exemption3dsStateCombination(connectorExemption3DsRequestedState, connectorExemption3dsState, ledgerExemptionState));
+        boolean stateCombinationIsValid = validCombinations.contains(new Exemption3dsStateCombination(connectorExemption3dsRequestedState, connectorExemption3dsState, ledgerExemptionState));
+        if (!stateCombinationIsValid) {
+            logger.info("Field value does not match between ledger and connector [field_name={}] [calculated_states={},{},{}]",
+                    "exemption", connectorExemption3dsState, connectorExemption3dsRequestedState, ledgerExemptionState,
+                    kv(FIELD_NAME, "exemption"));
+            return false;
+        }
+        return true;
     }
 
     private boolean compareVersions(ChargeEntity chargeEntity, LedgerTransaction transaction) {

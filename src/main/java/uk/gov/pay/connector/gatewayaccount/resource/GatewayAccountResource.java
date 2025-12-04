@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.jersey.PATCH;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,12 +62,10 @@ import java.util.stream.Collectors;
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY;
 import static java.lang.String.format;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static uk.gov.pay.connector.util.ResponseUtil.badRequestResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsInvalidSizeResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.fieldsMissingResponse;
 import static uk.gov.pay.connector.util.ResponseUtil.notFoundResponse;
-import static uk.gov.pay.connector.util.ResponseUtil.successResponseWithEntity;
 
 @Path("/")
 public class GatewayAccountResource {
@@ -78,6 +75,7 @@ public class GatewayAccountResource {
     private static final String SERVICE_NAME_FIELD_NAME = "service_name";
     private static final String REQUIRES_3DS_FIELD_NAME = "toggle_3ds";
     private static final String CARD_TYPES_FIELD_NAME = "card_types";
+    private static final String INVALID_ACCOUNT_PSP_SWITCH_ERROR = "Account is not configured to switch PSP or already switched PSP.";
     private static final int SERVICE_NAME_FIELD_LENGTH = 50;
     private final GatewayAccountService gatewayAccountService;
     private final CardTypeDao cardTypeDao;
@@ -153,7 +151,7 @@ public class GatewayAccountResource {
                             ))
             }
     )
-    public Response searchGatewayAccounts(
+    public GatewayAccountsListDTO searchGatewayAccounts(
             @Valid @BeanParam
             @Parameter(in = QUERY, schema = @Schema(implementation = GatewayAccountSearchParams.class))
             GatewayAccountSearchParams gatewayAccountSearchParams,
@@ -161,15 +159,13 @@ public class GatewayAccountResource {
         return getGatewayAccounts(gatewayAccountSearchParams, uriInfo);
     }
 
-    private Response getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
+    private GatewayAccountsListDTO getGatewayAccounts(@BeanParam GatewayAccountSearchParams gatewayAccountSearchParams, @Context UriInfo uriInfo) {
         logger.info(format("Searching gateway accounts by parameters %s", gatewayAccountSearchParams.toString()));
 
         List<GatewayAccountResponse> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
         gatewayAccounts.forEach(account -> account.addLink("self", buildUri(uriInfo, account.getAccountId())));
 
-        return Response
-                .ok(GatewayAccountsListDTO.of(gatewayAccounts))
-                .build();
+        return GatewayAccountsListDTO.of(gatewayAccounts);
     }
 
     private URI buildUri(UriInfo uriInfo, long accountId) {
@@ -221,11 +217,11 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getGatewayAccountAcceptedCardTypes(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long accountId) {
+    public Map<String, List<CardTypeEntity>> getGatewayAccountAcceptedCardTypes(@Parameter(example = "1", description = "Gateway account ID") @PathParam("accountId") Long accountId) {
         logger.info("Getting accepted card types for gateway account with account id {}", accountId);
         return gatewayAccountService.getGatewayAccount(accountId)
-                .map(gatewayAccount -> successResponseWithEntity(ImmutableMap.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
-                .orElseGet(() -> notFoundResponse(format("Account with id %s not found.", accountId)));
+                .map(gatewayAccount -> Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
+                .orElseThrow(() -> new GatewayAccountNotFoundException(accountId));
     }
 
     @GET
@@ -250,12 +246,12 @@ public class GatewayAccountResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getAcceptedCardTypesByServiceIdAndAccountType(
+    public Map<String, List<CardTypeEntity>> getAcceptedCardTypesByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
         logger.info("Getting accepted card types for service id {}, account type {}", serviceId, accountType.toString());
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .map(gatewayAccount -> successResponseWithEntity(Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes())))
+                .map(gatewayAccount -> Map.of(CARD_TYPES_FIELD_NAME, gatewayAccount.getCardTypes()))
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
@@ -328,7 +324,7 @@ public class GatewayAccountResource {
         return gatewayAccountServicesFactory.getUpdateService()
                 .doPatch(serviceId, accountType, JsonPatchRequest.from(payload))
                 .map(gatewayAccount -> Response.ok().build())
-                .orElseGet(() -> Response.status(NOT_FOUND).build());
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
     }
 
     @PATCH
@@ -362,7 +358,7 @@ public class GatewayAccountResource {
         return gatewayAccountServicesFactory.getUpdateService()
                 .doPatch(gatewayAccountId, JsonPatchRequest.from(payload))
                 .map(gatewayAccount -> Response.ok().build())
-                .orElseGet(() -> Response.status(NOT_FOUND).build());
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @PATCH
@@ -437,8 +433,7 @@ public class GatewayAccountResource {
                             return Response.ok().build();
                         }
                 )
-                .orElseGet(() ->
-                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @PATCH
@@ -514,8 +509,7 @@ public class GatewayAccountResource {
                             return Response.ok().build();
                         }
                 )
-                .orElseGet(() ->
-                        notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @POST
@@ -552,7 +546,7 @@ public class GatewayAccountResource {
 
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccountEntity -> updateGatewayAccountAcceptedCardTypes(cardTypeIds, gatewayAccountEntity))
-                .orElseGet(() -> notFoundResponse(format("The gateway account id '%s' does not exist", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
     }
 
     @POST
@@ -620,7 +614,7 @@ public class GatewayAccountResource {
     private List<String> extractNotFoundCardTypeIds(List<UUID> cardTypeIds, List<CardTypeEntity> cardTypeEntities) {
         List<UUID> foundIds = cardTypeEntities.stream()
                 .map(UuidAbstractEntity::getId)
-                .collect(Collectors.toList());
+                .toList();
 
         return cardTypeIds.stream()
                 .filter(cardTypeId -> !foundIds.contains(cardTypeId))
@@ -650,7 +644,7 @@ public class GatewayAccountResource {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceExternalId, accountType)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
-                        return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
+                        return badRequestResponse(INVALID_ACCOUNT_PSP_SWITCH_ERROR);
                     }
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
@@ -664,7 +658,7 @@ public class GatewayAccountResource {
                                     });
                         }
                     } catch (BadRequestException | NotFoundException ex) {
-                        logger.error(SWITCHING_PROVIDER_ERROR, ex.getMessage());
+                        logSwitchingProviderError(ex.getMessage());
                         return ex instanceof BadRequestException ? badRequestResponse(ex.getMessage()) : notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
@@ -693,19 +687,23 @@ public class GatewayAccountResource {
         return gatewayAccountService.getGatewayAccount(gatewayAccountId)
                 .map(gatewayAccountEntity -> {
                     if (!gatewayAccountEntity.isProviderSwitchEnabled()) {
-                        return badRequestResponse("Account is not configured to switch PSP or already switched PSP.");
+                        return badRequestResponse(INVALID_ACCOUNT_PSP_SWITCH_ERROR);
                     }
                     try {
                         gatewayAccountSwitchPaymentProviderService.switchPaymentProviderForAccount(gatewayAccountEntity, request);
                     } catch (BadRequestException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        logSwitchingProviderError(ex.getMessage());
                         return badRequestResponse(ex.getMessage());
                     } catch (NotFoundException ex) {
-                        logger.error("Switching Payment Provider failure: {}", ex.getMessage());
+                        logSwitchingProviderError(ex.getMessage());
                         return notFoundResponse(ex.getMessage());
                     }
                     return Response.ok().build();
                 })
-                .orElseGet(() -> notFoundResponse(format("The gateway account id [%s] does not exist.", gatewayAccountId)));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(gatewayAccountId));
+    }
+
+    private static void logSwitchingProviderError(String exceptionMessage) {
+        logger.error(SWITCHING_PROVIDER_ERROR, exceptionMessage);
     }
 }

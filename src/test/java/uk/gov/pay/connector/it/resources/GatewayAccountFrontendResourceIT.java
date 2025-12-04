@@ -426,7 +426,7 @@ public class GatewayAccountFrontendResourceIT {
                     .then()
                     .contentType(JSON)
                     .statusCode(404)
-                    .body("message", contains("The gateway account id '111111111' does not exist"))
+                    .body("message", contains("Gateway Account with id [111111111] not found."))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
     }
