@@ -4,7 +4,7 @@ The GOV.UK Pay Connector in Java (Dropwizard).
 
 ## API Specification
 
-The [Open API Specification](/openapi/connector_spec.yaml) provides details on the paths and operations including
+The [OpenAPI Specification](/openapi/connector_spec.yaml) provides details on the paths and operations including
 examples.
 
 [View the API specification for connector in Swagger Editor](https://editor.swagger.io/?url=https://raw.githubusercontent.com/alphagov/pay-connector/master/openapi/connector_spec.yaml).
