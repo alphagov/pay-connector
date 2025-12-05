@@ -1,13 +1,13 @@
-package uk.gov.pay.connector.report.resource;
+package uk.gov.pay.connector.tasks.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import uk.gov.pay.connector.report.ParityCheckerService;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
+import uk.gov.pay.connector.tasks.service.ParityCheckerService;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

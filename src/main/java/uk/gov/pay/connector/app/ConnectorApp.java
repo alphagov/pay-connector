@@ -77,7 +77,7 @@ import uk.gov.pay.connector.queue.managed.StateTransitionMessageReceiver;
 import uk.gov.pay.connector.queue.managed.TaskQueueMessageReceiver;
 import uk.gov.pay.connector.refund.resource.RefundReversalResource;
 import uk.gov.pay.connector.refund.resource.RefundsResource;
-import uk.gov.pay.connector.report.resource.ParityCheckerResource;
+import uk.gov.pay.connector.tasks.resource.ParityCheckerResource;
 import uk.gov.pay.connector.token.exception.TokenNotFoundExceptionMapper;
 import uk.gov.pay.connector.token.resource.SecurityTokensResource;
 import uk.gov.pay.connector.usernotification.resource.EmailNotificationResource;

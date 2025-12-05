@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.pay.connector.paymentprocessor.service.DiscrepancyService;
-import uk.gov.pay.connector.report.model.GatewayStatusComparison;
+import uk.gov.pay.connector.paymentprocessor.model.GatewayStatusComparison;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.ws.rs.Consumes;
