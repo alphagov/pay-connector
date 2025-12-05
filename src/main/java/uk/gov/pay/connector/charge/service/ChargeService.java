@@ -1207,52 +1207,64 @@ public class ChargeService {
 
     private void checkAgreementOptions(ChargeCreateRequest chargeCreateRequest, GatewayAccountEntity gatewayAccount) {
         switch (chargeCreateRequest.getAuthorisationMode()) {
-            case AGREEMENT -> {
-                if (!gatewayAccount.isRecurringEnabled()) {
-                    throw new RecurringCardPaymentsNotAllowedException(
-                            "Attempt to use authorisation mode 'agreement' for gateway account " +
-                                    gatewayAccount.getId() +
-                                    ", which does not have recurring card payments enabled");
-                } else if (chargeCreateRequest.getAgreementId() == null) {
-                    throw new MissingMandatoryAttributeException("agreement_id");
-                } else if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
-                    throw new IncorrectAuthorisationModeForSavePaymentToAgreementException();
-                } else if (chargeCreateRequest.isMoto()) {
-                    throw new UnexpectedAttributeException("moto");
-                } else if (chargeCreateRequest.getEmail().isPresent()) {
-                    throw new UnexpectedAttributeException("email");
-                } else if (chargeCreateRequest.getPrefilledCardHolderDetails().isPresent()) {
-                    throw new UnexpectedAttributeException("prefilled_cardholder_details");
-                }
-            }
-            case WEB -> {
-                if (chargeCreateRequest.getAgreementId() != null) {
-                    if (!chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
-                        throw new UnexpectedAttributeException("agreement_id");
-                    } else if (!gatewayAccount.isRecurringEnabled()) {
-                        throw new RecurringCardPaymentsNotAllowedException(
-                                "Attempt to save payment instrument to agreement for gateway account " +
-                                        gatewayAccount.getId() +
-                                        ", which does not have recurring card payments enabled");
-                    }
-                } else {
-                    if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
-                        throw new ChargeException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified",
-                                GENERIC, HttpStatus.SC_BAD_REQUEST);
-                    } else if (chargeCreateRequest.getAgreementPaymentType().isPresent()) {
-                        throw new UnexpectedAttributeException("agreement_payment_type");
-                    }
-                }
-            }
+            case AGREEMENT -> checkAgreementMode(chargeCreateRequest, gatewayAccount);
+            case WEB -> checkWebMode(chargeCreateRequest, gatewayAccount);
             default -> {
-                if (chargeCreateRequest.getAgreementId() != null) {
+                if (hasAgreementId(chargeCreateRequest)) {
                     throw new UnexpectedAttributeException("agreement_id");
-                } else if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+                } 
+                
+                if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
                     throw new IncorrectAuthorisationModeForSavePaymentToAgreementException();
-                } else if (chargeCreateRequest.getAgreementPaymentType().isPresent()) {
+                } 
+                
+                if (chargeCreateRequest.getAgreementPaymentType().isPresent()) {
                     throw new UnexpectedAttributeException("agreement_payment_type");
                 }
             }
+        }
+    }
+
+    private void checkWebMode(ChargeCreateRequest chargeCreateRequest, GatewayAccountEntity gatewayAccount) {
+        if (hasAgreementId(chargeCreateRequest)) {
+            if (!chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+                throw new UnexpectedAttributeException("agreement_id");
+            } else if (!gatewayAccount.isRecurringEnabled()) {
+                throw new RecurringCardPaymentsNotAllowedException(
+                        "Attempt to save payment instrument to agreement for gateway account " +
+                                gatewayAccount.getId() +
+                                ", which does not have recurring card payments enabled");
+            }
+        } else {
+            if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+                throw new ChargeException("If [save_payment_instrument_to_agreement] is true, [agreement_id] must be specified",
+                        GENERIC, HttpStatus.SC_BAD_REQUEST);
+            } else if (chargeCreateRequest.getAgreementPaymentType().isPresent()) {
+                throw new UnexpectedAttributeException("agreement_payment_type");
+            }
+        }
+    }
+
+    private boolean hasAgreementId(ChargeCreateRequest chargeCreateRequest) {
+        return chargeCreateRequest.getAgreementId() != null;
+    }
+
+    private void checkAgreementMode(ChargeCreateRequest chargeCreateRequest, GatewayAccountEntity gatewayAccount) {
+        if (!gatewayAccount.isRecurringEnabled()) {
+            throw new RecurringCardPaymentsNotAllowedException(
+                    "Attempt to use authorisation mode 'agreement' for gateway account " +
+                            gatewayAccount.getId() +
+                            ", which does not have recurring card payments enabled");
+        } else if (chargeCreateRequest.getAgreementId() == null) {
+            throw new MissingMandatoryAttributeException("agreement_id");
+        } else if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
+            throw new IncorrectAuthorisationModeForSavePaymentToAgreementException();
+        } else if (chargeCreateRequest.isMoto()) {
+            throw new UnexpectedAttributeException("moto");
+        } else if (chargeCreateRequest.getEmail().isPresent()) {
+            throw new UnexpectedAttributeException("email");
+        } else if (chargeCreateRequest.getPrefilledCardHolderDetails().isPresent()) {
+            throw new UnexpectedAttributeException("prefilled_cardholder_details");
         }
     }
 
