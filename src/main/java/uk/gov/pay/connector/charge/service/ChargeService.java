@@ -323,7 +323,7 @@ public class ChargeService {
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, String idempotencyKey) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
 
-            checkReturnUrl(chargeRequest, accountId, gatewayAccount);
+            checkReturnUrl(chargeRequest, gatewayAccount);
 
             GatewayAccountCredentialsEntity gatewayAccountCredential =
                     getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
@@ -380,16 +380,16 @@ public class ChargeService {
                                      GatewayAccountEntity gatewayAccount, 
                                      GatewayAccountCredentialsEntity gatewayAccountCredential) {
         
-        checkGatewayAccount(chargeRequest, gatewayAccount, chargeRequest.getAuthorisationMode());
+        checkGatewayAccount(chargeRequest, gatewayAccount);
         checkCardNumberInReferenceForPaymentLinkPayments(chargeRequest.getSource(), chargeRequest.getReference());
         checkAgreementOptions(chargeRequest, gatewayAccount);
         checkIfAmountBelowMinimum(chargeRequest.getSource(), chargeRequest.getAmount(), gatewayAccount, gatewayAccountCredential.getPaymentProvider());
     }
 
-    private void checkGatewayAccount(ChargeCreateRequest chargeRequest, GatewayAccountEntity gatewayAccount, AuthorisationMode authorisationMode) {
+    private void checkGatewayAccount(ChargeCreateRequest chargeRequest, GatewayAccountEntity gatewayAccount) {
         checkIfGatewayAccountDisabled(gatewayAccount);
 
-        if (authorisationMode == MOTO_API) {
+        if (chargeRequest.getAuthorisationMode() == MOTO_API) {
             checkMotoApiAuthorisationModeAllowed(gatewayAccount);
         } else {
             checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
@@ -424,11 +424,11 @@ public class ChargeService {
         return chargeEntityBuilder.build();
     }
 
-    private void checkReturnUrl(ChargeCreateRequest chargeRequest, Long accountId, GatewayAccountEntity gatewayAccount) {
+    private void checkReturnUrl(ChargeCreateRequest chargeRequest, GatewayAccountEntity gatewayAccount) {
         chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
             if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
                 throw new ChargeException(format("Gateway account %d is LIVE, but is configured to use a " +
-                        "non-https return_url", accountId), NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT, 422);
+                        "non-https return_url", gatewayAccount.getId()), NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT, 422);
             }
         });
     }
