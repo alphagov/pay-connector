@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.events;
 
 import io.dropwizard.core.setup.Environment;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -19,8 +18,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.dropwizard.testing.ConfigOverride.config;
-import static java.time.temporal.ChronoUnit.MICROS;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.time.temporal.ChronoUnit.MICROS;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -35,11 +35,11 @@ public class EmittedEventResourceIT {
             EmittedEventResourceIT.ConnectorAppWithCustomStateTransitionQueue.class,
             config("emittedEventSweepConfig.notEmittedEventMaxAgeInSeconds", "0")
     );
-    
+
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private String externalChargeId;
-    
+
     @BeforeEach
     void setUp() {
         stateTransitionQueue.clear();
@@ -113,7 +113,7 @@ public class EmittedEventResourceIT {
     }
 
     private long addCharge() {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = current().nextInt(0, Integer.MAX_VALUE);
         externalChargeId = "charge" + chargeId;
         app.getDatabaseTestHelper().addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

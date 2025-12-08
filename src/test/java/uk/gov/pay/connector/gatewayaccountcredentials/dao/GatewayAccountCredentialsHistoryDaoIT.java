@@ -11,7 +11,7 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials
 
 import java.util.Map;
 
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -38,7 +38,7 @@ public class GatewayAccountCredentialsHistoryDaoIT {
         gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
         gatewayAccountCredentialsHistoryDao = app.getInstanceFromGuiceContainer(GatewayAccountCredentialsHistoryDao.class);
     }
-    
+
     @Test
     void deleteGatewayAccountCredentialsHistory() {
         String serviceId = "archived-service-id";
@@ -46,7 +46,7 @@ public class GatewayAccountCredentialsHistoryDaoIT {
         // delete credentials history as DatabaseTestHelper creates some by default
         gatewayAccountCredentialsHistoryDao.delete(serviceId);
         persistTwoGatewayAccountCredentialsHistoryRows(gatewayAccountEntity, serviceId);
-        
+
         var anotherGatewayAccountEntity = createAGatewayAccount(serviceId);
         persistTwoGatewayAccountCredentialsHistoryRows(anotherGatewayAccountEntity, serviceId);
 
@@ -54,19 +54,19 @@ public class GatewayAccountCredentialsHistoryDaoIT {
         assertThat(app.getDatabaseTestHelper().getGatewayAccountCredentialsHistoryForAccount(gatewayAccountEntity.getId()).isEmpty(), is(true));
         assertThat(app.getDatabaseTestHelper().getGatewayAccountCredentialsHistoryForAccount(anotherGatewayAccountEntity.getId()).isEmpty(), is(true));
     }
-    
+
     private GatewayAccountEntity createAGatewayAccount(String serviceId) {
-        long gatewayAccountId = nextLong();
+        long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
         app.getDatabaseTestHelper()
                 .addGatewayAccount(anAddGatewayAccountParams()
-                .withAccountId(String.valueOf(gatewayAccountId))
-                .withServiceId(serviceId)
-                .build());
+                        .withAccountId(String.valueOf(gatewayAccountId))
+                        .withServiceId(serviceId)
+                        .build());
         return gatewayAccountDao.findById(gatewayAccountId).get();
     }
 
     private void persistTwoGatewayAccountCredentialsHistoryRows(GatewayAccountEntity gatewayAccountEntity, String serviceId) {
-        Map<String, Object> credentials = Map.of(ONE_OFF_CUSTOMER_INITIATED, 
+        Map<String, Object> credentials = Map.of(ONE_OFF_CUSTOMER_INITIATED,
                 Map.of(CREDENTIALS_MERCHANT_CODE, "a-merchant-code-1", CREDENTIALS_USERNAME, "a-merchant-code-1", CREDENTIALS_PASSWORD, "passw0rd1"));
         String externalCredentialId = randomUuid();
         var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()

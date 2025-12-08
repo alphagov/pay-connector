@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.json;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
@@ -32,7 +32,7 @@ public enum StripePayoutStatus {
 
     public static StripePayoutStatus fromString(String status) {
         for (StripePayoutStatus stat : values()) {
-            if (StringUtils.equals(stat.getStatus(), status)) {
+            if (Strings.CS.equals(stat.getStatus(), status)) {
                 return stat;
             }
         }

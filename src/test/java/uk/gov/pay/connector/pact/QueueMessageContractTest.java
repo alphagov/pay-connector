@@ -6,7 +6,6 @@ import au.com.dius.pact.provider.junit.target.Target;
 import au.com.dius.pact.provider.junit.target.TestTarget;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.RandomStringUtils;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -79,6 +78,7 @@ import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
@@ -242,7 +242,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a refund succeeded message")
     public String verifyRefundedEvent() throws JsonProcessingException {
-        String gatewayTransactionId = RandomStringUtils.randomAlphanumeric(14);
+        String gatewayTransactionId = randomAlphaNumeric(14);
         ChargeEntity chargeEntity = aValidChargeEntity().build();
         Charge charge = Charge.from(chargeEntity);
         RefundHistory refundHistory = aValidRefundHistoryEntity()

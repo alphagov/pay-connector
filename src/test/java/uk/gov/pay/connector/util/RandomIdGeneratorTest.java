@@ -13,8 +13,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.gov.pay.connector.util.RandomIdGenerator.newId;
 import static uk.gov.pay.connector.util.RandomIdGenerator.idFromExternalId;
+import static uk.gov.pay.connector.util.RandomIdGenerator.newId;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 class RandomIdGeneratorTest {
@@ -24,9 +24,9 @@ class RandomIdGeneratorTest {
     @Test
     void shouldGenerateUniqueRandomIds() {
         Set<String> randomIds = IntStream.range(0, 100)
-            .parallel()
-            .mapToObj(value -> newId())
-            .collect(Collectors.toSet());
+                .parallel()
+                .mapToObj(value -> newId())
+                .collect(Collectors.toSet());
 
         assertEquals(100, randomIds.size());
     }
@@ -34,18 +34,18 @@ class RandomIdGeneratorTest {
     @Test
     void shouldGenerateRandomIdsInBase32() {
         IntStream.range(0, 100)
-            .parallel()
-            .mapToObj(value -> newId())
-            .map(id -> asList(id.toCharArray()))
-            .forEach(idArray -> assertTrue(BASE32_DICTIONARY.containsAll(idArray)));
+                .parallel()
+                .mapToObj(value -> newId())
+                .map(id -> asList(id.toCharArray()))
+                .forEach(idArray -> assertTrue(BASE32_DICTIONARY.containsAll(idArray)));
     }
 
     @Test
     void shouldGenerateIdsOf26CharsInLength() {
         IntStream.range(0, 100)
-            .parallel()
-            .mapToObj(value -> newId())
-            .forEach(id -> assertEquals(26, id.length()));
+                .parallel()
+                .mapToObj(value -> newId())
+                .forEach(id -> assertEquals(26, id.length()));
     }
 
     @Test

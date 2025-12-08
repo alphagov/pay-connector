@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.time.ZonedDateTime.parse;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -96,7 +96,7 @@ public class ParityCheckServiceTest {
                 .withGatewayAccountEntity(defaultGatewayAccountEntity())
                 .withMoto(true)
                 .withSource(CARD_PAYMENT_LINK)
-                .withFee(Fee.of(null,10L))
+                .withFee(Fee.of(null, 10L))
                 .withCorporateSurcharge(25L)
                 .withWalletType(APPLE_PAY)
                 .withDelayedCapture(true)
@@ -155,7 +155,7 @@ public class ParityCheckServiceTest {
 
     @Test
     void parityCheckRefundForExpunger_shouldBackfillRefundIfParityCheckFails() {
-        LedgerTransaction transaction = from(nextLong(), refundEntity)
+        LedgerTransaction transaction = from(current().nextLong(0, Long.MAX_VALUE), refundEntity)
                 .withStatus(REFUND_ERROR.toExternal().getStatus()).build();
         when(mockLedgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
@@ -173,7 +173,7 @@ public class ParityCheckServiceTest {
         when(mockRefundDao.getRefundHistoryByRefundExternalIdAndRefundStatus(refundEntity.getExternalId(), RefundStatus.CREATED))
                 .thenReturn(Optional.of(refundHistory));
 
-        LedgerTransaction transaction = from(nextLong(), refundEntity).build();
+        LedgerTransaction transaction = from(current().nextLong(0, Long.MAX_VALUE), refundEntity).build();
         when(mockLedgerService.getTransaction(refundEntity.getExternalId())).thenReturn(Optional.of(transaction));
 
         boolean matchesWithLedger = parityCheckService.parityCheckRefundForExpunger(refundEntity);

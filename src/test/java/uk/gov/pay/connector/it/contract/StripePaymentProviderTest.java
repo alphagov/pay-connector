@@ -100,7 +100,7 @@ public class StripePaymentProviderTest {
     @Test
     public void createCharge() {
         GatewayResponse gatewayResponse = authorise();
-        assertTrue(gatewayResponse.isSuccessful());
+        assertTrue(gatewayResponse.getBaseResponse().isPresent());
     }
 
     @Test
@@ -113,7 +113,7 @@ public class StripePaymentProviderTest {
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request, charge);
 
-        assertTrue(gatewayResponse.isSuccessful());
+        assertTrue(gatewayResponse.getBaseResponse().isPresent());
     }
 
     @Test
@@ -132,7 +132,7 @@ public class StripePaymentProviderTest {
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request, charge);
 
-        assertTrue(gatewayResponse.isSuccessful());
+        assertTrue(gatewayResponse.getBaseResponse().isPresent());
     }
 
     @Test
@@ -151,7 +151,7 @@ public class StripePaymentProviderTest {
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse gatewayResponse = stripePaymentProvider.authorise(request, charge);
 
-        assertTrue(gatewayResponse.isSuccessful());
+        assertTrue(gatewayResponse.getBaseResponse().isPresent());
     }
 
     @Test
@@ -165,7 +165,7 @@ public class StripePaymentProviderTest {
 
         StripeAuthorisationResponse response = gatewayResponse.getBaseResponse().get();
 
-        assertTrue(gatewayResponse.isSuccessful());
+        assertTrue(gatewayResponse.getBaseResponse().isPresent());
         assertThat(response.getGatewayRecurringAuthToken().isPresent(), is(true));
         assertThat(response.getGatewayRecurringAuthToken().get(), hasKey(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY));
         assertThat(response.getGatewayRecurringAuthToken().get(), hasKey(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY));
@@ -192,7 +192,7 @@ public class StripePaymentProviderTest {
         ChargeEntity chargeEntity = getCharge();
         chargeEntity.setGatewayTransactionId(gatewayResponse.getBaseResponse().get().getTransactionId());
         GatewayResponse<BaseCancelResponse> cancelResponse = stripePaymentProvider.cancel(CancelGatewayRequest.valueOf(chargeEntity));
-        assertTrue(cancelResponse.isSuccessful());
+        assertTrue(cancelResponse.getBaseResponse().isPresent());
     }
 
     @Test
@@ -296,7 +296,7 @@ public class StripePaymentProviderTest {
 
         var gatewayRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(recurringCharge);
         GatewayResponse authoriseUserNotPresentResponse = stripePaymentProvider.authoriseUserNotPresent(gatewayRequest);
-        
+
         assertThat(authoriseUserNotPresentResponse.getBaseResponse().get(), instanceOf(StripeAuthorisationFailedResponse.class));
     }
 

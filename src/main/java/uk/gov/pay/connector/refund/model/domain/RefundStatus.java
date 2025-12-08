@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.refund.model.domain;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import uk.gov.pay.connector.common.model.Status;
 import uk.gov.pay.connector.common.model.api.ExternalRefundStatus;
 
@@ -41,7 +41,7 @@ public enum RefundStatus implements Status {
 
     public static RefundStatus fromString(String status) {
         for (RefundStatus stat : values()) {
-            if (StringUtils.equals(stat.getValue(), status)) {
+            if (Strings.CS.equals(stat.getValue(), status)) {
                 return stat;
             }
         }

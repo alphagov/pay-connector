@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
@@ -25,7 +24,6 @@ import uk.gov.service.payments.commons.model.SupportedLanguage;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +32,7 @@ import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.MICROS;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
@@ -329,7 +328,7 @@ public class DatabaseFixtures {
     }
 
     public class TestAccount {
-        long accountId = RandomUtils.nextLong(1, 99999);
+        long accountId = current().nextLong(1, 99999);
         String externalId = randomUuid();
         private String paymentProvider = "sandbox";
         private Map<String, Object> credentialsMap = Map.of();
@@ -421,8 +420,14 @@ public class DatabaseFixtures {
         public boolean isAllowTelephonePaymentNotifications() {
             return allowTelephonePaymentNotifications;
         }
-        public boolean isRequires3ds() { return requires3ds; }
-        public void setRequires3ds(boolean requires3ds) { this.requires3ds = requires3ds; }
+
+        public boolean isRequires3ds() {
+            return requires3ds;
+        }
+
+        public void setRequires3ds(boolean requires3ds) {
+            this.requires3ds = requires3ds;
+        }
 
         public boolean isRecurringEnabled() {
             return recurringEnabled;
@@ -554,7 +559,7 @@ public class DatabaseFixtures {
             this.requires3ds = requires3ds;
             return this;
         }
-        
+
         public TestAccount withRecurringEnabled(boolean recurringEnabled) {
             this.recurringEnabled = recurringEnabled;
             return this;
@@ -569,12 +574,12 @@ public class DatabaseFixtures {
             this.providerSwitchEnabled = providerSwitchEnabled;
             return this;
         }
-        
+
         public TestAccount withSendPayerEmailToGateway(boolean sendPayerEmailToGateway) {
             this.sendPayerEmailToGateway = sendPayerEmailToGateway;
             return this;
         }
-        
+
         public TestAccount withSendPayerIpAddressToGateway(boolean sendPayerIpAddressToGateway) {
             this.sendPayerIpAddressToGateway = sendPayerIpAddressToGateway;
             return this;
@@ -627,8 +632,8 @@ public class DatabaseFixtures {
     }
 
     public class TestAgreement {
-        Long agreementId = RandomUtils.nextLong();
-        Long gatewayAccountId = RandomUtils.nextLong();
+        Long agreementId = current().nextLong(0, Long.MAX_VALUE);
+        Long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
         String externalId = "externalIDxxxyz";
         String reference = "AgreementReference";
         String description = "A valid description";
@@ -742,7 +747,7 @@ public class DatabaseFixtures {
     }
 
     public class TestCharge {
-        Long chargeId = RandomUtils.nextLong();
+        Long chargeId = current().nextLong(0, Long.MAX_VALUE);
         String email = "alice.111@mail.test";
         String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
@@ -923,7 +928,7 @@ public class DatabaseFixtures {
             this.authorisationMode = authorisationMode;
             return this;
         }
-        
+
         public TestCharge withServiceId(String serviceId) {
             this.serviceId = serviceId;
             return this;
@@ -1005,7 +1010,9 @@ public class DatabaseFixtures {
             return requires3ds;
         }
 
-        public String getServiceId() { return serviceId; }
+        public String getServiceId() {
+            return serviceId;
+        }
     }
 
     public class TestToken {
@@ -1291,7 +1298,7 @@ public class DatabaseFixtures {
     }
 
     public class TestPaymentInstrument {
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
         ;
         Map<String, String> recurringAuthToken;
         Instant createdDate = Instant.now();

@@ -89,8 +89,8 @@ public class SandboxPaymentProviderTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -102,6 +102,7 @@ public class SandboxPaymentProviderTest {
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
         assertThat(authoriseResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
     }
+
     @Test
     void authorise_shouldBeAuthorisedWithUserNotPresetSuccessPaymentInstrument() {
         var cardNumber = AUTH_SUCCESS_CARD_NUMBER;
@@ -119,8 +120,8 @@ public class SandboxPaymentProviderTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withPaymentInstrument(paymentInstrument).build();
         GatewayResponse gatewayResponse = provider.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(charge));
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -132,7 +133,7 @@ public class SandboxPaymentProviderTest {
         assertThat(authoriseResponse.getErrorMessage(), is(nullValue()));
         assertThat(authoriseResponse.getGatewayRecurringAuthToken().isPresent(), is(true));
     }
-    
+
     @Test
     void authorise_shouldSetRecurringAuthToken() {
         AuthCardDetails authCardDetails = new AuthCardDetails();
@@ -143,8 +144,8 @@ public class SandboxPaymentProviderTest {
                 .build();
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -165,8 +166,8 @@ public class SandboxPaymentProviderTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -186,8 +187,8 @@ public class SandboxPaymentProviderTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
 
@@ -204,8 +205,8 @@ public class SandboxPaymentProviderTest {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
         GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
 
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
 
@@ -234,8 +235,8 @@ public class SandboxPaymentProviderTest {
 
         GatewayResponse<BaseCancelResponse> gatewayResponse = provider.cancel(CancelGatewayRequest.valueOf(ChargeEntityFixture.aValidChargeEntity().build()));
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
 
