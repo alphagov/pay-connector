@@ -61,7 +61,7 @@ examples.
 | `EXPUNGE_HISTORIC_CHARGE_EXCEPTIONS_OLDER_THAN_DAYS`            | 90      | Number of days after which charges in a certain state (ex: CAPTURE_SUBMITTED for charge) can be expunged, even when not in expungeable state |
 | `EXPUNGE_REFUNDS_ENABLED`                                       | false   | Set to true to enable expunging refunds in terminal state                                                                                    |
 | `EXPUNGE_NO_OF_REFUNDS_PER_TASK_RUN`                            | 1000    | Number of refunds to expunge each time expunge resource endpoint is invoked                                                                  |
-| `EXPUNGE_REFUNDS_OLDER_THAN_DAYS`                               | 7       | Expunge refunds older than 7 days (or as configured) based on created date                                                                   |
+| `EXPUNGE_REFUNDS_OLDER_THAN_DAYS`                               | 2       | Expunge refunds older than 2 days (or as configured) based on created date                                                                   |
 | `EXPUNGE_HISTORIC_REFUND_EXCEPTIONS_OLDER_THAN_DAYS`            | 90      | Number of days after which refunds in a certain state (ex: REFUND_SUBMITTED) can be expunged, even when not in terminal state                |
 
 ### Background captures
