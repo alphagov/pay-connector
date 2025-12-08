@@ -55,7 +55,7 @@ class CaptureConfirmedTest {
         Long fee = 5L;
 
         chargeEntity.withFee(Fee.of(FeeType.TRANSACTION, fee));
-        chargeEntity.withFee(Fee.of(FeeType.RADAR,10L));
+        chargeEntity.withFee(Fee.of(FeeType.RADAR, 10L));
         ChargeEventEntity chargeEvent = mock(ChargeEventEntity.class);
         when(chargeEvent.getChargeEntity()).thenReturn(chargeEntity.build());
         when(chargeEvent.getGatewayEventDate()).thenReturn(Optional.of(gatewayEventTime));

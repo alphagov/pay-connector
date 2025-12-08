@@ -26,9 +26,9 @@ public class ApplicationStartupDependentResourceChecker {
         boolean databaseAvailable = isDatabaseAvailable();
 
         long timeToWait = 0;
-        while(!databaseAvailable) {
+        while (!databaseAvailable) {
             timeToWait += PROGRESSIVE_SECONDS_TO_WAIT;
-            logger.info("Waiting for "+ timeToWait +" seconds till the database is available ...");
+            logger.info("Waiting for " + timeToWait + " seconds till the database is available ...");
             applicationStartupDependentResource.sleep(timeToWait * 1000);
             databaseAvailable = isDatabaseAvailable();
         }
@@ -44,7 +44,7 @@ public class ApplicationStartupDependentResourceChecker {
         } catch (SQLException e) {
             return false;
         } finally {
-            if(connection != null) {
+            if (connection != null) {
                 try {
                     connection.close();
                 } catch (SQLException e) {

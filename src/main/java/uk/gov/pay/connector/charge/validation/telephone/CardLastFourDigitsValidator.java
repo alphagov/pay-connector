@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+
 import java.util.regex.Pattern;
 
 public class CardLastFourDigitsValidator implements ConstraintValidator<ValidCardLastFourDigits, String> {
@@ -11,10 +12,10 @@ public class CardLastFourDigitsValidator implements ConstraintValidator<ValidCar
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
 
-        if(value == null) {
+        if (value == null) {
             return true;
         }
-        
+
         return pattern.matcher(value).matches();
     }
 }

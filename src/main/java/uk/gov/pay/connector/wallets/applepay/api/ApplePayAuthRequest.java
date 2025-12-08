@@ -5,11 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
-import uk.gov.pay.connector.wallets.WalletType;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import uk.gov.pay.connector.wallets.WalletAuthorisationRequest;
+import uk.gov.pay.connector.wallets.WalletType;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonIgnoreProperties(ignoreUnknown = true)

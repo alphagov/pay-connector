@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -11,7 +12,6 @@ import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.capture.ChargeCaptureMessage;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.inject.Inject;
 import java.util.List;
 
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;

@@ -33,7 +33,7 @@ public class CardAuthoriseServiceIT {
     private static final LastDigitsCardNumber SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_LAST_FOUR_DIGITS = LastDigitsCardNumber.of("5100");
     private static final FirstDigitsCardNumber SANDBOX_SUCCESS_SETUP_DECLINE_RECURRING_FIRST_SIX_DIGITS = FirstDigitsCardNumber.of("510510");
     private static final String SANDBOX_RECURRING_FIRST_AUTHORISE_SUCCESS_SUBSEQUENT_DECLINE_CARD_NO = "5105105105105100";
-    
+
     @Test
     void shouldAuthoriseSandboxWebPayment() {
         String chargeExternalId = testBaseExtension.addCharge(

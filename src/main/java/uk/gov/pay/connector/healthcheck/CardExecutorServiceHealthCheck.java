@@ -3,9 +3,9 @@ package uk.gov.pay.connector.healthcheck;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheck;
+import jakarta.inject.Inject;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 
-import jakarta.inject.Inject;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class CardExecutorServiceHealthCheck extends HealthCheck {
@@ -14,7 +14,7 @@ public class CardExecutorServiceHealthCheck extends HealthCheck {
 
     @Inject
     public CardExecutorServiceHealthCheck(CardExecutorService cardExecutorService) {
-        this.threadPoolExecutor = (ThreadPoolExecutor)cardExecutorService.getExecutor();
+        this.threadPoolExecutor = (ThreadPoolExecutor) cardExecutorService.getExecutor();
         initialiseMetrics(cardExecutorService.getMetricRegistry());
     }
 

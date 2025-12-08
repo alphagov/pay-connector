@@ -41,7 +41,7 @@ public class CardResourceCaptureWithSqsQueueIT {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-    
+
     @BeforeEach
     void setUpLogger() {
         Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
@@ -77,7 +77,7 @@ public class CardResourceCaptureWithSqsQueueIT {
                     AddChargeParameters.Builder.anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
                             .withCreatedDate(Instant.now().minus(48, HOURS))
                             .build());
-            
+
             app.givenSetup()
                     .post(format("/v1/api/accounts/%s/charges/%s/capture", testBaseExtension.getAccountId(), chargeId))
                     .then()

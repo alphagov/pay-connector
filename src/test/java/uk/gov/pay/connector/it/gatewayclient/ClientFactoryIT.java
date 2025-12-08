@@ -4,6 +4,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import io.dropwizard.testing.DropwizardTestSupport;
 import io.dropwizard.testing.ResourceHelpers;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Invocation;
 import org.glassfish.jersey.client.ClientProperties;
 import org.junit.After;
 import org.junit.Before;
@@ -17,8 +19,6 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.gateway.ClientFactory;
 import uk.gov.service.payments.commons.testing.port.PortFactory;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.Invocation;
 import java.net.SocketTimeoutException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -27,10 +27,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -39,8 +39,8 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 public class ClientFactoryIT {
 
     private DropwizardTestSupport<ConnectorConfiguration> app;
-    
-    private static String DEFAULT_DROPWIZARD_CONFIG = "config/test-it-config.yaml";
+
+    private static final String DEFAULT_DROPWIZARD_CONFIG = "config/test-it-config.yaml";
 
     @Mock
     MetricRegistry mockMetricRegistry;
@@ -52,7 +52,7 @@ public class ClientFactoryIT {
     public void setup() {
         wireMockRule.resetAll();
     }
-    
+
     @After
     public void after() {
         System.clearProperty("https.proxyHost");
@@ -99,7 +99,7 @@ public class ClientFactoryIT {
 
         wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
                 .willReturn(aResponse().withBody("world").withStatus(200).withFixedDelay(2000)));
-        
+
         Client client = new ClientFactory(app.getEnvironment(), app.getConfiguration())
                 .createWithDropwizardClient(WORLDPAY, AUTHORISE, mockMetricRegistry);
 
@@ -165,7 +165,7 @@ public class ClientFactoryIT {
         app = startApp("config/client-factory-test-config-with-worldpay-timeout-override.yaml", false);
 
         String path = "/hello";
-        
+
         wireMockRule.stubFor(get(urlPathEqualTo("/hello"))
                 .willReturn(aResponse().withBody("world").withStatus(200).withFixedDelay(2000)));
 

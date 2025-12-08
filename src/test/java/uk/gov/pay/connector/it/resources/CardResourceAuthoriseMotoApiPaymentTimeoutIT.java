@@ -53,7 +53,7 @@ public class CardResourceAuthoriseMotoApiPaymentTimeoutIT {
                 .withUsed(false)
                 .insert();
     }
-    
+
     @Test
     void shouldReturn500_andUpdateCharge_forAuthorisationTimeout() throws Exception {
         AuthorisationConfig conf = app.getAuthorisationConfig();

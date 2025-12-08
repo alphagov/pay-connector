@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.expunge.service;
 
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
+import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -16,8 +18,6 @@ import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.tasks.service.ParityCheckService;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.inject.Inject;
-import jakarta.persistence.OptimisticLockException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -70,7 +70,7 @@ public class ChargeExpungeService {
     @Inject
     public ChargeExpungeService(ChargeDao chargeDao, ConnectorConfiguration connectorConfiguration,
                                 ParityCheckService parityCheckService,
-                                ChargeService chargeService, IdempotencyDao idempotencyDao, 
+                                ChargeService chargeService, IdempotencyDao idempotencyDao,
                                 TaskQueueService taskQueueService) {
         this.chargeDao = chargeDao;
         expungeConfig = connectorConfiguration.getExpungeConfig();

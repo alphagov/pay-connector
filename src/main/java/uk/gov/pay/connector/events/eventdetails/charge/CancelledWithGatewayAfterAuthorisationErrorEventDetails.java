@@ -10,7 +10,7 @@ public class CancelledWithGatewayAfterAuthorisationErrorEventDetails extends Eve
     public CancelledWithGatewayAfterAuthorisationErrorEventDetails(String gatewayTransactionId) {
         this.gatewayTransactionId = gatewayTransactionId;
     }
-    
+
     public static CancelledWithGatewayAfterAuthorisationErrorEventDetails from(ChargeEntity charge) {
         return new CancelledWithGatewayAfterAuthorisationErrorEventDetails(charge.getGatewayTransactionId());
     }

@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.it.util;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.Map;
 
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static uk.gov.pay.connector.it.resources.ChargesFrontendResourceIT.AGREEMENT_ID;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
@@ -51,7 +51,7 @@ public class ChargeUtils {
         return createNewChargeWithAccountId(status, RandomIdGenerator.newId(), gatewayAccountId, databaseTestHelper, "email@fake.test", paymentProvider);
     }
 
-    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId, 
+    public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId,
                                                                 DatabaseTestHelper databaseTestHelper, String paymentProvider) {
         return createNewChargeWithAccountId(status, gatewayTransactionId, gatewayAccountId, databaseTestHelper, "email@fake.test", paymentProvider);
     }
@@ -63,7 +63,7 @@ public class ChargeUtils {
 
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId,
                                                                 DatabaseTestHelper databaseTestHelper, String emailAddress, String paymentProvider, String description) {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = current().nextInt(0, Integer.MAX_VALUE);
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -82,7 +82,7 @@ public class ChargeUtils {
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId,
                                                                 String gatewayAccountId, DatabaseTestHelper databaseTestHelper,
                                                                 String paymentProvider, Long gatewayCredentialId) {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = current().nextInt(0, Integer.MAX_VALUE);
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

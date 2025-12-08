@@ -12,11 +12,11 @@ import java.time.Instant;
 import java.util.List;
 
 import static io.restassured.http.ContentType.JSON;
-import static java.time.temporal.ChronoUnit.HOURS;
 import static jakarta.ws.rs.core.Response.Status.ACCEPTED;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static java.time.temporal.ChronoUnit.HOURS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
@@ -46,7 +46,7 @@ public class ChargeCancelFrontendResourceIT {
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
-    
+
     private static final List<ChargeStatus> NON_USER_CANCELLABLE_STATUSES = ImmutableList.of(
             AUTHORISATION_REJECTED,
             AUTHORISATION_ERROR,
@@ -63,12 +63,12 @@ public class ChargeCancelFrontendResourceIT {
             USER_CANCEL_ERROR,
             USER_CANCELLED
     );
-    
+
     @Test
     void respondWith204WithNoLockingState_whenCancellationBeforeAuth() {
 
         String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)).build());
+                .withCreatedDate(Instant.now().minus(1, HOURS)).build());
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -78,7 +78,7 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith204WithLockingState_whenCancellationAfterAuth() {
         String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)).build());
+                .withCreatedDate(Instant.now().minus(1, HOURS)).build());
         app.getWorldpayMockClient().mockCancelSuccess();
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, NO_CONTENT.getStatusCode());
@@ -94,7 +94,7 @@ public class ChargeCancelFrontendResourceIT {
     void respondWith204_whenCancellationDuringAuthReady() {
 
         String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_READY)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)).build());
+                .withCreatedDate(Instant.now().minus(1, HOURS)).build());
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
@@ -104,7 +104,7 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith202_whenCancelAlreadyInProgress() {
         String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(USER_CANCEL_READY)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)).build());
+                .withCreatedDate(Instant.now().minus(1, HOURS)).build());
         String expectedMessage = "User Cancellation for charge already in progress, " + chargeId;
         testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
@@ -120,7 +120,7 @@ public class ChargeCancelFrontendResourceIT {
     void respondWith204WithLockingState_whenCancelFailsAfterAuth() {
         app.getWorldpayMockClient().mockCancelError();
         String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)).build());
+                .withCreatedDate(Instant.now().minus(1, HOURS)).build());
 
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCEL_ERROR, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
@@ -133,13 +133,13 @@ public class ChargeCancelFrontendResourceIT {
     @Test
     void respondWith204With3DSRequiredState_whenCancellationBeforeAuth() {
         String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
-                        .withCreatedDate(Instant.now().minus(1, HOURS)).build());
+                .withCreatedDate(Instant.now().minus(1, HOURS)).build());
         userCancelChargeAndCheckApiStatus(chargeId, USER_CANCELLED, 204);
         List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
         assertThat(events.size(), is(2));
         assertThat(events, hasItems(AUTHORISATION_3DS_REQUIRED.getValue(), USER_CANCELLED.getValue()));
     }
-    
+
     private void userCancelChargeAndCheckApiStatus(String chargeId, ChargeStatus targetState, int httpStatusCode) {
         testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeId)
@@ -171,13 +171,13 @@ public class ChargeCancelFrontendResourceIT {
                 .body("message", contains("Charge with id [" + unknownChargeId + "] not found."))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
-    
+
     @Test
     void respondWith400_whenNotCancellableState() {
         NON_USER_CANCELLABLE_STATUSES
                 .forEach(status -> {
                     String chargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
-                                    .withCreatedDate(Instant.now().minus(1, HOURS)).build());
+                            .withCreatedDate(Instant.now().minus(1, HOURS)).build());
                     String incorrectStateMessage = "Charge not in correct state to be processed, " + chargeId;
 
                     testBaseExtension.getConnectorRestApiClient()

@@ -13,7 +13,7 @@ public class AgreementResponseBuilder {
     private String userIdentifier;
     private String serviceId;
     private boolean live;
-    
+
     public String getAgreementId() {
         return agreementId;
     }

@@ -1,12 +1,6 @@
 package uk.gov.pay.connector.agreement.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.logstash.logback.argument.StructuredArgument;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
-import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
-
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
@@ -20,6 +14,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import net.logstash.logback.argument.StructuredArgument;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
+import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ public class AgreementEntity {
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
 
-    @Column(name="external_id")
+    @Column(name = "external_id")
     private String externalId;
 
     @Column(name = "created_date")
@@ -61,10 +61,10 @@ public class AgreementEntity {
 
     @Column(name = "user_identifier")
     private String userIdentifier;
-    
+
     @Column(name = "service_id")
     private String serviceId;
-    
+
     @Column(name = "live")
     private boolean live;
 
@@ -75,14 +75,14 @@ public class AgreementEntity {
     @Column(name = "cancelled_date")
     @Convert(converter = InstantToUtcTimestampWithoutTimeZoneConverter.class)
     private Instant cancelledDate;
-    
+
 
     public AgreementEntity() {
         // For JPA
     }
-    
+
     public AgreementEntity(GatewayAccountEntity gatewayAccount, String serviceId, String reference,
-                            String description, String userIdentifier, boolean live, Instant createdDate, PaymentInstrumentEntity paymentInstrument) {
+                           String description, String userIdentifier, boolean live, Instant createdDate, PaymentInstrumentEntity paymentInstrument) {
         this.externalId = RandomIdGenerator.newId();
         this.gatewayAccount = gatewayAccount;
         this.serviceId = serviceId;
@@ -191,6 +191,7 @@ public class AgreementEntity {
         ));
         return structuredArguments.toArray();
     }
+
     public static class AgreementEntityBuilder {
         private GatewayAccountEntity gatewayAccount;
         private Instant createdDate;
@@ -206,7 +207,7 @@ public class AgreementEntity {
             agreementEntityBuilder.withCreatedDate(createdDate);
             return agreementEntityBuilder;
         }
-        
+
         public AgreementEntityBuilder withGatewayAccount(GatewayAccountEntity gatewayAccountEntity) {
             this.gatewayAccount = gatewayAccountEntity;
             return this;
@@ -250,7 +251,7 @@ public class AgreementEntity {
         public AgreementEntity build() {
             return new AgreementEntity(gatewayAccount, serviceId, reference, description, userIdentifier, live, createdDate, paymentInstrument);
         }
-        
+
     }
-    
+
 }

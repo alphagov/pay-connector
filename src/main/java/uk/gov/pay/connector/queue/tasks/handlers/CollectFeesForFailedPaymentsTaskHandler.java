@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue.tasks.handlers;
 
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -14,7 +15,6 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.queue.tasks.model.PaymentTaskData;
 
-import jakarta.inject.Inject;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.List;
@@ -41,7 +41,7 @@ public class CollectFeesForFailedPaymentsTaskHandler {
         this.eventService = eventService;
         this.instantSource = instantSource;
     }
-    
+
     @Transactional
     public void collectAndPersistFees(PaymentTaskData paymentTaskData) throws GatewayException {
         ChargeEntity charge = chargeService.findChargeByExternalId(paymentTaskData.getPaymentExternalId());

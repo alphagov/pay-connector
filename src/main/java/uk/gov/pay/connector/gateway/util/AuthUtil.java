@@ -14,8 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static java.lang.String.format;
 
 public class AuthUtil {
     private static final String STRIPE_VERSION_HEADER = "Stripe-Version";

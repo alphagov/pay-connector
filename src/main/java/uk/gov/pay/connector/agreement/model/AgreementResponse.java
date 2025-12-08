@@ -12,7 +12,7 @@ import java.time.Instant;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
-public record AgreementResponse (
+public record AgreementResponse(
         @JsonProperty("agreement_id")
         @Schema(example = "iaouobo39hiv0m2560q45j3p04")
         String agreementId,
@@ -44,15 +44,15 @@ public record AgreementResponse (
 
     public AgreementResponse(AgreementResponseBuilder agreementResponseBuilder) {
         this(agreementResponseBuilder.getAgreementId(),
-            agreementResponseBuilder.getCreatedDate(),
-            agreementResponseBuilder.getReference(),
-            agreementResponseBuilder.getDescription(),
-            agreementResponseBuilder.getUserIdentifier(),
-            agreementResponseBuilder.getServiceId(),
-            agreementResponseBuilder.isLive()
+                agreementResponseBuilder.getCreatedDate(),
+                agreementResponseBuilder.getReference(),
+                agreementResponseBuilder.getDescription(),
+                agreementResponseBuilder.getUserIdentifier(),
+                agreementResponseBuilder.getServiceId(),
+                agreementResponseBuilder.isLive()
         );
     }
-    
+
     public boolean isLive() {
         return live;
     }

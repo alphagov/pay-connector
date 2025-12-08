@@ -4,13 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
-import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
-import uk.gov.pay.connector.cardtype.model.domain.CardType;
-import uk.gov.pay.connector.charge.model.domain.PersistedCard;
-import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
@@ -20,6 +13,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
+import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.charge.model.domain.PersistedCard;
+import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
+import uk.gov.service.payments.commons.jpa.CardExpiryDateConverter;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -73,7 +73,7 @@ public class CardDetailsEntity {
 
     public CardDetailsEntity() {
     }
-    
+
     public CardDetailsEntity(LastDigitsCardNumber lastDigitsCardNumber, FirstDigitsCardNumber firstDigitsCardNumber, String cardHolderName,
                              CardExpiryDate expiryDate, String cardBrand, CardType cardType) {
         this.lastDigitsCardNumber = lastDigitsCardNumber;
@@ -163,7 +163,7 @@ public class CardDetailsEntity {
         this.cardType = cardType;
         return this;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -182,7 +182,7 @@ public class CardDetailsEntity {
     public int hashCode() {
         return Objects.hash(firstDigitsCardNumber, lastDigitsCardNumber, cardHolderName, expiryDate, cardBrand, cardType, billingAddress);
     }
-    
+
     public Optional<CardBrandLabelEntity> getCardTypeDetails() {
         return Optional.ofNullable(cardTypeDetails);
     }

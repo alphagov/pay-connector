@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +15,6 @@ import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.ws.rs.WebApplicationException;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;

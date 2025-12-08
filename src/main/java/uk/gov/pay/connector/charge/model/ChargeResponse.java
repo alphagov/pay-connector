@@ -431,7 +431,7 @@ public class ChargeResponse {
                 walletType == that.walletType &&
                 Objects.equals(externalMetadata, that.externalMetadata) &&
                 authorisationMode == that.authorisationMode &&
-                Objects.equals(exemption, that.exemption) && 
+                Objects.equals(exemption, that.exemption) &&
                 Objects.equals(agreementPaymentType, that.agreementPaymentType);
     }
 

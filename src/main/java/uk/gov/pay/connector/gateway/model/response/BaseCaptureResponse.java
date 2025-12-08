@@ -9,7 +9,7 @@ public interface BaseCaptureResponse extends BaseResponse {
     String getTransactionId();
 
     String stringify();
-    
+
     static BaseCaptureResponse fromTransactionId(String transactionId, PaymentGatewayName gatewayName) {
         return new BaseCaptureResponse() {
             @Override

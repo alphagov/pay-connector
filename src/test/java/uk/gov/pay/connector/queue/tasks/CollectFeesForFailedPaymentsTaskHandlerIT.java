@@ -12,7 +12,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang3.RandomUtils.nextInt;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -31,7 +31,7 @@ public class CollectFeesForFailedPaymentsTaskHandlerIT {
 
     @Test
     void shouldPersistFees() throws Exception {
-        long chargeId = nextInt();
+        long chargeId = current().nextInt(0, Integer.MAX_VALUE);
         String chargeExternalId = RandomIdGenerator.newId();
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
         app.getDatabaseTestHelper().addCharge(anAddChargeParams()
@@ -55,11 +55,11 @@ public class CollectFeesForFailedPaymentsTaskHandlerIT {
         assertThat(fees, hasSize(2));
         assertThat(fees, containsInAnyOrder(
                 allOf(
-                        hasEntry("fee_type", (Object)"radar"),
+                        hasEntry("fee_type", (Object) "radar"),
                         hasEntry("amount_collected", 5L)
                 ),
                 allOf(
-                        hasEntry("fee_type", (Object)"three_ds"),
+                        hasEntry("fee_type", (Object) "three_ds"),
                         hasEntry("amount_collected", 6L)
                 )
         ));

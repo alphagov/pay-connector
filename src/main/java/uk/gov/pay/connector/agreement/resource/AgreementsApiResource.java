@@ -6,15 +6,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
-import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
-import uk.gov.pay.connector.agreement.model.AgreementResponse;
-import uk.gov.pay.connector.agreement.service.AgreementService;
-import uk.gov.pay.connector.common.model.api.ErrorResponse;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -24,6 +15,14 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.agreement.model.AgreementCancelRequest;
+import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
+import uk.gov.pay.connector.agreement.model.AgreementResponse;
+import uk.gov.pay.connector.agreement.service.AgreementService;
+import uk.gov.pay.connector.common.model.api.ErrorResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
 import static org.apache.http.HttpStatus.SC_CREATED;
 
@@ -109,6 +108,6 @@ public class AgreementsApiResource {
         agreementService.cancelByServiceIdAndAccountType(agreementId, serviceId, accountType, agreementCancelRequest);
         return Response.noContent().build();
     }
-    
-    
+
+
 }

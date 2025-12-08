@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +42,6 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.ws.rs.core.UriInfo;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.ArrayList;
@@ -131,7 +131,7 @@ class ChargeServiceExemptionTest {
 
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
-    
+
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
@@ -210,12 +210,12 @@ class ChargeServiceExemptionTest {
 
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
-        exemption3DsRequested, typeInExemptionResponseObject
-        OPTIMISED, null
-        CORPORATE, corporate
-    """)
+                exemption3DsRequested, typeInExemptionResponseObject
+                OPTIMISED, null
+                CORPORATE, corporate
+            """)
     void shouldFindChargeWithExemptionTrue_whenExemption3dsWasRequestedButNoResponseYet(Exemption3dsType exemption3DsRequested,
-                                                                                     String typeInExemptionResponseObject) {
+                                                                                        String typeInExemptionResponseObject) {
         newCharge.setExemption3ds(null);
         newCharge.setExemption3dsRequested(exemption3DsRequested);
 
@@ -229,14 +229,14 @@ class ChargeServiceExemptionTest {
 
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
-        exemption3DsRequested, exemption3dsOutcome, typeInExemptionResponseObject
-        OPTIMISED, EXEMPTION_HONOURED, null
-        OPTIMISED, EXEMPTION_REJECTED, null
-        OPTIMISED, EXEMPTION_OUT_OF_SCOPE, null
-        CORPORATE, EXEMPTION_HONOURED, corporate
-        CORPORATE, EXEMPTION_REJECTED, corporate
-        CORPORATE, EXEMPTION_OUT_OF_SCOPE, corporate
-    """)
+                exemption3DsRequested, exemption3dsOutcome, typeInExemptionResponseObject
+                OPTIMISED, EXEMPTION_HONOURED, null
+                OPTIMISED, EXEMPTION_REJECTED, null
+                OPTIMISED, EXEMPTION_OUT_OF_SCOPE, null
+                CORPORATE, EXEMPTION_HONOURED, corporate
+                CORPORATE, EXEMPTION_REJECTED, corporate
+                CORPORATE, EXEMPTION_OUT_OF_SCOPE, corporate
+            """)
     void shouldFindChargeWithExemption_whenOutcomeAvailable(Exemption3dsType exemption3DsRequested, Exemption3ds exemption3dsOutcome,
                                                             String typeInExemptionResponseObject) {
         newCharge.setExemption3ds(exemption3dsOutcome);
@@ -253,11 +253,11 @@ class ChargeServiceExemptionTest {
 
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
-        exemption3dsOutcome
-        EXEMPTION_HONOURED
-        EXEMPTION_REJECTED
-        EXEMPTION_OUT_OF_SCOPE
-    """)
+                exemption3dsOutcome
+                EXEMPTION_HONOURED
+                EXEMPTION_REJECTED
+                EXEMPTION_OUT_OF_SCOPE
+            """)
     void shouldFindChargeWithExemption_fromBeforeWeRecordedExemption3dsType(Exemption3ds exemption3dsOutcome) {
         newCharge.setExemption3ds(exemption3dsOutcome);
         newCharge.setExemption3dsRequested(null);

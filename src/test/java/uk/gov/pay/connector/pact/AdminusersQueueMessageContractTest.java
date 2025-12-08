@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 @Provider("connector")
 @PactBroker(scheme = "https", host = "${PACT_BROKER_HOST:pact-broker.deploy.payments.service.gov.uk}", tags = {"${PACT_CONSUMER_TAG}", "test-fargate"},
         authentication = @PactBrokerAuth(username = "${PACT_BROKER_USERNAME}", password = "${PACT_BROKER_PASSWORD}"),
-        consumers = { "adminusers" })
+        consumers = {"adminusers"})
 @IgnoreNoPactsToVerify
 public class AdminusersQueueMessageContractTest extends QueueMessageContractTest {
 }

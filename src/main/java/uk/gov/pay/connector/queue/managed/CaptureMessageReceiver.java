@@ -1,14 +1,14 @@
 package uk.gov.pay.connector.queue.managed;
 
-import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.core.setup.Environment;
+import io.dropwizard.lifecycle.Managed;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.paymentprocessor.service.CardCaptureProcess;
 
-import jakarta.inject.Inject;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -64,7 +64,7 @@ public class CaptureMessageReceiver implements Managed {
                 // If the existing charges being captured didn't terminate within the allowed time then force them to.
                 LOGGER.error("Charges still being captured after shutdown wait time will now be forcefully stopped");
                 chargeCaptureMessageExecutorService.shutdownNow();
-                if (!chargeCaptureMessageExecutorService.awaitTermination(12, TimeUnit.SECONDS)){
+                if (!chargeCaptureMessageExecutorService.awaitTermination(12, TimeUnit.SECONDS)) {
                     LOGGER.error("Charge capture service could not be forced stopped");
                 }
             }

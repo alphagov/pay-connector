@@ -123,7 +123,7 @@ class ChargeServiceCreateTelephonePaymentTest {
 
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
-    
+
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 

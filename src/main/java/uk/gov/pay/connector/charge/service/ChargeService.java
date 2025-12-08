@@ -356,7 +356,7 @@ public class ChargeService {
             if (chargeRequest.getSavePaymentInstrumentToAgreement() || chargeRequest.getAuthorisationMode() == AGREEMENT) {
                 agreementPaymentType = chargeRequest.getAgreementPaymentType().orElse(AgreementPaymentType.RECURRING);
             }
- 
+
             ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
                     .withAmount(chargeRequest.getAmount())
                     .withDescription(chargeRequest.getDescription())
@@ -660,7 +660,7 @@ public class ChargeService {
         } else if (chargeEntity.getRequires3ds() != null) {
             authorisationSummary = getAuthorisationSummary(chargeEntity.getRequires3ds(), null);
         } else if (chargeEntity.get3dsRequiredDetails() == null && chargeEntity.getRequires3ds() == null) {
-            authorisationSummary = getAuthorisationSummary(false,  null);
+            authorisationSummary = getAuthorisationSummary(false, null);
         }
 
         T builderOfResponse = responseBuilder
@@ -733,7 +733,7 @@ public class ChargeService {
                 exemption.setType(exemption3dsRequested == CORPORATE ? CORPORATE.name().toLowerCase() : null);
                 exemption.setOutcome(new ChargeResponse.Exemption.Outcome(exemption3ds));
             }
-        } else if (exemption3dsRequested != null){
+        } else if (exemption3dsRequested != null) {
             exemption = new ChargeResponse.Exemption();
             exemption.setRequested(true);
             exemption.setType(exemption3dsRequested == CORPORATE ? CORPORATE.name().toLowerCase() : null);
@@ -854,7 +854,7 @@ public class ChargeService {
             if (charge.isSavePaymentInstrumentToAgreement()) {
                 Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
             }
-            
+
             if (newStatus == AUTHORISATION_SUCCESS || newStatus == AUTHORISATION_REJECTED) {
                 if (!Boolean.TRUE.equals(charge.getRequires3ds())) {
                     charge.setRequires3ds(false);
@@ -1179,7 +1179,7 @@ public class ChargeService {
             throw new AuthorisationApiNotAllowedForGatewayAccountException(gatewayAccount.getId());
         }
     }
-    
+
     private void checkIfGatewayAccountDisabled(GatewayAccountEntity gatewayAccount) {
         if (gatewayAccount.isDisabled()) {
             throw new GatewayAccountDisabledException("Attempt to create a charge for a disabled gateway account");
@@ -1192,7 +1192,7 @@ public class ChargeService {
         }
         checkIfZeroAmountAllowed(amount, gatewayAccount);
     }
-    
+
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
@@ -1263,7 +1263,7 @@ public class ChargeService {
 
         if (paymentInstrumentEntity.getStatus() != PaymentInstrumentStatus.ACTIVE) {
             throw new ChargeException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
-                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]" , 
+                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]",
                     AGREEMENT_NOT_ACTIVE, HttpStatus.SC_BAD_REQUEST);
         }
     }

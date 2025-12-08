@@ -26,7 +26,7 @@ public class AuthorisationRequestSummaryStringifier {
             case PRESENT -> stringJoiner.add("with email address");
             case NOT_PRESENT -> stringJoiner.add("without email address");
         }
-        
+
         if (authorisationRequestSummary.corporateCard()) {
             stringJoiner.add("with corporate card");
         }
@@ -34,9 +34,9 @@ public class AuthorisationRequestSummaryStringifier {
         authorisationRequestSummary.corporateExemptionRequested()
                 .filter(corporateExemptionRequested -> corporateExemptionRequested)
                 .ifPresent(corporateExemptionRequestedTrue -> {
-            stringJoiner.add("with corporate exemption requested");
-            authorisationRequestSummary.corporateExemptionResult().map(Exemption3ds::getDisplayName).ifPresent(stringJoiner::add);
-        });
+                    stringJoiner.add("with corporate exemption requested");
+                    authorisationRequestSummary.corporateExemptionResult().map(Exemption3ds::getDisplayName).ifPresent(stringJoiner::add);
+                });
 
         switch (authorisationRequestSummary.dataFor3ds()) {
             case PRESENT -> stringJoiner.add("with 3DS data");
@@ -55,7 +55,7 @@ public class AuthorisationRequestSummaryStringifier {
 
         Optional.ofNullable(authorisationRequestSummary.ipAddress())
                 .map(ipAddress -> stringJoiner.add("with remote IP " + ipAddress));
-        
+
         authorisationRequestSummary.agreementPaymentType()
                 .ifPresent(agreementPaymentType -> stringJoiner.add("with agreement payment type of " + agreementPaymentType.getName()));
 

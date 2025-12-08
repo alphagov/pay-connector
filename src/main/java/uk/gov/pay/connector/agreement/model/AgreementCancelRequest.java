@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record AgreementCancelRequest (
+public record AgreementCancelRequest(
         String userExternalId,
         String userEmail
 ) {

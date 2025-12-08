@@ -1,12 +1,12 @@
 package uk.gov.pay.connector.agreement.dao;
 
 import com.google.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.common.dao.JpaDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import java.util.Optional;
 
 public class AgreementDao extends JpaDao<AgreementEntity> {

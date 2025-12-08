@@ -6,26 +6,24 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 
-import java.util.Objects;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record CardInformation (
-    @JsonProperty("brand")
-    String brand,
+public record CardInformation(
+        @JsonProperty("brand")
+        String brand,
 
-    @JsonProperty("type") 
-    CardidCardType type,
+        @JsonProperty("type")
+        CardidCardType type,
 
-    @JsonProperty("label")
-    String label,
+        @JsonProperty("label")
+        String label,
 
-    @JsonProperty("corporate")
-    boolean corporate,
+        @JsonProperty("corporate")
+        boolean corporate,
 
-    @JsonProperty("prepaid")
-    PayersCardPrepaidStatus prepaidStatus
-){
+        @JsonProperty("prepaid")
+        PayersCardPrepaidStatus prepaidStatus
+) {
     public boolean isCorporate() {
         return corporate;
     }

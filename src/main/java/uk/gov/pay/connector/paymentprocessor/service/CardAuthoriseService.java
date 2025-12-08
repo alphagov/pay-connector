@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.core.setup.Environment;
 import io.prometheus.client.Counter;
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -38,7 +39,6 @@ import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 
@@ -55,12 +55,12 @@ public class CardAuthoriseService {
             .name("gateway_operations_authorisation_result_total")
             .help("Counter of results of card authorisations")
             .labelNames(
-                    "paymentProvider", 
-                    "gatewayAccountType", 
-                    "billingAddressPresent", 
-                    "corporateCardUsed", 
-                    "corporateExemption", 
-                    "emailPresent", 
+                    "paymentProvider",
+                    "gatewayAccountType",
+                    "billingAddressPresent",
+                    "corporateCardUsed",
+                    "corporateExemption",
+                    "emailPresent",
                     "ipAddressPresent",
                     "authorisationResult")
             .register();
@@ -203,9 +203,9 @@ public class CardAuthoriseService {
         return Pair.of(operationResponse, newStatus);
     }
 
-    private AuthorisationResponse updateChargePostAuthorisation(AuthCardDetails authCardDetails, 
-                                                                ChargeEntity charge, 
-                                                                GatewayResponse<BaseAuthoriseResponse> operationResponse, 
+    private AuthorisationResponse updateChargePostAuthorisation(AuthCardDetails authCardDetails,
+                                                                ChargeEntity charge,
+                                                                GatewayResponse<BaseAuthoriseResponse> operationResponse,
                                                                 ChargeStatus newStatus) {
         Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
         Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();

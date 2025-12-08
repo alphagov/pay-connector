@@ -152,11 +152,11 @@ public class AddGatewayAccountParams {
     public boolean isProviderSwitchEnabled() {
         return providerSwitchEnabled;
     }
-    
+
     public boolean isSendPayerEmailToGateway() {
         return sendPayerEmailToGateway;
     }
-    
+
     public boolean isSendPayerIpAddressToGateway() {
         return sendPayerIpAddressToGateway;
     }

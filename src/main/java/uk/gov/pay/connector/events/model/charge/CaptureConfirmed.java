@@ -7,7 +7,7 @@ import uk.gov.pay.connector.events.eventdetails.charge.CaptureConfirmedEventDeta
 import java.time.Instant;
 
 /**
- *  Confirmed by notification from payment gateway
+ * Confirmed by notification from payment gateway
  **/
 public class CaptureConfirmed extends PaymentEvent {
     public CaptureConfirmed(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,

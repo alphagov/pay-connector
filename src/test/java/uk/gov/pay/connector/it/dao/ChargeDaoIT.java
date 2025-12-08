@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
 import jakarta.validation.ConstraintViolationException;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -39,8 +38,8 @@ import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.MICROS;
 import static java.time.temporal.ChronoUnit.MILLIS;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static junit.framework.TestCase.assertTrue;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -70,6 +69,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.Auth3dsRequiredEntityFixture.anAuth3dsRequiredEntity;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
@@ -136,7 +136,7 @@ public class ChargeDaoIT {
         assertThrows(RuntimeException.class, () -> {
             chargeDao.persist(aValidChargeEntity()
                     .withGatewayAccountEntity(gatewayAccount)
-                    .withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255)))
+                    .withReference(ServicePaymentReference.of(randomAlphaNumeric(255)))
                     .build());
         });
     }
@@ -592,7 +592,7 @@ public class ChargeDaoIT {
         TestCharge charge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .insert();
@@ -610,7 +610,7 @@ public class ChargeDaoIT {
         app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .insert();
@@ -627,7 +627,7 @@ public class ChargeDaoIT {
         app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now().minus(ofMinutes(30)))
                 .insert();
@@ -666,7 +666,7 @@ public class ChargeDaoIT {
         return app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(createdDate)
                 .withUpdatedDate(updatedDate)
@@ -679,7 +679,7 @@ public class ChargeDaoIT {
         TestCharge charge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now())
                 .withAmount(300L)
@@ -713,7 +713,7 @@ public class ChargeDaoIT {
         app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED)
@@ -721,7 +721,7 @@ public class ChargeDaoIT {
         app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
@@ -729,7 +729,7 @@ public class ChargeDaoIT {
         TestCharge charge = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now())
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
@@ -751,7 +751,7 @@ public class ChargeDaoIT {
             TestCharge earliestCaptureReadyCharge = app.getDatabaseFixtures()
                     .aTestCharge()
                     .withTestAccount(defaultTestAccount)
-                    .withChargeId(nextLong())
+                    .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                     .withExternalChargeId(RandomIdGenerator.newId())
                     .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                     .withUpdatedDate(Instant.now().minus(Duration.ofHours(2)))
@@ -760,7 +760,7 @@ public class ChargeDaoIT {
             TestCharge charge = app.getDatabaseFixtures()
                     .aTestCharge()
                     .withTestAccount(defaultTestAccount)
-                    .withChargeId(nextLong())
+                    .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                     .withExternalChargeId(RandomIdGenerator.newId())
                     .withCreatedDate(Instant.now())
                     .withUpdatedDate(Instant.now())
@@ -776,7 +776,7 @@ public class ChargeDaoIT {
             TestCharge authSuccessChargeToBeIgnored = app.getDatabaseFixtures()
                     .aTestCharge()
                     .withTestAccount(defaultTestAccount)
-                    .withChargeId(nextLong())
+                    .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                     .withExternalChargeId(RandomIdGenerator.newId())
                     .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                     .withUpdatedDate(Instant.now().minus(Duration.ofHours(2)))
@@ -785,7 +785,7 @@ public class ChargeDaoIT {
             TestCharge captureReadyButRetriedWithInLastHourAndIsIgnored = app.getDatabaseFixtures()
                     .aTestCharge()
                     .withTestAccount(defaultTestAccount)
-                    .withChargeId(nextLong())
+                    .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                     .withExternalChargeId(RandomIdGenerator.newId())
                     .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                     .withUpdatedDate(Instant.now().minus(Duration.ofHours(2)))
@@ -804,7 +804,7 @@ public class ChargeDaoIT {
 
     @Test
     void countCaptureRetriesForChargeExternalId_shouldReturnNumberOfRetries() {
-        long chargeId = nextLong();
+        long chargeId = current().nextLong(0, Long.MAX_VALUE);
         String externalChargeId = RandomIdGenerator.newId();
 
         app.getDatabaseFixtures()
@@ -834,7 +834,7 @@ public class ChargeDaoIT {
 
     @Test
     void count3dsRequiredEventsForChargeExternalId() {
-        long chargeId = nextLong();
+        long chargeId = current().nextLong(0, Long.MAX_VALUE);
         String externalChargeId = RandomIdGenerator.newId();
 
         app.getDatabaseFixtures()
@@ -865,7 +865,7 @@ public class ChargeDaoIT {
         app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED)
@@ -873,7 +873,7 @@ public class ChargeDaoIT {
         app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(2)))
                 .withChargeStatus(CAPTURE_APPROVED_RETRY)
@@ -909,7 +909,7 @@ public class ChargeDaoIT {
 
         DatabaseFixtures.TestAccount anotherGatewayAccount = app.getDatabaseFixtures()
                 .aTestAccount()
-                .withAccountId(nextLong())
+                .withAccountId(current().nextLong(0, Long.MAX_VALUE))
                 .insert();
         app.getDatabaseFixtures()
                 .aTestCharge()
@@ -1160,14 +1160,14 @@ public class ChargeDaoIT {
     private void insertTestAccount() {
         this.defaultTestAccount = app.getDatabaseFixtures()
                 .aTestAccount()
-                .withAccountId(nextLong())
+                .withAccountId(current().nextLong(0, Long.MAX_VALUE))
                 .insert();
     }
 
     private DatabaseFixtures.TestAccount insertTestAccountWithProvider(String provider) {
         return app.getDatabaseFixtures()
                 .aTestAccount()
-                .withAccountId(nextLong())
+                .withAccountId(current().nextLong(0, Long.MAX_VALUE))
                 .withPaymentProvider(provider)
                 .insert();
     }

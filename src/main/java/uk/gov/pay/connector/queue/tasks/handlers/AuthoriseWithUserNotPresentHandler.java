@@ -24,7 +24,7 @@ public class AuthoriseWithUserNotPresentHandler {
         response.getAuthoriseStatus()
                 .ifPresent(authoriseStatus -> {
                     if (authoriseStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED) {
-                        chargeEligibleForCaptureService.markChargeAsEligibleForCapture(charge.getExternalId()); 
+                        chargeEligibleForCaptureService.markChargeAsEligibleForCapture(charge.getExternalId());
                     }
                 });
     }

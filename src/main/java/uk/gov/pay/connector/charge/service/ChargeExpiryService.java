@@ -3,6 +3,8 @@ package uk.gov.pay.connector.charge.service;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +32,6 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.token.dao.TokenDao;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
@@ -240,8 +240,8 @@ public class ChargeExpiryService {
                     },
                     () -> {
                         logger.info(format("Gateway status does not map to any charge " +
-                                        "status in %s, expiring without cancelling on the gateway.",
-                                ChargeStatus.class.getCanonicalName()),
+                                                "status in %s, expiring without cancelling on the gateway.",
+                                        ChargeStatus.class.getCanonicalName()),
                                 kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
                         chargeService.transitionChargeState(chargeEntity.getExternalId(), EXPIRED);
                         expireCancelled.getAndIncrement();
@@ -253,16 +253,16 @@ public class ChargeExpiryService {
                 expireCancelFailed.intValue()
         );
     }
-    
+
     private boolean forceTransitionChargeState(ChargeEntity chargeEntity, ChargeStatus status) {
         try {
             chargeService.forceTransitionChargeState(chargeEntity.getExternalId(), status);
             return true;
         } catch (InvalidForceStateTransitionException e) {
             logger.error(format("Cannot expire charge as it is in a terminal state of [%s] with " +
-                            "the gateway provider and it is not possible to transition the charge " +
-                            "into this state. Current state: [%s]",
-                    status.getValue(), chargeEntity.getStatus()),
+                                    "the gateway provider and it is not possible to transition the charge " +
+                                    "into this state. Current state: [%s]",
+                            status.getValue(), chargeEntity.getStatus()),
                     kv(PAYMENT_EXTERNAL_ID, chargeEntity.getExternalId()));
             return false;
         }
@@ -343,7 +343,7 @@ public class ChargeExpiryService {
         logger.debug("Charge expiry window size for awaiting_delay_capture in seconds: [{}]", chargeExpiryWindowSeconds.getSeconds());
         return instantSource.instant().minus(chargeExpiryWindowSeconds);
     }
-    
+
     private Instant getExpiryThresholdForTokens() {
         Duration tokenExpiryWindowSeconds = chargeSweepConfig.getTokenExpiryThresholdInSeconds();
         logger.debug("Token expiry window size in seconds: [{}]", tokenExpiryWindowSeconds.getSeconds());

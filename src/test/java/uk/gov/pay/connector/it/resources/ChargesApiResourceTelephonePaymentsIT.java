@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -50,7 +50,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
                 .statusCode(201)
                 .extract().path("gateway_account_id");
     }
-    
+
     @Nested
     class ByGatewayAccountId {
 
@@ -64,7 +64,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
                     .then()
                     .statusCode(OK.getStatusCode());
         }
-        
+
         @Test
         public void createTelephoneCharge_withAllFields() {
             var payload = Map.ofEntries(

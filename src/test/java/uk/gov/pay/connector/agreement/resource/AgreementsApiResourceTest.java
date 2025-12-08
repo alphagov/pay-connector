@@ -2,9 +2,12 @@ package uk.gov.pay.connector.agreement.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.Nested;
+import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 import uk.gov.pay.connector.agreement.model.AgreementResponse;
 import uk.gov.pay.connector.agreement.model.builder.AgreementResponseBuilder;
 import uk.gov.pay.connector.agreement.service.AgreementService;
@@ -12,8 +15,6 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -25,8 +26,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import uk.gov.pay.connector.agreement.model.AgreementCreateRequest;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class AgreementsApiResourceTest {
@@ -55,26 +54,26 @@ class AgreementsApiResourceTest {
                     .thenReturn(Optional.ofNullable(aSuccessfulAgreementResponse()));
 
             Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
-    
+
             Response response = resources.client()
                     .target(format(RESOURCE_URL, VALID_ACCOUNT_ID))
                     .request()
                     .post(Entity.json(payloadMap));
-    
+
             assertThat(response.getStatus(), is(CREATED_201));
         }
-    
+
         @Test
         void returnsNotFoundResponse_whenGatewayAccountNotFound() {
             when(agreementService.createByGatewayAccountId(aValidAgreementCreateRequest(), NOT_VALID_ACCOUNT_ID))
                     .thenThrow(new GatewayAccountNotFoundException("Gateway account [9876] not found"));
             Map payloadMap = Map.of("reference", REFERENCE_ID, "description", VALID_DESCRIPTION);
-            
+
             Response response = resources.client()
                     .target(format(RESOURCE_URL, NOT_VALID_ACCOUNT_ID))
                     .request()
                     .post(Entity.json(payloadMap));
-    
+
             assertThat(response.getStatus(), is(NOT_FOUND_404));
         }
     }
@@ -110,11 +109,11 @@ class AgreementsApiResourceTest {
             assertThat(response.getStatus(), is(NOT_FOUND_404));
         }
     }
-    
+
     private AgreementCreateRequest aValidAgreementCreateRequest() {
         return new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, null);
     }
-    
+
     private AgreementResponse aSuccessfulAgreementResponse() {
         return new AgreementResponseBuilder()
                 .withAgreementId("an-agreement-id")

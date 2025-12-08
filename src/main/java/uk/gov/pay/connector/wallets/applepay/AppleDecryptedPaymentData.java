@@ -20,7 +20,7 @@ public class AppleDecryptedPaymentData {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyMMdd")
     @JsonDeserialize(using = LocalDateDeserializer.class)
     private LocalDate applicationExpirationDate;
-    
+
     public AppleDecryptedPaymentData() {
     }
 
@@ -76,7 +76,7 @@ public class AppleDecryptedPaymentData {
     public void setPaymentInfo(WalletPaymentInfo applePaymentInfo) {
         this.paymentInfo = applePaymentInfo;
     }
-    
+
     public WalletPaymentInfo getPaymentInfo() {
         return paymentInfo;
     }

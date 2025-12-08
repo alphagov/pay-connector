@@ -51,7 +51,7 @@ class CaptureQueueTest {
 
     @Test
     void shouldParseChargeIdReceivedFromQueueGivenWellFormattedJSON() throws QueueException {
-                String validJsonMessage = "{ \"chargeId\": \"my-charge-id\"}";
+        String validJsonMessage = "{ \"chargeId\": \"my-charge-id\"}";
         SendMessageResponse messageResult = mock(SendMessageResponse.class);
 
         List<QueueMessage> messages = Arrays.asList(

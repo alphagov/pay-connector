@@ -188,7 +188,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private AuthorisationRequestSummary mockAuthorisationRequestSummary;
-    
+
     @Mock
     private AuthorisationRequestSummaryStringifier mockAuthorisationRequestSummaryStringifier;
 
@@ -434,13 +434,13 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetailsEntity);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         when(mockAuthorisationRequestSummary.corporateCard()).thenReturn(true);
-        
+
         charge.getGatewayAccount().setCorporateDebitCardSurchargeAmount(50L);
-        
+
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "with corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
-        
+
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
         assertTrue(response.getAuthoriseStatus().isPresent());
@@ -460,7 +460,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 "sandbox", "test", "without-billing-address", "with corporate card", "not requested", "without email address", "without ip address", "authorisation success"
         });
         assertThat(counterAfter, is(counterBefore + 1));
-        
+
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
@@ -551,7 +551,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
-    
+
     @Test
     void doAuthoriseWeb_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() throws Exception {
 
@@ -995,7 +995,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(false));
 
         double counterAfter = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
-                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address",  "authorisation rejected"
+                "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation rejected"
         });
         assertThat(counterAfter, is(counterBefore + 1));
 
@@ -1397,7 +1397,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED);
         providerWillRespondToAuthoriseUserNotPresentWith(authResponse, paymentGatewayName);
     }
-    
+
     private void providerWillReject(PaymentGatewayName paymentGatewayName) throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, REJECTED);

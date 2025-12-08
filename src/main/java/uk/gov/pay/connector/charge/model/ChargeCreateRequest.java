@@ -49,7 +49,7 @@ public class ChargeCreateRequest {
     @NotNull(message = "Field [reference] cannot be null")
     @Length(max = 255, message = "Field [reference] can have a size between 0 and 255")
     @JsonProperty("reference")
-    @Schema(example = "payment reference", description = "The reference issued by the government service for this payment",requiredMode = REQUIRED,
+    @Schema(example = "payment reference", description = "The reference issued by the government service for this payment", requiredMode = REQUIRED,
             maximum = "255")
     private String reference;
 

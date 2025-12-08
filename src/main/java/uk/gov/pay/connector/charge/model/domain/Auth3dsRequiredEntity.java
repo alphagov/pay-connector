@@ -17,16 +17,16 @@ public class Auth3dsRequiredEntity {
 
     @Column(name = "md_3ds")
     private String md;
-    
+
     @Column(name = "worldpay_challenge_acs_url_3ds")
     private String worldpayChallengeAcsUrl;
-    
+
     @Column(name = "worldpay_challenge_transaction_id_3ds")
     private String worldpayChallengeTransactionId;
-    
+
     @Column(name = "worldpay_challenge_payload_3ds")
     private String worldpayChallengePayload;
-    
+
     @Column(name = "version_3ds")
     private String threeDsVersion;
 
@@ -93,6 +93,6 @@ public class Auth3dsRequiredEntity {
     public void setThreeDsVersion(String threeDsVersion) {
         this.threeDsVersion = threeDsVersion;
     }
-    
-    
+
+
 }

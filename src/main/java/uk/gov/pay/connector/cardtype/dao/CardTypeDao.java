@@ -2,11 +2,11 @@ package uk.gov.pay.connector.cardtype.dao;
 
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.common.dao.JpaDao;
 
-import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

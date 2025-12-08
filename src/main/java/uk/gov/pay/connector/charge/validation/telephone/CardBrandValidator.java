@@ -2,6 +2,7 @@ package uk.gov.pay.connector.charge.validation.telephone;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+
 import java.util.HashSet;
 
 public class CardBrandValidator implements ConstraintValidator<ValidCardBrand, String> {
@@ -19,7 +20,7 @@ public class CardBrandValidator implements ConstraintValidator<ValidCardBrand, S
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
 
-        if(value == null) {
+        if (value == null) {
             return true;
         }
 

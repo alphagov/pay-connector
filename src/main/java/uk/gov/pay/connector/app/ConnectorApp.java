@@ -92,8 +92,8 @@ import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
 
 import java.util.concurrent.TimeUnit;
 
-import static java.util.EnumSet.of;
 import static jakarta.servlet.DispatcherType.REQUEST;
+import static java.util.EnumSet.of;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 

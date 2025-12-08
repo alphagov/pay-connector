@@ -2,8 +2,9 @@ package uk.gov.pay.connector.util;
 
 import java.time.Instant;
 import java.util.Objects;
-import java.util.Random;
 import java.util.stream.Stream;
+
+import static java.util.concurrent.ThreadLocalRandom.current;
 
 public class AddAgreementParams {
 
@@ -72,7 +73,7 @@ public class AddAgreementParams {
     }
 
     public static final class AddAgreementParamsBuilder {
-        private Long agreementId = new Random().nextLong();
+        private Long agreementId = current().nextLong(0, Long.MAX_VALUE);
         private String externalAgreementId = "anExternalAgreementId";
         private boolean live = false;
         private String serviceId = "aServiceId";

@@ -31,7 +31,7 @@ public class CaptureResponse {
     private CaptureResponse(String transactionId, ChargeState chargeState, GatewayError gatewayError, String stringified) {
         this(transactionId, chargeState, gatewayError, stringified, Collections.emptyList());
     }
-    
+
     public CaptureResponse(String transactionId, ChargeState chargeState, List<Fee> feeList) {
         this(transactionId, chargeState, null, null, feeList);
     }
@@ -44,14 +44,14 @@ public class CaptureResponse {
         if (isNotBlank(captureResponse.getErrorCode())) {
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState, genericGatewayError(captureResponse.stringify()), captureResponse.stringify());
         } else
-            return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify());
+            return new CaptureResponse(captureResponse.getTransactionId(), chargeState, null, captureResponse.stringify());
     }
 
     public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState, List<Fee> feeList) {
         if (isNotBlank(captureResponse.getErrorCode())) {
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState, genericGatewayError(captureResponse.stringify()), captureResponse.stringify());
         } else
-            return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify(), feeList);
+            return new CaptureResponse(captureResponse.getTransactionId(), chargeState, null, captureResponse.stringify(), feeList);
     }
 
     public Optional<GatewayError> getError() {

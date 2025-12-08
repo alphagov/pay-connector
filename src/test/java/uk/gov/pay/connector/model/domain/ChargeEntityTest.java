@@ -86,7 +86,7 @@ class ChargeEntityTest {
     @Test
     void shouldRejectAnInvalidStatusTransition() {
         ChargeEntity chargeCreated = ChargeEntityFixture.aValidChargeEntity().withStatus(CREATED).build();
-        assertThrows( InvalidStateTransitionException.class, () -> {
+        assertThrows(InvalidStateTransitionException.class, () -> {
             chargeCreated.setStatus(CAPTURED);
         });
     }

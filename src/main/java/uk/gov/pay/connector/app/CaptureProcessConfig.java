@@ -2,7 +2,6 @@ package uk.gov.pay.connector.app;
 
 
 import io.dropwizard.core.Configuration;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -28,7 +27,9 @@ public class CaptureProcessConfig extends Configuration {
         return maximumRetries;
     }
 
-    public Boolean getBackgroundProcessingEnabled() { return backgroundProcessingEnabled; }
+    public Boolean getBackgroundProcessingEnabled() {
+        return backgroundProcessingEnabled;
+    }
 
     public int getFailedCaptureRetryDelayInSeconds() {
         return failedCaptureRetryDelayInSeconds;

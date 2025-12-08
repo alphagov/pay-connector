@@ -1,9 +1,8 @@
 package uk.gov.pay.connector.chargeevent.model.domain;
 
-import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 @Converter
 public class ChargeStatusConverter implements AttributeConverter<ChargeStatus, String> {

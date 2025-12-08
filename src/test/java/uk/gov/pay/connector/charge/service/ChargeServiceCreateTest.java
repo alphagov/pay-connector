@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.UriInfo;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -79,7 +80,6 @@ import uk.gov.service.payments.commons.model.Source;
 import uk.gov.service.payments.commons.model.SupportedLanguage;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
@@ -94,10 +94,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.time.ZonedDateTime.now;
 import static jakarta.ws.rs.HttpMethod.GET;
 import static jakarta.ws.rs.HttpMethod.POST;
 import static jakarta.ws.rs.core.UriBuilder.fromUri;
+import static java.time.ZonedDateTime.now;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
@@ -526,7 +526,7 @@ class ChargeServiceCreateTest {
         final ChargeCreateRequest request = requestBuilder.withAmount(0).build();
         when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
         when(mockGatewayAccountCredentialsService.getCurrentOrActiveCredential(gatewayAccount)).thenReturn(gatewayAccountCredentialsEntity);
-        
+
         assertThrows(ZeroAmountNotAllowedForGatewayAccountException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
@@ -733,7 +733,7 @@ class ChargeServiceCreateTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = Source.class, names = { "CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO" })
+    @EnumSource(value = Source.class, names = {"CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO"})
     void shouldThrowException_whenPaymentProviderIsStripeAndAmountUnder30Pence(Source source) {
         GatewayAccountCredentialsEntity stripeGatewayAccountCredentialsEntity = GatewayAccountCredentialsEntityFixture
                 .aGatewayAccountCredentialsEntity()
@@ -751,7 +751,7 @@ class ChargeServiceCreateTest {
         assertThrows(ChargeException.class, () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
         verify(mockedChargeDao, never()).persist(any(ChargeEntity.class));
     }
-    
+
     @Test
     void shouldCreateNewChargeAndPersistIdempotency() throws URISyntaxException {
         String idempotencyKey = "idempotency-key";

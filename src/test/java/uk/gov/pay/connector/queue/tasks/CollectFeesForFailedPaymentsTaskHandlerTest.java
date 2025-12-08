@@ -58,7 +58,7 @@ class CollectFeesForFailedPaymentsTaskHandlerTest {
             .withExternalId(chargeExternalId)
             .withStatus(ChargeStatus.EXPIRED)
             .build();
-    
+
     private CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
 
     @BeforeEach
@@ -76,9 +76,9 @@ class CollectFeesForFailedPaymentsTaskHandlerTest {
                 Fee.of(THREE_D_S, 7L)
         );
         when(stripePaymentProvider.calculateAndTransferFeesForFailedPayments(charge)).thenReturn(fees);
-        
+
         collectFeesForFailedPaymentsTaskHandler.collectAndPersistFees(paymentTaskData);
-        
+
         assertThat(charge.getFees(), hasSize(2));
         assertThat(charge.getFees(), containsInAnyOrder(
                 allOf(

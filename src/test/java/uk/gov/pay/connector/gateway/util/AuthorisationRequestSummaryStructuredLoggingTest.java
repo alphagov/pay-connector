@@ -44,7 +44,8 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 @ExtendWith(MockitoExtension.class)
 class AuthorisationRequestSummaryStructuredLoggingTest {
 
-    @Mock private AuthorisationRequestSummary mockAuthorisationRequestSummary;
+    @Mock
+    private AuthorisationRequestSummary mockAuthorisationRequestSummary;
 
     private final AuthorisationRequestSummaryStructuredLogging structuredLogging = new AuthorisationRequestSummaryStructuredLogging();
 
@@ -132,34 +133,34 @@ class AuthorisationRequestSummaryStructuredLoggingTest {
                 kv(CORPORATE_CARD, false)
         )));
     }
-    
+
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
-    is_billing_address_present, payer_email, ip_address, three_ds_required, is_moto
-    true, citizen@example.org, 1.1.1.1, true, true
-    false, null, null, false, false
-    """)
+            is_billing_address_present, payer_email, ip_address, three_ds_required, is_moto
+            true, citizen@example.org, 1.1.1.1, true, true
+            false, null, null, false, false
+            """)
     void createArgsForPreAuthorisationLogging(boolean isBillingAddressPresent, String payerEmail, String ipAddress, boolean isThreeDsRequired, boolean isMoto) {
         WorldpayOrderRequestBuilder mockOrderRequestBuilder = mock(WorldpayOrderRequestBuilder.class);
         WorldpayOrderRequestBuilder.WorldpayTemplateData mockWorldpayTemplateData = mock(WorldpayOrderRequestBuilder.WorldpayTemplateData.class);
         given(mockOrderRequestBuilder.getWorldpayTemplateData()).willReturn(mockWorldpayTemplateData);
         AuthCardDetails mockAuthCardDetails = mock(AuthCardDetails.class);
-        
+
         given(mockAuthCardDetails.getAddress()).willReturn(isBillingAddressPresent ? Optional.of(new Address()) : Optional.empty());
         given(mockOrderRequestBuilder.getWorldpayTemplateData().getPayerEmail()).willReturn(payerEmail);
         given(mockOrderRequestBuilder.getWorldpayTemplateData().getPayerIpAddress()).willReturn(ipAddress);
         given(mockOrderRequestBuilder.getWorldpayTemplateData().isRequires3ds()).willReturn(isThreeDsRequired);
 
         StructuredArgument[] result = structuredLogging.createArgsForPreAuthorisationLogging(mockOrderRequestBuilder, mockAuthCardDetails, isMoto);
-        
+
         assertThat(result, is(hasItemInArray(kv(BILLING_ADDRESS, isBillingAddressPresent))));
         assertThat(result, is(hasItemInArray(kv(EMAIL, !isBlank(payerEmail)))));
         assertThat(result, is(hasItemInArray(kv(THREE_DS_REQUIRED, isThreeDsRequired))));
         assertThat(result, is(hasItemInArray(kv(MOTO, isMoto))));
-                
-        if(ipAddress != null) {
+
+        if (ipAddress != null) {
             assertThat(result, is(hasItemInArray(kv(IP_ADDRESS, ipAddress))));
-        } else  {
+        } else {
             assertThat(result, is(not(hasItemInArray(kv(IP_ADDRESS, null)))));
         }
     }

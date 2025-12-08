@@ -10,6 +10,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,9 +52,6 @@ import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
@@ -413,7 +413,7 @@ class CardResourceAuthoriseTest {
         assertThat(errorResponse.messages(), hasItem("InterpretedStatus not found for Gateway response"));
         assertThat(errorResponse.identifier(), is(GENERIC));
     }
-    
+
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
@@ -428,8 +428,9 @@ class CardResourceAuthoriseTest {
 
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
-        String payloadStr = load("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
-        
+        String payloadStr = load("googlepay/example-auth-request.json").replace("example@test.example", "A".repeat(250) + "@" + "email.com");
+        ;
+
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -477,7 +478,8 @@ class CardResourceAuthoriseTest {
 
     @Test
     void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
-        String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");;
+        String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("example@test.example", "A".repeat(250) + "@" + "email.com");
+        ;
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
@@ -493,14 +495,14 @@ class CardResourceAuthoriseTest {
         assertThat(errorResponse.messages(), hasItem(expectedErrorMessage));
         assertThat(errorResponse.identifier(), is(GENERIC));
     }
-    
+
     private void verifyReceiptOfPayloadNotLogged(Response response, String logMessage) {
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
     }
-    
-    
+
+
     private void mockGatewayError(GatewayError gatewayError) {
         GatewayResponse<BaseAuthoriseResponse> operationResponse = mock(GatewayResponse.class);
         when(operationResponse.getGatewayError()).thenReturn(Optional.of(gatewayError));

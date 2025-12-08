@@ -5,19 +5,19 @@ import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 
 public class ApplePayPaymentInfo extends WalletPaymentInfo {
-    
+
     @Schema(example = "MasterCard 1234")
     private String displayName;
-    
+
     @Schema(example = "MasterCard")
     private String network;
-    
+
     @Schema(example = "372C3858122B6BC39C6095ECA2F994A8AA012F3B025D0D72ECFD449C2A5877F9")
     private String transactionIdentifier;
 
     public ApplePayPaymentInfo() {
     }
-    
+
     public ApplePayPaymentInfo(String lastDigitsCardNumber,
                                String brand,
                                PayersCardType cardType,

@@ -139,7 +139,7 @@ class ChargeServiceCreateAgreementTest {
 
     @Mock
     private TaskQueueService mockTaskQueueService;
-    
+
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
 
@@ -386,7 +386,7 @@ class ChargeServiceCreateAgreementTest {
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .build();
 
-        var thrown = assertThrows(UnexpectedAttributeException.class, 
+        var thrown = assertThrows(UnexpectedAttributeException.class,
                 () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: email"));
@@ -473,7 +473,7 @@ class ChargeServiceCreateAgreementTest {
                 () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 
         assertThat(thrown.getMessage(), is("Unexpected attribute: agreement_id"));
-        
+
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
 
@@ -558,24 +558,24 @@ class ChargeServiceCreateAgreementTest {
 
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
     }
-    
-    @Test 
+
+    @Test
     void shouldThrowExceptionWhenRecurringNotEnabledForGatewayAccountForAuthorisationModeAgreement() {
         gatewayAccount.setRecurringEnabled(false);
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAuthorisationMode(AuthorisationMode.AGREEMENT).build();
-        
+
         var thrown = assertThrows(RecurringCardPaymentsNotAllowedException.class,
                 () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
-        
+
         assertThat(thrown.getMessage(), is("Attempt to use authorisation mode 'agreement' for gateway account 10, which does not have recurring card payments enabled"));
         verify(mockChargeDao, never()).persist(any(ChargeEntity.class));
-        }
+    }
 
     @Test
     void shouldThrowExceptionWhenRecurringNotEnabledForSavePaymentInstrumentToAgreement() {
         gatewayAccount.setRecurringEnabled(false);
         ChargeCreateRequest request = requestBuilder.withAmount(1000).withAgreementId(AGREEMENT_ID).withSavePaymentInstrumentToAgreement(true).build();
-        
+
         var thrown = assertThrows(RecurringCardPaymentsNotAllowedException.class,
                 () -> chargeService.create(request, GATEWAY_ACCOUNT_ID, mockedUriInfo, null));
 

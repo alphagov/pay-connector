@@ -49,26 +49,26 @@ public class AgreementServiceTest {
     public static final String VALID_USER_REFERENCE = "a-valid-user-reference";
     public static final String VALID_AGREEMENT_ID = "a-valid-agreement-id";
     private static final String INSTANT_EXPECTED = "2022-03-03T10:15:30Z";
-    
+
     private final GatewayAccountEntity gatewayAccount = mock(GatewayAccountEntity.class);
     private final AgreementDao mockedAgreementDao = mock(AgreementDao.class);
     private final GatewayAccountService mockGatewayAccountService = mock(GatewayAccountService.class);
     private final LedgerService mockedLedgerService = mock(LedgerService.class);
     private final TaskQueueService mockedTaskQueueService = mock(TaskQueueService.class);
     private AgreementService agreementService;
-    
+
     @BeforeEach
     public void setUp() {
         InstantSource instantSource = InstantSource.fixed(Instant.parse(INSTANT_EXPECTED));
         agreementService = new AgreementService(mockedAgreementDao, mockGatewayAccountService, mockedLedgerService, instantSource, mockedTaskQueueService);
     }
-    
+
     @Nested
     class ByGatewayAccountId {
-        
+
         @Nested
         class CreateAgreement {
-            
+
             @Test
             public void shouldBeSuccessful_whenRecurringEnabled() {
                 when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
@@ -173,13 +173,13 @@ public class AgreementServiceTest {
             }
         }
     }
-    
+
     @Nested
     class ByServiceIdAndAccountType {
 
         @Nested
         class CreateAgreement {
-            
+
             @Test
             public void shouldBeSuccessful_whenRecurringEnabled() {
                 when(gatewayAccount.getServiceId()).thenReturn(SERVICE_ID);
@@ -203,7 +203,7 @@ public class AgreementServiceTest {
                 when(mockGatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST))
                         .thenReturn(Optional.empty());
                 var agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
-                assertThrows(GatewayAccountNotFoundException.class, 
+                assertThrows(GatewayAccountNotFoundException.class,
                         () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
             }
 
@@ -213,7 +213,7 @@ public class AgreementServiceTest {
                 when(mockGatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, GatewayAccountType.TEST))
                         .thenReturn(Optional.of(gatewayAccount));
                 var agreementCreateRequest = new AgreementCreateRequest(REFERENCE_ID, VALID_DESCRIPTION, VALID_USER_REFERENCE);
-                assertThrows(RecurringCardPaymentsNotAllowedException.class, 
+                assertThrows(RecurringCardPaymentsNotAllowedException.class,
                         () -> agreementService.createByServiceIdAndAccountType(agreementCreateRequest, SERVICE_ID, GatewayAccountType.TEST));
             }
         }
@@ -281,7 +281,7 @@ public class AgreementServiceTest {
                         .build();
                 when(gatewayAccount.getId()).thenReturn(GATEWAY_ACCOUNT_ID);
                 when(mockedAgreementDao.findByExternalIdAndServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST)).thenReturn(Optional.of(agreement));
-                agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST,new AgreementCancelRequest());
+                agreementService.cancelByServiceIdAndAccountType(VALID_AGREEMENT_ID, SERVICE_ID, GatewayAccountType.TEST, new AgreementCancelRequest());
                 verify(mockedTaskQueueService).addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
                 verify(mockedLedgerService).postEvent(Mockito.any(AgreementCancelledByService.class));
                 assertThat(paymentInstrument.getStatus(), is(PaymentInstrumentStatus.CANCELLED));

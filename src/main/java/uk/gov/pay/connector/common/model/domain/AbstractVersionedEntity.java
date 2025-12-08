@@ -3,6 +3,7 @@ package uk.gov.pay.connector.common.model.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Version;
+
 import java.io.Serializable;
 
 @MappedSuperclass

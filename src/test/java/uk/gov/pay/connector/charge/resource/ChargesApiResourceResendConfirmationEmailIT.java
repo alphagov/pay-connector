@@ -1,9 +1,9 @@
 package uk.gov.pay.connector.charge.resource;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,7 +15,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static io.dropwizard.testing.ConfigOverride.config;
@@ -36,7 +35,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
     private static final String SERVICE_ID = RandomIdGenerator.randomUuid();
     private static final GatewayAccountType GATEWAY_ACCOUNT_TYPE = GatewayAccountType.TEST;
     private static final PaymentGatewayName PAYMENT_GATEWAY_NAME = PaymentGatewayName.STRIPE;
-    
+
     private static String gatewayAccountId;
     private static String chargeId;
 
@@ -80,7 +79,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             @DisplayName("Should return 204 when successful")
             void shouldReturn204WhenEmailSuccessfullySent() {
                 app.getNotifyStub().respondWithSuccess();
-                
+
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/accounts/%s/charges/%s/resend-confirmation-email", gatewayAccountId, chargeId))
@@ -103,7 +102,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             @DisplayName("Should return 204 when successful")
             void shouldReturn204WhenEmailSuccessfullySent() {
                 app.getNotifyStub().respondWithSuccess();
-                
+
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))
@@ -116,7 +115,7 @@ public class ChargesApiResourceResendConfirmationEmailIT {
             @MethodSource("shouldReturn404_argsProvider")
             void shouldReturn404_WhenServiceIdNotFound_OrAccountTypeNotFound(String serviceId, GatewayAccountType gatewayAccountType, String expectedError) {
                 app.getNotifyStub().respondWithSuccess();
-                
+
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", serviceId, gatewayAccountType, chargeId))
@@ -124,12 +123,12 @@ public class ChargesApiResourceResendConfirmationEmailIT {
                         .statusCode(404)
                         .body("message", contains(expectedError));
             }
-            
+
             @Test
             @DisplayName("Should return 402 when notification fails to send")
             void shouldReturn402_whenNotificationFails() {
                 app.getNotifyStub().respondWithFailure();
-                
+
                 app.givenSetup()
                         .body("")
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/resend-confirmation-email", SERVICE_ID, GATEWAY_ACCOUNT_TYPE, chargeId))

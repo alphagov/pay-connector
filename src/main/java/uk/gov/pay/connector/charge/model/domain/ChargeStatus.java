@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.charge.model.domain;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import uk.gov.pay.connector.common.model.Status;
 import uk.gov.pay.connector.common.model.api.ExternalChargeState;
 
@@ -57,7 +57,7 @@ public enum ChargeStatus implements Status {
     USER_CANCEL_SUBMITTED("USER CANCEL SUBMITTED", EXTERNAL_FAILED_CANCELLED, false),
     USER_CANCELLED("USER CANCELLED", EXTERNAL_FAILED_CANCELLED, true),
     USER_CANCEL_ERROR("USER CANCEL ERROR", EXTERNAL_FAILED_CANCELLED, true),
-    
+
     // Below statuses exist to facilitate cancellation on the gateway for charges that entered the various authorisation
     // error states. A recurring cleanup job moves charges into these states when it has handled them. This job is only
     // run for ePDQ charges, so only ePDQ charges will enter these states.
@@ -93,7 +93,7 @@ public enum ChargeStatus implements Status {
 
     public static ChargeStatus fromString(String status) {
         for (ChargeStatus stat : values()) {
-            if (StringUtils.equals(stat.getValue(), status)) {
+            if (Strings.CS.equals(stat.getValue(), status)) {
                 return stat;
             }
         }

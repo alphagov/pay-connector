@@ -8,7 +8,7 @@ import java.util.Optional;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.NOT_APPLICABLE;
 
 public interface AuthorisationRequestSummary {
-    
+
     enum Presence {
         PRESENT, NOT_PRESENT, NOT_APPLICABLE
     }
@@ -29,11 +29,13 @@ public interface AuthorisationRequestSummary {
         return NOT_APPLICABLE;
     }
 
-    default String ipAddress() { 
-        return null; 
+    default String ipAddress() {
+        return null;
     }
-    
-    default Presence setUpAgreement() { return NOT_APPLICABLE; }
+
+    default Presence setUpAgreement() {
+        return NOT_APPLICABLE;
+    }
 
     default boolean corporateCard() {
         return false;
@@ -46,12 +48,12 @@ public interface AuthorisationRequestSummary {
     default Optional<Exemption3ds> corporateExemptionResult() {
         return Optional.empty();
     }
-    
-    default Presence email() { 
-        return NOT_APPLICABLE; 
+
+    default Presence email() {
+        return NOT_APPLICABLE;
     }
-    
-    default Optional<AgreementPaymentType> agreementPaymentType() { 
+
+    default Optional<AgreementPaymentType> agreementPaymentType() {
         return Optional.empty();
     }
 

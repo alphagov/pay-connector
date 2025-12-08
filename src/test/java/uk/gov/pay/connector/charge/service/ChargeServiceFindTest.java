@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +51,6 @@ import uk.gov.pay.connector.wallets.WalletType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
@@ -158,14 +158,15 @@ class ChargeServiceFindTest {
 
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
-    
+
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
 
-    @Captor ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
+    @Captor
+    ArgumentCaptor<TokenEntity> tokenEntityArgumentCaptor;
 
     private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
 
@@ -215,6 +216,7 @@ class ChargeServiceFindTest {
                 mockWorldpay3dsFlexJwtService, mockIdempotencyDao, mockExternalTransactionStateFactory, objectMapper,
                 null, fixedInstantSource);
     }
+
     @Test
     void shouldNotFindCharge() {
         PaymentOutcome paymentOutcome = new PaymentOutcome("success");
@@ -238,7 +240,7 @@ class ChargeServiceFindTest {
     @EnumSource(names = {
             "CREATED",
             "ENTERING_CARD_DETAILS",
-            "AUTHORISATION_READY"     
+            "AUTHORISATION_READY"
     })
     void shouldFindChargeForChargeIdAndAccountIdWithNextUrlWhenChargeStatusIs(ChargeStatus status) throws URISyntaxException {
         Long chargeId = 101L;
@@ -338,7 +340,7 @@ class ChargeServiceFindTest {
         when(mockedChargeDao.findByExternalIdAndGatewayAccount(externalId, GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(charge));
 
         Optional<ChargeResponse> chargeResponseForAccount = chargeService.findChargeForAccount(externalId, GATEWAY_ACCOUNT_ID, mockedUriInfo);
-        
+
         assertThat(chargeResponseForAccount.isPresent(), is(true));
         final ChargeResponse chargeResponse = chargeResponseForAccount.get();
 

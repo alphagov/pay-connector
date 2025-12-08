@@ -1,11 +1,10 @@
 package uk.gov.pay.connector.cardtype.model.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import uk.gov.pay.connector.common.model.domain.UuidAbstractEntity;
 
 @Entity
 @Table(name = "card_types")
@@ -18,7 +17,7 @@ public class CardBrandLabelEntity extends UuidAbstractEntity {
     @Column
     @Schema(example = "Visa")
     private String label;
-    
+
     public String getBrand() {
         return brand;
     }

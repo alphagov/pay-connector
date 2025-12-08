@@ -8,14 +8,14 @@ import java.time.Instant;
 
 public class CancelledWithGatewayAfterAuthorisationError extends PaymentEvent {
     public CancelledWithGatewayAfterAuthorisationError(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
-                                                       CancelledWithGatewayAfterAuthorisationErrorEventDetails eventDetails, 
+                                                       CancelledWithGatewayAfterAuthorisationErrorEventDetails eventDetails,
                                                        Instant timestamp) {
         super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
-    
+
     public static CancelledWithGatewayAfterAuthorisationError from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
-        
+
         return new CancelledWithGatewayAfterAuthorisationError(
                 charge.getServiceId(),
                 charge.getGatewayAccount().isLive(),

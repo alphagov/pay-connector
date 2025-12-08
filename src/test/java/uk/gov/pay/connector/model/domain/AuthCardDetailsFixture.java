@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.model.domain;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.service.payments.commons.model.CardExpiryDate;
 import uk.gov.pay.connector.cardtype.model.domain.CardBrandLabelEntity;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -11,6 +10,7 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
+import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 public final class AuthCardDetailsFixture {
     private String cardNo = "4242424242424242";
@@ -94,7 +94,7 @@ public final class AuthCardDetailsFixture {
         this.payersCardPrepaidStatus = payersCardPrepaidStatus;
         return this;
     }
-    
+
     public AuthCardDetailsFixture withWorldpay3dsFlexDdcResult(String worldpay3dsFlexDdcResult) {
         this.worldpay3dsFlexDdcResult = worldpay3dsFlexDdcResult;
         return this;
@@ -128,25 +128,25 @@ public final class AuthCardDetailsFixture {
     public AuthCardDetailsFixture withJsTimezoneOffsetMins(String jsTimezoneOffsetMins) {
         this.jsTimezoneOffsetMins = jsTimezoneOffsetMins;
         return this;
-    }    
-    
+    }
+
     public AuthCardDetailsFixture withAcceptLanguageHeader(String acceptLanguageHeader) {
         this.acceptLanguageHeader = acceptLanguageHeader;
         return this;
     }
-    
+
     public CardDetailsEntity getCardDetailsEntity() {
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity();
         cardDetailsEntity.setCardBrand(cardBrand);
         cardDetailsEntity.setCardHolderName(cardHolder);
         cardDetailsEntity.setExpiryDate(endDate);
-        if(cardNo.length() > 6) {
+        if (cardNo.length() > 6) {
             cardDetailsEntity.setFirstDigitsCardNumber(FirstDigitsCardNumber.of(StringUtils.left(cardNo, 6)));
         }
 
         cardDetailsEntity.setLastDigitsCardNumber(LastDigitsCardNumber.of(StringUtils.right(cardNo, 4)));
 
-        if(address != null) {
+        if (address != null) {
             cardDetailsEntity.setBillingAddress(new AddressEntity(address));
         }
 

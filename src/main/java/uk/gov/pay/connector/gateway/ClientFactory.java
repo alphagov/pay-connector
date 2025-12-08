@@ -5,6 +5,8 @@ import com.codahale.metrics.httpclient5.InstrumentedHttpClientConnectionManager;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
 import org.apache.hc.client5.http.impl.io.ManagedHttpClientConnectionFactory;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
@@ -19,9 +21,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.OperationOverrides;
 import uk.gov.service.payments.logging.RestClientLoggingFilter;
 
-import jakarta.inject.Inject;
 import javax.net.ssl.SSLContext;
-import jakarta.ws.rs.client.Client;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
@@ -101,7 +101,7 @@ public class ClientFactory {
             throw new RuntimeException("Unable to create SSL connection socket factory", e);
         }
 
-       return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
+        return InstrumentedHttpClientConnectionManager.builder(metricRegistry)
                 .socketFactoryRegistry(RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("http", PlainConnectionSocketFactory.getSocketFactory())
                         .register("https", sslConnectionSocketFactory)

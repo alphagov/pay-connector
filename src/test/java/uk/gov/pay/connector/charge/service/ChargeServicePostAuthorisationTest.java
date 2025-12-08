@@ -74,27 +74,46 @@ class ChargeServicePostAuthorisationTest {
     private static final ProviderSessionIdentifier PROVIDER_SESSION_IDENTIFIER = ProviderSessionIdentifier.of("some-session-identifier");
     private static final Map<String, String> TOKEN = Map.of("token", "value");
 
-    @Mock private ChargeDao mockChargeDao;
-    @Mock private ChargeEventDao mockChargeEventDao;
-    @Mock private AgreementDao mockAgreementDao;
-    @Mock private GatewayAccountDao mockGatewayAccountDao;
-    @Mock private TokenDao mockTokenDao;
-    @Mock private CardTypeDao mockCardTypeDao;
-    @Mock private RefundService mockRefundService;
-    @Mock private PaymentInstrumentService mockPaymentInstrumentService;
-    @Mock private LedgerService mockLedgerService;
-    @Mock private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
-    @Mock private StateTransitionService mockStateTransitionService;
-    @Mock private EventService mockEventService;
-    @Mock private TaskQueueService mockTaskQueueService;
+    @Mock
+    private ChargeDao mockChargeDao;
+    @Mock
+    private ChargeEventDao mockChargeEventDao;
+    @Mock
+    private AgreementDao mockAgreementDao;
+    @Mock
+    private GatewayAccountDao mockGatewayAccountDao;
+    @Mock
+    private TokenDao mockTokenDao;
+    @Mock
+    private CardTypeDao mockCardTypeDao;
+    @Mock
+    private RefundService mockRefundService;
+    @Mock
+    private PaymentInstrumentService mockPaymentInstrumentService;
+    @Mock
+    private LedgerService mockLedgerService;
+    @Mock
+    private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    @Mock
+    private StateTransitionService mockStateTransitionService;
+    @Mock
+    private EventService mockEventService;
+    @Mock
+    private TaskQueueService mockTaskQueueService;
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
-    @Mock private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
-    @Mock private PaymentProviders mockProviders;
-    @Mock private ConnectorConfiguration mockConnectorConfig;
-    @Mock private CardDetailsEntity mockCardDetailsEntity;
-    @Mock private ChargeEventEntity mockChargeEventEntity;
-    @Mock private PaymentInstrumentEntity mockPaymentInstrumentEntity;
+    @Mock
+    private AuthCardDetailsToCardDetailsEntityConverter mockAuthCardDetailsToCardDetailsEntityConverter;
+    @Mock
+    private PaymentProviders mockProviders;
+    @Mock
+    private ConnectorConfiguration mockConnectorConfig;
+    @Mock
+    private CardDetailsEntity mockCardDetailsEntity;
+    @Mock
+    private ChargeEventEntity mockChargeEventEntity;
+    @Mock
+    private PaymentInstrumentEntity mockPaymentInstrumentEntity;
     @Mock
     private IdempotencyDao mockIdempotencyDao;
     @Mock
@@ -149,7 +168,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockChargeDao.findByExternalId(EXTERNAL_ID)).thenReturn(Optional.of(chargeEntity));
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(mockCardDetailsEntity);
         when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
-        
+
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
                 PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, null, null);
 
@@ -253,7 +272,7 @@ class ChargeServicePostAuthorisationTest {
         assertThat(event.getEventType(), is("AGREEMENT_INACTIVATED"));
         assertThat(event.getServiceId(), is("This is the service id"));
         assertThat(event.isLive(), is(false));
-        AgreementInactivated.AgreementInactivatedEventDetails eventDetails = (AgreementInactivated.AgreementInactivatedEventDetails)event.getEventDetails();
+        AgreementInactivated.AgreementInactivatedEventDetails eventDetails = (AgreementInactivated.AgreementInactivatedEventDetails) event.getEventDetails();
         assertThat(eventDetails.getReason(), is(CLOSED_ACCOUNT.toString()));
         assertThat(eventDetails.getPaymentInstrumentExternalId(), is(paymentInstrument.getExternalId()));
     }

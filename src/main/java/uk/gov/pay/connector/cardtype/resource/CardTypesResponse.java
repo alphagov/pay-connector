@@ -10,7 +10,7 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public record CardTypesResponse (
+public record CardTypesResponse(
         @Schema(name = "card_types")
         List<CardTypeEntity> cardTypes
 ) {

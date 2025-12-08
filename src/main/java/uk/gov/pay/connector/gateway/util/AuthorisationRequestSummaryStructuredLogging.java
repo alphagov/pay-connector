@@ -14,7 +14,7 @@ import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class AuthorisationRequestSummaryStructuredLogging {
-    
+
     public static final String BILLING_ADDRESS = "billing_address";
     public static final String CORPORATE_CARD = "corporate_card";
     public static final String CORPORATE_EXEMPTION_REQUESTED = "corporate_exemption_requested";
@@ -30,12 +30,12 @@ public class AuthorisationRequestSummaryStructuredLogging {
 
     public StructuredArgument[] createArgs(AuthorisationRequestSummary authorisationRequestSummary) {
         var structuredArguments = new ArrayList<StructuredArgument>();
-        
+
         switch (authorisationRequestSummary.billingAddress()) {
             case PRESENT -> structuredArguments.add(kv(BILLING_ADDRESS, true));
             case NOT_PRESENT -> structuredArguments.add(kv(BILLING_ADDRESS, false));
         }
- 
+
         switch (authorisationRequestSummary.dataFor3ds()) {
             case PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS, true));
             case NOT_PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS, false));
@@ -45,7 +45,7 @@ public class AuthorisationRequestSummaryStructuredLogging {
             case PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS2, true));
             case NOT_PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS2, false));
         }
-        
+
         switch (authorisationRequestSummary.email()) {
             case PRESENT -> structuredArguments.add(kv(EMAIL, true));
             case NOT_PRESENT -> structuredArguments.add(kv(EMAIL, false));
@@ -63,31 +63,31 @@ public class AuthorisationRequestSummaryStructuredLogging {
 
         authorisationRequestSummary.corporateExemptionRequested()
                 .ifPresent(corporateExemptionRequested -> structuredArguments.add(kv(CORPORATE_EXEMPTION_REQUESTED, corporateExemptionRequested)));
- 
+
         authorisationRequestSummary.corporateExemptionResult()
                 .map(Exemption3ds::name)
                 .ifPresent(exemption3dsResult -> structuredArguments.add(kv(CORPORATE_EXEMPTION_RESULT, exemption3dsResult)));
-        
+
         authorisationRequestSummary.agreementPaymentType()
                 .map(AgreementPaymentType::name).ifPresent(agreementPaymentTypeName -> structuredArguments.add(kv(AGREEMENT_PAYMENT_TYPE, agreementPaymentTypeName)));
- 
+
         return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
     }
-    
+
     public StructuredArgument[] createArgsForPreAuthorisationLogging(WorldpayOrderRequestBuilder orderRequestBuilder, AuthCardDetails authCardDetails, boolean isMoto) {
         var structuredArguments = new ArrayList<StructuredArgument>();
-        
+
         structuredArguments.add(kv(MOTO, isMoto));
-        
+
         structuredArguments.add(kv(BILLING_ADDRESS, authCardDetails.getAddress().isPresent()));
-        
+
         structuredArguments.add(kv(EMAIL, !isBlank(orderRequestBuilder.getWorldpayTemplateData().getPayerEmail())));
-        
+
         Optional.ofNullable(orderRequestBuilder.getWorldpayTemplateData().getPayerIpAddress())
                 .map(ipAddress -> structuredArguments.add(kv(IP_ADDRESS, ipAddress)));
-        
+
         structuredArguments.add(kv(THREE_DS_REQUIRED, orderRequestBuilder.getWorldpayTemplateData().isRequires3ds()));
-        
+
         return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
     }
 }

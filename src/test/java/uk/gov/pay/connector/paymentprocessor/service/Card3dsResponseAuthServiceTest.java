@@ -75,7 +75,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Mock
     private CardExecutorService mockExecutorService;
     @Mock
-    private EventService mockEventService;    
+    private EventService mockEventService;
     @Mock
     private PaymentInstrumentService mockPaymentInstrumentService;
     @Mock
@@ -413,7 +413,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Test
     void shouldThrowAnOperationAlreadyInProgressRuntimeExceptionWhenStatusIsAuthorisation3dsReady() {
 
-        assertThrows(OperationAlreadyInProgressRuntimeException.class, () ->{
+        assertThrows(OperationAlreadyInProgressRuntimeException.class, () -> {
             ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.AUTHORISATION_3DS_READY);
 
             when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -421,7 +421,6 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
             setupMockExecutorServiceMock();
             card3dsResponseAuthService.process3DSecureAuthorisation(charge.getExternalId(), AuthUtils.buildAuth3dsResult());
         });
-
 
 
         verifyNoMoreInteractions(mockedChargeDao, mockedProviders);
@@ -446,7 +445,7 @@ public class Card3dsResponseAuthServiceTest extends CardServiceTest {
     @Test
     void shouldThrowChargeExpiredRuntimeExceptionWhenChargeExpired() {
 
-        assertThrows( IllegalStateRuntimeException.class, () -> {
+        assertThrows(IllegalStateRuntimeException.class, () -> {
             ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.EXPIRED);
 
             when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));

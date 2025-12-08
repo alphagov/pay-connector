@@ -30,16 +30,16 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 class ChargeNotificationProcessorTest {
 
     protected static final long GATEWAY_ACCOUNT_ID = 10L;
-    
+
     protected ChargeNotificationProcessor chargeNotificationProcessor;
     protected GatewayAccountEntity gatewayAccount;
 
     @Mock
     protected ChargeService chargeService;
-    
+
     @Mock
     protected EventService eventService;
-    
+
     @BeforeEach
     void setUp() {
         gatewayAccount = GatewayAccountEntityFixture
@@ -48,16 +48,16 @@ class ChargeNotificationProcessorTest {
         gatewayAccount.setId(GATEWAY_ACCOUNT_ID);
         chargeNotificationProcessor = new ChargeNotificationProcessor(chargeService, eventService);
     }
-    
+
     @Test
     void receivedCaptureNotification_shouldEmitEvent() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity().withStatus(AUTHORISATION_ERROR).build();
         Charge charge = Charge.from(chargeEntity);
-        
-        chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccount, charge.getGatewayTransactionId(), charge,  CAPTURED);
-        
+
+        chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccount, charge.getGatewayTransactionId(), charge, CAPTURED);
+
         ArgumentCaptor<Event> eventArgumentCaptor = ArgumentCaptor.forClass(Event.class);
-        
+
         verify(eventService).emitEvent(eventArgumentCaptor.capture());
         Event event = eventArgumentCaptor.getValue();
 

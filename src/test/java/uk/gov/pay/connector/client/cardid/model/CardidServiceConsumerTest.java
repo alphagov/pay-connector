@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.client.cardid.model;
 
 import au.com.dius.pact.consumer.junit.PactVerification;
+import jakarta.ws.rs.client.Client;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,23 +16,21 @@ import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.service.payments.commons.testing.pact.consumers.Pacts;
 import uk.gov.service.payments.commons.testing.pact.consumers.PayPactProviderRule;
 
-import jakarta.ws.rs.client.Client;
-
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardidServiceConsumerTest {
-    
+
     @Rule
     public PayPactProviderRule cardidRule = new PayPactProviderRule("cardid", this);
-    
+
     @Mock
     ConnectorConfiguration configuration;
-    
+
     private CardidService cardidService;
 
     @Before
@@ -47,12 +46,12 @@ public class CardidServiceConsumerTest {
     public void getCardInformation_shouldDeserialiseCardFoundResponse() {
         String cardNumber = "2221000000000000";
         Optional<CardInformation> maybeCardInformation = cardidService.getCardInformation(cardNumber);
-        
+
         assertThat(maybeCardInformation.isPresent(), is(true));
         CardInformation cardInformation = maybeCardInformation.get();
         assertThat(cardInformation.type(), is(CardidCardType.CREDIT));
         assertThat(cardInformation.brand(), is("master-card"));
-        assertThat(cardInformation.label(), is ("MC"));
+        assertThat(cardInformation.label(), is("MC"));
         assertThat(cardInformation.prepaidStatus(), is(PayersCardPrepaidStatus.NOT_PREPAID));
         assertThat(cardInformation.isCorporate(), is(false));
     }

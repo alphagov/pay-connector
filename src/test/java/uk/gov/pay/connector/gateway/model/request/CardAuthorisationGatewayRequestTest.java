@@ -8,10 +8,10 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
- class CardAuthorisationGatewayRequestTest {
-    
+class CardAuthorisationGatewayRequestTest {
+
     @Test
-     void shouldReturnTotalAmount_whenThereIsACorporateSurcharge() {
+    void shouldReturnTotalAmount_whenThereIsACorporateSurcharge() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(2000L)
                 .withCorporateSurcharge(250L)
@@ -19,9 +19,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
         CardAuthorisationGatewayRequest gatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, null);
         assertThat(gatewayRequest.getAmount(), is("2250"));
     }
-    
+
     @Test
-     void shouldReturnBaseAmount_whenThereIsNoCorporateSurcharge() {
+    void shouldReturnBaseAmount_whenThereIsNoCorporateSurcharge() {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(2000L)
                 .build();

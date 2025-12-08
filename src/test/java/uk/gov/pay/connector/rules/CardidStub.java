@@ -33,7 +33,7 @@ public class CardidStub {
                         .withRequestBody(equalTo(objectMapper.writeValueAsString(new CardInformationRequest(cardNumber))))
                         .willReturn(response));
     }
-    
+
     public void returnNotFound(String cardNumber) throws JsonProcessingException {
         ResponseDefinitionBuilder response = aResponse().withHeader(CONTENT_TYPE, TEXT_PLAIN)
                 .withStatus(404);

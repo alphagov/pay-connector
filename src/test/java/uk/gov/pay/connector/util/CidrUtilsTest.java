@@ -29,6 +29,6 @@ class CidrUtilsTest {
 
     @Test
     void shouldThrowNullPointerExceptionAfterAcceptingNullValue() {
-       assertThrows(NullPointerException.class, () -> CidrUtils.getIpAddresses(null));
+        assertThrows(NullPointerException.class, () -> CidrUtils.getIpAddresses(null));
     }
 }

@@ -8,7 +8,7 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 public class ChargeQueryGatewayRequest implements GatewayRequest {
-    
+
     private final GatewayAccountEntity gatewayAccountEntity;
     private final GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
     private final String chargeExternalId;

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.cardtype.dao;
 
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.cardtype.model.domain.CardType;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 
 import java.util.UUID;
 

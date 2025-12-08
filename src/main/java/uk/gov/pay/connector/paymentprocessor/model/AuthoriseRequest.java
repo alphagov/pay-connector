@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueException;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.Objects;

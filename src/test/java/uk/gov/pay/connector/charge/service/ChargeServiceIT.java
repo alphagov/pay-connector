@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -15,7 +16,6 @@ import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.ws.rs.core.UriInfo;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;

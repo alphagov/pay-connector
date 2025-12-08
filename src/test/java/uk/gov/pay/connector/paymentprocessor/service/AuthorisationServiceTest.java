@@ -37,7 +37,7 @@ class AuthorisationServiceTest {
     }
 
     @Test
-    void  extractTransactionIdShouldReturnTransactionIdFromAuthResponse() {
+    void extractTransactionIdShouldReturnTransactionIdFromAuthResponse() {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID);
         Optional<String> optionalTransactionId = authService.extractTransactionId("externalId", authResponse, CURRENT_TRANSACTION_ID);
         assertThat(optionalTransactionId.isPresent(), is(true));

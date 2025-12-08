@@ -31,8 +31,10 @@ public interface BaseAuthoriseResponse extends BaseResponse {
         return Optional.empty();
     }
 
-    default Optional<CardExpiryDate> getCardExpiryDate() { return Optional.empty(); }
-    
+    default Optional<CardExpiryDate> getCardExpiryDate() {
+        return Optional.empty();
+    }
+
     enum AuthoriseStatus {
         // SUBMITTED only applies to ePDQ and can be removed when ePDQ code is deleted
         SUBMITTED(ChargeStatus.AUTHORISATION_SUBMITTED),

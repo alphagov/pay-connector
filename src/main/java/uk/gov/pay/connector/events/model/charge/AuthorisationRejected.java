@@ -18,7 +18,7 @@ public class AuthorisationRejected extends PaymentEvent {
     }
 
     private AuthorisationRejected(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
-                                 AuthorisationRejectedEventDetails eventDetails, Instant timestamp) {
+                                  AuthorisationRejectedEventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
 

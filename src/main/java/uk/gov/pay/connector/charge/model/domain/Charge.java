@@ -74,7 +74,7 @@ public class Charge {
                 chargeEntity.getGatewayTransactionId(),
                 credentialExternalId,
                 chargeEntity.getCorporateSurcharge().orElse(null),
-                null, 
+                null,
                 chargeEntity.getReference().toString(),
                 chargeEntity.getDescription(),
                 chargeEntity.getCreatedDate(),
@@ -83,7 +83,7 @@ public class Charge {
                 chargeEntity.getPaymentGatewayName().getName(),
                 false,
                 chargeEntity.getServiceId(),
-                chargeEntity.getGatewayAccount().isLive(), 
+                chargeEntity.getGatewayAccount().isLive(),
                 null,
                 chargeEntity.getAuthorisationMode(),
                 chargeEntity.getAgreement().map(AgreementEntity::getExternalId).orElse(null));
@@ -93,7 +93,7 @@ public class Charge {
         String externalRefundState = null;
         String externalStatus = null;
 
-        if (transaction.getRefundSummary() != null ) {
+        if (transaction.getRefundSummary() != null) {
             externalRefundState = transaction.getRefundSummary().getStatus();
         }
 
@@ -192,12 +192,12 @@ public class Charge {
     public void setCredentialExternalId(String credentialExternalId) {
         this.credentialExternalId = credentialExternalId;
     }
-    
-    public String getServiceId(){
+
+    public String getServiceId() {
         return serviceId;
     }
 
-    public boolean isLive(){
+    public boolean isLive() {
         return live;
     }
 

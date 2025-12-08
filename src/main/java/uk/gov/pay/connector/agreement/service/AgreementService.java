@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.agreement.service;
 
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
 import org.apache.http.HttpStatus;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundException;
@@ -23,7 +24,6 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 
-import jakarta.inject.Inject;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.Optional;
@@ -65,7 +65,7 @@ public class AgreementService {
                     throw new GatewayAccountNotFoundException(String.format("Gateway account {} not found", accountId));
                 }).map(gatewayAccountEntity -> create(agreementCreateRequest, gatewayAccountEntity));
     }
-    
+
     @Transactional
     public Optional<AgreementResponse> createByServiceIdAndAccountType(AgreementCreateRequest agreementCreateRequest, String serviceId, GatewayAccountType accountType) {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
@@ -77,7 +77,7 @@ public class AgreementService {
 
     @Transactional
     private AgreementResponse create(AgreementCreateRequest agreementCreateRequest, GatewayAccountEntity gatewayAccountEntity) {
-        if(!gatewayAccountEntity.isRecurringEnabled()) {
+        if (!gatewayAccountEntity.isRecurringEnabled()) {
             throw new RecurringCardPaymentsNotAllowedException(
                     "Attempt to create an agreement for gateway account " +
                             gatewayAccountEntity.getId() +
@@ -106,7 +106,7 @@ public class AgreementService {
                 .build();
     }
 
-    
+
     @Transactional
     public void cancelByGatewayAccountId(String agreementExternalId, long gatewayAccountId, AgreementCancelRequest agreementCancelRequest) {
         var agreement = agreementDao
@@ -122,7 +122,7 @@ public class AgreementService {
                 .orElseThrow(() -> new AgreementNotFoundException("Agreement with ID [" + agreementExternalId + "] not found."));
         cancel(agreement, agreementCancelRequest);
     }
-    
+
     @Transactional
     public void cancel(AgreementEntity agreement, AgreementCancelRequest agreementCancelRequest) {
         agreement.getPaymentInstrument()

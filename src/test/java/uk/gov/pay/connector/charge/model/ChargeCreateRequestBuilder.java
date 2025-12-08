@@ -65,7 +65,7 @@ public final class ChargeCreateRequestBuilder {
         this.language = language;
         return this;
     }
-    
+
     public ChargeCreateRequestBuilder withPrefilledCardHolderDetails(PrefilledCardHolderDetails prefilledCardHolderDetails) {
         this.prefilledCardHolderDetails = prefilledCardHolderDetails;
         return this;
@@ -90,7 +90,7 @@ public final class ChargeCreateRequestBuilder {
         this.agreementId = agreementId;
         return this;
     }
- 
+
     public ChargeCreateRequestBuilder withAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
         this.agreementPaymentType = agreementPaymentType;
         return this;
@@ -105,7 +105,7 @@ public final class ChargeCreateRequestBuilder {
         this.authorisationMode = authorisationMode;
         return this;
     }
-    
+
     public ChargeCreateRequestBuilder withCredentialId(String credentialExternalId) {
         this.credentialExternalId = credentialExternalId;
         return this;

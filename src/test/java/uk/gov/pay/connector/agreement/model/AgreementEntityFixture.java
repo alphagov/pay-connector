@@ -20,7 +20,7 @@ public class AgreementEntityFixture {
     public static AgreementEntityFixture anAgreementEntity() {
         return new AgreementEntityFixture();
     }
-    
+
     public AgreementEntityFixture withExternalId(String externalId) {
         this.externalId = externalId;
         return this;

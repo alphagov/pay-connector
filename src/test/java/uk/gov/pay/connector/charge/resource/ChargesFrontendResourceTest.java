@@ -2,6 +2,8 @@ package uk.gov.pay.connector.charge.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.agreement.service.AgreementService;
@@ -12,8 +14,6 @@ import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,7 @@ class ChargesFrontendResourceTest {
                 .put(Entity.json(""));
 
         assertThat(response.getStatus(), is(422));
-        
+
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(1));
         assertThat(listOfErrors, hasItem("must not be null"));
@@ -60,11 +60,11 @@ class ChargesFrontendResourceTest {
                 .put(Entity.json(Collections.singletonMap("new_status", "")));
 
         assertThat(response.getStatus(), is(422));
-        
+
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(2));
         assertThat(listOfErrors, hasItem("invalid new status"));
-        assertThat(listOfErrors, hasItem("may not be empty"));
+        assertThat(listOfErrors, hasItem("must not be empty"));
 
     }
 

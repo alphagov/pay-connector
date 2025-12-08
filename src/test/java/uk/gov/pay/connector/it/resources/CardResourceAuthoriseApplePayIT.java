@@ -28,7 +28,7 @@ public class CardResourceAuthoriseApplePayIT {
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
-    
+
     @Test
     void shouldAuthoriseCharge_ForApplePay() {
         var chargeId = testBaseExtension.createNewChargeWithNoGatewayTransactionIdOrEmailAddress(ENTERING_CARD_DETAILS);
@@ -121,7 +121,7 @@ public class CardResourceAuthoriseApplePayIT {
                 Triple.of("declined", 400, AUTHORISATION_REJECTED),
                 Triple.of("REFUSED", 400, AUTHORISATION_REJECTED),
                 Triple.of("refused", 400, AUTHORISATION_REJECTED),
-                Triple.of("ERROR", 402, AUTHORISATION_ERROR), 
+                Triple.of("ERROR", 402, AUTHORISATION_ERROR),
                 Triple.of("error", 402, AUTHORISATION_ERROR)
         );
     }

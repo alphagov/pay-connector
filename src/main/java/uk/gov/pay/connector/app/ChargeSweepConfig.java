@@ -11,7 +11,7 @@ public class ChargeSweepConfig extends Configuration {
     private int tokenExpiryThresholdInSeconds;
     private int skipExpiringChargesLastUpdatedInSeconds;
     private int idempotencyKeyExpiryThresholdInSeconds;
-    
+
     public Duration getDefaultChargeExpiryThreshold() {
         return Duration.ofSeconds(defaultChargeExpiryThreshold);
     }
@@ -27,7 +27,7 @@ public class ChargeSweepConfig extends Configuration {
     public Duration getSkipExpiringChargesLastUpdatedInSeconds() {
         return Duration.ofSeconds(skipExpiringChargesLastUpdatedInSeconds);
     }
-    
+
     public Duration getIdempotencyKeyExpiryThresholdInSeconds() {
         return Duration.ofSeconds(idempotencyKeyExpiryThresholdInSeconds);
     }

@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.it.dao;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
@@ -12,13 +12,13 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 
 import java.util.Optional;
 
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 public class AgreementDaoIT {
-    
+
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private static final String AGREEMENT_EXTERNAL_ID_ONE = "12345678901234567890123456";
@@ -26,7 +26,7 @@ public class AgreementDaoIT {
     private static final String SERVICE_ID = "a-valid-service-id";
     private AgreementDao agreementDao;
     private GatewayAccountEntity gatewayAccount1, gatewayAccount2;
-    
+
     @BeforeEach
     void setUp() {
         agreementDao = app.getInstanceFromGuiceContainer(AgreementDao.class);
@@ -42,7 +42,7 @@ public class AgreementDaoIT {
 
     @Nested
     class FindAgreementByExternalId {
-        
+
         @Test
         void shouldFindAnAgreementEntity() {
             insertTestAgreement(AGREEMENT_EXTERNAL_ID_ONE, gatewayAccount1.getId());
@@ -57,10 +57,10 @@ public class AgreementDaoIT {
             assertThat(agreement.isPresent(), is(false));
         }
     }
-    
+
     @Nested
     class FindAgreementByExternalIdAndGatewayAccountId {
-        
+
         @Test
         void shouldFindAnAgreementEntity() {
             insertTestAgreement(AGREEMENT_EXTERNAL_ID_ONE, gatewayAccount1.getId());
@@ -83,10 +83,10 @@ public class AgreementDaoIT {
             assertThat(agreement.isPresent(), is(false));
         }
     }
-    
+
     @Nested
     class FindAgreementByExternalIdAndServiceIdAndAccountType {
-        
+
         @Test
         void shouldFindAnAgreementEntity() {
             insertTestAgreement(AGREEMENT_EXTERNAL_ID_ONE, gatewayAccount1.getId());
@@ -101,7 +101,7 @@ public class AgreementDaoIT {
             Optional<AgreementEntity> agreement = agreementDao.findByExternalIdAndServiceIdAndAccountType(AGREEMENT_EXTERNAL_ID_ONE, SERVICE_ID, GatewayAccountType.TEST);
             assertThat(agreement.isPresent(), is(false));
         }
-        
+
         @Test
         void shouldNotFindAnAgreementEntity_forADifferentService() {
             insertTestAgreement(AGREEMENT_EXTERNAL_ID_ONE, gatewayAccount1.getId());
@@ -116,11 +116,11 @@ public class AgreementDaoIT {
             assertThat(agreement.isPresent(), is(false));
         }
     }
-    
+
     private void insertTestAgreement(String agreementExternalId, long gatewayAccountId) {
         app.getDatabaseFixtures()
                 .aTestAgreement()
-                .withAgreementId(nextLong())
+                .withAgreementId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalId(agreementExternalId)
                 .withReference("ref9876")
                 .withGatewayAccountId(gatewayAccountId)
@@ -132,7 +132,7 @@ public class AgreementDaoIT {
     private DatabaseFixtures.TestAccount insertTestAccount() {
         return app.getDatabaseFixtures()
                 .aTestAccount()
-                .withAccountId(nextLong())
+                .withAccountId(current().nextLong(0, Long.MAX_VALUE))
                 .withServiceId(SERVICE_ID)
                 .insert();
     }

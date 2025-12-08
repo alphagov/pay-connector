@@ -9,7 +9,7 @@ import java.time.Instant;
 public class AgreementEvent extends Event {
     private String serviceId;
     private Boolean live;
-    
+
     public AgreementEvent(String serviceId, boolean live, String resourceExternalId, EventDetails eventDetails, Instant timestamp) {
         super(timestamp, resourceExternalId, eventDetails);
         this.serviceId = serviceId;

@@ -19,7 +19,8 @@ import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Pre
 @ExtendWith(MockitoExtension.class)
 class AuthorisationRequestSummaryStringifierTest {
 
-    @Mock private AuthorisationRequestSummary mockAuthorisationRequestSummary;
+    @Mock
+    private AuthorisationRequestSummary mockAuthorisationRequestSummary;
 
     private final AuthorisationRequestSummaryStringifier stringifier = new AuthorisationRequestSummaryStringifier();
 

@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.rules;
 
 import com.google.inject.Injector;
-import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.core.setup.Environment;
+import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.testing.ConfigOverride;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
@@ -15,10 +15,10 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.gov.service.payments.commons.testing.db.PostgresDockerRule;
-import uk.gov.service.payments.commons.testing.port.PortFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.util.DatabaseTestHelper;
+import uk.gov.service.payments.commons.testing.db.PostgresDockerRule;
+import uk.gov.service.payments.commons.testing.port.PortFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -79,7 +79,7 @@ abstract public class AppWithPostgresRule implements TestRule {
                 try (Connection connection = getConnection(postgres.getConnectionUrl(), postgres.getUsername(), postgres.getPassword())) {
                     Liquibase migrator = new Liquibase("it-migrations.xml", new ClassLoaderResourceAccessor(), new JdbcConnection(connection));
                     migrator.update("");
-                }  catch (LiquibaseException | SQLException e) {
+                } catch (LiquibaseException | SQLException e) {
                     throw new PostgresTestDockerException(e);
                 }
                 restoreDropwizardsLogging();
@@ -131,7 +131,7 @@ abstract public class AppWithPostgresRule implements TestRule {
         newConfigOverride.add(config("database.password", postgresDockerRule.getPassword()));
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
-    
+
     private ConfigOverride[] overrideSqsConfig(ConfigOverride[] configOverrides) {
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
         newConfigOverride.add(config("sqsConfig.endpoint", "http://localhost:" + wireMockPort));

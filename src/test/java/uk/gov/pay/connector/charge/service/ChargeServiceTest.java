@@ -3,6 +3,7 @@ package uk.gov.pay.connector.charge.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -64,8 +65,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.token.dao.TokenDao;
-
-import jakarta.ws.rs.core.UriInfo;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
 
@@ -78,10 +77,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static jakarta.ws.rs.core.UriBuilder.fromUri;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Collections.singletonList;
-import static jakarta.ws.rs.core.UriBuilder.fromUri;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
@@ -149,31 +148,31 @@ class ChargeServiceTest {
 
     @Mock
     private ConnectorConfiguration mockedConfig;
-    
+
     @Mock
     private UriInfo mockedUriInfo;
-    
+
     @Mock
     private LinksConfig mockedLinksConfig;
-    
+
     @Mock
     private PaymentProviders mockedProviders;
-    
+
     @Mock
     private PaymentProvider mockedPaymentProvider;
-    
+
     @Mock
     private EventService mockEventService;
 
     @Mock
     private PaymentInstrumentService mockPaymentInstrumentService;
-    
+
     @Mock
     private StateTransitionService mockStateTransitionService;
 
     @Mock
     private RefundService mockedRefundService;
-    
+
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
 
@@ -182,7 +181,7 @@ class ChargeServiceTest {
 
     @Mock
     private CaptureProcessConfig mockedCaptureProcessConfig;
-    
+
     @Mock
     private TaskQueueService mockTaskQueueService;
 
@@ -248,7 +247,7 @@ class ChargeServiceTest {
 
         ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(CAPTURED).build();
         when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class))).thenReturn(chargeEventEntity);
-        
+
         ZonedDateTime gatewayEventDate = ZonedDateTime.parse("2021-01-01T01:30:00.000Z");
         ChargeEntity updatedCharge = chargeService.forceTransitionChargeState(charge, CAPTURED, gatewayEventDate);
 
@@ -256,14 +255,14 @@ class ChargeServiceTest {
         verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture(), eq(gatewayEventDate));
         assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(CAPTURED.getValue()));
         assertThat(updatedCharge.getStatus(), is(CAPTURED.getValue()));
-        
+
         verify(mockStateTransitionService).offerPaymentStateTransition(
-                charge.getExternalId(), 
-                AUTHORISATION_SUCCESS, 
-                CAPTURED, 
-                chargeEventEntity, 
+                charge.getExternalId(),
+                AUTHORISATION_SUCCESS,
+                CAPTURED,
+                chargeEventEntity,
                 StatusCorrectedToCapturedToMatchGatewayStatus.class);
-        
+
         verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
 
@@ -339,17 +338,17 @@ class ChargeServiceTest {
 
         final String expectedEmail = "test@examplecom";
         PatchRequestBuilder.PatchRequest patchRequest = PatchRequestBuilder.aPatchRequestBuilder(
-                ImmutableMap.of(
-                        "op", "replace",
-                        "path", "email",
-                        "value", expectedEmail))
+                        ImmutableMap.of(
+                                "op", "replace",
+                                "path", "email",
+                                "value", expectedEmail))
                 .withValidOps(singletonList("replace"))
                 .withValidPaths(ImmutableSet.of("email"))
                 .build();
 
         Optional<ChargeEntity> chargeEntity = chargeService.updateCharge(chargeEntityExternalId, patchRequest);
         assertThat(chargeEntity.get().getEmail(), is(expectedEmail));
-        
+
         verify(mockEventService).emitAndRecordEvent(any(UserEmailCollected.class));
     }
 
@@ -452,7 +451,7 @@ class ChargeServiceTest {
 
         final String chargeEntityExternalId = chargeSpy.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
-        
+
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
                 null, null, null);
 
@@ -474,7 +473,7 @@ class ChargeServiceTest {
         final String chargeEntityExternalId = chargeSpy.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
         when(mockedAuth3dsRequiredEntity.getThreeDsVersion()).thenReturn("2.1.0");
-        
+
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_3DS_REQUIRED, AUTHORISATION_3DS, "transaction-id",
                 mockedAuth3dsRequiredEntity, ProviderSessionIdentifier.of("provider-session-identifier"), null);
 
@@ -500,7 +499,7 @@ class ChargeServiceTest {
         final String chargeEntityExternalId = chargeSpy.getExternalId();
         when(mockedChargeDao.findByExternalId(chargeEntityExternalId)).thenReturn(Optional.of(chargeSpy));
         when(mockPaymentInstrumentService.createPaymentInstrument(chargeSpy, recurringAuthToken)).thenReturn(paymentInstrument);
-        
+
         chargeService.updateChargePost3dsAuthorisation(chargeSpy.getExternalId(), AUTHORISATION_SUCCESS, AUTHORISATION_3DS, "transaction-id",
                 null, null, recurringAuthToken);
 

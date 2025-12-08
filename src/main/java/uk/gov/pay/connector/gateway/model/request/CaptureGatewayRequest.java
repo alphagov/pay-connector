@@ -23,15 +23,15 @@ public class CaptureGatewayRequest implements GatewayRequest {
     public String getAmountAsString() {
         return String.valueOf(CorporateCardSurchargeCalculator.getTotalAmountFor(charge));
     }
-    
+
     public Long getAmount() {
         return charge.getAmount();
     }
-    
+
     public String getGatewayTransactionId() {
         return charge.getGatewayTransactionId();
     }
-    
+
     public String getExternalId() {
         return charge.getExternalId();
     }
@@ -43,7 +43,7 @@ public class CaptureGatewayRequest implements GatewayRequest {
     public List<ChargeEventEntity> getEvents() {
         return charge.getEvents();
     }
-    
+
     public boolean isCaptureRetry() {
         return charge.getEvents().stream().anyMatch(event -> event.getStatus() == ChargeStatus.CAPTURE_APPROVED_RETRY);
     }

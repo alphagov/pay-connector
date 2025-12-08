@@ -2,13 +2,14 @@ package uk.gov.pay.connector.paymentprocessor.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
-
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeCancelService;
 import uk.gov.pay.connector.charge.service.ChargeEligibleForCaptureService;
@@ -26,8 +27,6 @@ import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuil
 import uk.gov.pay.connector.token.TokenService;
 import uk.gov.pay.connector.wallets.WalletService;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -85,7 +84,7 @@ public class CardResourceCancelChargeTest {
                     mockGatewayAccountService
             ))
             .build();
-    
+
     @AfterEach
     void teardown() {
         reset(mockChargeService);
@@ -256,7 +255,7 @@ public class CardResourceCancelChargeTest {
                         .target(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", A_SERVICE_ID, A_GATEWAY_ACCOUNT_TYPE, A_CHARGE_ID))
                         .request()
                         .post(Entity.json(Collections.emptyMap()))) {
-                    
+
                     assertThat(response.getStatus(), is(204));
                 }
                 verify(mockChargeService, times(1)).transitionChargeState(A_CHARGE_ID, ChargeStatus.SYSTEM_CANCELLED);

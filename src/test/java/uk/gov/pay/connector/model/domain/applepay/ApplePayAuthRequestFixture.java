@@ -9,7 +9,7 @@ import static uk.gov.pay.connector.model.domain.applepay.ApplePayPaymentInfoFixt
 public final class ApplePayAuthRequestFixture {
     private ApplePayPaymentInfo applePaymentInfo = anApplePayPaymentInfo().build();
     private String applePaymentData = "***ENCRYPTED***DATA***";
-    
+
     private ApplePayAuthRequestFixture() {
     }
 
@@ -26,7 +26,9 @@ public final class ApplePayAuthRequestFixture {
         return this;
     }
 
-    public String getApplePaymentData() { return applePaymentData; }
+    public String getApplePaymentData() {
+        return applePaymentData;
+    }
 
     public ApplePayAuthRequestFixture withApplePaymentData(String applePaymentData) {
         this.applePaymentData = applePaymentData;

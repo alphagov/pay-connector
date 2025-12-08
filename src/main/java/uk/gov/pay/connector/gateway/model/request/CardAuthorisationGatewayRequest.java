@@ -14,7 +14,7 @@ public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest
     public CardAuthorisationGatewayRequest withNewTransactionId(String gatewayTransactionId) {
         return new CardAuthorisationGatewayRequest(this, this.authCardDetails, gatewayTransactionId);
     }
-    
+
     private CardAuthorisationGatewayRequest(CardAuthorisationGatewayRequest other, AuthCardDetails authCardDetails, String gatewayTransactionId) {
         super(gatewayTransactionId,
                 other.getEmail(),

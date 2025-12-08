@@ -1,10 +1,9 @@
 package uk.gov.pay.connector.charge.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import uk.gov.pay.connector.common.model.domain.Address;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import uk.gov.pay.connector.common.model.domain.Address;
 
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
 
@@ -46,7 +45,7 @@ public class AddressEntity {
         this.country = sanitize(address.getCountry());
     }
 
-    Address toAddress(){
+    Address toAddress() {
         return new Address(line1, line2, postcode, city, county, country);
     }
 

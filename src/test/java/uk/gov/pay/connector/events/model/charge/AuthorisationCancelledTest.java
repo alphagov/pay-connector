@@ -10,16 +10,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 class AuthorisationCancelledTest {
-    
+
     private static final String SERVICE_ID = "service";
     private static final long GATEWAY_ACCOUNT_ID = 1L;
     private static final String RESOURCE_EXTERNAL_ID = "resource";
     private static final String TIMESTAMP = "2024-04-01T10:11:12.123456Z";
-    
+
     @Test
     void serializes() throws JsonProcessingException {
         var event = new AuthorisationCancelled(
-                SERVICE_ID, 
+                SERVICE_ID,
                 true,
                 GATEWAY_ACCOUNT_ID,
                 RESOURCE_EXTERNAL_ID,

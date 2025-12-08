@@ -17,7 +17,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
@@ -35,11 +35,11 @@ import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentIns
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class AgreementsApiResourceIT {
-    
+
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     public static GatewayAccountResourceITHelpers testHelpers = new GatewayAccountResourceITHelpers(app.getLocalPort());
-    
+
     public static final String VALID_SERVICE_ID = "a-valid-service-id";
     private static final String REFERENCE_ID = "1234";
     private static final String DESCRIPTION = "a valid description";
@@ -136,7 +136,7 @@ public class AgreementsApiResourceIT {
                         "description", DESCRIPTION,
                         "user_identifier", USER_IDENTIFIER
                 ));
-                
+
                 app.givenSetup()
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_URL, accountId))
@@ -146,14 +146,14 @@ public class AgreementsApiResourceIT {
                         .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
             }
         }
-        
+
         @Nested
         class CancelAgreement {
             @Test
             void shouldReturn204AndCancelAgreement() {
                 var agreementId = "an-external-id";
                 AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
-                        .withPaymentInstrumentId(nextLong())
+                        .withPaymentInstrumentId(current().nextLong(0, Long.MAX_VALUE))
                         .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
                         .build();
                 app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
@@ -175,7 +175,7 @@ public class AgreementsApiResourceIT {
                 assertThat(agreementMap.get("cancelled_date"), is(notNullValue()));
             }
         }
-        
+
     }
 
     @Nested
@@ -189,10 +189,10 @@ public class AgreementsApiResourceIT {
                             .withServiceId(VALID_SERVICE_ID)
                             .build());
         }
-        
+
         @Nested
         class CreateAgreement {
-            
+
             @Test
             void shouldCreateAgreement_forValidRequest() {
                 testHelpers.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
@@ -305,7 +305,7 @@ public class AgreementsApiResourceIT {
                         "description", DESCRIPTION,
                         "user_identifier", USER_IDENTIFIER
                 ));
-                
+
                 app.givenSetup()
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
@@ -315,10 +315,10 @@ public class AgreementsApiResourceIT {
                         .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
             }
         }
-        
+
         @Nested
         class CancelAgreement {
-            
+
             @Test
             void shouldReturn204AndCancelAgreement() {
                 testHelpers.updateGatewayAccount(gatewayAccountId, "recurring_enabled", true);
@@ -346,7 +346,7 @@ public class AgreementsApiResourceIT {
 
                 // creating the payment instrument using the database because adding a payment instrument to an agreement via the API is laborious
                 // it would require creating a successful payment to set up the agreement via Charges API
-                long paymentInstrumentId = nextLong();
+                long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
                 AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                         .withPaymentInstrumentId(paymentInstrumentId)
                         .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
@@ -366,9 +366,9 @@ public class AgreementsApiResourceIT {
             }
         }
     }
-    
+
     private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider, boolean recurringEnabled) {
-        long accountId = nextLong(2, 10000);
+        long accountId = current().nextLong(2, 10000);
 
         return app.getDatabaseFixtures().aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)

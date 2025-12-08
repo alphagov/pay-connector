@@ -289,7 +289,7 @@ class ChargeExpungeServiceTest {
         chargeExpungeService.expunge(1);
 
         verify(mockChargeDao).expungeCharge(chargeEntity.getId(), chargeEntity.getExternalId());
-        verify(mockChargeService, never()).updateChargeParityStatus(any(),any());
+        verify(mockChargeService, never()).updateChargeParityStatus(any(), any());
     }
 
 
@@ -314,7 +314,7 @@ class ChargeExpungeServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED", "AUTHORISATION_UNEXPECTED_ERROR"})
+    @ValueSource(strings = {"CAPTURE_SUBMITTED", "EXPIRE_CANCEL_SUBMITTED", "SYSTEM_CANCEL_SUBMITTED", "USER_CANCEL_SUBMITTED", "AUTHORISATION_UNEXPECTED_ERROR"})
     void expunge_shouldExpungeChargeIfInSubmittedStateAndChargeIsOlderThanHistoric(String state) {
         when(mockExpungeConfig.getMinimumAgeForHistoricChargeExceptions()).thenReturn(2);
 
@@ -438,7 +438,7 @@ class ChargeExpungeServiceTest {
 
 
     @ParameterizedTest
-    @CsvSource( {"AUTHORISATION_ERROR", "AUTHORISATION_TIMEOUT", "AUTHORISATION_UNEXPECTED_ERROR"})
+    @CsvSource({"AUTHORISATION_ERROR", "AUTHORISATION_TIMEOUT", "AUTHORISATION_UNEXPECTED_ERROR"})
     void shouldNotExpungeChargeWithExemptChargeAuthorisationErrorStatuses(String state) {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))
@@ -462,7 +462,7 @@ class ChargeExpungeServiceTest {
 
 
     @ParameterizedTest
-    @ValueSource( strings = {"USER_CANCELLED", "EXPIRED", "CAPTURE_ERROR", "AUTHORISATION_REJECTED"})
+    @ValueSource(strings = {"USER_CANCELLED", "EXPIRED", "CAPTURE_ERROR", "AUTHORISATION_REJECTED"})
     void shouldExpungeEpdqChargesWithState(String state) {
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withCreatedDate(Instant.now().minus(Duration.ofDays(5)))

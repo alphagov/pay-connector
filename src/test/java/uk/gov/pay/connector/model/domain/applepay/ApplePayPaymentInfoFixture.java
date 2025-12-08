@@ -8,12 +8,12 @@ public final class ApplePayPaymentInfoFixture {
     private String lastDigitsCardNumber = "4242";
     private String brand = "visa";
     private PayersCardType cardType = PayersCardType.DEBIT;
-    String cardholderName= "Mr. Payment";
+    String cardholderName = "Mr. Payment";
     String email = "mr@payment.test";
     private String displayName;
     private String network;
     private String transactionIdentifier;
-    
+
     private ApplePayPaymentInfoFixture() {
     }
 

@@ -205,6 +205,7 @@ class ApplePayDecrypterTest {
             applePayDecrypter.performDecryptOperation(applePayAuthRequest);
         });
     }
+
     @Test
     void shouldThrowException_whenDataIsInvalid() {
         assertThrows(InvalidKeyException.class, () -> {

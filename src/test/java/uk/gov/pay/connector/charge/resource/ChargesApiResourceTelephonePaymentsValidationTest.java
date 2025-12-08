@@ -2,6 +2,8 @@ package uk.gov.pay.connector.charge.resource;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,8 +13,6 @@ import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.util.JsonMappingExceptionMapper;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
 
@@ -29,10 +29,10 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
             .addProvider(ConstraintViolationExceptionMapper.class)
             .addProvider(JsonMappingExceptionMapper.class)
             .build();
-    
+
     @DisplayName("Should return 400 for an invalid card expiry date")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -50,14 +50,14 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 .target(url)
                 .request()
                 .post(Entity.json(payload))) {
-            
-            assertGenericErrorResponse(response, 400,"Not in MM/yy format");
+
+            assertGenericErrorResponse(response, 400, "Not in MM/yy format");
         }
     }
 
     @DisplayName("Should return 422 for invalid card type")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -75,14 +75,14 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 .target(url)
                 .request()
                 .post(Entity.json(payload))) {
-            
-            assertGenericErrorResponse(response, 422,"Field [card_type] must be either master-card, visa, maestro, diners-club, american-express or jcb");
+
+            assertGenericErrorResponse(response, 422, "Field [card_type] must be either master-card, visa, maestro, diners-club, american-express or jcb");
         }
     }
 
     @DisplayName("Should return 422 for invalid payment outcome status")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -100,13 +100,13 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 .request()
                 .post(Entity.json(payload))) {
 
-            assertGenericErrorResponse(response, 422,"Field [payment_outcome] must include a valid status and error code");
+            assertGenericErrorResponse(response, 422, "Field [payment_outcome] must include a valid status and error code");
         }
     }
-    
+
     @DisplayName("Should return 422 for invalid payment outcome error code")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -124,29 +124,29 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                                 "error_message", "textual message describing error code"
                         )
                 ));
-        
+
         try (Response response = chargesApiResource
                 .target(url)
                 .request()
                 .post(Entity.json(payload))) {
 
-            assertGenericErrorResponse(response, 422,"Field [payment_outcome] must include a valid status and error code");
+            assertGenericErrorResponse(response, 422, "Field [payment_outcome] must include a valid status and error code");
         }
     }
 
     @DisplayName("Should return 422 for invalid combination of payment outcome status and code")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
     public void shouldReturn422ForInvalidPaymentOutcomeStatusAndCode(String url) {
         var payload = Map.of("amount", 12000,
-            "reference", "MRPC12345",
-            "description", "New passport application",
-            "processor_id", "183f2j8923j8",
-            "provider_id", "17498-8412u9-1273891239",
-            "payment_outcome", Map.of(
+                "reference", "MRPC12345",
+                "description", "New passport application",
+                "processor_id", "183f2j8923j8",
+                "provider_id", "17498-8412u9-1273891239",
+                "payment_outcome", Map.of(
                         "status", "success",
                         "code", "P0010"
                 ));
@@ -154,14 +154,14 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 .target(url)
                 .request()
                 .post(Entity.json(payload))) {
-            
-            assertGenericErrorResponse(response, 422,"Field [payment_outcome] must include a valid status and error code");
+
+            assertGenericErrorResponse(response, 422, "Field [payment_outcome] must include a valid status and error code");
         }
     }
 
     @DisplayName("Should return 422 for invalid created date")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -170,23 +170,23 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 "reference", "MRPC12345",
                 "description", "New passport application",
                 "processor_id", "183f2j8923j8",
-                "provider_id", "17498-8412u9-1273891239", 
+                "provider_id", "17498-8412u9-1273891239",
                 "payment_outcome", Map.of("status", "success"),
                 "created_date", "invalid"
-                );
+        );
 
         try (Response response = chargesApiResource
                 .target(url)
                 .request()
                 .post(Entity.json(payload))) {
 
-            assertGenericErrorResponse(response, 422,"Field [created_date] must be a valid ISO-8601 time and date format");
-        }    
+            assertGenericErrorResponse(response, 422, "Field [created_date] must be a valid ISO-8601 time and date format");
+        }
     }
 
     @DisplayName("Should return 422 for invalid authorised date")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -205,13 +205,13 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 .request()
                 .post(Entity.json(payload))) {
 
-            assertGenericErrorResponse(response, 422,"Field [authorised_date] must be a valid ISO-8601 time and date format");
+            assertGenericErrorResponse(response, 422, "Field [authorised_date] must be a valid ISO-8601 time and date format");
         }
     }
-    
+
     @DisplayName("Should return 422 if mandatory fields are missing")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -222,7 +222,7 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 .target(url)
                 .request()
                 .post(Entity.json(payload))) {
-            
+
             assertThat(response.getStatus(), is(422));
             List<String> errorResponseMessages = response.readEntity(ErrorResponse.class).messages();
             assertTrue(errorResponseMessages.contains("Field [amount] cannot be null"));
@@ -236,7 +236,7 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
 
     @DisplayName("Should return 422 if request body is empty")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/telephone-charges",
             "/v1/api/service/my-service-id/account/test/telephone-charges"
     })
@@ -245,11 +245,11 @@ public class ChargesApiResourceTelephonePaymentsValidationTest {
                 .target(url)
                 .request()
                 .post(Entity.json(""))) {
-            
-            assertGenericErrorResponse(response, 422,"must not be null" );
+
+            assertGenericErrorResponse(response, 422, "must not be null");
         }
     }
-    
+
     private static void assertGenericErrorResponse(Response response, int status, String errorMessage) {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(response.getStatus(), is(status));

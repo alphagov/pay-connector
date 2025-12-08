@@ -29,7 +29,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
     private final boolean savePaymentInstrumentToAgreement;
     private final AgreementPaymentType agreementPaymentType;
     private final Optional<AgreementEntity> agreement;
-    
+
     protected AuthorisationGatewayRequest(ChargeEntity charge) {
         // NOTE: we don't store the ChargeEntity as we want to discourage code that deals with this request from
         // updating the charge in the database.
@@ -62,7 +62,7 @@ public abstract class AuthorisationGatewayRequest implements GatewayRequest {
                                        GatewayCredentials credentials,
                                        GatewayAccountEntity gatewayAccount,
                                        AuthorisationMode authorisationMode,
-                                       boolean savePaymentInstrumentToAgreement, 
+                                       boolean savePaymentInstrumentToAgreement,
                                        AgreementPaymentType agreementPaymentType,
                                        AgreementEntity agreement) {
         this.gatewayTransactionId = gatewayTransactionId;

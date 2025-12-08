@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.charge.service;
 
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -14,8 +16,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
 import uk.gov.pay.connector.util.MDCUtils;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,7 +101,7 @@ public class AuthorisationErrorGatewayCleanupService {
                 CLEANUP_FAILED, failures.intValue()
         );
     }
-    
+
     @Transactional
     private boolean cleanUpChargeWithGateway(ChargeEntity chargeEntity, ChargeQueryResponse chargeQueryResponse) {
         if (!chargeQueryResponse.foundCharge()) {

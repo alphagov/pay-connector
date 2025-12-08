@@ -3,6 +3,8 @@ package uk.gov.pay.connector.paymentprocessor.service;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.persist.Transactional;
 import io.dropwizard.core.setup.Environment;
+import jakarta.inject.Inject;
+import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -22,8 +24,6 @@ import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
-import jakarta.inject.Inject;
-import jakarta.persistence.OptimisticLockException;
 import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;

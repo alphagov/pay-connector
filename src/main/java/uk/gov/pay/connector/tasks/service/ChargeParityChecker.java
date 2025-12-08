@@ -89,18 +89,19 @@ import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class ChargeParityChecker {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(ChargeParityChecker.class);
 
     private static final Instant CHECK_AUTHORISATION_SUMMARY_PARITY_AFTER_DATE = Instant.parse("2021-09-01T00:00:00Z");
-    
+
     private final RefundService refundService;
     private final PaymentProviders providers;
 
     record Exemption3dsStateCombination(
             Connector3dsExemptionRequestedState requestedState,
             Connector3dsExemptionResultState connectorState,
-            LedgerExemptionState ledgerState) {}
+            LedgerExemptionState ledgerState) {
+    }
 
     Set<Exemption3dsStateCombination> validCombinations = Set.of(
             new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_NULL, CONNECTOR_HAS_EXEMPTION_RESULT_NULL, LEDGER_HAS_NO_EXEMPTION),
@@ -117,7 +118,7 @@ public class ChargeParityChecker {
             new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE, CONNECTOR_HAS_EXEMPTION_RESULT_REJECTED, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_REJECTED),
             new Exemption3dsStateCombination(CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE, CONNECTOR_HAS_EXEMPTION_RESULT_OUT_OF_SCOPE, LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE)
     );
-    
+
     @Inject
     public ChargeParityChecker(RefundService refundService, PaymentProviders providers) {
         this.refundService = refundService;
@@ -419,7 +420,7 @@ public class ChargeParityChecker {
             case CORPORATE -> CONNECTOR_HAS_EXEMPTION_3DS_REQUESTED_CORPORATE;
         };
     }
-    
+
     private static Connector3dsExemptionResultState calculateConnectorExemption3ds(ChargeEntity chargeEntity) {
         return switch (chargeEntity.getExemption3ds()) {
             case null -> CONNECTOR_HAS_EXEMPTION_RESULT_NULL;
@@ -433,24 +434,32 @@ public class ChargeParityChecker {
     private static LedgerExemptionState calculateLedgerExemptionState(LedgerTransaction transaction) {
         return switch (transaction.getExemption()) {
             case null -> LEDGER_HAS_NO_EXEMPTION;
-            case Exemption(boolean requested, String type, ExemptionOutcome outcome) when !requested -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_FALSE;
-            case Exemption(boolean requested, String type, ExemptionOutcome outcome) when outcome == null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_AND_NO_OUTCOME;
+            case Exemption(boolean requested, String type, ExemptionOutcome outcome) when !requested ->
+                    LEDGER_HAS_EXEMPTION_WITH_REQUESTED_FALSE;
+            case Exemption(boolean requested, String type, ExemptionOutcome outcome) when outcome == null ->
+                    LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_AND_NO_OUTCOME;
             case Exemption(boolean requested, String type, ExemptionOutcome(String result)) -> switch (result) {
-                case null -> LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_NO_RESULT;   
+                case null -> LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_NO_RESULT;
                 case "honoured" -> switch (type) {
                     case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_HONOURED;
-                    case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_HONOURED;
-                    default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_HONOURED;
+                    case "corporate" ->
+                            LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_HONOURED;
+                    default ->
+                            LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_HONOURED;
                 };
                 case "rejected" -> switch (type) {
                     case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_REJECTED;
-                    case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_REJECTED;
-                    default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_REJECTED;
+                    case "corporate" ->
+                            LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_REJECTED;
+                    default ->
+                            LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_REJECTED;
                 };
                 case "out of scope" -> switch (type) {
                     case null -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_NO_TYPE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
-                    case "corporate" -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
-                    default -> LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
+                    case "corporate" ->
+                            LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_TYPE_CORPORATE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
+                    default ->
+                            LEDGER_HAS_EXEMPTION_WITH_REQUESTED_TRUE_UNEXPECTED_TYPE_AND_OUTCOME_WITH_RESULT_OUT_OF_SCOPE;
                 };
                 default -> LEDGER_HAS_EXEMPTION_WITH_OUTCOME_WITH_UNEXPECTED_RESULT;
             };

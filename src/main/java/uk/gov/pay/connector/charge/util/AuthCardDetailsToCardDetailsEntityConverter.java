@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.charge.util;
 
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.charge.model.AddressEntity;
 import uk.gov.pay.connector.charge.model.CardDetailsEntity;
@@ -9,8 +10,6 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
-
-import jakarta.inject.Inject;
 
 import java.util.Optional;
 

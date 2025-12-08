@@ -3,6 +3,7 @@ package uk.gov.pay.connector.paymentprocessor.service;
 
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.core.setup.Environment;
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -19,7 +20,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 
-import jakarta.inject.Inject;
 import java.util.Optional;
 import java.util.function.Supplier;
 

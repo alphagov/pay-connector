@@ -89,7 +89,7 @@ class ChargeExpiryServiceTest {
 
     @Mock
     private IdempotencyDao mockIdempotencyDao;
-    
+
     @Mock
     private PaymentProviders mockPaymentProviders;
 
@@ -149,7 +149,7 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "CREATED",
             "ENTERING CARD DETAILS"
     })
@@ -172,7 +172,7 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY"
     })
@@ -197,7 +197,7 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION SUCCESS",
             "AWAITING CAPTURE REQUEST"
     })
@@ -236,7 +236,7 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION SUCCESS",
@@ -279,7 +279,7 @@ class ChargeExpiryServiceTest {
 
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION SUCCESS",

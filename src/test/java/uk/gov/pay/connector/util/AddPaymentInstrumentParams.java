@@ -31,7 +31,7 @@ public class AddPaymentInstrumentParams {
     private final String stateOrProvince;
     private final String postcode;
     private final String countryCode;
-    
+
     private Map<String, String> recurringAuthToken;
 
     public Long getPaymentInstrumentId() {
@@ -184,7 +184,7 @@ public class AddPaymentInstrumentParams {
             this.paymentInstrumentStatus = paymentInstrumentStatus;
             return this;
         }
-        
+
         public AddPaymentInstrumentParamsBuilder withAgreementExternalId(String agreementExternalId) {
             this.agreementExternalId = agreementExternalId;
             return this;
@@ -249,7 +249,7 @@ public class AddPaymentInstrumentParams {
             this.countryCode = countryCode;
             return this;
         }
-        
+
         public AddPaymentInstrumentParamsBuilder withRecurringAuthToken(Map<String, String> recurringAuthToken) {
             this.recurringAuthToken = recurringAuthToken;
             return this;
