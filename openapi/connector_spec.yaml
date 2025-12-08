@@ -5369,9 +5369,6 @@ components:
           type: string
           description: Only `ENTERING CARD DETAILS` is allowed
           example: ENTERING CARD DETAILS
-          minLength: 1
-      required:
-      - new_status
     Outcome:
       type: object
       description: Object containing information about the outcome of the 3ds exemption
