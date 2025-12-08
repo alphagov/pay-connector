@@ -1258,7 +1258,7 @@ public class ChargeService {
                             gatewayAccount.getId() +
                             ", which does not have recurring card payments enabled");
         } 
-        if (chargeCreateRequest.getAgreementId() == null) {
+        if (!hasAgreementId(chargeCreateRequest)) {
             throw new MissingMandatoryAttributeException("agreement_id");
         } 
         if (chargeCreateRequest.getSavePaymentInstrumentToAgreement()) {
