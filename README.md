@@ -42,7 +42,6 @@ examples.
 |------------------------------------------------|---------|---------------------------------------------------------------------------------------------------------|
 | `AWS_SQS_REGION`                               | -       | SQS capture queue region                                                                                |
 | `AWS_SQS_CAPTURE_QUEUE_URL`                    | -       | SQS capture queue URL                                                                                   |
-| `AWS_SQS_EVENT_QUEUE_URL`                      | -       | SQS event queue URL                                                                                     |
 | `AWS_SQS_PAYOUT_RECONCILE_QUEUE_URL`           | -       | SQS payout reconcile queue URL                                                                          | 
 | `AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT`        | false   | Set to true to use non standard (eg: http://my-own-sqs-endpoint) SQS endpoint                           |
 | `AWS_SQS_ENDPOINT`                             | -       | URL that is the entry point for SQS. Only required when AWS_SQS_NON_STANDARD_SERVICE_ENDPOINT is `true` |
