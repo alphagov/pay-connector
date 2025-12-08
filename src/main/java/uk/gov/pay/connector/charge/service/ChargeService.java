@@ -322,67 +322,31 @@ public class ChargeService {
     @Transactional
     private Optional<ChargeEntity> createCharge(ChargeCreateRequest chargeRequest, Long accountId, String idempotencyKey) {
         return gatewayAccountDao.findById(accountId).map(gatewayAccount -> {
-            checkIfGatewayAccountDisabled(gatewayAccount);
 
-            var authorisationMode = chargeRequest.getAuthorisationMode();
-
-            if (authorisationMode == MOTO_API) {
-                checkMotoApiAuthorisationModeAllowed(gatewayAccount);
-            } else {
-                checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
-            }
-
-            checkCardNumberInReferenceForPaymentLinkPayments(chargeRequest.getSource(), chargeRequest.getReference());
-
-            checkAgreementOptions(chargeRequest, gatewayAccount);
-
-            chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
-                if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
-                    throw new ChargeException(format("Gateway account %d is LIVE, but is configured to use a " +
-                            "non-https return_url", accountId), NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT, 422);
-                }
-            });
+            checkReturnUrl(chargeRequest, gatewayAccount);
 
             GatewayAccountCredentialsEntity gatewayAccountCredential =
                     getGatewayAccountCredentialsEntity(chargeRequest, gatewayAccount);
 
-            checkIfAmountBelowMinimum(chargeRequest.getSource(), chargeRequest.getAmount(), gatewayAccount, gatewayAccountCredential.getPaymentProvider());
+            checkChargeValidity(chargeRequest, gatewayAccount, gatewayAccountCredential);
 
             var agreementEntity = Optional.ofNullable(chargeRequest.getAgreementId()).map(agreementId ->
                     agreementDao.findByExternalIdAndGatewayAccountId(chargeRequest.getAgreementId(), gatewayAccount.getId())
                             .orElseThrow(() -> new ChargeException("Agreement with ID [" + chargeRequest.getAgreementId() + "] not found.", AGREEMENT_NOT_FOUND, HttpStatus.SC_BAD_REQUEST)));
-
+            
             AgreementPaymentType agreementPaymentType = null;
             if (chargeRequest.getSavePaymentInstrumentToAgreement() || chargeRequest.getAuthorisationMode() == AGREEMENT) {
                 agreementPaymentType = chargeRequest.getAgreementPaymentType().orElse(AgreementPaymentType.RECURRING);
             }
 
-            ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
-                    .withAmount(chargeRequest.getAmount())
-                    .withDescription(chargeRequest.getDescription())
-                    .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
-                    .withGatewayAccount(gatewayAccount)
-                    .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
-                    .withPaymentProvider(gatewayAccountCredential.getPaymentProvider())
-                    .withEmail(chargeRequest.getEmail().orElse(null))
-                    .withLanguage(chargeRequest.getLanguage())
-                    .withDelayedCapture(chargeRequest.isDelayedCapture())
-                    .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
-                    .withSource(chargeRequest.getSource())
-                    .withMoto(authorisationMode == MOTO_API || chargeRequest.isMoto())
-                    .withServiceId(gatewayAccount.getServiceId())
-                    .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
-                    .withAgreementEntity(agreementEntity.orElse(null))
-                    .withAuthorisationMode(chargeRequest.getAuthorisationMode())
-                    .withAgreementPaymentType(agreementPaymentType);
-
-            chargeRequest.getReturnUrl().ifPresent(chargeEntityBuilder::withReturnUrl);
-            ChargeEntity chargeEntity = chargeEntityBuilder.build();
+            ChargeEntity chargeEntity = buildChargeEntity(chargeRequest, gatewayAccount, gatewayAccountCredential, agreementEntity.orElse(null), agreementPaymentType);
 
             chargeRequest.getPrefilledCardHolderDetails()
                     .map(this::createCardDetailsEntity)
                     .ifPresent(chargeEntity::setCardDetails);
-
+            
+            var authorisationMode = chargeRequest.getAuthorisationMode();
+            
             if (authorisationMode == AuthorisationMode.AGREEMENT) {
                 agreementEntity.ifPresent(agreement -> {
                     checkAgreementHasActivePaymentInstrument(agreement);
@@ -409,6 +373,63 @@ public class ChargeService {
             chargeDao.merge(chargeEntity);
 
             return chargeEntity;
+        });
+    }
+
+    private void checkChargeValidity(ChargeCreateRequest chargeRequest, 
+                                     GatewayAccountEntity gatewayAccount, 
+                                     GatewayAccountCredentialsEntity gatewayAccountCredential) {
+        
+        checkGatewayAccount(chargeRequest, gatewayAccount);
+        checkCardNumberInReferenceForPaymentLinkPayments(chargeRequest.getSource(), chargeRequest.getReference());
+        checkAgreementOptions(chargeRequest, gatewayAccount);
+        checkIfAmountBelowMinimum(chargeRequest.getSource(), chargeRequest.getAmount(), gatewayAccount, gatewayAccountCredential.getPaymentProvider());
+    }
+
+    private void checkGatewayAccount(ChargeCreateRequest chargeRequest, GatewayAccountEntity gatewayAccount) {
+        checkIfGatewayAccountDisabled(gatewayAccount);
+
+        if (chargeRequest.getAuthorisationMode() == MOTO_API) {
+            checkMotoApiAuthorisationModeAllowed(gatewayAccount);
+        } else {
+            checkIfMotoPaymentsAllowed(chargeRequest.isMoto(), gatewayAccount);
+        }
+    }
+
+    private ChargeEntity buildChargeEntity(ChargeCreateRequest chargeRequest,
+                                           GatewayAccountEntity gatewayAccount,
+                                           GatewayAccountCredentialsEntity gatewayAccountCredential, 
+                                           AgreementEntity agreementEntity, 
+                                           AgreementPaymentType agreementPaymentType) {
+        ChargeEntity.WebChargeEntityBuilder chargeEntityBuilder = aWebChargeEntity()
+                .withAmount(chargeRequest.getAmount())
+                .withDescription(chargeRequest.getDescription())
+                .withReference(ServicePaymentReference.of(chargeRequest.getReference()))
+                .withGatewayAccount(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
+                .withPaymentProvider(gatewayAccountCredential.getPaymentProvider())
+                .withEmail(chargeRequest.getEmail().orElse(null))
+                .withLanguage(chargeRequest.getLanguage())
+                .withDelayedCapture(chargeRequest.isDelayedCapture())
+                .withExternalMetadata(chargeRequest.getExternalMetadata().orElse(null))
+                .withSource(chargeRequest.getSource())
+                .withMoto(chargeRequest.getAuthorisationMode() == MOTO_API || chargeRequest.isMoto())
+                .withServiceId(gatewayAccount.getServiceId())
+                .withSavePaymentInstrumentToAgreement(chargeRequest.getSavePaymentInstrumentToAgreement())
+                .withAgreementEntity(agreementEntity)
+                .withAuthorisationMode(chargeRequest.getAuthorisationMode())
+                .withAgreementPaymentType(agreementPaymentType);
+
+        chargeRequest.getReturnUrl().ifPresent(chargeEntityBuilder::withReturnUrl);
+        return chargeEntityBuilder.build();
+    }
+
+    private void checkReturnUrl(ChargeCreateRequest chargeRequest, GatewayAccountEntity gatewayAccount) {
+        chargeRequest.getReturnUrl().ifPresent(returnUrl -> {
+            if (gatewayAccount.isLive() && !returnUrl.startsWith("https://")) {
+                throw new ChargeException(format("Gateway account %d is LIVE, but is configured to use a " +
+                        "non-https return_url", gatewayAccount.getId()), NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT, 422);
+            }
         });
     }
 
@@ -660,7 +681,7 @@ public class ChargeService {
         } else if (chargeEntity.getRequires3ds() != null) {
             authorisationSummary = getAuthorisationSummary(chargeEntity.getRequires3ds(), null);
         } else if (chargeEntity.get3dsRequiredDetails() == null && chargeEntity.getRequires3ds() == null) {
-            authorisationSummary = getAuthorisationSummary(false, null);
+            authorisationSummary = getAuthorisationSummary(false,  null);
         }
 
         T builderOfResponse = responseBuilder
@@ -733,7 +754,7 @@ public class ChargeService {
                 exemption.setType(exemption3dsRequested == CORPORATE ? CORPORATE.name().toLowerCase() : null);
                 exemption.setOutcome(new ChargeResponse.Exemption.Outcome(exemption3ds));
             }
-        } else if (exemption3dsRequested != null) {
+        } else if (exemption3dsRequested != null){
             exemption = new ChargeResponse.Exemption();
             exemption.setRequested(true);
             exemption.setType(exemption3dsRequested == CORPORATE ? CORPORATE.name().toLowerCase() : null);
@@ -854,7 +875,7 @@ public class ChargeService {
             if (charge.isSavePaymentInstrumentToAgreement()) {
                 Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
             }
-
+            
             if (newStatus == AUTHORISATION_SUCCESS || newStatus == AUTHORISATION_REJECTED) {
                 if (!Boolean.TRUE.equals(charge.getRequires3ds())) {
                     charge.setRequires3ds(false);
@@ -1179,7 +1200,7 @@ public class ChargeService {
             throw new AuthorisationApiNotAllowedForGatewayAccountException(gatewayAccount.getId());
         }
     }
-
+    
     private void checkIfGatewayAccountDisabled(GatewayAccountEntity gatewayAccount) {
         if (gatewayAccount.isDisabled()) {
             throw new GatewayAccountDisabledException("Attempt to create a charge for a disabled gateway account");
@@ -1192,7 +1213,7 @@ public class ChargeService {
         }
         checkIfZeroAmountAllowed(amount, gatewayAccount);
     }
-
+    
     private void checkIfZeroAmountAllowed(Long amount, GatewayAccountEntity gatewayAccount) {
         if (amount == 0L && !gatewayAccount.isAllowZeroAmount()) {
             throw new ZeroAmountNotAllowedForGatewayAccountException(gatewayAccount.getId());
@@ -1263,7 +1284,7 @@ public class ChargeService {
 
         if (paymentInstrumentEntity.getStatus() != PaymentInstrumentStatus.ACTIVE) {
             throw new ChargeException("Agreement with ID [" + agreementEntity.getExternalId() + "] has payment instrument with ID [" +
-                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]",
+                    paymentInstrumentEntity.getExternalId() + "] but its state is [" + paymentInstrumentEntity.getStatus() + "]" , 
                     AGREEMENT_NOT_ACTIVE, HttpStatus.SC_BAD_REQUEST);
         }
     }

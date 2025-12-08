@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.report.model;
+package uk.gov.pay.connector.paymentprocessor.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

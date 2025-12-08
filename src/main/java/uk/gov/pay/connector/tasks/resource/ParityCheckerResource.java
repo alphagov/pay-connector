@@ -1,10 +1,9 @@
-package uk.gov.pay.connector.report.resource;
+package uk.gov.pay.connector.tasks.resource;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import uk.gov.pay.connector.report.ParityCheckerService;
 import uk.gov.pay.connector.tasks.RecordType;
 
 import jakarta.inject.Inject;
@@ -13,6 +12,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
+import uk.gov.pay.connector.tasks.service.ParityCheckerService;
+
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
