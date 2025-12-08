@@ -78,17 +78,17 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
         logMissingDdcResultFor3dsFlexIntegration(request);
 
-        var worldpayOrderBuilder  = WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionRequest, acceptLanguageHeaderParser);
+        var worldpayOrderBuilder = WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionRequest, acceptLanguageHeaderParser);
         logAuthorisationRequestToBePosted(request, worldpayOrderBuilder);
 
-        try {            
+        try {
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
                     WORLDPAY,
                     request.getGatewayAccount().getType(),
                     worldpayOrderBuilder.build(),
                     getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
-            
+
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required: %s", sanitiseMessage(response.getEntity())));
             }
@@ -127,7 +127,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                 request.getGatewayAccount().getId()
         );
 
-        LOGGER.info(logMessage, structuredLoggingArguments);
+        LOGGER.info(logMessage, (Object) structuredLoggingArguments);
     }
 
     private String sanitiseMessage(String message) {
@@ -141,10 +141,10 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
             LOGGER.info("[3DS Flex] Missing device data collection result for {}", gatewayAccount.getId());
         }
     }
-    
+
     private String stringifyLogMessage(WorldpayOrderRequestBuilder orderRequestBuilder, AuthCardDetails authCardDetails, boolean isMoto) {
         var stringJoiner = new StringJoiner(" and ", " ", "");
-        
+
         stringJoiner.add(isMoto ? "MOTO" : "not MOTO");
 
         authCardDetails.getAddress()
@@ -153,14 +153,14 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
         Optional.ofNullable(orderRequestBuilder.getWorldpayTemplateData().getPayerEmail())
                 .map(email -> stringJoiner.add("with email address"))
-                .orElseGet(() ->stringJoiner.add("without email address"));
+                .orElseGet(() -> stringJoiner.add("without email address"));
 
         Optional.ofNullable(orderRequestBuilder.getWorldpayTemplateData().getPayerIpAddress())
                 .map(ipAddress -> stringJoiner.add("with IP address"))
-                .orElseGet(() ->stringJoiner.add("without IP address"));
+                .orElseGet(() -> stringJoiner.add("without IP address"));
 
         stringJoiner.add(orderRequestBuilder.getWorldpayTemplateData().isRequires3ds() ? "with 3DS data" : "without 3DS data");
-        
+
         return stringJoiner.toString();
     }
 }

@@ -8,15 +8,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.stream.Collectors;
 
@@ -74,7 +75,7 @@ public class HealthCheckResource {
                 .collect(Collectors.toMap(Map.Entry::getKey,
                                 healthCheck -> ImmutableMap.of(
                                         "healthy", healthCheck.getValue().isHealthy(),
-                                        "message", defaultString(healthCheck.getValue().getMessage(), "Healthy"))
+                                        "message", Objects.toString(healthCheck.getValue().getMessage(), "Healthy"))
                         )
                 );
 

@@ -45,10 +45,10 @@ class StripeCancelHandlerTest {
     private GatewayClient client;
     @Mock
     private StripeGatewayConfig stripeGatewayConfig;
-    
+
     @InjectMocks
     private StripeCancelHandler stripeCancelHandler;
-    
+
     private ChargeEntity chargeEntity;
 
     @BeforeEach
@@ -70,24 +70,24 @@ class StripeCancelHandlerTest {
     void shouldCancelPaymentSuccessfully() throws Exception {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         verify(client).postRequestFor(any(StripePaymentIntentCancelRequest.class));
-    } 
-    
+    }
+
     @Test
     void shouldCancelPaymentSuccessfullyUsingPaymentIntents() throws Exception {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(aValidChargeEntity()
                 .withGatewayAccountEntity(buildGatewayAccountEntity())
                 .withGatewayAccountCredentialsEntity(aGatewayAccountCredentialsEntity()
-                                .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
-                                .withPaymentProvider(STRIPE.getName())
-                                .withState(ACTIVE)
-                                .build())
+                        .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))
+                        .withPaymentProvider(STRIPE.getName())
+                        .withState(ACTIVE)
+                        .build())
                 .withTransactionId("pi_123")
                 .withAmount(10000L)
                 .build());
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         verify(client).postRequestFor(any(StripePaymentIntentCancelRequest.class));
     }
 
@@ -99,7 +99,7 @@ class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), Is.is(true));
         assertThat(gatewayResponse.getGatewayError().get().getMessage(), Is.is("Unexpected HTTP status code 402 from gateway"));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
@@ -113,7 +113,7 @@ class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), Is.is(true));
         assertThat(gatewayResponse.getGatewayError().get().getMessage(), Is.is("Problem with Stripe servers"));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
@@ -127,16 +127,16 @@ class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {
         var gatewayAccountEntity = aGatewayAccountEntity()
-        .withId(1L)
-        .withGatewayName("stripe")
-        .withRequires3ds(false)
-        .withType(TEST)
-        .build();
+                .withId(1L)
+                .withGatewayName("stripe")
+                .withRequires3ds(false)
+                .withType(TEST)
+                .build();
 
         var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of("stripe_account_id", "stripe_account_id"))

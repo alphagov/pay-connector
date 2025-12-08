@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -7,35 +8,20 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
-import jakarta.ws.rs.core.Response;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.common.model.domain.NumbersInStringsSanitizer.sanitize;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_CHARGE_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_VALUE;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_PROVIDER_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VALUE;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_RETURN_URL_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.PROVIDER_NAME;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.RETURN_URL;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
 
 public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
-    
+
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private static final String VALID_SERVICE_ID = "valid-service-id";
@@ -103,11 +89,11 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
 
         @Test
         void shouldReturn201_withPrefilledCardHolderDetailsFieldsAtMaximumLength() {
-            String cardholderName = randomAlphanumeric(255);
-            String line1 = randomAlphanumeric(255);
-            String line2 = randomAlphanumeric(255);
-            String city = randomAlphanumeric(255);
-            String postcode = randomAlphanumeric(25);
+            String cardholderName = randomAlphaNumeric(255);
+            String line1 = randomAlphaNumeric(255);
+            String line2 = randomAlphaNumeric(255);
+            String city = randomAlphaNumeric(255);
+            String postcode = randomAlphaNumeric(25);
             String country = "GB";
 
             app.givenSetup()
@@ -288,11 +274,11 @@ public class ChargesApiResourceCreatePrefilledCardholderDetailsIT {
 
         @Test
         void shouldReturn201_withPrefilledCardHolderDetailsFieldsAtMaximumLength() {
-            String cardholderName = randomAlphanumeric(255);
-            String line1 = randomAlphanumeric(255);
-            String line2 = randomAlphanumeric(255);
-            String city = randomAlphanumeric(255);
-            String postcode = randomAlphanumeric(25);
+            String cardholderName = randomAlphaNumeric(255);
+            String line1 = randomAlphaNumeric(255);
+            String line2 = randomAlphaNumeric(255);
+            String city = randomAlphaNumeric(255);
+            String postcode = randomAlphaNumeric(25);
             String country = "GB";
 
             app.givenSetup()

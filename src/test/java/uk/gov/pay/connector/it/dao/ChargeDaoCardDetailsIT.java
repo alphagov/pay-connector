@@ -25,7 +25,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.nullValue;
@@ -73,7 +73,7 @@ public class ChargeDaoCardDetailsIT {
 
     @Test
     void findById_shouldFindCardDetails() {
-        long chargeId = nextLong();
+        long chargeId = current().nextLong(0, Long.MAX_VALUE);
         DatabaseFixtures.TestCardDetails testCardDetails = createCardDetailsForChargeWithId(chargeId);
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
 
@@ -96,7 +96,7 @@ public class ChargeDaoCardDetailsIT {
 
     @Test
     void findById_shouldFindCardDetailsIfCardDigitsAreNotPresent() {
-        long chargeId = nextLong();
+        long chargeId = current().nextLong(0, Long.MAX_VALUE);
         DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
                 .aTestCardDetails()
                 .withFirstDigitsOfCardNumber(null)
@@ -177,6 +177,6 @@ public class ChargeDaoCardDetailsIT {
         chargeDao.persist(chargeEntity);
 
         Map<String, Object> cardDetailsSaved = app.getDatabaseTestHelper().getChargeCardDetails(chargeEntity.getId());
-        assertThat(cardDetailsSaved, hasEntry("card_type",null));
+        assertThat(cardDetailsSaved, hasEntry("card_type", null));
     }
 }

@@ -113,7 +113,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
-    
+
     private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("01/30");
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -258,7 +258,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
@@ -288,13 +288,13 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        
+
         GooglePayAuthRequest authorisationData =
                 objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
@@ -324,13 +324,13 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        
+
         GooglePayAuthRequest authorisationData =
                 objectMapper.readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
 
         GatewayResponse<BaseAuthoriseResponse> response = walletAuthoriseService.authorise(charge.getExternalId(), authorisationData);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().isPresent(), is(true));
         assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
 
@@ -363,7 +363,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
@@ -378,7 +378,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
@@ -392,7 +392,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 "test",
                 "apple-pay",
                 "failure");
-        
+
         verify(mockMetricRegistry).counter(expectedMetric);
     }
 
@@ -404,7 +404,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
@@ -419,7 +419,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_CANCELLED.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
@@ -432,11 +432,11 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillError();
         GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code", null);
         when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
-        
-        
+
+
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_ERROR.getValue()));
         assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
         assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
@@ -548,7 +548,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_TIMEOUT.getValue()));
 
         verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
@@ -560,7 +560,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        assertThat(response.isFailed(), is(true));
+        assertThat(response.getGatewayError().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_UNEXPECTED_ERROR.getValue()));
 
         verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));

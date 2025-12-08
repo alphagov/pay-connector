@@ -25,17 +25,16 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.joining;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class ChargesApiResourceValidationTest {
-    
+
     public static ResourceExtension chargesApiResource = ResourceExtension.builder()
             .addResource(new ChargesApiResource(null, null, null, null))
             .setRegisterDefaultExceptionMappers(false)
@@ -49,7 +48,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if fields are missing")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -69,18 +68,18 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 422 if fields exceed maximum length")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
     void shouldReturn422_whenFieldsExceedMaxLength(String url) {
         var payload = Map.of(
                 "amount", 6234L,
-                "reference", randomAlphabetic(256),
-                "description", randomAlphabetic(256),
-                "email", randomAlphabetic(256),
+                "reference", randomAlphaNumeric(256),
+                "description", randomAlphaNumeric(256),
+                "email", randomAlphaNumeric(256),
                 "return_url", "https://service.example/success-page/");
-        
+
         try (Response response = chargesApiResource
                 .target(url)
                 .request()
@@ -103,7 +102,7 @@ public class ChargesApiResourceValidationTest {
                 "description", "Test description",
                 "email", "test@example.com",
                 "return_url", "https://service.example/success-page/");
-        
+
         try (Response response = chargesApiResource
                 .target("/v1/api/accounts/invalidAccountId/charges")
                 .request()
@@ -116,7 +115,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if language is not supported")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -127,7 +126,7 @@ public class ChargesApiResourceValidationTest {
                 "description", "Test description",
                 "return_url", "https://service.example/success-page/",
                 "language", "not a supported language");
-        
+
         try (Response response = chargesApiResource
                 .target(url)
                 .request()
@@ -139,7 +138,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 422 if metadata is correct type but invalid values")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -151,7 +150,7 @@ public class ChargesApiResourceValidationTest {
         metadata.put("key3", "");
         metadata.put("key4", IntStream.rangeClosed(1, ExternalMetadata.MAX_VALUE_LENGTH + 1).mapToObj(i -> "v").collect(joining()));
         metadata.put(IntStream.rangeClosed(1, ExternalMetadata.MAX_KEY_LENGTH + 1).mapToObj(i -> "k").collect(joining()), "This is valid");
-       
+
         var payload = Map.of(
                 "amount", 6234L,
                 "reference", "Test reference",
@@ -159,7 +158,7 @@ public class ChargesApiResourceValidationTest {
                 "return_url", "https://service.example/success-page/",
                 "metadata", metadata
         );
-        
+
         try (Response response = chargesApiResource
                 .target(url)
                 .request()
@@ -178,7 +177,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if metadata is a string")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -190,7 +189,7 @@ public class ChargesApiResourceValidationTest {
                 "return_url", "https://service.example/success-page/",
                 "metadata", "metadata cannot be a string"
         );
-        
+
         try (Response response = chargesApiResource
                 .target(url)
                 .request()
@@ -202,7 +201,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if metadata is an array")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -214,11 +213,11 @@ public class ChargesApiResourceValidationTest {
                 "return_url", "https://service.example/success-page/",
                 "metadata", new Object[1]
         );
-        
+
         try (Response response = chargesApiResource
-                    .target(url)
-                    .request()
-                    .post(Entity.json(payload))) {
+                .target(url)
+                .request()
+                .post(Entity.json(payload))) {
 
             assertGenericErrorResponse(response, 400, "Field [metadata] must be an object of JSON key-value pairs");
         }
@@ -226,7 +225,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if authorisation mode is invalid")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -250,7 +249,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if authorisation_payment_type is invalid for initial payment")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -276,7 +275,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if authorisation_payment_type is invalid for subsequent payment")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -298,10 +297,10 @@ public class ChargesApiResourceValidationTest {
             assertGenericErrorResponse(response, 400, "Cannot deserialize value of type `uk.gov.service.payments.commons.model.AgreementPaymentType`");
         }
     }
-    
+
     @DisplayName("Should return 422 if idempotency key is above maximum length")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -319,14 +318,14 @@ public class ChargesApiResourceValidationTest {
                 .request()
                 .header("Idempotency-Key", "a".repeat(256))
                 .post(Entity.json(payload))) {
-            
+
             assertGenericErrorResponse(response, 422, "Header [Idempotency-Key] can have a size between 1 and 255");
         }
     }
 
     @DisplayName("Should return 422 if idempotency key is empty")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -351,7 +350,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 422 if return url is missing")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -376,7 +375,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 422 if return url is an empty string")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -402,7 +401,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 422 if return url is not a valid format")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -428,7 +427,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 422 if return url is present and authorisation mode is moto api")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -455,7 +454,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if source value is invalid")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -481,7 +480,7 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 400 if source type is invalid")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
@@ -507,18 +506,18 @@ public class ChargesApiResourceValidationTest {
 
     @DisplayName("Should return 422 if prefilled cardholder details exceed maximum length]")
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "/v1/api/accounts/1234/charges",
             "/v1/api/service/my-service-id/account/test/charges"
     })
     void shouldReturn422IfPrefilledCardHolderDetailsExceedMaximumLength(String url) {
-        String cardholderName = randomAlphanumeric(256);
-        String line1 = randomAlphanumeric(256);
-        String line2 = randomAlphanumeric(256);
-        String city = randomAlphanumeric(256);
-        String postcode = randomAlphanumeric(26);
+        String cardholderName = randomAlphaNumeric(256);
+        String line1 = randomAlphaNumeric(256);
+        String line2 = randomAlphaNumeric(256);
+        String city = randomAlphaNumeric(256);
+        String postcode = randomAlphaNumeric(26);
         String country = "GB";
-        
+
         String payload = toJson(Map.of(
                 "amount", 6234L,
                 "reference", "Test reference",
@@ -550,7 +549,7 @@ public class ChargesApiResourceValidationTest {
             assertTrue(errorMessages.contains("Field [postcode] can have a size between 0 and 25"));
         }
     }
-    
+
     private static void assertGenericErrorResponse(Response response, int status, String errorMessage) {
         ErrorResponse errorResponse = response.readEntity(ErrorResponse.class);
         assertThat(response.getStatus(), is(status));
