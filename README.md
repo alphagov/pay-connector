@@ -132,11 +132,10 @@ Example log from the connector shutdown:
 
 ## Integration tests
 
-To run the integration tests, the `DOCKER_HOST` and `DOCKER_CERT_PATH` environment variables must be set up correctly.
-On OS X the environment can be set up with:
+To run the integration tests, run:
 
 ```
-    mvn verify
+mvn verify
 ```
 
 ## Command line tasks
