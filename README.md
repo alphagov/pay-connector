@@ -69,7 +69,7 @@ examples.
 The background capture mechanism will capture all payments in the `CAPTURE_APPROVED` state that have been published to
 the SQS queue (`AWS_SQS_CAPTURE_QUEUE_URL`).
 
-A background thread managed by dropwizard runs on all connector nodes. It polls the SQS capture queue to retrieve the
+A background thread managed by Dropwizard runs on all connector nodes. It polls the SQS capture queue to retrieve the
 list of charges that are waiting to be captured.
 
 If a capture attempt fails it will be retried again after a specified delay (
