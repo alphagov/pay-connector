@@ -106,7 +106,7 @@ attempts to check readiness for shutdown.
 
 Example log from the connector shutdown:
 
- ```shell script
+ ```
 [2019-08-27 10:53:01.231] [thread=Thread-1] [logger=u.g.p.c.p.s.CardExecutorService] - Shutting down CardExecutorService
 [2019-08-27 10:53:01.285] [thread=Thread-1] [logger=u.g.p.c.p.s.CardExecutorService] - Awaiting for CardExecutorService threads to terminate
 [2019-08-27 10:53:01.369] [thread=Thread-11] [logger=o.e.j.s.AbstractConnector] - Stopped application@72fedd85{HTTP/1.1,[http/1.1]}{0.0.0.0:9300}
