@@ -163,7 +163,7 @@ are used to distribute events between running instances of connector.
 
 #### Event Queue
 
-The event queue is used to send payment event information to Ledger (such as the payment has been refuned, payment
+The event queue is used to send payment event information to Ledger (such as the payment has been refunded, payment
 details have been entered), connector pushes these events onto the queue and Ledger retrieves the on the other end.
 
 #### Capture Queue & Payout Reconcile Queue
