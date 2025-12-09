@@ -37,13 +37,11 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -282,7 +280,9 @@ public class GatewayAccountCredentialsServiceTest {
 
             verify(mockGatewayAccountCredentialsDao, times(2)).merge(credentialsEntity);
             WorldpayCredentials worldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
-            WorldpayMerchantCodeCredentials oneOffCustomerInitiated = worldpayCredentials.getOneOffCustomerInitiatedCredentials().get();
+            WorldpayMerchantCodeCredentials oneOffCustomerInitiated = worldpayCredentials
+                    .getOneOffCustomerInitiatedCredentials()
+                    .orElseThrow(() -> new AssertionError("one-off worldpay credentials expected"));
             assertThat(oneOffCustomerInitiated.getMerchantCode(), is("new-merchant-code"));
             assertThat(oneOffCustomerInitiated.getUsername(), is("new-username"));
             assertThat(oneOffCustomerInitiated.getPassword(), is("new-password"));
@@ -319,7 +319,7 @@ public class GatewayAccountCredentialsServiceTest {
 
             List<JsonPatchRequest> patchRequests = Stream.of(replaceRecurringCit, replaceRecurringMit)
                     .map(JsonPatchRequest::from)
-                    .collect(toUnmodifiableList());
+                    .toList();
 
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
 
@@ -327,14 +327,14 @@ public class GatewayAccountCredentialsServiceTest {
 
             WorldpayMerchantCodeCredentials recurringCustomerInitiated = worldpayCredentials
                     .getRecurringCustomerInitiatedCredentials()
-                    .orElseThrow();
+                    .orElseThrow(() -> new AssertionError("recurring customer-initiated credentials expected"));
             assertThat(recurringCustomerInitiated.getMerchantCode(), is("new-merchant-code-cit"));
             assertThat(recurringCustomerInitiated.getUsername(), is("new-username-cit"));
             assertThat(recurringCustomerInitiated.getPassword(), is("new-password-cit"));
 
             WorldpayMerchantCodeCredentials recurringMerchantInitiated = worldpayCredentials
                     .getRecurringMerchantInitiatedCredentials()
-                    .orElseThrow();
+                    .orElseThrow(() -> new AssertionError("recurring merchant-initiated credentials expected"));
             assertThat(recurringMerchantInitiated.getMerchantCode(), is("new-merchant-code-mit"));
             assertThat(recurringMerchantInitiated.getUsername(), is("new-username-mit"));
             assertThat(recurringMerchantInitiated.getPassword(), is("new-password-mit"));
@@ -1021,9 +1021,7 @@ public class GatewayAccountCredentialsServiceTest {
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(activeCredentials));
 
-            WebApplicationException exception = assertThrows(WebApplicationException.class, () -> {
-                gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
-            });
+            WebApplicationException exception = assertThrows(WebApplicationException.class, () -> gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity));
 
             assertEquals("HTTP 500 Internal Server Error", exception.getMessage());
         }
@@ -1040,9 +1038,7 @@ public class GatewayAccountCredentialsServiceTest {
                     .build();
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(activeCredentials));
 
-            WebApplicationException exception = assertThrows(WebApplicationException.class, () -> {
-                gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity);
-            });
+            WebApplicationException exception = assertThrows(WebApplicationException.class, () -> gatewayAccountCredentialsService.updateStatePostFlexCredentialsUpdate(gatewayAccountEntity));
 
             assertEquals("HTTP 500 Internal Server Error", exception.getMessage());
         }
@@ -1166,7 +1162,8 @@ public class GatewayAccountCredentialsServiceTest {
                     .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntityOne, stripeGatewayAccountCredentialsEntityOne))
                     .build();
             Charge charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().withPaymentProvider(WORLDPAY.getName()).build());
-            String chargeCredentialExternalId = charge.getCredentialExternalId().get();
+            String chargeCredentialExternalId = charge.getCredentialExternalId()
+                    .orElseThrow(() -> new AssertionError("charge credential external id expected"));
             Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntity = gatewayAccountCredentialsService.findCredentialFromCharge(charge, gatewayAccountEntity);
 
             assertThat(gatewayAccountCredentialsEntity.isPresent(), is(true));
@@ -1369,9 +1366,7 @@ public class GatewayAccountCredentialsServiceTest {
             when(mockGatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L))
                     .thenReturn(Optional.empty());
 
-            var exception = assertThrows(CredentialsNotFoundBadRequestException.class, () -> {
-                gatewayAccountCredentialsService.getCredentialInUsableState(credentialExternalId, 1L);
-            });
+            var exception = assertThrows(CredentialsNotFoundBadRequestException.class, () -> gatewayAccountCredentialsService.getCredentialInUsableState(credentialExternalId, 1L));
 
             assertThat(exception.getMessage(), is("Credentials not found for gateway account [1] and credential_external_id [credential-external-id]"));
         }
@@ -1388,9 +1383,7 @@ public class GatewayAccountCredentialsServiceTest {
             when(mockGatewayAccountCredentialsDao.findByExternalIdAndGatewayAccountId(credentialExternalId, 1L))
                     .thenReturn(Optional.of(gatewayAccountCredentialsEntity));
 
-            var exception = assertThrows(NoCredentialsInUsableStateException.class, () -> {
-                gatewayAccountCredentialsService.getCredentialInUsableState(credentialExternalId, 1L);
-            });
+            var exception = assertThrows(NoCredentialsInUsableStateException.class, () -> gatewayAccountCredentialsService.getCredentialInUsableState(credentialExternalId, 1L));
 
             assertThat(exception.getMessage(), is("Payment provider details are not configured on this account"));
         }
