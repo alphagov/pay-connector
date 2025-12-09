@@ -192,9 +192,7 @@ class GatewayAccountEntityTest {
                 .build();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
-        assertThrows(WebApplicationException.class, () -> {
-            gatewayAccountEntity.getGatewayAccountCredentialsEntity("sandbox");
-        }, "No credentials exists for payment provider");
+        assertThrows(WebApplicationException.class, () -> gatewayAccountEntity.getGatewayAccountCredentialsEntity("sandbox"), "No credentials exists for payment provider");
     }
 
     @Test

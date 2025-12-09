@@ -31,6 +31,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphabetic;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class ChargesApiResourceValidationTest {
@@ -75,9 +76,9 @@ public class ChargesApiResourceValidationTest {
     void shouldReturn422_whenFieldsExceedMaxLength(String url) {
         var payload = Map.of(
                 "amount", 6234L,
-                "reference", randomAlphaNumeric(256),
-                "description", randomAlphaNumeric(256),
-                "email", randomAlphaNumeric(256),
+                "reference", randomAlphabetic(256),
+                "description", randomAlphabetic(256),
+                "email", randomAlphabetic(256),
                 "return_url", "https://service.example/success-page/");
 
         try (Response response = chargesApiResource

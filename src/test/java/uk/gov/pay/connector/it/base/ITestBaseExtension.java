@@ -67,6 +67,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphabetic;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
@@ -77,7 +78,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public static final String CVC = "123";
 
     public static final String RETURN_URL = "http://service.local/success-page/";
-    public static final String EMAIL = randomAlphaNumeric(242) + "@example.com";
+    public static final String EMAIL = randomAlphabetic(242) + "@example.com";
     public static final long AMOUNT = 6234L;
     public static final String JSON_REFERENCE_VALUE = "Test reference";
     public static final String JSON_DESCRIPTION_VALUE = "Test description";
