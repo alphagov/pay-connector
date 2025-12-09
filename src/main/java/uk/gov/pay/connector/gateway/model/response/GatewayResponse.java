@@ -29,16 +29,7 @@ public class GatewayResponse<T extends BaseResponse> {
     private GatewayResponse(GatewayError error) {
         this.gatewayError = error;
     }
-
-    @Deprecated
-    public boolean isSuccessful() {
-        return baseResponse != null;
-    }
-
-    @Deprecated
-    public boolean isFailed() {
-        return gatewayError != null;
-    }
+    
 
     public Optional<ProviderSessionIdentifier> getSessionIdentifier() {
         return Optional.ofNullable(sessionIdentifier);

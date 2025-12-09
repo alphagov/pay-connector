@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -77,7 +77,7 @@ public class CardResourceCaptureIT {
     @Test
     void shouldPreserveCardDetails_IfCaptureReady() {
         String externalChargeId = testBaseExtension.authoriseNewCharge();
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Long chargeId = Long.valueOf(Strings.CS.removeStart(externalChargeId, "charge-"));
 
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
