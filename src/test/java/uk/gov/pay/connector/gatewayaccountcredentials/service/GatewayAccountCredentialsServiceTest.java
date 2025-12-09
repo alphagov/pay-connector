@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.WebApplicationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,6 +19,8 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.CredentialsNotFoundBadRequestException;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.NoCredentialsInUsableStateException;
@@ -26,7 +29,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
-import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -37,10 +39,11 @@ import java.util.stream.Stream;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -102,7 +105,12 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("sandbox"));
             assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
             assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
-            assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+
+            var saved = gatewayAccountCredentialsEntity.getCredentialsObject();
+
+            //hasCredentials in SandboxCredentials.class is hardcoded to true
+            assertThat(saved.hasCredentials(), is(true));
+            assertThat(saved.getGooglePayMerchantId().isPresent(), is(false));
         }
 
         @Test
@@ -119,7 +127,9 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
             assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
             assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
-            assertThat(gatewayAccountCredentialsEntity.getCredentials().get("stripe_account_id"), is("abc"));
+
+            StripeCredentials stripeCredentials = (StripeCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
+            assertThat(stripeCredentials.getStripeAccountId(), is("abc"));
         }
 
         @Test
@@ -138,7 +148,7 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
             assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
             assertThat(gatewayAccountCredentialsEntity.getState(), is(CREATED));
-            assertThat(gatewayAccountCredentialsEntity.getCredentials().get("stripe_account_id"), is("abc"));
+            assertThat(((StripeCredentials) gatewayAccountCredentialsEntity.getCredentialsObject()).getStripeAccountId(), is("abc"));
         }
 
         @Test
@@ -156,7 +166,12 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
             assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
             assertThat(gatewayAccountCredentialsEntity.getState(), is(CREATED));
-            assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+
+            StripeCredentials saved = (StripeCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
+
+            assertThat(saved.hasCredentials(), is(false));
+            assertThat(saved.getGooglePayMerchantId().isPresent(), is(false));
+            assertNull(saved.getStripeAccountId());
         }
 
         @Test
@@ -174,7 +189,12 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("stripe"));
             assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
             assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
-            assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+
+            StripeCredentials saved = (StripeCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
+
+            assertThat(saved.hasCredentials(), is(false));
+            assertThat(saved.getGooglePayMerchantId().isPresent(), is(false));
+            assertNull(saved.getStripeAccountId());
         }
 
         @Test
@@ -192,7 +212,12 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is("sandbox"));
             assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
             assertThat(gatewayAccountCredentialsEntity.getState(), is(ACTIVE));
-            assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+
+            var saved = gatewayAccountCredentialsEntity.getCredentialsObject();
+
+            //hasCredentials in SandboxCredentials.class is hardcoded to true
+            assertThat(saved.hasCredentials(), is(true));
+            assertThat(saved.getGooglePayMerchantId().isPresent(), is(false));
         }
 
         @ParameterizedTest
@@ -209,7 +234,11 @@ public class GatewayAccountCredentialsServiceTest {
             assertThat(gatewayAccountCredentialsEntity.getPaymentProvider(), is(paymentProvider));
             assertThat(gatewayAccountCredentialsEntity.getGatewayAccountEntity(), is(gatewayAccountEntity));
             assertThat(gatewayAccountCredentialsEntity.getState(), is(CREATED));
-            assertThat(gatewayAccountCredentialsEntity.getCredentials().isEmpty(), is(true));
+
+            var saved = gatewayAccountCredentialsEntity.getCredentialsObject();
+
+            assertThat(saved.hasCredentials(), is(false));
+            assertThat(saved.getGooglePayMerchantId().isPresent(), is(false));
         }
     }
 
@@ -217,7 +246,7 @@ public class GatewayAccountCredentialsServiceTest {
     @DisplayName("updateGatewayAccountCredentials")
     class UpdateGatewayAccountCredentialsTest {
         @Test
-        void shouldUpdateGatewayAccountCredentials() {
+        void shouldUpdateWorldpayGatewayAccountCredentials() {
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
             GatewayAccountCredentialsEntity credentialsEntity = aGatewayAccountCredentialsEntity()
                     .withGatewayAccountEntity(gatewayAccountEntity)
@@ -247,15 +276,16 @@ public class GatewayAccountCredentialsServiceTest {
 
             List<JsonPatchRequest> patchRequests = Stream.of(replaceCredentialsNode, replaceLastUserNode, replaceStateNode)
                     .map(JsonPatchRequest::from)
-                    .collect(toUnmodifiableList());
+                    .toList();
 
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
 
             verify(mockGatewayAccountCredentialsDao, times(2)).merge(credentialsEntity);
-            Map<String, Object> oneOffCustomerInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("one_off_customer_initiated");
-            assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "new-merchant-code"));
-            assertThat(oneOffCustomerInitiated, hasEntry("username", "new-username"));
-            assertThat(oneOffCustomerInitiated, hasEntry("password", "new-password"));
+            WorldpayCredentials worldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
+            WorldpayMerchantCodeCredentials oneOffCustomerInitiated = worldpayCredentials.getOneOffCustomerInitiatedCredentials().get();
+            assertThat(oneOffCustomerInitiated.getMerchantCode(), is("new-merchant-code"));
+            assertThat(oneOffCustomerInitiated.getUsername(), is("new-username"));
+            assertThat(oneOffCustomerInitiated.getPassword(), is("new-password"));
             assertThat(credentialsEntity.getLastUpdatedByUserExternalId(), is("new-user-external-id"));
             assertThat(credentialsEntity.getState(), is(VERIFIED_WITH_LIVE_PAYMENT));
         }
@@ -293,15 +323,22 @@ public class GatewayAccountCredentialsServiceTest {
 
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
 
-            Map<String, Object> recurringCustomerInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("recurring_customer_initiated");
-            assertThat(recurringCustomerInitiated, hasEntry("merchant_code", "new-merchant-code-cit"));
-            assertThat(recurringCustomerInitiated, hasEntry("username", "new-username-cit"));
-            assertThat(recurringCustomerInitiated, hasEntry("password", "new-password-cit"));
+            WorldpayCredentials worldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
 
-            Map<String, Object> recurringMerchantInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("recurring_merchant_initiated");
-            assertThat(recurringMerchantInitiated, hasEntry("merchant_code", "new-merchant-code-mit"));
-            assertThat(recurringMerchantInitiated, hasEntry("username", "new-username-mit"));
-            assertThat(recurringMerchantInitiated, hasEntry("password", "new-password-mit"));
+            WorldpayMerchantCodeCredentials recurringCustomerInitiated = worldpayCredentials
+                    .getRecurringCustomerInitiatedCredentials()
+                    .orElseThrow();
+            assertThat(recurringCustomerInitiated.getMerchantCode(), is("new-merchant-code-cit"));
+            assertThat(recurringCustomerInitiated.getUsername(), is("new-username-cit"));
+            assertThat(recurringCustomerInitiated.getPassword(), is("new-password-cit"));
+
+            WorldpayMerchantCodeCredentials recurringMerchantInitiated = worldpayCredentials
+                    .getRecurringMerchantInitiatedCredentials()
+                    .orElseThrow();
+            assertThat(recurringMerchantInitiated.getMerchantCode(), is("new-merchant-code-mit"));
+            assertThat(recurringMerchantInitiated.getUsername(), is("new-username-mit"));
+            assertThat(recurringMerchantInitiated.getPassword(), is("new-password-mit"));
+
         }
 
         @Test
@@ -333,23 +370,31 @@ public class GatewayAccountCredentialsServiceTest {
 
             List<JsonPatchRequest> patchRequests = Stream.of(replaceRecurringCIT)
                     .map(JsonPatchRequest::from)
-                    .collect(toUnmodifiableList());
+                    .toList();
 
             gatewayAccountCredentialsService.updateGatewayAccountCredentials(credentialsEntity, patchRequests);
 
-            assertThat((Map<String, Object>) credentialsEntity.getCredentials().get("recurring_merchant_initiated"),
-                    hasEntry("merchant_code", "new-merchant-code-mit"));
+            WorldpayCredentials worldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
 
-            Map<String, Object> recurringCustomerInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("recurring_customer_initiated");
-            assertThat(recurringCustomerInitiated, hasEntry("merchant_code", "existing-merchant-code-cit"));
-            assertThat(recurringCustomerInitiated, hasEntry("username", "existing-username-cit"));
-            assertThat(recurringCustomerInitiated, hasEntry("password", "existing-password-cit"));
+            WorldpayMerchantCodeCredentials recurringMerchantInitiated = worldpayCredentials
+                    .getRecurringMerchantInitiatedCredentials()
+                    .orElseThrow();
+            assertThat(recurringMerchantInitiated.getMerchantCode(), is("new-merchant-code-mit"));
 
+            WorldpayMerchantCodeCredentials recurringCustomerInitiated = worldpayCredentials
+                    .getRecurringCustomerInitiatedCredentials()
+                    .orElseThrow();
+            assertThat(recurringCustomerInitiated.getMerchantCode(), is("existing-merchant-code-cit"));
+            assertThat(recurringCustomerInitiated.getUsername(), is("existing-username-cit"));
+            assertThat(recurringCustomerInitiated.getPassword(), is("existing-password-cit"));
 
-            Map<String, Object> oneOffCustomerInitiated = (Map<String, Object>) credentialsEntity.getCredentials().get("one_off_customer_initiated");
-            assertThat(oneOffCustomerInitiated, hasEntry("merchant_code", "existing-merchant-code"));
-            assertThat(oneOffCustomerInitiated, hasEntry("username", "existing-username"));
-            assertThat(oneOffCustomerInitiated, hasEntry("password", "existing-password"));
+            WorldpayMerchantCodeCredentials oneOffCustomerInitiated = worldpayCredentials
+                    .getOneOffCustomerInitiatedCredentials()
+                    .orElseThrow();
+            assertThat(oneOffCustomerInitiated.getMerchantCode(), is("existing-merchant-code"));
+            assertThat(oneOffCustomerInitiated.getUsername(), is("existing-username"));
+            assertThat(oneOffCustomerInitiated.getPassword(), is("existing-password"));
+
         }
 
         @Test
@@ -842,7 +887,7 @@ public class GatewayAccountCredentialsServiceTest {
 
             assertThat(credentialsEntity.getState(), is(ACTIVE));
         }
-        
+
         @Test
         void shouldNotUpdateStateWhenOnlyRecurringCustomerInitiatedCredentialsAreSet() {
             GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()

@@ -1,7 +1,11 @@
 package uk.gov.pay.connector.gatewayaccountcredentials.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -10,6 +14,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountCredentialsNo
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
@@ -21,9 +26,6 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchOp;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -79,8 +81,8 @@ public class GatewayAccountCredentialsService {
 
     @Transactional
     public GatewayAccountCredentialsEntity createGatewayAccountCredentials(GatewayAccountEntity gatewayAccountEntity,
-                                                                     String paymentProvider,
-                                                                     Map<String, String> credentials) {
+                                                                           String paymentProvider,
+                                                                           Map<String, String> credentials) {
         GatewayAccountCredentialState state = calculateStateForNewCredentials(gatewayAccountEntity, paymentProvider, credentials);
         // We refactored the type to <String, Object> for nested credentials. We need to "cast" credentials until we refactor creation as well
         Map<String, Object> newMap = new HashMap<>(credentials);
@@ -164,7 +166,7 @@ public class GatewayAccountCredentialsService {
                         GatewayAccountCredentialState.valueOf(patchRequest.valueAsString()));
                 break;
             case GATEWAY_MERCHANT_ID_PATH:
-                var credentials = (WorldpayCredentials)gatewayAccountCredentialsEntity.getCredentialsObject();
+                var credentials = (WorldpayCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
                 credentials.setGooglePayMerchantId(patchRequest.valueAsString());
                 gatewayAccountCredentialsEntity.setCredentials(credentials);
                 break;
@@ -174,9 +176,13 @@ public class GatewayAccountCredentialsService {
     }
 
     private void updateCredentials(JsonPatchRequest patchRequest, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
-        HashMap<String, Object> updatableMap = new HashMap<>(gatewayAccountCredentialsEntity.getCredentials());
-        patchRequest.valueAsObject().forEach(updatableMap::put);
-        gatewayAccountCredentialsEntity.setCredentials(updatableMap);
+        GatewayCredentials existingCredentials = gatewayAccountCredentialsEntity.getCredentialsObject();
+        Map<String, Object> updatableMap = objectMapper.convertValue(existingCredentials, new TypeReference<>() {});
+        
+        updatableMap.putAll(patchRequest.valueAsObject());
+
+        GatewayCredentials updatedCredentials = objectMapper.convertValue(updatableMap, existingCredentials.getClass());
+        gatewayAccountCredentialsEntity.setCredentials(updatedCredentials);
 
         updateStateForCredentials(gatewayAccountCredentialsEntity);
     }
@@ -282,7 +288,7 @@ public class GatewayAccountCredentialsService {
                 .getGatewayAccountCredentials()
                 .stream()
                 .filter(credential -> credential.getPaymentProvider().equals(charge.getPaymentGatewayName()))
-                .collect(Collectors.toList());
+                .toList();
 
         Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentialsEntityByPaymentProvider = gatewayAccountCredentialsEntities
                 .stream()
