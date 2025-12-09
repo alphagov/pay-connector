@@ -1,8 +1,6 @@
 package uk.gov.pay.connector.gateway.stripe.handler;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.core.setup.Environment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,7 +15,6 @@ import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
-import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -26,13 +23,11 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.stripe.StripeSdkClient;
 import uk.gov.pay.connector.gateway.stripe.request.*;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
-import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
@@ -87,24 +82,12 @@ public class StripeAuthoriseHandlerTest {
     private static final String CARD_HOLDER = "Mr. Payment";
     public static final String CUSTOMER_ID = "cus_abc213";
     public static final String PAYMENT_METHOD_ID = "pm_abc123";
-
     private static final String TOKEN_ID = "token_abc_123";
-
-    @Captor
-    private ArgumentCaptor<StripeTransferInRequest> stripeTransferInRequestCaptor;
-
     @Captor
     private ArgumentCaptor<StripePostRequest> stripePostRequestCaptor;
-
     private StripeAuthoriseHandler handler;
     @Mock
     private GatewayClient gatewayClient;
-    @Mock
-    private GatewayClientFactory gatewayClientFactory;
-    @Mock
-    private Environment environment;
-    @Mock
-    private MetricRegistry metricRegistry;
     @Mock
     private ConnectorConfiguration configuration;
     @Mock
@@ -119,12 +102,8 @@ public class StripeAuthoriseHandlerTest {
     private GatewayClient.Response paymentIntentsResponse;
     @Mock
     private GatewayClient.Response tokenResponse;
-    @Mock
-    private RefundEntityFactory refundEntityFactory;
-    @Mock
-    private StripeSdkClient stripeSDKClient;
-    private  final JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
-    
+    private final JsonObjectMapper objectMapper = new JsonObjectMapper(new ObjectMapper());
+
     @BeforeEach
     void setUp() {
         when(configuration.getLinks()).thenReturn(linksConfig);
@@ -145,7 +124,7 @@ public class StripeAuthoriseHandlerTest {
             gatewayAccount.setIntegrationVersion3ds(2);
             ChargeEntity charge = buildTestCharge(gatewayAccount);
             GatewayResponse<BaseAuthoriseResponse> response = handler.authorise(buildTestAuthorisationRequest(charge));
-
+            
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
             assertTrue(response.isSuccessful());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
@@ -154,7 +133,6 @@ public class StripeAuthoriseHandlerTest {
             assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitYear(), is("24"));
         }
 
-        // need to check if this test is still needed, can't see any logic relating to this in the handler
         @Test
         void shouldAuthorise_ForAddressInUs() throws Exception {
             when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
@@ -300,6 +278,7 @@ public class StripeAuthoriseHandlerTest {
             assertThat(baseAuthoriseResponse.toString(), containsString("message: No such charge: ch_123456 or something similar"));
             assertThat(baseAuthoriseResponse.toString(), containsString("code: resource_missing"));
         }
+
         @Test
         void shouldMarkChargeAsAuthorisationError_whenStripeRespondsWithErrorTypeOtherThanCardError() throws Exception {
             when(gatewayClient.postRequestFor(any(StripePaymentMethodRequest.class))).thenReturn(paymentMethodResponse);
@@ -384,9 +363,9 @@ public class StripeAuthoriseHandlerTest {
             assertThat(authoriseResponse.getGatewayError().get().getErrorType(), is(GATEWAY_ERROR));
         }
     }
-    
+
     @Nested
-    class AuthoriseUserNotPresent{
+    class AuthoriseUserNotPresent {
         @Test
         void shouldAuthoriseUserNotPresentPayment() throws Exception {
 
@@ -457,7 +436,7 @@ public class StripeAuthoriseHandlerTest {
             assertEquals(GATEWAY_CONNECTION_TIMEOUT_ERROR, authoriseResponse.getGatewayError().get().getErrorType());
         }
     }
-    
+
     @Nested
     class AuthoriseWallet {
         @Test
@@ -476,7 +455,6 @@ public class StripeAuthoriseHandlerTest {
 
             var paymentIntentRequest = (StripePaymentIntentRequest) allRequests.get(1);
             assertThat(paymentIntentRequest.getTokenId(), is("tok_1NrjK3Hj08j2jFuBm3LGVHYe"));
-
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
             assertTrue(response.isSuccessful());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
@@ -563,7 +541,7 @@ public class StripeAuthoriseHandlerTest {
             assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitYear(), is("24"));
         }
     }
-    
+
     @Test
     void shouldSetAs3DSRequired_whenPaymentIntentReturnsWithRequiresAction_forGooglePay() throws Exception {
         when(paymentIntentsResponse.getEntity()).thenReturn(requires3DSCreatePaymentIntentsResponse());
