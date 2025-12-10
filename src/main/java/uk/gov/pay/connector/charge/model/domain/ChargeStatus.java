@@ -65,9 +65,9 @@ public enum ChargeStatus implements Status {
     AUTHORISATION_ERROR_REJECTED("AUTHORISATION ERROR REJECTED", EXTERNAL_ERROR_GATEWAY, true),
     AUTHORISATION_ERROR_CHARGE_MISSING("AUTHORISATION ERROR CHARGE MISSING", EXTERNAL_ERROR_GATEWAY, true);
 
-    private String value;
-    private ExternalChargeState externalStatus;
-    private boolean expungeable;
+    private final String value;
+    private final ExternalChargeState externalStatus;
+    private final boolean expungeable;
 
     ChargeStatus(String value, ExternalChargeState externalStatus, boolean expungeable) {
         this.value = value;
