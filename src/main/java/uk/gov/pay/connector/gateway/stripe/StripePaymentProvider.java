@@ -57,6 +57,7 @@ import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayReque
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -229,7 +230,7 @@ public class StripePaymentProvider implements PaymentProvider {
 
     public void transferDisputeAmount(StripeDisputeData stripeDisputeData, Charge charge, GatewayAccountEntity gatewayAccount,
                                       GatewayAccountCredentialsEntity gatewayAccountCredentials, long transferAmount) throws GatewayException {
-        
+
         String disputeExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
 
         StripeTransferInRequest transferInRequest = StripeTransferInRequest.createDisputeTransferRequest(
