@@ -7,7 +7,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public record AddChargeParameters(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
@@ -16,7 +16,7 @@ public record AddChargeParameters(long chargeId, String externalChargeId, Charge
 
 
     public static final class Builder {
-        private long chargeId = nextLong();
+        private long chargeId = current().nextLong(0, Long.MAX_VALUE);
         private String externalChargeId = RandomIdGenerator.newId();
         private ChargeStatus chargeStatus;
         private ServicePaymentReference reference = ServicePaymentReference.of("ref");

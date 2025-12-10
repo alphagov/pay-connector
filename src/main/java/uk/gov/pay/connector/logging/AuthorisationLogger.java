@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.logging;
 
+import jakarta.inject.Inject;
+import net.logstash.logback.argument.StructuredArgument;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -9,7 +11,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 
-import jakarta.inject.Inject;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -19,7 +20,7 @@ public class AuthorisationLogger {
     private final AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging;
 
     @Inject
-    public AuthorisationLogger(AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier, 
+    public AuthorisationLogger(AuthorisationRequestSummaryStringifier authorisationRequestSummaryStringifier,
                                AuthorisationRequestSummaryStructuredLogging authorisationRequestSummaryStructuredLogging) {
         this.authorisationRequestSummaryStringifier = authorisationRequestSummaryStringifier;
         this.authorisationRequestSummaryStructuredLogging = authorisationRequestSummaryStructuredLogging;
@@ -27,7 +28,7 @@ public class AuthorisationLogger {
 
     public void logChargeAuthorisation(Logger logger,
                                        AuthorisationRequestSummary authorisationRequestSummary,
-                                       ChargeEntity charge, 
+                                       ChargeEntity charge,
                                        String transactionId,
                                        GatewayResponse gatewayResponse,
                                        ChargeStatus oldStatus,
@@ -41,16 +42,15 @@ public class AuthorisationLogger {
                 charge.getGatewayAccount().getAnalyticsId(),
                 charge.getGatewayAccount().getId(),
                 gatewayResponse,
-                oldStatus, 
+                oldStatus,
                 newStatus);
 
         var structuredLoggingArguments = ArrayUtils.addAll(
                 charge.getStructuredLoggingArgs(),
                 Optional.ofNullable(authorisationRequestSummary)
                         .map(authorisationRequestSummaryStructuredLogging::createArgs)
-                        .orElse(null));
-
-        logger.info(logMessage, structuredLoggingArguments);
+                        .orElse(new StructuredArgument[0]));
+        logger.info(logMessage, (Object[]) structuredLoggingArguments);
     }
 
     public void logChargeAuthorisation(Logger logger,

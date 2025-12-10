@@ -21,12 +21,13 @@ import static uk.gov.pay.connector.charge.resource.ChargesApiResource.AMOUNT_KEY
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.DELAYED_CAPTURE_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.EMAIL_KEY;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.LANGUAGE_KEY;
+import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAX_AMOUNT;
 import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT;
-import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MAXIMUM_FIELDS_SIZE;
 import static uk.gov.pay.connector.common.validator.ApiValidators.parseZonedDateTime;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargeParams;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargePatchParams;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
 
 
 class ApiValidatorsTest {
@@ -35,10 +36,10 @@ class ApiValidatorsTest {
     void shouldValidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
-                ImmutableMap.of(
-                        "op", "replace",
-                        "path", "email",
-                        "value", "test@example.com"))
+                        ImmutableMap.of(
+                                "op", "replace",
+                                "path", "email",
+                                "value", "test@example.com"))
                 .withValidOps(singletonList("replace"))
                 .withValidPaths(ImmutableSet.of("email"))
                 .build();
@@ -49,10 +50,10 @@ class ApiValidatorsTest {
     void shouldInvalidateEmailLength_WhenPatchingAnEmail() {
 
         PatchRequestBuilder.PatchRequest request = PatchRequestBuilder.aPatchRequestBuilder(
-                ImmutableMap.of(
-                        "op", "replace",
-                        "path", "email",
-                        "value", randomAlphanumeric(255) + "@example.com"))
+                        ImmutableMap.of(
+                                "op", "replace",
+                                "path", "email",
+                                "value", randomAlphaNumeric(255) + "@example.com"))
                 .withValidOps(singletonList("replace"))
                 .withValidPaths(ImmutableSet.of("email"))
                 .build();
@@ -86,7 +87,7 @@ class ApiValidatorsTest {
     @Test
     void validateChargeParams_shouldRejectEmail_when255Characters() {
         Map<String, String> inputData = new HashMap<>();
-        inputData.put(EMAIL_KEY, randomAlphanumeric(255));
+        inputData.put(EMAIL_KEY, randomAlphaNumeric(255));
 
         Optional<List<String>> result = validateChargeParams(inputData);
 
@@ -122,7 +123,7 @@ class ApiValidatorsTest {
     @Test
     void validateChargeParams_shouldRejectEmailAndAmount_whenBothInvalid() {
         Map<String, String> inputData = new HashMap<>();
-        inputData.put(EMAIL_KEY, randomAlphanumeric(255));
+        inputData.put(EMAIL_KEY, randomAlphaNumeric(255));
         inputData.put(AMOUNT_KEY, String.valueOf(MAX_AMOUNT + 1));
 
         Optional<List<String>> result = validateChargeParams(inputData);
@@ -240,5 +241,5 @@ class ApiValidatorsTest {
 
         assertThat(result, is(Optional.of(Collections.singletonList("delayed_capture"))));
     }
-    
+
 }

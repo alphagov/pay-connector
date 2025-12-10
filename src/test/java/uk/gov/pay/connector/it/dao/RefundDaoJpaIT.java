@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +21,7 @@ import java.util.Optional;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.MICROS;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -42,6 +40,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
 
 public class RefundDaoJpaIT {
     @RegisterExtension
@@ -68,14 +67,14 @@ public class RefundDaoJpaIT {
 
         DatabaseFixtures.TestRefund testRefund = app.getDatabaseFixtures()
                 .aTestRefund()
-                .withGatewayTransactionId(randomAlphanumeric(10))
+                .withGatewayTransactionId(randomAlphaNumeric(10))
                 .withChargeExternalId(testCharge.getExternalChargeId())
                 .withTestCharge(testCharge);
 
         this.sandboxAccount = testAccount.insert();
         this.chargeTestRecord = testCharge.insert();
         this.refundTestRecord = testRefund.insert();
-        refundGatewayTransactionId = randomAlphanumeric(30);
+        refundGatewayTransactionId = randomAlphaNumeric(30);
     }
 
     @Test
@@ -306,7 +305,7 @@ public class RefundDaoJpaIT {
     @Test
     void findMaxId_returnsTheMaximumId() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
-        refundEntity.setId(nextLong());
+        refundEntity.setId(current().nextLong(0, Long.MAX_VALUE));
         refundEntity.setStatus(REFUND_SUBMITTED.getValue());
         refundDao.persist(refundEntity);
 
@@ -320,7 +319,7 @@ public class RefundDaoJpaIT {
 
     @Test
     void findRefundToExpunge_shouldReturnRefundReadyForExpunging() {
-        String chargeExternalId = randomAlphanumeric(26);
+        String chargeExternalId = randomAlphaNumeric(26);
         RefundEntity refundToExpunge = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
         refundToExpunge.setStatus(REFUNDED);
         refundToExpunge.setCreatedDate(ZonedDateTime.now(UTC).minusDays(7));
@@ -350,7 +349,7 @@ public class RefundDaoJpaIT {
 
     @Test
     void findRefundToExpunge_shouldReturnParityCheckedRefundIfEligible() {
-        String chargeExternalId = randomAlphanumeric(26);
+        String chargeExternalId = randomAlphaNumeric(26);
         RefundEntity refundParityCheckedRecentlyAndNotEligibleForExpunging = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
         refundParityCheckedRecentlyAndNotEligibleForExpunging.setStatus(REFUNDED);
         refundParityCheckedRecentlyAndNotEligibleForExpunging.setCreatedDate(ZonedDateTime.now(UTC).minusDays(10));
@@ -388,7 +387,7 @@ public class RefundDaoJpaIT {
         emittedEventDao.persist(anEmittedEventEntity()
                 .withResourceExternalId(refundToExpunge.getExternalId())
                 .withResourceType("refund")
-                .withId(RandomUtils.nextLong())
+                .withId(current().nextLong(0, Long.MAX_VALUE))
                 .build());
 
         // assert data is as expected

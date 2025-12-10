@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -24,6 +23,7 @@ import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -119,9 +119,9 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
         testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
         verifyNoInteractions(mockAppender);
     }
-    
+
     private String setupChargeWithAgreementAndPaymentInstrument(String first6Digits, String last4Digits) {
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)

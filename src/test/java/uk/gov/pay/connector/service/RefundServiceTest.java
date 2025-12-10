@@ -46,15 +46,15 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
 
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -129,7 +129,7 @@ public class RefundServiceTest {
 
     @BeforeEach
     void setUp() {
-        refundId = ThreadLocalRandom.current().nextLong();
+        refundId = current().nextLong(0, Long.MAX_VALUE);
         refundEntity = aValidRefundEntity().withChargeExternalId(externalChargeId).withAmount(REFUND_AMOUNT).build();
         lenient().when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         lenient().when(mockProvider.getRefundEntityFactory()).thenReturn(mockRefundEntityFactory);
@@ -439,7 +439,7 @@ public class RefundServiceTest {
                 .build();
 
         Charge charge = Charge.from(chargeEntity);
-        
+
         var thrown = assertThrows(GatewayAccountDisabledException.class,
                 () -> refundService.submitRefund(disabledAccount, charge, new RefundRequest(100L, 0, userExternalId)));
         assertThat(thrown.getMessage(), is("Attempt to create a refund for a disabled gateway account"));
@@ -585,7 +585,7 @@ public class RefundServiceTest {
                 .withStatus(AUTHORISATION_SUCCESS)
                 .withPaymentProvider(SANDBOX.getName())
                 .build();
-        
+
         RefundEntity refundExpungedSinceWeFirstChecked = aValidRefundEntity()
                 .withAmount(100L)
                 .withExternalId("refund1")

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -46,7 +46,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
         accountId = testAccount.getAccountId();
         credentialsId = testAccount.getCredentials().get(0).getId();
     }
-    
+
     @Test
     void existingOneOffCredentialsCanBeReplaced() {
         app.givenSetup()
@@ -173,7 +173,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
     void checkWorldpayCredentials_returns500WhenWorldpayReturnsUnexpectedResponse() {
         app.getWorldpayMockClient().mockCredentialsValidationUnexpectedResponse();
 
-        long accountId = nextLong(2, 10000);
+        long accountId = current().nextLong(2, 10000);
         app.getDatabaseFixtures().aTestAccount().withAccountId(accountId).withPaymentProvider("worldpay").insert();
         app.givenSetup()
                 .body(Map.of(
@@ -189,7 +189,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider, GatewayAccountCredentialState state,
                                                                         GatewayAccountType gatewayAccountType) {
-        long accountId = nextLong(2, 10000);
+        long accountId = current().nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
         LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();
