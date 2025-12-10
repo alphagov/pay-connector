@@ -1,1 +1,0 @@
-OPERATION=DES&PAYID=${payId}&PSPID=${pspId}&PSWD=${password}&USERID=${userId}&SHASIGN=${shaSign}
