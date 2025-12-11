@@ -20,10 +20,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
-import static jakarta.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -676,7 +676,7 @@ public class GatewayAccountCredentialsResourceIT {
             GatewayAccountType gatewayAccountType,
             Map<String, Object> credentials) {
 
-        long accountId = nextLong(2, 10000);
+        long accountId = current().nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
         LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();

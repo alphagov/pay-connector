@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -37,14 +37,14 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 public class ChargesApiResourceAllowWebPaymentsIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
-    
+
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     private DatabaseFixtures.TestAccount testAccount;
     private Long accountId;
     private String chargeId;
     private Long credentialsId;
-    
+
     @BeforeEach
     void setupGateway() {
         testAccount = addGatewayAccountAndCredential("worldpay");
@@ -74,7 +74,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
         if (setAllowGooglePayFlag) {
             allowWebPaymentsOnGatewayAccount("allow_google_pay");
         }
-        
+
         if (setGatewayMerchantId) {
             addGatewayMerchantIdToGatewayAccount();
         }
@@ -104,12 +104,12 @@ public class ChargesApiResourceAllowWebPaymentsIT {
                 .then()
                 .statusCode(HttpStatus.SC_OK);
     }
-    
+
     private void addGatewayMerchantIdToGatewayAccount() throws JsonProcessingException {
         String payload = objectMapper.writeValueAsString(
                 List.of(Map.of("op", "replace",
-                "path", "credentials/gateway_merchant_id",
-                "value", "94b53bf6b12b6c5")));
+                        "path", "credentials/gateway_merchant_id",
+                        "value", "94b53bf6b12b6c5")));
 
         given().port(app.getLocalPort()).contentType(JSON)
                 .body(payload)
@@ -117,7 +117,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
                 .then()
                 .statusCode(HttpStatus.SC_OK);
     }
-    
+
     private String createCharge(int port, String accountId) {
         return given().port(port).contentType(JSON)
                 .contentType(JSON)
@@ -129,7 +129,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
     }
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider) {
-        long accountId = nextLong(2, 10000);
+        long accountId = current().nextLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
         LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();
@@ -142,10 +142,10 @@ public class ChargesApiResourceAllowWebPaymentsIT {
                 .withActiveEndDate(activeEndDate.toInstant(ZoneOffset.UTC))
                 .withState(GatewayAccountCredentialState.ACTIVE)
                 .withCredentials(Map.of(
-                                ONE_OFF_CUSTOMER_INITIATED, Map.of(
-                                        CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
-                                        CREDENTIALS_USERNAME, "a-username",
-                                        CREDENTIALS_PASSWORD, "a-password")))
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "a-merchant-code",
+                                CREDENTIALS_USERNAME, "a-username",
+                                CREDENTIALS_PASSWORD, "a-password")))
                 .build();
 
         return app.getDatabaseFixtures().aTestAccount().withPaymentProvider(paymentProvider)
@@ -157,7 +157,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
 
     static Stream<Arguments> permissions() {
         return Stream.of(
-                Arguments.of(true, false, false ),
+                Arguments.of(true, false, false),
                 Arguments.of(true, true, true),
                 Arguments.of(false, true, false)
         );

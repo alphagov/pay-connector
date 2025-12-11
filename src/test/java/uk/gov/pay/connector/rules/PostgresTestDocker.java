@@ -2,7 +2,7 @@ package uk.gov.pay.connector.rules;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer ;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -16,14 +16,14 @@ public class PostgresTestDocker {
     private static final String DB_NAME = "connector_test";
     private static final String DB_USERNAME = "test";
     private static final String DB_PASSWORD = "test";
-    private static PostgreSQLContainer<?> POSTGRES_CONTAINER;
+    private static PostgreSQLContainer POSTGRES_CONTAINER;
 
     public static void getOrCreate() {
         try {
             if (POSTGRES_CONTAINER == null) {
                 logger.info("Creating Postgres Container");
 
-                POSTGRES_CONTAINER = new PostgreSQLContainer<>("postgres:15.2")
+                POSTGRES_CONTAINER = new PostgreSQLContainer("postgres:15.2")
                         .withUsername(DB_USERNAME)
                         .withPassword(DB_PASSWORD);
 

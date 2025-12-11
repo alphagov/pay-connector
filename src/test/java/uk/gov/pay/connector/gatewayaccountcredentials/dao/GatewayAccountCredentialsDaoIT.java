@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -17,9 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -46,7 +46,7 @@ public class GatewayAccountCredentialsDaoIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private GatewayAccountDao gatewayAccountDao;
 
     @BeforeEach
@@ -57,13 +57,14 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void hasActiveCredentialsShouldReturnTrueIfGatewayAccountHasActiveCredentials() {
-        long gatewayAccountId = nextLong();
+        long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
-        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId)
+                .orElseThrow(() -> new AssertionError("Gateway account not found: " + gatewayAccountId));
         var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of())
                 .withGatewayAccountEntity(gatewayAccountEntity)
@@ -80,7 +81,7 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void hasActiveCredentialsShouldReturnFalseIfGatewayAccountHasNoActiveCredentials() {
-        long gatewayAccountId = nextLong();
+        long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withState(CREATED)
                 .withPaymentProvider("stripe")
@@ -100,14 +101,15 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void findsCredentialByExternalIdAndGatewayAccount() {
-        long gatewayAccountId = nextLong();
+        long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
         String externalCredentialId = randomUuid();
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
                 .withServiceName("a cool service")
                 .build());
-        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId)
+                .orElseThrow(() -> new AssertionError("Gateway account not found: " + gatewayAccountId));
         var gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of())
                 .withGatewayAccountEntity(gatewayAccountEntity)
@@ -126,32 +128,36 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void findByCredentialsKeyValue_shouldFindGatewayAccountCredentialEntity() {
-        long gatewayAccountId = nextLong();
-        Map<String, Object> credMap = Map.of("some_payment_provider_account_id", "accountid");
+        long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
+        Map<String, Object> credMap = Map.of(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, "accountid");
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
-                .withPaymentGateway("test provider")
+                .withPaymentGateway(STRIPE.getName())
                 .withServiceName("service name")
                 .withCredentials(credMap)
                 .build());
 
-        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId).get();
+        var gatewayAccountEntity = gatewayAccountDao.findById(gatewayAccountId)
+                .orElseThrow(() -> new AssertionError("Gateway account not found: " + gatewayAccountId));
         var gatewayAccountCredentialsEntityOne = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider("test provider")
+                .withPaymentProvider(STRIPE.getName())
                 .withCredentials(credMap)
                 .build();
         var gatewayAccountCredentialsEntityTwo = aGatewayAccountCredentialsEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
-                .withPaymentProvider("test provider")
+                .withPaymentProvider(STRIPE.getName())
                 .build();
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntityOne);
         gatewayAccountCredentialsDao.persist(gatewayAccountCredentialsEntityTwo);
 
-        Optional<GatewayAccountCredentialsEntity> maybeGatewayAccountCredentials = gatewayAccountCredentialsDao.findByCredentialsKeyValue("some_payment_provider_account_id", "accountid");
+        Optional<GatewayAccountCredentialsEntity> maybeGatewayAccountCredentials = gatewayAccountCredentialsDao.findByCredentialsKeyValue(StripeCredentials.STRIPE_ACCOUNT_ID_KEY, "accountid");
         assertThat(maybeGatewayAccountCredentials.isPresent(), is(true));
-        Map<String, Object> credentialsMap = maybeGatewayAccountCredentials.get().getCredentials();
-        assertThat(credentialsMap, hasEntry("some_payment_provider_account_id", "accountid"));
+
+        var credentialsObj = maybeGatewayAccountCredentials.get().getCredentialsObject();
+        assertThat(credentialsObj, is(not(nullValue())));
+        assertThat(credentialsObj, is(org.hamcrest.Matchers.instanceOf(StripeCredentials.class)));
+        assertThat(((StripeCredentials) credentialsObj).getStripeAccountId(), is("accountid"));
     }
 
     @Test
@@ -169,14 +175,14 @@ public class GatewayAccountCredentialsDaoIT {
         List<Map<String, Object>> credentialsForAccount = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountEntity.getId());
         assertThat(credentialsForAccount, hasSize(2));
         long credentialsId = (long) credentialsForAccount.get(1).get("id");
-        
+
         List<Map<String, Object>> historyRows = app.getDatabaseTestHelper().getGatewayAccountCredentialsHistory(credentialsId);
         assertThat(historyRows, hasSize(1));
-        assertThat(historyRows.get(0).get("state"), is("ACTIVE"));
-        assertThat(historyRows.get(0).get("history_start_date"), not(nullValue()));
-        assertThat(historyRows.get(0).get("history_end_date"), is(nullValue()));
-        assertEquals(objectMapper.readValue(historyRows.get(0).get("credentials").toString(), Map.class), credentials);
-        
+        assertThat(historyRows.getFirst().get("state"), is("ACTIVE"));
+        assertThat(historyRows.getFirst().get("history_start_date"), not(nullValue()));
+        assertThat(historyRows.getFirst().get("history_end_date"), is(nullValue()));
+        assertEquals(objectMapper.readValue(historyRows.getFirst().get("credentials").toString(), Map.class), credentials);
+
         gatewayAccountCredentialsEntity.setState(RETIRED);
         WorldpayCredentials worldpayCredentials = (WorldpayCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
         worldpayCredentials.getRecurringCustomerInitiatedCredentials().ifPresent(WorldpayMerchantCodeCredentials::redactSensitiveInformation);
@@ -188,10 +194,10 @@ public class GatewayAccountCredentialsDaoIT {
 
         List<Map<String, Object>> historyRowsAfterUpdate = app.getDatabaseTestHelper().getGatewayAccountCredentialsHistory(credentialsId);
         assertThat(historyRowsAfterUpdate, hasSize(2));
-        assertThat(historyRowsAfterUpdate.get(0).get("state"), is("ACTIVE"));
-        assertThat(historyRowsAfterUpdate.get(0).get("history_start_date"), not(nullValue()));
-        assertThat(historyRowsAfterUpdate.get(0).get("history_end_date"), not(nullValue()));
-        assertEquals(objectMapper.readValue(historyRowsAfterUpdate.get(0).get("credentials").toString(), Map.class), credentials);
+        assertThat(historyRowsAfterUpdate.getFirst().get("state"), is("ACTIVE"));
+        assertThat(historyRowsAfterUpdate.getFirst().get("history_start_date"), not(nullValue()));
+        assertThat(historyRowsAfterUpdate.getFirst().get("history_end_date"), not(nullValue()));
+        assertEquals(objectMapper.readValue(historyRowsAfterUpdate.getFirst().get("credentials").toString(), Map.class), credentials);
         assertThat(historyRowsAfterUpdate.get(1).get("state"), is("RETIRED"));
         assertThat(historyRowsAfterUpdate.get(1).get("history_start_date"), not(nullValue()));
         assertThat(historyRowsAfterUpdate.get(1).get("history_end_date"), is(nullValue()));
@@ -217,10 +223,11 @@ public class GatewayAccountCredentialsDaoIT {
     }
 
     private GatewayAccountEntity createAndPersistAGatewayAccount() {
-        long gatewayAccountId = nextLong();
+        long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());
-        return gatewayAccountDao.findById(gatewayAccountId).get();
+        return gatewayAccountDao.findById(gatewayAccountId)
+                .orElseThrow(() -> new AssertionError("Gateway account not found: " + gatewayAccountId));
     }
 }

@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
+import jakarta.inject.Inject;
 import net.logstash.logback.argument.StructuredArgument;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,7 +18,6 @@ import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 
-import jakarta.inject.Inject;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -104,7 +104,7 @@ public class Card3dsResponseAuthService {
         ChargeStatus newStatus = operationResponse.getMappedChargeStatus();
         if (newStatus == AUTHORISATION_3DS_REQUIRED) {
             int numberOf3dsRequiredEventsRecorded = chargeService.count3dsRequiredEvents(chargeExternalId);
-            if (numberOf3dsRequiredEventsRecorded < authorisation3dsConfig.getMaximumNumberOfTimesToAllowUserToAttempt3ds()){
+            if (numberOf3dsRequiredEventsRecorded < authorisation3dsConfig.getMaximumNumberOfTimesToAllowUserToAttempt3ds()) {
                 LOGGER.info("Gateway instructed us to send the user through 3DS again for {} — this will be attempt {} of {}",
                         chargeExternalId, numberOf3dsRequiredEventsRecorded + 1, authorisation3dsConfig.getMaximumNumberOfTimesToAllowUserToAttempt3ds());
             } else {
@@ -133,9 +133,9 @@ public class Card3dsResponseAuthService {
         var worldPay3dsOrFlexLogMessage = integration3dsType(auth3dsResult, updatedCharge);
         var structuredLoggingArguments = updatedCharge.getStructuredLoggingArgs();
         if (worldPay3dsOrFlexLogMessage == WORLDPAY_3DS_CLASSIC) {
-            structuredLoggingArguments = ArrayUtils.addAll(structuredLoggingArguments, new StructuredArgument[] {kv(INTEGRATION_3DS_VERSION, "3DS")});
+            structuredLoggingArguments = ArrayUtils.addAll(structuredLoggingArguments, new StructuredArgument[]{kv(INTEGRATION_3DS_VERSION, "3DS")});
         } else if (worldPay3dsOrFlexLogMessage == WORLDPAY_3DS_FLEX) {
-            structuredLoggingArguments = ArrayUtils.addAll(structuredLoggingArguments, new StructuredArgument[] {kv(INTEGRATION_3DS_VERSION, "3DS Flex")});
+            structuredLoggingArguments = ArrayUtils.addAll(structuredLoggingArguments, new StructuredArgument[]{kv(INTEGRATION_3DS_VERSION, "3DS Flex")});
         }
 
         var logMessage = String.format(Locale.UK, "3DS authentication result%s authorisation for %s (%s %s) for %s (%s) - %s .'. %s -> %s",
@@ -149,7 +149,7 @@ public class Card3dsResponseAuthService {
                 oldChargeStatus,
                 updatedCharge.getStatus());
 
-        LOGGER.info(logMessage, structuredLoggingArguments);
+        LOGGER.info(logMessage, (Object[]) structuredLoggingArguments);
 
         authorisationService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
     }

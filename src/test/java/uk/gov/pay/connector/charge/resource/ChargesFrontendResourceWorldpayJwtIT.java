@@ -11,7 +11,7 @@ import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -37,7 +37,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 "organisational_unit_id", "My Org",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, nextLong(), chargeExternalId, ChargeStatus.CREATED);
+        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, current().nextLong(0, Long.MAX_VALUE), chargeExternalId, ChargeStatus.CREATED);
 
         testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
@@ -50,7 +50,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
     void shouldReturn409WhenCredentialsAreMissingForGatewayAccount() {
         var chargeExternalId = "mySecondChargeId";
         var gatewayAccountId = "202";
-        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, null, nextLong(), chargeExternalId,
+        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, null, current().nextLong(0, Long.MAX_VALUE), chargeExternalId,
                 ChargeStatus.CREATED);
 
         testBaseExtension.getConnectorRestApiClient()
@@ -69,7 +69,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 "organisational_unit_id", "My Org",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        setUpChargeAndAccount(gatewayAccountId, STRIPE, validCredentials, nextLong(), chargeExternalId,
+        setUpChargeAndAccount(gatewayAccountId, STRIPE, validCredentials, current().nextLong(0, Long.MAX_VALUE), chargeExternalId,
                 ChargeStatus.CREATED);
 
         testBaseExtension.getConnectorRestApiClient()
@@ -81,7 +81,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
 
     @Test
     void shouldReturnChallengeJwt() {
-        long chargeId = nextLong();
+        long chargeId = current().nextLong(0, Long.MAX_VALUE);
         var chargeExternalId = "myFirstChargeId";
         var gatewayAccountId = "101";
         var validCredentials = Map.of(
@@ -94,8 +94,8 @@ public class ChargesFrontendResourceWorldpayJwtIT {
 
         app.getDatabaseTestHelper().updateCharge3dsFlexChallengeDetails(chargeId,
                 "http://example.com",
-                "a-transaction-id", 
-                "a-payload", 
+                "a-transaction-id",
+                "a-payload",
                 "2.1.0");
 
         testBaseExtension.getConnectorRestApiClient()
@@ -109,7 +109,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
 
     @Test
     void shouldOmitChallengeJwtWhenChargeNotInAppropriateState() {
-        long chargeId = nextLong();
+        long chargeId = current().nextLong(0, Long.MAX_VALUE);
         var chargeExternalId = "myFirstChargeId";
         var gatewayAccountId = "101";
         var validCredentials = Map.of(

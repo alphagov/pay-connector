@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,10 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.lang.String.format;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -63,7 +63,7 @@ public class GatewayAccountResourceIT {
 
     @Nested
     class GetByServiceIdAndAccountType {
-        
+
         @Test
         void shouldReturnConflictWhenTryingToAddMultipleLiveGatewayAccounts() {
             String serviceId = randomUuid();
@@ -83,7 +83,7 @@ public class GatewayAccountResourceIT {
                     .then()
                     .statusCode(CONFLICT.getStatusCode());
         }
-        
+
         @Test
         void shouldReturnConflictWhenThereAreMultipleLiveGatewayAccounts() {
             String serviceId = randomUuid();
@@ -94,21 +94,21 @@ public class GatewayAccountResourceIT {
                                     "service_name", "Service Name",
                                     "type", "live")))
                     .post("/v1/api/accounts/");
-            
+
             //add another live gateway account directly into the database as it's not possible to add another via API 
             app.getDatabaseTestHelper().addGatewayAccount(
                     anAddGatewayAccountParams()
                             .withPaymentGateway("worldpay")
                             .withServiceId(serviceId)
-                            .withAccountId(String.valueOf(RandomUtils.nextInt()))
+                            .withAccountId(String.valueOf(current().nextInt(0, Integer.MAX_VALUE)))
                             .withServiceName("Service Name")
                             .withType(LIVE)
                             .build());
-            
+
             app.givenSetup().get(format("/v1/api/service/%s/account/live", serviceId))
                     .then().statusCode(CONFLICT.getStatusCode());
         }
-        
+
         @Test
         void shouldReturnStripeGatewayAccountWhenThereAreMultipleGatewayAccounts() {
             String serviceId = randomUuid();
@@ -167,7 +167,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnWorldpayAccountInformation() {
-            long accountId = RandomUtils.nextInt();
+            long accountId = current().nextInt(0, Integer.MAX_VALUE);
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(WORLDPAY.getName())
                     .withGatewayAccountId(accountId)
@@ -280,7 +280,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnStripeAccountInformation() {
-            long accountId = RandomUtils.nextInt();
+            long accountId = current().nextInt(0, Integer.MAX_VALUE);
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(STRIPE.getName())
                     .withGatewayAccountId(accountId)
@@ -387,7 +387,7 @@ public class GatewayAccountResourceIT {
                     aCreateGatewayAccountPayloadBuilder()
                             .withDescription("desc")
                             .withAnalyticsId("id")
-                                    .build());
+                            .build());
             app.givenSetup()
                     .get(ACCOUNTS_API_URL + gatewayAccountId)
                     .then()
@@ -416,7 +416,7 @@ public class GatewayAccountResourceIT {
                     aCreateGatewayAccountPayloadBuilder()
                             .withDescription("desc")
                             .build());
-            
+
             app.givenSetup()
                     .get(ACCOUNTS_API_URL + gatewayAccountId)
                     .then()
@@ -478,7 +478,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnAccountInformationForGetAccountById_withWorldpayCredentials() {
-            long accountId = RandomUtils.nextInt();
+            long accountId = current().nextInt(0, Integer.MAX_VALUE);
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(WORLDPAY.getName())
                     .withGatewayAccountId(accountId)
@@ -582,7 +582,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnAccountInformationForGetAccountById_withStripeCredentials() {
-            long accountId = RandomUtils.nextInt();
+            long accountId = current().nextInt(0, Integer.MAX_VALUE);
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(STRIPE.getName())
                     .withGatewayAccountId(accountId)
@@ -614,7 +614,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnAccountInformationForGetAccountById_withEpdqCredentials() {
-            long accountId = RandomUtils.nextInt();
+            long accountId = current().nextInt(0, Integer.MAX_VALUE);
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(EPDQ.getName())
                     .withGatewayAccountId(accountId)
@@ -679,7 +679,7 @@ public class GatewayAccountResourceIT {
                 aCreateGatewayAccountPayloadBuilder()
                         .withProvider("worldpay")
                         .build());
-        
+
         app.getDatabaseTestHelper().insertWorldpay3dsFlexCredential(
                 Long.valueOf(gatewayAccountId2),
                 "macKey",
@@ -706,7 +706,7 @@ public class GatewayAccountResourceIT {
 
     @Test
     public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInOneOffPaymentCredentials() {
-        long accountId = RandomUtils.nextInt();
+        long accountId = current().nextInt(0, Integer.MAX_VALUE);
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
                 .withGatewayAccountId(accountId)
@@ -739,7 +739,7 @@ public class GatewayAccountResourceIT {
 
     @Test
     public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
-        long accountId = RandomUtils.nextInt();
+        long accountId = current().nextInt(0, Integer.MAX_VALUE);
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
                 .withGatewayAccountId(accountId)
@@ -769,7 +769,7 @@ public class GatewayAccountResourceIT {
                 .body("accounts[0].gateway_account_id", is(accountIdAsInt))
                 .body("accounts[0].payment_provider", is("worldpay"));
     }
-    
+
     @Test
     public void shouldSetApplePayEnabledByDefaultForSandboxAccount() {
         String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().withProvider("sandbox").build());
@@ -808,7 +808,7 @@ public class GatewayAccountResourceIT {
         String serviceId = "aValidServiceId";
         String anotherServiceId = "anotherServiceId";
         String nonExistentServiceId = "nonExistentServiceId";
-        
+
         String gatewayAccountId1 = testHelpers.createGatewayAccount(
                 aCreateGatewayAccountPayloadBuilder()
                         .withServiceId(serviceId)
@@ -817,7 +817,7 @@ public class GatewayAccountResourceIT {
                 aCreateGatewayAccountPayloadBuilder()
                         .withServiceId(anotherServiceId)
                         .build());
-        
+
         app.givenSetup().accept(JSON)
                 .get(format("/v1/api/accounts?serviceIds=%s,%s", nonExistentServiceId, serviceId))
                 .then()
@@ -1025,7 +1025,7 @@ public class GatewayAccountResourceIT {
                 .body("code", Is.is(404))
                 .body("message", Is.is("HTTP 404 Not Found"));
     }
-    
+
     @Nested
     class Update3dsToggleByServiceIdAndAccountType {
 
@@ -1042,7 +1042,7 @@ public class GatewayAccountResourceIT {
 
             app.givenSetup().body(toJson(gatewayAccountRequest)).post(ACCOUNTS_API_URL);
         }
-        
+
         @Test
         void update3dsToggleSuccessfully() {
             app.givenSetup()
@@ -1062,7 +1062,7 @@ public class GatewayAccountResourceIT {
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("requires3ds", is(true));
-            
+
             app.givenSetup()
                     .body(toJson(Map.of("toggle_3ds", false)))
                     .patch(format("/v1/frontend/service/%s/account/test/3ds-toggle", serviceId))
@@ -1075,7 +1075,7 @@ public class GatewayAccountResourceIT {
                     .statusCode(OK.getStatusCode())
                     .body("requires3ds", is(false));
         }
-        
+
         @Test
         void setting3dsToggleToFalse_WhenA3dsCardTypeIsAccepted_returnsConflict() {
             app.givenSetup()
@@ -1099,10 +1099,11 @@ public class GatewayAccountResourceIT {
                     .statusCode(CONFLICT.getStatusCode());
         }
     }
-    
+
     @Nested
     class Update3dsToggleByGatewayAccountId {
         String gatewayAccountId;
+
         @BeforeEach
         void createGatewayAccount() {
             gatewayAccountId = testHelpers.createGatewayAccount(
@@ -1110,7 +1111,7 @@ public class GatewayAccountResourceIT {
                             .withProvider("worldpay")
                             .build());
         }
-        
+
         @Test
         void shouldToggle3dsToTrue() {
             app.givenSetup()
@@ -1162,7 +1163,7 @@ public class GatewayAccountResourceIT {
                     .statusCode(CONFLICT.getStatusCode());
         }
     }
-    
+
     @Test
     void shouldReturn3dsFlexCredentials_whenGatewayAccountHasCreds() {
         String gatewayAccountId = testHelpers.createGatewayAccount(
