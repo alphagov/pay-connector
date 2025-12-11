@@ -977,3 +977,4 @@ public class ContractTest {
         dbHelper.addFee(randomAlphaNumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphaNumeric(10), FeeType.TRANSACTION);
     }
 }
+

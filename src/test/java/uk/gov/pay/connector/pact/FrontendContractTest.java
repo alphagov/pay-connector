@@ -52,14 +52,14 @@ public class FrontendContractTest {
 
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(app.getWireMockPort());
-    
+
     @TestTarget
     public static Target target;
     private static DatabaseTestHelper dbHelper;
-    
+
     private StripeMockClient stripeMockClient;
     private WorldpayMockClient worldpayMockClient;
-    
+
     @BeforeClass
     public static void setUp() {
         target = new HttpTarget(app.getLocalPort());
@@ -72,7 +72,7 @@ public class FrontendContractTest {
         stripeMockClient = new StripeMockClient(wireMockRule);
         worldpayMockClient = new WorldpayMockClient(wireMockRule);
     }
-    
+
     @State("an unused token testToken exists with external charge id chargeExternalId associated with it")
     public void anUnusedTokenExists() {
         long gatewayAccountId = 666L;
@@ -83,15 +83,15 @@ public class FrontendContractTest {
                 .withGatewayAccountId(String.valueOf(gatewayAccountId))
                 .build();
         dbHelper.addCharge(params);
-        
+
         dbHelper.addToken(params.chargeId(), "testToken", false);
     }
-    
+
     @State("a sandbox account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
     public void aChargeExistsAwaitingAuthorisation() {
         long gatewayAccountId = 666L;
         setUpGatewayAccount(dbHelper, gatewayAccountId);
-        
+
         String chargeExternalId = "testChargeId";
 
         dbHelper.addCharge(anAddChargeParams()
@@ -130,7 +130,7 @@ public class FrontendContractTest {
                 .withDelayedCapture(false)
                 .build());
     }
-    
+
     @State("a sandbox account exists with a charge with id testChargeId and description ERROR that is in state ENTERING_CARD_DETAILS.")
     public void aChargeExistsAwaitingAuthorisationWithDescriptionError() {
         long gatewayAccountId = 666L;
@@ -205,7 +205,7 @@ public class FrontendContractTest {
                 "a-payload",
                 "2.1.0");
     }
-    
+
     @State("a Worldpay account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
     public void aWorldpayChargeExistsAwaitingAuthorisation() {
         worldpayMockClient.mockAuthorisationSuccess();
@@ -214,7 +214,7 @@ public class FrontendContractTest {
         createGatewayAccount(gatewayAccountId, gatewayCredentialId, PaymentGatewayName.WORLDPAY);
         createChargeEnteringCardDetails("testChargeId", gatewayAccountId, gatewayCredentialId, PaymentGatewayName.WORLDPAY);
     }
-    
+
     @State("a Stripe account exists with a charge with id testChargeId that is in state ENTERING_CARD_DETAILS.")
     public void aStripeChargeExistsAwaitingAuthorisation() {
         stripeMockClient.mockCreatePaymentIntent();
@@ -223,19 +223,19 @@ public class FrontendContractTest {
         createGatewayAccount(gatewayAccountId, gatewayCredentialId, PaymentGatewayName.STRIPE);
         createChargeEnteringCardDetails("testChargeId", gatewayAccountId, gatewayCredentialId, PaymentGatewayName.STRIPE);
     }
-    
+
     private void createGatewayAccount(Long gatewayAccountId, int gatewayCredentialId, PaymentGatewayName paymentProvider) {
         Map<String, Object> credentials;
-        switch(paymentProvider) {
-            case WORLDPAY: 
+        switch (paymentProvider) {
+            case WORLDPAY:
                 credentials = Map.of(
-                    ONE_OFF_CUSTOMER_INITIATED, Map.of(
-                            CREDENTIALS_MERCHANT_CODE, "merchant-id",
-                            CREDENTIALS_USERNAME, "test-user",
-                            CREDENTIALS_PASSWORD, "test-password")
+                        ONE_OFF_CUSTOMER_INITIATED, Map.of(
+                                CREDENTIALS_MERCHANT_CODE, "merchant-id",
+                                CREDENTIALS_USERNAME, "test-user",
+                                CREDENTIALS_PASSWORD, "test-password")
                 );
                 break;
-            case STRIPE: 
+            case STRIPE:
                 credentials = Map.of("stripe_account_id", RandomUtils.nextInt());
                 break;
             default:
@@ -243,7 +243,7 @@ public class FrontendContractTest {
         }
         createGatewayAccount(gatewayAccountId, gatewayCredentialId, paymentProvider, credentials);
     }
-    
+
     private void createGatewayAccount(Long gatewayAccountId, int gatewayCredentialId, PaymentGatewayName paymentProvider, Map<String, Object> credentials) {
         AddGatewayAccountCredentialsParams accountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withId(gatewayCredentialId)
@@ -264,7 +264,7 @@ public class FrontendContractTest {
                 .withCardTypeEntities(List.of(visaCreditCard))
                 .insert();
     }
-     
+
     private void createChargeEnteringCardDetails(String externalChargeId, Long gatewayAccountId, int gatewayCredentialId, PaymentGatewayName paymentProvider) {
         dbHelper.addCharge(anAddChargeParams()
                 .withExternalChargeId(externalChargeId)
@@ -275,5 +275,5 @@ public class FrontendContractTest {
                 .withGatewayCredentialId(Long.valueOf(gatewayCredentialId))
                 .build());
     }
-    
+
 }
