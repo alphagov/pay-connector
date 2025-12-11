@@ -14,6 +14,7 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.RuntimeDelegate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -814,7 +815,7 @@ class WorldpayAuthoriseHandlerTest {
         var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
 
         GatewayResponse response = handlerWithRealJerseyClient.authorise(getCardAuthorisationRequest(chargeEntityFixture.build()), DO_NOT_SEND_EXEMPTION_REQUEST);
-        assertTrue(response.isSuccessful());
+        assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
     }
 
@@ -987,7 +988,7 @@ class WorldpayAuthoriseHandlerTest {
         when(mockBuilder.header(anyString(), anyString())).thenReturn(mockBuilder);
 
         Map<String, NewCookie> responseCookies =
-                Collections.singletonMap(WORLDPAY_MACHINE_COOKIE_NAME, NewCookie.valueOf("value-from-worldpay"));
+                Collections.singletonMap(WORLDPAY_MACHINE_COOKIE_NAME, RuntimeDelegate.getInstance().createHeaderDelegate(NewCookie.class).fromString("value-from-worldpay"));
 
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);

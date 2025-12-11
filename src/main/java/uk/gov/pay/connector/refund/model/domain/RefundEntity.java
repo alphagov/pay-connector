@@ -1,13 +1,6 @@
 package uk.gov.pay.connector.refund.model.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.eclipse.persistence.annotations.Customizer;
-import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
-import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
-import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
-import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
-import uk.gov.pay.connector.util.RandomIdGenerator;
-
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
@@ -23,14 +16,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
+import org.eclipse.persistence.annotations.Customizer;
+import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
+import uk.gov.pay.connector.common.model.domain.UTCDateTimeConverter;
+import uk.gov.pay.connector.util.RandomIdGenerator;
+
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
+import static com.google.common.base.Ascii.equalsIgnoreCase;
 import static java.time.temporal.ChronoUnit.MICROS;
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 @SqlResultSetMapping(
@@ -43,7 +42,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
                         @ColumnResult(name = "amount", type = Long.class),
                         @ColumnResult(name = "status", type = String.class),
                         @ColumnResult(name = "created_date", type = Timestamp.class),
-                        @ColumnResult(name = "version", type=Long.class),
+                        @ColumnResult(name = "version", type = Long.class),
                         @ColumnResult(name = "history_start_date", type = Timestamp.class),
                         @ColumnResult(name = "history_end_date", type = Timestamp.class),
                         @ColumnResult(name = "user_external_id", type = String.class),
@@ -60,7 +59,7 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Id
     @SequenceGenerator(name = "refundsSequence", sequenceName = "refunds_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="refundsSequence")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "refundsSequence")
     @JsonIgnore
     private Long id;
 
@@ -73,7 +72,7 @@ public class RefundEntity extends AbstractVersionedEntity {
 
     @Column(name = "user_external_id")
     private String userExternalId;
-    
+
     @Column(name = "user_email")
     private String userEmail;
 
@@ -111,8 +110,8 @@ public class RefundEntity extends AbstractVersionedEntity {
     public String getExternalId() {
         return externalId;
     }
-    
-    public String getGatewayTransactionId() { 
+
+    public String getGatewayTransactionId() {
         return gatewayTransactionId;
     }
 
@@ -143,8 +142,8 @@ public class RefundEntity extends AbstractVersionedEntity {
     public void setExternalId(String externalId) {
         this.externalId = externalId;
     }
-    
-    public void setGatewayTransactionId(String gatewayTransactionId) { 
+
+    public void setGatewayTransactionId(String gatewayTransactionId) {
         this.gatewayTransactionId = gatewayTransactionId;
     }
 

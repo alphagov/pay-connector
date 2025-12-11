@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -11,6 +10,7 @@ import java.util.List;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -41,7 +41,7 @@ public class GatewayCleanupResourceIT {
         // add a non-Worldpay charge that shouldn't be picked up
         var sandboxAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
-                .withAccountId(RandomUtils.nextLong())
+                .withAccountId(current().nextLong(0, Long.MAX_VALUE))
                 .withPaymentProvider(SANDBOX.getName())
                 .insert();
 
@@ -67,7 +67,7 @@ public class GatewayCleanupResourceIT {
         String chargeStatus2 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId2);
         String chargeStatus3 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId3);
         String chargeStatus4 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId4);
-        
+
         assertThat(chargeStatus1, is(AUTHORISATION_REJECTED.getValue()));
         assertThat(chargeStatus2, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
         assertThat(chargeStatus3, is(AUTHORISATION_ERROR_CANCELLED.getValue()));

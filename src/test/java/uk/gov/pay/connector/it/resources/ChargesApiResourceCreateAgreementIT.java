@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_CREATED;
@@ -72,7 +72,7 @@ public class ChargesApiResourceCreateAgreementIT {
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
-    
+
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
@@ -83,7 +83,7 @@ public class ChargesApiResourceCreateAgreementIT {
     private static final String JSON_TOO_LONG_AGREEMENT_ID_VALUE = "123456789012345678901234567890";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
     private static final String JSON_AGREEMENT_PAYMENT_TYPE = "agreement_payment_type";
-    
+
     @BeforeEach
     void setUpLogger() {
         Logger root = (Logger) LoggerFactory.getLogger(TaskQueue.class);
@@ -158,7 +158,7 @@ public class ChargesApiResourceCreateAgreementIT {
     @Test
     void shouldCreatePaymentWithAgreementIdAndAuthorisationModeAgreementAndNoExplicitAgreementPaymentType() {
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
@@ -205,7 +205,7 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldCreatePaymentWithAgreementIdAndAuthorisationModeAgreementAndExplicitAgreementPaymentType(
             String requestAgreementPaymentType, AgreementPaymentType expectedAgreementPaymentType) {
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
@@ -259,7 +259,7 @@ public class ChargesApiResourceCreateAgreementIT {
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
-    
+
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -304,27 +304,27 @@ public class ChargesApiResourceCreateAgreementIT {
                 .body("message", contains("Unexpected attribute: agreement_payment_type"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
     }
-    
+
     @ParameterizedTest
     @EnumSource(AgreementPaymentType.class)
     void shouldReturn422WhenAgreementPaymentTypeUsedWithoutAuthorisationModeAgreement(AgreementPaymentType agreementPaymentType) {
         String requestAgreementPaymentType = agreementPaymentType.getName();
 
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
-        Long paymentInstrumentId = RandomUtils.nextLong();
-    
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
+
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE).build();
         app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
-    
+
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(testBaseExtension.getAccountId())
                 .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .build();
         app.getDatabaseTestHelper().addAgreement(agreementParams);
-    
+
         String postBody = toJson(Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -346,7 +346,7 @@ public class ChargesApiResourceCreateAgreementIT {
         String idempotencyKey = "an-idempotency-key";
 
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
@@ -391,7 +391,7 @@ public class ChargesApiResourceCreateAgreementIT {
         String idempotencyKey = "an-idempotency-key";
 
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
@@ -441,7 +441,7 @@ public class ChargesApiResourceCreateAgreementIT {
         String idempotencyKey = "an-idempotency-key";
 
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = current().nextLong(0, Long.MAX_VALUE);
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
@@ -457,7 +457,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         String existingChargeExternalId = testBaseExtension.addCharge(
                 anAddChargeParameters().withChargeStatus(CREATED).build());
-        
+
         Map<String, Object> previousRequestBodyMap = Map.of(
                 JSON_AMOUNT_KEY, AMOUNT,
                 JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
@@ -485,7 +485,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn400WhenSavePaymentInstrumentToAgreementIsTrueButNoAgreementId() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -512,7 +512,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn400WhenSavePaymentInstrumentToAgreementTrueAndAgreementNotFound() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -538,7 +538,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAuthorisationModeAgreementButNoAgreementId() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -563,7 +563,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAuthorisationModeAgreementAndReturnUrlProvided() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
@@ -589,7 +589,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAuthorisationModeAgreementAndMotoTrue() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
@@ -617,7 +617,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAuthorisationModeAgreementAndEmailProvided() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
@@ -644,7 +644,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAuthorisationModeAgreementAndPrefilledCardholderDetailsProvided() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("sandbox")
                 .withAccountId(accountId)
@@ -671,7 +671,7 @@ public class ChargesApiResourceCreateAgreementIT {
         ));
 
         testBaseExtension.getConnectorRestApiClient()
-                .postCreateCharge(postBody,accountId)
+                .postCreateCharge(postBody, accountId)
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: prefilled_cardholder_details"))
@@ -680,7 +680,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn400WhenAuthorisationModeIsAgreementAndAgreementNotFound() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -705,7 +705,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn400WhenAuthorisationModeIsAgreementAndPaymentInstrumentNotFound() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -736,7 +736,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn400WhenAuthorisationModeIsAgreementAndPaymentInstrumentIsNotActive() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -777,7 +777,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAuthorisationModeMotoApiAndAgreementId() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -807,7 +807,7 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldReturn422WhenAuthorisationModeMotoApiAndAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
         String requestAgreementPaymentType = agreementPaymentType.getName();
 
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -834,7 +834,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn400WhenSavePaymentInstrumentToAgreementTrueAuthorisationModeAgreementAndAgreementId() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -861,7 +861,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAgreementIdIsProvidedButNotSavePaymentInstrumentToAgreementNorAuthorisationModeAgreement() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -889,8 +889,8 @@ public class ChargesApiResourceCreateAgreementIT {
     void shouldReturn422WhenAgreementIdAndAgreementPaymentTypeIsProvidedButNotSavePaymentInstrumentToAgreementNorAuthorisationModeAgreement(
             AgreementPaymentType agreementPaymentType) {
         String requestAgreementPaymentType = agreementPaymentType.getName();
-        
-        String accountId = String.valueOf(RandomUtils.nextInt());
+
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -916,7 +916,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAgreementIdIsProvidedButSavePaymentInstrumentToAgreementFalse() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -942,7 +942,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAgreementIdExceeds26Characters() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)
@@ -972,7 +972,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
     @Test
     void shouldReturn422WhenAgreementIdFewerThan26Characters() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(current().nextInt(0, Integer.MAX_VALUE));
         AddGatewayAccountParams gatewayAccountParams = anAddGatewayAccountParams()
                 .withPaymentGateway("worldpay")
                 .withAccountId(accountId)

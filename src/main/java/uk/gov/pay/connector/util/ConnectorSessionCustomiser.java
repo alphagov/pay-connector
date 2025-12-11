@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.util;
 
-import org.eclipse.persistence.config.SessionCustomizer;
 import org.eclipse.persistence.sessions.DatabaseLogin;
 import org.eclipse.persistence.sessions.Session;
+import org.eclipse.persistence.sessions.SessionCustomizer;
 
 public class ConnectorSessionCustomiser implements SessionCustomizer {
 

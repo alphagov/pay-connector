@@ -12,7 +12,7 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang3.RandomUtils.nextInt;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
@@ -29,7 +29,7 @@ class QueryAndUpdatePaymentInSubmittedStateTaskHandlerIT {
 
     @Test
     void shouldQueryAndUpdateChargeInSubmittedStateToCaptured() {
-        long chargeId = nextInt();
+        long chargeId = current().nextInt(0, Integer.MAX_VALUE);
         String chargeExternalId = RandomIdGenerator.newId();
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
 

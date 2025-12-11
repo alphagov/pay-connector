@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -20,15 +19,13 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.ZonedDateTime.parse;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
@@ -40,6 +37,7 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userEmail;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternalId;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.RandomAlphaNumericString.randomAlphaNumeric;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.service.payments.commons.model.SupportedLanguage.ENGLISH;
 
@@ -64,13 +62,13 @@ public class ExpungeResourceIT {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withAccountId(nextLong())
+                .withAccountId(current().nextLong(0, Long.MAX_VALUE))
                 .insert();
     }
 
     @Test
     void shouldExpungeCharge() throws JsonProcessingException {
-        var chargedId = ThreadLocalRandom.current().nextLong();
+        var chargedId = current().nextLong(0, Long.MAX_VALUE);
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -110,7 +108,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldUpdateTheParityCheckedDateOfNonCriteriaMatchedCharge() throws JsonProcessingException {
-        var chargedId = ThreadLocalRandom.current().nextLong();
+        var chargedId = current().nextLong(0, Long.MAX_VALUE);
         var date = parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))).toInstant();
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -136,7 +134,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldNotExpungeChargeThatIsNotOldEnoughToBeExpunged() throws JsonProcessingException {
-        var chargedId = ThreadLocalRandom.current().nextLong();
+        var chargedId = current().nextLong(0, Long.MAX_VALUE);
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -168,7 +166,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldExpungeChargesMeetingCriteriaButNotThoseThatDont() throws JsonProcessingException {
-        var chargedId = ThreadLocalRandom.current().nextLong();
+        var chargedId = current().nextLong(0, Long.MAX_VALUE);
 
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -189,7 +187,7 @@ public class ExpungeResourceIT {
         insertChargeEvent(expungeableCharge1);
         app.getLedgerStub().returnLedgerTransaction("external_charge_id_10", expungeableCharge1, null);
 
-        var chargedId2 = ThreadLocalRandom.current().nextLong();
+        var chargedId2 = current().nextLong(0, Long.MAX_VALUE);
 
         var nonExpungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -210,7 +208,7 @@ public class ExpungeResourceIT {
         insertChargeEvent(nonExpungeableCharge1);
         app.getLedgerStub().returnLedgerTransaction("external_charge_id_11", nonExpungeableCharge1, null);
 
-        var chargedId3 = ThreadLocalRandom.current().nextLong();
+        var chargedId3 = current().nextLong(0, Long.MAX_VALUE);
 
         var expungeableCharge2 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -231,7 +229,7 @@ public class ExpungeResourceIT {
         insertChargeEvent(expungeableCharge2);
         app.getLedgerStub().returnLedgerTransaction("external_charge_id_12", expungeableCharge2, null);
 
-        var chargedId4 = ThreadLocalRandom.current().nextLong();
+        var chargedId4 = current().nextLong(0, Long.MAX_VALUE);
 
         var nonExpungeableCharge2 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -270,7 +268,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldExpungeAuxiliaryTables_whenTheyExistAndReferenceAChargeForExpunging() throws JsonProcessingException {
-        var chargedId = ThreadLocalRandom.current().nextLong();
+        var chargedId = current().nextLong(0, Long.MAX_VALUE);
 
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -301,7 +299,7 @@ public class ExpungeResourceIT {
         emittedEventDao.persist(anEmittedEventEntity()
                 .withResourceExternalId(expungeableCharge1.getExternalChargeId())
                 .withResourceType("payment")
-                .withId(RandomUtils.nextLong())
+                .withId(current().nextLong(0, Long.MAX_VALUE))
                 .build());
 
         app.getLedgerStub().returnLedgerTransaction("external_charge_id", expungeableCharge1, testFee);
@@ -325,7 +323,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldExpungeRefundEligibleAndRelatedRecords() throws JsonProcessingException {
-        String chargeExternalId = randomAlphanumeric(26);
+        String chargeExternalId = randomAlphaNumeric(26);
         RefundEntity refundToBeExpunged1 = createAndStubRefund(chargeExternalId, 91, REFUNDED, true);
         RefundEntity refundToBeExpunged2 = createAndStubRefund(chargeExternalId, 91, REFUND_SUBMITTED, true);
 
@@ -348,14 +346,14 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldNotExpungeRefundsNotMeetingCriteria() throws JsonProcessingException {
-        String chargeExternalId = randomAlphanumeric(26);
-        RefundEntity nonExpungeableRefund1 = createAndStubRefund(randomAlphanumeric(26), 1, REFUNDED, true);
-        RefundEntity nonExpungeableRefund2 = createAndStubRefund(randomAlphanumeric(26), 1, REFUND_SUBMITTED, true);
+        String chargeExternalId = randomAlphaNumeric(26);
+        RefundEntity nonExpungeableRefund1 = createAndStubRefund(randomAlphaNumeric(26), 1, REFUNDED, true);
+        RefundEntity nonExpungeableRefund2 = createAndStubRefund(randomAlphaNumeric(26), 1, REFUND_SUBMITTED, true);
         RefundEntity parityCheckFailedRefund = createAndStubRefund(chargeExternalId, 91, REFUNDED, false);
 
         var chargeToStub = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
-                .withChargeId(ThreadLocalRandom.current().nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withTestAccount(defaultTestAccount);
         app.getLedgerStub().returnLedgerTransaction(chargeExternalId, chargeToStub, null);
         var containsEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(parityCheckFailedRefund.getExternalId());
@@ -386,7 +384,7 @@ public class ExpungeResourceIT {
     private RefundEntity createAndStubRefund(String chargeExternalId, int createdBeforeDays, RefundStatus refundStatus,
                                              boolean stubForMatchingLedgerTransaction) throws JsonProcessingException {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeExternalId);
-        refundEntity.setGatewayTransactionId(randomAlphanumeric(20));
+        refundEntity.setGatewayTransactionId(randomAlphaNumeric(20));
         refundEntity.setStatus(RefundStatus.CREATED);
         refundEntity.setCreatedDate(now(UTC).minusDays(createdBeforeDays));
         refundDao.persist(refundEntity);

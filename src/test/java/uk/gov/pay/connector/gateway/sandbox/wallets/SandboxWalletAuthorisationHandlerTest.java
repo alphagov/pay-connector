@@ -49,8 +49,8 @@ class SandboxWalletAuthorisationHandlerTest {
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseApplePay(
                 new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().withDescription("whatever").build(), applePayAuthRequest));
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -77,8 +77,8 @@ class SandboxWalletAuthorisationHandlerTest {
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseApplePay(
                 new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().withDescription(magicValue.name()).build(), applePayAuthRequest));
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -104,8 +104,8 @@ class SandboxWalletAuthorisationHandlerTest {
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseApplePay(
                 new ApplePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().withDescription(SandboxWalletMagicValues.ERROR.name()).build(), applePayAuthRequest));
 
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
 
@@ -126,8 +126,8 @@ class SandboxWalletAuthorisationHandlerTest {
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseGooglePay(
                 new GooglePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().withDescription("whatever").build(), googlePayAuthRequest));
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -154,8 +154,8 @@ class SandboxWalletAuthorisationHandlerTest {
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseGooglePay(
                 new GooglePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().withDescription(magicValue.name()).build(), googlePayAuthRequest));
 
-        assertThat(gatewayResponse.isSuccessful(), is(true));
-        assertThat(gatewayResponse.isFailed(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get() instanceof BaseAuthoriseResponse, is(true));
@@ -181,8 +181,8 @@ class SandboxWalletAuthorisationHandlerTest {
         GatewayResponse gatewayResponse = sandboxWalletAuthorisationHandler.authoriseGooglePay(
                 new GooglePayAuthorisationGatewayRequest(ChargeEntityFixture.aValidChargeEntity().withDescription(SandboxWalletMagicValues.ERROR.name()).build(), googlePayAuthRequest));
 
-        assertThat(gatewayResponse.isSuccessful(), is(false));
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
 

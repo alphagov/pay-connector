@@ -27,7 +27,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.serverError;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -96,7 +96,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             @Test
             void forAccountSwitchingToWorldpay_withValidCredentials_shouldReturn200_withResultValid() throws Exception {
-                var anAccountId = nextLong(2, 10000);
+                var anAccountId = current().nextLong(2, 10000);
                 var credentials = List.of(
                         createGatewayAccountCredentialsParams(anAccountId, "stripe", ACTIVE),
                         createGatewayAccountCredentialsParams(anAccountId, "worldpay", CREATED)
@@ -151,7 +151,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             @Test
             void forAccountSwitchingToWorldpay_shouldSet3dsFlexCredentials_andReturn200() throws Exception {
-                var anAccountId = nextLong(2, 10000);
+                var anAccountId = current().nextLong(2, 10000);
                 var credentials = List.of(
                         createGatewayAccountCredentialsParams(anAccountId, "stripe", ACTIVE),
                         createGatewayAccountCredentialsParams(anAccountId, "worldpay", CREATED)
@@ -319,7 +319,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
             @Test
             void forAccountSwitchingToWorldpay_shouldReturn200_andUpdateCredentials() {
-                var anAccountId = nextLong(2, 10000);
+                var anAccountId = current().nextLong(2, 10000);
                 var anAccount = addGatewayAccountAndCredential(anAccountId, LIVE, SERVICE_ID, List.of(
                         createGatewayAccountCredentialsParams(anAccountId, "stripe", ACTIVE),
                         createGatewayAccountCredentialsParams(anAccountId, "worldpay", CREATED)
@@ -493,7 +493,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider, GatewayAccountCredentialState state,
                                                                         GatewayAccountType gatewayAccountType, String serviceId) {
-        long accountId = nextLong(2, 10000);
+        long accountId = current().nextLong(2, 10000);
         return addGatewayAccountAndCredential(accountId,
                 gatewayAccountType,
                 serviceId,

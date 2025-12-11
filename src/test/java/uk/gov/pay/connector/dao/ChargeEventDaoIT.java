@@ -22,8 +22,8 @@ import java.util.List;
 
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.ThreadLocalRandom.current;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -60,7 +60,7 @@ public class ChargeEventDaoIT {
         Long chargeId = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withTransactionId(TRANSACTION_ID)
                 .insert()
@@ -98,7 +98,7 @@ public class ChargeEventDaoIT {
         Long chargeId = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(current().nextLong(0, Long.MAX_VALUE))
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withTransactionId(TRANSACTION_ID)
                 .withDelayedCapture(true)
@@ -186,7 +186,7 @@ public class ChargeEventDaoIT {
 
             @Override
             public void describeTo(Description description) {
-                description.appendText(String.format("does not contain [%s]", expectedStatuses));
+                description.appendText(String.format("does not contain [%s]", (Object) expectedStatuses));
             }
         };
     }
