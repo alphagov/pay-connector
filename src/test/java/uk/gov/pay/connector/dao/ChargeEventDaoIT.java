@@ -186,7 +186,7 @@ public class ChargeEventDaoIT {
 
             @Override
             public void describeTo(Description description) {
-                description.appendText(String.format("does not contain [%s]", (Object) expectedStatuses));
+                description.appendText(String.format("does not contain [%s]", asList(expectedStatuses)));
             }
         };
     }
