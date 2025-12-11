@@ -149,7 +149,7 @@ public class Card3dsResponseAuthService {
                 oldChargeStatus,
                 updatedCharge.getStatus());
 
-        LOGGER.info(logMessage, (Object[]) structuredLoggingArguments);
+        LOGGER.info(logMessage, structuredLoggingArguments);
 
         authorisationService.emitAuthorisationMetric(updatedCharge, "authorise-3ds");
     }
