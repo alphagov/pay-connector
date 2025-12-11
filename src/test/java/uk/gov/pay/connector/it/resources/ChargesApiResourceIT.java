@@ -857,7 +857,6 @@ public class ChargesApiResourceIT {
                     .contentType(JSON)
                     .body(JSON_MESSAGE_KEY, contains(format("Charge with id [%s] not found.", testChargeId)))
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
-            ;
         }
 
         @Test
