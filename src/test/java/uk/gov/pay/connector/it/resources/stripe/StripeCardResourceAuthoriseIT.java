@@ -381,7 +381,6 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.card_type", is("debit"))
                 .body("card_details.card_brand", is("Visa"))
                 .body("card_details.expiry_date", is("08/24"));
-        ;
     }
 
     @Test
