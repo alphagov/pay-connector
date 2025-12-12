@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 import static uk.gov.service.payments.logging.LoggingKeys.MDC_REQUEST_ID_KEY;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
