@@ -126,7 +126,7 @@ public class StripeAuthoriseHandlerTest {
             GatewayResponse<BaseAuthoriseResponse> response = handler.authorise(buildTestAuthorisationRequest(charge));
             
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-            assertTrue(response.isSuccessful());
+            assertTrue(response.getBaseResponse().isPresent());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
             assertThat(response.getBaseResponse().get().getCardExpiryDate().isPresent(), is(true));
             assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitMonth(), is("08"));
@@ -146,7 +146,7 @@ public class StripeAuthoriseHandlerTest {
             GatewayResponse<BaseAuthoriseResponse> response = handler.authorise(buildTestUsAuthorisationRequest(charge));
 
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-            assertTrue(response.isSuccessful());
+            assertTrue(response.getBaseResponse().isPresent());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
         }
 
@@ -176,7 +176,7 @@ public class StripeAuthoriseHandlerTest {
             assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get().get(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY), is("cus_4QFOF3xrvBT3nU"));
             assertThat(response.getBaseResponse().get().getGatewayRecurringAuthToken().get().get(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY), is("pm_1FHESdEZsufgnuO0bzghQoZ2"));
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-            assertTrue(response.isSuccessful());
+            assertTrue(response.getBaseResponse().isPresent());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
         }
 
@@ -193,7 +193,7 @@ public class StripeAuthoriseHandlerTest {
             GatewayResponse<BaseAuthoriseResponse> response = handler.authorise(buildTestAuthorisationRequest(charge));
 
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
-            assertTrue(response.isSuccessful());
+            assertTrue(response.getBaseResponse().isPresent());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_123")); // id from templates/stripe/create_payment_intent_requires_3ds_response.json
 
             Optional<Stripe3dsRequiredParams> stripeParamsFor3ds = (Optional<Stripe3dsRequiredParams>) response.getBaseResponse().get().getGatewayParamsFor3ds();
@@ -212,7 +212,7 @@ public class StripeAuthoriseHandlerTest {
             ChargeEntity charge = buildTestCharge();
             GatewayResponse<BaseAuthoriseResponse> authoriseResponse = handler.authorise(buildTestAuthorisationRequest(charge));
 
-            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertEquals("jakarta.ws.rs.ProcessingException: java.io.IOException",
                     authoriseResponse.getGatewayError().get().getMessage());
@@ -303,7 +303,7 @@ public class StripeAuthoriseHandlerTest {
             ChargeEntity charge = buildTestCharge();
             GatewayResponse<BaseAuthoriseResponse> authoriseResponse = handler.authorise(buildTestAuthorisationRequest(charge));
 
-            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                     containsString("There was an internal server error"));
@@ -320,7 +320,7 @@ public class StripeAuthoriseHandlerTest {
             ChargeEntity charge = buildTestCharge();
             GatewayResponse<BaseAuthoriseResponse> authoriseResponse = handler.authorise(buildTestAuthorisationRequest(charge));
 
-            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                     containsString("There was an internal server error"));
@@ -337,7 +337,7 @@ public class StripeAuthoriseHandlerTest {
             ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
             GatewayResponse<BaseAuthoriseResponse> authoriseResponse = handler.authorise(buildTestAuthorisationRequest(charge));
 
-            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                     containsString("There was an internal server error"));
@@ -356,7 +356,7 @@ public class StripeAuthoriseHandlerTest {
             ChargeEntity charge = buildTestChargeToSetUpAgreement(buildTestGatewayAccountEntity(), "agreement description");
             GatewayResponse<BaseAuthoriseResponse> authoriseResponse = handler.authorise(buildTestAuthorisationRequest(charge));
 
-            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                     containsString("There was an internal server error"));
@@ -382,7 +382,7 @@ public class StripeAuthoriseHandlerTest {
             assertThat(paymentIntentRequest.getPaymentMethodId(), is(PAYMENT_METHOD_ID));
 
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-            assertTrue(response.isSuccessful());
+            assertTrue(response.getBaseResponse().isPresent());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
         }
 
@@ -413,7 +413,7 @@ public class StripeAuthoriseHandlerTest {
             RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
             GatewayResponse<BaseAuthoriseResponse> authoriseResponse = handler.authoriseUserNotPresent(authRequest);
 
-            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().get().getMessage(),
                     containsString("There was an internal server error"));
@@ -429,7 +429,7 @@ public class StripeAuthoriseHandlerTest {
             RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
             GatewayResponse<BaseAuthoriseResponse> authoriseResponse = handler.authoriseUserNotPresent(authRequest);
 
-            assertThat(authoriseResponse.isFailed(), is(true));
+            assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertThat(authoriseResponse.getGatewayError().isPresent(), is(true));
             assertEquals("jakarta.ws.rs.ProcessingException: java.io.IOException",
                     authoriseResponse.getGatewayError().get().getMessage());
@@ -456,7 +456,7 @@ public class StripeAuthoriseHandlerTest {
             var paymentIntentRequest = (StripePaymentIntentRequest) allRequests.get(1);
             assertThat(paymentIntentRequest.getTokenId(), is("tok_1NrjK3Hj08j2jFuBm3LGVHYe"));
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-            assertTrue(response.isSuccessful());
+            assertTrue(response.getBaseResponse().isPresent());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
             assertThat(response.getBaseResponse().get().getCardExpiryDate().isPresent(), is(true));
             assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitMonth(), is("08"));
@@ -534,7 +534,7 @@ public class StripeAuthoriseHandlerTest {
             assertThat(paymentIntentRequest.getTokenId(), is(TOKEN_ID));
 
             assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
-            assertTrue(response.isSuccessful());
+            assertTrue(response.getBaseResponse().isPresent());
             assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_1FHESeEZsufgnuO08A2FUSPy"));
             assertThat(response.getBaseResponse().get().getCardExpiryDate().isPresent(), is(true));
             assertThat(response.getBaseResponse().get().getCardExpiryDate().get().getTwoDigitMonth(), is("08"));
@@ -553,7 +553,7 @@ public class StripeAuthoriseHandlerTest {
         GatewayResponse<BaseAuthoriseResponse> response = handler.authoriseGooglePay(buildGooglePayAuthorisationRequest(charge));
 
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.REQUIRES_3DS));
-        assertTrue(response.isSuccessful());
+        assertTrue(response.getBaseResponse().isPresent());
         assertThat(response.getBaseResponse().get().getTransactionId(), is("pi_123"));
 
         Optional<Stripe3dsRequiredParams> stripeParamsFor3ds = (Optional<Stripe3dsRequiredParams>) response.getBaseResponse().get().getGatewayParamsFor3ds();
