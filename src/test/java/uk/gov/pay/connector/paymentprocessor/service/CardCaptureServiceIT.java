@@ -13,7 +13,6 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -24,6 +23,7 @@ import static uk.gov.pay.connector.charge.model.domain.FeeType.THREE_D_S;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.TRANSACTION;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 
 public class CardCaptureServiceIT {
     @RegisterExtension
@@ -33,7 +33,7 @@ public class CardCaptureServiceIT {
 
     @Test
     void shouldPersistFeesForStripeV2Charge() {
-        long chargeId = nextInt();
+        long chargeId = randomInt();
         String externalChargeId = RandomIdGenerator.newId();
 
         app.getDatabaseTestHelper().addCharge(anAddChargeParams()
@@ -58,15 +58,15 @@ public class CardCaptureServiceIT {
         assertThat(listOfFees, hasSize(3));
         assertThat(listOfFees, containsInAnyOrder(
                 allOf(
-                        hasEntry("fee_type", (Object)"radar"),
+                        hasEntry("fee_type", (Object) "radar"),
                         hasEntry("amount_collected", 10L)
                 ),
                 allOf(
-                        hasEntry("fee_type", (Object)"three_ds"),
+                        hasEntry("fee_type", (Object) "three_ds"),
                         hasEntry("amount_collected", 20L)
                 ),
                 allOf(
-                        hasEntry("fee_type", (Object)"transaction"),
+                        hasEntry("fee_type", (Object) "transaction"),
                         hasEntry("amount_collected", 480L)
                 )
         ));

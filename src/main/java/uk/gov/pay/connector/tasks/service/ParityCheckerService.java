@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.tasks.service;
 
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
-import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,8 +44,8 @@ public class ParityCheckerService {
 
     @Inject
     public ParityCheckerService(ChargeDao chargeDao, ChargeService chargeService, EmittedEventDao emittedEventDao,
-                             StateTransitionService stateTransitionService, EventService eventService,
-                             RefundService refundService, RefundDao refundDao, ParityCheckService parityCheckService) {
+                                StateTransitionService stateTransitionService, EventService eventService,
+                                RefundService refundService, RefundDao refundDao, ParityCheckService parityCheckService) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.emittedEventDao = emittedEventDao;
@@ -62,7 +62,7 @@ public class ParityCheckerService {
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
 
-            MDC.put(MDC_REQUEST_ID_KEY, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
+            MDC.put(MDC_REQUEST_ID_KEY, "ParityCheckWorker-" + RandomUtils.secure().randomLong(0, 10000));
 
             if (parityCheckStatus.isPresent()) {
                 checkParityForParityCheckStatus(parityCheckStatus.get());
@@ -86,7 +86,7 @@ public class ParityCheckerService {
 
     public void checkParityForRefundsOnly(Long startId, Long maxId, boolean doNotReprocessValidRecords,
                                           String parityCheckStatus, Long doNotRetryEmitUntilDuration) {
-        String parityCheckRequestId = "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000);
+        String parityCheckRequestId = "ParityCheckWorker-" + RandomUtils.secure().randomLong(0, 10000);
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
             MDC.put(MDC_REQUEST_ID_KEY, parityCheckRequestId);

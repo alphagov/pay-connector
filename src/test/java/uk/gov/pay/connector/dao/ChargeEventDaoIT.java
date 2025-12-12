@@ -23,7 +23,6 @@ import java.util.List;
 import static java.time.ZonedDateTime.now;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -33,6 +32,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAP
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 
 public class ChargeEventDaoIT {
     @RegisterExtension
@@ -60,7 +60,7 @@ public class ChargeEventDaoIT {
         Long chargeId = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(randomLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withTransactionId(TRANSACTION_ID)
                 .insert()
@@ -98,7 +98,7 @@ public class ChargeEventDaoIT {
         Long chargeId = app.getDatabaseFixtures()
                 .aTestCharge()
                 .withTestAccount(defaultTestAccount)
-                .withChargeId(nextLong())
+                .withChargeId(randomLong())
                 .withExternalChargeId(RandomIdGenerator.newId())
                 .withTransactionId(TRANSACTION_ID)
                 .withDelayedCapture(true)

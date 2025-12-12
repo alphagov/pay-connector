@@ -18,7 +18,6 @@ import java.util.Map;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,6 +33,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.matcher.RefundsMatcher.aRefundMatching;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomLong;
 
 public class WorldpayRefundsResourceIT {
@@ -51,7 +51,7 @@ public class WorldpayRefundsResourceIT {
                     CREDENTIALS_USERNAME, "test-user",
                     CREDENTIALS_PASSWORD, "test-password")
     );
-    
+
     @BeforeEach
     void setUpCharge() {
         gatewayAccountId = randomLong();
@@ -86,9 +86,9 @@ public class WorldpayRefundsResourceIT {
                 .withGatewayCredentialId(defaultCredentialsId)
                 .insert();
     }
-    
+
     @Nested
-    class ByAccountId {        
+    class ByAccountId {
 
         @Nested
         class GetRefund {
@@ -172,7 +172,7 @@ public class WorldpayRefundsResourceIT {
             }
         }
     }
-    
+
     @Nested
     class ByServiceIdAndType {
         @Nested
@@ -190,7 +190,7 @@ public class WorldpayRefundsResourceIT {
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
                         .then().statusCode(202)
                         .extract().path("refund_id");
-                
+
                 // Attempt to retrieve refund
                 var response = app.givenSetup()
                         .get(format("/v1/api/service/%s/account/%s/charges/%s/refunds/%s", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId(), refundExternalId))
@@ -199,7 +199,7 @@ public class WorldpayRefundsResourceIT {
                         .body("amount", is((int) defaultTestCharge.getAmount()))
                         .body("status", is("submitted"))
                         .body("created_date", is(notNullValue()));
-                
+
                 // Verify payment links in response
                 String paymentUrl = format("https://localhost:%s/v1/api/service/%s/account/%s/charges/%s",
                         app.getLocalPort(), SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId());

@@ -1,0 +1,113 @@
+package uk.gov.pay.connector.util;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.*;
+
+class RandomGeneratorUtilsTest {
+
+    @Test
+    void randomAlphabetic_positiveLength_producesOnlyLettersAndCorrectLength() {
+        int length = 10;
+        String randomString = randomAlphabetic(length);
+        assertNotNull(randomString);
+        assertEquals(length, randomString.length());
+        assertTrue(randomString.chars().allMatch(Character::isLetterOrDigit),
+                "expected only letters or digits but found: " + randomString);
+
+    }
+
+    @Test
+    void randomAlphabetic_zeroLength_returnsEmptyString() {
+        String randomString = randomAlphabetic(0);
+        assertNotNull(randomString);
+        assertEquals(0, randomString.length());
+    }
+
+    @Test
+    void randomAlphaNumeric_positiveLength_producesLettersOrDigitsAndCorrectLength() {
+        int length = 12;
+        String randomString = randomAlphanumeric(length);
+        assertNotNull(randomString);
+        assertEquals(length, randomString.length());
+        assertTrue(randomString.chars().allMatch(Character::isLetterOrDigit),
+                "expected only letters or digits but found: " + randomString);
+    }
+
+    @Test
+    void randomAlphaNumeric_zeroLength_returnsEmptyString() {
+        String string = randomAlphanumeric(0);
+        assertNotNull(string);
+        assertEquals(0, string.length());
+    }
+    
+
+    @Test
+    void randomLong_defaultRange_withinExpectedBounds() {
+        long randomLong = randomLong();
+        assertTrue(randomLong >= 0, "value should be >= 0");
+        assertTrue(randomLong < Long.MAX_VALUE, "value should be < Long.MAX_VALUE");
+    }
+
+    @Test
+    void randomLong_withBounds_returnsValueWithinProvidedRange() {
+        long minInclusive = -10L;
+        long maxExclusive = 0L;
+        for (int i = 0; i < 50; i++) {
+            long randomLong = randomLong(minInclusive, maxExclusive);
+            assertTrue(randomLong >= minInclusive, "value should be >= minInclusive");
+            assertTrue(randomLong < maxExclusive, "value should be < maxExclusive");
+        }
+    }
+
+    @Test
+    void randomLong_singleValueRange_returnsThatValue() {
+        long min = 5L;
+        long max = 6L; // only possible value is 5
+        long randomLong = randomLong(min, max);
+        assertEquals(min, randomLong);
+    }
+
+    @Test
+    void randomLong_invalidRange_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> randomLong(10L, 10L));
+        assertThrows(IllegalArgumentException.class, () -> randomLong(11L, 10L));
+    }
+
+    @Test
+    void randomInt_defaultRange_withinExpectedBounds() {
+        long randomLong = randomInt();
+        assertTrue(randomLong >= 0, "value should be >= 0");
+        assertTrue(randomLong < Integer.MAX_VALUE, "value should be < Integer.MAX_VALUE");
+    }
+
+    @Test
+    void randomInt_withBounds_returnsValueWithinProvidedRange() {
+        int minInclusive = -20;
+        int maxExclusive = 0;
+        //run multiple times to make sure it doesnt behave flaky
+        for (int i = 0; i < 50; i++) {
+            long randomLong = randomInt(minInclusive, maxExclusive);
+            assertTrue(randomLong >= minInclusive, "value should be >= minInclusive");
+            assertTrue(randomLong < maxExclusive, "value should be < maxExclusive");
+        }
+    }
+
+    @Test
+    void randomInt_singleValueRange_returnsThatValue() {
+        int min = 7;
+        int max = 8; // only possible value is 7
+        long randomLong = randomInt(min, max);
+        assertEquals(min, randomLong);
+    }
+
+    @Test
+    void randomInt_invalidRange_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> randomInt(5, 5));
+        assertThrows(IllegalArgumentException.class, () -> randomInt(6, 5));
+    }
+}

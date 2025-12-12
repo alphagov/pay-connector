@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +37,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.SERVICE_ID;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 
 public class ChargeCancelResourceIT {
     @RegisterExtension
@@ -45,7 +45,7 @@ public class ChargeCancelResourceIT {
 
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
-    
+
     public static Stream<Arguments> cancellableChargeStatesPriorToAuthorisation() {
         return Stream.of(
                 Arguments.of(ChargeStatus.CREATED),
@@ -72,7 +72,7 @@ public class ChargeCancelResourceIT {
     }
 
     @Nested
-    class ByGatewayAccountId {        
+    class ByGatewayAccountId {
         @Test
         @DisplayName("Should return 204 when successful")
         void success_shouldReturn204() {
@@ -142,20 +142,20 @@ public class ChargeCancelResourceIT {
                     .then().statusCode(404)
                     .body("message", is("HTTP 404 Not Found"));
         }
-        
+
         @Test
         @DisplayName("Should preserve charge card details when charge is cancelled")
         void shouldPreserveCardDetailsIfCancelled() {
             String externalChargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
             Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
-    
+
             app.getWorldpayMockClient().mockCancelSuccess();
-    
+
             Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
             assertThat(cardDetails.isEmpty(), is(false));
-    
+
             testBaseExtension.cancelChargeAndCheckApiStatus(externalChargeId, SYSTEM_CANCELLED, 204);
-    
+
             cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
             assertThat(cardDetails, is(notNullValue()));
             assertThat(cardDetails.get("card_brand"), is(notNullValue()));
@@ -168,51 +168,51 @@ public class ChargeCancelResourceIT {
             assertThat(cardDetails.get("address_postcode"), is(notNullValue()));
             assertThat(cardDetails.get("address_country"), is(notNullValue()));
         }
-    
+
         @Test
         @DisplayName("Should add locking status to charge events if charge is cancelled after auth success")
         void chargeEventsShouldHaveLockingStatus_IfCancelledAfterAuth() {
             String chargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
             app.getWorldpayMockClient().mockCancelSuccess();
-    
+
             testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCELLED, 204);
-    
+
             List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
             assertThat(events.size(), is(3));
             assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                     SYSTEM_CANCEL_READY.getValue(),
                     SYSTEM_CANCELLED.getValue()));
         }
-    
+
         @Test
         @DisplayName("Should add locking status to charge events if charge is cancelled after auth failed")
         void chargeEventsShouldHaveLockingStatus_IfCancelFailedAfterAuth() {
             String chargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
             app.getWorldpayMockClient().mockCancelError();
-    
+
             testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, SYSTEM_CANCEL_ERROR, 204);
-    
+
             List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
             assertThat(events.size(), is(3));
             assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                     SYSTEM_CANCEL_READY.getValue(),
                     SYSTEM_CANCEL_ERROR.getValue()));
         }
-    
+
         @ParameterizedTest()
         @MethodSource("uk.gov.pay.connector.it.resources.ChargeCancelResourceIT#cancellableChargeStatesPriorToAuthorisation")
         @DisplayName("Should not add locking status to charge events if charge is cancelled before auth")
         void chargeEventsShouldNotHaveLockingStatus_IfCancelledBeforeAuth(ChargeStatus status) {
             String chargeId = createNewInPastChargeWithStatus(status);
             testBaseExtension.cancelChargeAndCheckApiStatus(chargeId, ChargeStatus.SYSTEM_CANCELLED, 204);
-    
+
             List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeId);
             assertThat(events.size(), is(2));
             assertThat(events, hasItems(status.getValue(), ChargeStatus.SYSTEM_CANCELLED.getValue()));
         }
-        
+
         private String createNewInPastChargeWithStatus(ChargeStatus status) {
-            long chargeId = RandomUtils.nextInt();
+            long chargeId = randomInt();
             return testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
                     .withCreatedDate(Instant.now().minus(1, HOURS))
                     .withChargeId(chargeId)
@@ -276,13 +276,13 @@ public class ChargeCancelResourceIT {
         @DisplayName("Should return 404 if account is not found")
         void accountNotFound_shouldReturn404() {
             var chargeId = testBaseExtension.createNewCharge();
-            
+
             app.givenSetup()
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", "not-real-service-id", GatewayAccountType.TEST, chargeId))
                     .then().statusCode(404)
                     .body("message", contains(String.format("Charge with id [%s] not found.", chargeId)));
         }
-    
+
 
         @Test
         @DisplayName("Should preserve charge card details when charge is cancelled")
@@ -290,7 +290,7 @@ public class ChargeCancelResourceIT {
             String chargeExternalId = testBaseExtension.authoriseNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
             app.getDatabaseTestHelper().addEvent(chargeInternalId, AUTHORISATION_SUCCESS.toString());
-            
+
             app.getWorldpayMockClient().mockCancelSuccess();
 
             Map<String, Object> cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeInternalId);
@@ -300,9 +300,9 @@ public class ChargeCancelResourceIT {
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);
-            
+
             checkCancelStatusViaApi(chargeExternalId, SYSTEM_CANCELLED);
-            
+
             cardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeInternalId);
             assertThat(cardDetails, is(notNullValue()));
             assertThat(cardDetails.get("card_brand"), is(notNullValue()));
@@ -315,23 +315,23 @@ public class ChargeCancelResourceIT {
             assertThat(cardDetails.get("address_postcode"), is(notNullValue()));
             assertThat(cardDetails.get("address_country"), is(notNullValue()));
         }
-        
+
         @Test
         @DisplayName("Should add locking status to charge events if charge is cancelled after auth success")
-        void chargeEventsShouldHaveLockingStatus_IfCancelledAfterAuth() {            
+        void chargeEventsShouldHaveLockingStatus_IfCancelledAfterAuth() {
             String chargeExternalId = testBaseExtension.authoriseNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
             app.getDatabaseTestHelper().addEvent(chargeInternalId, AUTHORISATION_SUCCESS.toString());
 
             app.getWorldpayMockClient().mockCancelSuccess();
-    
+
             app.givenSetup()
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);
 
             checkCancelStatusViaApi(chargeExternalId, SYSTEM_CANCELLED);
-            
+
             List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeExternalId);
             assertThat(events.size(), is(3));
             assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
@@ -354,28 +354,28 @@ public class ChargeCancelResourceIT {
                     .statusCode(204);
 
             checkCancelStatusViaApi(chargeExternalId, SYSTEM_CANCEL_ERROR);
-            
+
             List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeExternalId);
             assertThat(events.size(), is(3));
             assertThat(events, hasItems(AUTHORISATION_SUCCESS.getValue(),
                     SYSTEM_CANCEL_READY.getValue(),
                     SYSTEM_CANCEL_ERROR.getValue()));
         }
-        
+
         @Test
         @DisplayName("Should not add locking status to charge events if charge is cancelled in created state")
         void chargeEventsShouldNotHaveLockingStatus_IfCancelledFromCreatedState() {
             String chargeExternalId = testBaseExtension.createNewChargeWithServiceId(SERVICE_ID);
             long chargeInternalId = app.getDatabaseTestHelper().getChargeIdByExternalId(chargeExternalId);
             app.getDatabaseTestHelper().addEvent(chargeInternalId, CREATED.toString());
-            
+
             app.givenSetup()
                     .post(String.format("/v1/api/service/%s/account/%s/charges/%s/cancel", SERVICE_ID, GatewayAccountType.TEST, chargeExternalId))
                     .then()
                     .statusCode(204);
 
             checkCancelStatusViaApi(chargeExternalId, SYSTEM_CANCELLED);
-            
+
             List<String> events = app.getDatabaseTestHelper().getInternalEvents(chargeExternalId);
             assertThat(events.size(), is(2));
             assertThat(events, hasItems(ChargeStatus.CREATED.getValue(), ChargeStatus.SYSTEM_CANCELLED.getValue()));
@@ -399,7 +399,7 @@ public class ChargeCancelResourceIT {
             assertThat(events.size(), is(2));
             assertThat(events, hasItems(ENTERING_CARD_DETAILS.getValue(), ChargeStatus.SYSTEM_CANCELLED.getValue()));
         }
-        
+
         void checkCancelStatusViaApi(String chargeId, ChargeStatus targetState) {
             app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/charges/%s", SERVICE_ID, GatewayAccountType.TEST, chargeId))

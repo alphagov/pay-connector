@@ -12,19 +12,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 
 public class PaymentInstrumentDaoIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private PaymentInstrumentDao paymentInstrumentDao;
-    
+
     private static final String PAYMENT_INSTRUMENT_EXTERNAL_ID_ONE = "12345678901234567890123456";
-   
+
     @BeforeEach
     void setUp() {
         paymentInstrumentDao = app.getInstanceFromGuiceContainer(PaymentInstrumentDao.class);
@@ -51,31 +51,31 @@ public class PaymentInstrumentDaoIT {
         insertAgreement(agreementExternalId);
         insertAgreement(otherAgreementExternalId);
 
-        insertTestPaymentInstrument("payment-instrument-1", agreementExternalId, 
+        insertTestPaymentInstrument("payment-instrument-1", agreementExternalId,
                 PaymentInstrumentStatus.ACTIVE);
-        insertTestPaymentInstrument("payment-instrument-2", agreementExternalId, 
+        insertTestPaymentInstrument("payment-instrument-2", agreementExternalId,
                 PaymentInstrumentStatus.ACTIVE);
-        insertTestPaymentInstrument("payment-instrument-3", agreementExternalId, 
+        insertTestPaymentInstrument("payment-instrument-3", agreementExternalId,
                 PaymentInstrumentStatus.CREATED);
-        insertTestPaymentInstrument("payment-instrument-4", otherAgreementExternalId, 
+        insertTestPaymentInstrument("payment-instrument-4", otherAgreementExternalId,
                 PaymentInstrumentStatus.ACTIVE);
         List<PaymentInstrumentEntity> paymentInstruments = paymentInstrumentDao.findPaymentInstrumentsByAgreementAndStatus(
                 agreementExternalId, PaymentInstrumentStatus.ACTIVE);
-        
+
         assertThat(paymentInstruments, hasSize(2));
         List<String> returnedPaymentInstrumentExternalIds = paymentInstruments.stream()
                 .map(PaymentInstrumentEntity::getExternalId).collect(Collectors.toList());
         assertThat(returnedPaymentInstrumentExternalIds, containsInAnyOrder("payment-instrument-1", "payment-instrument-2"));
     }
-    
+
     private void insertTestPaymentInstrument(String paymentInstrumentExternalId) {
         app.getDatabaseFixtures()
                 .aTestPaymentInstrument()
-                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentId(randomLong())
                 .withExternalId(paymentInstrumentExternalId)
                 .insert();
     }
-    
+
     private void insertTestPaymentInstrument(String externalId, String agreementExternalId, PaymentInstrumentStatus status) {
         app.getDatabaseFixtures()
                 .aTestPaymentInstrument()

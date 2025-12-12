@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.it.contract;
 
 import io.dropwizard.core.setup.Environment;
-import org.apache.commons.lang3.RandomUtils;
+import jakarta.ws.rs.client.ClientBuilder;
 import org.apache.http.HttpStatus;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -17,7 +17,6 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.ws.rs.client.ClientBuilder;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +31,7 @@ import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @Ignore
@@ -65,7 +65,7 @@ public class GooglePayForWorldpayTest {
         String payload = load("templates/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml")
                 .replace("${amount}", "100")
                 .replace("${merchantCode}", merchantCode)
-                .replace("${transactionId?xml}", Integer.toString(RandomUtils.nextInt()))
+                .replace("${transactionId?xml}", Integer.toString(randomInt()))
                 .replace("${walletAuthorisationData.encryptedPaymentData.signature?xml}", signature)
                 .replace("${walletAuthorisationData.encryptedPaymentData.protocolVersion?xml}", protocolVersion)
                 .replace("${walletAuthorisationData.encryptedPaymentData.signedMessage?xml}", signedMessage);
@@ -73,7 +73,7 @@ public class GooglePayForWorldpayTest {
         GatewayClient authoriseClient = getGatewayClient();
 
         GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, payload, APPLICATION_XML_TYPE);
-        WorldpayCredentials credentials = (WorldpayCredentials)gatewayAccount.getGatewayAccountCredentialsEntity(WORLDPAY.getName()).getCredentialsObject();
+        WorldpayCredentials credentials = (WorldpayCredentials) gatewayAccount.getGatewayAccountCredentialsEntity(WORLDPAY.getName()).getCredentialsObject();
         GatewayClient.Response response = authoriseClient.postRequestFor(
                 URI.create("https://secure-test.worldpay.com/jsp/merchant/xml/paymentService.jsp"),
                 WORLDPAY,

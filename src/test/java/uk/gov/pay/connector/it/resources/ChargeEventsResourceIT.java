@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,9 +19,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.Is.is;
@@ -36,6 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 
 public class ChargeEventsResourceIT {
 
@@ -48,7 +48,7 @@ public class ChargeEventsResourceIT {
     public static final String USER_EMAIL = "test@test.com";
     private static final String SERVICE_ID = "a-valid-service-id";
     private static final String CHARGE_EXTERNAL_ID = "external-charge-id";
-    
+
     private String gatewayAccountId;
     private long chargeId;
     private DatabaseFixtures.TestCharge testCharge;
@@ -73,7 +73,7 @@ public class ChargeEventsResourceIT {
         DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .withAccountId(Long.parseLong(gatewayAccountId));
-        chargeId = RandomUtils.nextLong();
+        chargeId = randomLong();
         testCharge = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withChargeId(chargeId)
@@ -84,7 +84,7 @@ public class ChargeEventsResourceIT {
                 .withChargeStatus(CAPTURED)
                 .insert();
     }
-    
+
     @Nested
     class ByServiceIdAndAccountType {
         @Test
@@ -162,7 +162,7 @@ public class ChargeEventsResourceIT {
                     .body("events[4]", new TransactionEventMatcher("REFUND", withState("success", "true"), "10", partialRefundRefundedEventDate, gatewayTransactionIdForPartialRefund, SUBMITTED_BY))
                     .body("events[5]", new TransactionEventMatcher("REFUND", withState("submitted", "false"), "90", secondRefundSubmittedEventDate, gatewayTransactionIdForSecondRefund, null))
                     .body("events[6]", new TransactionEventMatcher("REFUND", withState("success", "true"), "90", secondRefundRefundedEventDate, gatewayTransactionIdForSecondRefund, null));
-            }
+        }
 
         @Test
         public void shouldReturn404WhenServiceIdIsIncorrect() {
@@ -310,7 +310,7 @@ public class ChargeEventsResourceIT {
         return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestRefundHistory(testRefund);
     }
-    
+
     private DatabaseFixtures.TestRefund createTestRefund(DatabaseFixtures.TestCharge testCharge, ZonedDateTime createdDate, String gatewayTransactionId, long amountRefunded, String submittedBy) {
         return withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestRefund()
