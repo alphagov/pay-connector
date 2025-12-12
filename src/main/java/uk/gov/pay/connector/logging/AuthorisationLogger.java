@@ -50,7 +50,7 @@ public class AuthorisationLogger {
                 Optional.ofNullable(authorisationRequestSummary)
                         .map(authorisationRequestSummaryStructuredLogging::createArgs)
                         .orElse(new StructuredArgument[0]));
-        logger.info(logMessage, (Object[]) structuredLoggingArguments);
+        logger.info(logMessage, structuredLoggingArguments);
     }
 
     public void logChargeAuthorisation(Logger logger,

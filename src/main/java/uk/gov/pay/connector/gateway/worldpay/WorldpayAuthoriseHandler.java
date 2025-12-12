@@ -127,7 +127,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
                 request.getGatewayAccount().getId()
         );
 
-        LOGGER.info(logMessage, (Object) structuredLoggingArguments);
+        LOGGER.info(logMessage, structuredLoggingArguments);
     }
 
     private String sanitiseMessage(String message) {
