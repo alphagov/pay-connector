@@ -2,6 +2,7 @@ package uk.gov.pay.connector.events;
 
 import com.google.inject.persist.Transactional;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -61,7 +62,7 @@ public class HistoricalEventEmitterService {
 
     public void emitHistoricEventsById(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
         try {
-            MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + randomLong(0, 10000));
+            MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.secure().randomLong(0, 10000));
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
             maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
             logger.info("Starting from {} up to {}", startId, maxId);
@@ -83,7 +84,7 @@ public class HistoricalEventEmitterService {
     }
 
     public void emitHistoricEventsByDate(ZonedDateTime startDate, ZonedDateTime endDate, Long doNotRetryEmitUntilDuration) {
-        MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + randomLong(0, 10000));
+        MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.secure().randomLong(0, 10000));
 
         initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
         logger.info("Starting to emit events from date range {} up to {}", startDate, endDate);
@@ -94,7 +95,7 @@ public class HistoricalEventEmitterService {
 
     public void emitRefundEventsOnlyById(Long startId, OptionalLong maybeMaxId, Long doNotRetryEmitUntilDuration) {
         try {
-            MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + randomLong(0, 10000));
+            MDC.put(MDC_REQUEST_ID_KEY, "HistoricalEventEmitterWorker-" + RandomUtils.secure().randomLong(0, 10000));
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
 
             maxId = maybeMaxId.orElseGet(refundDao::findMaxId);
