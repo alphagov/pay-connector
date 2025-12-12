@@ -40,9 +40,6 @@ public final class RandomGeneratorUtils {
     }
 
     private static String randomFromCharset(String charset, int length) {
-        if (length < 0) {
-            throw new IllegalArgumentException("length must be non-negative");
-        }
         ThreadLocalRandom rnd = current();
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
