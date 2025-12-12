@@ -30,7 +30,7 @@ public class JwtGeneratorTest {
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat(jws.getHeader().get("typ"), is("JWT"));
-        assertThat(jws.getBody().get("key1"), is("value1"));
-        assertThat(jws.getBody().get("key2"), is("value2"));
+        assertThat(jws.getPayload().get("key1"), is("value1"));
+        assertThat(jws.getPayload().get("key2"), is("value2"));
     }
 }
