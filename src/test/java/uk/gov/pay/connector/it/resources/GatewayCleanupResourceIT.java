@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -24,6 +23,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 
 public class GatewayCleanupResourceIT {
     @RegisterExtension
@@ -41,7 +41,7 @@ public class GatewayCleanupResourceIT {
         // add a non-Worldpay charge that shouldn't be picked up
         var sandboxAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
-                .withAccountId(RandomUtils.nextLong())
+                .withAccountId(randomLong())
                 .withPaymentProvider(SANDBOX.getName())
                 .insert();
 
@@ -67,7 +67,7 @@ public class GatewayCleanupResourceIT {
         String chargeStatus2 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId2);
         String chargeStatus3 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId3);
         String chargeStatus4 = app.getDatabaseTestHelper().getChargeStatusByExternalId(chargeId4);
-        
+
         assertThat(chargeStatus1, is(AUTHORISATION_REJECTED.getValue()));
         assertThat(chargeStatus2, is(AUTHORISATION_ERROR_CANCELLED.getValue()));
         assertThat(chargeStatus3, is(AUTHORISATION_ERROR_CANCELLED.getValue()));

@@ -13,11 +13,10 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.Arrays.asList;
-import static jakarta.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -34,16 +33,17 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 
 public class ChargeExpiryResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
-    
+
     private static final String JSON_CHARGE_KEY = "charge_id";
     private static final String JSON_STATE_KEY = "state.status";
-    
+
     @Test
     void shouldExpireChargesAndHaveTheCorrectEvents() {
         String extChargeId1 = testBaseExtension.addCharge(
@@ -241,7 +241,7 @@ public class ChargeExpiryResourceIT {
                 .withCreatedDate(Instant.now().minus(90, MINUTES))
                 .withTransactionId(gatewayTransactionId1)
                 .build());
-        
+
         String extChargeId2 = testBaseExtension.addCharge(
                 anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
                         .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
@@ -288,7 +288,7 @@ public class ChargeExpiryResourceIT {
 
     @Test
     void shouldPreserveCardDetailsIfChargeExpires() {
-        Long chargeId = nextLong();
+        Long chargeId = randomLong();
         AddChargeParameters addChargeParameters = anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
                 .withCreatedDate(Instant.now().minus(90, MINUTES))
                 .withChargeId(chargeId)

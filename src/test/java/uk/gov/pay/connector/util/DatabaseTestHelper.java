@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.util;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.postgresql.util.PGobject;
@@ -35,6 +34,7 @@ import java.util.stream.Collectors;
 import static java.sql.Types.OTHER;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 
 public class DatabaseTestHelper {
 
@@ -272,7 +272,7 @@ public class DatabaseTestHelper {
     public int addRefund(String externalId, long amount, RefundStatus status,
                          String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
                          String userEmail, String chargeExternalId, ParityCheckStatus parityCheckStatus, ZonedDateTime parityCheckDate) {
-        int refundId = RandomUtils.nextInt();
+        int refundId = randomInt();
         jdbi.withHandle(handle ->
                 handle
                         .createUpdate("INSERT INTO refunds(id, external_id, amount, status, " +
@@ -983,7 +983,7 @@ public class DatabaseTestHelper {
                         .list()
         );
     }
-    
+
     public List<String> getRefundStatusHistoryByChargeExternalId(String chargeExternalId) {
         return getRefundsHistoryByChargeExternalId(chargeExternalId).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
     }
@@ -1217,13 +1217,13 @@ public class DatabaseTestHelper {
         );
     }
 
-    public void insertIdempotency(String key, Long gatewayAccountId, String resourceExternalId, Map<String,Object> requestBody) {
+    public void insertIdempotency(String key, Long gatewayAccountId, String resourceExternalId, Map<String, Object> requestBody) {
         PGobject requestBodyJson = mapToJsonPGobject(requestBody);
 
         jdbi.withHandle(handle ->
                 handle.createUpdate("INSERT INTO idempotency(key, gateway_account_id, " +
-                        "resource_external_id, request_body) " +
-                        " VALUES (:key, :gatewayAccountId, :resourceExternalId, :requestBody)")
+                                "resource_external_id, request_body) " +
+                                " VALUES (:key, :gatewayAccountId, :resourceExternalId, :requestBody)")
                         .bind("key", key)
                         .bind("gatewayAccountId", gatewayAccountId)
                         .bind("resourceExternalId", resourceExternalId)
@@ -1231,7 +1231,7 @@ public class DatabaseTestHelper {
                         .execute());
     }
 
-    public void insertIdempotency(String key, Instant createdDate, Long gatewayAccountId, String resourceExternalId, Map<String,Object> requestBody) {
+    public void insertIdempotency(String key, Instant createdDate, Long gatewayAccountId, String resourceExternalId, Map<String, Object> requestBody) {
         PGobject requestBodyJson = mapToJsonPGobject(requestBody);
 
         jdbi.withHandle(handle ->
@@ -1245,7 +1245,7 @@ public class DatabaseTestHelper {
                         .bindBySqlType("requestBody", requestBodyJson, OTHER)
                         .execute());
     }
-    
+
     public void insertGatewayAccountCredentials(AddGatewayAccountCredentialsParams params) {
         PGobject credentialsJson = buildCredentialsJson(params);
 
@@ -1281,7 +1281,7 @@ public class DatabaseTestHelper {
             throw new RuntimeException(e);
         }
     }
-    
+
     private static PGobject mapToJsonPGobject(Map map) {
         PGobject json = getJsonPGobject();
         try {
@@ -1293,7 +1293,7 @@ public class DatabaseTestHelper {
             throw new RuntimeException("Failed to convert map to PGobject", e);
         }
     }
-    
+
     private static PGobject getJsonPGobject() {
         PGobject pGobject = new PGobject();
         pGobject.setType("json");

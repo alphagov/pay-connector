@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.util;
 
-import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 
 import java.time.Instant;
@@ -8,6 +7,7 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class AddGatewayAccountCredentialsParams {
@@ -63,7 +63,7 @@ public class AddGatewayAccountCredentialsParams {
     }
 
     public static final class AddGatewayAccountCredentialsParamsBuilder {
-        private long id = RandomUtils.nextLong(2, 1000000);
+        private long id = randomLong(2, 1000000);
         private Instant createdDate = Instant.now();
         private Instant activeStartDate = null;
         private Instant activeEndDate = null;

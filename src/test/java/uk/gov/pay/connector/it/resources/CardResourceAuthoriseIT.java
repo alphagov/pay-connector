@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -59,6 +58,7 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccoun
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class CardResourceAuthoriseIT {
@@ -309,7 +309,7 @@ public class CardResourceAuthoriseIT {
 
     @Test
     void shouldPersistCorporateSurcharge() {
-        String accountId = String.valueOf(RandomUtils.nextInt());
+        String accountId = String.valueOf(randomInt());
         long corporateCreditCardSurchargeAmount = 2222L;
         var gatewayAccountParams = anAddGatewayAccountParams()
                 .withAccountId(accountId)
@@ -479,7 +479,7 @@ public class CardResourceAuthoriseIT {
 
     @Test
     void shouldUseActivePaymentProviderWhenMultipleCredentials() {
-        long accountId = RandomUtils.nextInt();
+        long accountId = randomInt();
         AddGatewayAccountCredentialsParams stripeCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(STRIPE.getName())
                 .withGatewayAccountId(accountId)

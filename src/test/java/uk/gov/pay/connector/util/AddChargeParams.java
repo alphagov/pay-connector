@@ -15,7 +15,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
+
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 
 public record AddChargeParams(
         Long chargeId,
@@ -54,7 +55,7 @@ public record AddChargeParams(
         AgreementPaymentType agreementPaymentType) {
 
     public static final class AddChargeParamsBuilder {
-        
+
         public AddChargeParams build() {
             List.of(amount, status, returnUrl, gatewayAccountId, description, reference, externalChargeId)
                     .forEach(Objects::requireNonNull);
@@ -66,13 +67,13 @@ public record AddChargeParams(
                     authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds, exemption3ds, exemption3dsType,
                     agreementPaymentType);
         }
-        
+
         private String agreementExternalId;
         private long amount = 1000;
         private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
         private Boolean canRetry;
         private CardType cardType;
-        private Long chargeId = new Random().nextLong();
+        private Long chargeId = randomLong();
         private Long corporateSurcharge;
         private Instant createdDate = Instant.now();
         private boolean delayedCapture = false;
@@ -102,7 +103,8 @@ public record AddChargeParams(
         private long version = 1;
         private AgreementPaymentType agreementPaymentType;
 
-        private AddChargeParamsBuilder() {}
+        private AddChargeParamsBuilder() {
+        }
 
         public static AddChargeParamsBuilder anAddChargeParams() {
             return new AddChargeParamsBuilder();

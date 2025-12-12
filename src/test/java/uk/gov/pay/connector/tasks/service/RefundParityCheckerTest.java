@@ -18,7 +18,6 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.when;
@@ -28,6 +27,7 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 
 @ExtendWith(MockitoExtension.class)
 class RefundParityCheckerTest {
@@ -36,7 +36,7 @@ class RefundParityCheckerTest {
     private RefundDao mockRefundDao;
     @InjectMocks
     RefundParityChecker refundParityChecker;
-    private Long gatewayAccountId = nextLong();
+    private Long gatewayAccountId = randomLong();
     private RefundEntity refundEntity;
 
     @BeforeEach

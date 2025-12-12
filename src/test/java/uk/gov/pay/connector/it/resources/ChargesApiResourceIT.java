@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.it.resources;
 
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -25,22 +26,19 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.Response;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
-import static java.time.temporal.ChronoUnit.HOURS;
-import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang3.RandomUtils.nextInt;
+import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
@@ -75,6 +73,7 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_LOCAL_DATE_IN_UTC;
 
 public class ChargesApiResourceIT {
@@ -90,7 +89,7 @@ public class ChargesApiResourceIT {
 
     private final DatabaseTestHelper databaseTestHelper = app.getDatabaseTestHelper();
     private final String accountId = testBaseExtension.getAccountId();
-    
+
     @Test
     void makeChargeSubmitCaptureAndCheckSettlementSummary() throws QueueException, InterruptedException {
         Instant startOfTest = Instant.now();
@@ -141,7 +140,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetChargeStatusAsInProgressIfInternalStatusIsAuthorised() {
 
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = "charge1";
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -167,7 +166,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetCardDetails_whenStatusIsBeyondAuthorised() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -195,7 +194,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetMetadataWhenSet() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
             ExternalMetadata externalMetadata = new ExternalMetadata(
                     Map.of("key1", true, "key2", 123, "key3", "string1"));
@@ -222,7 +221,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnMetadataWhenNull() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -244,7 +243,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCardBrandLabel_whenChargeIsAuthorised() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
@@ -271,7 +270,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3ds() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -296,7 +295,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3dsAndVersionIsNotPresent() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -321,7 +320,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWithOut3dsAndVersionIsNotPresent() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -345,7 +344,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -370,7 +369,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnBillingAddress_whenNoAddressDetailsPresentInDB() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -395,7 +394,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnFeeIfItExists() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
             long feeCollected = 100L;
 
@@ -414,7 +413,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnNetAmountIfFeeExists() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
             long feeCollected = 100L;
 
@@ -447,10 +446,10 @@ public class ChargesApiResourceIT {
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
 
-    @Test
-    void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
-        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED)
-                .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
+        @Test
+        void shouldGetSuccessAndFailedResponseForExpiryChargeTask() {
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(CREATED)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             // run expiry task
             testBaseExtension.getConnectorRestApiClient()
@@ -472,10 +471,10 @@ public class ChargesApiResourceIT {
 
         }
 
-    @Test
-    void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
-        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
-                        .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
+        @Test
+        void shouldGetSuccessResponseForExpiryChargeTaskFor3dsRequiredPayments() {
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AUTHORISATION_3DS_REQUIRED)
+                    .withCreatedDate(Instant.now().minus(90, MINUTES)).build());
 
             testBaseExtension.getConnectorRestApiClient()
                     .postChargeExpiryTask()
@@ -495,10 +494,10 @@ public class ChargesApiResourceIT {
 
         }
 
-    @Test
-    void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
-        String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
-                .withCreatedDate(Instant.now().minus(120, HOURS)).build());
+        @Test
+        void shouldGetSuccessForExpiryChargeTask_withStatus_awaitingCaptureRequest() {
+            String extChargeId = testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(AWAITING_CAPTURE_REQUEST)
+                    .withCreatedDate(Instant.now().minus(120, HOURS)).build());
 
             // run expiry task
             testBaseExtension.getConnectorRestApiClient()
@@ -522,7 +521,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnNullCardType_whenCardTypeIsNull() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -548,7 +547,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnChargeWhenAuthorisationModeIsMotoApi() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -569,7 +568,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCanRetryTrueWhenChargeCanBeRetried() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -592,7 +591,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCanBeRetried() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -615,7 +614,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCannotBeRetried() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -638,7 +637,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeAgreementAndUnspecifiedWhetherItCanBeRetried() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -661,7 +660,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeWeb() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -684,7 +683,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnDebitCardType_whenCardTypeIsDebit() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -710,7 +709,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetFullExemptionObject_whenAllRelevantFieldIsSet() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -739,7 +738,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotGetOutcome_whenExemption3dsOutcomeNotYetKnown() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -767,7 +766,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotGetExemption_whenNotSet() {
-            long chargeId = nextInt();
+            long chargeId = randomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -787,14 +786,14 @@ public class ChargesApiResourceIT {
                     .body("exemption", is(nullValue()));
         }
     }
-    
+
     @Nested
     class GetChargeByServiceIdAndAccountType {
-        
+
         private static String VALID_SERVICE_ID = "valid-service-id";
         private static String NON_EXISTENT_SERVICE_ID = "non-existent-service-id";
         private String testChargeId;
-        
+
         @BeforeEach
         void setup() {
             app.givenSetup()
@@ -820,24 +819,24 @@ public class ChargesApiResourceIT {
                     .statusCode(Response.Status.CREATED.getStatusCode())
                     .extract().path("charge_id");
         }
-        
+
         @Test
         void shouldReturnCorrectChargeAndStatus() {
-            
+
             app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("charge_id", is(testChargeId))
                     .body("state.status", is(EXTERNAL_CREATED.getStatus()));
-            
+
             app.givenSetup()
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/cancel", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(NO_CONTENT.getStatusCode());
-            
+
             app.givenSetup()
-                    .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId)) 
+                    .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
                     .statusCode(OK.getStatusCode())
                     .body("charge_id", is(testChargeId))
@@ -857,7 +856,8 @@ public class ChargesApiResourceIT {
                     .statusCode(NOT_FOUND.getStatusCode())
                     .contentType(JSON)
                     .body(JSON_MESSAGE_KEY, contains(format("Charge with id [%s] not found.", testChargeId)))
-                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));;
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+            ;
         }
 
         @Test
@@ -868,10 +868,11 @@ public class ChargesApiResourceIT {
                     .statusCode(NOT_FOUND.getStatusCode())
                     .contentType(JSON)
                     .body(JSON_MESSAGE_KEY, contains(format("Charge with id [unknown-charge-id] not found.")))
-                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));;
+                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+            ;
         }
     }
-    
+
     @Nested
     class DelayedCaptureApproveByAccountId {
         @Test
@@ -1014,7 +1015,7 @@ public class ChargesApiResourceIT {
                     .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
         }
     }
-    
+
     private void createCharge(String externalChargeId, long chargeId) {
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

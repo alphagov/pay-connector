@@ -25,8 +25,6 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_XML;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -35,11 +33,13 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 public class WorldpayNotificationResourceIT {
     private static final ReverseDnsLookup reverseDnsLookup = mock(ReverseDnsLookup.class);
-    
+
     // App must be instantiated after mock is set
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(WorldpayNotificationResourceIT.ConnectorAppWithCustomInjector.class, config("worldpay.notificationDomain", ".worldpay.com"));
@@ -50,7 +50,7 @@ public class WorldpayNotificationResourceIT {
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/worldpay";
     private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
     private static final String UNEXPECTED_IP_ADDRESS = "8.8.8.8";
-    
+
     @BeforeAll
     static void before() {
         when(reverseDnsLookup.lookup(new DnsPointerResourceRecord(WORLDPAY_IP_ADDRESS))).thenReturn(Optional.of("hello.worldpay.com."));
@@ -75,7 +75,7 @@ public class WorldpayNotificationResourceIT {
     @Test
     void shouldHandleARefundNotification() {
         String transactionId = RandomIdGenerator.newId();
-        String refundExternalId = String.valueOf(nextLong());
+        String refundExternalId = String.valueOf(randomLong());
         int refundAmount = 1000;
 
         String externalChargeId = createNewChargeWithRefund(transactionId, refundExternalId, refundAmount);
@@ -93,7 +93,7 @@ public class WorldpayNotificationResourceIT {
     @Test
     void shouldHandleARefundNotification_forAnExpungedCharge() throws Exception {
         String gatewayTransactionId = RandomIdGenerator.newId();
-        String refundExternalId = String.valueOf(nextLong());
+        String refundExternalId = String.valueOf(randomLong());
         String chargeExternalId = randomAlphanumeric(26);
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -128,7 +128,7 @@ public class WorldpayNotificationResourceIT {
     @Test
     void shouldReturn500_whenChargeNotInConnectorAndLedgerReturnsAnError() throws Exception {
         String gatewayTransactionId = RandomIdGenerator.newId();
-        String refundExternalId = String.valueOf(nextLong());
+        String refundExternalId = String.valueOf(randomLong());
         String chargeExternalId = randomAlphanumeric(26);
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -194,7 +194,7 @@ public class WorldpayNotificationResourceIT {
                 .then()
                 .statusCode(403);
     }
-    
+
     @Test
     void shouldReturnForbiddenIfXForwardedForHeaderIsMissing() {
         given().port(app.getLocalPort())

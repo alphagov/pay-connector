@@ -7,7 +7,6 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.restassured.specification.RequestSpecification;
-import org.apache.commons.lang3.RandomUtils;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -45,6 +44,7 @@ import static uk.gov.pay.connector.rules.PostgresTestDocker.getConnectionUrl;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
@@ -71,19 +71,19 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private LedgerStub ledgerStub;
     private CardidStub cardidStub;
     private NotifyStub notifyStub;
-    
-    protected static String accountId = String.valueOf(RandomUtils.nextInt());
+
+    protected static String accountId = String.valueOf(randomInt());
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
 
     public AppWithPostgresAndSqsExtension() {
         this(ConnectorApp.class, new ConfigOverride[0]);
     }
-    
+
     public AppWithPostgresAndSqsExtension(Class CustomConnectorClass) {
         this(CustomConnectorClass, new ConfigOverride[0]);
     }
-    
+
     public AppWithPostgresAndSqsExtension(ConfigOverride... configOverrides) {
         this(ConnectorApp.class, configOverrides);
     }
@@ -96,13 +96,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         stripeWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         ledgerWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         notifyWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
-        
+
         wireMockServer.start();
         worldpayWireMockServer.start();
         stripeWireMockServer.start();
         ledgerWireMockServer.start();
         notifyWireMockServer.start();
-        
+
         wireMockPort = wireMockServer.port();
         worldpayWireMockPort = worldpayWireMockServer.port();
         stripeWireMockPort = stripeWireMockServer.port();
@@ -129,7 +129,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
         jdbi = Jdbi.create(getConnectionUrl(), getDbUsername(), getDbPassword());
         jdbi.installPlugin(new SqlObjectPlugin());
-        
+
         databaseTestHelper = new DatabaseTestHelper(jdbi);
 
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
@@ -138,13 +138,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         ledgerStub = new LedgerStub(ledgerWireMockServer);
         cardidStub = new CardidStub(wireMockServer);
         notifyStub = new NotifyStub(notifyWireMockServer);
-        
+
         databaseFixtures = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper);
         mapper = new ObjectMapper();
 
         injector = InjectorLookup.getInjector(dropwizardAppExtension.getApplication()).get();
     }
-    
+
     public void resetWireMockServer() {
         wireMockServer.resetAll();
         worldpayWireMockServer.resetAll();
@@ -153,10 +153,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         notifyWireMockServer.resetAll();
         ledgerStub.acceptPostEvent();
     }
+
     public void resetDatabase() {
         databaseTestHelper.truncateAllData();
     }
-    
+
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         if (context.getRequiredTestClass().getEnclosingClass() == null) {
@@ -169,6 +170,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public void beforeEach(ExtensionContext context) {
         ledgerStub.acceptPostEvent();
     }
+
     @Override
     public void afterEach(ExtensionContext context) {
         resetWireMockServer();
@@ -199,7 +201,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         newConfigOverride.add(config("database.password", getDbPassword()));
         return newConfigOverride.toArray(new ConfigOverride[0]);
     }
-    
+
     private ConfigOverride[] overrideEndpointConfig(ConfigOverride[] configOverrides) {
         List<ConfigOverride> newConfigOverride = newArrayList(configOverrides);
         newConfigOverride.add(config("worldpay.urls.test", "http://localhost:" + worldpayWireMockPort + "/jsp/merchant/xml/paymentService.jsp"));
@@ -262,7 +264,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public WireMockServer getWireMockServer() {
         return wireMockServer;
     }
-    
+
     public WireMockServer getStripeWireMockServer() {
         return stripeWireMockServer;
     }
@@ -290,11 +292,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public LedgerStub getLedgerStub() {
         return ledgerStub;
     }
-    
+
     public CardidStub getCardidStub() {
         return cardidStub;
     }
-    
+
     public NotifyStub getNotifyStub() {
         return notifyStub;
     }

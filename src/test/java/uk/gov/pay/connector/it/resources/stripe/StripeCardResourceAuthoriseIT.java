@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.collection.IsIn;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,10 +27,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static java.lang.String.format;
 import static java.net.URLEncoder.encode;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.eclipse.jetty.http.HttpStatus.BAD_REQUEST_400;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.eclipse.jetty.http.HttpStatus.OK_200;
@@ -62,6 +61,7 @@ import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBui
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
 
 public class StripeCardResourceAuthoriseIT {
     @RegisterExtension
@@ -95,12 +95,12 @@ public class StripeCardResourceAuthoriseIT {
     private String accountId;
     private DatabaseTestHelper databaseTestHelper;
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
-    
+
     @BeforeEach
     void setup() {
-        stripeAccountId = String.valueOf(RandomUtils.nextInt());
+        stripeAccountId = String.valueOf(randomInt());
         databaseTestHelper = app.getDatabaseTestHelper();
-        accountId = String.valueOf(RandomUtils.nextInt());
+        accountId = String.valueOf(randomInt());
 
         connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
 
@@ -230,7 +230,8 @@ public class StripeCardResourceAuthoriseIT {
         verifyPaymentIntentRequest(externalChargeId, stripeAccountId);
 
         Map<String, Object> paymentInstrument = databaseTestHelper.getPaymentInstrumentByChargeExternalId(externalChargeId.toString());
-        Map<String, String> recurringAuthTokenMap = mapper.readValue(paymentInstrument.get("recurring_auth_token").toString(), new TypeReference<Map<String, String>>() {});
+        Map<String, String> recurringAuthTokenMap = mapper.readValue(paymentInstrument.get("recurring_auth_token").toString(), new TypeReference<Map<String, String>>() {
+        });
 
         assertThat(recurringAuthTokenMap, hasKey(STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY));
         assertThat(recurringAuthTokenMap, hasKey(STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY));
@@ -296,7 +297,8 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.last_digits_card_number", is("4242"))
                 .body("card_details.card_type", is("debit"))
                 .body("card_details.card_brand", is("Visa"))
-                .body("card_details.expiry_date", is("08/24"));;
+                .body("card_details.expiry_date", is("08/24"));
+        ;
     }
 
     @Test
@@ -324,7 +326,8 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.last_digits_card_number", is("4242"))
                 .body("card_details.card_type", is("debit"))
                 .body("card_details.card_brand", is("Visa"))
-                .body("card_details.expiry_date", is("08/24"));;
+                .body("card_details.expiry_date", is("08/24"));
+        ;
     }
 
     @Test
@@ -379,7 +382,8 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.last_digits_card_number", is("4242"))
                 .body("card_details.card_type", is("debit"))
                 .body("card_details.card_brand", is("Visa"))
-                .body("card_details.expiry_date", is("08/24"));;
+                .body("card_details.expiry_date", is("08/24"));
+        ;
     }
 
     @Test
@@ -435,7 +439,7 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.card_brand", is("Visa"))
                 .body("card_details.expiry_date", is(nullValue()));
     }
-    
+
     @Test
     void shouldCaptureCardPayment_IfChargeWasPreviouslyAuthorised() {
 
@@ -470,7 +474,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private String addChargeWithStatus(ChargeStatus chargeStatus) {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = randomInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -485,7 +489,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private String addChargeWithAgreement(ChargeStatus chargeStatus, String agreementExternalId) {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = randomInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
