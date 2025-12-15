@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class StripeResourceCancelIT {
     @RegisterExtension
@@ -49,9 +49,9 @@ public class StripeResourceCancelIT {
 
     @BeforeEach
     void setup() {
-        stripeAccountId = String.valueOf(randomInt());
+        stripeAccountId = String.valueOf(secureRandomInt());
         databaseTestHelper = app.getDatabaseTestHelper();
-        accountId = String.valueOf(randomInt());
+        accountId = String.valueOf(secureRandomInt());
 
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(paymentProvider)
@@ -66,7 +66,7 @@ public class StripeResourceCancelIT {
 
         addGatewayAccount();
 
-        String transactionId = "stripe-" + randomInt();
+        String transactionId = "stripe-" + secureRandomInt();
         app.getStripeMockClient().mockCancelPaymentIntent(transactionId);
 
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
@@ -89,7 +89,7 @@ public class StripeResourceCancelIT {
 
         addGatewayAccount();
 
-        String transactionId = "stripe-" + randomInt();
+        String transactionId = "stripe-" + secureRandomInt();
         app.getStripeMockClient().mockCancelPaymentIntent(transactionId);
 
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
@@ -108,7 +108,7 @@ public class StripeResourceCancelIT {
     }
 
     private String addChargeWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

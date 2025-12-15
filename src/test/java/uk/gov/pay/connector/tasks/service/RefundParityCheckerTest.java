@@ -27,7 +27,7 @@ import static uk.gov.pay.connector.charge.model.domain.ParityCheckStatus.MISSING
 import static uk.gov.pay.connector.model.domain.LedgerTransactionFixture.from;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 @ExtendWith(MockitoExtension.class)
 class RefundParityCheckerTest {
@@ -36,7 +36,7 @@ class RefundParityCheckerTest {
     private RefundDao mockRefundDao;
     @InjectMocks
     RefundParityChecker refundParityChecker;
-    private Long gatewayAccountId = randomLong();
+    private Long gatewayAccountId = secureRandomLong();
     private RefundEntity refundEntity;
 
     @BeforeEach

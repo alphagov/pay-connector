@@ -33,7 +33,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.EXPIRE_CANCEL_READY;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class ChargeExpiryResourceIT {
     @RegisterExtension
@@ -288,7 +288,7 @@ public class ChargeExpiryResourceIT {
 
     @Test
     void shouldPreserveCardDetailsIfChargeExpires() {
-        Long chargeId = randomLong();
+        Long chargeId = secureRandomLong();
         AddChargeParameters addChargeParameters = anAddChargeParameters().withChargeStatus(AUTHORISATION_SUCCESS)
                 .withCreatedDate(Instant.now().minus(90, MINUTES))
                 .withChargeId(chargeId)

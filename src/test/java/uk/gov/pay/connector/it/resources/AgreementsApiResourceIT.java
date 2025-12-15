@@ -32,7 +32,7 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class AgreementsApiResourceIT {
 
@@ -153,7 +153,7 @@ public class AgreementsApiResourceIT {
             void shouldReturn204AndCancelAgreement() {
                 var agreementId = "an-external-id";
                 AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
-                        .withPaymentInstrumentId(randomLong())
+                        .withPaymentInstrumentId(secureRandomLong())
                         .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
                         .build();
                 app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
@@ -346,7 +346,7 @@ public class AgreementsApiResourceIT {
 
                 // creating the payment instrument using the database because adding a payment instrument to an agreement via the API is laborious
                 // it would require creating a successful payment to set up the agreement via Charges API
-                long paymentInstrumentId = randomLong();
+                long paymentInstrumentId = secureRandomLong();
                 AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                         .withPaymentInstrumentId(paymentInstrumentId)
                         .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
@@ -368,7 +368,7 @@ public class AgreementsApiResourceIT {
     }
 
     private DatabaseFixtures.TestAccount createTestAccount(String paymentProvider, boolean recurringEnabled) {
-        long accountId = randomLong(2, 10000);
+        long accountId = secureRandomLong(2, 10000);
 
         return app.getDatabaseFixtures().aTestAccount().withPaymentProvider(paymentProvider)
                 .withIntegrationVersion3ds(2)

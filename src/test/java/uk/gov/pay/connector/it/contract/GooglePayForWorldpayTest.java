@@ -31,7 +31,7 @@ import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @Ignore
@@ -65,7 +65,7 @@ public class GooglePayForWorldpayTest {
         String payload = load("templates/worldpay/WorldpayAuthoriseGooglePayOrderTemplate.xml")
                 .replace("${amount}", "100")
                 .replace("${merchantCode}", merchantCode)
-                .replace("${transactionId?xml}", Integer.toString(randomInt()))
+                .replace("${transactionId?xml}", Integer.toString(secureRandomInt()))
                 .replace("${walletAuthorisationData.encryptedPaymentData.signature?xml}", signature)
                 .replace("${walletAuthorisationData.encryptedPaymentData.protocolVersion?xml}", protocolVersion)
                 .replace("${walletAuthorisationData.encryptedPaymentData.signedMessage?xml}", signedMessage);

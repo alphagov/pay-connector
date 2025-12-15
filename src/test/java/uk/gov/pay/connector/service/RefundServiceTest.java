@@ -84,7 +84,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundServiceTest {
@@ -129,7 +129,7 @@ public class RefundServiceTest {
 
     @BeforeEach
     void setUp() {
-        refundId = randomLong();
+        refundId = secureRandomLong();
         refundEntity = aValidRefundEntity().withChargeExternalId(externalChargeId).withAmount(REFUND_AMOUNT).build();
         lenient().when(mockProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockProvider);
         lenient().when(mockProvider.getRefundEntityFactory()).thenReturn(mockRefundEntityFactory);

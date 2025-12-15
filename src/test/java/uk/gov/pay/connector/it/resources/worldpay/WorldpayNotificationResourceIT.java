@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 public class WorldpayNotificationResourceIT {
@@ -75,7 +75,7 @@ public class WorldpayNotificationResourceIT {
     @Test
     void shouldHandleARefundNotification() {
         String transactionId = RandomIdGenerator.newId();
-        String refundExternalId = String.valueOf(randomLong());
+        String refundExternalId = String.valueOf(secureRandomLong());
         int refundAmount = 1000;
 
         String externalChargeId = createNewChargeWithRefund(transactionId, refundExternalId, refundAmount);
@@ -93,7 +93,7 @@ public class WorldpayNotificationResourceIT {
     @Test
     void shouldHandleARefundNotification_forAnExpungedCharge() throws Exception {
         String gatewayTransactionId = RandomIdGenerator.newId();
-        String refundExternalId = String.valueOf(randomLong());
+        String refundExternalId = String.valueOf(secureRandomLong());
         String chargeExternalId = randomAlphanumeric(26);
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
@@ -128,7 +128,7 @@ public class WorldpayNotificationResourceIT {
     @Test
     void shouldReturn500_whenChargeNotInConnectorAndLedgerReturnsAnError() throws Exception {
         String gatewayTransactionId = RandomIdGenerator.newId();
-        String refundExternalId = String.valueOf(randomLong());
+        String refundExternalId = String.valueOf(secureRandomLong());
         String chargeExternalId = randomAlphanumeric(26);
 
         DatabaseFixtures.TestCharge testCharge = DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())

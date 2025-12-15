@@ -44,7 +44,7 @@ import static uk.gov.pay.connector.rules.PostgresTestDocker.getConnectionUrl;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbPassword;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getDbUsername;
 import static uk.gov.pay.connector.rules.PostgresTestDocker.getOrCreate;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
@@ -72,7 +72,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private CardidStub cardidStub;
     private NotifyStub notifyStub;
 
-    protected static String accountId = String.valueOf(randomInt());
+    protected static String accountId = String.valueOf(secureRandomInt());
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
 

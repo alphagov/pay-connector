@@ -37,8 +37,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.pact.util.GatewayAccountUtil.setUpGatewayAccount;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 @RunWith(PactRunner.class)
 @Provider("connector")
@@ -186,7 +186,7 @@ public class FrontendContractTest {
                 .withCardTypeEntities(Collections.singletonList(dbHelper.getVisaDebitCard()))
                 .insert();
 
-        Long chargeId = randomLong();
+        Long chargeId = secureRandomLong();
         String chargeExternalId = "testChargeId";
 
         dbHelper.insertWorldpay3dsFlexCredential(gatewayAccountId, "1A4rIZWXzXxqH7hZQUJ5aIUlFgPJFKLfrOGKxASaaV3YWMrcS616L7H86UhnTg5u", "an-issuer", "a-org-unit-id", 2L);
@@ -210,7 +210,7 @@ public class FrontendContractTest {
     public void aWorldpayChargeExistsAwaitingAuthorisation() {
         worldpayMockClient.mockAuthorisationSuccess();
         long gatewayAccountId = 666L;
-        int gatewayCredentialId = randomInt();
+        int gatewayCredentialId = secureRandomInt();
         createGatewayAccount(gatewayAccountId, gatewayCredentialId, PaymentGatewayName.WORLDPAY);
         createChargeEnteringCardDetails("testChargeId", gatewayAccountId, gatewayCredentialId, PaymentGatewayName.WORLDPAY);
     }
@@ -219,7 +219,7 @@ public class FrontendContractTest {
     public void aStripeChargeExistsAwaitingAuthorisation() {
         stripeMockClient.mockCreatePaymentIntent();
         long gatewayAccountId = 666L;
-        int gatewayCredentialId = randomInt();
+        int gatewayCredentialId = secureRandomInt();
         createGatewayAccount(gatewayAccountId, gatewayCredentialId, PaymentGatewayName.STRIPE);
         createChargeEnteringCardDetails("testChargeId", gatewayAccountId, gatewayCredentialId, PaymentGatewayName.STRIPE);
     }
@@ -236,7 +236,7 @@ public class FrontendContractTest {
                 );
                 break;
             case STRIPE:
-                credentials = Map.of("stripe_account_id", randomInt());
+                credentials = Map.of("stripe_account_id", secureRandomInt());
                 break;
             default:
                 throw new RuntimeException("This provider state only supports Worldpay and Stripe accounts");

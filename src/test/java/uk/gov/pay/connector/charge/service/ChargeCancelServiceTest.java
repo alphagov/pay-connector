@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeCancelServiceTest {
@@ -64,7 +64,7 @@ class ChargeCancelServiceTest {
     @Test
     void doSystemCancel_shouldCancel_withStatusThatDoesNotNeedCancellationInGatewayProvider() {
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = randomLong();
+        Long gatewayAccountId = secureRandomLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withStatus(ChargeStatus.ENTERING_CARD_DETAILS)
@@ -87,7 +87,7 @@ class ChargeCancelServiceTest {
         var status = ChargeStatus.fromString(chargeStatus);
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = randomLong();
+        Long gatewayAccountId = secureRandomLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")
@@ -113,7 +113,7 @@ class ChargeCancelServiceTest {
         var status = ChargeStatus.fromString(chargeStatus);
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = randomLong();
+        Long gatewayAccountId = secureRandomLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")
@@ -140,7 +140,7 @@ class ChargeCancelServiceTest {
     @Test
     void doSystemCancel_chargeStatusAfterAuthorisation_cancelledWithProvider() throws Exception {
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = randomLong();
+        Long gatewayAccountId = secureRandomLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")
@@ -166,7 +166,7 @@ class ChargeCancelServiceTest {
     void doSystemCancel_shouldFail_whenChargeNotFound() {
 
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = randomLong();
+        Long gatewayAccountId = secureRandomLong();
 
         when(mockChargeDao.findByExternalIdAndGatewayAccount(externalChargeId, gatewayAccountId)).thenReturn(Optional.empty());
 
@@ -284,7 +284,7 @@ class ChargeCancelServiceTest {
     @Test
     void doSystemCancel_shouldCancelWorldPayCharge_withStatus_awaitingCaptureRequest() throws Exception {
         String externalChargeId = "external-charge-id";
-        Long gatewayAccountId = randomLong();
+        Long gatewayAccountId = secureRandomLong();
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withTransactionId("transaction-id")

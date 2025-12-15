@@ -61,7 +61,7 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
 import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphabetic;
 import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class ChargesFrontendResourceIT {
     @RegisterExtension
@@ -70,7 +70,7 @@ public class ChargesFrontendResourceIT {
     public static final String AGREEMENT_ID = "12345678901234567890123456";
 
     private DatabaseTestHelper databaseTestHelper;
-    private String accountId = String.valueOf(randomLong());
+    private String accountId = String.valueOf(secureRandomLong());
     private String description = "Test description";
     private String returnUrl = "http://whatever.com";
     private String email = randomAlphabetic(242) + "@example.com";
@@ -237,7 +237,7 @@ public class ChargesFrontendResourceIT {
     @Test
     void getChargeShouldIncludeNetAmountIfFeeExists() {
         String externalChargeId = RandomIdGenerator.newId();
-        long chargeId = randomLong();
+        long chargeId = secureRandomLong();
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -262,7 +262,7 @@ public class ChargesFrontendResourceIT {
     @Test
     void shouldReturnInternalChargeStatusIfStatusIsAuthorised() {
         String externalChargeId = RandomIdGenerator.newId();
-        Long chargeId = randomLong();
+        Long chargeId = secureRandomLong();
 
         CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
 
@@ -285,7 +285,7 @@ public class ChargesFrontendResourceIT {
     @Test
     void shouldReturnEmptyCardBrandLabelIfStatusIsAuthorisedAndBrandUnknown() {
         String externalChargeId = RandomIdGenerator.newId();
-        Long chargeId = randomLong();
+        Long chargeId = secureRandomLong();
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -305,7 +305,7 @@ public class ChargesFrontendResourceIT {
     @Test
     void shouldIncludeAuth3dsDataInResponse() {
         String externalChargeId = RandomIdGenerator.newId();
-        Long chargeId = randomLong();
+        Long chargeId = secureRandomLong();
         String issuerUrl = "https://issuer.example.com/3ds";
         String paRequest = "test-pa-request";
 
@@ -332,7 +332,7 @@ public class ChargesFrontendResourceIT {
     @Test
     void shouldNotIncludeBillingAddress_whenNoAddressDetailsPresentInDB() {
         String externalChargeId = RandomIdGenerator.newId();
-        Long chargeId = randomLong();
+        Long chargeId = secureRandomLong();
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -355,7 +355,7 @@ public class ChargesFrontendResourceIT {
     @Test
     void getChargeShouldIncludeExternalChargeStatus() {
         String externalChargeId = RandomIdGenerator.newId();
-        long chargeId = randomLong();
+        long chargeId = secureRandomLong();
 
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

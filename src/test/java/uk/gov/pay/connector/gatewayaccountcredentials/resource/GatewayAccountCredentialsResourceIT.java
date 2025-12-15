@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class GatewayAccountCredentialsResourceIT {
     @RegisterExtension
@@ -676,7 +676,7 @@ public class GatewayAccountCredentialsResourceIT {
             GatewayAccountType gatewayAccountType,
             Map<String, Object> credentials) {
 
-        long accountId = randomLong(2, 10000);
+        long accountId = secureRandomLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
         LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();

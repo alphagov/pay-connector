@@ -15,7 +15,7 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class AgreementDaoIT {
 
@@ -120,7 +120,7 @@ public class AgreementDaoIT {
     private void insertTestAgreement(String agreementExternalId, long gatewayAccountId) {
         app.getDatabaseFixtures()
                 .aTestAgreement()
-                .withAgreementId(randomLong())
+                .withAgreementId(secureRandomLong())
                 .withExternalId(agreementExternalId)
                 .withReference("ref9876")
                 .withGatewayAccountId(gatewayAccountId)
@@ -132,7 +132,7 @@ public class AgreementDaoIT {
     private DatabaseFixtures.TestAccount insertTestAccount() {
         return app.getDatabaseFixtures()
                 .aTestAccount()
-                .withAccountId(randomLong())
+                .withAccountId(secureRandomLong())
                 .withServiceId(SERVICE_ID)
                 .insert();
     }

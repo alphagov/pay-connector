@@ -32,7 +32,7 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ChargeDaoCardDetailsIT {
@@ -73,7 +73,7 @@ public class ChargeDaoCardDetailsIT {
 
     @Test
     void findById_shouldFindCardDetails() {
-        long chargeId = randomLong();
+        long chargeId = secureRandomLong();
         DatabaseFixtures.TestCardDetails testCardDetails = createCardDetailsForChargeWithId(chargeId);
         Optional<ChargeEntity> chargeDaoOptional = chargeDao.findById(chargeId);
 
@@ -96,7 +96,7 @@ public class ChargeDaoCardDetailsIT {
 
     @Test
     void findById_shouldFindCardDetailsIfCardDigitsAreNotPresent() {
-        long chargeId = randomLong();
+        long chargeId = secureRandomLong();
         DatabaseFixtures.TestCardDetails testCardDetails = app.getDatabaseFixtures()
                 .aTestCardDetails()
                 .withFirstDigitsOfCardNumber(null)

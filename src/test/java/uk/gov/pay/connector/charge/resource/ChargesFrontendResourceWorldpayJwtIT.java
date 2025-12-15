@@ -19,7 +19,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class ChargesFrontendResourceWorldpayJwtIT {
     @RegisterExtension
@@ -37,7 +37,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 "organisational_unit_id", "My Org",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, randomLong(), chargeExternalId, ChargeStatus.CREATED);
+        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, validCredentials, secureRandomLong(), chargeExternalId, ChargeStatus.CREATED);
 
         testBaseExtension.getConnectorRestApiClient()
                 .withChargeId(chargeExternalId)
@@ -50,7 +50,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
     void shouldReturn409WhenCredentialsAreMissingForGatewayAccount() {
         var chargeExternalId = "mySecondChargeId";
         var gatewayAccountId = "202";
-        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, null, randomLong(), chargeExternalId,
+        setUpChargeAndAccount(gatewayAccountId, WORLDPAY, null, secureRandomLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
         testBaseExtension.getConnectorRestApiClient()
@@ -69,7 +69,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
                 "organisational_unit_id", "My Org",
                 "jwt_mac_id", "fa2daee2-1fbb-45ff-4444-52805d5cd9e0"
         );
-        setUpChargeAndAccount(gatewayAccountId, STRIPE, validCredentials, randomLong(), chargeExternalId,
+        setUpChargeAndAccount(gatewayAccountId, STRIPE, validCredentials, secureRandomLong(), chargeExternalId,
                 ChargeStatus.CREATED);
 
         testBaseExtension.getConnectorRestApiClient()
@@ -81,7 +81,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
 
     @Test
     void shouldReturnChallengeJwt() {
-        long chargeId = randomLong();
+        long chargeId = secureRandomLong();
         var chargeExternalId = "myFirstChargeId";
         var gatewayAccountId = "101";
         var validCredentials = Map.of(
@@ -109,7 +109,7 @@ public class ChargesFrontendResourceWorldpayJwtIT {
 
     @Test
     void shouldOmitChallengeJwtWhenChargeNotInAppropriateState() {
-        long chargeId = randomLong();
+        long chargeId = secureRandomLong();
         var chargeExternalId = "myFirstChargeId";
         var gatewayAccountId = "101";
         var validCredentials = Map.of(

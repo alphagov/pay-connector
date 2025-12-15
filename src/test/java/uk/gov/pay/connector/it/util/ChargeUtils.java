@@ -10,7 +10,7 @@ import java.util.Map;
 import static uk.gov.pay.connector.it.resources.ChargesFrontendResourceIT.AGREEMENT_ID;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class ChargeUtils {
 
@@ -63,7 +63,7 @@ public class ChargeUtils {
 
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId, String gatewayAccountId,
                                                                 DatabaseTestHelper databaseTestHelper, String emailAddress, String paymentProvider, String description) {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -82,7 +82,7 @@ public class ChargeUtils {
     public static ExternalChargeId createNewChargeWithAccountId(ChargeStatus status, String gatewayTransactionId,
                                                                 String gatewayAccountId, DatabaseTestHelper databaseTestHelper,
                                                                 String paymentProvider, Long gatewayCredentialId) {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         ExternalChargeId externalChargeId = ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

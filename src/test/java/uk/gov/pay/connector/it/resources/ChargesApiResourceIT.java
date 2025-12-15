@@ -73,7 +73,7 @@ import static uk.gov.pay.connector.matcher.ZoneDateTimeAsStringWithinMatcher.isW
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_LOCAL_DATE_IN_UTC;
 
 public class ChargesApiResourceIT {
@@ -140,7 +140,7 @@ public class ChargesApiResourceIT {
         @Test
         void shouldGetChargeStatusAsInProgressIfInternalStatusIsAuthorised() {
 
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = "charge1";
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -166,7 +166,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetCardDetails_whenStatusIsBeyondAuthorised() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -194,7 +194,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetMetadataWhenSet() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
             ExternalMetadata externalMetadata = new ExternalMetadata(
                     Map.of("key1", true, "key2", 123, "key3", "string1"));
@@ -221,7 +221,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnMetadataWhenNull() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -243,7 +243,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCardBrandLabel_whenChargeIsAuthorised() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             CardTypeEntity mastercardCredit = databaseTestHelper.getMastercardCreditCard();
@@ -270,7 +270,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3ds() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -295,7 +295,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWith3dsAndVersionIsNotPresent() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -320,7 +320,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnAuthorisationSummary_whenChargeIsAuthorisedWithOut3dsAndVersionIsNotPresent() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -344,7 +344,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnEmptyCardBrandLabel_whenChargeIsAuthorisedAndBrandUnknown() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -369,7 +369,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnBillingAddress_whenNoAddressDetailsPresentInDB() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -394,7 +394,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnFeeIfItExists() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
             long feeCollected = 100L;
 
@@ -413,7 +413,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnNetAmountIfFeeExists() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
             long feeCollected = 100L;
 
@@ -521,7 +521,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnNullCardType_whenCardTypeIsNull() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -547,7 +547,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnChargeWhenAuthorisationModeIsMotoApi() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -568,7 +568,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCanRetryTrueWhenChargeCanBeRetried() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -591,7 +591,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCanBeRetried() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -614,7 +614,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnCanRetryFalseWhenChargeHasAuthorisationModeAgreementAndCannotBeRetried() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -637,7 +637,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeAgreementAndUnspecifiedWhetherItCanBeRetried() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -660,7 +660,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotReturnCanRetryWhenChargeHasAuthorisationModeWeb() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -683,7 +683,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldReturnDebitCardType_whenCardTypeIsDebit() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -709,7 +709,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldGetFullExemptionObject_whenAllRelevantFieldIsSet() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -738,7 +738,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotGetOutcome_whenExemption3dsOutcomeNotYetKnown() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()
@@ -766,7 +766,7 @@ public class ChargesApiResourceIT {
 
         @Test
         void shouldNotGetExemption_whenNotSet() {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             String externalChargeId = RandomIdGenerator.newId();
 
             databaseTestHelper.addCharge(anAddChargeParams()

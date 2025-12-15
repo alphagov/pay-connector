@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.SERVICE_ID;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class ChargeCancelResourceIT {
     @RegisterExtension
@@ -212,7 +212,7 @@ public class ChargeCancelResourceIT {
         }
 
         private String createNewInPastChargeWithStatus(ChargeStatus status) {
-            long chargeId = randomInt();
+            long chargeId = secureRandomInt();
             return testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
                     .withCreatedDate(Instant.now().minus(1, HOURS))
                     .withChargeId(chargeId)

@@ -25,7 +25,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class EmittedEventResourceIT {
 
@@ -113,7 +113,7 @@ public class EmittedEventResourceIT {
     }
 
     private long addCharge() {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         externalChargeId = "charge" + chargeId;
         app.getDatabaseTestHelper().addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

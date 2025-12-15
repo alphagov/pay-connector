@@ -6,7 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.*;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphabetic;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 class RandomGeneratorUtilsTest {
 
@@ -44,11 +47,11 @@ class RandomGeneratorUtilsTest {
         assertNotNull(string);
         assertEquals(0, string.length());
     }
-    
+
 
     @Test
     void randomLong_defaultRange_withinExpectedBounds() {
-        long randomLong = randomLong();
+        long randomLong = secureRandomLong();
         assertTrue(randomLong >= 0, "value should be >= 0");
         assertTrue(randomLong < Long.MAX_VALUE, "value should be < Long.MAX_VALUE");
     }
@@ -58,7 +61,7 @@ class RandomGeneratorUtilsTest {
         long minInclusive = -10L;
         long maxExclusive = 0L;
         for (int i = 0; i < 50; i++) {
-            long randomLong = randomLong(minInclusive, maxExclusive);
+            long randomLong = secureRandomLong(minInclusive, maxExclusive);
             assertTrue(randomLong >= minInclusive, "value should be >= minInclusive");
             assertTrue(randomLong < maxExclusive, "value should be < maxExclusive");
         }
@@ -68,21 +71,21 @@ class RandomGeneratorUtilsTest {
     void randomLong_singleValueRange_returnsThatValue() {
         long min = 5L;
         long max = 6L; // only possible value is 5
-        long randomLong = randomLong(min, max);
+        long randomLong = secureRandomLong(min, max);
         assertEquals(min, randomLong);
     }
 
     @Test
     void randomLong_invalidRange_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> randomLong(10L, 10L));
-        assertThrows(IllegalArgumentException.class, () -> randomLong(11L, 10L));
+        assertThrows(IllegalArgumentException.class, () -> secureRandomLong(10L, 10L));
+        assertThrows(IllegalArgumentException.class, () -> secureRandomLong(11L, 10L));
     }
 
     @Test
     void randomInt_defaultRange_withinExpectedBounds() {
-        long randomLong = randomInt();
-        assertTrue(randomLong >= 0, "value should be >= 0");
-        assertTrue(randomLong < Integer.MAX_VALUE, "value should be < Integer.MAX_VALUE");
+        long randomInt = secureRandomInt();
+        assertTrue(randomInt >= 0, "value should be >= 0");
+        assertTrue(randomInt < Integer.MAX_VALUE, "value should be < Integer.MAX_VALUE");
     }
 
     @Test
@@ -91,7 +94,7 @@ class RandomGeneratorUtilsTest {
         int maxExclusive = 0;
         //run multiple times to make sure it doesnt behave flaky
         for (int i = 0; i < 50; i++) {
-            long randomLong = randomInt(minInclusive, maxExclusive);
+            long randomLong = secureRandomInt(minInclusive, maxExclusive);
             assertTrue(randomLong >= minInclusive, "value should be >= minInclusive");
             assertTrue(randomLong < maxExclusive, "value should be < maxExclusive");
         }
@@ -101,13 +104,13 @@ class RandomGeneratorUtilsTest {
     void randomInt_singleValueRange_returnsThatValue() {
         int min = 7;
         int max = 8; // only possible value is 7
-        long randomLong = randomInt(min, max);
+        long randomLong = secureRandomInt(min, max);
         assertEquals(min, randomLong);
     }
 
     @Test
     void randomInt_invalidRange_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> randomInt(5, 5));
-        assertThrows(IllegalArgumentException.class, () -> randomInt(6, 5));
+        assertThrows(IllegalArgumentException.class, () -> secureRandomInt(5, 5));
+        assertThrows(IllegalArgumentException.class, () -> secureRandomInt(6, 5));
     }
 }

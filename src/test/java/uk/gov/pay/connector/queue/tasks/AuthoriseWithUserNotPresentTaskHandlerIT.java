@@ -48,7 +48,7 @@ import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VAL
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class AuthoriseWithUserNotPresentTaskHandlerIT {
     @RegisterExtension
@@ -121,7 +121,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
     }
 
     private String setupChargeWithAgreementAndPaymentInstrument(String first6Digits, String last4Digits) {
-        Long paymentInstrumentId = randomLong();
+        Long paymentInstrumentId = secureRandomLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)

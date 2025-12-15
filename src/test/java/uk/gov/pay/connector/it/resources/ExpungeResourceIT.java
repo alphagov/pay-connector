@@ -37,7 +37,7 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternal
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 import static uk.gov.service.payments.commons.model.SupportedLanguage.ENGLISH;
 
@@ -62,13 +62,13 @@ public class ExpungeResourceIT {
         this.defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(databaseTestHelper)
                 .aTestAccount()
-                .withAccountId(randomLong())
+                .withAccountId(secureRandomLong())
                 .insert();
     }
 
     @Test
     void shouldExpungeCharge() throws JsonProcessingException {
-        var chargedId = randomLong();
+        var chargedId = secureRandomLong();
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -108,7 +108,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldUpdateTheParityCheckedDateOfNonCriteriaMatchedCharge() throws JsonProcessingException {
-        var chargedId = randomLong();
+        var chargedId = secureRandomLong();
         var date = parse(ISO_INSTANT_MILLISECOND_PRECISION.format(now(UTC).minusDays(91))).toInstant();
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -134,7 +134,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldNotExpungeChargeThatIsNotOldEnoughToBeExpunged() throws JsonProcessingException {
-        var chargedId = randomLong();
+        var chargedId = secureRandomLong();
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
                 .withChargeId(chargedId)
@@ -166,7 +166,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldExpungeChargesMeetingCriteriaButNotThoseThatDont() throws JsonProcessingException {
-        var chargedId = randomLong();
+        var chargedId = secureRandomLong();
 
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -187,7 +187,7 @@ public class ExpungeResourceIT {
         insertChargeEvent(expungeableCharge1);
         app.getLedgerStub().returnLedgerTransaction("external_charge_id_10", expungeableCharge1, null);
 
-        var chargedId2 = randomLong();
+        var chargedId2 = secureRandomLong();
 
         var nonExpungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -208,7 +208,7 @@ public class ExpungeResourceIT {
         insertChargeEvent(nonExpungeableCharge1);
         app.getLedgerStub().returnLedgerTransaction("external_charge_id_11", nonExpungeableCharge1, null);
 
-        var chargedId3 = randomLong();
+        var chargedId3 = secureRandomLong();
 
         var expungeableCharge2 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -229,7 +229,7 @@ public class ExpungeResourceIT {
         insertChargeEvent(expungeableCharge2);
         app.getLedgerStub().returnLedgerTransaction("external_charge_id_12", expungeableCharge2, null);
 
-        var chargedId4 = randomLong();
+        var chargedId4 = secureRandomLong();
 
         var nonExpungeableCharge2 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -268,7 +268,7 @@ public class ExpungeResourceIT {
 
     @Test
     void shouldExpungeAuxiliaryTables_whenTheyExistAndReferenceAChargeForExpunging() throws JsonProcessingException {
-        var chargedId = randomLong();
+        var chargedId = secureRandomLong();
 
         expungeableCharge1 = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
@@ -299,7 +299,7 @@ public class ExpungeResourceIT {
         emittedEventDao.persist(anEmittedEventEntity()
                 .withResourceExternalId(expungeableCharge1.getExternalChargeId())
                 .withResourceType("payment")
-                .withId(randomLong())
+                .withId(secureRandomLong())
                 .build());
 
         app.getLedgerStub().returnLedgerTransaction("external_charge_id", expungeableCharge1, testFee);
@@ -353,7 +353,7 @@ public class ExpungeResourceIT {
 
         var chargeToStub = DatabaseFixtures.withDatabaseTestHelper(databaseTestHelper)
                 .aTestCharge()
-                .withChargeId(randomLong())
+                .withChargeId(secureRandomLong())
                 .withTestAccount(defaultTestAccount);
         app.getLedgerStub().returnLedgerTransaction(chargeExternalId, chargeToStub, null);
         var containsEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(parityCheckFailedRefund.getExternalId());

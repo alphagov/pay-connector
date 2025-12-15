@@ -32,7 +32,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.it.util.ChargeUtils.createChargePostBody;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class ChargesApiResourceAllowWebPaymentsIT {
     @RegisterExtension
@@ -129,7 +129,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
     }
 
     private DatabaseFixtures.TestAccount addGatewayAccountAndCredential(String paymentProvider) {
-        long accountId = randomLong(2, 10000);
+        long accountId = secureRandomLong(2, 10000);
         LocalDateTime createdDate = LocalDate.parse("2021-01-01").atStartOfDay();
         LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
         LocalDateTime activeEndDate = LocalDate.parse("2021-03-01").atStartOfDay();

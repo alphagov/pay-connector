@@ -61,7 +61,7 @@ import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBui
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class StripeCardResourceAuthoriseIT {
     @RegisterExtension
@@ -98,9 +98,9 @@ public class StripeCardResourceAuthoriseIT {
 
     @BeforeEach
     void setup() {
-        stripeAccountId = String.valueOf(randomInt());
+        stripeAccountId = String.valueOf(secureRandomInt());
         databaseTestHelper = app.getDatabaseTestHelper();
-        accountId = String.valueOf(randomInt());
+        accountId = String.valueOf(secureRandomInt());
 
         connectorRestApiClient = new RestAssuredClient(app.getLocalPort(), accountId);
 
@@ -474,7 +474,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private String addChargeWithStatus(ChargeStatus chargeStatus) {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -489,7 +489,7 @@ public class StripeCardResourceAuthoriseIT {
     }
 
     private String addChargeWithAgreement(ChargeStatus chargeStatus, String agreementExternalId) {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

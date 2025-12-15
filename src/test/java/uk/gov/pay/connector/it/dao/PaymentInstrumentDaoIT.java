@@ -16,7 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class PaymentInstrumentDaoIT {
     @RegisterExtension
@@ -71,7 +71,7 @@ public class PaymentInstrumentDaoIT {
     private void insertTestPaymentInstrument(String paymentInstrumentExternalId) {
         app.getDatabaseFixtures()
                 .aTestPaymentInstrument()
-                .withPaymentInstrumentId(randomLong())
+                .withPaymentInstrumentId(secureRandomLong())
                 .withExternalId(paymentInstrumentExternalId)
                 .insert();
     }

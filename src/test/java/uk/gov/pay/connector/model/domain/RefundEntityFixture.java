@@ -6,11 +6,11 @@ import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class RefundEntityFixture {
 
-    private Long id = randomLong();
+    private Long id = secureRandomLong();
     private Long amount = 500L;
     private RefundStatus status = RefundStatus.CREATED;
     private String reference = "reference";

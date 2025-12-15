@@ -25,7 +25,7 @@ import static uk.gov.pay.connector.it.util.NotificationUtils.worldpayRefundNotif
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class SendRefundEmailIT {
     private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
@@ -42,14 +42,14 @@ public class SendRefundEmailIT {
             CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
             CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
     );
-    private final String accountId = String.valueOf(randomInt());
+    private final String accountId = String.valueOf(secureRandomInt());
 
     @Test
     void shouldSendEmailFollowingASuccessfulRefund() throws Exception {
         app.getNotifyStub().respondWithSuccess();
         addGatewayAccount();
 
-        String transactionId = String.valueOf(randomInt());
+        String transactionId = String.valueOf(secureRandomInt());
         String refundExternalId = "999999";
 
         ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, app.getDatabaseTestHelper(), "worldpay");

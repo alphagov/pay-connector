@@ -35,12 +35,12 @@ import java.util.Map;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ChargeEntityFixture {
 
-    private Long id = randomLong();
+    private Long id = secureRandomLong();
     private String externalId = RandomIdGenerator.newId();
     private Long amount = 500L;
     private String returnUrl = "http://return.invalid";

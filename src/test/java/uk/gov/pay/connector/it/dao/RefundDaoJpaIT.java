@@ -40,7 +40,7 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class RefundDaoJpaIT {
     @RegisterExtension
@@ -305,7 +305,7 @@ public class RefundDaoJpaIT {
     @Test
     void findMaxId_returnsTheMaximumId() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
-        refundEntity.setId(randomLong());
+        refundEntity.setId(secureRandomLong());
         refundEntity.setStatus(REFUND_SUBMITTED.getValue());
         refundDao.persist(refundEntity);
 
@@ -387,7 +387,7 @@ public class RefundDaoJpaIT {
         emittedEventDao.persist(anEmittedEventEntity()
                 .withResourceExternalId(refundToExpunge.getExternalId())
                 .withResourceType("refund")
-                .withId(randomLong())
+                .withId(secureRandomLong())
                 .build());
 
         // assert data is as expected

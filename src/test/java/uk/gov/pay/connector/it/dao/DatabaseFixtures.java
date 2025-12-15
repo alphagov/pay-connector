@@ -42,7 +42,7 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
@@ -328,7 +328,7 @@ public class DatabaseFixtures {
     }
 
     public class TestAccount {
-        long accountId = randomLong(1, 99999);
+        long accountId = secureRandomLong(1, 99999);
         String externalId = randomUuid();
         private String paymentProvider = "sandbox";
         private Map<String, Object> credentialsMap = Map.of();
@@ -632,8 +632,8 @@ public class DatabaseFixtures {
     }
 
     public class TestAgreement {
-        Long agreementId = randomLong();
-        Long gatewayAccountId = randomLong();
+        Long agreementId = secureRandomLong();
+        Long gatewayAccountId = secureRandomLong();
         String externalId = "externalIDxxxyz";
         String reference = "AgreementReference";
         String description = "A valid description";
@@ -747,7 +747,7 @@ public class DatabaseFixtures {
     }
 
     public class TestCharge {
-        Long chargeId = randomLong();
+        Long chargeId = secureRandomLong();
         String email = "alice.111@mail.test";
         String externalChargeId = RandomIdGenerator.newId();
         long amount = 101L;
@@ -1298,7 +1298,7 @@ public class DatabaseFixtures {
     }
 
     public class TestPaymentInstrument {
-        Long paymentInstrumentId = randomLong();
+        Long paymentInstrumentId = secureRandomLong();
         ;
         Map<String, String> recurringAuthToken;
         Instant createdDate = Instant.now();

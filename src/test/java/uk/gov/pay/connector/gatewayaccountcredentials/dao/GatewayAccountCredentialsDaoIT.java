@@ -39,7 +39,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountCredentialsDaoIT {
@@ -57,7 +57,7 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void hasActiveCredentialsShouldReturnTrueIfGatewayAccountHasActiveCredentials() {
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = secureRandomLong();
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .withPaymentGateway("stripe")
@@ -80,7 +80,7 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void hasActiveCredentialsShouldReturnFalseIfGatewayAccountHasNoActiveCredentials() {
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = secureRandomLong();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withState(CREATED)
                 .withPaymentProvider("stripe")
@@ -100,7 +100,7 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void findsCredentialByExternalIdAndGatewayAccount() {
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = secureRandomLong();
         String externalCredentialId = randomUuid();
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
@@ -126,7 +126,7 @@ public class GatewayAccountCredentialsDaoIT {
 
     @Test
     void findByCredentialsKeyValue_shouldFindGatewayAccountCredentialEntity() {
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = secureRandomLong();
         Map<String, Object> credMap = Map.of("some_payment_provider_account_id", "accountid");
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
@@ -217,7 +217,7 @@ public class GatewayAccountCredentialsDaoIT {
     }
 
     private GatewayAccountEntity createAndPersistAGatewayAccount() {
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = secureRandomLong();
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());

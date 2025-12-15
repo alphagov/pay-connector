@@ -26,7 +26,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ServiceArchivedEventIT {
@@ -66,7 +66,7 @@ public class ServiceArchivedEventIT {
     @Test
     @PactVerification({"adminusers"})
     public void test() throws Exception {
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = secureRandomLong();
         String externalId = randomUuid();
         Map<String, Object> credMap = Map.of("some_payment_provider_account_id", String.valueOf(gatewayAccountId));
         app.getDatabaseTestHelper().addGatewayAccount(

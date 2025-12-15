@@ -16,7 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public record AddChargeParams(
         Long chargeId,
@@ -73,7 +73,7 @@ public record AddChargeParams(
         private AuthorisationMode authorisationMode = AuthorisationMode.WEB;
         private Boolean canRetry;
         private CardType cardType;
-        private Long chargeId = randomLong();
+        private Long chargeId = secureRandomLong();
         private Long corporateSurcharge;
         private Instant createdDate = Instant.now();
         private boolean delayedCapture = false;

@@ -52,7 +52,7 @@ import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountResourceIT {
@@ -100,7 +100,7 @@ public class GatewayAccountResourceIT {
                     anAddGatewayAccountParams()
                             .withPaymentGateway("worldpay")
                             .withServiceId(serviceId)
-                            .withAccountId(String.valueOf(randomInt()))
+                            .withAccountId(String.valueOf(secureRandomInt()))
                             .withServiceName("Service Name")
                             .withType(LIVE)
                             .build());
@@ -167,7 +167,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnWorldpayAccountInformation() {
-            long accountId = randomInt();
+            long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(WORLDPAY.getName())
                     .withGatewayAccountId(accountId)
@@ -280,7 +280,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnStripeAccountInformation() {
-            long accountId = randomInt();
+            long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(STRIPE.getName())
                     .withGatewayAccountId(accountId)
@@ -478,7 +478,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnAccountInformationForGetAccountById_withWorldpayCredentials() {
-            long accountId = randomInt();
+            long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(WORLDPAY.getName())
                     .withGatewayAccountId(accountId)
@@ -582,7 +582,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnAccountInformationForGetAccountById_withStripeCredentials() {
-            long accountId = randomInt();
+            long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(STRIPE.getName())
                     .withGatewayAccountId(accountId)
@@ -614,7 +614,7 @@ public class GatewayAccountResourceIT {
 
         @Test
         void shouldReturnAccountInformationForGetAccountById_withEpdqCredentials() {
-            long accountId = randomInt();
+            long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(EPDQ.getName())
                     .withGatewayAccountId(accountId)
@@ -706,7 +706,7 @@ public class GatewayAccountResourceIT {
 
     @Test
     public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInOneOffPaymentCredentials() {
-        long accountId = randomInt();
+        long accountId = secureRandomInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
                 .withGatewayAccountId(accountId)
@@ -739,7 +739,7 @@ public class GatewayAccountResourceIT {
 
     @Test
     public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
-        long accountId = randomInt();
+        long accountId = secureRandomInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
                 .withGatewayAccountId(accountId)

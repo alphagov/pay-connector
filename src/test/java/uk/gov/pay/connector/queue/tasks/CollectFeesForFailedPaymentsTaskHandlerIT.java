@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class CollectFeesForFailedPaymentsTaskHandlerIT {
     @RegisterExtension
@@ -31,7 +31,7 @@ public class CollectFeesForFailedPaymentsTaskHandlerIT {
 
     @Test
     void shouldPersistFees() throws Exception {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         String chargeExternalId = RandomIdGenerator.newId();
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
         app.getDatabaseTestHelper().addCharge(anAddChargeParams()

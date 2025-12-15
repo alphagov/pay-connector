@@ -58,7 +58,7 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccoun
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class CardResourceAuthoriseIT {
@@ -309,7 +309,7 @@ public class CardResourceAuthoriseIT {
 
     @Test
     void shouldPersistCorporateSurcharge() {
-        String accountId = String.valueOf(randomInt());
+        String accountId = String.valueOf(secureRandomInt());
         long corporateCreditCardSurchargeAmount = 2222L;
         var gatewayAccountParams = anAddGatewayAccountParams()
                 .withAccountId(accountId)
@@ -479,7 +479,7 @@ public class CardResourceAuthoriseIT {
 
     @Test
     void shouldUseActivePaymentProviderWhenMultipleCredentials() {
-        long accountId = randomInt();
+        long accountId = secureRandomInt();
         AddGatewayAccountCredentialsParams stripeCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(STRIPE.getName())
                 .withGatewayAccountId(accountId)

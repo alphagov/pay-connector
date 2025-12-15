@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.util;
 
+import org.apache.commons.lang3.RandomUtils;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.ThreadLocalRandom.current;
@@ -15,20 +17,20 @@ public final class RandomGeneratorUtils {
     }
 
 
-    public static long randomLong() {
-        return randomLong(0, Long.MAX_VALUE);
+    public static long secureRandomLong() {
+        return secureRandomLong(0, Long.MAX_VALUE);
     }
 
-    public static long randomLong(long minInclusive, long maxExclusive) {
-        return current().nextLong(minInclusive, maxExclusive);
+    public static long secureRandomLong(long minInclusive, long maxExclusive) {
+        return RandomUtils.secure().randomLong(minInclusive, maxExclusive);
     }
 
-    public static int randomInt() {
-        return current().nextInt(0, Integer.MAX_VALUE);
+    public static int secureRandomInt() {
+        return secureRandomInt(0, Integer.MAX_VALUE);
     }
 
-    public static int randomInt(int minInclusive, int maxExclusive) {
-        return current().nextInt(minInclusive, maxExclusive);
+    public static int secureRandomInt(int minInclusive, int maxExclusive) {
+        return RandomUtils.secure().randomInt(minInclusive, maxExclusive);
     }
 
     public static String randomAlphabetic(int length) {

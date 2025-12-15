@@ -23,7 +23,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class GatewayCleanupResourceIT {
     @RegisterExtension
@@ -41,7 +41,7 @@ public class GatewayCleanupResourceIT {
         // add a non-Worldpay charge that shouldn't be picked up
         var sandboxAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
-                .withAccountId(randomLong())
+                .withAccountId(secureRandomLong())
                 .withPaymentProvider(SANDBOX.getName())
                 .insert();
 

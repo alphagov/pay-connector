@@ -18,7 +18,7 @@ import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 class QueryAndUpdatePaymentInSubmittedStateTaskHandlerIT {
     @RegisterExtension
@@ -29,7 +29,7 @@ class QueryAndUpdatePaymentInSubmittedStateTaskHandlerIT {
 
     @Test
     void shouldQueryAndUpdateChargeInSubmittedStateToCaptured() {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         String chargeExternalId = RandomIdGenerator.newId();
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
 

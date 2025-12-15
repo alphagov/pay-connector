@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import static java.sql.Types.OTHER;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
 
 public class DatabaseTestHelper {
 
@@ -272,7 +272,7 @@ public class DatabaseTestHelper {
     public int addRefund(String externalId, long amount, RefundStatus status,
                          String gatewayTransactionId, ZonedDateTime createdDate, String submittedByUserExternalId,
                          String userEmail, String chargeExternalId, ParityCheckStatus parityCheckStatus, ZonedDateTime parityCheckDate) {
-        int refundId = randomInt();
+        int refundId = secureRandomInt();
         jdbi.withHandle(handle ->
                 handle
                         .createUpdate("INSERT INTO refunds(id, external_id, amount, status, " +

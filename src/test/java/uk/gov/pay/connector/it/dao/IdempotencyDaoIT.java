@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class IdempotencyDaoIT {
     @RegisterExtension
@@ -55,7 +55,7 @@ public class IdempotencyDaoIT {
     void shouldThrowException_whenGatewayAccountIdAndKeyExists() {
         Map<String, Object> requestBody = Map.of("foo", "bar");
         gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = secureRandomLong();
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());

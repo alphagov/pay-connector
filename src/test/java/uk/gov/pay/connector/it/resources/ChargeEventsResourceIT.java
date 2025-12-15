@@ -35,7 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 
 public class ChargeEventsResourceIT {
 
@@ -73,7 +73,7 @@ public class ChargeEventsResourceIT {
         DatabaseFixtures.TestAccount testAccount = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
                 .withAccountId(Long.parseLong(gatewayAccountId));
-        chargeId = randomLong();
+        chargeId = secureRandomLong();
         testCharge = withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
                 .withChargeId(chargeId)

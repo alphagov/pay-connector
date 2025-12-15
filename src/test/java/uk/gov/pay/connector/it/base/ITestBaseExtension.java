@@ -66,8 +66,8 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphabetic;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomInt;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomLong;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
@@ -104,8 +104,8 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
 
     private String paymentProvider;
 
-    protected static String accountId = String.valueOf(randomInt());
-    private int gatewayAccountCredentialsId = randomInt();
+    protected static String accountId = String.valueOf(secureRandomInt());
+    private int gatewayAccountCredentialsId = secureRandomInt();
     private Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
     private static AddGatewayAccountCredentialsParams credentialParams;
@@ -471,7 +471,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -490,7 +490,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public String addAgreement() {
-        String agreementExternalId = String.valueOf(randomLong());
+        String agreementExternalId = String.valueOf(secureRandomLong());
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(accountId)
                 .withExternalAgreementId(agreementExternalId)
@@ -500,7 +500,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public Long addPaymentInstrument(String agreementExternalId, PaymentInstrumentStatus status) {
-        Long paymentInstrumentId = randomLong();
+        Long paymentInstrumentId = secureRandomLong();
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .withAgreementExternalId(agreementExternalId)
@@ -521,10 +521,10 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     ) {
         String agreementExternalId = addAgreement();
 
-        long paymentInstrumentId = randomInt();
+        long paymentInstrumentId = secureRandomInt();
         AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder paymentInstrumentParamsBuilder = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
-                .withExternalPaymentInstrumentId(String.valueOf(randomInt()))
+                .withExternalPaymentInstrumentId(String.valueOf(secureRandomInt()))
                 .withRecurringAuthToken(recurringAuthToken)
                 .withAgreementExternalId(agreementExternalId);
 
@@ -534,7 +534,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         databaseTestHelper.addPaymentInstrument(paymentInstrumentParamsBuilder.build());
         databaseTestHelper.updateAgreementPaymentInstrumentId(agreementExternalId, paymentInstrumentId);
 
-        long chargeId = randomInt();
+        long chargeId = secureRandomInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
         var chargeParams = anAddChargeParams()
                 .withChargeId(chargeId)
