@@ -85,7 +85,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Credential with ACTIVE state not found"));
         }
 
@@ -108,7 +108,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Account has no credential to switch to/from"));
         }
 
@@ -136,7 +136,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(404));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Credential with external id [" + nonExistentCredentialExternalId + "] not found"));
         }
 
@@ -164,7 +164,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Credential with VERIFIED_WITH_LIVE_PAYMENT state not found"));
         }
 
@@ -181,7 +181,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(404));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is(format("Gateway account not found for service external id [%s] and account type [test]", serviceId)));
         }
 
@@ -199,7 +199,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Account is not configured to switch PSP or already switched PSP."));
         }
 
@@ -251,7 +251,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Credential with ACTIVE state not found"));
         }
 
@@ -274,7 +274,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Account has no credential to switch to/from"));
         }
 
@@ -301,7 +301,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(404));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Credential with external id [" + switchToExtId + "] not found"));
         }
 
@@ -328,7 +328,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Credential with VERIFIED_WITH_LIVE_PAYMENT state not found"));
         }
 
@@ -344,7 +344,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(404));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Gateway Account with id [1] not found."));
         }
 
@@ -361,7 +361,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(400));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("Account is not configured to switch PSP or already switched PSP."));
         }
 
@@ -379,7 +379,7 @@ class GatewayAccountResourceSwitchPspValidationTest {
 
             assertThat(response.getStatus(), is(422));
 
-            String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+            String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
             assertThat(errorMessage, is("must not be null"));
         }
     }

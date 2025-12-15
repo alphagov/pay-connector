@@ -32,6 +32,6 @@ public class IpAddressMatcher {
         List<String> ipAddresses = asList(forwardedAddresses.replaceAll("\\s","").split(","));
         // We want the last address in the forwardedAddress parameter as that's the address we trust 
         Collections.reverse(ipAddresses);
-        return ipAddresses.get(0);
+        return ipAddresses.getFirst();
     }
 }

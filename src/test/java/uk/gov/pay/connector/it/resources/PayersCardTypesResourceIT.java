@@ -47,7 +47,7 @@ public class PayersCardTypesResourceIT {
                 });
         List<CardTypeEntity> cardTypeEntities = response.get("card_types");
         assertThat(cardTypeEntities, hasSize(1));
-        CardTypeEntity visaCard = cardTypeEntities.get(0);
+        CardTypeEntity visaCard = cardTypeEntities.getFirst();
         assertThat(visaCard, is(cardTypeEntity));
     }
 }

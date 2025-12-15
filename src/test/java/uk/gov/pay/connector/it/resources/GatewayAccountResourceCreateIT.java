@@ -219,12 +219,12 @@ public class GatewayAccountResourceCreateIT {
 
         List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
         assertThat(gatewayAccountCredentialsList.size(), is(1));
-        GatewayCredentials credentialsObject = gatewayAccountCredentialsList.get(0).getCredentialsObject();
+        GatewayCredentials credentialsObject = gatewayAccountCredentialsList.getFirst().getCredentialsObject();
         assertThat(credentialsObject, isA(StripeCredentials.class));
         assertThat(((StripeCredentials) credentialsObject).getStripeAccountId(), is(stripeAccountId));
-        assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
-        assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("stripe"));
-        assertThat(gatewayAccountCredentialsList.get(0).getActiveStartDate(), is(notNullValue()));
+        assertThat(gatewayAccountCredentialsList.getFirst().getState(), is(ACTIVE));
+        assertThat(gatewayAccountCredentialsList.getFirst().getPaymentProvider(), is("stripe"));
+        assertThat(gatewayAccountCredentialsList.getFirst().getActiveStartDate(), is(notNullValue()));
     }
 
         @Test
@@ -252,9 +252,9 @@ public class GatewayAccountResourceCreateIT {
 
             List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
             assertThat(gatewayAccountCredentialsList.size(), is(1));
-            assertThat(gatewayAccountCredentialsList.get(0).getState(), is(ACTIVE));
-            assertThat(gatewayAccountCredentialsList.get(0).getPaymentProvider(), is("sandbox"));
-            assertThat(gatewayAccountCredentialsList.get(0).getCredentials().isEmpty(), is(true));
+            assertThat(gatewayAccountCredentialsList.getFirst().getState(), is(ACTIVE));
+            assertThat(gatewayAccountCredentialsList.getFirst().getPaymentProvider(), is("sandbox"));
+            assertThat(gatewayAccountCredentialsList.getFirst().getCredentials().isEmpty(), is(true));
         }
 
         private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {

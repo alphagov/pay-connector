@@ -319,8 +319,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getAllValues().get(0).getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        assertThat(eventCaptor.getAllValues().getFirst().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
 
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
@@ -416,7 +416,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
                 hasItems("Applied corporate card surcharge for charge"));
-        assertThat(loggingEvents.get(0).getArgumentArray(), hasItemInArray(kv("corporate_card_surcharge", 250L)));
+        assertThat(loggingEvents.getFirst().getArgumentArray(), hasItemInArray(kv("corporate_card_surcharge", 250L)));
 
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
@@ -881,8 +881,8 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getAllValues().get(0).getResourceExternalId(), is(charge.getExternalId()));
-        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_SUBMITTED_BY_API"));
+        assertThat(eventCaptor.getAllValues().getFirst().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_SUBMITTED_BY_API"));
 
         assertThat(charge.getRequires3ds(), is(false));
 

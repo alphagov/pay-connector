@@ -69,7 +69,7 @@ class GatewayAccountResourceValidationTest {
 
         assertThat(response.getStatus(), is(422));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
         assertThat(errorMessage, is("Unsupported payment provider account type, should be one of (test, live)"));
     }
 
@@ -85,7 +85,7 @@ class GatewayAccountResourceValidationTest {
 
         assertThat(response.getStatus(), is(422));
 
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+        String errorMessage = response.readEntity(JsonNode.class).get("message").getFirst().textValue();
         assertThat(errorMessage, is("Unsupported payment provider value."));
     }
 
@@ -205,7 +205,7 @@ class GatewayAccountResourceValidationTest {
         JsonNode message = body.get("message");
         assertThat(message.isArray(), is(true));
         assertThat(message.size(), is(1));
-        assertThat(message.get(0).textValue(),
+        assertThat(message.getFirst().textValue(),
                 is(expectedMessage));
         assertThat(body.get("error_identifier").textValue(), is(identifier.toString()));
     }

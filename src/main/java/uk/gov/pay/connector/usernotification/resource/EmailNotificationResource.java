@@ -131,7 +131,7 @@ public class EmailNotificationResource {
 
     private NotificationPatchInfo getNotificationInfoFromPath(EmailNotificationPatchRequest emailPatchRequest) {
         List<String> pathTokens = emailPatchRequest.pathTokens();
-        return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.get(0)), pathTokens.get(1), emailPatchRequest.getValue());
+        return new NotificationPatchInfo(EmailNotificationType.fromString(pathTokens.getFirst()), pathTokens.get(1), emailPatchRequest.getValue());
     }
 
     private void patch(EmailNotificationEntity emailNotificationEntity, NotificationPatchInfo patchInfo) {

@@ -172,10 +172,10 @@ public class GatewayAccountCredentialsDaoIT {
         
         List<Map<String, Object>> historyRows = app.getDatabaseTestHelper().getGatewayAccountCredentialsHistory(credentialsId);
         assertThat(historyRows, hasSize(1));
-        assertThat(historyRows.get(0).get("state"), is("ACTIVE"));
-        assertThat(historyRows.get(0).get("history_start_date"), not(nullValue()));
-        assertThat(historyRows.get(0).get("history_end_date"), is(nullValue()));
-        assertEquals(objectMapper.readValue(historyRows.get(0).get("credentials").toString(), Map.class), credentials);
+        assertThat(historyRows.getFirst().get("state"), is("ACTIVE"));
+        assertThat(historyRows.getFirst().get("history_start_date"), not(nullValue()));
+        assertThat(historyRows.getFirst().get("history_end_date"), is(nullValue()));
+        assertEquals(objectMapper.readValue(historyRows.getFirst().get("credentials").toString(), Map.class), credentials);
         
         gatewayAccountCredentialsEntity.setState(RETIRED);
         WorldpayCredentials worldpayCredentials = (WorldpayCredentials) gatewayAccountCredentialsEntity.getCredentialsObject();
@@ -188,10 +188,10 @@ public class GatewayAccountCredentialsDaoIT {
 
         List<Map<String, Object>> historyRowsAfterUpdate = app.getDatabaseTestHelper().getGatewayAccountCredentialsHistory(credentialsId);
         assertThat(historyRowsAfterUpdate, hasSize(2));
-        assertThat(historyRowsAfterUpdate.get(0).get("state"), is("ACTIVE"));
-        assertThat(historyRowsAfterUpdate.get(0).get("history_start_date"), not(nullValue()));
-        assertThat(historyRowsAfterUpdate.get(0).get("history_end_date"), not(nullValue()));
-        assertEquals(objectMapper.readValue(historyRowsAfterUpdate.get(0).get("credentials").toString(), Map.class), credentials);
+        assertThat(historyRowsAfterUpdate.getFirst().get("state"), is("ACTIVE"));
+        assertThat(historyRowsAfterUpdate.getFirst().get("history_start_date"), not(nullValue()));
+        assertThat(historyRowsAfterUpdate.getFirst().get("history_end_date"), not(nullValue()));
+        assertEquals(objectMapper.readValue(historyRowsAfterUpdate.getFirst().get("credentials").toString(), Map.class), credentials);
         assertThat(historyRowsAfterUpdate.get(1).get("state"), is("RETIRED"));
         assertThat(historyRowsAfterUpdate.get(1).get("history_start_date"), not(nullValue()));
         assertThat(historyRowsAfterUpdate.get(1).get("history_end_date"), is(nullValue()));

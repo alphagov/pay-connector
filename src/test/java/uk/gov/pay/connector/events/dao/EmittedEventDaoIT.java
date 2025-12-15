@@ -69,7 +69,7 @@ public class EmittedEventDaoIT {
         final List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
 
         assertThat(events.size(), is(1));
-        final Map<String, Object> event = events.get(0);
+        final Map<String, Object> event = events.getFirst();
         assertThat(event.get("resource_external_id"), is(eventThatHasBeenEmitted.getResourceExternalId()));
         assertThat(event.get("do_not_retry_emit_until"), is(Timestamp.from(doNotRetryEmitUntilDate.toInstant())));
     }
@@ -103,7 +103,7 @@ public class EmittedEventDaoIT {
         final List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
 
         assertThat(events.size(), is(1));
-        final Map<String, Object> event = events.get(0);
+        final Map<String, Object> event = events.getFirst();
         assertThat(event.get("resource_external_id"), is(eventToRecord.getResourceExternalId()));
         assertThat(event.get("resource_type"), is(eventToRecord.getResourceType().getLowercase()));
         assertThat(event.get("event_type"), is(eventToRecord.getEventType()));
@@ -119,14 +119,14 @@ public class EmittedEventDaoIT {
                 eventToRecord.getEventType(), eventToRecord.getTimestamp(), null);
 
         List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
-        Map<String, Object> event = events.get(0);
+        Map<String, Object> event = events.getFirst();
         assertThat(event.get("emitted_date"), is(nullValue()));
         assertThat(event.get("event_date").toString(), is("2018-01-01 12:00:00.0"));
 
         final RefundSubmitted eventToUpdate = aRefundSubmittedEvent(Instant.parse("2019-01-01T14:00:00Z"));
         emittedEventDao.markEventAsEmitted(eventToUpdate);
         events = app.getDatabaseTestHelper().readEmittedEvents();
-        event = events.get(0);
+        event = events.getFirst();
         assertThat(event.get("emitted_date"), is(notNullValue()));
         assertThat(event.get("event_date").toString(), is("2019-01-01 14:00:00.0"));
     }
@@ -138,13 +138,13 @@ public class EmittedEventDaoIT {
 
         List<Map<String, Object>> events = app.getDatabaseTestHelper().readEmittedEvents();
 
-        Map<String, Object> event = events.get(0);
+        Map<String, Object> event = events.getFirst();
         assertThat(event.get("emitted_date"), is(notNullValue()));
         String emittedDateBeforeUpdate = event.get("emitted_date").toString();
 
         emittedEventDao.markEventAsEmitted(eventToRecord);
         events = app.getDatabaseTestHelper().readEmittedEvents();
-        event = events.get(0);
+        event = events.getFirst();
         assertThat(event.get("emitted_date").toString(), is(emittedDateBeforeUpdate));
     }
 
@@ -162,10 +162,10 @@ public class EmittedEventDaoIT {
                 Instant.parse("2019-01-01T14:00:01Z"), 1, 0L, Long.MAX_VALUE,  ZonedDateTime.now(UTC));
 
         assertThat(notEmittedEvents.size(), is(1));
-        assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());
-        assertThat(notEmittedEvents.get(0).getEventType(), is(paymentCreatedEvent.getEventType()));
-        assertThat(notEmittedEvents.get(0).getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
-        assertThat(notEmittedEvents.get(0).getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
+        assertThat(notEmittedEvents.getFirst().getEmittedDate(), nullValue());
+        assertThat(notEmittedEvents.getFirst().getEventType(), is(paymentCreatedEvent.getEventType()));
+        assertThat(notEmittedEvents.getFirst().getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
+        assertThat(notEmittedEvents.getFirst().getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
     }
 
     @Test
@@ -187,11 +187,11 @@ public class EmittedEventDaoIT {
                 Instant.parse("2019-01-01T14:00:01Z"), 2, 0L, Long.MAX_VALUE, ZonedDateTime.now(UTC));
 
         assertThat(notEmittedEvents.size(), is(2));
-        assertThat(notEmittedEvents.get(0).getEmittedDate(), nullValue());
-        assertThat(notEmittedEvents.get(0).getEventType(), is(paymentCreatedEvent.getEventType()));
-        assertThat(notEmittedEvents.get(0).getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
-        assertThat(notEmittedEvents.get(0).getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
-        assertThat(notEmittedEvents.get(0).getDoNotRetryEmitUntil(), is(nullValue()));
+        assertThat(notEmittedEvents.getFirst().getEmittedDate(), nullValue());
+        assertThat(notEmittedEvents.getFirst().getEventType(), is(paymentCreatedEvent.getEventType()));
+        assertThat(notEmittedEvents.getFirst().getResourceExternalId(), is(paymentCreatedEvent.getResourceExternalId()));
+        assertThat(notEmittedEvents.getFirst().getResourceType(), is(paymentCreatedEvent.getResourceType().getLowercase()));
+        assertThat(notEmittedEvents.getFirst().getDoNotRetryEmitUntil(), is(nullValue()));
 
         assertThat(notEmittedEvents.get(1).getEmittedDate(), nullValue());
         assertThat(notEmittedEvents.get(1).getEventType(), is(refundSubmittedEvent.getEventType()));

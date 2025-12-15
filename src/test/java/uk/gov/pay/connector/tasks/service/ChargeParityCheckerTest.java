@@ -378,7 +378,7 @@ class ChargeParityCheckerTest {
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logStatement.get(0).getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=created_date]"));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=created_date]"));
     }
 
     @Test
@@ -435,7 +435,7 @@ class ChargeParityCheckerTest {
         if (connectorAuthorisationSummaryState != null || ledgerAuthorisationSummaryState != null) {
             expectedLogMessage.append(" [calculated_states=").append(connectorAuthorisationSummaryState).append(",").append(ledgerAuthorisationSummaryState).append(']');
         }
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage.toString()));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage.toString()));
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepancies() {
@@ -587,7 +587,7 @@ class ChargeParityCheckerTest {
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = "Field value does not match between ledger and connector [field_name=exemption] " +
                 "[calculated_states=" + connectorExemption3dsState + ',' + connectorExemption3DsRequestedState + ',' + ledgerExemptionState + ']';
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatch() {

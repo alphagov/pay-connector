@@ -28,11 +28,11 @@ class NotificationsTest {
         assertThat(notifications.get(), is(notNullValue()));
         assertThat(notifications.get().size(), is(2));
 
-        assertThat(notifications.get().get(0).getTransactionId(), is("transaction-id-1"));
-        assertThat(notifications.get().get(0).getReference(), is("reference-1"));
-        assertThat(notifications.get().get(0).getStatus(), is("status-1"));
-        assertThat(notifications.get().get(0).getGatewayEventDate(), is(now));
-        assertThat(notifications.get().get(0).getPayload(), is(Optional.of(singletonList(new BasicNameValuePair("my", "payload1")))));
+        assertThat(notifications.get().getFirst().getTransactionId(), is("transaction-id-1"));
+        assertThat(notifications.get().getFirst().getReference(), is("reference-1"));
+        assertThat(notifications.get().getFirst().getStatus(), is("status-1"));
+        assertThat(notifications.get().getFirst().getGatewayEventDate(), is(now));
+        assertThat(notifications.get().getFirst().getPayload(), is(Optional.of(singletonList(new BasicNameValuePair("my", "payload1")))));
 
         assertThat(notifications.get().get(1).getTransactionId(), is("transaction-id-2"));
         assertThat(notifications.get().get(1).getReference(), is("reference-2"));

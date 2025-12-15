@@ -68,7 +68,7 @@ import static org.mockito.Mockito.when;
         verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> allValues = loggingEventArgumentCaptor.getAllValues();
 
-        assertThat(allValues.get(0).getFormattedMessage(), is("Checking for database availability >>>"));
+        assertThat(allValues.getFirst().getFormattedMessage(), is("Checking for database availability >>>"));
         assertThat(allValues.get(1).getFormattedMessage(), is("Waiting for 5 seconds till the database is available ..."));
         assertThat(allValues.get(2).getFormattedMessage(), is("Database available."));
     }
@@ -91,7 +91,7 @@ import static org.mockito.Mockito.when;
         verify(mockAppender, times(5)).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logStatement.get(0).getFormattedMessage(), is("Checking for database availability >>>"));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is("Checking for database availability >>>"));
         assertThat(logStatement.get(1).getFormattedMessage(), is("Waiting for 5 seconds till the database is available ..."));
         assertThat(logStatement.get(2).getFormattedMessage(), is("Waiting for 10 seconds till the database is available ..."));
         assertThat(logStatement.get(3).getFormattedMessage(), is("Waiting for 15 seconds till the database is available ..."));

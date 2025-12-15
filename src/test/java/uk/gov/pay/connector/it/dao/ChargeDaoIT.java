@@ -102,7 +102,7 @@ public class ChargeDaoIT {
                 .withPaymentProvider(defaultTestAccount.getPaymentProvider())
                 .withState(ACTIVE)
                 .build();
-        gatewayAccountCredentialsEntity.setId(defaultTestAccount.getCredentials().get(0).getId());
+        gatewayAccountCredentialsEntity.setId(defaultTestAccount.getCredentials().getFirst().getId());
     }
 
     @AfterEach
@@ -602,7 +602,7 @@ public class ChargeDaoIT {
         List<ChargeEntity> charges = chargeDao.findBeforeDateWithStatusIn(Instant.now().minus(Duration.ofHours(1)), chargeStatuses);
 
         assertThat(charges.size(), is(1));
-        assertEquals(charges.get(0).getId(), charge.getChargeId());
+        assertEquals(charges.getFirst().getId(), charge.getChargeId());
     }
 
     @Test
@@ -962,7 +962,7 @@ public class ChargeDaoIT {
         var charges = chargeDao.findByParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER, 1, 0L);
 
         assertThat(charges.size(), is(1));
-        assertThat(charges.get(0).getParityCheckStatus(), is(ParityCheckStatus.MISSING_IN_LEDGER));
+        assertThat(charges.getFirst().getParityCheckStatus(), is(ParityCheckStatus.MISSING_IN_LEDGER));
     }
 
     @Test

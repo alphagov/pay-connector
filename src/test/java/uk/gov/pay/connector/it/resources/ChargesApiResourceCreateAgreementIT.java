@@ -194,7 +194,7 @@ public class ChargesApiResourceCreateAgreementIT {
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
 
-        LoggingEvent log = logEvents.get(0);
+        LoggingEvent log = logEvents.getFirst();
         List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).toList();
         assertThat(log.getMessage(), is("Task added to queue"));
         assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
@@ -242,7 +242,7 @@ public class ChargesApiResourceCreateAgreementIT {
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
 
-        LoggingEvent log = logEvents.get(0);
+        LoggingEvent log = logEvents.getFirst();
         List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).toList();
         assertThat(log.getMessage(), is("Task added to queue"));
         assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));

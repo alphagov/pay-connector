@@ -49,16 +49,16 @@ public class ResponseContainsLinkMatcher extends TypeSafeMatcher<List<Map<String
                 .filter(link -> this.rel.equals(link.get("rel"))).collect(Collectors.toList());
 
         boolean result = filteredLinks.size() == 1 &&
-                method.equals(filteredLinks.get(0).get("method")) &&
-                href.equals(filteredLinks.get(0).get("href"));
+                method.equals(filteredLinks.getFirst().get("method")) &&
+                href.equals(filteredLinks.getFirst().get("href"));
 
         if (type == null) {
             // only rel, method and href and no other fields
-            result = result && filteredLinks.get(0).size() == 3;
+            result = result && filteredLinks.getFirst().size() == 3;
         } else {
             result = result &&
-                    type.equals(filteredLinks.get(0).get("type")) &&
-                    parametersMatches(params, (Map<String, Object>) filteredLinks.get(0).get("params"));
+                    type.equals(filteredLinks.getFirst().get("type")) &&
+                    parametersMatches(params, (Map<String, Object>) filteredLinks.getFirst().get("params"));
         }
 
         return result;

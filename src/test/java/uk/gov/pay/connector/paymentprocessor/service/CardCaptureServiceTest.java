@@ -432,7 +432,7 @@ class CardCaptureServiceTest extends CardServiceTest {
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
     }
 
     @Test

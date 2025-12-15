@@ -517,7 +517,7 @@ public class ChargesApiResourceTelephonePaymentsIT {
                     .extract().path("charge_id").toString();
 
             String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(chargeExternalId).get("gateway_account_credential_id").toString();
-            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(gatewayAccountId)).get(0).get("id").toString();
+            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(gatewayAccountId)).getFirst().get("id").toString();
             assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
 
             Map<String, Object> chargeDetails = app.getDatabaseTestHelper().getChargeByExternalId(chargeExternalId);

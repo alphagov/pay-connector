@@ -76,7 +76,7 @@ public class StripeAccountResourceIT {
                 .body("analyticsId", is(createGatewayAccountResponse.analyticsId()))
                 .body("location", is(createGatewayAccountResponse.location()))
                 .body("requires3ds", is(createGatewayAccountResponse.requires3ds()))
-                .body("links[0].href", not(createGatewayAccountResponse.links().get(0).get("href")))
+                .body("links[0].href", not(createGatewayAccountResponse.links().getFirst().get("href")))
                 .body("gateway_account_credentials", hasSize(1))
                 .body("gateway_account_credentials[0].payment_provider", is("stripe"))
                 .body("gateway_account_credentials[0].state", is("ACTIVE"))

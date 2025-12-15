@@ -283,7 +283,7 @@ class WorldpayPaymentProviderTest {
 
         verify(chargeDao, times(2)).merge(chargeDaoArgumentCaptor.capture());
         List<ChargeEntity> mergedCharges = chargeDaoArgumentCaptor.getAllValues();
-        assertThat(mergedCharges.get(0).getExemption3dsRequested(), is(exemption3dsType));
+        assertThat(mergedCharges.getFirst().getExemption3dsRequested(), is(exemption3dsType));
         assertThat(mergedCharges.get(1).getExemption3ds(), is(exemption3ds));
     }
 
@@ -862,7 +862,7 @@ class WorldpayPaymentProviderTest {
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
 
-        Requested3dsExemption exemptionRequested = (Requested3dsExemption) eventCaptor.getAllValues().get(0);
+        Requested3dsExemption exemptionRequested = (Requested3dsExemption) eventCaptor.getAllValues().getFirst();
         assertThat(exemptionRequested.getResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(((Requested3dsExemptionEventDetails) exemptionRequested.getEventDetails()).getExemption3dsRequested(), is(exemption3dsRequestType.toString()));
         assertThat(exemptionRequested.getEventType(), is("REQUESTED_3DS_EXEMPTION"));
@@ -975,8 +975,8 @@ class WorldpayPaymentProviderTest {
                 ArgumentCaptor.forClass(Map.class).capture());
 
         assertThat(cookies.getValue().size(), is(1));
-        assertThat(cookies.getValue().get(0).getName(), is(WORLDPAY_MACHINE_COOKIE_NAME));
-        assertThat(cookies.getValue().get(0).getValue(), is(providerSessionId));
+        assertThat(cookies.getValue().getFirst().getName(), is(WORLDPAY_MACHINE_COOKIE_NAME));
+        assertThat(cookies.getValue().getFirst().getValue(), is(providerSessionId));
     }
 
     @Test
