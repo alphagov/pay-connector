@@ -70,7 +70,7 @@ class StripeCancelHandlerTest {
     void shouldCancelPaymentSuccessfully() throws Exception {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         verify(client).postRequestFor(any(StripePaymentIntentCancelRequest.class));
     } 
     
@@ -87,7 +87,7 @@ class StripeCancelHandlerTest {
                 .withAmount(10000L)
                 .build());
         final GatewayResponse<BaseCancelResponse> response = stripeCancelHandler.cancel(request);
-        assertThat(response.isSuccessful(), is(true));
+        assertThat(response.getBaseResponse().isPresent(), is(true));
         verify(client).postRequestFor(any(StripePaymentIntentCancelRequest.class));
     }
 
@@ -99,7 +99,7 @@ class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), Is.is(true));
         assertThat(gatewayResponse.getGatewayError().get().getMessage(), Is.is("Unexpected HTTP status code 402 from gateway"));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
@@ -113,7 +113,7 @@ class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), Is.is(true));
         assertThat(gatewayResponse.getGatewayError().get().getMessage(), Is.is("Problem with Stripe servers"));
         assertThat(gatewayResponse.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
@@ -127,7 +127,7 @@ class StripeCancelHandlerTest {
         CancelGatewayRequest request = CancelGatewayRequest.valueOf(chargeEntity);
 
         final GatewayResponse<BaseCancelResponse> gatewayResponse = stripeCancelHandler.cancel(request);
-        assertThat(gatewayResponse.isFailed(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
     }
 
     private GatewayAccountEntity buildGatewayAccountEntity() {

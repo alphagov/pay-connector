@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -13,6 +12,7 @@ import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.Strings.CS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
@@ -77,7 +77,7 @@ public class CardResourceCaptureIT {
     @Test
     void shouldPreserveCardDetails_IfCaptureReady() {
         String externalChargeId = testBaseExtension.authoriseNewCharge();
-        Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        Long chargeId = Long.valueOf(CS.removeStart(externalChargeId, "charge-"));
 
         Map<String, Object> chargeCardDetails = app.getDatabaseTestHelper().getChargeCardDetailsByChargeId(chargeId);
         assertThat(chargeCardDetails.isEmpty(), is(false));
