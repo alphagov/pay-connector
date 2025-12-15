@@ -7,7 +7,6 @@ import io.restassured.response.ValidatableResponse;
 import jakarta.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.CoreMatchers;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -91,15 +90,15 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
 public class ChargesApiResourceCreateIT {
-    
+
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             config("eventQueue.eventQueueEnabled", "true"),
             config("captureProcessConfig.backgroundProcessingEnabled", "true"));
-    
+
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
-    
+
     private static final String VALID_CARD_NUMBER = "4242424242424242";
     private static final String VALID_SERVICE_ID = "valid-service-id";
     private String testGatewayAccountId;
@@ -131,10 +130,10 @@ public class ChargesApiResourceCreateIT {
                 .statusCode(201)
                 .extract().path("gateway_account_id");
     }
-    
+
     @Nested
     class ByGatewayAccountId {
-        
+
         @Test
         void should_create_charge_and_retrieve_details_successfully() {
             ValidatableResponse response = app.givenSetup()
@@ -276,7 +275,7 @@ public class ChargesApiResourceCreateIT {
             var authLinkParams = (Map<String, String>) authLink.get("params");
             assertThat(authLinkParams.get("one_time_token"), is(not(blankOrNullString())));
         }
-        
+
         @Test
         void should_create_charge_with_no_email_field() {
             app.givenSetup()
@@ -316,11 +315,11 @@ public class ChargesApiResourceCreateIT {
 
         @ParameterizedTest
         @CsvSource(nullValues = "null", textBlock = """
-        instalment,INSTALMENT, 
-        recurring,RECURRING, 
-        unscheduled,UNSCHEDULED
-        null, RECURRING
-        """)
+                instalment,INSTALMENT, 
+                recurring,RECURRING, 
+                unscheduled,UNSCHEDULED
+                null, RECURRING
+                """)
         void should_create_recurring_charge_with_agreement_type_and_retrieve_details_successfully(String requestAgreementPaymentType, AgreementPaymentType expectedAgreementPaymentType) {
             app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testGatewayAccountId));
             Long paymentInstrumentId = RandomUtils.nextLong();
@@ -339,14 +338,14 @@ public class ChargesApiResourceCreateIT {
             app.getDatabaseTestHelper().addAgreement(agreementParams);
 
             Map<String, Object> payloadMap = new HashMap<>();
-            
+
             payloadMap.put("amount", 6234L);
             payloadMap.put("reference", "Test reference");
             payloadMap.put("description", "Test description");
             payloadMap.put("authorisation_mode", "agreement");
             payloadMap.put("agreement_id", agreementId);
             payloadMap.put("agreement_payment_type", requestAgreementPaymentType);
-            
+
             ValidatableResponse createResponse = app.givenSetup()
                     .body(toJson(payloadMap))
                     .post(format("/v1/api/accounts/%s/charges", testGatewayAccountId))
@@ -387,14 +386,14 @@ public class ChargesApiResourceCreateIT {
                     .body("containsKey('card_details')", is(false))
                     .body("agreement_payment_type", is(expectedAgreementPaymentType.getName()));
         }
-        
+
         @Nested
         class BadRequest {
             @Test
             void when_reference_is_a_card_number_for_payment_link_payment() throws JsonProcessingException {
                 var cardInformation = aCardInformation().build();
                 app.getCardidStub().returnCardInformation(VALID_CARD_NUMBER, cardInformation);
-    
+
                 app.givenSetup()
                         .body(toJson(Map.of(
                                 "amount", 6234L,
@@ -411,7 +410,7 @@ public class ChargesApiResourceCreateIT {
                         .body("message[0]", is("Card number entered in a payment link reference"));
             }
         }
-        
+
         @Nested
         class ReturnUnprocessableContent {
 
@@ -433,7 +432,7 @@ public class ChargesApiResourceCreateIT {
                         .body("message[0]", is(format("Gateway account %s is LIVE, but is configured to use a " +
                                 "non-https return_url", liveGatewayAccountId)));
             }
-            
+
             @Test
             void when_moto_is_true_and_moto_not_allowed_for_account() {
                 //by default, gateway account does not have moto enabled
@@ -450,9 +449,10 @@ public class ChargesApiResourceCreateIT {
                         .statusCode(422)
                         .contentType(JSON)
                         .body("message", contains("MOTO payments are not enabled for this gateway account"))
-                        .body("error_identifier", is(ErrorIdentifier.MOTO_NOT_ALLOWED.toString()));;
+                        .body("error_identifier", is(ErrorIdentifier.MOTO_NOT_ALLOWED.toString()));
+                ;
             }
-            
+
             @Test
             void when_amount_is_zero_and_account_does_not_allow_zero_amount() {
                 //by default, gateway account does not have zero amount enabled
@@ -472,19 +472,19 @@ public class ChargesApiResourceCreateIT {
             }
 
             @ParameterizedTest
-            @ValueSource( strings = { "CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO" })
+            @ValueSource(strings = {"CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO"})
             void when_amount_is_under_30p_for_api_payment_for_Stripe_account(String source) {
                 DatabaseFixtures.TestAccount stripeTestAccount = app.getDatabaseFixtures()
                         .aTestAccount()
                         .withPaymentProvider("stripe")
                         .withCredentials(Collections.singletonMap("stripe_account_id", "acct_123example123"))
                         .insert();
-                
+
                 app.givenSetup()
                         .body(toJson(Map.of(
                                 "amount", 29,
                                 "reference", "Test reference",
-                                "description", "Test description", 
+                                "description", "Test description",
                                 "return_url", "http://service.local/success-page/",
                                 "source", source
                         )))
@@ -530,7 +530,7 @@ public class ChargesApiResourceCreateIT {
                     .body("metadata.key2", is(true))
                     .body("metadata.key3", is(123))
                     .body("metadata.key4", is(1.23F));
-            
+
         }
 
         @Test
@@ -549,7 +549,7 @@ public class ChargesApiResourceCreateIT {
                     .statusCode(Status.CREATED.getStatusCode())
                     .body("reference", is("Test reference"));
         }
-        
+
 
         @Test
         void should_create_moto_charge_when_moto_is_true_and_moto_allowed_for_account() {
@@ -563,7 +563,7 @@ public class ChargesApiResourceCreateIT {
                     .patch("/v1/api/accounts/" + testGatewayAccountId)
                     .then()
                     .statusCode(OK.getStatusCode());
-            
+
             app.givenSetup()
                     .body(toJson(Map.of(
                             "amount", 6234L,
@@ -591,7 +591,7 @@ public class ChargesApiResourceCreateIT {
                     .patch("/v1/api/accounts/" + testGatewayAccountId)
                     .then()
                     .statusCode(OK.getStatusCode());
-            
+
             app.givenSetup()
                     .body(toJson(Map.of(
                             "amount", 0,
@@ -605,7 +605,7 @@ public class ChargesApiResourceCreateIT {
                     .contentType(JSON)
                     .body("amount", is(0));
         }
-        
+
         @Test
         void should_return_404_when_account_not_found() {
             String nonExistentGatewayAccount = "1234123";
@@ -651,7 +651,7 @@ public class ChargesApiResourceCreateIT {
 
     @Nested
     class ByServiceIdAndAccountType {
-        
+
         @Test
         void should_create_charge_and_retrieve_details_successfully() {
             ValidatableResponse response = app.givenSetup()
@@ -709,7 +709,7 @@ public class ChargesApiResourceCreateIT {
 
             Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId);
             assertThat(CARD_API.toString(), equalTo(charge.get("source")));
-            
+
             ValidatableResponse getChargeResponse = app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/charges/%s", VALID_SERVICE_ID, GatewayAccountType.TEST, testChargeId))
                     .then()
@@ -808,7 +808,7 @@ public class ChargesApiResourceCreateIT {
                     .contentType(JSON);
 
         }
-        
+
         @Test
         void should_create_charge_when_reference_is_a_card_number_for_api_payment() throws JsonProcessingException {
             var cardInformation = aCardInformation().build();
@@ -951,7 +951,7 @@ public class ChargesApiResourceCreateIT {
                         .body("message[0]", is(format("Gateway account %s is LIVE, but is configured to use a " +
                                 "non-https return_url", liveGatewayAccountId)));
             }
-            
+
             @Test
             void when_moto_is_true_and_moto_not_allowed_for_account() {
                 //by default, gateway account does not have moto enabled
@@ -968,7 +968,8 @@ public class ChargesApiResourceCreateIT {
                         .statusCode(422)
                         .contentType(JSON)
                         .body("message", contains("MOTO payments are not enabled for this gateway account"))
-                        .body("error_identifier", is(ErrorIdentifier.MOTO_NOT_ALLOWED.toString()));;
+                        .body("error_identifier", is(ErrorIdentifier.MOTO_NOT_ALLOWED.toString()));
+                ;
             }
 
             @Test
@@ -990,7 +991,7 @@ public class ChargesApiResourceCreateIT {
             }
 
             @ParameterizedTest
-            @ValueSource( strings = { "CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO" })
+            @ValueSource(strings = {"CARD_API", "CARD_PAYMENT_LINK", "CARD_AGENT_INITIATED_MOTO"})
             void when_amount_is_under_30p_for_api_payment_for_Stripe_account(String source) {
                 DatabaseFixtures.TestAccount stripeTestAccount = app.getDatabaseFixtures()
                         .aTestAccount()
@@ -1024,7 +1025,7 @@ public class ChargesApiResourceCreateIT {
                     "value", true);
 
             app.givenSetup()
-                    .body(toJson(payload)) 
+                    .body(toJson(payload))
                     .patch(format("/v1/api/service/%s/account/%s/", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
                     .statusCode(OK.getStatusCode());
@@ -1042,7 +1043,7 @@ public class ChargesApiResourceCreateIT {
                     .contentType(JSON)
                     .body("amount", is(0));
         }
-        
+
         @Test
         void should_return_404_when_service_id_does_not_exist() {
             app.givenSetup()
@@ -1070,9 +1071,10 @@ public class ChargesApiResourceCreateIT {
                     .post(format("/v1/api/service/%s/account/%s/charges", VALID_SERVICE_ID, GatewayAccountType.LIVE))
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
-                    .body("message[0]", CoreMatchers.is("Gateway account not found for service external id [valid-service-id] and account type [live]"));;
+                    .body("message[0]", CoreMatchers.is("Gateway account not found for service external id [valid-service-id] and account type [live]"));
+            ;
         }
-        
+
         @Test
         void should_return_404_when_account_disabled() {
             app.givenSetup()
@@ -1080,7 +1082,7 @@ public class ChargesApiResourceCreateIT {
                     .patch(format("/v1/api/service/%s/account/%s", VALID_SERVICE_ID, GatewayAccountType.TEST))
                     .then()
                     .statusCode(Status.OK.getStatusCode());
-            
+
             app.givenSetup()
                     .body(toJson(Map.of(
                             "amount", 6234L,
@@ -1095,11 +1097,12 @@ public class ChargesApiResourceCreateIT {
                     .body("message", contains(format("Gateway account not found for service external id [%s] and account type [test]", VALID_SERVICE_ID)));
         }
     }
-        /*
-    This test breaks when the device running the test is on BST (UTC+1). This is because JDBI assumes
-    the time stored in the database (UTC) is in local time (BST) and incorrectly tries to "correct" it to UTC
-    by moving it back an hour which results in the assertion failing as it is now 1 hour apart.
-     */
+
+    /*
+This test breaks when the device running the test is on BST (UTC+1). This is because JDBI assumes
+the time stored in the database (UTC) is in local time (BST) and incorrectly tries to "correct" it to UTC
+by moving it back an hour which results in the assertion failing as it is now 1 hour apart.
+ */
     @Disabled("British Summer Time cause this test to fail")
     @Test
     void shouldEmitPaymentCreatedEventWhenChargeIsSuccessfullyCreated() throws Exception {
@@ -1121,17 +1124,16 @@ public class ChargesApiResourceCreateIT {
         Thread.sleep(100);
         List<Message> messages = readMessagesFromEventQueue();
 
-        final Message message = messages.get(0);
+        final Message message = messages.getFirst();
         ZonedDateTime eventTimestamp = ZonedDateTime.parse(
-                new JsonParser()
-                        .parse(message.body())
+                JsonParser.parseString(message.body())
                         .getAsJsonObject()
                         .get("timestamp")
                         .getAsString()
         );
 
         Optional<JsonObject> createdMessage = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(e -> e.get("event_type").getAsString().equals("PAYMENT_CREATED"))
                 .findFirst();
         assertThat(createdMessage.isPresent(), is(true));
