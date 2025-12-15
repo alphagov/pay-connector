@@ -10,7 +10,7 @@ import java.util.Map;
 import static uk.gov.pay.connector.it.resources.ChargesFrontendResourceIT.AGREEMENT_ID;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class ChargeUtils {
 

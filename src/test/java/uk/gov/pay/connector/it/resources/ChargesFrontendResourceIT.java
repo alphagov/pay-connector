@@ -59,9 +59,9 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphabetic;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphabetic;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ChargesFrontendResourceIT {
     @RegisterExtension

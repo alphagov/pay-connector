@@ -35,7 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ChargeEventsResourceIT {
 

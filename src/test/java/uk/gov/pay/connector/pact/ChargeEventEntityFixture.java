@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ChargeEventEntityFixture {
     private ChargeStatus chargeStatus = ChargeStatus.CAPTURED;

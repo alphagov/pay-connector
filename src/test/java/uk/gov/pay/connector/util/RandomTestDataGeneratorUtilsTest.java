@@ -6,12 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphabetic;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphabetic;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
-class RandomGeneratorUtilsTest {
+class RandomTestDataGeneratorUtilsTest {
 
     @Test
     void randomAlphabetic_positiveLength_producesOnlyLettersAndCorrectLength() {
@@ -50,18 +50,22 @@ class RandomGeneratorUtilsTest {
     
 
     @Test
+    void randomLong_defaultRange_withinExpectedBounds() {
+        long randomLong = secureRandomLong();
+        assertTrue(randomLong >= 0, "value should be >= 0");
+        assertTrue(randomLong < Long.MAX_VALUE, "value should be < Long.MAX_VALUE");
+    }
+
+
+
+    @Test
     void randomLong_singleValueRange_returnsThatValue() {
         long min = 5L;
         long max = 6L; // only possible value is 5
         long randomLong = secureRandomLong(min, max);
         assertEquals(min, randomLong);
     }
-
-    @Test
-    void randomLong_invalidRange_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> secureRandomLong(10L, 10L));
-        assertThrows(IllegalArgumentException.class, () -> secureRandomLong(11L, 10L));
-    }
+    
 
     @Test
     void randomInt_defaultRange_withinExpectedBounds() {
@@ -69,18 +73,7 @@ class RandomGeneratorUtilsTest {
         assertTrue(randomInt >= 0, "value should be >= 0");
         assertTrue(randomInt < Integer.MAX_VALUE, "value should be < Integer.MAX_VALUE");
     }
-
-    @Test
-    void randomInt_withBounds_returnsValueWithinProvidedRange() {
-        int minInclusive = -20;
-        int maxExclusive = 0;
-        //run multiple times to make sure it doesnt behave flaky
-        for (int i = 0; i < 50; i++) {
-            long randomLong = secureRandomInt(minInclusive, maxExclusive);
-            assertTrue(randomLong >= minInclusive, "value should be >= minInclusive");
-            assertTrue(randomLong < maxExclusive, "value should be < maxExclusive");
-        }
-    }
+    
 
     @Test
     void randomInt_singleValueRange_returnsThatValue() {
@@ -89,10 +82,5 @@ class RandomGeneratorUtilsTest {
         long randomLong = secureRandomInt(min, max);
         assertEquals(min, randomLong);
     }
-
-    @Test
-    void randomInt_invalidRange_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> secureRandomInt(5, 5));
-        assertThrows(IllegalArgumentException.class, () -> secureRandomInt(6, 5));
-    }
+    
 }

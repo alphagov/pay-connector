@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import static java.sql.Types.OTHER;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class DatabaseTestHelper {
 

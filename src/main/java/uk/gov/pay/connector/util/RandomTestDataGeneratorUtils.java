@@ -6,13 +6,13 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.ThreadLocalRandom.current;
 
-public final class RandomGeneratorUtils {
+public final class RandomTestDataGeneratorUtils {
 
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     private static final String NUMS = "0123456789";
     private static final String ALPHA_NUM = CHARS + NUMS;
 
-    private RandomGeneratorUtils() {
+    private RandomTestDataGeneratorUtils() {
         // utility class - prevent instantiation
     }
 

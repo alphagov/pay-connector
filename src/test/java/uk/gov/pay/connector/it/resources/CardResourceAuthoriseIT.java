@@ -58,7 +58,7 @@ import static uk.gov.pay.connector.it.util.ChargeUtils.createNewChargeWithAccoun
 import static uk.gov.pay.connector.rules.WorldpayMockClient.WORLDPAY_URL;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class CardResourceAuthoriseIT {

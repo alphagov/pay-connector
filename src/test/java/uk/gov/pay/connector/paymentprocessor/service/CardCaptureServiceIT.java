@@ -23,7 +23,7 @@ import static uk.gov.pay.connector.charge.model.domain.FeeType.THREE_D_S;
 import static uk.gov.pay.connector.charge.model.domain.FeeType.TRANSACTION;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class CardCaptureServiceIT {
     @RegisterExtension

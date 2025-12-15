@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.charge.resource.ChargesApiResource.MIN_AMOUNT
 import static uk.gov.pay.connector.common.validator.ApiValidators.parseZonedDateTime;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargeParams;
 import static uk.gov.pay.connector.common.validator.ApiValidators.validateChargePatchParams;
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
 
 
 class ApiValidatorsTest {

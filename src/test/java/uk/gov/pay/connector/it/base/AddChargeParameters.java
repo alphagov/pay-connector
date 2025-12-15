@@ -7,7 +7,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
 
-import static uk.gov.pay.connector.util.RandomGeneratorUtils.secureRandomLong;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public record AddChargeParameters(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
