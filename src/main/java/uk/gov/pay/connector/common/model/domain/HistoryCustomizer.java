@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.common.model.domain;
 
-import org.eclipse.persistence.config.DescriptorCustomizer;
+import org.eclipse.persistence.descriptors.DescriptorCustomizer;
 import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.history.HistoryPolicy;
 
