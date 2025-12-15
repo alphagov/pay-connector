@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.stripe.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
 import java.util.Arrays;
@@ -28,7 +28,7 @@ public enum StripeChargeStatus {
 
     public static StripeChargeStatus fromString(String stripeStatusValue) {
         return Arrays.stream(StripeChargeStatus.values())
-                .filter(stripeChargeStatusEnum -> StringUtils.equals(stripeChargeStatusEnum.getName(), stripeStatusValue))
+                .filter(stripeChargeStatusEnum -> Strings.CS.equals(stripeChargeStatusEnum.getName(), stripeStatusValue))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Stripe charge status not recognized: " + stripeStatusValue));
     }

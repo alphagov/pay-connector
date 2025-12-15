@@ -1,7 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -12,18 +10,18 @@ public enum StripeTransferMetadataReason {
     TRANSFER_REFUND_AMOUNT,
     TRANSFER_PAYMENT_AMOUNT,
     TRANSFER_DISPUTE_AMOUNT;
-    
+
     @Override
     public String toString() {
         return name().toLowerCase((Locale.ENGLISH));
     }
-    
+
     public static StripeTransferMetadataReason fromString(String value) {
         if (value == null) {
             return NOT_DEFINED;
         }
         return Arrays.stream(StripeTransferMetadataReason.values())
-                .filter(stripeTransferMetadataReason -> StringUtils.equalsIgnoreCase(stripeTransferMetadataReason.name(), value))
+                .filter(stripeTransferMetadataReason -> stripeTransferMetadataReason.name().equalsIgnoreCase(value))
                 .findFirst()
                 .orElse(UNRECOGNISED);
     }
