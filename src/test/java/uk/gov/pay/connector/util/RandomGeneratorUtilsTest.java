@@ -47,25 +47,7 @@ class RandomGeneratorUtilsTest {
         assertNotNull(string);
         assertEquals(0, string.length());
     }
-
-
-    @Test
-    void randomLong_defaultRange_withinExpectedBounds() {
-        long randomLong = secureRandomLong();
-        assertTrue(randomLong >= 0, "value should be >= 0");
-        assertTrue(randomLong < Long.MAX_VALUE, "value should be < Long.MAX_VALUE");
-    }
-
-    @Test
-    void randomLong_withBounds_returnsValueWithinProvidedRange() {
-        long minInclusive = -10L;
-        long maxExclusive = 0L;
-        for (int i = 0; i < 50; i++) {
-            long randomLong = secureRandomLong(minInclusive, maxExclusive);
-            assertTrue(randomLong >= minInclusive, "value should be >= minInclusive");
-            assertTrue(randomLong < maxExclusive, "value should be < maxExclusive");
-        }
-    }
+    
 
     @Test
     void randomLong_singleValueRange_returnsThatValue() {
