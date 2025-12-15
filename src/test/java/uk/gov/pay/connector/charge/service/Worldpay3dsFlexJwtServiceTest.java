@@ -105,9 +105,9 @@ class Worldpay3dsFlexJwtServiceTest {
         String token = worldpay3dsFlexJwtService.generateDdcToken(gatewayAccount, worldpay3dsFlexCredentials, paymentCreationTimeEpochSeconds19August2029, WORLDPAY.getName());
 
         Jws<Claims> jws = Jwts.parser()
-                .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
+                .verifyWith(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token);
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat((Map<String, Object>) jws.getHeader(), hasEntry("typ", "JWT"));
@@ -169,9 +169,9 @@ class Worldpay3dsFlexJwtServiceTest {
         assertThat(maybeToken.isPresent(), is(true));
 
         Jws<Claims> jws = Jwts.parser()
-                .setSigningKey(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
+                .verifyWith(new SecretKeySpec(VALID_CREDENTIALS.get("jwt_mac_id").getBytes(), "HmacSHA256"))
                 .build()
-                .parseClaimsJws(maybeToken.get());
+                .parseSignedClaims(maybeToken.get());
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat((Map<String, Object>) jws.getHeader(), hasEntry("typ", "JWT"));
