@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.stripe.json;
 
-import org.apache.commons.lang3.StringUtils;
 import uk.gov.pay.connector.events.model.payout.PayoutEvent;
 import uk.gov.pay.connector.events.model.payout.PayoutFailed;
 import uk.gov.pay.connector.events.model.payout.PayoutPaid;
@@ -8,6 +7,7 @@ import uk.gov.pay.connector.events.model.payout.PayoutPaid;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static org.apache.commons.lang3.Strings.CS;
 
 public enum StripePayoutStatus {
     PENDING("pending", false),
@@ -32,7 +32,7 @@ public enum StripePayoutStatus {
 
     public static StripePayoutStatus fromString(String status) {
         for (StripePayoutStatus stat : values()) {
-            if (StringUtils.equals(stat.getStatus(), status)) {
+            if (CS.equals(stat.getStatus(), status)) {
                 return stat;
             }
         }
