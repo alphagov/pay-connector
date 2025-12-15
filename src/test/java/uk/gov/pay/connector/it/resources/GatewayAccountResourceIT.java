@@ -18,10 +18,10 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.lang.String.format;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -1218,5 +1218,15 @@ public class GatewayAccountResourceIT {
                 .then()
                 .statusCode(200)
                 .body("worldpay_3ds_flex", nullValue());
+    }
+
+    @Test
+    void shouldNotReturnBadRequestWhenSearchingWithUrlEncodedQueryParam() {
+        String urlEncodedQueryParam = "AD001043%2F22"; // AD001043/22
+        app.givenSetup()
+                .get("/v1/api/accounts?payment_provider_account_id=" + urlEncodedQueryParam)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(0));
     }
 }
