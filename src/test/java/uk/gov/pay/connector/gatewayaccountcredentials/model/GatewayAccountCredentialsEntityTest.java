@@ -12,31 +12,20 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.isA;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_IN_PASSPHRASE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_SHA_OUT_PASSPHRASE;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_USERNAME;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeCredentials.STRIPE_ACCOUNT_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
-import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 
 class GatewayAccountCredentialsEntityTest {
 
@@ -158,31 +147,34 @@ class GatewayAccountCredentialsEntityTest {
                 .withPaymentProvider(WORLDPAY.getName())
                 .build();
 
-        var worldpayCredentials = (WorldpayCredentials)credentialsEntity.getCredentialsObject();
+        var worldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
         worldpayCredentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials("one-off-merchant-code", "one-off-username", "one-off-password"));
         worldpayCredentials.setRecurringCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials("cit-merchant-code", "cit-username", "cit-password"));
         worldpayCredentials.setRecurringMerchantInitiatedCredentials(new WorldpayMerchantCodeCredentials("mit-merchant-code", "mit-username", "mit-password"));
         worldpayCredentials.setGooglePayMerchantId("google-pay-merchant-id");
-        
+
         credentialsEntity.setCredentials(worldpayCredentials);
 
-        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(4));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(FIELD_GATEWAY_MERCHANT_ID, "google-pay-merchant-id"));
-        assertThat(credentialsEntity.getCredentials(), hasKey(ONE_OFF_CUSTOMER_INITIATED));
-        assertThat(((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED)).entrySet(), hasSize(3));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_MERCHANT_CODE, "one-off-merchant-code"));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_USERNAME, "one-off-username"));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(ONE_OFF_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_PASSWORD, "one-off-password"));
-        assertThat(credentialsEntity.getCredentials(), hasKey(RECURRING_CUSTOMER_INITIATED));
-        assertThat(((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED)).entrySet(), hasSize(3));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_MERCHANT_CODE, "cit-merchant-code"));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_USERNAME, "cit-username"));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_CUSTOMER_INITIATED), hasEntry(CREDENTIALS_PASSWORD, "cit-password"));
-        assertThat(credentialsEntity.getCredentials(), hasKey(RECURRING_MERCHANT_INITIATED));
-        assertThat(((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED)).entrySet(), hasSize(3));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED), hasEntry(CREDENTIALS_MERCHANT_CODE, "mit-merchant-code"));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED), hasEntry(CREDENTIALS_USERNAME, "mit-username"));
-        assertThat((Map<String, String>) credentialsEntity.getCredentials().get(RECURRING_MERCHANT_INITIATED), hasEntry(CREDENTIALS_PASSWORD, "mit-password"));
+        var saved = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
+
+        assertThat(saved.hasCredentials(), is(true));
+        assertThat(saved.getGooglePayMerchantId().orElse(null), is("google-pay-merchant-id"));
+
+        assertTrue(saved.getOneOffCustomerInitiatedCredentials().isPresent());
+        assertThat(saved.getOneOffCustomerInitiatedCredentials().get().getMerchantCode(), is("one-off-merchant-code"));
+        assertThat(saved.getOneOffCustomerInitiatedCredentials().get().getUsername(), is("one-off-username"));
+        assertThat(saved.getOneOffCustomerInitiatedCredentials().get().getPassword(), is("one-off-password"));
+
+        assertTrue(saved.getRecurringCustomerInitiatedCredentials().isPresent());
+        assertThat(saved.getRecurringCustomerInitiatedCredentials().get().getMerchantCode(), is("cit-merchant-code"));
+        assertThat(saved.getRecurringCustomerInitiatedCredentials().get().getUsername(), is("cit-username"));
+        assertThat(saved.getRecurringCustomerInitiatedCredentials().get().getPassword(), is("cit-password"));
+
+        assertTrue(saved.getRecurringMerchantInitiatedCredentials().isPresent());
+        assertThat(saved.getRecurringMerchantInitiatedCredentials().get().getMerchantCode(), is("mit-merchant-code"));
+        assertThat(saved.getRecurringMerchantInitiatedCredentials().get().getUsername(), is("mit-username"));
+        assertThat(saved.getRecurringMerchantInitiatedCredentials().get().getPassword(), is("mit-password"));
+
     }
 
     @Test
@@ -191,10 +183,16 @@ class GatewayAccountCredentialsEntityTest {
                 .withPaymentProvider(WORLDPAY.getName())
                 .build();
 
-        var worldpayCredentials = (WorldpayCredentials)credentialsEntity.getCredentialsObject();
+        var worldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
         credentialsEntity.setCredentials(worldpayCredentials);
 
-        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(0));
+        var saved = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
+
+        assertThat(saved.hasCredentials(), is(false));
+        assertThat(saved.getGooglePayMerchantId().isPresent(), is(false));
+        assertTrue(saved.getOneOffCustomerInitiatedCredentials().isEmpty());
+        assertTrue(saved.getRecurringCustomerInitiatedCredentials().isEmpty());
+        assertTrue(saved.getRecurringMerchantInitiatedCredentials().isEmpty());
     }
 
     @Test
@@ -203,7 +201,7 @@ class GatewayAccountCredentialsEntityTest {
                 .withPaymentProvider(EPDQ.getName())
                 .build();
 
-        var epdqCredentials = (EpdqCredentials)credentialsEntity.getCredentialsObject();
+        var epdqCredentials = (EpdqCredentials) credentialsEntity.getCredentialsObject();
         epdqCredentials.setMerchantId("a-merchant-id");
         epdqCredentials.setUsername("a-username");
         epdqCredentials.setPassword("a-password");
@@ -212,12 +210,13 @@ class GatewayAccountCredentialsEntityTest {
 
         credentialsEntity.setCredentials(epdqCredentials);
 
-        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(5));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_MERCHANT_ID, "a-merchant-id"));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_USERNAME, "a-username"));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_PASSWORD, "a-password"));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_SHA_IN_PASSPHRASE, "a-sha-in-passphrase"));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(CREDENTIALS_SHA_OUT_PASSPHRASE, "a-sha-out-passphrase"));
+        var saved = (EpdqCredentials) credentialsEntity.getCredentialsObject();
+        assertThat(saved.hasCredentials(), is(true));
+        assertThat(saved.getMerchantId(), is("a-merchant-id"));
+        assertThat(saved.getUsername(), is("a-username"));
+        assertThat(saved.getPassword(), is("a-password"));
+        assertThat(saved.getShaInPassphrase(), is("a-sha-in-passphrase"));
+        assertThat(saved.getShaOutPassphrase(), is("a-sha-out-passphrase"));
     }
 
     @Test
@@ -227,11 +226,13 @@ class GatewayAccountCredentialsEntityTest {
                 .build();
 
         var stripeAccountId = "a-stripe-account-id";
-        var stripeCredentials = (StripeCredentials)credentialsEntity.getCredentialsObject();
+        var stripeCredentials = (StripeCredentials) credentialsEntity.getCredentialsObject();
         stripeCredentials.setStripeAccountId(stripeAccountId);
-        
+
         credentialsEntity.setCredentials(stripeCredentials);
-        assertThat(credentialsEntity.getCredentials().entrySet(), hasSize(1));
-        assertThat(credentialsEntity.getCredentials(), hasEntry(STRIPE_ACCOUNT_ID_KEY, stripeAccountId));
+
+        var saved = (StripeCredentials) credentialsEntity.getCredentialsObject();
+        assertThat(saved.hasCredentials(), is(true));
+        assertThat(saved.getStripeAccountId(), is(stripeAccountId));
     }
 }
