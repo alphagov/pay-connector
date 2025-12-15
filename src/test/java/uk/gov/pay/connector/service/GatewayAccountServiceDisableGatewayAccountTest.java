@@ -100,7 +100,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
         gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
 
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(),
+        assertThat(loggingEventArgumentCaptor.getAllValues().getFirst().getFormattedMessage(),
                 containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
         assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
                 containsString("No credentials to redact."));
@@ -131,7 +131,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
 
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(),
+        assertThat(loggingEventArgumentCaptor.getAllValues().getFirst().getFormattedMessage(),
                 containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
         assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
                 containsString("Credentials redacted"));
@@ -167,7 +167,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
 
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(0).getFormattedMessage(),
+        assertThat(loggingEventArgumentCaptor.getAllValues().getFirst().getFormattedMessage(),
                 containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
         assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
                 containsString("Credentials redacted"));

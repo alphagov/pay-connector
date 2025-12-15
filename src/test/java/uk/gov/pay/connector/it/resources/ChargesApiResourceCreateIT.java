@@ -232,7 +232,7 @@ public class ChargesApiResourceCreateIT {
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
 
 
-            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).get(0).get("id").toString();
+            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).getFirst().get("id").toString();
             String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId).get("gateway_account_credential_id").toString();
 
             assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
@@ -749,7 +749,7 @@ public class ChargesApiResourceCreateIT {
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
 
 
-            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).get(0).get("id").toString();
+            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).getFirst().get("id").toString();
             String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId).get("gateway_account_credential_id").toString();
 
             assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));

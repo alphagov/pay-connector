@@ -139,13 +139,13 @@ public class WorldpayRefundSubmitResourceIT {
             List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(refundsFoundByChargeExternalId.size(), is(1));
             assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUND SUBMITTED")));
-            assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
-            assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("gateway_transaction_id", refundId));
+            assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
+            assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("gateway_transaction_id", refundId));
 
             String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST)
                     .replace("{{merchantCode}}", "merchant-id")
                     .replace("{{transactionId}}", "MyUniqueTransactionId!")
-                    .replace("{{refundReference}}", refundsFoundByChargeExternalId.get(0).get("external_id").toString())
+                    .replace("{{refundReference}}", refundsFoundByChargeExternalId.getFirst().get("external_id").toString())
                     .replace("{{amount}}", "100");
 
             verifyRequestBodyToWorldpay(expectedRequestBody);

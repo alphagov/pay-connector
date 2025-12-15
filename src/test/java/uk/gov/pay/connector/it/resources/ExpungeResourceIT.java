@@ -373,9 +373,9 @@ public class ExpungeResourceIT {
         assertThat(containsRefund2, is(true));
 
         List<Map<String, Object>> parityCheckFailedRefundFromDB = databaseTestHelper.getRefund(parityCheckFailedRefund.getId());
-        assertThat(parityCheckFailedRefundFromDB.get(0).get("external_id"), is(parityCheckFailedRefund.getExternalId()));
-        assertThat(parityCheckFailedRefundFromDB.get(0).get("parity_check_status"), is("DATA_MISMATCH"));
-        assertThat(parityCheckFailedRefundFromDB.get(0).get("parity_check_date"), is(notNullValue()));
+        assertThat(parityCheckFailedRefundFromDB.getFirst().get("external_id"), is(parityCheckFailedRefund.getExternalId()));
+        assertThat(parityCheckFailedRefundFromDB.getFirst().get("parity_check_status"), is("DATA_MISMATCH"));
+        assertThat(parityCheckFailedRefundFromDB.getFirst().get("parity_check_date"), is(notNullValue()));
         containsEmittedEvents = databaseTestHelper.containsEmittedEventWithExternalId(parityCheckFailedRefund.getExternalId());
         assertThat(containsEmittedEvents, is(true));
 

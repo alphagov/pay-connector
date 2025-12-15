@@ -51,7 +51,7 @@ public class ChargesApiResourceAllowWebPaymentsIT {
         accountId = testAccount.getAccountId();
         chargeId = createCharge(app.getLocalPort(), accountId.toString());
 
-        credentialsId = testAccount.getCredentials().get(0).getId();
+        credentialsId = testAccount.getCredentials().getFirst().getId();
     }
 
     @Test

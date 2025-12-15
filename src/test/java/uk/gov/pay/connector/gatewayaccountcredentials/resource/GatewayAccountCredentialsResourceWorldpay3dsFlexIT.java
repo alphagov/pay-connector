@@ -214,7 +214,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                 assertThat(result.get("jwt_mac_key"), is(VALID_JWT_MAC_KEY));
 
                 List<Map<String, Object>> gatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(testAccount.getAccountId());
-                assertThat(gatewayAccountCredentials.get(0).get("state"), is("ACTIVE"));
+                assertThat(gatewayAccountCredentials.getFirst().get("state"), is("ACTIVE"));
             }
 
             @Test
@@ -357,7 +357,7 @@ public class GatewayAccountCredentialsResourceWorldpay3dsFlexIT {
                 assertThat(updatedGatewayAccountCredentials, hasEntry("organisational_unit_id", VALID_ORG_UNIT_ID));
 
                 List<Map<String, Object>> gatewayAccountCredentials = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(testAccount.getAccountId());
-                assertThat(gatewayAccountCredentials.get(0).get("state"), is("ACTIVE"));
+                assertThat(gatewayAccountCredentials.getFirst().get("state"), is("ACTIVE"));
             }
 
             @Test

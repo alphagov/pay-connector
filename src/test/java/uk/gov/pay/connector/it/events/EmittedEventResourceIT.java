@@ -63,7 +63,7 @@ public class EmittedEventResourceIT {
 
         // emitted events sweeper adds duplicate event to table (and doesn't remove existing event)
         assertThat(emittedEvents.size(), is(2));
-        assertEmittedEvent(emittedEvents.get(0), null);
+        assertEmittedEvent(emittedEvents.getFirst(), null);
         assertEmittedEvent(emittedEvents.get(1), null);
     }
 
@@ -87,7 +87,7 @@ public class EmittedEventResourceIT {
         // emitted events sweeper adds duplicate event to table (and doesn't remove existing event)
         assertThat(emittedEvents.size(), is(2));
 
-        assertEmittedEvent(emittedEvents.get(0), doNotRetryEmitUntil);
+        assertEmittedEvent(emittedEvents.getFirst(), doNotRetryEmitUntil);
         assertEmittedEvent(emittedEvents.get(1), null);
     }
 
@@ -109,7 +109,7 @@ public class EmittedEventResourceIT {
         List<Map<String, Object>> emittedEvents = app.getDatabaseTestHelper().readEmittedEvents();
 
         assertThat(emittedEvents.size(), is(1));
-        assertEmittedEvent(emittedEvents.get(0), doNotRetryEmitUntil);
+        assertEmittedEvent(emittedEvents.getFirst(), doNotRetryEmitUntil);
     }
 
     private long addCharge() {

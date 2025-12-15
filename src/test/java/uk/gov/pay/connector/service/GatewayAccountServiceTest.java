@@ -187,7 +187,7 @@ class GatewayAccountServiceTest {
         List<GatewayAccountResponse> gatewayAccounts = gatewayAccountService.searchGatewayAccounts(gatewayAccountSearchParams);
 
         assertThat(gatewayAccounts, hasSize(2));
-        assertThat(gatewayAccounts.get(0).getServiceName(), is("service one"));
+        assertThat(gatewayAccounts.getFirst().getServiceName(), is("service one"));
         assertThat(gatewayAccounts.get(1).getServiceName(), is("service two"));
     }
 

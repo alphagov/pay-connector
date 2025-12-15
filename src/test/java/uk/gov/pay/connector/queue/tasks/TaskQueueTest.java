@@ -78,8 +78,8 @@ class TaskQueueTest {
         List<TaskMessage> taskMessages = queue.retrieveTaskQueueMessages();
 
         assertNotNull(taskMessages);
-        assertEquals("payload data", taskMessages.get(0).getTask().getData());
-        assertEquals(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT, taskMessages.get(0).getTask().getTaskType());
+        assertEquals("payload data", taskMessages.getFirst().getTask().getData());
+        assertEquals(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT, taskMessages.getFirst().getTask().getTaskType());
     }
 
     @Test
@@ -92,8 +92,8 @@ class TaskQueueTest {
         List<TaskMessage> taskMessages = queue.retrieveTaskQueueMessages();
 
         assertNotNull(taskMessages);
-        assertEquals("external-id-123", taskMessages.get(0).getTask().getPaymentExternalId());
-        assertEquals(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT, taskMessages.get(0).getTask().getTaskType());
+        assertEquals("external-id-123", taskMessages.getFirst().getTask().getPaymentExternalId());
+        assertEquals(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT, taskMessages.getFirst().getTask().getTaskType());
     }
 
     @Test
@@ -107,8 +107,8 @@ class TaskQueueTest {
         List<TaskMessage> taskMessages = queue.retrieveTaskQueueMessages();
 
         assertThat(taskMessages, hasSize(1));
-        assertEquals("payload data", taskMessages.get(0).getTask().getData());
-        assertEquals(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT, taskMessages.get(0).getTask().getTaskType());
+        assertEquals("payload data", taskMessages.getFirst().getTask().getData());
+        assertEquals(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT, taskMessages.getFirst().getTask().getTaskType());
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();

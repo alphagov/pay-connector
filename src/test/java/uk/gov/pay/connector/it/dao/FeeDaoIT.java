@@ -49,8 +49,8 @@ public class FeeDaoIT {
         List<Map<String, Object>> feesForCharge = app.getDatabaseTestHelper().getFeesByChargeId(chargeId);
 
         assertThat(feesForCharge.size(), is(1));
-        assertThat(feesForCharge.get(0).get("charge_id"), is(chargeId));
-        assertThat(feesForCharge.get(0).get("fee_type"), is(nullValue()));
+        assertThat(feesForCharge.getFirst().get("charge_id"), is(chargeId));
+        assertThat(feesForCharge.getFirst().get("fee_type"), is(nullValue()));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class FeeDaoIT {
         List<Map<String, Object>> feesForCharge = app.getDatabaseTestHelper().getFeesByChargeId(chargeId);
 
         assertThat(feesForCharge.size(), is(1));
-        assertThat(feesForCharge.get(0).get("charge_id"), is(chargeId));
-        assertThat(feesForCharge.get(0).get("fee_type"), is(FeeType.TRANSACTION.getName()));
+        assertThat(feesForCharge.getFirst().get("charge_id"), is(chargeId));
+        assertThat(feesForCharge.getFirst().get("fee_type"), is(FeeType.TRANSACTION.getName()));
     }
 }

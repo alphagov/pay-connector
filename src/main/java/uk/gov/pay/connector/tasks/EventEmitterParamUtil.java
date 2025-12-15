@@ -51,7 +51,7 @@ public class EventEmitterParamUtil {
     public static String getParameterValue(Map<String, List<String>> parameters, String paramName) {
         return (parameters.get(paramName) == null ||
                 parameters.get(paramName).isEmpty()) ?
-                null : parameters.get(paramName).get(0);
+                null : parameters.get(paramName).getFirst();
     }
 
     public static Optional<RecordType> getRecordType(Map<String, List<String>> parameters) {

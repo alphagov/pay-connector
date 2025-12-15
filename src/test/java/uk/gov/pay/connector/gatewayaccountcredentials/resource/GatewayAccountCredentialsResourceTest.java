@@ -115,7 +115,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway Account with id [111] not found."));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Gateway Account with id [111] not found."));
             }
 
             @Test
@@ -199,7 +199,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is(expectedErrorMessage));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is(expectedErrorMessage));
             }
 
             @Test
@@ -211,7 +211,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(valid3dsFlexCredentialsPayload));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Not a Worldpay gateway account"));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Not a Worldpay gateway account"));
             }
 
             @Test
@@ -223,7 +223,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(valid3dsFlexCredentialsPayload));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Not a Worldpay gateway account"));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Not a Worldpay gateway account"));
             }
         }
 
@@ -238,7 +238,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(validCheckWorldpayCredentialsPayload));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is(format("Gateway Account with id [%s] not found.", accountId)));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is(format("Gateway Account with id [%s] not found.", accountId)));
             }
 
             @Test
@@ -255,7 +255,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Field [username] is required"));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Field [username] is required"));
             }
 
             @Test
@@ -272,7 +272,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Field [password] is required"));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Field [password] is required"));
             }
 
             @Test
@@ -289,7 +289,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("One of fields [merchant_id, merchant_code] is required"));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("One of fields [merchant_id, merchant_code] is required"));
             }
 
             @Test
@@ -352,7 +352,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(Map.of("payment_provider", "worldpay")));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway Account with id [111] not found."));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Gateway Account with id [111] not found."));
             }
 
             @Test
@@ -386,7 +386,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .method("PATCH", Entity.json(payload));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway Account with id [111] not found."));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Gateway Account with id [111] not found."));
             }
         }
     }
@@ -429,7 +429,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .put(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is(expectedErrorMessage));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is(expectedErrorMessage));
             }
         }
 
@@ -527,7 +527,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .method("PATCH", Entity.json(payload));
 
                 assertThat(response.getStatus(), is(404));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("Gateway account not found for service external id [a-valid-service-id] and account type [test]"));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Gateway account not found for service external id [a-valid-service-id] and account type [test]"));
             }
         }
 
@@ -549,7 +549,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is(format("Field [%s] is required", fieldName)));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is(format("Field [%s] is required", fieldName)));
             }
             
             @Test
@@ -565,7 +565,7 @@ public class GatewayAccountCredentialsResourceTest {
                         .post(Entity.json(payload));
 
                 assertThat(response.getStatus(), is(422));
-                assertThat(extractErrorMessagesFromResponse(response).get(0), is("One of fields [merchant_id, merchant_code] is required"));
+                assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("One of fields [merchant_id, merchant_code] is required"));
             }
         }
     }
@@ -579,7 +579,7 @@ public class GatewayAccountCredentialsResourceTest {
                 .post(Entity.json(payload));
 
         assertThat(response.getStatus(), is(422));
-        assertThat(extractErrorMessagesFromResponse(response).get(0), is(expectedErrorMessage));
+        assertThat(extractErrorMessagesFromResponse(response).getFirst(), is(expectedErrorMessage));
     }
 
     private void verifyCheckWorldpay3dsCredentialsValidationError(Map<String, String> payload, String expectedErrorMessage) {
@@ -590,7 +590,7 @@ public class GatewayAccountCredentialsResourceTest {
                 .post(Entity.json(payload));
 
         assertThat(response.getStatus(), is(422));
-        assertThat(extractErrorMessagesFromResponse(response).get(0), is(expectedErrorMessage));
+        assertThat(extractErrorMessagesFromResponse(response).getFirst(), is(expectedErrorMessage));
     }
 
     private List extractErrorMessagesFromResponse(Response response) {
