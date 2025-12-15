@@ -111,11 +111,11 @@ class Worldpay3dsFlexJwtServiceTest {
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat((Map<String, Object>) jws.getHeader(), hasEntry("typ", "JWT"));
-        assertThat(jws.getBody(), hasKey("jti"));
-        assertThat(jws.getBody(), hasKey("iat"));
-        assertThat(jws.getBody(), hasEntry("exp", expectedTokenExpirationTimeEpochSeconds.getEpochSecond()));
-        assertThat(jws.getBody(), hasEntry("iss", "me"));
-        assertThat(jws.getBody(), hasEntry("OrgUnitId", "myOrg"));
+        assertThat(jws.getPayload(), hasKey("jti"));
+        assertThat(jws.getPayload(), hasKey("iat"));
+        assertThat(jws.getPayload(), hasEntry("exp", expectedTokenExpirationTimeEpochSeconds.getEpochSecond()));
+        assertThat(jws.getPayload(), hasEntry("iss", "me"));
+        assertThat(jws.getPayload(), hasEntry("OrgUnitId", "myOrg"));
     }
 
     @Test
@@ -175,14 +175,14 @@ class Worldpay3dsFlexJwtServiceTest {
 
         assertThat(jws.getHeader().getAlgorithm(), is("HS256"));
         assertThat((Map<String, Object>) jws.getHeader(), hasEntry("typ", "JWT"));
-        assertThat(jws.getBody(), hasKey("jti"));
-        assertThat(jws.getBody(), hasKey("iat"));
-        assertThat(jws.getBody(), hasEntry("iss", VALID_CREDENTIALS.get("issuer")));
-        assertThat(jws.getBody(), hasEntry("OrgUnitId", VALID_CREDENTIALS.get("organisational_unit_id")));
-        assertThat(jws.getBody(), hasEntry("ReturnUrl", format("%s/card_details/%s/3ds_required_in", FRONTEND_URL, CHARGE_EXTERNAL_ID)));
-        assertThat(jws.getBody(), hasEntry("ObjectifyPayload", true));
-        assertThat(jws.getBody(), hasEntry(is("Payload"), instanceOf(Map.class)));
-        Map<String, Object> payload = (Map<String, Object>) jws.getBody().get("Payload");
+        assertThat(jws.getPayload(), hasKey("jti"));
+        assertThat(jws.getPayload(), hasKey("iat"));
+        assertThat(jws.getPayload(), hasEntry("iss", VALID_CREDENTIALS.get("issuer")));
+        assertThat(jws.getPayload(), hasEntry("OrgUnitId", VALID_CREDENTIALS.get("organisational_unit_id")));
+        assertThat(jws.getPayload(), hasEntry("ReturnUrl", format("%s/card_details/%s/3ds_required_in", FRONTEND_URL, CHARGE_EXTERNAL_ID)));
+        assertThat(jws.getPayload(), hasEntry("ObjectifyPayload", true));
+        assertThat(jws.getPayload(), hasEntry(is("Payload"), instanceOf(Map.class)));
+        Map<String, Object> payload = (Map<String, Object>) jws.getPayload().get("Payload");
         assertThat(payload, hasEntry("ACSUrl", WORLDPAY_CHALLENGE_ACS_URL));
         assertThat(payload, hasEntry("Payload", WORLDPAY_CHALLENGE_PAYLOAD));
         assertThat(payload, hasEntry("TransactionId", WORLDPAY_CHALLENGE_TRANSACTION_ID));
