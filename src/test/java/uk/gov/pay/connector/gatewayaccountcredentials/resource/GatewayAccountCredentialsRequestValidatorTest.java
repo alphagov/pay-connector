@@ -55,14 +55,14 @@ class GatewayAccountCredentialsRequestValidatorTest {
     void shouldThrowWhenCreateHasPaymentProviderIsMissing() {
         var request = new GatewayAccountCredentialsRequest(null, null);
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
-        assertThat(thrown.getErrors().get(0), is("Field(s) missing: [payment_provider]"));
+        assertThat(thrown.getErrors().getFirst(), is("Field(s) missing: [payment_provider]"));
     }
 
     @Test
     void shouldThrowWhenCreateRequestPaymentProviderIsNotStripeOrWorldpay() {
         var request = new GatewayAccountCredentialsRequest("sandbox", null);
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
-        assertThat(thrown.getErrors().get(0), is("Operation not supported for payment provider 'sandbox'"));
+        assertThat(thrown.getErrors().getFirst(), is("Operation not supported for payment provider 'sandbox'"));
     }
 
     @Test
@@ -72,7 +72,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                 "password", "password"
         ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validateCreate(request));
-        assertThat(thrown.getErrors().get(0), is("Field [credentials] is not supported for payment provider Worldpay"));
+        assertThat(thrown.getErrors().getFirst(), is("Field [credentials] is not supported for payment provider Worldpay"));
     }
 
     @Test
@@ -82,7 +82,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                         "op", "add",
                         "value", "something")));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Operation [add] not supported for path [credentials]"));
+        assertThat(thrown.getErrors().getFirst(), is("Operation [add] not supported for path [credentials]"));
     }
 
     @Test
@@ -111,7 +111,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                         "op", "replace",
                         "value", credentials)));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Value for path [" + path + "] is missing field(s): [merchant_code]"));
+        assertThat(thrown.getErrors().getFirst(), is("Value for path [" + path + "] is missing field(s): [merchant_code]"));
     }
 
     @Test
@@ -123,7 +123,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", 1)
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Value for path [last_updated_by_user_external_id] must be a string"));
+        assertThat(thrown.getErrors().getFirst(), is("Value for path [last_updated_by_user_external_id] must be a string"));
     }
 
     @Test
@@ -135,7 +135,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", 1)
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Value for path [state] must be a string"));
+        assertThat(thrown.getErrors().getFirst(), is("Value for path [state] must be a string"));
     }
 
     @Test
@@ -147,7 +147,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "ACTIVE")
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Operation with path [state] can only be used to update state to [VERIFIED_WITH_LIVE_PAYMENT]"));
+        assertThat(thrown.getErrors().getFirst(), is("Operation with path [state] can only be used to update state to [VERIFIED_WITH_LIVE_PAYMENT]"));
     }
 
     @Test
@@ -211,7 +211,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "abcdef123abcdef")
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Operation [add] not supported for path [credentials/gateway_merchant_id]"));
+        assertThat(thrown.getErrors().getFirst(), is("Operation [add] not supported for path [credentials/gateway_merchant_id]"));
     }
 
     @Test
@@ -225,7 +225,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
         var credentials = new WorldpayCredentials();
         credentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials());
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", credentials));
-        assertThat(thrown.getErrors().get(0), is("Field [credentials/gateway_merchant_id] value [ABCDEF123abcdef] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]"));
+        assertThat(thrown.getErrors().getFirst(), is("Field [credentials/gateway_merchant_id] value [ABCDEF123abcdef] does not match that expected for a Worldpay Merchant ID; should be 15 characters and within range [0-9a-f]"));
     }
 
     @Test
@@ -236,7 +236,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "op", "replace")
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Field [value] is required"));
+        assertThat(thrown.getErrors().getFirst(), is("Field [value] is required"));
     }
 
     @Test
@@ -248,7 +248,7 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "123456789012311")
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "stripe", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
+        assertThat(thrown.getErrors().getFirst(), is("Gateway Merchant ID is not applicable for payment provider 'stripe'."));
     }
 
     @Test
@@ -260,6 +260,6 @@ class GatewayAccountCredentialsRequestValidatorTest {
                                 "value", "invalid-value")
                 ));
         var thrown = assertThrows(ValidationException.class, () -> validator.validatePatch(request, "worldpay", new WorldpayCredentials()));
-        assertThat(thrown.getErrors().get(0), is("Account credentials are required to set a Gateway Merchant ID."));
+        assertThat(thrown.getErrors().getFirst(), is("Account credentials are required to set a Gateway Merchant ID."));
     }
 }

@@ -120,7 +120,7 @@ class EmittedEventsBackfillServiceTest {
         verify(emittedEventDao, never()).findNotEmittedEventsOlderThan(any(Instant.class), anyInt(), anyLong(), eq(maxId), any());
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=0, maxId=none]"));
+        assertThat(loggingEvents.getFirst().getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=0, maxId=none]"));
     }
 
     @Test
@@ -136,7 +136,7 @@ class EmittedEventsBackfillServiceTest {
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(),
+        assertThat(loggingEvents.getFirst().getFormattedMessage(),
                 is("Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00:00Z]"));
         assertThat(loggingEvents.get(1).getFormattedMessage(),
                 is("Finished processing not emitted events [lastProcessedId=1, maxId=2]"));
@@ -164,7 +164,7 @@ class EmittedEventsBackfillServiceTest {
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(),
+        assertThat(loggingEvents.getFirst().getFormattedMessage(),
                 is("Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00:00Z]"));
         assertThat(loggingEvents.get(1).getFormattedMessage(),
                 is("Finished processing not emitted events [lastProcessedId=1, maxId=2]"));
@@ -197,7 +197,7 @@ class EmittedEventsBackfillServiceTest {
         verify(stateTransitionService, times(2)).offerStateTransition(any(), any(), isNull());
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(0).getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=2, oldestDate=2019-09-20T09:00:00Z]"));
+        assertThat(loggingEvents.getFirst().getFormattedMessage(), is("Processing not emitted events [lastProcessedId=0, no.of.events=2, oldestDate=2019-09-20T09:00:00Z]"));
         assertThat(loggingEvents.get(1).getFormattedMessage(), is("Finished processing not emitted events [lastProcessedId=2, maxId=2]"));
     }
 }

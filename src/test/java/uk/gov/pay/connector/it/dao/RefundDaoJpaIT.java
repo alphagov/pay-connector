@@ -148,10 +148,10 @@ public class RefundDaoJpaIT {
         assertThat(refundByIdFound.size(), is(1));
         assertThat(refundByIdFound, hasItems(aRefundMatching(refundEntity.getExternalId(), is(refundGatewayTransactionId),
                 refundEntity.getChargeExternalId(), refundEntity.getAmount(), refundEntity.getStatus().getValue())));
-        assertThat(refundByIdFound.get(0), hasEntry("created_date", java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant())));
-        assertThat(refundByIdFound.get(0), hasEntry("user_external_id", userExternalId));
-        assertThat(refundByIdFound.get(0), hasEntry("user_email", userEmail));
-        assertThat(refundByIdFound.get(0), hasEntry("charge_external_id", chargeTestRecord.getExternalChargeId()));
+        assertThat(refundByIdFound.getFirst(), hasEntry("created_date", java.sql.Timestamp.from(refundEntity.getCreatedDate().toInstant())));
+        assertThat(refundByIdFound.getFirst(), hasEntry("user_external_id", userExternalId));
+        assertThat(refundByIdFound.getFirst(), hasEntry("user_email", userEmail));
+        assertThat(refundByIdFound.getFirst(), hasEntry("charge_external_id", chargeTestRecord.getExternalChargeId()));
     }
 
     @Test
@@ -165,7 +165,7 @@ public class RefundDaoJpaIT {
 
         assertThat(refundHistoryList.size(), is(1));
 
-        RefundHistory refundHistory = refundHistoryList.get(0);
+        RefundHistory refundHistory = refundHistoryList.getFirst();
         assertThat(refundHistory.getId(), is(refundEntity.getId()));
         assertThat(refundHistory.getExternalId(), is(refundEntity.getExternalId()));
         assertThat(refundHistory.getAmount(), is(refundEntity.getAmount()));
@@ -214,7 +214,7 @@ public class RefundDaoJpaIT {
 
         assertThat(refundHistoryList.size(), is(1));
 
-        RefundHistory refundHistory = refundHistoryList.get(0);
+        RefundHistory refundHistory = refundHistoryList.getFirst();
         assertThat(refundHistory.getId(), is(refundEntity.getId()));
         assertThat(refundHistory.getExternalId(), is(refundEntity.getExternalId()));
         assertThat(refundHistory.getAmount(), is(refundEntity.getAmount()));
@@ -276,7 +276,7 @@ public class RefundDaoJpaIT {
 
         assertThat(refundHistoryList.size(), is(2));
 
-        RefundHistory refundHistory = refundHistoryList.get(0);
+        RefundHistory refundHistory = refundHistoryList.getFirst();
         assertThat(refundHistory.getStatus(), is(CREATED));
         assertThat(refundHistory.getGatewayTransactionId(), is("ref-1"));
         assertThat(refundHistory.getId(), is(testRefund.getId()));
@@ -299,7 +299,7 @@ public class RefundDaoJpaIT {
 
         List<RefundEntity> refundEntityList = refundDao.findRefundsByChargeExternalId(chargeTestRecord.externalChargeId);
         assertThat(refundEntityList.size(), is(2));
-        assertThat(refundEntityList.get(0).getChargeExternalId(), is(chargeTestRecord.externalChargeId));
+        assertThat(refundEntityList.getFirst().getChargeExternalId(), is(chargeTestRecord.externalChargeId));
         assertThat(refundEntityList.get(1).getChargeExternalId(), is(chargeTestRecord.externalChargeId));
     }
 
@@ -428,8 +428,8 @@ public class RefundDaoJpaIT {
         List<RefundHistory> refundHistoryList = refundDao.getRefundHistoryByRefundExternalId(refundEntity.getExternalId());
 
         assertThat(refundHistoryList.size(), is(2));
-        assertThat(refundHistoryList.get(0).getExternalId(), is(refundEntity.getExternalId()));
-        assertThat(refundHistoryList.get(0).getStatus(), oneOf(CREATED, REFUND_ERROR));
+        assertThat(refundHistoryList.getFirst().getExternalId(), is(refundEntity.getExternalId()));
+        assertThat(refundHistoryList.getFirst().getStatus(), oneOf(CREATED, REFUND_ERROR));
         assertThat(refundHistoryList.get(1).getExternalId(), is(refundEntity.getExternalId()));
         assertThat(refundHistoryList.get(1).getStatus(), oneOf(CREATED, REFUND_ERROR));
     }
@@ -470,6 +470,6 @@ public class RefundDaoJpaIT {
         var refunds = refundDao.findByParityCheckStatus(ParityCheckStatus.MISSING_IN_LEDGER, 1, 0L);
 
         assertThat(refunds.size(), Matchers.is(1));
-        assertThat(refunds.get(0).getParityCheckStatus(), Matchers.is(ParityCheckStatus.MISSING_IN_LEDGER));
+        assertThat(refunds.getFirst().getParityCheckStatus(), Matchers.is(ParityCheckStatus.MISSING_IN_LEDGER));
     }
 }

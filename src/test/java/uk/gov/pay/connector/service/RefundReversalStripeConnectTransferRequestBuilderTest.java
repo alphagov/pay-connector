@@ -49,7 +49,7 @@ public class RefundReversalStripeConnectTransferRequestBuilderTest {
 
         List expandList = (List) builderRequest.get("expand");
         assertEquals(2, expandList.size());
-        assertEquals("balance_transaction", expandList.get(0));
+        assertEquals("balance_transaction", expandList.getFirst());
         assertEquals("destination_payment", expandList.get(1));
         assertEquals(6, builderRequest.size());
 

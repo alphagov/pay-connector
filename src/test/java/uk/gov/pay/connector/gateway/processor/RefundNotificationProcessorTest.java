@@ -122,7 +122,7 @@ import static org.mockito.Mockito.when;
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessageForSplunkAlert = "Refund request record set as failed (REFUND_ERROR)";
-        assertThat(logStatement.get(0).getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
+        assertThat(logStatement.getFirst().getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
     }
 
     @Test
@@ -136,7 +136,7 @@ import static org.mockito.Mockito.when;
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessageForSplunkAlert = "Notification received for refund would cause an illegal state transition";
-        assertThat(logStatement.get(0).getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
+        assertThat(logStatement.getFirst().getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
     }
 
     @Test
@@ -150,7 +150,7 @@ import static org.mockito.Mockito.when;
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessageForSplunkAlert = "Notification received for refund would cause an illegal state transition";
-        assertThat(logStatement.get(0).getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
+        assertThat(logStatement.getFirst().getFormattedMessage(), containsString(expectedLogMessageForSplunkAlert));
     }
 
     @Test
@@ -162,7 +162,7 @@ import static org.mockito.Mockito.when;
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = "Refund notification could not be used to update charge (missing reference)";
 
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
     }
 
     @Test
@@ -176,7 +176,7 @@ import static org.mockito.Mockito.when;
                 "unknown",
                 charge.getExternalId());
 
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
     }
 
     @Test
@@ -192,7 +192,7 @@ import static org.mockito.Mockito.when;
         String expectedLogMessage = String.format("%s notification could not be processed as refund [%s] has been expunged from connector",
                 paymentGatewayName, refundEntity.getExternalId());
 
-        assertThat(logStatement.get(0).getFormattedMessage(), is(expectedLogMessage));
+        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
     }
 
      static RefundEntityFixture aValidRefundEntity() {

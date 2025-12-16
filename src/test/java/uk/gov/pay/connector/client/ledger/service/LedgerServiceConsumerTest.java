@@ -105,10 +105,10 @@ public class LedgerServiceConsumerTest {
 
         List<LedgerTransaction> transactions = refundTransactionsForPayment.getTransactions();
 
-        assertThat(transactions.get(0).getTransactionId(), is("nklfm1pk9flpu91j815kp2835o"));
-        assertThat(transactions.get(0).getGatewayAccountId(), is("3"));
-        assertThat(transactions.get(0).getAmount(), is(100L));
-        assertThat(transactions.get(0).getState().getStatus(), is("submitted"));
+        assertThat(transactions.getFirst().getTransactionId(), is("nklfm1pk9flpu91j815kp2835o"));
+        assertThat(transactions.getFirst().getGatewayAccountId(), is("3"));
+        assertThat(transactions.getFirst().getAmount(), is(100L));
+        assertThat(transactions.getFirst().getState().getStatus(), is("submitted"));
 
         assertThat(transactions.get(1).getTransactionId(), is("migtkmlt6gvm16sim5h0p7oeje"));
         assertThat(transactions.get(1).getAmount(), is(110L));

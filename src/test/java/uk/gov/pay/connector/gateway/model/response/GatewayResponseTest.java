@@ -22,8 +22,8 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
         GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
                 .withGatewayError(error)
                 .build();
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.isSuccessful(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().get(), is(error));
@@ -37,8 +37,8 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
         GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
                 .withResponse(baseResponse)
                 .build();
-        assertThat(gatewayResponse.isFailed(), is(false));
-        assertThat(gatewayResponse.isSuccessful(), is(true));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get(), is(baseResponse));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
@@ -51,8 +51,8 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
         GatewayResponse<BaseResponse> gatewayResponse = gatewayResponseBuilder
                 .withResponse(baseResponse)
                 .build();
-        assertThat(gatewayResponse.isFailed(), is(true));
-        assertThat(gatewayResponse.isSuccessful(), is(false));
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().get().getMessage(),

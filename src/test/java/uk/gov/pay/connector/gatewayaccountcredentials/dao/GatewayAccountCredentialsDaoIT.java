@@ -223,7 +223,7 @@ public class GatewayAccountCredentialsDaoIT {
     }
 
     private GatewayAccountEntity createAndPersistAGatewayAccount() {
-        long gatewayAccountId = current().nextLong(0, Long.MAX_VALUE);
+        long gatewayAccountId = randomSecureLong();
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());

@@ -18,9 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -62,7 +60,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -102,9 +99,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER_WITH_INSTALMENT_AGREEMENT_PAYMENT_TYPE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER_WITH_RECURRING_AGREEMENT_PAYMENT_TYPE;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER_WITH_UNSCHEDULED_AGREEMENT_PAYMENT_TYPE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS;
@@ -257,11 +251,11 @@ class WorldpayAuthoriseHandlerTest {
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, textBlock =
             """
-                sendCorporateExemptionRequest, expectedExemptionType, expectedExemptionPlacement
-                SEND_CORPORATE_EXEMPTION_REQUEST, CP, AUTHORISATION
-                SEND_EXEMPTION_ENGINE_REQUEST, OP, OPTIMISED
-                DO_NOT_SEND_EXEMPTION_REQUEST, '', ''
-            """
+                        sendCorporateExemptionRequest, expectedExemptionType, expectedExemptionPlacement
+                        SEND_CORPORATE_EXEMPTION_REQUEST, CP, AUTHORISATION
+                        SEND_EXEMPTION_ENGINE_REQUEST, OP, OPTIMISED
+                        DO_NOT_SEND_EXEMPTION_REQUEST, '', ''
+                    """
     )
     void should_include_the_correct_exemption_element_when_account_exemption_engine_is_enabled(
             SendWorldpayExemptionRequest sendCorporateExemptionRequest,
@@ -552,13 +546,13 @@ class WorldpayAuthoriseHandlerTest {
         assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
     }
-    
+
     @ParameterizedTest
     @CsvSource(textBlock = """
-        RECURRING, templates/worldpay/valid-authorise-worldpay-request-setup-agreement-with-recurring-agreement-payment-type.xml,
-        INSTALMENT, templates/worldpay/valid-authorise-worldpay-request-setup-agreement-with-instalment-agreement-payment-type.xml,
-        UNSCHEDULED, templates/worldpay/valid-authorise-worldpay-request-setup-agreement-with-unscheduled-agreement-payment-type.xml
-    """)
+                RECURRING, templates/worldpay/valid-authorise-worldpay-request-setup-agreement-with-recurring-agreement-payment-type.xml,
+                INSTALMENT, templates/worldpay/valid-authorise-worldpay-request-setup-agreement-with-instalment-agreement-payment-type.xml,
+                UNSCHEDULED, templates/worldpay/valid-authorise-worldpay-request-setup-agreement-with-unscheduled-agreement-payment-type.xml
+            """)
     void should_send_reason_for_recurring_payment_to_worldpay_when_a_CIT_recurring_payment_is_initiated_with_an_agreement_payment_type(AgreementPaymentType agreementPaymentType, String templatePath) throws Exception {
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
@@ -697,7 +691,7 @@ class WorldpayAuthoriseHandlerTest {
                         WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY, "test-transaction-id-999999"
                 ))
                 .build();
-        
+
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withExternalId("test-chargeId-789")
                 .withAmount(500L)
@@ -720,7 +714,7 @@ class WorldpayAuthoriseHandlerTest {
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
         verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
-        
+
 
         assertXMLEqual(load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER),
                 gatewayOrderArgumentCaptor.getValue().getPayload());
@@ -814,7 +808,7 @@ class WorldpayAuthoriseHandlerTest {
         var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
 
         GatewayResponse response = handlerWithRealJerseyClient.authorise(getCardAuthorisationRequest(chargeEntityFixture.build()), DO_NOT_SEND_EXEMPTION_REQUEST);
-        assertTrue(response.isSuccessful());
+        assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getSessionIdentifier().isPresent());
     }
 
@@ -987,7 +981,10 @@ class WorldpayAuthoriseHandlerTest {
         when(mockBuilder.header(anyString(), anyString())).thenReturn(mockBuilder);
 
         Map<String, NewCookie> responseCookies =
-                Collections.singletonMap(WORLDPAY_MACHINE_COOKIE_NAME, NewCookie.valueOf("value-from-worldpay"));
+                Collections.singletonMap(
+                        WORLDPAY_MACHINE_COOKIE_NAME,
+                        new NewCookie(WORLDPAY_MACHINE_COOKIE_NAME, "value-from-worldpay")
+                );
 
         Response response = mock(Response.class);
         when(response.readEntity(String.class)).thenReturn(responsePayload);
