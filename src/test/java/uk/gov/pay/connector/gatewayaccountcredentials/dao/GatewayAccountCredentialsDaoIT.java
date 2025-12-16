@@ -21,6 +21,7 @@ import java.util.Optional;
 import static java.util.concurrent.ThreadLocalRandom.current;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -40,7 +41,6 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
-import static uk.gov.pay.connector.util.RandomIdGenerator.randomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class GatewayAccountCredentialsDaoIT {
@@ -157,7 +157,7 @@ public class GatewayAccountCredentialsDaoIT {
 
         var credentialsObj = maybeGatewayAccountCredentials.get().getCredentialsObject();
         assertThat(credentialsObj, is(not(nullValue())));
-        assertThat(credentialsObj, is(org.hamcrest.Matchers.instanceOf(StripeCredentials.class)));
+        assertThat(credentialsObj, is(instanceOf(StripeCredentials.class)));
         assertThat(((StripeCredentials) credentialsObj).getStripeAccountId(), is("accountid"));
     }
 
@@ -224,7 +224,7 @@ public class GatewayAccountCredentialsDaoIT {
     }
 
     private GatewayAccountEntity createAndPersistAGatewayAccount() {
-        long gatewayAccountId = randomLong();
+        long gatewayAccountId = current().nextLong(1, Long.MAX_VALUE);
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());

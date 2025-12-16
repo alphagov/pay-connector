@@ -155,25 +155,25 @@ class GatewayAccountCredentialsEntityTest {
 
         credentialsEntity.setCredentials(worldpayCredentials);
 
-        var saved = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
+        var retrivedWorldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
 
-        assertThat(saved.hasCredentials(), is(true));
-        assertThat(saved.getGooglePayMerchantId().orElse(null), is("google-pay-merchant-id"));
+        assertThat(retrivedWorldpayCredentials.hasCredentials(), is(true));
+        assertThat(retrivedWorldpayCredentials.getGooglePayMerchantId().orElse(null), is("google-pay-merchant-id"));
 
-        assertTrue(saved.getOneOffCustomerInitiatedCredentials().isPresent());
-        assertThat(saved.getOneOffCustomerInitiatedCredentials().get().getMerchantCode(), is("one-off-merchant-code"));
-        assertThat(saved.getOneOffCustomerInitiatedCredentials().get().getUsername(), is("one-off-username"));
-        assertThat(saved.getOneOffCustomerInitiatedCredentials().get().getPassword(), is("one-off-password"));
+        assertTrue(retrivedWorldpayCredentials.getOneOffCustomerInitiatedCredentials().isPresent());
+        assertThat(retrivedWorldpayCredentials.getOneOffCustomerInitiatedCredentials().get().getMerchantCode(), is("one-off-merchant-code"));
+        assertThat(retrivedWorldpayCredentials.getOneOffCustomerInitiatedCredentials().get().getUsername(), is("one-off-username"));
+        assertThat(retrivedWorldpayCredentials.getOneOffCustomerInitiatedCredentials().get().getPassword(), is("one-off-password"));
 
-        assertTrue(saved.getRecurringCustomerInitiatedCredentials().isPresent());
-        assertThat(saved.getRecurringCustomerInitiatedCredentials().get().getMerchantCode(), is("cit-merchant-code"));
-        assertThat(saved.getRecurringCustomerInitiatedCredentials().get().getUsername(), is("cit-username"));
-        assertThat(saved.getRecurringCustomerInitiatedCredentials().get().getPassword(), is("cit-password"));
+        assertTrue(retrivedWorldpayCredentials.getRecurringCustomerInitiatedCredentials().isPresent());
+        assertThat(retrivedWorldpayCredentials.getRecurringCustomerInitiatedCredentials().get().getMerchantCode(), is("cit-merchant-code"));
+        assertThat(retrivedWorldpayCredentials.getRecurringCustomerInitiatedCredentials().get().getUsername(), is("cit-username"));
+        assertThat(retrivedWorldpayCredentials.getRecurringCustomerInitiatedCredentials().get().getPassword(), is("cit-password"));
 
-        assertTrue(saved.getRecurringMerchantInitiatedCredentials().isPresent());
-        assertThat(saved.getRecurringMerchantInitiatedCredentials().get().getMerchantCode(), is("mit-merchant-code"));
-        assertThat(saved.getRecurringMerchantInitiatedCredentials().get().getUsername(), is("mit-username"));
-        assertThat(saved.getRecurringMerchantInitiatedCredentials().get().getPassword(), is("mit-password"));
+        assertTrue(retrivedWorldpayCredentials.getRecurringMerchantInitiatedCredentials().isPresent());
+        assertThat(retrivedWorldpayCredentials.getRecurringMerchantInitiatedCredentials().get().getMerchantCode(), is("mit-merchant-code"));
+        assertThat(retrivedWorldpayCredentials.getRecurringMerchantInitiatedCredentials().get().getUsername(), is("mit-username"));
+        assertThat(retrivedWorldpayCredentials.getRecurringMerchantInitiatedCredentials().get().getPassword(), is("mit-password"));
 
     }
 
@@ -186,13 +186,13 @@ class GatewayAccountCredentialsEntityTest {
         var worldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
         credentialsEntity.setCredentials(worldpayCredentials);
 
-        var saved = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
+        var retrivedWorldpayCredentials = (WorldpayCredentials) credentialsEntity.getCredentialsObject();
 
-        assertThat(saved.hasCredentials(), is(false));
-        assertThat(saved.getGooglePayMerchantId().isPresent(), is(false));
-        assertTrue(saved.getOneOffCustomerInitiatedCredentials().isEmpty());
-        assertTrue(saved.getRecurringCustomerInitiatedCredentials().isEmpty());
-        assertTrue(saved.getRecurringMerchantInitiatedCredentials().isEmpty());
+        assertThat(retrivedWorldpayCredentials.hasCredentials(), is(false));
+        assertThat(retrivedWorldpayCredentials.getGooglePayMerchantId().isPresent(), is(false));
+        assertTrue(retrivedWorldpayCredentials.getOneOffCustomerInitiatedCredentials().isEmpty());
+        assertTrue(retrivedWorldpayCredentials.getRecurringCustomerInitiatedCredentials().isEmpty());
+        assertTrue(retrivedWorldpayCredentials.getRecurringMerchantInitiatedCredentials().isEmpty());
     }
 
     @Test
@@ -210,13 +210,13 @@ class GatewayAccountCredentialsEntityTest {
 
         credentialsEntity.setCredentials(epdqCredentials);
 
-        var saved = (EpdqCredentials) credentialsEntity.getCredentialsObject();
-        assertThat(saved.hasCredentials(), is(true));
-        assertThat(saved.getMerchantId(), is("a-merchant-id"));
-        assertThat(saved.getUsername(), is("a-username"));
-        assertThat(saved.getPassword(), is("a-password"));
-        assertThat(saved.getShaInPassphrase(), is("a-sha-in-passphrase"));
-        assertThat(saved.getShaOutPassphrase(), is("a-sha-out-passphrase"));
+        var retrivedEpdqCredentials = (EpdqCredentials) credentialsEntity.getCredentialsObject();
+        assertThat(retrivedEpdqCredentials.hasCredentials(), is(true));
+        assertThat(retrivedEpdqCredentials.getMerchantId(), is("a-merchant-id"));
+        assertThat(retrivedEpdqCredentials.getUsername(), is("a-username"));
+        assertThat(retrivedEpdqCredentials.getPassword(), is("a-password"));
+        assertThat(retrivedEpdqCredentials.getShaInPassphrase(), is("a-sha-in-passphrase"));
+        assertThat(retrivedEpdqCredentials.getShaOutPassphrase(), is("a-sha-out-passphrase"));
     }
 
     @Test
@@ -231,8 +231,8 @@ class GatewayAccountCredentialsEntityTest {
 
         credentialsEntity.setCredentials(stripeCredentials);
 
-        var saved = (StripeCredentials) credentialsEntity.getCredentialsObject();
-        assertThat(saved.hasCredentials(), is(true));
-        assertThat(saved.getStripeAccountId(), is(stripeAccountId));
+        var retrivedStripeCredentials = (StripeCredentials) credentialsEntity.getCredentialsObject();
+        assertThat(retrivedStripeCredentials.hasCredentials(), is(true));
+        assertThat(retrivedStripeCredentials.getStripeAccountId(), is(stripeAccountId));
     }
 }

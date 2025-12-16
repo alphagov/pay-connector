@@ -139,7 +139,7 @@ class GatewayAccountEntityTest {
 
     @Test
     void isAllowGooglePayShouldReturnTrueForWorldpayAccountIfFlagIsEnabledAndMerchantAccountIdIsAvailableOnCredentials() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGateway_account_credentials_entity_with_gateway_merchant_id();
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntityWithGatewayMerchantId();
         gatewayAccountEntity.setAllowGooglePay(true);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
@@ -148,7 +148,7 @@ class GatewayAccountEntityTest {
 
     @Test
     void isAllowGooglePayShouldReturnFalseForWorldpayAccountIfFlagIsDisabledAndMerchantAccountIdIsAvailableOnCredentials() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGateway_account_credentials_entity_with_gateway_merchant_id();
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntityWithGatewayMerchantId();
         gatewayAccountEntity.setAllowGooglePay(false);
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
@@ -168,7 +168,7 @@ class GatewayAccountEntityTest {
 
     @Test
     void getGatewayMerchantIdShouldReturnIdAvailableOnCredentials() {
-        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGateway_account_credentials_entity_with_gateway_merchant_id();
+        GatewayAccountCredentialsEntity credentialsEntityWorldpay = aGatewayAccountCredentialsEntityWithGatewayMerchantId();
         gatewayAccountEntity.setGatewayAccountCredentials(List.of(credentialsEntityWorldpay));
 
         assertThat(gatewayAccountEntity.getGooglePayMerchantId(), is("some-id"));
@@ -313,7 +313,7 @@ class GatewayAccountEntityTest {
 
     }
 
-    private GatewayAccountCredentialsEntity aGateway_account_credentials_entity_with_gateway_merchant_id() {
+    private GatewayAccountCredentialsEntity aGatewayAccountCredentialsEntityWithGatewayMerchantId() {
         return aGatewayAccountCredentialsEntity()
                 .withPaymentProvider("worldpay")
                 .withCredentials(Map.of("gateway_merchant_id", "some-id"))

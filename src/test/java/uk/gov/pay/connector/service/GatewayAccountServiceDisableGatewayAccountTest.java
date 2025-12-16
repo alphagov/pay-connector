@@ -82,8 +82,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
-
-
+    
     @BeforeEach
     void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mock(CardTypeDao.class),
@@ -130,8 +129,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
         verify(mockGatewayAccountDao).findByServiceId(serviceId);
 
         verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials();
-
-
+        
         var expectedWorldpay = new WorldpayCredentials();
 
         var oneOff = new WorldpayMerchantCodeCredentials("a-merchant-code-1", DELETED, DELETED);
@@ -139,8 +137,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         var recurring = new WorldpayMerchantCodeCredentials("a-merchant-code-3", DELETED, DELETED);
         expectedWorldpay.setRecurringMerchantInitiatedCredentials(recurring);
-
-
+        
         verifyExpectedGatewayAccountCredentialsAndStateIsRetired(expectedWorldpay);
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
@@ -199,13 +196,14 @@ class GatewayAccountServiceDisableGatewayAccountTest {
         GatewayCredentials actualCredentials = capturedGatewayAccountCredentialsEntity.getCredentialsObject();
 
         var mapper = new ObjectMapper();
-        Map<String, Object> actualMap = mapper.convertValue(actualCredentials, new TypeReference<>() {});
-        Map<String, Object> expectedMap = mapper.convertValue(expectedCredentials, new TypeReference<>() {});
+        Map<String, Object> actualMap = mapper.convertValue(actualCredentials, new TypeReference<>() {
+        });
+        Map<String, Object> expectedMap = mapper.convertValue(expectedCredentials, new TypeReference<>() {
+        });
 
         assertThat(actualMap, is(expectedMap));
     }
-
-
+    
     private void verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials() {
         verify(mockGatewayAccountDao).merge(updatedGatewayAccountEntity.capture());
         var capturedGatewayAccountEntity = updatedGatewayAccountEntity.getValue();
