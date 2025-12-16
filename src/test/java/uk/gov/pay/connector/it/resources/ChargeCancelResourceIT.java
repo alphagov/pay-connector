@@ -147,6 +147,7 @@ public class ChargeCancelResourceIT {
         @DisplayName("Should preserve charge card details when charge is cancelled")
         void shouldPreserveCardDetailsIfCancelled() {
             String externalChargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
+
             Long chargeId = Long.valueOf(CS.removeStart(externalChargeId, "charge"));
 
             app.getWorldpayMockClient().mockCancelSuccess();
