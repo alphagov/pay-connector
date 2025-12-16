@@ -113,7 +113,7 @@ public class StripeCaptureHandler implements CaptureHandler {
             throw new GatewayException.GenericGatewayException(
                 String.format("Expected exactly one charge associated with payment intent %s, got %s", paymentIntent.getId(), stripeCharges.size()));
         }
-        return stripeCharges.get(0);
+        return stripeCharges.getFirst();
     }
 
     private List<Fee> transferToConnectAccount(CaptureGatewayRequest request, StripeCharge capturedCharge, boolean checkForExistingTransfer) 

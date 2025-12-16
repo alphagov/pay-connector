@@ -232,7 +232,7 @@ public class ChargesApiResourceCreateIT {
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
 
 
-            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).get(0).get("id").toString();
+            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).getFirst().get("id").toString();
             String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId).get("gateway_account_credential_id").toString();
 
             assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
@@ -749,7 +749,7 @@ public class ChargesApiResourceCreateIT {
                             "application/x-www-form-urlencoded", Map.of("chargeTokenId", newChargeTokenId)));
 
 
-            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).get(0).get("id").toString();
+            String expectedGatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(Long.parseLong(testGatewayAccountId)).getFirst().get("id").toString();
             String actualGatewayAccountCredentialId = app.getDatabaseTestHelper().getChargeByExternalId(testChargeId).get("gateway_account_credential_id").toString();
 
             assertThat(actualGatewayAccountCredentialId, is(expectedGatewayAccountCredentialId));
@@ -1124,17 +1124,16 @@ by moving it back an hour which results in the assertion failing as it is now 1 
         Thread.sleep(100);
         List<Message> messages = readMessagesFromEventQueue();
 
-        final Message message = messages.get(0);
+        final Message message = messages.getFirst();
         ZonedDateTime eventTimestamp = ZonedDateTime.parse(
-                new JsonParser()
-                        .parse(message.body())
+                JsonParser.parseString(message.body())
                         .getAsJsonObject()
                         .get("timestamp")
                         .getAsString()
         );
 
         Optional<JsonObject> createdMessage = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(e -> e.get("event_type").getAsString().equals("PAYMENT_CREATED"))
                 .findFirst();
         assertThat(createdMessage.isPresent(), is(true));

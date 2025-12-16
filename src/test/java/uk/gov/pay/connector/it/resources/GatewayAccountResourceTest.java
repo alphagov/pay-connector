@@ -52,7 +52,7 @@ class GatewayAccountResourceTest {
                 .get();
 
         assertThat(response.getStatus(), is(422));
-        assertThat(extractErrorMessagesFromResponse(response).get(0), is("Parameter [accountIds] must be a comma separated list of numbers"));
+        assertThat(extractErrorMessagesFromResponse(response).getFirst(), is("Parameter [accountIds] must be a comma separated list of numbers"));
     }
 
     private List extractErrorMessagesFromResponse(Response response) {

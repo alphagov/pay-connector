@@ -62,7 +62,7 @@ class CaptureQueueTest {
         List<ChargeCaptureMessage> chargeCaptureMessages = queue.retrieveChargesForCapture();
 
         assertNotNull(chargeCaptureMessages);
-        assertEquals("my-charge-id", chargeCaptureMessages.get(0).getChargeId());
+        assertEquals("my-charge-id", chargeCaptureMessages.getFirst().getChargeId());
     }
 
     @Test

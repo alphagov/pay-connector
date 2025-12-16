@@ -205,8 +205,8 @@ class StripeAccountSetupServiceTest {
 
         assertThat(entities.size(), is(6));
 
-        assertThat(entities.get(0).getGatewayAccount(), is(spyGatewayAccountEntity));
-        assertThat(entities.get(0).getTask(), is(BANK_ACCOUNT));
+        assertThat(entities.getFirst().getGatewayAccount(), is(spyGatewayAccountEntity));
+        assertThat(entities.getFirst().getTask(), is(BANK_ACCOUNT));
 
         assertThat(entities.get(1).getGatewayAccount(), is(spyGatewayAccountEntity));
         assertThat(entities.get(1).getTask(), is(RESPONSIBLE_PERSON));

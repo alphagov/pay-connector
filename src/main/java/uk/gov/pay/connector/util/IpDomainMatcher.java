@@ -27,7 +27,7 @@ public class IpDomainMatcher {
         List<String> ipAddresses = asList(forwardedAddress.replaceAll("\\s","").split(","));
         // We want the last address in the forwardedAddress parameter as that's the address we trust 
         Collections.reverse(ipAddresses);
-        String extractedIp = ipAddresses.get(0);
+        String extractedIp = ipAddresses.getFirst();
         LOGGER.debug("Extracted ip {} from X-Forwarded-For '{}'", extractedIp, forwardedAddress);
         return extractedIp;
     }

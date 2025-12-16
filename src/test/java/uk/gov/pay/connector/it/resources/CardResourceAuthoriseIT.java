@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -24,6 +23,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.http.ContentType.JSON;
 import static java.lang.String.format;
+import static org.apache.commons.lang3.Strings.CS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -564,6 +564,6 @@ public class CardResourceAuthoriseIT {
     }
 
     private Long getLongChargeId(String externalChargeId) {
-        return Long.valueOf(StringUtils.removeStart(externalChargeId, "charge-"));
+        return Long.valueOf(CS.removeStart(externalChargeId, "charge-"));
     }
 }

@@ -62,7 +62,7 @@ public class StateTransitionsIT {
         assertThat(messages.size(), is(2));
 
         JsonObject cancelledMessage = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(e -> e.get("event_type").getAsString().equals("CANCELLED_BY_EXTERNAL_SERVICE"))
                 .findFirst().get();
 
@@ -72,7 +72,7 @@ public class StateTransitionsIT {
         assertThat(cancelledMessage.get("live").getAsBoolean(), is(false));
 
         Optional<JsonObject> refundMessage = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(e -> e.get("event_type").getAsString().equals("REFUND_AVAILABILITY_UPDATED"))
                 .findFirst();
         assertThat(refundMessage.isPresent(), is(true));
@@ -80,7 +80,7 @@ public class StateTransitionsIT {
     }
 
     @Test
-    void shouldEmitCorrectRefundEvents() throws Exception{
+    void shouldEmitCorrectRefundEvents() throws Exception {
         String chargeId = testBaseExtension.addCharge(
                 anAddChargeParameters().withChargeStatus(CAPTURED)
                         .withCreatedDate(Instant.now().minus(1, HOURS))
@@ -103,13 +103,13 @@ public class StateTransitionsIT {
         Thread.sleep(500L);
 
         String refundId = response.extract().response().jsonPath().get("refund_id");
-        
+
         List<Message> messages = readMessagesFromEventQueue();
 
         assertThat(messages.size(), is(4));
 
         JsonObject message1 = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_CREATED_BY_SERVICE".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
         assertThat(message1.get("event_type").getAsString(), is("REFUND_CREATED_BY_SERVICE"));
@@ -120,7 +120,7 @@ public class StateTransitionsIT {
         assertThat(message1.get("event_details").getAsJsonObject().get("amount").getAsInt(), is(50));
 
         JsonObject message2 = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_AVAILABILITY_UPDATED".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
         assertThat(message2.get("event_type").getAsString(), is("REFUND_AVAILABILITY_UPDATED"));
@@ -132,7 +132,7 @@ public class StateTransitionsIT {
         assertThat(message2.get("event_details").getAsJsonObject().get("refund_status").getAsString(), is("available"));
 
         JsonObject message3 = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_SUBMITTED".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
         assertThat(message3.get("event_type").getAsString(), is("REFUND_SUBMITTED"));
@@ -141,7 +141,7 @@ public class StateTransitionsIT {
         assertThat(message3.get("live").getAsBoolean(), is(false));
 
         JsonObject message4 = messages.stream()
-                .map(m -> new JsonParser().parse(m.body()).getAsJsonObject())
+                .map(m -> JsonParser.parseString(m.body()).getAsJsonObject())
                 .filter(m -> "REFUND_SUCCEEDED".equals(m.get("event_type").getAsString()))
                 .findFirst().get();
 

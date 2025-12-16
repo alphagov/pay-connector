@@ -148,9 +148,7 @@ class WorldpayPaymentProviderTest {
         } catch (IllegalStateException ex) {
             assumeTrue(false, "Ignoring test since credentials not configured");
         }
-
-        new URL(gatewayUrlMap().get(TEST.toString()).toString()).openConnection().connect();
-
+        gatewayUrlMap().get(TEST.toString()).toURL().openConnection().connect();
 
         validGatewayAccount = new GatewayAccountEntity();
         validGatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()

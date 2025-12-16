@@ -178,9 +178,9 @@ public class SandboxRefundsResourceIT {
                 List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(1));
                 assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
-                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("user_external_id", userExternalId));
-                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("user_email", userEmail));
-                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
+                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("user_external_id", userExternalId));
+                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("user_email", userEmail));
+                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
 
                 assertRefundsHistoryInOrderInDBForSuccessfulOrPartialRefund(defaultTestCharge);
             }
@@ -527,9 +527,9 @@ public class SandboxRefundsResourceIT {
                 List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(1));
                 assertThat(refundsFoundByChargeExternalId, hasItems(aRefundMatching(refundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), refundAmount, "REFUNDED")));
-                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("user_external_id", userExternalId));
-                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("user_email", userEmail));
-                assertThat(refundsFoundByChargeExternalId.get(0), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
+                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("user_external_id", userExternalId));
+                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("user_email", userEmail));
+                assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("charge_external_id", defaultTestCharge.getExternalChargeId()));
 
                 // Verify refund history
                 List<String> refundsHistory = app.getDatabaseTestHelper().getRefundStatusHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId());

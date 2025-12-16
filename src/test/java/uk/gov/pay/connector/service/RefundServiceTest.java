@@ -742,9 +742,9 @@ public class RefundServiceTest {
         verify(mockLedgerService, never()).getRefundsForPayment(charge.getGatewayAccountId(), charge.getExternalId());
 
         assertThat(refunds.size(), is(2));
-        assertThat(refunds.get(0).getChargeExternalId(), is(charge.getExternalId()));
-        assertThat(refunds.get(0).getAmount(), is(refundOne.getAmount()));
-        assertThat(refunds.get(0).getExternalStatus(), is(RefundStatus.CREATED.toExternal()));
+        assertThat(refunds.getFirst().getChargeExternalId(), is(charge.getExternalId()));
+        assertThat(refunds.getFirst().getAmount(), is(refundOne.getAmount()));
+        assertThat(refunds.getFirst().getExternalStatus(), is(RefundStatus.CREATED.toExternal()));
         assertThat(refunds.get(1).getExternalStatus(), is(RefundStatus.REFUND_SUBMITTED.toExternal()));
         assertThat(refunds.get(1).getAmount(), is(refundTwo.getAmount()));
     }
@@ -796,8 +796,8 @@ public class RefundServiceTest {
 
         List<Refund> refunds = refundService.findRefunds(charge);
         assertThat(refunds, hasSize(3));
-        assertThat(refunds.get(0).getAmount(), is(100L));
-        assertThat(refunds.get(0).getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_SUCCESS));
+        assertThat(refunds.getFirst().getAmount(), is(100L));
+        assertThat(refunds.getFirst().getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_SUCCESS));
         assertThat(refunds.get(1).getAmount(), is(200L));
         assertThat(refunds.get(1).getExternalStatus(), is(ExternalRefundStatus.EXTERNAL_SUBMITTED));
         assertThat(refunds.get(2).getAmount(), is(300L));

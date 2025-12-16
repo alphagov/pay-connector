@@ -36,7 +36,7 @@ class HistoryCustomizerTest {
         verify(mockClassDescriptor).setHistoryPolicy(setHistoryPolicyArgumentCaptor.capture());
         HistoryPolicy setHistoryPolicyArgument = setHistoryPolicyArgumentCaptor.getValue();
         assertThat(setHistoryPolicyArgument.getHistoryTableNames().size(), is(1));
-        assertThat(setHistoryPolicyArgument.getHistoryTableNames().get(0), is("TABLE_NAME_HISTORY"));
+        assertThat(setHistoryPolicyArgument.getHistoryTableNames().getFirst(), is("TABLE_NAME_HISTORY"));
         assertThat(setHistoryPolicyArgument.getEndFieldName(), is("HISTORY_END_DATE"));
         assertThat(setHistoryPolicyArgument.getStartFieldName(), is("HISTORY_START_DATE"));
     }

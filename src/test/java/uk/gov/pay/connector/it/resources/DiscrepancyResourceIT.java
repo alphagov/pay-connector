@@ -65,12 +65,12 @@ public class DiscrepancyResourceIT {
 
         assertEquals(2, results.size());
 
-        assertEquals("AUTHORISATION SUCCESS", results.get(0).get("gatewayStatus").asText());
-        assertEquals("EXPIRED", results.get(0).get("payStatus").asText());
-        assertEquals(chargeId, results.get(0).get("chargeId").asText());
-        assertEquals("Worldpay query response (orderCode: transaction-id, lastEvent: AUTHORISED)", results.get(0).get("rawGatewayResponse").asText());
-        assertEquals("EXTERNAL_SUBMITTED", results.get(0).get("gatewayExternalStatus").asText());
-        assertEquals("EXTERNAL_FAILED_EXPIRED", results.get(0).get("payExternalStatus").asText());
+        assertEquals("AUTHORISATION SUCCESS", results.getFirst().get("gatewayStatus").asText());
+        assertEquals("EXPIRED", results.getFirst().get("payStatus").asText());
+        assertEquals(chargeId, results.getFirst().get("chargeId").asText());
+        assertEquals("Worldpay query response (orderCode: transaction-id, lastEvent: AUTHORISED)", results.getFirst().get("rawGatewayResponse").asText());
+        assertEquals("EXTERNAL_SUBMITTED", results.getFirst().get("gatewayExternalStatus").asText());
+        assertEquals("EXTERNAL_FAILED_EXPIRED", results.getFirst().get("payExternalStatus").asText());
 
         assertEquals("AUTHORISATION SUCCESS", results.get(1).get("gatewayStatus").asText());
         assertEquals("AUTHORISATION SUCCESS", results.get(1).get("payStatus").asText());
@@ -101,12 +101,12 @@ public class DiscrepancyResourceIT {
 
         assertEquals(1, results.size());
 
-        assertEquals("AUTHORISATION SUCCESS", results.get(0).get("gatewayStatus").asText());
-        assertNull(results.get(0).get("payStatus"));
-        assertEquals(charge.getExternalChargeId(), results.get(0).get("chargeId").asText());
-        assertEquals("Worldpay query response (orderCode: transaction-id, lastEvent: AUTHORISED)", results.get(0).get("rawGatewayResponse").asText());
-        assertEquals("EXTERNAL_SUBMITTED", results.get(0).get("gatewayExternalStatus").asText());
-        assertEquals("submitted", results.get(0).get("payExternalStatus").asText());
+        assertEquals("AUTHORISATION SUCCESS", results.getFirst().get("gatewayStatus").asText());
+        assertNull(results.getFirst().get("payStatus"));
+        assertEquals(charge.getExternalChargeId(), results.getFirst().get("chargeId").asText());
+        assertEquals("Worldpay query response (orderCode: transaction-id, lastEvent: AUTHORISED)", results.getFirst().get("rawGatewayResponse").asText());
+        assertEquals("EXTERNAL_SUBMITTED", results.getFirst().get("gatewayExternalStatus").asText());
+        assertEquals("submitted", results.getFirst().get("payExternalStatus").asText());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class DiscrepancyResourceIT {
 
         assertEquals(1, results.size());
 
-        JsonNode statusComparisonForChargeId = results.get(0);
+        JsonNode statusComparisonForChargeId = results.getFirst();
         assertEquals("AUTHORISATION REJECTED", statusComparisonForChargeId.get("gatewayStatus").asText());
         assertEquals("EXPIRED", statusComparisonForChargeId.get("payStatus").asText());
         assertEquals(chargeId, statusComparisonForChargeId.get("chargeId").asText());
@@ -166,7 +166,7 @@ public class DiscrepancyResourceIT {
 
         assertEquals(2, results.size());
 
-        JsonNode statusComparisonForChargeId = results.get(0);
+        JsonNode statusComparisonForChargeId = results.getFirst();
         assertEquals("AUTHORISATION SUCCESS", statusComparisonForChargeId.get("gatewayStatus").asText());
         assertEquals("EXPIRED", statusComparisonForChargeId.get("payStatus").asText());
         assertEquals(chargeId, statusComparisonForChargeId.get("chargeId").asText());

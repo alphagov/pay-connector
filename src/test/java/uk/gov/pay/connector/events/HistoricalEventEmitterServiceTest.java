@@ -146,7 +146,7 @@ class HistoricalEventEmitterServiceTest {
         verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(),
                 any(), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(PaymentCreated.class));
 
         verify(chargeDao, never()).findById(2L);
     }
@@ -203,7 +203,7 @@ class HistoricalEventEmitterServiceTest {
         verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(),
                 any(), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(PaymentCreated.class));
     }
 
     @Test
@@ -471,7 +471,7 @@ class HistoricalEventEmitterServiceTest {
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(),
                 any(), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(CaptureSubmitted.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(CaptureSubmitted.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(CaptureConfirmed.class));
     }
 
@@ -568,11 +568,11 @@ class HistoricalEventEmitterServiceTest {
         verify(stateTransitionService, times(1)).offerStateTransition(argument.capture(),
                 any(AuthorisationSucceeded.class), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
 
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventService, times(1)).emitAndRecordEvent(daoArgumentCaptor.capture(), isNotNull()); // additional events - paymentDetailsEnteredEvent
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        assertThat(daoArgumentCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @Test
@@ -594,7 +594,7 @@ class HistoricalEventEmitterServiceTest {
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService).offerStateTransition(argument.capture(), any(RefundCreatedByService.class), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(RefundCreatedByService.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(RefundCreatedByService.class));
 
         verify(emittedEventDao, atMostOnce()).recordEmission(any(), isNotNull());
     }
@@ -632,12 +632,12 @@ class HistoricalEventEmitterServiceTest {
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(GatewayRequires3dsAuthorisation.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(GatewayRequires3dsAuthorisation.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(AuthorisationSucceeded.class));
 
         ArgumentCaptor<Event> daoArgumentCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventService, times(2)).emitAndRecordEvent(daoArgumentCaptor.capture(), isNotNull());
-        assertThat(daoArgumentCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        assertThat(daoArgumentCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
         assertThat(daoArgumentCaptor.getAllValues().get(1).getEventType(), is("BACKFILLER_RECREATED_USER_EMAIL_COLLECTED"));
     }
 
@@ -661,7 +661,7 @@ class HistoricalEventEmitterServiceTest {
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(PaymentCreated.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(PaymentCreated.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(PaymentStarted.class));
     }
 
@@ -682,7 +682,7 @@ class HistoricalEventEmitterServiceTest {
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(RefundCreatedByService.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(RefundCreatedByService.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(RefundSucceeded.class));
     }
 
@@ -712,7 +712,7 @@ class HistoricalEventEmitterServiceTest {
         ArgumentCaptor<StateTransition> argument = ArgumentCaptor.forClass(StateTransition.class);
         verify(stateTransitionService, times(2)).offerStateTransition(argument.capture(), any(), isNotNull());
 
-        assertThat(argument.getAllValues().get(0).getStateTransitionEventClass(), is(RefundCreatedByService.class));
+        assertThat(argument.getAllValues().getFirst().getStateTransitionEventClass(), is(RefundCreatedByService.class));
         assertThat(argument.getAllValues().get(1).getStateTransitionEventClass(), is(RefundSucceeded.class));
 
         verify(emittedEventDao, atMostOnce()).recordEmission(any(Event.class), isNotNull());
@@ -805,9 +805,9 @@ class HistoricalEventEmitterServiceTest {
         verify(eventService).emitAndRecordEvent(argument.capture(), isNotNull());
 
         List<Gateway3dsExemptionResultObtainedEvent> capturedEvents = argument.getAllValues();
-        Gateway3dsExemptionResultObtainedEventDetails eventDetailsType = (Gateway3dsExemptionResultObtainedEventDetails) argument.getAllValues().get(0).getEventDetails();
+        Gateway3dsExemptionResultObtainedEventDetails eventDetailsType = (Gateway3dsExemptionResultObtainedEventDetails) argument.getAllValues().getFirst().getEventDetails();
         
-        assertThat(capturedEvents.get(0).getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT"));
+        assertThat(capturedEvents.getFirst().getEventType(), is("GATEWAY_3DS_EXEMPTION_RESULT_OBTAINED_EVENT"));
         assertThat(eventDetailsType.getExemption3ds(), is(exemption3ds.toString()));
     }
     
@@ -839,7 +839,7 @@ class HistoricalEventEmitterServiceTest {
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
         verify(eventService).emitAndRecordEvent(eventCaptor.capture(), any());
         assertThat(eventCaptor.getAllValues().size(), is(1));
-        assertThat(eventCaptor.getAllValues().get(0).getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+        assertThat(eventCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
     }
 
     @ParameterizedTest

@@ -57,7 +57,7 @@ public class GatewayAccountCredentialsResourceIT {
             testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST, credentials);
             accountId = testAccount.getAccountId();
 
-            credentialsId = testAccount.getCredentials().get(0).getId();
+            credentialsId = testAccount.getCredentials().getFirst().getId();
         }
 
         @Nested
@@ -97,8 +97,8 @@ public class GatewayAccountCredentialsResourceIT {
             void validRequest_responseShouldBe200() {
                 DatabaseFixtures.TestAccount stripeTestAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST,
                         Map.of("stripe_account_id", "some-account-id"));
-                long stripeCredentialsId = stripeTestAccount.getCredentials().get(0).getId();
-                String stripeCredentialsExternalId = stripeTestAccount.getCredentials().get(0).getExternalId();
+                long stripeCredentialsId = stripeTestAccount.getCredentials().getFirst().getId();
+                String stripeCredentialsExternalId = stripeTestAccount.getCredentials().getFirst().getExternalId();
 
                 Map<String, String> newCredentials = Map.of("stripe_account_id", "new-account-id");
                 app.givenSetup()
@@ -132,7 +132,7 @@ public class GatewayAccountCredentialsResourceIT {
 
             @Test
             void invalidRequestBody_shouldReturn400() {
-                Long credentialsId = (Long) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(accountId).get(0).get("id");
+                Long credentialsId = (Long) app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(accountId).getFirst().get("id");
 
                 app.givenSetup()
                         .body(toJson(singletonList(
@@ -186,7 +186,7 @@ public class GatewayAccountCredentialsResourceIT {
             @Test
             void forGatewayMerchantId_shouldReturn400ForUnsupportedGateway() {
                 DatabaseFixtures.TestAccount testAccount = addGatewayAccountAndCredential("stripe", ACTIVE, TEST, Map.of());
-                AddGatewayAccountCredentialsParams params = testAccount.getCredentials().get(0);
+                AddGatewayAccountCredentialsParams params = testAccount.getCredentials().getFirst();
 
                 app.givenSetup()
                         .body(toJson(singletonList(

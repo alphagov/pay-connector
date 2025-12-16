@@ -225,7 +225,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(2));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_1));
             assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
         }
 
@@ -253,8 +253,8 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(2));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
-            assertThat(gatewayAccounts.get(0).getExternalId(), is(externalId_1));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_1));
+            assertThat(gatewayAccounts.getFirst().getExternalId(), is(externalId_1));
             assertThat(gatewayAccounts.get(1).getId(), is(gatewayAccountId_2));
             assertThat(gatewayAccounts.get(1).getExternalId(), is(externalId_2));
         }
@@ -277,7 +277,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_2));
         }
 
         @Test
@@ -298,7 +298,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_2));
         }
 
         @Test
@@ -319,7 +319,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_2));
         }
 
         @Test
@@ -340,7 +340,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_2));
         }
 
         @Test
@@ -361,7 +361,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_2));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_2));
         }
 
         @Test
@@ -433,7 +433,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId_1));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId_1));
         }
 
         @Test
@@ -450,7 +450,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId));
         }
 
         @Test
@@ -467,7 +467,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId));
         }
 
         @Test
@@ -484,7 +484,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId));
         }
 
         @Test
@@ -501,7 +501,7 @@ public class GatewayAccountDaoIT {
 
             List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.search(params);
             assertThat(gatewayAccounts, hasSize(1));
-            assertThat(gatewayAccounts.get(0).getId(), is(gatewayAccountId));
+            assertThat(gatewayAccounts.getFirst().getId(), is(gatewayAccountId));
         }
     }
 

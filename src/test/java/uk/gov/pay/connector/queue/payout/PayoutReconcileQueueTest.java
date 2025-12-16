@@ -61,9 +61,9 @@ class PayoutReconcileQueueTest {
         List<PayoutReconcileMessage> payoutReconcileMessages = payoutReconcileQueue.retrievePayoutMessages();
 
         assertNotNull(payoutReconcileMessages);
-        assertEquals("payout-id", payoutReconcileMessages.get(0).getGatewayPayoutId());
-        assertEquals("connect-accnt-id", payoutReconcileMessages.get(0).getConnectAccountId());
-        assertEquals(Instant.parse("2020-05-01T10:30:00.000Z"), payoutReconcileMessages.get(0).getCreatedDate());
+        assertEquals("payout-id", payoutReconcileMessages.getFirst().getGatewayPayoutId());
+        assertEquals("connect-accnt-id", payoutReconcileMessages.getFirst().getConnectAccountId());
+        assertEquals(Instant.parse("2020-05-01T10:30:00.000Z"), payoutReconcileMessages.getFirst().getCreatedDate());
     }
 
     @Test

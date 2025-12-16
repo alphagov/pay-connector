@@ -180,7 +180,7 @@ class EventFactoryTest {
 
         assertThat(refundEvents.size(), is(1));
 
-        RefundSubmitted refundSubmitted = (RefundSubmitted) refundEvents.get(0);
+        RefundSubmitted refundSubmitted = (RefundSubmitted) refundEvents.getFirst();
 
         assertThat(refundSubmitted.getParentResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(refundSubmitted.getResourceExternalId(), is(refundSubmittedHistory.getExternalId()));
@@ -211,7 +211,7 @@ class EventFactoryTest {
 
         assertThat(refundEvents.size(), is(1));
 
-        RefundSucceeded refundSucceeded = (RefundSucceeded) refundEvents.get(0);
+        RefundSucceeded refundSucceeded = (RefundSucceeded) refundEvents.getFirst();
 
         assertThat(refundSucceeded.getParentResourceExternalId(), is(chargeEntity.getExternalId()));
         assertThat(refundSucceeded.getResourceExternalId(), is(refundSucceededHistory.getExternalId()));
@@ -278,7 +278,7 @@ class EventFactoryTest {
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2));
-        PaymentCreated event = (PaymentCreated) events.get(0);
+        PaymentCreated event = (PaymentCreated) events.getFirst();
         assertThat(event, instanceOf(PaymentCreated.class));
         assertThat(event.getEventDetails(), instanceOf(PaymentCreatedEventDetails.class));
         assertThat(event.getResourceExternalId(), Is.is(chargeEventEntity.getChargeEntity().getExternalId()));
@@ -306,7 +306,7 @@ class EventFactoryTest {
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2)); // also creates RefundAvailabilityUpdated event
-        CancelByExternalServiceSubmitted event = (CancelByExternalServiceSubmitted) events.get(0);
+        CancelByExternalServiceSubmitted event = (CancelByExternalServiceSubmitted) events.getFirst();
         assertThat(event, instanceOf(CancelByExternalServiceSubmitted.class));
         assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
     }
@@ -365,7 +365,7 @@ class EventFactoryTest {
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2));
-        Event event1 = events.get(0);
+        Event event1 = events.getFirst();
         assertThat(event1, instanceOf(eventClass));
         assertThat(event1.getEventDetails(), instanceOf(eventDetailsClass));
 
@@ -433,7 +433,7 @@ class EventFactoryTest {
 
         assertThat(events.size(), is(1));
 
-        PaymentNotificationCreated event = (PaymentNotificationCreated) events.get(0);
+        PaymentNotificationCreated event = (PaymentNotificationCreated) events.getFirst();
         assertThat(event, is(instanceOf(PaymentNotificationCreated.class)));
 
         assertThat(event.getEventDetails(), instanceOf(PaymentNotificationCreatedEventDetails.class));
@@ -470,7 +470,7 @@ class EventFactoryTest {
 
         assertThat(events.size(), is(2));
 
-        AuthorisationRejected event = (AuthorisationRejected) events.get(0);
+        AuthorisationRejected event = (AuthorisationRejected) events.getFirst();
         assertThat(event, is(instanceOf(AuthorisationRejected.class)));
 
         assertThat(event.getEventDetails(), instanceOf(AuthorisationRejectedEventDetails.class));
@@ -507,7 +507,7 @@ class EventFactoryTest {
 
         assertThat(events.size(), is(2));
 
-        AuthorisationRejected event = (AuthorisationRejected) events.get(0);
+        AuthorisationRejected event = (AuthorisationRejected) events.getFirst();
         assertThat(event, is(instanceOf(AuthorisationRejected.class)));
 
         assertThat(event.getEventDetails(), instanceOf(EmptyEventDetails.class));
@@ -537,7 +537,7 @@ class EventFactoryTest {
 
         assertThat(events.size(), is(1));
 
-        BackfillerRecreatedUserEmailCollected event = (BackfillerRecreatedUserEmailCollected) events.get(0);
+        BackfillerRecreatedUserEmailCollected event = (BackfillerRecreatedUserEmailCollected) events.getFirst();
         assertThat(event, is(instanceOf(BackfillerRecreatedUserEmailCollected.class)));
 
         assertThat(event.getEventDetails(), instanceOf(UserEmailCollectedEventDetails.class));
@@ -573,7 +573,7 @@ class EventFactoryTest {
 
         assertThat(events.size(), is(1));
 
-        GatewayRequires3dsAuthorisation event = (GatewayRequires3dsAuthorisation) events.get(0);
+        GatewayRequires3dsAuthorisation event = (GatewayRequires3dsAuthorisation) events.getFirst();
         assertThat(event, is(instanceOf(GatewayRequires3dsAuthorisation.class)));
 
         assertThat(event.getEventDetails(), instanceOf(GatewayRequires3dsAuthorisationEventDetails.class));
@@ -610,8 +610,8 @@ class EventFactoryTest {
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2));
-
-        CancelledWithGatewayAfterAuthorisationError event = (CancelledWithGatewayAfterAuthorisationError) events.get(0);
+        
+        CancelledWithGatewayAfterAuthorisationError event = (CancelledWithGatewayAfterAuthorisationError) events.getFirst();
         assertThat(event.getEventDetails(), is(instanceOf(CancelledWithGatewayAfterAuthorisationErrorEventDetails.class)));
         assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
 

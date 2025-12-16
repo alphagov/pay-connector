@@ -30,7 +30,7 @@ public class CardTypeDaoIT {
     @Test
     void findById() {
         List<CardTypeEntity> allCardTypes = cardTypeDao.findAll();
-        CardTypeEntity aCard = allCardTypes.get(0);
+        CardTypeEntity aCard = allCardTypes.getFirst();
         Optional<CardTypeEntity> maybeCardTypeEntity = cardTypeDao.findById(aCard.getId());
         assertThat(maybeCardTypeEntity.isPresent(), is(true));
     }

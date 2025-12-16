@@ -254,20 +254,20 @@ public class RefundReversalServiceTest {
         List<Event> postedEvents = eventsCaptor.getValue();
 
         assertThat(postedEvents, hasSize(3));
-        assertInstanceOf(RefundFailureFundsSentToConnectAccount.class, postedEvents.get(0));
+        assertInstanceOf(RefundFailureFundsSentToConnectAccount.class, postedEvents.getFirst());
         assertInstanceOf(PaymentStatusCorrectedToSuccessByAdmin.class, postedEvents.get(1));
         assertInstanceOf(RefundStatusCorrectedToErrorByAdmin.class, postedEvents.get(2));
 
-        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(0)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
+        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.getFirst()).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
         assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
         assertThat(((RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2)).getGatewayAccountId(), is(gatewayAccountEntity.getId()));
 
 
-        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.get(0)).getServiceId(), is(charge.getServiceId()));
+        assertThat(((RefundFailureFundsSentToConnectAccount) postedEvents.getFirst()).getServiceId(), is(charge.getServiceId()));
         assertThat(((PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1)).getServiceId(), is(charge.getServiceId()));
         assertThat(((RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2)).getServiceId(), is(charge.getServiceId()));
 
-        RefundFailureFundsSentToConnectAccount refundFailureEvent = (RefundFailureFundsSentToConnectAccount) postedEvents.get(0);
+        RefundFailureFundsSentToConnectAccount refundFailureEvent = (RefundFailureFundsSentToConnectAccount) postedEvents.getFirst();
         PaymentStatusCorrectedToSuccessByAdmin paymentStatusEvent = (PaymentStatusCorrectedToSuccessByAdmin) postedEvents.get(1);
         RefundStatusCorrectedToErrorByAdmin refundStatusEvent = (RefundStatusCorrectedToErrorByAdmin) postedEvents.get(2);
 
@@ -308,7 +308,7 @@ public class RefundReversalServiceTest {
         Response response = refundReversalService.reverseFailedRefund(gatewayAccountEntity, refund, charge, githubUserId, zendeskId);
         ErrorResponse actualErrorResponse = (ErrorResponse) response.getEntity();
         assertEquals("Stripe transfer successful but error updating payment and refunds",
-                actualErrorResponse.messages().get(0));
+                actualErrorResponse.messages().getFirst());
 
     }
 

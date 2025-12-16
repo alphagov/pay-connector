@@ -153,7 +153,7 @@ class PayoutReconcileProcessTest {
         verify(payoutEmitterService, times(2)).emitPayoutEvent(
                 captor.capture(), any(), any(), any());
 
-        assertThat(captor.getAllValues().get(0), is(PayoutCreated.class));
+        assertThat(captor.getAllValues().getFirst(), is(PayoutCreated.class));
         assertThat(captor.getAllValues().get(1), is(PayoutPaid.class));
 
         verify(payoutReconcileQueue).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
@@ -174,7 +174,7 @@ class PayoutReconcileProcessTest {
 
         StripePayout stripePayoutForFailedEvent = captorForStripePayout.getAllValues().get(1);
 
-        assertThat(captor.getAllValues().get(0), is(PayoutCreated.class));
+        assertThat(captor.getAllValues().getFirst(), is(PayoutCreated.class));
         assertThat(captor.getAllValues().get(1), is(PayoutFailed.class));
 
         assertThat(stripePayoutForFailedEvent.getFailureCode(), is("account_closed"));

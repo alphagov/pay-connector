@@ -52,8 +52,8 @@ public class StripeQueryPaymentStatusHandler {
                 LOGGER.error("There are more than one payment intents for charge: [{}]", chargeQueryGatewayRequest.getChargeExternalId());
                 throw new ChargeNotFoundRuntimeException(request.getChargeExternalId());
             }
-            return new ChargeQueryResponse(StripeChargeStatus.mapToChargeStatus(StripeChargeStatus.fromString(paymentIntentList.get(0).getStatus())),
-                    new StripeQueryResponse(paymentIntentList.get(0).getId()));
+            return new ChargeQueryResponse(StripeChargeStatus.mapToChargeStatus(StripeChargeStatus.fromString(paymentIntentList.getFirst().getStatus())),
+                    new StripeQueryResponse(paymentIntentList.getFirst().getId()));
         } catch (GatewayException.GatewayErrorException ex) {
             if ((ex.getStatus().isPresent() && ex.getStatus().get() == SC_UNAUTHORIZED) || ex.getFamily() == SERVER_ERROR) {
                 LOGGER.info("Querying payment status failed due to an internal error. Reason: {}. Status code from Stripe: {}.",

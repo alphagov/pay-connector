@@ -120,9 +120,9 @@ public class WorldpayNotificationResourceIT {
 
         List<Map<String, Object>> refundsByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(chargeExternalId);
         assertThat(refundsByChargeExternalId.size(), is(1));
-        assertThat(refundsByChargeExternalId.get(0).get("charge_external_id"), is(chargeExternalId));
-        assertThat(refundsByChargeExternalId.get(0).get("gateway_transaction_id"), is(refundExternalId));
-        assertThat(refundsByChargeExternalId.get(0).get("status"), is("REFUNDED"));
+        assertThat(refundsByChargeExternalId.getFirst().get("charge_external_id"), is(chargeExternalId));
+        assertThat(refundsByChargeExternalId.getFirst().get("gateway_transaction_id"), is(refundExternalId));
+        assertThat(refundsByChargeExternalId.getFirst().get("status"), is("REFUNDED"));
     }
 
     @Test

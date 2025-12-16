@@ -94,7 +94,7 @@ public class ServiceArchivedEventIT {
 
         var updatedGatewayAccount = app.getDatabaseTestHelper().getGatewayAccount(gatewayAccountId);
         assertThat(updatedGatewayAccount.get("disabled").toString(), is("true"));
-        var credentialsMap = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountId).get(0);
+        var credentialsMap = app.getDatabaseTestHelper().getGatewayAccountCredentialsForAccount(gatewayAccountId).getFirst();
         assertThat(GatewayAccountCredentialState.valueOf(credentialsMap.get("state").toString()), is(GatewayAccountCredentialState.RETIRED));
     }
 

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,6 +21,7 @@ import java.util.stream.Stream;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.HOURS;
+import static org.apache.commons.lang3.Strings.CS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItems;
@@ -147,7 +147,7 @@ public class ChargeCancelResourceIT {
         @DisplayName("Should preserve charge card details when charge is cancelled")
         void shouldPreserveCardDetailsIfCancelled() {
             String externalChargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
-            Long chargeId = Long.valueOf(StringUtils.removeStart(externalChargeId, "charge"));
+            Long chargeId = Long.valueOf(CS.removeStart(externalChargeId, "charge"));
 
             app.getWorldpayMockClient().mockCancelSuccess();
 

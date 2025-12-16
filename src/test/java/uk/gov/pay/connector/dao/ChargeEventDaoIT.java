@@ -89,7 +89,7 @@ public class ChargeEventDaoIT {
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
         assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
         assertThat(events, shouldIncludeStatus(CAPTURE_READY));
-        assertDateMatch(events.get(0).getUpdated());
+        assertDateMatch(events.getFirst().getUpdated());
     }
 
     @Test
@@ -128,7 +128,7 @@ public class ChargeEventDaoIT {
         assertThat(events, shouldIncludeStatus(ENTERING_CARD_DETAILS));
         assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
         assertThat(events, shouldIncludeStatus(AWAITING_CAPTURE_REQUEST));
-        assertDateMatch(events.get(0).getUpdated());
+        assertDateMatch(events.getFirst().getUpdated());
     }
 
     @Test
@@ -146,7 +146,7 @@ public class ChargeEventDaoIT {
 
         assertThat(events, hasSize(2));
         assertThat(events, shouldIncludeStatus(AUTHORISATION_READY));
-        assertThat(events.get(0).getChargeEntity().getId(), Matchers.is(testCharge.getChargeId()));
+        assertThat(events.getFirst().getChargeEntity().getId(), Matchers.is(testCharge.getChargeId()));
         assertThat(events, shouldIncludeStatus(AUTHORISATION_SUCCESS));
         assertThat(events.get(1).getChargeEntity().getId(), Matchers.is(testCharge.getChargeId()));
     }

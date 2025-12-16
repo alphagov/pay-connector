@@ -192,7 +192,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
+        String log = loggingEventArgumentCaptor.getAllValues().getFirst().getMessage();
         assertTrue(log.contains("Authorisation with billing address and without email address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, exemptionResponse result: HONOURED, exemptionResponse reason: HIGH_RISK)"));
 
@@ -217,7 +217,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
+        String log = loggingEventArgumentCaptor.getAllValues().getFirst().getMessage();
         assertTrue(log.contains("Authorisation with billing address and without email address and with 3DS data and without device data collection result"));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED, exemptionResponse result: HONOURED, exemptionResponse reason: ISSUER_HONOURED)"));
 
@@ -331,7 +331,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
+        String log = loggingEventArgumentCaptor.getAllValues().getFirst().getMessage();
         assertTrue(log.contains("Authorisation with billing address and without email address and with 3DS data and without device data collection result "));
         assertTrue(log.contains("Worldpay authorisation response (orderCode: transaction-id, lastEvent: AUTHORISED) .'. AUTHORISATION SUCCESS -> AUTHORISATION SUCCESS"));
     }
@@ -359,10 +359,10 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        String log = loggingEventArgumentCaptor.getAllValues().get(0).getMessage();
+        String log = loggingEventArgumentCaptor.getAllValues().getFirst().getMessage();
         assertTrue(log.contains("and with agreement payment type of " + agreementPaymentType.getName()));
 
-        var structuredLoggingArgs = Arrays.stream(loggingEventArgumentCaptor.getAllValues().get(0).getArgumentArray())
+        var structuredLoggingArgs = Arrays.stream(loggingEventArgumentCaptor.getAllValues().getFirst().getArgumentArray())
                 .map(Object::toString)
                 .toList();
         assertThat(structuredLoggingArgs, hasItem("agreement_payment_type=" + agreementPaymentType.name()));

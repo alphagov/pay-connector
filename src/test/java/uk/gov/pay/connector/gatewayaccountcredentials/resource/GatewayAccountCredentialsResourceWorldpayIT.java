@@ -44,7 +44,7 @@ public class GatewayAccountCredentialsResourceWorldpayIT {
     void setup() {
         testAccount = addGatewayAccountAndCredential("worldpay", ACTIVE, TEST);
         accountId = testAccount.getAccountId();
-        credentialsId = testAccount.getCredentials().get(0).getId();
+        credentialsId = testAccount.getCredentials().getFirst().getId();
     }
 
     @Test
