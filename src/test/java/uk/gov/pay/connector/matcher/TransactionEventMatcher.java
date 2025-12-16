@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.matcher;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Objects;
 
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 
@@ -42,12 +42,12 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
 
     }
 
-    private String type;
-    private State state;
-    private String amount;
-    private String updated;
-    private String refundReference;
-    private String refundSubmittedBy;
+    private final String type;
+    private final State state;
+    private final String amount;
+    private final String updated;
+    private final String refundReference;
+    private final String refundSubmittedBy;
 
     public TransactionEventMatcher(String type, State state, String amount, ZonedDateTime updated, String refundReference, String submittedBy) {
         this.type = type;
@@ -91,17 +91,17 @@ public class TransactionEventMatcher extends TypeSafeMatcher<Map<String, Object>
         if (record.get("state") == null) {
             stateMatches = (state == null);
         } else {
-            stateMatches = ObjectUtils.equals(((Map)record.get("state")).get("status"), state.getStatus()) &&
-                    ObjectUtils.equals(((Map)record.get("state")).get("finished").toString(), state.getFinished()) &&
-                    ObjectUtils.equals(((Map)record.get("state")).get("code"), state.getCode()) &&
-                    ObjectUtils.equals(((Map)record.get("state")).get("message"), state.getMessage());
+            stateMatches = Objects.equals(((Map<?, ?>) record.get("state")).get("status"), state.getStatus()) &&
+                    Objects.equals(((Map<?, ?>) record.get("state")).get("finished").toString(), state.getFinished()) &&
+                    Objects.equals(((Map<?, ?>) record.get("state")).get("code"), state.getCode()) &&
+                    Objects.equals(((Map<?, ?>) record.get("state")).get("message"), state.getMessage());
         }
 
         return stateMatches &&
-                ObjectUtils.equals(record.get("refund_reference"), refundReference) &&
-                ObjectUtils.equals(record.get("type"), type) &&
-                ObjectUtils.equals(record.get("amount"), Integer.valueOf(amount)) &&
-                ObjectUtils.equals(record.get("updated"), updated) &&
-                ObjectUtils.equals(record.get("submitted_by"), refundSubmittedBy);
+                Objects.equals(record.get("refund_reference"), refundReference) &&
+                Objects.equals(record.get("type"), type) &&
+                Objects.equals(record.get("amount"), Integer.valueOf(amount)) &&
+                Objects.equals(record.get("updated"), updated) &&
+                Objects.equals(record.get("submitted_by"), refundSubmittedBy);
     }
 }
