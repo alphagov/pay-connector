@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.SandboxCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.StripeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
@@ -56,7 +57,7 @@ public class GatewayAccountResourceCreateIT {
                     .withSendPayerIpAddressToGateway(true)
                     .withSendPayerEmailToGateway(true)
                     .build();
-            
+
             Map<String, String> requestForSecondAccountPayload = aCreateGatewayAccountPayloadBuilder()
                     .withProvider("worldpay")
                     .withServiceId("my-service-id")
@@ -65,14 +66,14 @@ public class GatewayAccountResourceCreateIT {
                     .withSendPayerEmailToGateway(true)
                     .withSendPayerIpAddressToGateway(true)
                     .build();
-            
+
             ValidatableResponse response = app.givenSetup()
                     .body(requestForAccountPayload)
                     .post(ACCOUNTS_API_URL + "?degatewayification=true")
                     .then()
                     .statusCode(201)
                     .contentType(JSON);
-            
+
             app.givenSetup()
                     .body(requestForSecondAccountPayload)
                     .post(ACCOUNTS_API_URL + "?degatewayification=true")
@@ -80,7 +81,7 @@ public class GatewayAccountResourceCreateIT {
                     .statusCode(409)
                     .contentType(JSON)
                     .body("message", contains("Gateway account with service id my-service-id and account type 'test' already exists."));
-            
+
             assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, true, true);
         }
     }
@@ -123,10 +124,10 @@ public class GatewayAccountResourceCreateIT {
                     .statusCode(201)
                     .contentType(JSON);
         }
-        
+
         @Test
         public void createASandboxGatewayAccount() {
-            Map<String, Object> payload = Map.of("payment_provider", "sandbox", "service_id", "a-valid-service-id", "description","my test service", 
+            Map<String, Object> payload = Map.of("payment_provider", "sandbox", "service_id", "a-valid-service-id", "description", "my test service",
                     "analytics_id", "analytics", "send_payer_email_to_gateway", true, "send_payer_ip_address_to_gateway", true);
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
             GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, true, true);
@@ -134,7 +135,7 @@ public class GatewayAccountResourceCreateIT {
 
         @Test
         public void createAWorldpaySandboxGatewayAccount() {
-            Map<String, Object> payload = Map.of("payment_provider", "worldpay", "service_id", "a-valid-service-id", "description","my test service", 
+            Map<String, Object> payload = Map.of("payment_provider", "worldpay", "service_id", "a-valid-service-id", "description", "my test service",
                     "analytics_id", "analytics", "send_payer_email_to_gateway", true, "send_payer_ip_address_to_gateway", true);
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
             GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, true, true);
@@ -142,7 +143,7 @@ public class GatewayAccountResourceCreateIT {
 
         @Test
         public void createAWorldpayStripeGatewayAccount() {
-            Map<String, Object> payload = Map.of("payment_provider", "stripe", "service_id", "a-valid-service-id", "description","my test service", 
+            Map<String, Object> payload = Map.of("payment_provider", "stripe", "service_id", "a-valid-service-id", "description", "my test service",
                     "analytics_id", "analytics", "send_payer_email_to_gateway", false, "send_payer_ip_address_to_gateway", false);
             ValidatableResponse response = app.givenSetup().body(payload).post(ACCOUNTS_API_URL).then().statusCode(201).contentType(JSON);
             GatewayAccountResourceITHelpers.assertCorrectCreateResponse(response, TEST, "my test service", "analytics", null, false, false);
@@ -166,66 +167,66 @@ public class GatewayAccountResourceCreateIT {
                     .then().statusCode(200).contentType(JSON).body("payment_provider", is("stripe")).body("gateway_account_id", is(notNullValue())).body("service_name", is("a-service-name")).body("service_id", is("some-special-service-id")).body("type", is("live")).body("analytics_id", is("an-analytics-id")).body("description", is("a-description")).body("requires3ds", is(true)).body("allow_apple_pay", is(true)).body("allow_google_pay", is(true));
         }
 
-    @Test
-    public void createStripeGatewayAccountWithoutCredentials() {
-        Map<String, Object> payload = Map.of(
-                "type", "test",
-                "payment_provider", "stripe",
-                "service_name", "My shiny new stripe service",
-                "service_id", "a-valid-service-id");
-        app.givenSetup()
-                .body(toJson(payload))
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201)
-                .contentType(JSON)
-                .body("gateway_account_id", not(emptyString()))
-                .body("service_name", is("My shiny new stripe service"))
-                .body("type", is("test"))
-                .body("links.size()", is(1))
-                .body("links[0].href", matchesPattern("https://localhost:[0-9]*/v1/api/accounts/[0-9]*"))
-                .body("links[0].rel", is("self"))
-                .body("links[0].method", is("GET"));
-    }
+        @Test
+        public void createStripeGatewayAccountWithoutCredentials() {
+            Map<String, Object> payload = Map.of(
+                    "type", "test",
+                    "payment_provider", "stripe",
+                    "service_name", "My shiny new stripe service",
+                    "service_id", "a-valid-service-id");
+            app.givenSetup()
+                    .body(toJson(payload))
+                    .post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON)
+                    .body("gateway_account_id", not(emptyString()))
+                    .body("service_name", is("My shiny new stripe service"))
+                    .body("type", is("test"))
+                    .body("links.size()", is(1))
+                    .body("links[0].href", matchesPattern("https://localhost:[0-9]*/v1/api/accounts/[0-9]*"))
+                    .body("links[0].rel", is("self"))
+                    .body("links[0].method", is("GET"));
+        }
 
-    @Test
-    public void createStripeGatewayAccountWithCredentials() {
-        String stripeAccountId = "abc";
-        Map<String, Object> payload = Map.of(
-                "type", "test",
-                "payment_provider", "stripe",
-                "service_name", "My shiny new stripe service",
-                "service_id", "a-valid-service-id",
-                "credentials", Map.of("stripe_account_id", stripeAccountId));
-        String gatewayAccountId = app.givenSetup()
-                .body(toJson(payload))
-                .post(ACCOUNTS_API_URL)
-                .then()
-                .statusCode(201)
-                .contentType(JSON)
-                .body("gateway_account_id", not(emptyString()))
-                .body("service_name", is("My shiny new stripe service"))
-                .body("type", is("test"))
-                .body("links.size()", is(1))
-                .body("links[0].href", matchesPattern("https://localhost:[0-9]*/v1/api/accounts/[0-9]*"))
-                .body("links[0].rel", is("self"))
-                .body("links[0].method", is("GET"))
-                .extract()
-                .body()
-                .jsonPath()
-                .getString("gateway_account_id");
-        Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
-        assertThat(gatewayAccount.isPresent(), is(true));
+        @Test
+        public void createStripeGatewayAccountWithCredentials() {
+            String stripeAccountId = "abc";
+            Map<String, Object> payload = Map.of(
+                    "type", "test",
+                    "payment_provider", "stripe",
+                    "service_name", "My shiny new stripe service",
+                    "service_id", "a-valid-service-id",
+                    "credentials", Map.of("stripe_account_id", stripeAccountId));
+            String gatewayAccountId = app.givenSetup()
+                    .body(toJson(payload))
+                    .post(ACCOUNTS_API_URL)
+                    .then()
+                    .statusCode(201)
+                    .contentType(JSON)
+                    .body("gateway_account_id", not(emptyString()))
+                    .body("service_name", is("My shiny new stripe service"))
+                    .body("type", is("test"))
+                    .body("links.size()", is(1))
+                    .body("links[0].href", matchesPattern("https://localhost:[0-9]*/v1/api/accounts/[0-9]*"))
+                    .body("links[0].rel", is("self"))
+                    .body("links[0].method", is("GET"))
+                    .extract()
+                    .body()
+                    .jsonPath()
+                    .getString("gateway_account_id");
+            Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
+            assertThat(gatewayAccount.isPresent(), is(true));
 
-        List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
-        assertThat(gatewayAccountCredentialsList.size(), is(1));
-        GatewayCredentials credentialsObject = gatewayAccountCredentialsList.getFirst().getCredentialsObject();
-        assertThat(credentialsObject, isA(StripeCredentials.class));
-        assertThat(((StripeCredentials) credentialsObject).getStripeAccountId(), is(stripeAccountId));
-        assertThat(gatewayAccountCredentialsList.getFirst().getState(), is(ACTIVE));
-        assertThat(gatewayAccountCredentialsList.getFirst().getPaymentProvider(), is("stripe"));
-        assertThat(gatewayAccountCredentialsList.getFirst().getActiveStartDate(), is(notNullValue()));
-    }
+            List<GatewayAccountCredentialsEntity> gatewayAccountCredentialsList = gatewayAccount.get().getGatewayAccountCredentials();
+            assertThat(gatewayAccountCredentialsList.size(), is(1));
+            GatewayCredentials credentialsObject = gatewayAccountCredentialsList.getFirst().getCredentialsObject();
+            assertThat(credentialsObject, isA(StripeCredentials.class));
+            assertThat(((StripeCredentials) credentialsObject).getStripeAccountId(), is(stripeAccountId));
+            assertThat(gatewayAccountCredentialsList.getFirst().getState(), is(ACTIVE));
+            assertThat(gatewayAccountCredentialsList.getFirst().getPaymentProvider(), is("stripe"));
+            assertThat(gatewayAccountCredentialsList.getFirst().getActiveStartDate(), is(notNullValue()));
+        }
 
         @Test
         public void createGatewayAccountWithoutPaymentProviderDefaultsToSandbox() {
@@ -245,7 +246,7 @@ public class GatewayAccountResourceCreateIT {
                     .body("payment_provider", is("sandbox"))
                     .body("gateway_account_id", is(notNullValue()))
                     .body("type", is("test"));
-            
+
             String gatewayAccountId = response.extract().body().jsonPath().getString("gateway_account_id");
             Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountDao.findById(Long.valueOf(gatewayAccountId));
             assertThat(gatewayAccount.isPresent(), is(true));
@@ -254,7 +255,11 @@ public class GatewayAccountResourceCreateIT {
             assertThat(gatewayAccountCredentialsList.size(), is(1));
             assertThat(gatewayAccountCredentialsList.getFirst().getState(), is(ACTIVE));
             assertThat(gatewayAccountCredentialsList.getFirst().getPaymentProvider(), is("sandbox"));
-            assertThat(gatewayAccountCredentialsList.getFirst().getCredentials().isEmpty(), is(true));
+
+            GatewayCredentials credentialsObj = gatewayAccountCredentialsList.getFirst().getCredentialsObject();
+            assertThat(credentialsObj, isA(SandboxCredentials.class));
+            //hasCredentials in SandboxCredentials.class is hardcoded to true
+            assertThat(credentialsObj.hasCredentials(), is(true));
         }
 
         private void assertCorrectCreateResponse(ValidatableResponse response, GatewayAccountType type) {
