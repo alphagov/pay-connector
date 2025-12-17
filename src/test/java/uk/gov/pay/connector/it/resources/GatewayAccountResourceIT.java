@@ -1220,4 +1220,14 @@ public class GatewayAccountResourceIT {
                 .statusCode(200)
                 .body("worldpay_3ds_flex", nullValue());
     }
+
+    @Test
+    void shouldNotReturnBadRequestWhenSearchingWithUrlEncodedQueryParam() {
+        String urlEncodedQueryParam = "AD001043%2F22"; // AD001043/22
+        app.givenSetup()
+                .get("/v1/api/accounts?payment_provider_account_id=" + urlEncodedQueryParam)
+                .then()
+                .statusCode(OK.getStatusCode())
+                .body("accounts", hasSize(0));
+    }
 }

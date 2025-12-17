@@ -17,6 +17,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.SortedMap;
 import java.util.stream.Collectors;
 
@@ -74,7 +75,7 @@ public class HealthCheckResource {
                 .collect(Collectors.toMap(Map.Entry::getKey,
                                 healthCheck -> ImmutableMap.of(
                                         "healthy", healthCheck.getValue().isHealthy(),
-                                        "message", defaultString(healthCheck.getValue().getMessage(), "Healthy"))
+                                        "message", Objects.toString(healthCheck.getValue().getMessage(), "Healthy"))
                         )
                 );
 
