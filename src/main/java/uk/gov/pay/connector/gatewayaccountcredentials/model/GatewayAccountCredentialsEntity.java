@@ -96,14 +96,7 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     public String getPaymentProvider() {
         return paymentProvider;
     }
-
-    /**
-     * @deprecated Use {@link GatewayAccountCredentialsEntity#getCredentialsObject()} instead
-     */
-    @Deprecated(since = "19/07/2023")
-    public Map<String, Object> getCredentials() {
-        return credentials;
-    }
+    
     
     public GatewayCredentials getCredentialsObject() {
         Map<String, Object> credentialsMap = Optional.ofNullable(credentials).orElse(Map.of());
