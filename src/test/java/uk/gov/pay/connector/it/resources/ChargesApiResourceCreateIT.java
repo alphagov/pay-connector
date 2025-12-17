@@ -1072,7 +1072,6 @@ public class ChargesApiResourceCreateIT {
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
                     .body("message[0]", CoreMatchers.is("Gateway account not found for service external id [valid-service-id] and account type [live]"));
-            ;
         }
 
         @Test

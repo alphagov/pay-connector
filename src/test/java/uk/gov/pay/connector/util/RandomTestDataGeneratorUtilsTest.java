@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphabetic;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
@@ -47,7 +46,7 @@ class RandomTestDataGeneratorUtilsTest {
         assertNotNull(string);
         assertEquals(0, string.length());
     }
-    
+
 
     @Test
     void randomLong_defaultRange_withinExpectedBounds() {
@@ -57,7 +56,6 @@ class RandomTestDataGeneratorUtilsTest {
     }
 
 
-
     @Test
     void randomLong_singleValueRange_returnsThatValue() {
         long min = 5L;
@@ -65,7 +63,7 @@ class RandomTestDataGeneratorUtilsTest {
         long randomLong = secureRandomLong(min, max);
         assertEquals(min, randomLong);
     }
-    
+
 
     @Test
     void randomInt_defaultRange_withinExpectedBounds() {
@@ -73,7 +71,7 @@ class RandomTestDataGeneratorUtilsTest {
         assertTrue(randomInt >= 0, "value should be >= 0");
         assertTrue(randomInt < Integer.MAX_VALUE, "value should be < Integer.MAX_VALUE");
     }
-    
+
 
     @Test
     void randomInt_singleValueRange_returnsThatValue() {
@@ -82,5 +80,5 @@ class RandomTestDataGeneratorUtilsTest {
         long randomLong = secureRandomInt(min, max);
         assertEquals(min, randomLong);
     }
-    
+
 }

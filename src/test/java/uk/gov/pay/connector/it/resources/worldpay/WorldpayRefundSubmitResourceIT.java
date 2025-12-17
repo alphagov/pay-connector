@@ -548,7 +548,6 @@ public class WorldpayRefundSubmitResourceIT {
                     .body("amount", is(firstRefundAmount))
                     .body("status", is("submitted"))
                     .body("created_date", is(notNullValue()));
-            ;
             String firstRefundId = firstResponse.extract().path("refund_id");
 
             // Request second refund
@@ -563,7 +562,6 @@ public class WorldpayRefundSubmitResourceIT {
                     .body("amount", is(secondRefundAmount))
                     .body("status", is("submitted"))
                     .body("created_date", is(notNullValue()));
-            ;
             String secondRefundId = secondResponse.extract().path("refund_id");
 
             // Verify refund entities are created in database
