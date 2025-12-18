@@ -34,18 +34,18 @@ public final class RandomTestDataGeneratorUtils {
     }
 
     public static String randomAlphabetic(int length) {
-        return possibleCharacters(CHARS, length);
+        return randomFromCharset(CHARS, length);
     }
 
     public static String randomAlphanumeric(int length) {
-        return possibleCharacters(ALPHA_NUM, length);
+        return randomFromCharset(ALPHA_NUM, length);
     }
 
-    private static String possibleCharacters(String charset, int length) {
+    private static String randomFromCharset(String possibleCharacters, int length) {
         ThreadLocalRandom rnd = current();
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
-            sb.append(charset.charAt(rnd.nextInt(charset.length())));
+            sb.append(possibleCharacters.charAt(rnd.nextInt(possibleCharacters.length())));
         }
         return sb.toString();
     }
