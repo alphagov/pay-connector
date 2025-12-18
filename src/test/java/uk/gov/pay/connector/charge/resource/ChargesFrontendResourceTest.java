@@ -64,7 +64,7 @@ class ChargesFrontendResourceTest {
         List<String> listOfErrors = (List) response.readEntity(Map.class).get("message");
         assertThat(listOfErrors.size(), is(2));
         assertThat(listOfErrors, hasItem("invalid new status"));
-        assertThat(listOfErrors, hasItem("may not be empty"));
+        assertThat(listOfErrors, hasItem("must not be empty"));
 
     }
 
