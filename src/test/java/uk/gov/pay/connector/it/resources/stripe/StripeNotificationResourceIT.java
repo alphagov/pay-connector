@@ -2,7 +2,6 @@ package uk.gov.pay.connector.it.resources.stripe;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import io.restassured.response.Response;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -22,7 +21,6 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_XML;
-import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -35,6 +33,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
@@ -52,16 +51,16 @@ public class StripeNotificationResourceIT {
 
     private String accountId;
     private DatabaseTestHelper databaseTestHelper;
-    
+
     private WireMockServer wireMockServer;
 
     private StripeMockClient stripeMockClient;
 
     private AddGatewayAccountCredentialsParams accountCredentialsParams;
-    
+
     @BeforeEach
     void setup() {
-        accountId = String.valueOf(RandomUtils.nextInt());
+        accountId = String.valueOf(secureRandomInt());
 
         databaseTestHelper = app.getDatabaseTestHelper();
         wireMockServer = app.getWireMockServer();
@@ -84,7 +83,7 @@ public class StripeNotificationResourceIT {
 
     @Test
     void shouldHandleAPaymentIntentAmountCapturableUpdatedNotification() {
-        String transactionId = "pi_123" + nextInt();
+        String transactionId = "pi_123" + secureRandomInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
         String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
@@ -102,7 +101,7 @@ public class StripeNotificationResourceIT {
 
     @Test
     void shouldHandleAPaymentIntentPaymentFailedNotification() {
-        String transactionId = "pi_123" + nextInt();
+        String transactionId = "pi_123" + secureRandomInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
         String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
@@ -134,7 +133,7 @@ public class StripeNotificationResourceIT {
 
     @Test
     void shouldFailAStripeNotification_whenSignatureIsInvalid() {
-        String transactionId = "transaction-id" + nextInt();
+        String transactionId = "transaction-id" + secureRandomInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
         String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
@@ -150,7 +149,7 @@ public class StripeNotificationResourceIT {
 
     @Test
     void shouldReturnForbiddenIfRequestComesFromUnexpectedIpAddress() {
-        String transactionId = "transaction-id" + nextInt();
+        String transactionId = "transaction-id" + secureRandomInt();
         createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
         stripeMockClient.mockCreatePaymentIntent();
 
@@ -164,7 +163,7 @@ public class StripeNotificationResourceIT {
 
     @Test
     void shouldHandleAPaymentIntent3DSVersion() {
-        String transactionId = "pi_123" + nextInt();
+        String transactionId = "pi_123" + secureRandomInt();
         String externalChargeId = createNewChargeWith(AUTHORISATION_3DS_REQUIRED, transactionId);
 
         String payload = sampleStripeNotification(STRIPE_NOTIFICATION_PAYMENT_INTENT,
@@ -218,7 +217,7 @@ public class StripeNotificationResourceIT {
     }
 
     protected String createNewChargeWith(ChargeStatus status, String gatewayTransactionId) {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = secureRandomInt();
 
         String externalChargeId = "charge-" + chargeId;
 

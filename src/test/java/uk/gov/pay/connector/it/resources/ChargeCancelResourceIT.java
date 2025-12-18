@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -38,6 +37,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.SERVICE_ID;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class ChargeCancelResourceIT {
     @RegisterExtension
@@ -147,6 +147,7 @@ public class ChargeCancelResourceIT {
         @DisplayName("Should preserve charge card details when charge is cancelled")
         void shouldPreserveCardDetailsIfCancelled() {
             String externalChargeId = createNewInPastChargeWithStatus(AUTHORISATION_SUCCESS);
+
             Long chargeId = Long.valueOf(CS.removeStart(externalChargeId, "charge"));
 
             app.getWorldpayMockClient().mockCancelSuccess();
@@ -212,7 +213,7 @@ public class ChargeCancelResourceIT {
         }
 
         private String createNewInPastChargeWithStatus(ChargeStatus status) {
-            long chargeId = RandomUtils.nextInt();
+            long chargeId = secureRandomInt();
             return testBaseExtension.addCharge(anAddChargeParameters().withChargeStatus(status)
                     .withCreatedDate(Instant.now().minus(1, HOURS))
                     .withChargeId(chargeId)

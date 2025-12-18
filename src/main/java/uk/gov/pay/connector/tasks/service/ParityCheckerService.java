@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.tasks.service;
 
 import com.google.inject.persist.Transactional;
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,6 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.tasks.HistoricalEventEmitter;
 
-import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,9 +43,7 @@ public class ParityCheckerService {
     private HistoricalEventEmitter historicalEventEmitter;
 
     @Inject
-    public ParityCheckerService(ChargeDao chargeDao, ChargeService chargeService, EmittedEventDao emittedEventDao,
-                             StateTransitionService stateTransitionService, EventService eventService,
-                             RefundService refundService, RefundDao refundDao, ParityCheckService parityCheckService) {
+    public ParityCheckerService(ChargeDao chargeDao, ChargeService chargeService, EmittedEventDao emittedEventDao, StateTransitionService stateTransitionService, EventService eventService, RefundService refundService, RefundDao refundDao, ParityCheckService parityCheckService) {
         this.chargeDao = chargeDao;
         this.chargeService = chargeService;
         this.emittedEventDao = emittedEventDao;
@@ -56,13 +54,12 @@ public class ParityCheckerService {
         this.parityCheckService = parityCheckService;
     }
 
-    public void checkParity(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords,
-                            Optional<String> parityCheckStatus, Long doNotRetryEmitUntilDuration) {
+    public void checkParity(Long startId, Optional<Long> maybeMaxId, boolean doNotReprocessValidRecords, Optional<String> parityCheckStatus, Long doNotRetryEmitUntilDuration) {
         Long maxId = maybeMaxId.orElseGet(chargeDao::findMaxId);
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
 
-            MDC.put(MDC_REQUEST_ID_KEY, "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000));
+            MDC.put(MDC_REQUEST_ID_KEY, "ParityCheckWorker-" + RandomUtils.secure().randomLong(0, 10000));
 
             if (parityCheckStatus.isPresent()) {
                 checkParityForParityCheckStatus(parityCheckStatus.get());
@@ -73,20 +70,17 @@ public class ParityCheckerService {
             for (StackTraceElement s : e.getStackTrace()) {
                 logger.error("Null pointer exception stack trace: {}", s);
             }
-            logger.error("Null pointer exception [start={}] [max={}] [error={}]",
-                    startId, maxId, e.getMessage(), e);
+            logger.error("Null pointer exception [start={}] [max={}] [error={}]", startId, maxId, e.getMessage(), e);
         } catch (Exception e) {
-            logger.error("Error attempting to process payment events on job [start={}] [max={}] [error={}]",
-                    startId, maxId, e.getMessage(), e);
+            logger.error("Error attempting to process payment events on job [start={}] [max={}] [error={}]", startId, maxId, e.getMessage(), e);
         }
 
         logger.info("Terminating");
         MDC.remove(MDC_REQUEST_ID_KEY);
     }
 
-    public void checkParityForRefundsOnly(Long startId, Long maxId, boolean doNotReprocessValidRecords,
-                                          String parityCheckStatus, Long doNotRetryEmitUntilDuration) {
-        String parityCheckRequestId = "ParityCheckWorker-" + RandomUtils.nextLong(0, 10000);
+    public void checkParityForRefundsOnly(Long startId, Long maxId, boolean doNotReprocessValidRecords, String parityCheckStatus, Long doNotRetryEmitUntilDuration) {
+        String parityCheckRequestId = "ParityCheckWorker-" + RandomUtils.secure().randomLong(0, 10000);
         try {
             initializeHistoricalEventEmitter(doNotRetryEmitUntilDuration);
             MDC.put(MDC_REQUEST_ID_KEY, parityCheckRequestId);
@@ -98,16 +92,14 @@ public class ParityCheckerService {
                 processRefundsByIdRange(startId, maxId, doNotReprocessValidRecords);
             }
         } catch (Exception e) {
-            logger.error("Error parity checking refunds on job [start={}] [max={}] [error={}]",
-                    startId, maxId, e.getMessage(), e);
+            logger.error("Error parity checking refunds on job [start={}] [max={}] [error={}]", startId, maxId, e.getMessage(), e);
         }
         logger.info("Terminating");
         MDC.remove(MDC_REQUEST_ID_KEY);
     }
 
     private void initializeHistoricalEventEmitter(Long doNotRetryEmitUntilDuration) {
-        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService,
-                eventService, stateTransitionService, doNotRetryEmitUntilDuration);
+        this.historicalEventEmitter = new HistoricalEventEmitter(emittedEventDao, refundDao, chargeService, eventService, stateTransitionService, doNotRetryEmitUntilDuration);
     }
 
     private void checkParityForParityCheckStatus(String parityCheckStatus) {

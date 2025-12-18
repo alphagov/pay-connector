@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -49,6 +48,7 @@ import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VAL
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class AuthoriseWithUserNotPresentTaskHandlerIT {
     @RegisterExtension
@@ -119,9 +119,9 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
         testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
         verifyNoInteractions(mockAppender);
     }
-    
+
     private String setupChargeWithAgreementAndPaymentInstrument(String first6Digits, String last4Digits) {
-        Long paymentInstrumentId = RandomUtils.nextLong();
+        Long paymentInstrumentId = secureRandomLong();
 
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)

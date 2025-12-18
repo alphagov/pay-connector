@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.apache.commons.lang3.RandomUtils;
+import jakarta.persistence.RollbackException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -10,7 +10,6 @@ import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.idempotency.model.IdempotencyEntity;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
-import jakarta.persistence.RollbackException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -20,6 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class IdempotencyDaoIT {
     @RegisterExtension
@@ -55,11 +55,11 @@ public class IdempotencyDaoIT {
     void shouldThrowException_whenGatewayAccountIdAndKeyExists() {
         Map<String, Object> requestBody = Map.of("foo", "bar");
         gatewayAccountDao = app.getInstanceFromGuiceContainer(GatewayAccountDao.class);
-        long gatewayAccountId = RandomUtils.nextLong();
+        long gatewayAccountId = secureRandomLong();
         app.getDatabaseTestHelper().addGatewayAccount(anAddGatewayAccountParams()
                 .withAccountId(String.valueOf(gatewayAccountId))
                 .build());
-        
+
         IdempotencyEntity entity = new IdempotencyEntity(key, gatewayAccountDao.findById(gatewayAccountId).get(),
                 resourceExternalId, requestBody, Instant.now());
         idempotencyDao.persist(entity);
@@ -90,14 +90,14 @@ public class IdempotencyDaoIT {
         String expiringKey = "expiring-idempotency-key";
         String newKey = "new-idempotency-key";
         Instant nowMinus25Hours = Instant.now().minus(25, ChronoUnit.HOURS);
-        
+
         app.getDatabaseTestHelper().insertIdempotency(expiringKey, nowMinus25Hours, Long.parseLong(testBaseExtension.getAccountId()), resourceExternalId, requestBody);
         app.getDatabaseTestHelper().insertIdempotency(newKey, Long.parseLong(testBaseExtension.getAccountId()), resourceExternalId, requestBody);
 
         Instant idempotencyKeyExpiryDate = Instant.now().minus(86400, ChronoUnit.SECONDS);
         idempotencyDao.deleteIdempotencyKeysOlderThanSpecifiedDateTime(idempotencyKeyExpiryDate);
-        
-        Optional<IdempotencyEntity> optionalOldEntity = idempotencyDao.findByGatewayAccountIdAndKey(Long.parseLong(testBaseExtension.getAccountId()),expiringKey);
+
+        Optional<IdempotencyEntity> optionalOldEntity = idempotencyDao.findByGatewayAccountIdAndKey(Long.parseLong(testBaseExtension.getAccountId()), expiringKey);
         assertThat(optionalOldEntity.isPresent(), is(false));
 
         Optional<IdempotencyEntity> optionalNewEntity = idempotencyDao.findByGatewayAccountIdAndKey(Long.parseLong(testBaseExtension.getAccountId()), newKey);

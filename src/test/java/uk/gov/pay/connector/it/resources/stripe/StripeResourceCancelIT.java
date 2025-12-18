@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources.stripe;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -22,9 +21,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.joining;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -32,6 +31,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class StripeResourceCancelIT {
     @RegisterExtension
@@ -49,9 +49,9 @@ public class StripeResourceCancelIT {
 
     @BeforeEach
     void setup() {
-        stripeAccountId = String.valueOf(RandomUtils.nextInt());
+        stripeAccountId = String.valueOf(secureRandomInt());
         databaseTestHelper = app.getDatabaseTestHelper();
-        accountId = String.valueOf(RandomUtils.nextInt());
+        accountId = String.valueOf(secureRandomInt());
 
         accountCredentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(paymentProvider)
@@ -66,9 +66,9 @@ public class StripeResourceCancelIT {
 
         addGatewayAccount();
 
-        String transactionId = "stripe-" + RandomUtils.nextInt();
+        String transactionId = "stripe-" + secureRandomInt();
         app.getStripeMockClient().mockCancelPaymentIntent(transactionId);
-        
+
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
 
         given().port(app.getLocalPort())
@@ -89,7 +89,7 @@ public class StripeResourceCancelIT {
 
         addGatewayAccount();
 
-        String transactionId = "stripe-" + RandomUtils.nextInt();
+        String transactionId = "stripe-" + secureRandomInt();
         app.getStripeMockClient().mockCancelPaymentIntent(transactionId);
 
         String externalChargeId = addChargeWithStatusAndTransactionId(AUTHORISATION_SUCCESS, transactionId);
@@ -108,7 +108,7 @@ public class StripeResourceCancelIT {
     }
 
     private String addChargeWithStatusAndTransactionId(ChargeStatus chargeStatus, String transactionId) {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = secureRandomInt();
         String externalChargeId = "charge-" + chargeId;
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)

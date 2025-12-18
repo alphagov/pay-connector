@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static jakarta.ws.rs.core.Response.Status.ACCEPTED;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static jakarta.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static java.lang.String.format;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.eclipse.jetty.http.HttpStatus.FORBIDDEN_403;
 import static org.eclipse.jetty.http.HttpStatus.NOT_FOUND_404;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -59,7 +59,7 @@ import static uk.gov.pay.connector.model.domain.RefundEntityFixture.userExternal
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomLong;
 
-public class SandboxRefundsResourceIT  {
+public class SandboxRefundsResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private final String PAYMENT_PROVIDER = "sandbox";
@@ -75,7 +75,7 @@ public class SandboxRefundsResourceIT  {
             CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
             CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
     );
-    
+
     @BeforeEach
     void setUpCharge() {
         defaultTestAccount = DatabaseFixtures
@@ -96,7 +96,7 @@ public class SandboxRefundsResourceIT  {
                 .withPaymentProvider(PAYMENT_PROVIDER)
                 .insert();
     }
-    
+
     @Nested
     class ByAccountId {
         @Nested
@@ -207,12 +207,12 @@ public class SandboxRefundsResourceIT  {
                 assertRefundsHistoryInOrderInDBForTwoRefunds(defaultTestCharge);
 
                 app.givenSetup()
-                    .get(format("/v1/api/accounts/%s/charges/%s/", accountId, defaultTestCharge.getExternalChargeId()))
-                    .then()
-                    .statusCode(200)
-                    .body("refund_summary.status", is("full"))
-                    .body("refund_summary.amount_available", is(0))
-                    .body("refund_summary.amount_submitted", is(100));
+                        .get(format("/v1/api/accounts/%s/charges/%s/", accountId, defaultTestCharge.getExternalChargeId()))
+                        .then()
+                        .statusCode(200)
+                        .body("refund_summary.status", is("full"))
+                        .body("refund_summary.amount_available", is(0))
+                        .body("refund_summary.amount_submitted", is(100));
             }
 
             @Test
@@ -430,7 +430,7 @@ public class SandboxRefundsResourceIT  {
             }
         }
     }
-    
+
     @Nested
     class ByServiceIdAndType {
         @Nested
@@ -442,16 +442,16 @@ public class SandboxRefundsResourceIT  {
                 app.getDatabaseTestHelper().setDisabled(defaultTestAccount.getAccountId());
 
                 app.givenSetup()
-                    .body(toJson(Map.of(
-                            "amount", refundAmount,
-                            "refund_amount_available", defaultTestCharge.getAmount()
-                            
-                    )))
-                    .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
-                    .then()
-                    .statusCode(NOT_FOUND_404)
-                    .body("message", contains(format("Gateway account not found for service external id [%s] and account type [test]", SERVICE_ID)))
-                    .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+                        .body(toJson(Map.of(
+                                "amount", refundAmount,
+                                "refund_amount_available", defaultTestCharge.getAmount()
+
+                        )))
+                        .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
+                        .then()
+                        .statusCode(NOT_FOUND_404)
+                        .body("message", contains(format("Gateway account not found for service external id [%s] and account type [test]", SERVICE_ID)))
+                        .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
             }
 
             @Test
@@ -461,19 +461,19 @@ public class SandboxRefundsResourceIT  {
 
                 // Attempt to submit refund
                 var response = app.givenSetup()
-                    .body(toJson(Map.of(
-                            "amount", refundAmount,
-                            "refund_amount_available", defaultTestCharge.getAmount()
+                        .body(toJson(Map.of(
+                                "amount", refundAmount,
+                                "refund_amount_available", defaultTestCharge.getAmount()
 
-                    )))
-                    .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
-                    .then()
-                    .statusCode(ACCEPTED.getStatusCode())
-                    .body("refund_id", is(notNullValue()))
-                    .body("amount", is(refundAmount))
-                    .body("status", is("success"))
-                    .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
-                    .body("created_date", isWithin(10, SECONDS));
+                        )))
+                        .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
+                        .then()
+                        .statusCode(ACCEPTED.getStatusCode())
+                        .body("refund_id", is(notNullValue()))
+                        .body("amount", is(refundAmount))
+                        .body("status", is("success"))
+                        .body("created_date", matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(.\\d{1,3})?Z"))
+                        .body("created_date", isWithin(10, SECONDS));
 
                 // Verify payment links in response
                 String paymentUrl = format("https://localhost:%s/v1/api/service/%s/account/%s/charges/%s",
@@ -481,7 +481,7 @@ public class SandboxRefundsResourceIT  {
                 String refundId = response.extract().path("refund_id");
                 response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))
                         .body("_links.payment.href", is(paymentUrl));
-                
+
                 // Verify refund entity created in database
                 List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(1));
@@ -492,7 +492,6 @@ public class SandboxRefundsResourceIT  {
                 assertThat(refundsHistory.size(), is(3));
                 assertThat(refundsHistory, contains("REFUNDED", "REFUND SUBMITTED", "CREATED"));
             }
-
 
 
             @Test
@@ -523,7 +522,7 @@ public class SandboxRefundsResourceIT  {
                 String refundId = response.extract().path("refund_id");
                 response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))
                         .body("_links.payment.href", is(paymentUrl));
-                
+
                 // Verify refund entity created in database
                 List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(1));
@@ -537,12 +536,12 @@ public class SandboxRefundsResourceIT  {
                 assertThat(refundsHistory.size(), is(3));
                 assertThat(refundsHistory, contains("REFUNDED", "REFUND SUBMITTED", "CREATED"));
             }
-            
+
             @Test
             @DisplayName("Should create refund two refund entities with correct status history when submitting two refunds with correct amounts available")
             void shouldBeAbleToRefundTwoRequestsWhereAmountAvailableMatch() {
                 int refundAmount = 50;
-                
+
                 // Attempt to submit first refund
                 String firstRefundId = app.givenSetup()
                         .body(toJson(Map.of(
@@ -554,7 +553,7 @@ public class SandboxRefundsResourceIT  {
                         .then()
                         .statusCode(ACCEPTED.getStatusCode())
                         .extract().path("refund_id");
-                
+
                 // Attempt to submit second request
                 String secondRefundId = app.givenSetup()
                         .body(toJson(Map.of(
@@ -574,11 +573,13 @@ public class SandboxRefundsResourceIT  {
 
 
                 // Verify refund history
-                List<String> firstRefundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByRefundExternalId(firstRefundId).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());;
+                List<String> firstRefundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByRefundExternalId(firstRefundId).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+                ;
                 assertThat(firstRefundsHistory.size(), is(3));
                 assertThat(firstRefundsHistory, contains("REFUNDED", "REFUND SUBMITTED", "CREATED"));
-                
-                List<String> secondRefundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByRefundExternalId(secondRefundId).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());;
+
+                List<String> secondRefundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByRefundExternalId(secondRefundId).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
+                ;
                 assertThat(secondRefundsHistory.size(), is(3));
                 assertThat(secondRefundsHistory, contains("REFUNDED", "REFUND SUBMITTED", "CREATED"));
             }
@@ -588,7 +589,7 @@ public class SandboxRefundsResourceIT  {
             void shouldBeAbleToRequestARefund_multiplePartialAmounts_andRefundShouldBeInFullStatus() {
                 int firstRefundAmount = 80;
                 int secondRefundAmount = 20;
-                
+
                 // Attempt to submit first refund
                 app.givenSetup()
                         .body(toJson(Map.of(
@@ -598,7 +599,7 @@ public class SandboxRefundsResourceIT  {
                         )))
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
                         .then().statusCode(ACCEPTED.getStatusCode());
-                        
+
                 // Attempt to submit second refund
                 app.givenSetup()
                         .body(toJson(Map.of(
@@ -608,7 +609,7 @@ public class SandboxRefundsResourceIT  {
                         )))
                         .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
                         .then().statusCode(ACCEPTED.getStatusCode());
-                
+
                 // Verify refund summary on charge
                 app.givenSetup()
                         .get(format("/v1/api/accounts/%s/charges/%s/", accountId, defaultTestCharge.getExternalChargeId()))
@@ -644,13 +645,14 @@ public class SandboxRefundsResourceIT  {
                         .then().statusCode(BAD_REQUEST.getStatusCode())
                         .body("message", contains(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())))
                         .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
-                
+
                 // Verify no refund entity created
                 List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(0));
             }
 
             private static final Stream<ChargeStatus> NON_REFUNDABLE_CHARGE_STATUSES = Arrays.stream(ChargeStatus.values()).filter(chargeStatus -> !chargeStatus.equals(CAPTURED));
+
             private static Stream<ChargeStatus> nonRefundableChargeStatuses() {
                 return NON_REFUNDABLE_CHARGE_STATUSES;
             }
@@ -674,7 +676,7 @@ public class SandboxRefundsResourceIT  {
                 // Verify refund exists in database
                 List<Map<String, Object>> firstRefundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(externalChargeId);
                 assertThat(firstRefundsFoundByChargeExternalId.size(), is(1));
-                
+
                 // Attempt to submit additional refund
                 app.givenSetup()
                         .body(toJson(Map.of(
@@ -713,7 +715,7 @@ public class SandboxRefundsResourceIT  {
 
                 // Verify no refund or history created in database
                 List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
-                assertThat(refundsFoundByChargeExternalId.size(), is(0));                
+                assertThat(refundsFoundByChargeExternalId.size(), is(0));
                 List<String> refundsHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
                 assertThat(refundsHistory.size(), is(0));
             }
@@ -788,7 +790,7 @@ public class SandboxRefundsResourceIT  {
                 // Verify partial refund exists in DB
                 List<Map<String, Object>> refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
                 assertThat(refundsFoundByChargeExternalId.size(), is(1));
-                                
+
                 // Attempt to submit second refund, exceeding amount available
                 app.givenSetup()
                         .body(toJson(Map.of(
@@ -807,7 +809,7 @@ public class SandboxRefundsResourceIT  {
                 List<Map<String, Object>> secondRefundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
                 assertThat(secondRefundsFoundByChargeExternalId.size(), is(1));
             }
-            
+
             @Nested
             @DisplayName("When charge is historic")
             class HistoricCharge {
@@ -831,7 +833,7 @@ public class SandboxRefundsResourceIT  {
                     // add one refund that is still in connector and another that is only in ledger to check
                     // that both are used when calculating refundability
                     app.getDatabaseTestHelper().addRefund("connector-refund-id-xxxxxx", 500L, RefundStatus.REFUNDED, "refund-gateway-id-1", ZonedDateTime.now(), chargeExternalId);
-                    
+
                     LedgerTransaction expungedRefund = aValidLedgerTransaction()
                             .withExternalId("ledger-refund-id")
                             .withGatewayAccountId(defaultTestAccount.getAccountId())
@@ -899,9 +901,9 @@ public class SandboxRefundsResourceIT  {
                             .withPaymentProvider(PAYMENT_PROVIDER)
                             .build();
                     app.getLedgerStub().returnRefundsForPayment(chargeExternalId, List.of(expungedRefund));
-                    
+
                     Long refundAmount = 201L;
-                    
+
                     // Attempt to submit refund
                     app.givenSetup()
                             .body(toJson(Map.of(
@@ -942,12 +944,12 @@ public class SandboxRefundsResourceIT  {
                             )))
                             .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, chargeExternalId))
                             .then().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
-                    
+
                     // Verify no refunds created in database
                     List<Map<String, Object>> refunds = app.getDatabaseTestHelper().getRefundsByChargeExternalId(chargeExternalId);
                     assertThat(refunds, hasSize(0));
                 }
-                
+
             }
         }
     }

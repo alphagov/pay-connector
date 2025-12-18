@@ -3,7 +3,6 @@ package uk.gov.pay.connector.it.base;
 import com.google.gson.JsonObject;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
-import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -36,11 +35,8 @@ import java.util.Optional;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
-import static org.apache.commons.lang3.RandomUtils.nextInt;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -69,6 +65,9 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphabetic;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.TransactionId.randomId;
 
 public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
@@ -105,15 +104,15 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
 
     private String paymentProvider;
 
-    protected static String accountId = String.valueOf(RandomUtils.nextInt());
-    private int gatewayAccountCredentialsId  = RandomUtils.nextInt();
+    protected static String accountId = String.valueOf(secureRandomInt());
+    private int gatewayAccountCredentialsId = secureRandomInt();
     private Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
     private static AddGatewayAccountCredentialsParams credentialParams;
     public RestAssuredClient connectorRestApiClient;
     private final DatabaseTestHelper databaseTestHelper;
     private final int appLocalPort;
-    
+
     public ITestBaseExtension(String paymentProvider, int appLocalPort, DatabaseTestHelper databaseTestHelper) {
         this.paymentProvider = paymentProvider;
         this.databaseTestHelper = databaseTestHelper;
@@ -125,25 +124,28 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         createConnectorRestApiClient();
         createTestAccount();
     }
-    
+
     @Override
     public void beforeEach(ExtensionContext context) {
         setUpBase();
     }
-    
-    @Override
-    public void afterEach(ExtensionContext context) {}
-    
-    @Override
-    public void beforeAll(ExtensionContext context) {}
 
     @Override
-    public void afterAll(ExtensionContext context) {}
+    public void afterEach(ExtensionContext context) {
+    }
+
+    @Override
+    public void beforeAll(ExtensionContext context) {
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) {
+    }
 
     public void createConnectorRestApiClient() {
         connectorRestApiClient = new RestAssuredClient(appLocalPort, accountId);
     }
-    
+
     public void createTestAccount() {
         CardTypeEntity visaCreditCard = databaseTestHelper.getVisaCreditCard();
         testAccount = withDatabaseTestHelper(databaseTestHelper)
@@ -156,7 +158,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withCardTypeEntities(List.of(visaCreditCard))
                 .insert();
     }
-    
+
     public void createCredentialParams() {
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
@@ -193,7 +195,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withCredentials(credentials)
                 .build();
     }
-    
+
     public Map<String, Object> getCredentials() {
         return credentials;
     }
@@ -266,7 +268,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public void assertApiStateIs(String chargeId, String stateString) {
         getCharge(chargeId).body("state.status", is(stateString));
     }
-    
+
     public void assertAgreementPaymentTypeIs(String chargeId, AgreementPaymentType agreementPaymentType) {
         var charge = databaseTestHelper.getChargeByExternalId(chargeId);
         assertThat(charge.get("agreement_payment_type"), is(agreementPaymentType.toString()));
@@ -296,7 +298,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public String createNewChargeWithServiceId(String serviceId) {
         return createNewChargeWithServiceIdAndStatus(serviceId, CREATED);
     }
-    
+
     public String createNewChargeWithServiceIdAndStatus(String serviceId, ChargeStatus chargeStatus) {
         String chargeExternalId = createNewChargeWith(chargeStatus, "");
         databaseTestHelper.updateServiceIdForCharge(chargeExternalId, serviceId);
@@ -347,6 +349,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public static String authoriseChargeUrlForApplePay(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/wallets/apple".replace("{chargeId}", chargeId);
     }
+
     public static String authoriseChargeUrlForGooglePayStripe(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/wallets/google/stripe".replace("{chargeId}", chargeId);
     }
@@ -354,11 +357,11 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public static String authoriseChargeUrlForGooglePayWorldpay(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/wallets/google/worldpay".replace("{chargeId}", chargeId);
     }
-    
+
     public static String authoriseChargeUrlForGooglePay(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/wallets/google".replace("{chargeId}", chargeId);
     }
-    
+
 
     public static String authoriseChargeUrlFor(String chargeId) {
         return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
@@ -468,7 +471,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = secureRandomInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
                 .withChargeId(chargeId)
@@ -487,7 +490,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public String addAgreement() {
-        String agreementExternalId = String.valueOf(nextLong());
+        String agreementExternalId = String.valueOf(secureRandomLong());
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(accountId)
                 .withExternalAgreementId(agreementExternalId)
@@ -497,7 +500,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public Long addPaymentInstrument(String agreementExternalId, PaymentInstrumentStatus status) {
-        Long paymentInstrumentId = nextLong();
+        Long paymentInstrumentId = secureRandomLong();
         AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .withAgreementExternalId(agreementExternalId)
@@ -518,10 +521,10 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     ) {
         String agreementExternalId = addAgreement();
 
-        long paymentInstrumentId = nextInt();
+        long paymentInstrumentId = secureRandomInt();
         AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder paymentInstrumentParamsBuilder = anAddPaymentInstrumentParams()
                 .withPaymentInstrumentId(paymentInstrumentId)
-                .withExternalPaymentInstrumentId(String.valueOf(nextInt()))
+                .withExternalPaymentInstrumentId(String.valueOf(secureRandomInt()))
                 .withRecurringAuthToken(recurringAuthToken)
                 .withAgreementExternalId(agreementExternalId);
 
@@ -531,7 +534,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         databaseTestHelper.addPaymentInstrument(paymentInstrumentParamsBuilder.build());
         databaseTestHelper.updateAgreementPaymentInstrumentId(agreementExternalId, paymentInstrumentId);
 
-        long chargeId = RandomUtils.nextInt();
+        long chargeId = secureRandomInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
         var chargeParams = anAddChargeParams()
                 .withChargeId(chargeId)
@@ -564,7 +567,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public String getAccountId() {
         return accountId;
     }
-    
+
     public int getGatewayAccountCredentialsId() {
         return gatewayAccountCredentialsId;
     }

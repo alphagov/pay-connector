@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.RandomUtils;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -12,7 +12,6 @@ import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 import uk.gov.pay.connector.util.AddGatewayAccountParams;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +23,7 @@ import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class ChargesApiResourceCreateProviderCredentialsIT {
     @RegisterExtension
@@ -31,13 +31,13 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
     private static final String VALID_SERVICE_ID = "a-valid-service-id";
-    
+
     @Nested
     class ByGatewayAccountId {
         @Test
         void shouldCreateChargeForCredentialIdProvided() {
             //set up a Worldpay to Worldpay PSP switch scenario in the database (as described in PP-10958)
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.ENTERED)
@@ -79,7 +79,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
         @Test
         void shouldReturn400WhenCredentialsNotFoundForCredentialIdProvided() {
             //set up an account with valid credentials in the database
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.ACTIVE)
@@ -111,7 +111,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
 
         @Test
         void shouldReturn400WhenNoCredentialsAreInUsableState() {
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.RETIRED)
@@ -144,7 +144,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
 
         @Test
         void shouldReturn400WhenCredentialsInCreatedState() {
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.CREATED)
@@ -181,7 +181,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
         @Test
         void shouldCreateChargeForCredentialIdProvided() {
             //set up a Worldpay to Worldpay PSP switch scenario in the database (as described in PP-10958)
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentialsToUse = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.ENTERED)
@@ -224,7 +224,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
         @Test
         void shouldReturn400WhenCredentialsNotFoundForCredentialIdProvided() {
             //set up an account with valid credentials in the database
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.ACTIVE)
@@ -257,7 +257,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
 
         @Test
         void shouldReturn400WhenNoCredentialsAreInUsableState() {
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.RETIRED)
@@ -291,7 +291,7 @@ public class ChargesApiResourceCreateProviderCredentialsIT {
 
         @Test
         void shouldReturn400WhenCredentialsInCreatedState() {
-            String accountId = String.valueOf(RandomUtils.nextInt());
+            String accountId = String.valueOf(secureRandomInt());
             AddGatewayAccountCredentialsParams credentials = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider("worldpay")
                     .withState(GatewayAccountCredentialState.CREATED)

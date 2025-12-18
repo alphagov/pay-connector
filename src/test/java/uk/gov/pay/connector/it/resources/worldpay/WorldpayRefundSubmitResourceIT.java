@@ -28,10 +28,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalToXml;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.ACCEPTED;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -62,19 +62,19 @@ public class WorldpayRefundSubmitResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private final static String SERVICE_ID = "a-valid-service-id";
-    
+
     private long defaultAccountId;
     private long defaultCredentialsId;
     private DatabaseFixtures.TestAccount defaultTestAccount;
     private DatabaseFixtures.TestCharge defaultTestCharge;
-    
+
     private static final Map<String, Object> validWorldpayCredentials = Map.of(
             ONE_OFF_CUSTOMER_INITIATED, Map.of(
                     CREDENTIALS_MERCHANT_CODE, "merchant-id",
                     CREDENTIALS_USERNAME, "test-user",
                     CREDENTIALS_PASSWORD, "test-password")
     );
-    
+
     @BeforeEach
     void setUpCharge() {
         defaultAccountId = randomLong();
@@ -87,7 +87,7 @@ public class WorldpayRefundSubmitResourceIT {
                 .withState(ACTIVE)
                 .withCredentials(validWorldpayCredentials)
                 .build();
-        
+
         defaultTestAccount = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestAccount()
@@ -132,7 +132,7 @@ public class WorldpayRefundSubmitResourceIT {
         void shouldBeAbleToRequestARefund_fullAmount() {
             Long refundAmount = defaultTestCharge.getAmount();
             app.getWorldpayMockClient().mockRefundSuccess();
-            
+
             ValidatableResponse validatableResponse = postRefundFor(defaultAccountId, defaultTestCharge.getExternalChargeId(), refundAmount, defaultTestCharge.getAmount());
             String refundId = assertRefundResponseWith(defaultAccountId, defaultTestCharge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -161,7 +161,7 @@ public class WorldpayRefundSubmitResourceIT {
                     .withGatewayAccountId(accountId)
                     .withState(ACTIVE)
                     .build();
-            
+
             AddGatewayAccountCredentialsParams worldpayCredentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(WORLDPAY.getName())
                     .withGatewayAccountId(accountId)
@@ -175,7 +175,7 @@ public class WorldpayRefundSubmitResourceIT {
                     .withAccountId(accountId)
                     .withGatewayAccountCredentials(List.of(stripeCredentialsParams, worldpayCredentialsParams))
                     .insert();
-            
+
             DatabaseFixtures.TestCharge charge = DatabaseFixtures
                     .withDatabaseTestHelper(app.getDatabaseTestHelper())
                     .aTestCharge()
@@ -187,7 +187,7 @@ public class WorldpayRefundSubmitResourceIT {
                     .insert();
 
             Long refundAmount = 100L;
-            
+
             ValidatableResponse validatableResponse = postRefundFor(accountId, charge.getExternalChargeId(), refundAmount, charge.getAmount());
             assertRefundResponseWith(accountId, charge.getExternalChargeId(), refundAmount, validatableResponse, ACCEPTED.getStatusCode());
 
@@ -356,7 +356,7 @@ public class WorldpayRefundSubmitResourceIT {
                     )));
         }
     }
-    
+
     @Nested
     class ByServiceIdAndType {
         @Test
@@ -379,13 +379,13 @@ public class WorldpayRefundSubmitResourceIT {
                     .body("status", is("submitted"))
                     .body("created_date", is(notNullValue()));
             String refundId = response.extract().path("refund_id");
-            
+
             // Validate links in response
             String paymentUrl = format("https://localhost:%s/v1/api/service/%s/account/%s/charges/%s",
                     app.getLocalPort(), SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId());
             response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))
                     .body("_links.payment.href", is(paymentUrl));
-            
+
             // Verify refund entity is created in database
             List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(refundsFoundByChargeExternalId.size(), is(1));
@@ -425,7 +425,7 @@ public class WorldpayRefundSubmitResourceIT {
                     .body("status", is("submitted"))
                     .body("created_date", is(notNullValue()))
                     .extract().path("refund_id");
-            
+
             // Verify refund entity is created
             List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(refundsFoundByChargeExternalId.size(), is(1));
@@ -437,7 +437,7 @@ public class WorldpayRefundSubmitResourceIT {
             List<String> refundsStatusHistory = (app.getDatabaseTestHelper()).getRefundsHistoryByChargeExternalId(defaultTestCharge.getExternalChargeId()).stream().map(x -> x.get("status").toString()).collect(Collectors.toList());
             assertThat(refundsStatusHistory.size(), is(2));
             assertThat(refundsStatusHistory, containsInAnyOrder("REFUND SUBMITTED", "CREATED"));
-            
+
             // Verify request sent to Worldpay
             String expectedRequestBody = TestTemplateResourceLoader.load(WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST)
                     .replace("{{merchantCode}}", "merchant-id")
@@ -535,7 +535,7 @@ public class WorldpayRefundSubmitResourceIT {
             int secondRefundAmount = 20;
             String externalChargeId = defaultTestCharge.getExternalChargeId();
             app.getWorldpayMockClient().mockRefundSuccess();
-            
+
             // Request first refund
             var firstResponse = app.givenSetup()
                     .body(toJson(Map.of(
@@ -547,9 +547,9 @@ public class WorldpayRefundSubmitResourceIT {
                     .body("refund_id", is(notNullValue()))
                     .body("amount", is(firstRefundAmount))
                     .body("status", is("submitted"))
-                    .body("created_date", is(notNullValue()));;
+                    .body("created_date", is(notNullValue()));
             String firstRefundId = firstResponse.extract().path("refund_id");
-            
+
             // Request second refund
             var secondResponse = app.givenSetup()
                     .body(toJson(Map.of(
@@ -561,9 +561,9 @@ public class WorldpayRefundSubmitResourceIT {
                     .body("refund_id", is(notNullValue()))
                     .body("amount", is(secondRefundAmount))
                     .body("status", is("submitted"))
-                    .body("created_date", is(notNullValue()));;
+                    .body("created_date", is(notNullValue()));
             String secondRefundId = secondResponse.extract().path("refund_id");
-            
+
             // Verify refund entities are created in database
             List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(refundsFoundByChargeExternalId.size(), is(2));
@@ -571,7 +571,7 @@ public class WorldpayRefundSubmitResourceIT {
                     aRefundMatching(firstRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), firstRefundAmount, "REFUND SUBMITTED"),
                     aRefundMatching(secondRefundId, is(notNullValue()), defaultTestCharge.getExternalChargeId(), secondRefundAmount, "REFUND SUBMITTED")
             ));
-            
+
             // Verify refund summary on charge
             app.givenSetup()
                     .get(format("/v1/api/accounts/%s/charges/%s", defaultAccountId, externalChargeId))
@@ -625,17 +625,18 @@ public class WorldpayRefundSubmitResourceIT {
                     .then().statusCode(BAD_REQUEST.getStatusCode())
                     .body("message", contains(format("Charge with id [%s] not available for refund.", testCharge.getExternalChargeId())))
                     .body("error_identifier", is(ErrorIdentifier.REFUND_NOT_AVAILABLE.toString()));
-            
+
             // Verify no refunds are created in the database
             List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(refundsFoundByChargeExternalId.size(), is(0));
-            
+
             // Verify no refund requests are made to Worldpay
             app.getWorldpayWireMockServer().verify(0, postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
         }
 
 
         private static final Stream<ChargeStatus> NON_REFUNDABLE_CHARGE_STATUSES = Arrays.stream(ChargeStatus.values()).filter(chargeStatus -> !chargeStatus.equals(CAPTURED));
+
         private static Stream<ChargeStatus> nonRefundableChargeStatuses() {
             return NON_REFUNDABLE_CHARGE_STATUSES;
         }
@@ -644,7 +645,7 @@ public class WorldpayRefundSubmitResourceIT {
         @DisplayName("Should return 400, not create a refund entity, and not send refund request to Worldpay when charge has already been fully refunded")
         void shouldFailRequestingARefund_whenChargeRefundIsFull() {
             app.getWorldpayMockClient().mockRefundSuccess();
-            
+
             // Issue full refund for charge
             app.givenSetup()
                     .body(toJson(Map.of(
@@ -660,7 +661,7 @@ public class WorldpayRefundSubmitResourceIT {
             // Verify refund entity exists
             List<Map<String, Object>> firstRefundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(firstRefundsFoundByChargeExternalId.size(), is(1));
-            
+
             // Request additional refund
             app.givenSetup()
                     .body(toJson(Map.of(
@@ -680,7 +681,7 @@ public class WorldpayRefundSubmitResourceIT {
             List<Map<String, Object>> secondRefundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(secondRefundsFoundByChargeExternalId.size(), is(1));
         }
-        
+
         @Test
         @DisplayName("Should return 400, not create a refund entity, and not send refund request to Worldpay when requested refund is larger than charge amount")
         void shouldFailRequestingARefund_whenAmountIsBiggerThanChargeAmount() {
@@ -689,7 +690,7 @@ public class WorldpayRefundSubmitResourceIT {
             // Request refund exceeding charge amount
             app.givenSetup()
                     .body(toJson(Map.of(
-                            "amount",  defaultTestCharge.getAmount() + 20,
+                            "amount", defaultTestCharge.getAmount() + 20,
                             "refund_amount_available", defaultTestCharge.getAmount()
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
@@ -700,12 +701,12 @@ public class WorldpayRefundSubmitResourceIT {
 
             // Verify no requests made to Worldpay
             app.getWorldpayWireMockServer().verify(0, postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
-            
+
             // Verify no refund entity is created
             List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(refundsFoundByChargeExternalId.size(), is(0));
         }
-        
+
         @Test
         @DisplayName("Should return 400, not create a refund entity, and not send refund request to Worldpay when requested refund is larger than allowed charge amount")
         void shouldFailRequestingARefund_whenAmountIsBiggerThanAllowedChargeAmount() {
@@ -714,7 +715,7 @@ public class WorldpayRefundSubmitResourceIT {
             // Request refund exceeding allowed charge amount
             app.givenSetup()
                     .body(toJson(Map.of(
-                            "amount",  10000001L,
+                            "amount", 10000001L,
                             "refund_amount_available", defaultTestCharge.getAmount()
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
@@ -730,7 +731,7 @@ public class WorldpayRefundSubmitResourceIT {
             List<Map<String, Object>> refundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(refundsFoundByChargeExternalId.size(), is(0));
         }
-        
+
         @Test
         @DisplayName("Should return 400, not create a refund entity, and not send refund request to Worldpay when requested refund is less than minimum charge amount")
         void shouldFailRequestingARefund_whenAmountIsLessThanOnePence() {
@@ -739,7 +740,7 @@ public class WorldpayRefundSubmitResourceIT {
             // Request refund of less than minimum amount
             app.givenSetup()
                     .body(toJson(Map.of(
-                            "amount",  0,
+                            "amount", 0,
                             "refund_amount_available", defaultTestCharge.getAmount()
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
@@ -767,25 +768,25 @@ public class WorldpayRefundSubmitResourceIT {
             // Request first partial refund
             app.givenSetup()
                     .body(toJson(Map.of(
-                            "amount",  firstRefundAmount,
+                            "amount", firstRefundAmount,
                             "refund_amount_available", defaultTestCharge.getAmount()
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
                     .then().statusCode(ACCEPTED.getStatusCode())
                     .body("amount", is(firstRefundAmount))
                     .body("status", is("submitted"));
-            
+
             // Verify refund entity is created
             List<Map<String, Object>> firstRefundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(firstRefundsFoundByChargeExternalId.size(), is(1));
 
             // Verify first request to Worldpay
             app.getWorldpayWireMockServer().verify(1, postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
-            
+
             // Request refund of more than amount remaining available
             app.givenSetup()
                     .body(toJson(Map.of(
-                            "amount",  secondRefundAmount,
+                            "amount", secondRefundAmount,
                             "refund_amount_available", defaultTestCharge.getAmount() - firstRefundAmount
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))
@@ -797,7 +798,7 @@ public class WorldpayRefundSubmitResourceIT {
             // Verify no additional refund entity is created
             List<Map<String, Object>> secondRefundsFoundByChargeExternalId = (app.getDatabaseTestHelper()).getRefundsByChargeExternalId(defaultTestCharge.getExternalChargeId());
             assertThat(secondRefundsFoundByChargeExternalId.size(), is(1));
-            
+
             // Verify no additional requests made to Worldpay
             app.getWorldpayWireMockServer().verify(1, postRequestedFor(urlPathEqualTo(WORLDPAY_URL)));
         }
@@ -811,7 +812,7 @@ public class WorldpayRefundSubmitResourceIT {
 
             app.givenSetup()
                     .body(toJson(Map.of(
-                            "amount",  refundAmount,
+                            "amount", refundAmount,
                             "refund_amount_available", defaultTestCharge.getAmount()
                     )))
                     .post(format("/v1/api/service/%s/account/%s/charges/%s/refunds", SERVICE_ID, TEST, defaultTestCharge.getExternalChargeId()))

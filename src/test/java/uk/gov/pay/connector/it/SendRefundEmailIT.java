@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -26,6 +25,7 @@ import static uk.gov.pay.connector.it.util.NotificationUtils.worldpayRefundNotif
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.REFUND_ISSUED;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class SendRefundEmailIT {
     private static final String WORLDPAY_IP_ADDRESS = "some-worldpay-ip";
@@ -34,7 +34,7 @@ public class SendRefundEmailIT {
             config("notifyConfig.emailNotifyEnabled", "true"),
             config("worldpay.secureNotificationEnabled", "false")
     );
-    
+
     private static final Map<String, Object> credentials = ImmutableMap.of(
             CREDENTIALS_MERCHANT_ID, "merchant-id",
             CREDENTIALS_USERNAME, "test-user",
@@ -42,17 +42,18 @@ public class SendRefundEmailIT {
             CREDENTIALS_SHA_IN_PASSPHRASE, "test-sha-in-passphrase",
             CREDENTIALS_SHA_OUT_PASSPHRASE, "test-sha-out-passphrase"
     );
-    private final String accountId = String.valueOf(RandomUtils.nextInt());
+    private final String accountId = String.valueOf(secureRandomInt());
+
     @Test
     void shouldSendEmailFollowingASuccessfulRefund() throws Exception {
         app.getNotifyStub().respondWithSuccess();
         addGatewayAccount();
 
-        String transactionId = String.valueOf(RandomUtils.nextInt());
+        String transactionId = String.valueOf(secureRandomInt());
         String refundExternalId = "999999";
 
         ChargeUtils.ExternalChargeId chargeId = createNewChargeWithAccountId(CAPTURED, transactionId, accountId, app.getDatabaseTestHelper(), "worldpay");
-        app.getDatabaseTestHelper().addRefund(refundExternalId,100,  REFUND_SUBMITTED, refundExternalId,
+        app.getDatabaseTestHelper().addRefund(refundExternalId, 100, REFUND_SUBMITTED, refundExternalId,
                 ZonedDateTime.now(), chargeId.toString());
 
         given().port(app.getLocalPort())
@@ -62,7 +63,7 @@ public class SendRefundEmailIT {
                 .post("/v1/api/notifications/worldpay");
 
         Thread.sleep(500L); // Email sent using ExecutorService task: give it some time to complete
-        
+
         app.getNotifyWireMockServer().verify(postRequestedFor(
                 urlEqualTo("/v2/notifications/email"))
         );

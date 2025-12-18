@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.pact;
 
-import org.apache.commons.lang3.RandomUtils;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
@@ -10,12 +9,13 @@ import java.time.ZonedDateTime;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ChargeEventEntityFixture {
     private ChargeStatus chargeStatus = ChargeStatus.CAPTURED;
     private ZonedDateTime updated = ZonedDateTime.now();
     private ZonedDateTime gatewayEventDate;
-    private Long id = RandomUtils.nextLong();
+    private Long id = secureRandomLong();
     private ChargeEntity charge = aValidChargeEntity()
             .withFee(Fee.of(null, 42L))
             .build();

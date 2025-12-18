@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.dao;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,8 +21,6 @@ import java.util.Optional;
 import static java.time.ZoneOffset.UTC;
 import static java.time.ZonedDateTime.now;
 import static java.time.temporal.ChronoUnit.MICROS;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -42,6 +39,8 @@ import static uk.gov.pay.connector.refund.model.domain.RefundStatus.CREATED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class RefundDaoJpaIT {
     @RegisterExtension
@@ -306,7 +305,7 @@ public class RefundDaoJpaIT {
     @Test
     void findMaxId_returnsTheMaximumId() {
         RefundEntity refundEntity = new RefundEntity(100L, userExternalId, userEmail, chargeTestRecord.getExternalChargeId());
-        refundEntity.setId(nextLong());
+        refundEntity.setId(secureRandomLong());
         refundEntity.setStatus(REFUND_SUBMITTED.getValue());
         refundDao.persist(refundEntity);
 
@@ -388,7 +387,7 @@ public class RefundDaoJpaIT {
         emittedEventDao.persist(anEmittedEventEntity()
                 .withResourceExternalId(refundToExpunge.getExternalId())
                 .withResourceType("refund")
-                .withId(RandomUtils.nextLong())
+                .withId(secureRandomLong())
                 .build());
 
         // assert data is as expected

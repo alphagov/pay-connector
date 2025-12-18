@@ -31,16 +31,16 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 
 public class ChargeEntityFixture {
 
-    private Long id = ThreadLocalRandom.current().nextLong();
+    private Long id = secureRandomLong();
     private String externalId = RandomIdGenerator.newId();
     private Long amount = 500L;
     private String returnUrl = "http://return.invalid";
@@ -385,7 +385,7 @@ public class ChargeEntityFixture {
         return this;
     }
 
-    public ChargeEntityFixture withUpdatedDate(Instant updatedDate){
+    public ChargeEntityFixture withUpdatedDate(Instant updatedDate) {
         this.updatedDate = updatedDate;
         return this;
     }

@@ -12,13 +12,13 @@ import uk.gov.pay.connector.util.RandomIdGenerator;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.anAddChargeParams;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 class QueryAndUpdatePaymentInSubmittedStateTaskHandlerIT {
     @RegisterExtension
@@ -29,7 +29,7 @@ class QueryAndUpdatePaymentInSubmittedStateTaskHandlerIT {
 
     @Test
     void shouldQueryAndUpdateChargeInSubmittedStateToCaptured() {
-        long chargeId = nextInt();
+        long chargeId = secureRandomInt();
         String chargeExternalId = RandomIdGenerator.newId();
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
 

@@ -8,7 +8,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.Stripe;
 import io.dropwizard.testing.ConfigOverride;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -47,16 +46,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.http.ContentType.JSON;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
-import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static uk.gov.pay.connector.cardtype.model.domain.CardType.DEBIT;
 import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aCardInformation;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
@@ -79,6 +74,9 @@ import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGa
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ContractTest {
 
@@ -134,7 +132,7 @@ public class ContractTest {
     @State("a charge with metadata exists")
     public void aChargeWithMetadataExists(Map<String, String> params) throws Exception {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         dbHelper.addCharge(anAddChargeParams()
@@ -156,7 +154,7 @@ public class ContractTest {
     @State("a charge with a gateway transaction id exists")
     public void aChargeWithGatewayTxIdExists(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         dbHelper.addCharge(anAddChargeParams()
@@ -182,7 +180,7 @@ public class ContractTest {
     private void setUpRefunds(int numberOfRefunds, Long chargeId,
                               ZonedDateTime createdDate, RefundStatus refundStatus, String chargeExternalId) {
         for (int i = 0; i < numberOfRefunds; i++) {
-            dbHelper.addRefund("external" + RandomUtils.nextInt(), 1L, refundStatus,
+            dbHelper.addRefund("external" + secureRandomInt(), 1L, refundStatus,
                     randomAlphanumeric(10), createdDate, "user_external_id1234", null, chargeExternalId);
         }
     }
@@ -194,7 +192,7 @@ public class ContractTest {
     @State("a canceled charge exists")
     public void aCanceledChargeExists(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
@@ -337,7 +335,7 @@ public class ContractTest {
     @State("a charge with fee and net_amount exists")
     public void createACharge(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
@@ -358,7 +356,7 @@ public class ContractTest {
 
     @State("a charge with service external id 'a-service-id', account type 'test' and charge external id 'a-charge-id-1a2b3c' exists")
     public void createChargeWithServiceExternalIdAndAccountType() {
-        long gatewayAccountId = new Random().nextLong(1000);
+        long gatewayAccountId = secureRandomLong(0, 1000);
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, gatewayAccountId, "a-service-id");
         setUpCharge(anAddChargeParams()
                 .withServiceId("a-service-id")
@@ -366,12 +364,12 @@ public class ContractTest {
                 .withExternalChargeId("a-charge-id-1a2b3c")
                 .build());
     }
-    
+
     @State("a charge with gateway account id 42 and charge id abcdef1234 exists")
     public void createChargeWithHardCodedParams() {
         String gatewayAccountId = "42";
         String chargeExternalId = "abcdef1234";
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
                 .withExternalChargeId(chargeExternalId)
@@ -388,7 +386,7 @@ public class ContractTest {
     @State("a charge with delayed capture true exists")
     public void createChargeWithDelayedCaptureTrue(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
@@ -407,7 +405,7 @@ public class ContractTest {
     @State("a charge with authorisation mode moto_api exists")
     public void createChargeWithAuthorisationModeMotoApi(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
@@ -425,7 +423,7 @@ public class ContractTest {
     @State("a charge with wallet type APPLE_PAY exists")
     public void createChargeWithWalletTypeApplePay(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
@@ -457,7 +455,7 @@ public class ContractTest {
         String oneTimeToken = params.get("one_time_token");
         String oneTimeTokenUsed = params.get("one_time_token_used");
         String chargeExternalId = params.get("charge_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
                 .withExternalChargeId(chargeExternalId)
@@ -478,7 +476,7 @@ public class ContractTest {
         if (gatewayAccountId == null) {
             gatewayAccountId = "123456";
         }
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         if (chargeExternalId == null) {
             chargeExternalId = "ch_123abc456def";
@@ -507,7 +505,7 @@ public class ContractTest {
     @State("a charge with delayed capture true and awaiting capture request status exists")
     public void createChargeWithDelayedCaptureTrueAndAwaitingCaptureRequestStatus(Map<String, String> params) {
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
@@ -542,7 +540,7 @@ public class ContractTest {
     public void aChargeWithIdAndChargeEvents() {
         String gatewayAccountId = "42";
         String chargeExternalId = "abc123";
-        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        long chargeId = secureRandomLong(100, 100000);
         GatewayAccountUtil.setUpGatewayAccount(dbHelper, Long.valueOf(gatewayAccountId));
         AddChargeParams addChargeParams = anAddChargeParams()
                 .withExternalChargeId(chargeExternalId)
@@ -562,7 +560,7 @@ public class ContractTest {
     public void createChargeWithCardDetails(Map<String, String> params) {
         String chargeExternalId = params.get("charge_id");
         String gatewayAccountId = params.get("gateway_account_id");
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String cardHolderName = params.get("cardholder_name");
         String lastDigitsCardNumber = params.get("last_digits_card_number");
         String firstDigitsCardNumber = params.get("first_digits_card_number");
@@ -779,7 +777,7 @@ public class ContractTest {
                                         .withState(VERIFIED_WITH_LIVE_PAYMENT)
                                         .withPaymentProvider(STRIPE.getName())
                                         .build()
-                                ))
+                        ))
                         .build());
     }
 
@@ -788,7 +786,7 @@ public class ContractTest {
         var agreementExternalId = params.get("agreement_external_id");
         var gatewayAccountId = params.get("gateway_account_id");
         var addPaymentInstrumentParams = anAddPaymentInstrumentParams()
-                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentId(secureRandomLong())
                 .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
                 .build();
         dbHelper.addPaymentInstrument(addPaymentInstrumentParams);
@@ -803,7 +801,7 @@ public class ContractTest {
     @State("a charge created with an idempotency key for an agreement exists")
     public void aChargeCreatedWithAnIdempotencyKeyForAnAgreementExists(Map<String, String> params) {
         Instant createdDate = Instant.parse(params.get("created"));
-        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_external_id");
         String idempotencyKey = params.get("idempotency_key");
         String agreementExternalId = params.get("agreement_external_id");
@@ -836,7 +834,7 @@ public class ContractTest {
 
     @State("a charge with authorisation mode agreement and rejected status exists")
     public void aChargeWithAuthorisationModeAgreementAndRejectedStatusExists(Map<String, String> params) {
-        long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_external_id");
         String agreementExternalId = params.get("agreement_external_id");
         long amount = Long.parseLong(params.get("amount"));
@@ -868,7 +866,7 @@ public class ContractTest {
                 .build());
 
         var addPaymentInstrumentParams = anAddPaymentInstrumentParams()
-                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentId(secureRandomLong())
                 .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
                 .build();
         dbHelper.addPaymentInstrument(addPaymentInstrumentParams);
@@ -894,7 +892,7 @@ public class ContractTest {
                 .withRecurringEnabled(true)
                 .build());
         var addPaymentInstrumentParams = anAddPaymentInstrumentParams()
-                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentId(secureRandomLong())
                 .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
                 .build();
         dbHelper.addPaymentInstrument(addPaymentInstrumentParams);
@@ -919,7 +917,7 @@ public class ContractTest {
                 .withRecurringEnabled(true)
                 .build());
         var addPaymentInstrumentParams = anAddPaymentInstrumentParams()
-                .withPaymentInstrumentId(nextLong())
+                .withPaymentInstrumentId(secureRandomLong())
                 .withPaymentInstrumentStatus(PaymentInstrumentStatus.CANCELLED)
                 .build();
         dbHelper.addPaymentInstrument(addPaymentInstrumentParams);
@@ -956,7 +954,7 @@ public class ContractTest {
         if (gatewayAccountId == null) {
             gatewayAccountId = "123456";
         }
-        Long chargeId = ThreadLocalRandom.current().nextLong(100, 100000);
+        Long chargeId = secureRandomLong(100, 100000);
         String chargeExternalId = params.get("charge_id");
         if (chargeExternalId == null) {
             chargeExternalId = "ch_123abc456def";

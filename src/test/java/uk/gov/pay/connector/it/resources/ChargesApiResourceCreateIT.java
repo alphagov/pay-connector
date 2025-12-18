@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.restassured.response.ValidatableResponse;
 import jakarta.ws.rs.core.Response.Status;
-import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -83,6 +82,7 @@ import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBui
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.NumberMatcher.isNumber;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.CARD_NUMBER_IN_PAYMENT_LINK_REFERENCE_REJECTED;
 import static uk.gov.service.payments.commons.model.ErrorIdentifier.NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
@@ -322,7 +322,7 @@ public class ChargesApiResourceCreateIT {
                 """)
         void should_create_recurring_charge_with_agreement_type_and_retrieve_details_successfully(String requestAgreementPaymentType, AgreementPaymentType expectedAgreementPaymentType) {
             app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testGatewayAccountId));
-            Long paymentInstrumentId = RandomUtils.nextLong();
+            Long paymentInstrumentId = secureRandomLong();
 
             AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
                     .withPaymentInstrumentId(paymentInstrumentId)
@@ -1072,7 +1072,6 @@ public class ChargesApiResourceCreateIT {
                     .then()
                     .statusCode(NOT_FOUND.getStatusCode())
                     .body("message[0]", CoreMatchers.is("Gateway account not found for service external id [valid-service-id] and account type [live]"));
-            ;
         }
 
         @Test

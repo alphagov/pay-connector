@@ -79,7 +79,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -90,6 +89,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
 
 @ExtendWith(MockitoExtension.class)
 class EventFactoryTest {
@@ -153,7 +153,7 @@ class EventFactoryTest {
         assertThat(eventDetails.getUserEmail(), is("test@example.com"));
         assertThat(refundCreatedByUser.getResourceType(), is(ResourceType.REFUND));
         assertThat(refundCreatedByUser.getEventDetails(), is(instanceOf(RefundCreatedByUserEventDetails.class)));
-        
+
         assertThat(refundEvents, hasItem(refundAvailabilityUpdated));
     }
 
@@ -274,7 +274,7 @@ class EventFactoryTest {
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
         when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
-        
+
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2));
@@ -302,7 +302,7 @@ class EventFactoryTest {
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
         when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
-        
+
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2)); // also creates RefundAvailabilityUpdated event
@@ -361,7 +361,7 @@ class EventFactoryTest {
         RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
         when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(chargeEntity), chargeEventEntity.getUpdated().toInstant()))
                 .thenReturn(refundAvailabilityUpdated);
-        
+
         List<Event> events = eventFactory.createEvents(paymentStateTransition);
 
         assertThat(events.size(), is(2));
@@ -583,7 +583,7 @@ class EventFactoryTest {
         assertThat(eventDetails.getVersion3DS(), is("2.1.0"));
         assertThat(eventDetails.isRequires3DS(), is(true));
     }
-    
+
     @Test
     void shouldCreateCorrectEventForCancelledWithGatewayAfterAuthorisationErrorEvent() throws EventCreationException {
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
@@ -614,7 +614,7 @@ class EventFactoryTest {
         CancelledWithGatewayAfterAuthorisationError event = (CancelledWithGatewayAfterAuthorisationError) events.getFirst();
         assertThat(event.getEventDetails(), is(instanceOf(CancelledWithGatewayAfterAuthorisationErrorEventDetails.class)));
         assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
-        
+
         CancelledWithGatewayAfterAuthorisationErrorEventDetails eventDetails = (CancelledWithGatewayAfterAuthorisationErrorEventDetails) event.getEventDetails();
         assertThat(eventDetails.getGatewayTransactionId(), is("gateway_transaction_id"));
     }
