@@ -79,6 +79,7 @@ import static uk.gov.pay.connector.events.model.payout.PayoutCreated.from;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.pact.ChargeEventEntityFixture.aValidChargeEventEntity;
 import static uk.gov.pay.connector.pact.RefundHistoryEntityFixture.aValidRefundHistoryEntity;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.EXTERNAL;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.Source.CARD_API;
@@ -242,7 +243,7 @@ public class QueueMessageContractTest {
 
     @PactVerifyProvider("a refund succeeded message")
     public String verifyRefundedEvent() throws JsonProcessingException {
-        String gatewayTransactionId = RandomStringUtils.randomAlphanumeric(14);
+        String gatewayTransactionId = randomAlphanumeric(14);
         ChargeEntity chargeEntity = aValidChargeEntity().build();
         Charge charge = Charge.from(chargeEntity);
         RefundHistory refundHistory = aValidRefundHistoryEntity()

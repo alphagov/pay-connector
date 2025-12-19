@@ -8,11 +8,12 @@ import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 
 import static java.time.ZoneOffset.UTC;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
 
 public class RefundHistoryEntityFixture {
 
     private Long id = 1L;
-    private String externalId = RandomStringUtils.randomAlphanumeric(10);
+    private String externalId = randomAlphanumeric(10);
     private Long amount = 50L;
     private String status = RefundStatus.CREATED.getValue();
     private ZonedDateTime createdDate = ZonedDateTime.now(UTC).minusSeconds(5L);
@@ -22,7 +23,7 @@ public class RefundHistoryEntityFixture {
     private String userExternalId;
     private String userEmail;
     private String gatewayTransactionId = null;
-    private String chargeExternalId = RandomStringUtils.randomAlphanumeric(10);
+    private String chargeExternalId = randomAlphanumeric(10);
     private Long gatewayAccountId = 123456L;
 
     private RefundHistoryEntityFixture() {}

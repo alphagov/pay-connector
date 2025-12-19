@@ -136,7 +136,7 @@ public class ChargeDaoIT {
         assertThrows(RuntimeException.class, () -> {
             chargeDao.persist(aValidChargeEntity()
                     .withGatewayAccountEntity(gatewayAccount)
-                    .withReference(ServicePaymentReference.of(RandomStringUtils.randomAlphanumeric(255)))
+                    .withReference(ServicePaymentReference.of(randomAlphanumeric(255)))
                     .build());
         });
     }

@@ -12,6 +12,7 @@ import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
+import uk.gov.pay.connector.util.RandomTestDataGeneratorUtils;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZonedDateTime;
@@ -35,6 +36,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.*;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ChargeEventsResourceIT {
@@ -120,7 +122,7 @@ public class ChargeEventsResourceIT {
 
             //set up a partial refund
             ZonedDateTime partialRefundCreatedDate = createdDate.plusMinutes(10);
-            String gatewayTransactionIdForPartialRefund = RandomStringUtils.randomAlphanumeric(30);
+            String gatewayTransactionIdForPartialRefund = randomAlphanumeric(30);
             DatabaseFixtures.TestRefund partialRefund = createTestRefund(testCharge, partialRefundCreatedDate, gatewayTransactionIdForPartialRefund, 10L, SUBMITTED_BY);
 
             //set up the event history for the partial refund
@@ -134,7 +136,7 @@ public class ChargeEventsResourceIT {
 
             //set up a second partial refund
             ZonedDateTime secondRefundCreatedDate = partialRefundCreatedDate.plusMinutes(1);
-            String gatewayTransactionIdForSecondRefund = RandomStringUtils.randomAlphanumeric(10);
+            String gatewayTransactionIdForSecondRefund = randomAlphanumeric(10);
             DatabaseFixtures.TestRefund secondRefund = createTestRefund(testCharge, secondRefundCreatedDate, gatewayTransactionIdForSecondRefund, 90L, null);
 
             //set up the event history for the second refund
@@ -223,7 +225,7 @@ public class ChargeEventsResourceIT {
 
             //set up a partial refund
             ZonedDateTime partialRefundCreatedDate = createdDate.plusMinutes(10);
-            String gatewayTransactionIdForPartialRefund = RandomStringUtils.randomAlphanumeric(30);
+            String gatewayTransactionIdForPartialRefund = randomAlphanumeric(30);
             DatabaseFixtures.TestRefund partialRefund = createTestRefund(testCharge, partialRefundCreatedDate, gatewayTransactionIdForPartialRefund, 10L, SUBMITTED_BY);
 
             //set up the event history for the partial refund
@@ -237,7 +239,7 @@ public class ChargeEventsResourceIT {
 
             //set up a second partial refund
             ZonedDateTime secondRefundCreatedDate = partialRefundCreatedDate.plusMinutes(1);
-            String gatewayTransactionIdForSecondRefund = RandomStringUtils.randomAlphanumeric(10);
+            String gatewayTransactionIdForSecondRefund = randomAlphanumeric(10);
             DatabaseFixtures.TestRefund secondRefund = createTestRefund(testCharge, secondRefundCreatedDate, gatewayTransactionIdForSecondRefund, 90L, null);
 
             //set up the event history for the second refund
