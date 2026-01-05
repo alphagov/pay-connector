@@ -22,10 +22,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
-import static java.lang.String.format;
-import static java.util.Objects.nonNull;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static java.lang.String.format;
+import static java.util.Objects.nonNull;
 import static uk.gov.pay.connector.model.domain.RefundTransactionsForPaymentFixture.aValidRefundTransactionsForPayment;
 import static uk.gov.service.payments.commons.model.CommonDateTimeFormatters.ISO_INSTANT_MILLISECOND_PRECISION;
 
@@ -153,8 +153,9 @@ public class LedgerStub {
             responseDefBuilder.withBody(objectMapper.writeValueAsString(ledgerTransactionFields));
         }
         wireMockServer.stubFor(
-                get(urlPathEqualTo(format("/v1/transaction/gateway-transaction/%s", gatewayTransactionId)))
+                get(urlPathEqualTo("/v1/transaction/gateway-transaction"))
                         .withQueryParam("payment_provider", equalTo(paymentProvider))
+                        .withQueryParam("gateway_transaction_id", equalTo(gatewayTransactionId))
                         .willReturn(
                                 responseDefBuilder
                         )
