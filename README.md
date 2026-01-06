@@ -176,6 +176,13 @@ using a lock to 'claim' an event for processing. The new implementation removes 
 instance takes the next event on the queue and the distribution is managed by logic within the queue. As connector
 scales out more instances of connector poll the queue for new events.
 
+#### Task Queue
+
+Task Queue is used for processing different tasks (Recurring payments authorisation, Retrying failed payment or refund emails
+and so on) asynchronously (see TaskQueueMesssageHandler class for all tasks handled using the Task Queue). Connector
+adds tasks to the Task Queue and TaskQueueMesssageHandler reads from the queue and processes tasks as per relevant task
+handler.
+
 ## Licence
 
 [MIT License](LICENSE)
