@@ -138,4 +138,19 @@ public class LedgerServiceConsumerTest {
 
         assertThat(response.getStatus(), is(202));
     }
+
+    @Test
+    @PactVerification("ledger")
+    @Pacts(pacts = {"connector-ledger-get-payment-transaction-by-gateway-transaction-id"})
+    public void getTransactionByGatewayTransactionId_shouldSerialiseLedgerPaymentTransactionCorrectly() {
+        String gatewayTransactionId = "gateway-tx-123456";
+        String paymentProvider = "sandbox";
+        
+        Optional<LedgerTransaction> mayBeTransaction = ledgerService.getTransactionForProviderAndGatewayTransactionId(paymentProvider, gatewayTransactionId);
+
+        assertThat(mayBeTransaction.isPresent(), is(true));
+        LedgerTransaction transaction = mayBeTransaction.get();
+        assertThat(transaction.getGatewayTransactionId(), is(gatewayTransactionId));
+        assertThat(transaction.getAmount(), is(100L));
+    }
 }

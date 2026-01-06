@@ -63,7 +63,8 @@ public class LedgerService {
                                                                                         String gatewayTransactionId) {
         var uri = UriBuilder
                 .fromPath(ledgerUrl)
-                .path(format("/v1/transaction/gateway-transaction/%s", URLEncoder.encode(gatewayTransactionId, StandardCharsets.UTF_8)))
+                .path("/v1/transaction/gateway-transaction")
+                .queryParam("gateway_transaction_id", gatewayTransactionId)
                 .queryParam("payment_provider", paymentGatewayName);
         
         return getTransactionFromLedger(uri);

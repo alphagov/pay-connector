@@ -170,26 +170,4 @@ public class LedgerServiceTest {
 
         assertThrows(LedgerException.class, () -> ledgerService.getTransaction("transaction-id"));
     }
-
-    @Test
-    void getTransactionForProviderAndGatewayTransactionId_shouldEncodeCorrectly() {
-        var oddId = "an-id-with//some-weird-stuff-in-it";
-        LedgerTransaction ledgerTransaction = aValidLedgerTransaction()
-                .withPaymentProvider("worldpay")
-                .withGatewayTransactionId(oddId)
-                .build();
-        setupMocksForGetRequest();
-        when(mockResponse.getStatus()).thenReturn(SC_OK);
-        when(mockResponse.readEntity(LedgerTransaction.class)).thenReturn(ledgerTransaction);
-
-        var expectedPath = "/v1/transaction/gateway-transaction/an-id-with%2F%2Fsome-weird-stuff-in-it";
-        
-        Optional<LedgerTransaction> maybeTransaction = ledgerService.getTransactionForProviderAndGatewayTransactionId("worldpay", oddId);
-        verify(mockClient).target(argThat((UriBuilder arg) -> {
-            assertEquals(expectedPath, arg.build().getRawPath());
-            return true;
-        }));
-        assertThat(maybeTransaction.isPresent(), is(true));
-        assertThat(maybeTransaction.get(), is(ledgerTransaction));
-    }
 }
