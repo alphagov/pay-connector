@@ -2,8 +2,6 @@ package uk.gov.pay.connector.it.dao;
 
 import com.google.common.collect.Lists;
 import jakarta.validation.ConstraintViolationException;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -105,11 +103,7 @@ public class ChargeDaoIT {
                 .build();
         gatewayAccountCredentialsEntity.setId(defaultTestAccount.getCredentials().getFirst().getId());
     }
-
-    @AfterEach
-    void clear() {
-        app.getDatabaseTestHelper().truncateAllData();
-    }
+    
 
     @Test
     void chargeEvents_shouldRecordTransactionIdWithEachStatusChange() {

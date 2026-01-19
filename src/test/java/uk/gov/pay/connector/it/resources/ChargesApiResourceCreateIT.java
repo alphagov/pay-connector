@@ -117,18 +117,6 @@ public class ChargesApiResourceCreateIT {
                 .then()
                 .statusCode(201)
                 .extract().path("gateway_account_id");
-
-        liveGatewayAccountId = app.givenSetup()
-                .body(toJson(Map.of(
-                        "service_id", "a-service-id",
-                        "type", GatewayAccountType.LIVE,
-                        "payment_provider", PaymentGatewayName.WORLDPAY.getName(),
-                        "service_name", "my-test-service-name"
-                )))
-                .post("/v1/api/accounts")
-                .then()
-                .statusCode(201)
-                .extract().path("gateway_account_id");
     }
 
     @Nested
@@ -414,6 +402,11 @@ public class ChargesApiResourceCreateIT {
         @Nested
         class ReturnUnprocessableContent {
 
+            @BeforeEach
+            void setupLiveAccount() {
+                liveGatewayAccountId = createLiveWorldpayAccount();
+            }
+            
             @Test
             void when_return_url_is_not_https_when_gateway_account_is_live() {
                 app.givenSetup()
@@ -932,7 +925,12 @@ public class ChargesApiResourceCreateIT {
 
         @Nested
         class ReturnUnprocessableContent {
-
+           
+            @BeforeEach
+            void setupLiveAccount() {
+                liveGatewayAccountId = createLiveWorldpayAccount();
+            }
+            
             @Test
             void when_return_url_is_not_https_and_gateway_account_is_live() {
                 app.givenSetup()
@@ -1160,5 +1158,18 @@ by moving it back an hour which results in the assertion failing as it is now 1 
                 .replace("{accountId}", accountId)
                 .replace("{chargeId}", chargeId);
     }
-
+    
+    private String createLiveWorldpayAccount() {
+        return app.givenSetup()
+                .body(toJson(Map.of(
+                        "service_id", "a-service-id",
+                        "type", GatewayAccountType.LIVE,
+                        "payment_provider", PaymentGatewayName.WORLDPAY.getName(),
+                        "service_name", "my-test-service-name"
+                )))
+                .post("/v1/api/accounts")
+                .then()
+                .statusCode(201)
+                .extract().path("gateway_account_id");
+    }
 }
