@@ -12,7 +12,7 @@
         <jjwt.version>0.13.0</jjwt.version>
         <pact.version>4.6.19</pact.version>
         <eclipselink.version>4.0.9</eclipselink.version>
-        <swagger-version>2.2.41</swagger-version>
+        <swagger-version>2.2.42</swagger-version>
         <prometheus.version>0.16.0</prometheus.version>
 
         <PACT_BROKER_URL/>
