@@ -75,6 +75,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     protected static String accountId = String.valueOf(secureRandomInt());
     protected static ObjectMapper mapper;
     protected DatabaseFixtures databaseFixtures;
+    private static boolean migratedDatabase = false;
 
     public AppWithPostgresAndSqsExtension() {
         this(ConnectorApp.class, new ConfigOverride[0]);
@@ -144,13 +145,18 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
         injector = InjectorLookup.getInjector(dropwizardAppExtension.getApplication()).get();
     }
-
+    
+    private void resetIfRunning(WireMockServer server) {
+        if (server.isRunning()) {
+            server.resetRequests();
+        }
+    }
     public void resetWireMockServer() {
-        wireMockServer.resetAll();
-        worldpayWireMockServer.resetAll();
-        ledgerWireMockServer.resetAll();
-        stripeWireMockServer.resetAll();
-        notifyWireMockServer.resetAll();
+        resetIfRunning(wireMockServer);
+        resetIfRunning(worldpayWireMockServer);
+        resetIfRunning(ledgerWireMockServer);
+        resetIfRunning(stripeWireMockServer);
+        resetIfRunning(notifyWireMockServer);
         ledgerStub.acceptPostEvent();
     }
 
@@ -160,9 +166,12 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        if (context.getRequiredTestClass().getEnclosingClass() == null) {
+        if (!migratedDatabase && context.getRequiredTestClass().getEnclosingClass() == null) {
+            // Only run DB migrations once for the entire test JVM
             // Only runs if there is no enclosing class, i.e. not in a @Nested block
             dropwizardAppExtension.getApplication().run("db", "migrate", CONFIG_PATH);
+            migratedDatabase = true;
+
         }
     }
 

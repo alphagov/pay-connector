@@ -1002,16 +1002,23 @@ public class DatabaseTestHelper {
     public void truncateEmittedEvents() {
         jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events").execute());
     }
+    
 
     public void truncateAllData() {
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE gateway_accounts CASCADE").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE emitted_events CASCADE").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE tokens").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE refunds_history").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE agreements CASCADE").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE payment_instruments CASCADE").execute());
-        jdbi.withHandle(h -> h.createUpdate("TRUNCATE TABLE idempotency").execute());
+        jdbi.useHandle(h ->
+                h.createUpdate("""
+            TRUNCATE TABLE
+                gateway_accounts,
+                emitted_events,
+                tokens,
+                refunds,
+                refunds_history,
+                agreements,
+                payment_instruments,
+                idempotency
+            CASCADE
+        """).execute()
+        );
     }
 
     public void truncateAgreements() {
