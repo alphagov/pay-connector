@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay.wallets;
 
 import com.google.inject.name.Named;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -13,20 +14,17 @@ import uk.gov.pay.connector.gateway.util.AuthUtil;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayAuthoriseOrderSessionId;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayGatewayResponseGenerator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder;
-import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
-import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.pay.connector.wallets.applepay.api.ApplePayAuthRequest;
+import uk.gov.pay.connector.wallets.googlepay.GooglePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.googlepay.api.GooglePayAuthRequest;
-import uk.gov.pay.connector.wallets.model.WalletPaymentInfo;
 import uk.gov.service.payments.commons.api.exception.ValidationException;
 
-import jakarta.inject.Inject;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
@@ -56,8 +54,7 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
         WorldpayOrderRequestBuilder worldpayOrderRequestBuilder = aWorldpayAuthoriseApplePayOrderRequestBuilder();
         worldpayOrderRequestBuilder.withAppleDecryptedPaymentData(appleDecryptedPaymentData);
         
-        GatewayOrder gatewayOrder = buildWalletAuthoriseOrder(authorisationGatewayRequest, 
-                appleDecryptedPaymentData.getPaymentInfo(), worldpayOrderRequestBuilder);
+        GatewayOrder gatewayOrder = buildWalletAuthoriseOrder(authorisationGatewayRequest, worldpayOrderRequestBuilder);
 
         return postGatewayRequest(gatewayOrder, authorisationGatewayRequest);
     }
@@ -80,9 +77,12 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
         if (is3dsRequired && isSendIpAddress) {
             worldpayOrderRequestBuilder.withPayerIpAddress(googlePayAuthRequest.getPaymentInfo().getIpAddress());
         }
+
+        if (authorisationGatewayRequest.getGatewayAccount().isSendPayerEmailToGateway()) {
+            worldpayOrderRequestBuilder.withPayerEmail(googlePayAuthRequest.getPaymentInfo().getEmail());
+        }
         
-        GatewayOrder gatewayOrder = buildWalletAuthoriseOrder(authorisationGatewayRequest, 
-                googlePayAuthRequest.getPaymentInfo(), worldpayOrderRequestBuilder);
+        GatewayOrder gatewayOrder = buildWalletAuthoriseOrder(authorisationGatewayRequest, worldpayOrderRequestBuilder);
 
         return postGatewayRequest(gatewayOrder, authorisationGatewayRequest);
     }
@@ -98,13 +98,9 @@ public class WorldpayWalletAuthorisationHandler implements WorldpayGatewayRespon
         return getWorldpayGatewayResponse(response);
     }
 
-    private GatewayOrder buildWalletAuthoriseOrder(AuthorisationGatewayRequest request, WalletPaymentInfo walletPaymentInfo, WorldpayOrderRequestBuilder builder) {
-        boolean isSendPayerEmailToGateway = request.getGatewayAccount().isSendPayerEmailToGateway();
-        boolean isSendReferenceToGateway = request.getGatewayAccount().isSendReferenceToGateway();
+    private GatewayOrder buildWalletAuthoriseOrder(AuthorisationGatewayRequest request, WorldpayOrderRequestBuilder builder) {
 
-        if (isSendPayerEmailToGateway) {
-            Optional.ofNullable(walletPaymentInfo.getEmail()).ifPresent(builder::withPayerEmail);
-        }
+        boolean isSendReferenceToGateway = request.getGatewayAccount().isSendReferenceToGateway();
 
         return builder
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of(request.getGovUkPayPaymentId()))
