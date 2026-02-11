@@ -3,91 +3,93 @@
         "http://dtd.worldpay.com/paymentService_v1.dtd">
 <paymentService version="1.4" merchantCode="${merchantCode}">
     <submit>
-        <order orderCode="${transactionId?xml}">
+        <order orderCode="${orderCode?xml}">
             <description>${description?xml}</description>
             <amount currencyCode="GBP" exponent="2" value="${amount}"/>
             <paymentDetails>
                 <CARD-SSL>
-                    <cardNumber>${authCardDetails.cardNo}</cardNumber>
+                    <cardNumber>${cardNumber?xml}</cardNumber>
                     <expiryDate>
-                        <date month="${authCardDetails.endDate.twoDigitMonth?xml}" year="${authCardDetails.endDate.fourDigitYear?xml}"/>
+                        <date month="${expiryMonthTwoDigits?xml}" year="${expiryYearFourDigits?xml}"/>
                     </expiryDate>
                     <cardHolderName>${authCardDetails.cardHolder?xml}</cardHolderName>
-                    <cvc>${authCardDetails.cvc}</cvc>
-                    <#if authCardDetails.address.isPresent()>
+                    <cvc>${cvc?xml}</cvc>
+                    <#if address??>
                     <cardAddress>
                         <address>
-                            <address1>${authCardDetails.address.get().line1?xml}</address1>
-                            <#if authCardDetails.address.get().line2??>
-                            <address2>${authCardDetails.address.get().line2?xml}</address2>
+                            <address1>${address.address1?xml}</address1>
+                            <#if address.address2??>
+                            <address2>${address.address2?xml}}</address2>
                             </#if>
-                            <postalCode>${authCardDetails.address.get().postcode?xml}</postalCode>
-                            <city>${authCardDetails.address.get().city?xml}</city>
-                            <#if state??>
-                            <state>${state?xml}</state>
+                            <postalCode>${address.postalCode?xml}}</postalCode>
+                            <city>${address.city?xml}</city>
+                            <#if address.state??>
+                            <state>${address.state?xml}</state>
                             </#if>
-                            <countryCode>${authCardDetails.address.get().country?xml}</countryCode>
+                            <countryCode>${address.countryCode?xml}</countryCode>
                         </address>
                     </cardAddress>
                     </#if>
                 </CARD-SSL>
-                <#if savePaymentInstrumentToAgreement>
-                <#if agreementPaymentType??>
-                <storedCredentials usage="FIRST" customerInitiatedReason="${agreementPaymentType}"/>
+                <#if storesTokenisedCredentials()>
+                <#if customerInitiatedReason??>
+                <storedCredentials usage="FIRST" customerInitiatedReason="${customerInitiatedReason?xml}"/>
                 <#else>
                 <storedCredentials usage="FIRST"/>
                 </#if>
                 </#if>
-                <#if requires3ds>
-                <#if payerIpAddress??>
-                <session id="${sessionId?xml}" shopperIPAddress="${payerIpAddress?xml}"/>
+                <#if sessionId??>
+                <#if ipAddress??>
+                <session id="${sessionId?xml}" shopperIPAddress="${ipAddress?xml}"/>
                 <#else>
                 <session id="${sessionId?xml}"/>
                 </#if>
                 </#if>
             </paymentDetails>
-            <#if requires3ds || payerEmail?? || savePaymentInstrumentToAgreement>
+            <#if acceptHeader?? || userAgentHeader?? || browserLanguageTag?? || email?? || authenticatedShopperId??>
             <shopper>
-                <#if payerEmail??>
-                <shopperEmailAddress>${payerEmail?xml}</shopperEmailAddress>
+                <#if email??>
+                <shopperEmailAddress>${email?xml}</shopperEmailAddress>
                 </#if>
-                <#if savePaymentInstrumentToAgreement>
-                <authenticatedShopperID>${agreementId?xml}</authenticatedShopperID>
+                <#if authenticatedShopperId??>
+                <authenticatedShopperID>${authenticatedShopperId?xml}</authenticatedShopperID>
                 </#if>
-                <#if requires3ds>
+                <#if acceptHeader?? || userAgentHeader?? || browserLanguageTag??>
                 <browser>
-                    <acceptHeader>${authCardDetails.acceptHeader?xml}</acceptHeader>
-                    <userAgentHeader>${authCardDetails.userAgentHeader?xml}</userAgentHeader>
-                    <#if authCardDetails.worldpay3dsFlexDdcResult.isEmpty() && integrationVersion3ds == 2>
-                    <browserLanguage>${browserLanguage?xml}</browserLanguage>
+                    <#if acceptHeader??>
+                    <acceptHeader>${acceptHeader?xml}</acceptHeader>
+                    </#if>
+                    <#if userAgentHeader??>
+                    <userAgentHeader>${userAgentHeader?xml}</userAgentHeader>
+                    </#if>
+                    <#if browserLanguageTag??>
+                    <browserLanguageTag>${browserLanguageTag?xml}</browserLanguageTag>
                     </#if>
                 </browser>
                 </#if>
             </shopper>
             </#if>
-            <#if savePaymentInstrumentToAgreement>
+            <#if tokenEventReference??>
             <createToken tokenScope="shopper">
-                <tokenEventReference>${paymentPlatformReference?xml}</tokenEventReference>
+                <tokenEventReference>${tokenEventReference?xml}</tokenEventReference>
             </createToken>
             </#if>
-            <#if requires3ds>
-            <#if authCardDetails.worldpay3dsFlexDdcResult.isPresent()>
+            <#if is3dsFlexRequest()>
+            <#if dfReferenceId??>
             <additional3DSData
-                dfReferenceId="${authCardDetails.worldpay3dsFlexDdcResult.get()?xml}"
+                dfReferenceId="${dfReferenceId?xml}"
                 challengeWindowSize="390x400" challengePreference="noPreference"
             />
-            </#if>
-            <#if authCardDetails.worldpay3dsFlexDdcResult.isEmpty() && integrationVersion3ds == 2>
+            <#else>
             <additional3DSData
                 dfReferenceId=""
                 javaScriptEnabled="false"
                 challengeWindowSize="390x400" challengePreference="noPreference"
             />
             </#if>
-            <#if requestExemption.name() == "SEND_CORPORATE_EXEMPTION_REQUEST">
-            <exemption type="CP" placement="AUTHORISATION"/>
-            <#elseif requestExemption.name() == "SEND_EXEMPTION_ENGINE_REQUEST">
-            <exemption type="OP" placement="OPTIMISED"/>
+            </#if>
+            <#if exemption??>
+            <exemption type="${exemptionRequest.type?xml}" placement="${exemptionRequest.placement?xml}"/>
             </#if>
         </#if>
         </order>

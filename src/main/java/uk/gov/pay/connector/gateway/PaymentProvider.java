@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.gateway.GatewayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -32,7 +33,11 @@ public interface PaymentProvider {
 
     Optional<String> generateTransactionId();
 
-    GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException;
+    default GatewayAuthoriseRequest generateCardNumberAuthorisationRequest(CardAuthorisationGatewayRequest request) {
+        throw new NotImplementedException();
+    }
+
+    GatewayResponse authorise(GatewayAuthoriseRequest gatewayAuthoriseRequest, ChargeEntity charge) throws GatewayException;
 
     default GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
         throw new NotImplementedException("User-not-present authorisation is not implemented for this payment provider");

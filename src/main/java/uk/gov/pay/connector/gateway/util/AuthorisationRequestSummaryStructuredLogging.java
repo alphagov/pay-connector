@@ -1,8 +1,18 @@
 package uk.gov.pay.connector.gateway.util;
 
 import net.logstash.logback.argument.StructuredArgument;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.gateway.model.request.gateway.GatewayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.Worldpay3dsEligibleAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.Worldpay3dsFlexEligibleAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptional3dsExemption;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptionalBillingAddress;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptionalEmail;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptionalIpAddress;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayExemptionRequest;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
@@ -12,6 +22,7 @@ import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayExemptionRequest.Type.CP;
 
 public class AuthorisationRequestSummaryStructuredLogging {
     
@@ -28,66 +39,66 @@ public class AuthorisationRequestSummaryStructuredLogging {
     public static final String AGREEMENT_PAYMENT_TYPE = "agreement_payment_type";
     public static final String MOTO = "moto";
 
-    public StructuredArgument[] createArgs(AuthorisationRequestSummary authorisationRequestSummary) {
+    public StructuredArgument[] createArgs(GatewayAuthoriseRequest request, ChargeEntity charge, AuthCardDetails authCardDetails) {
         var structuredArguments = new ArrayList<StructuredArgument>();
-        
-        switch (authorisationRequestSummary.billingAddress()) {
-            case PRESENT -> structuredArguments.add(kv(BILLING_ADDRESS, true));
-            case NOT_PRESENT -> structuredArguments.add(kv(BILLING_ADDRESS, false));
-        }
- 
-        switch (authorisationRequestSummary.dataFor3ds()) {
-            case PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS, true));
-            case NOT_PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS, false));
+
+        if (request instanceof WorldpayAuthoriseRequestWithOptionalBillingAddress reqWithOptionalAddress) {
+            if (reqWithOptionalAddress.address() != null) {
+                structuredArguments.add(kv(BILLING_ADDRESS, true));
+            } else {
+                structuredArguments.add(kv(BILLING_ADDRESS, false));
+            }
         }
 
-        switch (authorisationRequestSummary.dataFor3ds2()) {
-            case PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS2, true));
-            case NOT_PRESENT -> structuredArguments.add(kv(DATA_FOR_3DS2, false));
-        }
-        
-        switch (authorisationRequestSummary.email()) {
-            case PRESENT -> structuredArguments.add(kv(EMAIL, true));
-            case NOT_PRESENT -> structuredArguments.add(kv(EMAIL, false));
+        if (request instanceof Worldpay3dsEligibleAuthoriseRequest) {
+            structuredArguments.add(kv(DATA_FOR_3DS, true));
+        } else if (request instanceof WorldpayAuthoriseRequest) {
+            structuredArguments.add(kv(DATA_FOR_3DS, false));
         }
 
-        switch (authorisationRequestSummary.deviceDataCollectionResult()) {
-            case PRESENT -> structuredArguments.add(kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, true));
-            case NOT_PRESENT -> structuredArguments.add(kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false));
+        if (request instanceof Worldpay3dsFlexEligibleAuthoriseRequest flexEligible) {
+            if (flexEligible.dfReferenceId() != null) {
+                structuredArguments.add(kv(DATA_FOR_3DS2, true));
+            } else {
+                structuredArguments.add(kv(DATA_FOR_3DS2, false));
+            }
         }
 
-        Optional.ofNullable(authorisationRequestSummary.ipAddress())
-                .map(ipAddress -> structuredArguments.add(kv(IP_ADDRESS, ipAddress)));
+        if (request instanceof WorldpayAuthoriseRequestWithOptionalEmail reqWithOptionalEmail) {
+            if (reqWithOptionalEmail.email() != null) {
+                structuredArguments.add(kv(EMAIL, true));
+            } else {
+                structuredArguments.add(kv(EMAIL, false));
+            }
+        }
 
-        structuredArguments.add(kv(CORPORATE_CARD, authorisationRequestSummary.corporateCard()));
+        if (request instanceof Worldpay3dsFlexEligibleAuthoriseRequest flexEligible) {
+            if (flexEligible.dfReferenceId() != null) {
+                structuredArguments.add(kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, true));
+            } else {
+                structuredArguments.add(kv(WORLDPAY_3DS_FLEX_DEVICE_DATA_COLLECTION_RESULT, false));
+            }
+        }
 
-        authorisationRequestSummary.corporateExemptionRequested()
-                .ifPresent(corporateExemptionRequested -> structuredArguments.add(kv(CORPORATE_EXEMPTION_REQUESTED, corporateExemptionRequested)));
- 
-        authorisationRequestSummary.corporateExemptionResult()
-                .map(Exemption3ds::name)
-                .ifPresent(exemption3dsResult -> structuredArguments.add(kv(CORPORATE_EXEMPTION_RESULT, exemption3dsResult)));
-        
-        authorisationRequestSummary.agreementPaymentType()
-                .map(AgreementPaymentType::name).ifPresent(agreementPaymentTypeName -> structuredArguments.add(kv(AGREEMENT_PAYMENT_TYPE, agreementPaymentTypeName)));
- 
+        if (request instanceof WorldpayAuthoriseRequestWithOptionalIpAddress reqWithOptionalIpAddress
+                && reqWithOptionalIpAddress.ipAddress() != null) {
+            structuredArguments.add(kv(IP_ADDRESS, reqWithOptionalIpAddress.ipAddress()));
+        }
+
+        structuredArguments.add(kv(CORPORATE_CARD, authCardDetails.isCorporateCard()));
+
+        if (request instanceof WorldpayAuthoriseRequestWithOptional3dsExemption reqWithOptionalExemption
+                && reqWithOptionalExemption.exemption() instanceof WorldpayExemptionRequest(
+                WorldpayExemptionRequest.Type type, WorldpayExemptionRequest.Placement placement)
+                && type == CP) {
+            structuredArguments.add(kv(CORPORATE_EXEMPTION_REQUESTED, true);
+            structuredArguments.add(kv(CORPORATE_EXEMPTION_RESULT, Optional.ofNullable(charge.getExemption3ds()).map(Exemption3ds::getDisplayName)));
+        }
+
+        Optional.ofNullable(charge.getAgreementPaymentType()).map(AgreementPaymentType::name)
+                .ifPresent(agreementPaymentTypeName -> structuredArguments.add(kv(AGREEMENT_PAYMENT_TYPE, agreementPaymentTypeName));
+
         return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
     }
-    
-    public StructuredArgument[] createArgsForPreAuthorisationLogging(WorldpayOrderRequestBuilder orderRequestBuilder, AuthCardDetails authCardDetails, boolean isMoto) {
-        var structuredArguments = new ArrayList<StructuredArgument>();
-        
-        structuredArguments.add(kv(MOTO, isMoto));
-        
-        structuredArguments.add(kv(BILLING_ADDRESS, authCardDetails.getAddress().isPresent()));
-        
-        structuredArguments.add(kv(EMAIL, !isBlank(orderRequestBuilder.getWorldpayTemplateData().getPayerEmail())));
-        
-        Optional.ofNullable(orderRequestBuilder.getWorldpayTemplateData().getPayerIpAddress())
-                .map(ipAddress -> structuredArguments.add(kv(IP_ADDRESS, ipAddress)));
-        
-        structuredArguments.add(kv(THREE_DS_REQUIRED, orderRequestBuilder.getWorldpayTemplateData().isRequires3ds()));
-        
-        return structuredArguments.toArray(new StructuredArgument[structuredArguments.size()]);
-    }
+
 }

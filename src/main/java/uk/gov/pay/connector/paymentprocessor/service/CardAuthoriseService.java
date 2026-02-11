@@ -28,6 +28,12 @@ import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.gateway.GatewayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptional3dsExemption;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptionalBillingAddress;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptionalEmail;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayAuthoriseRequestWithOptionalIpAddress;
+import uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayExemptionRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
@@ -47,6 +53,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
 import static uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary.Presence.PRESENT;
+import static uk.gov.pay.connector.gateway.model.request.gateway.worldpay.authorise.WorldpayExemptionRequest.Type.CP;
 
 public class CardAuthoriseService {
 
@@ -110,13 +117,16 @@ public class CardAuthoriseService {
 
         GatewayResponse<BaseAuthoriseResponse> operationResponse;
         ChargeStatus newStatus;
+        GatewayAuthoriseRequest gatewayAuthoriseRequest = null;
 
         try {
             PaymentProvider paymentProvider = getPaymentProviderFor(charge);
 
+
             switch (charge.getAuthorisationMode()) {
                 case WEB:
                     CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
+                    gatewayAuthoriseRequest = paymentProvider.generateCardNumberAuthorisationRequest(request);
                     operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
                     break;
                 case AGREEMENT:
@@ -138,7 +148,7 @@ public class CardAuthoriseService {
             operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
         }
 
-        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
+        return updateChargePostAuthorisation(authCardDetails, charge, gatewayAuthoriseRequest, operationResponse, newStatus);
     }
 
     public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, AuthoriseRequest authoriseRequest) {
@@ -204,7 +214,8 @@ public class CardAuthoriseService {
     }
 
     private AuthorisationResponse updateChargePostAuthorisation(AuthCardDetails authCardDetails, 
-                                                                ChargeEntity charge, 
+                                                                ChargeEntity charge,
+                                                                GatewayAuthoriseRequest gatewayAuthoriseRequest,
                                                                 GatewayResponse<BaseAuthoriseResponse> operationResponse, 
                                                                 ChargeStatus newStatus) {
         Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
@@ -230,11 +241,9 @@ public class CardAuthoriseService {
                 mayBeCanRetry.orElse(null),
                 mayBeRejectedReason.orElse(null));
 
-        var authorisationRequestSummary = generateAuthorisationRequestSummary(updatedCharge, authCardDetails);
-
         authorisationLogger.logChargeAuthorisation(
                 LOGGER,
-                authorisationRequestSummary,
+                gatewayAuthoriseRequest,
                 updatedCharge,
                 transactionId.orElse("missing transaction ID"),
                 operationResponse,
@@ -242,31 +251,38 @@ public class CardAuthoriseService {
                 newStatus
         );
 
-        incrementMetricsPostAuthorisation(newStatus, updatedCharge, authorisationRequestSummary);
+        incrementMetricsPostAuthorisation(newStatus, updatedCharge, gatewayAuthoriseRequest, authCardDetails);
 
         return new AuthorisationResponse(operationResponse);
     }
 
-    private void incrementMetricsPostAuthorisation(ChargeStatus newStatus, ChargeEntity updatedCharge, AuthorisationRequestSummary authorisationRequestSummary) {
+    private void incrementMetricsPostAuthorisation(ChargeStatus newStatus, ChargeEntity updatedCharge,
+                                                   GatewayAuthoriseRequest gatewayAuthoriseRequest, AuthCardDetails authCardDetails) {
         AUTHORISATION_RESULT_COUNTER.labels(
                 updatedCharge.getPaymentProvider().toLowerCase(),
                 updatedCharge.getGatewayAccount().getType().toLowerCase(),
-                authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
-                authorisationRequestSummary.corporateCard() ? "with corporate card" : "with non-corporate card",
-                authorisationRequestSummary.corporateExemptionResult()
+                gatewayAuthoriseRequest instanceof WorldpayAuthoriseRequestWithOptionalBillingAddress req && req.address() != null
+                        ? "with-billing-address" : "without-billing-address",
+                authCardDetails.isCorporateCard() ? "with corporate card" : "with non-corporate card",
+                Optional.ofNullable(updatedCharge.getExemption3ds())
                         .map(Exemption3ds::getDisplayName)
                         .orElse(Exemption3ds.EXEMPTION_NOT_REQUESTED.getDisplayName()),
-                authorisationRequestSummary.email() == PRESENT ? "with email address" : "without email address",
-                authorisationRequestSummary.ipAddress() != null ? "with ip address" : "without ip address",
+                gatewayAuthoriseRequest instanceof WorldpayAuthoriseRequestWithOptionalEmail req && req.email() != null
+                        ? "with email address" : "without email address",
+                gatewayAuthoriseRequest instanceof WorldpayAuthoriseRequestWithOptionalIpAddress req && req.ipAddress() != null
+                        ? "with ip address" : "without ip address",
                 newStatus.toString().toLowerCase()).inc();
 
         metricRegistry.counter(String.format(
                 "gateway-operations.%s.%s.authorise.%s.result.%s.%s.%s",
                 updatedCharge.getPaymentProvider(),
                 updatedCharge.getGatewayAccount().getType(),
-                authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
-                authorisationRequestSummary.email() == PRESENT ? "with email address" : "without email address",
-                authorisationRequestSummary.ipAddress() != null ? "with ip address" : "without ip address",
+                gatewayAuthoriseRequest instanceof WorldpayAuthoriseRequestWithOptionalBillingAddress req && req.address() != null
+                        ? "with-billing-address" : "without-billing-address",
+                gatewayAuthoriseRequest instanceof WorldpayAuthoriseRequestWithOptionalEmail req && req.email() != null
+                        ? "with email address" : "without email address",
+                gatewayAuthoriseRequest instanceof WorldpayAuthoriseRequestWithOptionalIpAddress req && req.ipAddress() != null
+                        ? "with ip address" : "without ip address",
                 newStatus)).inc();
     }
 
