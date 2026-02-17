@@ -1277,9 +1277,6 @@ paths:
         required: true
         schema:
           type: string
-          enum:
-          - test
-          - live
       responses:
         "200":
           content:

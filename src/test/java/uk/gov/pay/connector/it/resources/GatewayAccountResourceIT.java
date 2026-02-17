@@ -153,6 +153,18 @@ public class GatewayAccountResourceIT {
         }
 
         @Test
+        void shouldReturn404IfAccountTypeIsUnknown() {
+            String serviceId = randomUuid();
+            addGatewayAccountForServiceId(serviceId, "sandbox");
+            
+            String url = ACCOUNTS_API_SERVICE_ID_URL.replace("{serviceId}", serviceId).replace("{accountType}", "unknown-account-type");
+            app.givenSetup()
+                    .get(url)
+                    .then()
+                    .statusCode(404);
+        }
+
+        @Test
         void shouldReturn404IfNoLiveAccountExists() {
             defaultTestAccount = DatabaseFixtures
                     .withDatabaseTestHelper(app.getDatabaseTestHelper())
