@@ -132,10 +132,19 @@ public class GatewayAccountResource {
     )
     public GatewayAccountWithCredentialsResponse getGatewayAccountByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
-            @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType) {
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+            @Parameter(example = "test", description = "Account type") @PathParam("accountType") String accountType) {
+        
+        GatewayAccountType gatewayAccountType;
+
+        try {
+            gatewayAccountType = GatewayAccountType.fromString(accountType);
+        } catch (IllegalArgumentException ex) {
+            throw new GatewayAccountNotFoundException(format("Gateway Account with type [%s] not found.", accountType));
+        }
+        
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, gatewayAccountType)
                 .map(GatewayAccountWithCredentialsResponse::new)
-                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, gatewayAccountType));
     }
 
     @GET
