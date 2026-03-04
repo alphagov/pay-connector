@@ -344,6 +344,7 @@ paths:
         name: Idempotency-Key
         schema:
           type: string
+          nullable: true
       requestBody:
         content:
           '*/*':
@@ -1490,6 +1491,7 @@ paths:
         name: Idempotency-Key
         schema:
           type: string
+          nullable: true
       requestBody:
         content:
           '*/*':
