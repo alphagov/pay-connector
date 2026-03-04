@@ -2092,4 +2092,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add gateway_rejection_reason to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="gateway_rejection_reason" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
