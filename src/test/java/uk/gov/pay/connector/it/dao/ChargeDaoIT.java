@@ -343,6 +343,22 @@ public class ChargeDaoIT {
     }
 
     @Test
+    void shouldUpdateChargeWithGatewayRejectionReason() {
+        ChargeEntity chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(gatewayAccount)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .build();
+        chargeDao.persist(chargeEntity);
+
+        assertNull(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getGatewayRejectionReason());
+
+        chargeEntity.setGatewayRejectionReason("fraudulent");
+        chargeDao.merge(chargeEntity);
+
+        assertEquals(chargeDao.findByExternalId(chargeEntity.getExternalId()).get().getGatewayRejectionReason(), "fraudulent");
+    }
+
+    @Test
     void shouldCreateNewChargeWithParityCheckStatus() {
         ChargeEntity chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccount)

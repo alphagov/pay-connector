@@ -234,4 +234,13 @@ class ChargeEntityTest {
 
         assertTrue(chargeEntity.getRequires3ds());
     }
+    
+    @Test
+    void shouldReturnGatewayRejectionReason() {
+        ChargeEntity chargeCreated = ChargeEntityFixture
+                .aValidChargeEntity()
+                .build();
+        chargeCreated.setGatewayRejectionReason("fraudulent");
+        assertThat(chargeCreated.getGatewayRejectionReason(), is("fraudulent"));
+    }
 }
