@@ -79,6 +79,7 @@ public class ChargeEntityFixture {
     private Boolean requires3ds;
     private ChargeResponse.AuthorisationSummary authorisationSummary;
     private AgreementPaymentType agreementPaymentType;
+    private String gatewayRejectionReason;
 
     public static ChargeEntityFixture aValidChargeEntity() {
         return new ChargeEntityFixture();
@@ -178,6 +179,7 @@ public class ChargeEntityFixture {
         chargeEntity.setExemption3dsRequested(exemption3dsRequested);
         chargeEntity.setPaymentInstrument(paymentInstrument);
         chargeEntity.setUpdatedDate(updatedDate);
+        chargeEntity.setGatewayRejectionReason(gatewayRejectionReason);
 
         if (this.auth3DsRequiredEntity != null) {
             chargeEntity.set3dsRequiredDetails(auth3DsRequiredEntity);
@@ -372,6 +374,11 @@ public class ChargeEntityFixture {
 
     public ChargeEntityFixture withSavePaymentInstrumentToAgreement(boolean savePaymentInstrumentToAgreement) {
         this.savePaymentInstrumentToAgreement = savePaymentInstrumentToAgreement;
+        return this;
+    }
+
+    public ChargeEntityFixture withGatewayRejectionReason(String gatewayRejectionReason) {
+        this.gatewayRejectionReason = gatewayRejectionReason;
         return this;
     }
 

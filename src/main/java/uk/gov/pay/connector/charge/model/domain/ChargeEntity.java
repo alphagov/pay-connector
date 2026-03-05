@@ -214,6 +214,9 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     @Column(name = "requires_3ds")
     private Boolean requires3ds;
+    
+    @Column(name = "gateway_rejection_reason")
+    private String gatewayRejectionReason;
 
     public ChargeEntity() {
         //for jpa
@@ -289,7 +292,11 @@ public class ChargeEntity extends AbstractVersionedEntity {
     public void setPaymentInstrument(PaymentInstrumentEntity paymentInstrument) {
         this.paymentInstrument = paymentInstrument;
     }
-    
+
+    public void setGatewayRejectionReason(String gatewayRejectionReason) {
+        this.gatewayRejectionReason = gatewayRejectionReason;
+    }
+
     public Long getAmount() {
         return amount;
     }
@@ -623,6 +630,10 @@ public class ChargeEntity extends AbstractVersionedEntity {
 
     public Instant getUpdatedDate() {
         return updatedDate;
+    }
+
+    public String getGatewayRejectionReason() {
+        return gatewayRejectionReason;
     }
 
     public static final class WebChargeEntityBuilder {
