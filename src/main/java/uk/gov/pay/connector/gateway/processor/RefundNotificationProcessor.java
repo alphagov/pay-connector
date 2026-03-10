@@ -19,6 +19,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_TYPE;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
@@ -61,7 +62,8 @@ public class RefundNotificationProcessor {
                     () -> logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
                             gatewayName, gatewayTransactionId, charge.getExternalId(),
                             kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), kv(PROVIDER, gatewayName),
-                            kv("provider_refund_id", gatewayTransactionId))
+                            kv("provider_refund_id", transactionId),
+                            kv("gateway_transaction_id", gatewayTransactionId))
             );
             return;
         }
@@ -89,24 +91,25 @@ public class RefundNotificationProcessor {
 
         String stateTransitionMessage = newStatus == REFUND_ERROR ? "Refund request record set as failed (REFUND_ERROR)" : "Refund request record set as successful (REFUNDED)";
 
-        logger.info("Notification received for refund. Updating refund: {} - charge_external_id={}, refund_reference={}, transaction_id={}, status={}, "
-                        + "status_to={}, account_id={}, provider={}, provider_type={}",
+        logger.info("Notification received for refund. Updating refund: {}",
                 stateTransitionMessage,
-                refundEntity.getChargeExternalId(),
-                gatewayTransactionId,
-                transactionId,
-                oldStatus,
-                newStatus,
-                gatewayAccountEntity.getId(),
-                charge.getPaymentGatewayName(),
-                gatewayAccountEntity.getType());
+                kv(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId()),
+                kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                kv(PROVIDER, charge.getPaymentGatewayName()),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                kv("provider_refund_id", transactionId),
+                kv("gateway_transaction_id", gatewayTransactionId),
+                kv("from_status", oldStatus),
+                kv("to_status", newStatus)
+        );
     }
 
     private boolean isRefundTransitionRedundant(RefundStatus oldStatus, RefundStatus newStatus) {
-            return newStatus == oldStatus;
+        return newStatus == oldStatus;
     }
 
     private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
-            return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
+        return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
     }
 }
