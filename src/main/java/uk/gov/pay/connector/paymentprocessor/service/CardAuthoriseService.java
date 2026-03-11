@@ -30,6 +30,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_TIMEOUT;
 import static uk.gov.pay.connector.charge.util.CorporateCardSurchargeCalculator.getCorporateCardSurchargeFor;
@@ -170,6 +172,7 @@ public class CardAuthoriseService {
                     authCardDetails,
                     null,
                     null,
+                    null,
                     null);
 
             LOGGER.info("Attempt to authorise charge synchronously timed out.");
@@ -219,6 +222,14 @@ public class CardAuthoriseService {
         Optional<String> mayBeRejectedReason = operationResponse.getBaseResponse()
                 .flatMap(baseAuthoriseResponse ->
                         baseAuthoriseResponse.getMappedAuthorisationRejectedReason().map(MappedAuthorisationRejectedReason::name));
+
+        Optional<String> gatewayRejectionReason = Optional.empty();
+        
+        if (newStatus == AUTHORISATION_REJECTED && 
+                !(operationResponse.getBaseResponse().map(BaseAuthoriseResponse::isSoftDecline).orElse(false))) {
+                gatewayRejectionReason = operationResponse.getBaseResponse().flatMap(BaseAuthoriseResponse::getGatewayRejectionReason);
+        }
+        
         ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                 charge.getExternalId(),
                 newStatus,
@@ -228,7 +239,8 @@ public class CardAuthoriseService {
                 authCardDetails,
                 maybeToken.orElse(null),
                 mayBeCanRetry.orElse(null),
-                mayBeRejectedReason.orElse(null));
+                mayBeRejectedReason.orElse(null),
+                gatewayRejectionReason.orElse(null));
 
         var authorisationRequestSummary = generateAuthorisationRequestSummary(updatedCharge, authCardDetails);
 

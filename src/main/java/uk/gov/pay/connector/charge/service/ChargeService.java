@@ -787,9 +787,10 @@ public class ChargeService {
                                                           AuthCardDetails authCardDetails,
                                                           Map<String, String> recurringAuthToken,
                                                           Boolean canRetry,
-                                                          String rejectedReason) {
+                                                          String rejectedReason,
+                                                          String gatewayRejectionReason) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
-                null, null, recurringAuthToken, canRetry, rejectedReason);
+                null, null, recurringAuthToken, canRetry, rejectedReason, gatewayRejectionReason);
 
     }
 
@@ -802,7 +803,7 @@ public class ChargeService {
                                                             String emailAddress,
                                                             Auth3dsRequiredEntity auth3dsRequiredDetails) {
         return updateChargeAndEmitEventPostAuthorisation(chargeExternalId, status, authCardDetails, transactionId, auth3dsRequiredDetails, sessionIdentifier,
-                walletType, emailAddress, null, null, null);
+                walletType, emailAddress, null, null, null, null);
     }
 
     private ChargeEntity updateChargeAndEmitEventPostAuthorisation(String chargeExternalId,
@@ -815,9 +816,10 @@ public class ChargeService {
                                                                    String emailAddress,
                                                                    Map<String, String> recurringAuthToken,
                                                                    Boolean canRetry,
-                                                                   String rejectedReason) {
+                                                                   String rejectedReason,
+                                                                   String gatewayRejectionReason) {
         updateChargePostAuthorisation(chargeExternalId, newStatus, authCardDetails, transactionId,
-                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken, canRetry, rejectedReason);
+                auth3dsRequiredDetails, sessionIdentifier, walletType, emailAddress, recurringAuthToken, canRetry, rejectedReason, gatewayRejectionReason);
         ChargeEntity chargeEntity = findChargeByExternalId(chargeExternalId);
         if (chargeEntity.getAuthorisationMode() == MOTO_API) {
             eventService.emitAndRecordEvent(PaymentDetailsSubmittedByAPI.from(chargeEntity));
@@ -845,13 +847,15 @@ public class ChargeService {
                                                       String emailAddress,
                                                       Map<String, String> recurringAuthToken,
                                                       Boolean canRetry,
-                                                      String rejectedReason) {
+                                                      String rejectedReason,
+                                                      String gatewayRejectionReason) {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             setTransactionId(charge, transactionId);
             Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
             Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
             Optional.ofNullable(walletType).ifPresent(charge::setWalletType);
             Optional.ofNullable(emailAddress).ifPresent(charge::setEmail);
+            Optional.ofNullable(gatewayRejectionReason).ifPresent(charge::setGatewayRejectionReason);
 
             CardDetailsEntity detailsEntity = authCardDetailsToCardDetailsEntityConverter.convert(authCardDetails);
 

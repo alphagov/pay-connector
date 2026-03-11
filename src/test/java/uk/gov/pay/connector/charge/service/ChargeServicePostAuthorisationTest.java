@@ -151,7 +151,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
         
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, null, null);
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, null, null, null);
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
@@ -188,7 +188,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
 
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, true, null);
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, true, null, null);
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
@@ -232,7 +232,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
 
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, false, CLOSED_ACCOUNT.name());
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, false, CLOSED_ACCOUNT.name(), null);
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
@@ -285,7 +285,7 @@ class ChargeServicePostAuthorisationTest {
         when(mockChargeEventDao.persistChargeEventOf(chargeEntity, null)).thenReturn(mockChargeEventEntity);
 
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, false, CLOSED_ACCOUNT.name());
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, false, CLOSED_ACCOUNT.name(), null);
 
         assertThat(chargeEntity.getStatus(), is(AUTHORISATION_SUCCESS.toString()));
         assertThat(chargeEntity.getEmail(), is(EMAIL));
@@ -309,10 +309,9 @@ class ChargeServicePostAuthorisationTest {
         when(mockPaymentInstrumentService.createPaymentInstrument(chargeEntity, TOKEN)).thenReturn(mockPaymentInstrumentEntity);
 
         chargeService.updateChargePostCardAuthorisation(EXTERNAL_ID, AUTHORISATION_SUCCESS, TRANSACTION_ID, auth3dsRequiredEntity,
-                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, null, null);
+                PROVIDER_SESSION_IDENTIFIER, authCardDetails, TOKEN, null, null, null);
 
         assertThat(chargeEntity.getPaymentInstrument().isPresent(), is(true));
         assertThat(chargeEntity.getPaymentInstrument().get(), is(mockPaymentInstrumentEntity));
     }
-
 }
