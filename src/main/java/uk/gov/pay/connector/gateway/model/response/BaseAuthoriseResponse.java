@@ -26,6 +26,14 @@ public interface BaseAuthoriseResponse extends BaseResponse {
                 .filter(authoriseStatus -> authoriseStatus == AuthoriseStatus.REJECTED)
                 .map(authoriseStatus -> MappedAuthorisationRejectedReason.UNCATEGORISED);
     }
+    
+    default Optional<String> getGatewayRejectionReason() {
+        return Optional.empty();
+    }
+    
+    default boolean isSoftDecline() {
+        return false;
+    }
 
     default Optional<Map<String, String>> getGatewayRecurringAuthToken() {
         return Optional.empty();
