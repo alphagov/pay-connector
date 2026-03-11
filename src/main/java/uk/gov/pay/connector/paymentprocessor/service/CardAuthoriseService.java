@@ -41,6 +41,7 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
@@ -170,6 +171,7 @@ public class CardAuthoriseService {
                     authCardDetails,
                     null,
                     null,
+                    null,
                     null);
 
             LOGGER.info("Attempt to authorise charge synchronously timed out.");
@@ -219,6 +221,19 @@ public class CardAuthoriseService {
         Optional<String> mayBeRejectedReason = operationResponse.getBaseResponse()
                 .flatMap(baseAuthoriseResponse ->
                         baseAuthoriseResponse.getMappedAuthorisationRejectedReason().map(MappedAuthorisationRejectedReason::name));
+
+        Optional<String> gatewayRejectionReason = Optional.empty();
+        
+        if (!mayBeCanRetry.orElse(false)) {
+            Optional<String> mayBeErrorMessage = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getErrorMessage);
+            Optional<String> mayBeErrorCode = operationResponse.getBaseResponse().map(BaseAuthoriseResponse::getErrorCode);
+
+            gatewayRejectionReason = Stream.of(mayBeErrorMessage, mayBeErrorCode)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .reduce((errorMessage, errorCode) -> errorMessage + " " + errorCode);
+        }
+
         ChargeEntity updatedCharge = chargeService.updateChargePostCardAuthorisation(
                 charge.getExternalId(),
                 newStatus,
@@ -228,7 +243,8 @@ public class CardAuthoriseService {
                 authCardDetails,
                 maybeToken.orElse(null),
                 mayBeCanRetry.orElse(null),
-                mayBeRejectedReason.orElse(null));
+                mayBeRejectedReason.orElse(null),
+                gatewayRejectionReason.orElse(null));
 
         var authorisationRequestSummary = generateAuthorisationRequestSummary(updatedCharge, authCardDetails);
 
