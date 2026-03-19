@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.core.Configuration;
 import io.dropwizard.db.DataSourceFactory;
+import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.config.Authorisation3dsConfig;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.app.config.EmittedEventSweepConfig;
@@ -50,6 +51,11 @@ public class ConnectorConfiguration extends Configuration {
     @Valid
     @NotNull
     private StripeGatewayConfig stripeConfig;
+
+    @Valid
+    @NotNull
+    @JsonProperty("adyen")
+    private AdyenGatewayConfig adyenConfig;
 
     @Valid
     @NotNull
@@ -183,6 +189,11 @@ public class ConnectorConfiguration extends Configuration {
     @JsonProperty("stripe")
     public StripeGatewayConfig getStripeConfig() {
         return stripeConfig;
+    }
+
+    @JsonProperty("adyen")
+    public AdyenGatewayConfig getAdyenGatewayConfig() {
+        return adyenConfig;
     }
 
     @JsonProperty("rejectPaymentLinkPaymentsWithCardNumberInReference")
