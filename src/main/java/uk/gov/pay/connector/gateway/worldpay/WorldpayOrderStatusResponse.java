@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.eclipse.persistence.oxm.annotations.XmlPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,6 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import jakarta.xml.bind.annotation.XmlRootElement;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static java.lang.String.format;
 import static java.util.function.Predicate.not;
@@ -122,6 +123,7 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
         this.challengeAcsUrl = challengeAcsUrl != null ? challengeAcsUrl.trim() : null;
     }
 
+    @Override
     public boolean isSoftDecline() {
         return Optional.ofNullable(lastEvent).map("REFUSED"::equals).orElse(false)
                 && Optional.ofNullable(exemptionResponseResult).map(SOFT_DECLINE_EXEMPTION_RESPONSE_RESULTS::contains).orElse(false);
@@ -272,6 +274,13 @@ public class WorldpayOrderStatusResponse implements BaseAuthoriseResponse, BaseC
                 .orElse(MappedAuthorisationRejectedReason.UNCATEGORISED);
 
         return Optional.of(mappedAuthorisationRejectedReason);
+    }
+
+    @Override
+    public Optional<String> getGatewayRejectionReason() {
+        return Stream.of(Optional.ofNullable(getRefusedReturnCode()), Optional.ofNullable(getRefusedReturnCodeDescription()))
+                .flatMap(Optional::stream)
+                .reduce((errorCode, errorMessage) -> errorCode + " " + errorMessage);
     }
 
     @Override

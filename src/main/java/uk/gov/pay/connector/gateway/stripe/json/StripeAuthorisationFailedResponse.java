@@ -10,6 +10,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.REJECTED;
@@ -88,6 +89,15 @@ public class StripeAuthorisationFailedResponse implements BaseAuthoriseResponse 
     @Override
     public String getErrorMessage() {
         return null;
+    }
+    
+    @Override
+    public Optional<String> getGatewayRejectionReason() {
+        return  Optional.ofNullable(errorResponse)
+                .map(StripeErrorResponse::getError)
+                .flatMap(StripeErrorResponse.Error::getStripePaymentIntent)
+                .flatMap(StripePaymentIntent::getLastPaymentError)
+                .map(LastPaymentError::getDeclineCode);
     }
 
     @Override

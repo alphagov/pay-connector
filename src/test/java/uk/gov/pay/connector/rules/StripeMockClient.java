@@ -23,6 +23,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_AUTHOR
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_CUSTOMER_SUCCESS_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_ERROR_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_GET_PAYMENT_INTENT_WITH_3DS_AUTHORISED_RESPONSE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_AUTHORISATION_REJECTED_NO_RETRY_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_AUTHORISATION_REJECTED_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CANCEL_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYMENT_INTENT_CAPTURE_SUCCESS_RESPONSE;
@@ -68,7 +69,12 @@ public class StripeMockClient {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_AUTHORISATION_REJECTED_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 402);
     }
-
+    
+    public void mockCreatePaymentIntentAuthorisationRejectedNoRetry() {
+        String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_AUTHORISATION_REJECTED_NO_RETRY_RESPONSE);
+        setupResponse(payload, "/v1/payment_intents", 402);
+    }
+    
     public void mockCreatePaymentIntentAuthorisationError() {
         String payload = TestTemplateResourceLoader.load(STRIPE_PAYMENT_INTENT_ERROR_RESPONSE);
         setupResponse(payload, "/v1/payment_intents", 402);
