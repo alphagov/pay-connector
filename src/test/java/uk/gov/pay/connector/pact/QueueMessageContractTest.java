@@ -1,12 +1,11 @@
 package uk.gov.pay.connector.pact;
 
 import au.com.dius.pact.provider.PactVerifyProvider;
-import au.com.dius.pact.provider.junit.target.AmqpTarget;
-import au.com.dius.pact.provider.junit.target.Target;
-import au.com.dius.pact.provider.junit.target.TestTarget;
+import au.com.dius.pact.provider.junit.target.MessageTarget;
+import au.com.dius.pact.provider.junitsupport.target.Target;
+import au.com.dius.pact.provider.junitsupport.target.TestTarget;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.RandomStringUtils;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -88,7 +87,7 @@ import static uk.gov.service.payments.commons.model.Source.CARD_EXTERNAL_TELEPHO
 public class QueueMessageContractTest {
 
     @TestTarget
-    public final Target target = new AmqpTarget();
+    public final Target target = new MessageTarget();
 
     private String resourceId = "anExternalResourceId";
 
