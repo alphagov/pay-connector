@@ -7,15 +7,20 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.util.ChargeUtils;
+import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.time.temporal.ChronoUnit.HOURS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 
 public class WorldpayCardAuthoriseServiceIT {
     @RegisterExtension
@@ -115,5 +120,26 @@ public class WorldpayCardAuthoriseServiceIT {
 
         var mergedCharge = app.getInstanceFromGuiceContainer(ChargeService.class).findChargeByExternalId(userNotPresentChargeId.toString());
         assertThat(mergedCharge.getRequires3ds(), is(nullValue()));
+    }
+
+    @Test
+    void shouldProcessFailedAuthorisationAndSetGatewayRejectionReason() {
+        String chargeId = testBaseExtension.addCharge(
+                anAddChargeParameters().withChargeStatus(ENTERING_CARD_DETAILS)
+                        .withCreatedDate(Instant.now().minus(1, HOURS))
+                        .withTransactionId("transaction-id-transition-it")
+                        .build());
+
+        app.getWorldpayMockClient().mockAuthorisationFailure();
+        
+        var authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+
+        var failureResponse = app.getInstanceFromGuiceContainer(CardAuthoriseService.class).doAuthoriseWeb(chargeId, authCardDetails);
+        
+        assertThat(failureResponse.getAuthoriseStatus(), is(Optional.of(BaseAuthoriseResponse.AuthoriseStatus.REJECTED)));
+
+        var chargeUpdated = app.getDatabaseTestHelper().getChargeByExternalId(chargeId);
+
+        assertThat(chargeUpdated.get("gateway_rejection_reason"), is("5 REFUSED"));
     }
 }

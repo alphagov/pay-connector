@@ -327,7 +327,32 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.card_type", is("debit"))
                 .body("card_details.card_brand", is("Visa"))
                 .body("card_details.expiry_date", is("08/24"));
-        ;
+    }
+
+    @Test
+    void shouldRejectPayPayment_andSaveRejectionReason() {
+        app.getStripeMockClient().mockCreatePaymentMethod();
+        app.getStripeMockClient().mockCreatePaymentIntentAuthorisationRejectedNoRetry();
+        addGatewayAccount();
+
+        String externalChargeId = addCharge();
+
+        given().port(app.getLocalPort())
+                .contentType(JSON)
+                .body(validAuthorisationDetailsWithoutBillingAddress)
+                .post(testBaseExtension.authoriseChargeUrlFor(externalChargeId))
+                .then()
+                .statusCode(400);
+
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_methods"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
+
+        app.getStripeWireMockServer().verify(postRequestedFor(urlEqualTo("/v1/payment_intents"))
+                .withHeader("Content-Type", equalTo(APPLICATION_FORM_URLENCODED)));
+        
+        var charge = app.getDatabaseTestHelper().getChargeByExternalId(externalChargeId);
+
+        assertThat(charge.get("gateway_rejection_reason"), is("lost_card"));
     }
 
     @Test
@@ -383,7 +408,6 @@ public class StripeCardResourceAuthoriseIT {
                 .body("card_details.card_type", is("debit"))
                 .body("card_details.card_brand", is("Visa"))
                 .body("card_details.expiry_date", is("08/24"));
-        ;
     }
 
     @Test

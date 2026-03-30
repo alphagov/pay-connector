@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -19,16 +20,19 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITHOUT_TRANSACTION_IDENTIFIER;
@@ -152,12 +156,29 @@ class WorldpayOrderStatusResponseTest {
         verifyLogging(1, "Expiry date in Worldpay wallet payment authorisation response is in an unexpected format; month has 2 digits, year has 3 digits.");
     }
 
+    @ParameterizedTest
+    @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
+        refusedReturnCodeDescription, refusedReturnCode, outcome, present
+        fraudulent, 42, 42 fraudulent, true
+        fraudulent, null, fraudulent, true
+        null, 42, 42, true
+        null, null, null, false
+    """)
+    void get_gateway_rejection_reason_should_return_reduced_values(String refusedReturnCodeDescription, String refusedReturnCode, String outcome, Boolean present)  throws Exception {
+        var response = spy(WorldpayOrderStatusResponse.class);
+        when(response.getRefusedReturnCode()).thenReturn(refusedReturnCode);
+        when(response.getRefusedReturnCodeDescription()).thenReturn(refusedReturnCodeDescription);
+        Optional<String> gatewayRejectionReason = response.getGatewayRejectionReason();
+        assertThat(gatewayRejectionReason.isPresent(), is(present));
+        if (present) {
+            assertThat(gatewayRejectionReason.get(), is(outcome));
+        }
+    }
+
     private void verifyLogging(int invocations, String logMessage) {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(invocations)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains(logMessage)), is(true));
     }
-
-
 }
