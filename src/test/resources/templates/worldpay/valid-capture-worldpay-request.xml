@@ -6,7 +6,7 @@
         <orderModification orderCode="MyUniqueTransactionId!">
             <capture>
                 <date dayOfMonth="23" month="02" year="2013"/>
-                <amount value="500" currencyCode="GBP" exponent="2" debitCreditIndicator="credit"/>
+                <amount value="500" currencyCode="GBP" exponent="2"/>
             </capture>
         </orderModification>
     </modify>

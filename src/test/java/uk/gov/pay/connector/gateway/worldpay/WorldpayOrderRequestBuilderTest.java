@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.worldpay;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.xml.sax.SAXException;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
@@ -18,10 +17,10 @@ import uk.gov.pay.connector.wallets.googlepay.api.GooglePayPaymentInfo;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.io.IOException;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.xmlunit.assertj3.XmlAssert.assertThat;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpay3dsResponseAuthOrderRequestBuilder;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayAuthoriseApplePayOrderRequestBuilder;
@@ -55,7 +54,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
-import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
 class WorldpayOrderRequestBuilderTest {
 
@@ -86,8 +84,7 @@ class WorldpayOrderRequestBuilderTest {
     );
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() throws Exception {
-
+    void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFields() {
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
@@ -103,12 +100,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseRecurringOrderRequestWithSchemeIdentifier() throws Exception {
+    void shouldGenerateValidAuthoriseRecurringOrderRequestWithSchemeIdentifier() {
         GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withPaymentTokenId("test-payment-token-123456")
                 .withSchemeTransactionIdentifier("test-transaction-id-999999")
@@ -120,12 +119,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseRecurringOrderRequestWithOutSchemeIdentifier() throws Exception {
+    void shouldGenerateValidAuthoriseRecurringOrderRequestWithOutSchemeIdentifier() {
         GatewayOrder actualRequest = aWorldpayAuthoriseRecurringOrderRequestBuilder()
                 .withPaymentTokenId("test-payment-token-123456")
                 .withAgreementId("test-agreement-123456")
@@ -136,13 +137,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() throws Exception {
-
+    void shouldGenerateValidAuthoriseOrderRequestForAddressWithMinimumFieldsWhen3dsEnabled() {
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
@@ -160,13 +162,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithState() throws Exception {
-
+    void shouldGenerateValidAuthoriseOrderRequestForAddressWithState() {
         Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
 
         AuthCardDetails authCardDetails = getValidTestCard(usAddress);
@@ -182,13 +185,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithStateWhen3dsEnabled() throws Exception {
-
+    void shouldGenerateValidAuthoriseOrderRequestForAddressWithStateWhen3dsEnabled() {
         Address usAddress = new Address("10 WCB", null, "20500", "Washington D.C.", null, "US");
 
         AuthCardDetails authCardDetails = getValidTestCard(usAddress);
@@ -206,13 +210,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() throws Exception {
-
+    void shouldGenerateValidAuthoriseOrderRequestForAddressWithAllFields() {
         Address fullAddress = new Address("123 My Street", "This road", "SW8URR", "London", "London county", "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(fullAddress);
@@ -228,13 +233,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestWhenSpecialCharactersInUserInput() throws Exception {
-
+    void shouldGenerateValidAuthoriseOrderRequestWhenSpecialCharactersInUserInput() {
         Address address = new Address("123 & My Street", "This road -->", "SW8 > URR", "London !>", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(address);
@@ -250,12 +256,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseOrderRequestWhenAddressIsMissing() throws Exception {
+    void shouldGenerateValidAuthoriseOrderRequestWhenAddressIsMissing() {
         AuthCardDetails authCardDetails = getValidTestCard(null);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseOrderRequestBuilder()
@@ -269,12 +277,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuth3dsResponseOrderRequest() throws Exception {
+    void shouldGenerateValidAuth3dsResponseOrderRequest() {
         GatewayOrder actualRequest = aWorldpay3dsResponseAuthOrderRequestBuilder()
                 .withPaResponse3ds("I am an opaque 3D Secure PA response from the card issuer")
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
@@ -282,12 +292,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withMerchantCode("MERCHANTCODE")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseApplePayOrderRequest() throws Exception {
+    void shouldGenerateValidAuthoriseApplePayOrderRequest() {
         GatewayOrder actualRequest = aWorldpayAuthoriseApplePayOrderRequestBuilder()
                 .withAppleDecryptedPaymentData(validApplePayData)
                 .withSessionId(WorldpayAuthoriseOrderSessionId.of("uniqueSessionId"))
@@ -299,12 +311,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseApplePayOrderRequest_withMinData() throws Exception {
+    void shouldGenerateValidAuthoriseApplePayOrderRequest_withMinData() {
         AppleDecryptedPaymentData validData =
                 anApplePayDecryptedPaymentData()
                         .withEciIndicator(null)
@@ -324,12 +338,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseGooglePayOrderRequest() throws Exception {
+    void shouldGenerateValidAuthoriseGooglePayOrderRequest() {
         GooglePayPaymentInfo googlePayPaymentInfo = aGooglePayPaymentInfo().build();
         GooglePayAuthRequest validGooglePayData = new GooglePayAuthRequest(googlePayPaymentInfo, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
@@ -341,12 +357,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithoutIpAddress() throws Exception {
+    void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithoutIpAddress() {
         GooglePayAuthRequest validGooglePay3dsData = new GooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
@@ -361,12 +379,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithIpAddress() throws Exception {
+    void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWithIpAddress() {
         GooglePayAuthRequest validGooglePay3dsData = new GooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
@@ -382,12 +402,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWhen3dsDisabled() throws Exception {
+    void shouldGenerateValidAuthoriseGooglePay3dsOrderRequestWhen3dsDisabled() {
         GooglePayAuthRequest validGooglePay3dsData = new GooglePayAuthRequest(googlePayWalletPaymentInfoFor3ds, GOOGLE_PAY_ENCRYPTED_PAYMENT_DATA);
 
         GatewayOrder actualRequest = aWorldpayAuthoriseGooglePayOrderRequestBuilder()
@@ -400,12 +422,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidCaptureOrderRequest() throws Exception {
+    void shouldGenerateValidCaptureOrderRequest() {
         var date = LocalDate.of(2013, 2, 23);
 
         GatewayOrder actualRequest = aWorldpayCaptureOrderRequestBuilder()
@@ -415,12 +439,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST))
+                .areIdentical();
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidCaptureOrderRequestWithSpecialCharactersInStrings() throws Exception {
+    void shouldGenerateValidCaptureOrderRequestWithSpecialCharactersInStrings() {
         var date = LocalDate.of(2013, 2, 23);
 
         GatewayOrder actualRequest = aWorldpayCaptureOrderRequestBuilder()
@@ -430,13 +456,14 @@ class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId <!-- & > ")
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST))
+                .areIdentical();
         assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidCancelOrderRequest() throws Exception {
-
+    void shouldGenerateValidCancelOrderRequest() {
         GatewayOrder actualRequest = aWorldpayCancelOrderRequestBuilder()
                 .withMerchantCode("MERCHANTCODE")
                 .withTransactionId("MyUniqueTransactionId!")
@@ -446,13 +473,14 @@ class WorldpayOrderRequestBuilderTest {
                 .replace("{{merchantCode}}", "MERCHANTCODE")
                 .replace("{{transactionId}}", "MyUniqueTransactionId!");
 
-        assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(expectedRequestBody)
+                .areIdentical();
         assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidRefundOrderRequest() throws Exception {
-
+    void shouldGenerateValidRefundOrderRequest() {
         GatewayOrder actualRequest = aWorldpayRefundOrderRequestBuilder()
                 .withReference("reference")
                 .withAmount("200")
@@ -466,12 +494,14 @@ class WorldpayOrderRequestBuilderTest {
                 .replace("{{refundReference}}", "reference")
                 .replace("{{amount}}", "200");
 
-        assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(expectedRequestBody)
+                .areIdentical();
         assertEquals(OrderRequestType.REFUND, actualRequest.getOrderRequestType());
     }
 
     @Test
-    void shouldGenerateValidDeleteTokenRequest() throws Exception {
+    void shouldGenerateValidDeleteTokenRequest() {
         GatewayOrder actualRequest = aWorldpayDeleteTokenOrderRequestBuilder()
                 .withAgreementId("test-agreement-123")
                 .withPaymentTokenId("test-paymentToken-789")
@@ -483,7 +513,9 @@ class WorldpayOrderRequestBuilderTest {
                 .replace("{{agreementId}}", "test-agreement-123")
                 .replace("{{paymentTokenId}}", "test-paymentToken-789");
 
-        assertXMLEqual(expectedRequestBody, actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(expectedRequestBody)
+                .areIdentical();
         assertEquals(OrderRequestType.DELETE_STORED_PAYMENT_DETAILS, actualRequest.getOrderRequestType());
     }
 
@@ -496,8 +528,7 @@ class WorldpayOrderRequestBuilderTest {
             """)
     void shouldGenerateValidAuthoriseOrderRequestAndIncludeCorrectExemptionResponse(SendWorldpayExemptionRequest sendExemptionRequest,
                                                                                     String testTemplatePath,
-                                                                                    Boolean isCorporateCard) throws Exception {
-
+                                                                                    Boolean isCorporateCard) {
         Address minAddress = new Address("123 My Street", null, "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCorporateCardDetails = getValidTestCard(minAddress);
@@ -516,10 +547,12 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCorporateCardDetails)
                 .build();
 
-        assertXMLEqual(TestTemplateResourceLoader.load(testTemplatePath), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(testTemplatePath))
+                .areIdentical();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
     }
-    
+
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
             3ds_enabled, send_payer_ip_address_to_gateway, send_payer_email_to_gateway, email_address, template_path
@@ -529,8 +562,7 @@ class WorldpayOrderRequestBuilderTest {
             true, false, false, citizen@example.org, templates/worldpay/valid-authorise-worldpay-request-including-3ds.xml
             false, true, true, null, templates/worldpay/valid-authorise-worldpay-request-excluding-3ds.xml
             """)
-    void testVariationsOfSendPayerEmailAndSendPayerIPAddress(boolean is3dsEnabled, boolean sendIPAddress, boolean sendEmail, String emailAddress, String testTemplatePath) throws IOException, SAXException {
-        
+    void testVariationsOfSendPayerEmailAndSendPayerIPAddress(boolean is3dsEnabled, boolean sendIPAddress, boolean sendEmail, String emailAddress, String testTemplatePath) {
         Address minAddress = new Address("123 My Street", "This road", "SW8URR", "London", null, "GB");
 
         AuthCardDetails authCardDetails = getValidTestCard(minAddress);
@@ -541,28 +573,30 @@ class WorldpayOrderRequestBuilderTest {
                 .withAcceptHeader("text/html")
                 .withUserAgentHeader("Mozilla/5.0")
                 .withRequestExemption(DO_NOT_SEND_EXEMPTION_REQUEST);
-                
-                builder
+
+        builder
                 .withTransactionId("transaction-id")
                 .withMerchantCode("MERCHANTCODE")
                 .withDescription("This is a description")
                 .withAmount("500")
                 .withAuthorisationDetails(authCardDetails);
-        
+
         if (sendEmail) {
             builder.withPayerEmail(emailAddress);
         }
-        
+
         if (sendIPAddress) {
             builder.withPayerIpAddress("127.0.0.1");
         }
 
-        GatewayOrder actualRequest =  builder.build();
+        GatewayOrder actualRequest = builder.build();
         assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
 
-        assertXMLEqual(TestTemplateResourceLoader.load(testTemplatePath), actualRequest.getPayload());
+        assertThat(actualRequest.getPayload())
+                .and(TestTemplateResourceLoader.load(testTemplatePath))
+                .areIdentical();
     }
-    
+
     private AuthCardDetails getValidTestCard(Address address) {
         return AuthCardDetailsFixture.anAuthCardDetails()
                 .withCardHolder("Mr. Payment")
