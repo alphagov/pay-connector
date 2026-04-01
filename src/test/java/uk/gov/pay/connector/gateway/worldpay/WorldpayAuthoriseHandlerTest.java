@@ -23,7 +23,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -48,13 +47,10 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
-import uk.gov.pay.connector.util.XPathUtils;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathFactory;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
@@ -62,9 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -109,7 +103,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_SETUP_AGREEMENT_WITH_EMAIL_AND_IP_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITH_REFERENCE_IN_DESCRIPTION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
-import static uk.gov.pay.connector.util.XPathUtils.getNodeListFromExpression;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayAuthoriseHandlerTest {
@@ -286,10 +279,13 @@ class WorldpayAuthoriseHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@type", document), is(expectedExemptionType));
-        assertThat(xPath.evaluate("/paymentService/submit/order/exemption/@placement", document), is(expectedExemptionPlacement));
+        String payload = gatewayOrderArgumentCaptor.getValue().getPayload();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/exemption/@type")
+                .isEqualTo(expectedExemptionType);
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/exemption/@placement")
+                .isEqualTo(expectedExemptionPlacement);
     }
 
     @Test
@@ -313,9 +309,9 @@ class WorldpayAuthoriseHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/exemption").getLength(),
-                is(0));
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .valueByXPath("/paymentService/submit/order/exemption")
+                .isEmpty();
     }
 
     @Test
@@ -336,16 +332,19 @@ class WorldpayAuthoriseHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(getNodeListFromExpression(document, "/paymentService/submit/order/additional3DSData").getLength(),
-                is(0));
-        assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
-                not(emptyString()));
-        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/acceptHeader", document),
-                not(emptyString()));
-        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
-                not(emptyString()));
+        String payload = gatewayOrderArgumentCaptor.getValue().getPayload();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/additional3DSData")
+                .isEmpty();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/paymentDetails/session/@id")
+                .isNotEmpty();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/shopper/browser/acceptHeader")
+                .isNotEmpty();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/shopper/browser/userAgentHeader")
+                .isNotEmpty();
     }
 
     @Test
@@ -366,20 +365,25 @@ class WorldpayAuthoriseHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@dfReferenceId", document),
-                is(authCardDetails.getWorldpay3dsFlexDdcResult().get()));
-        assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengeWindowSize", document),
-                is("390x400"));
-        assertThat(xPath.evaluate("/paymentService/submit/order/additional3DSData/@challengePreference", document),
-                is("noPreference"));
-        assertThat(xPath.evaluate("/paymentService/submit/order/paymentDetails/session/@id", document),
-                not(emptyString()));
-        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/acceptHeader", document),
-                not(emptyString()));
-        assertThat(xPath.evaluate("/paymentService/submit/order/shopper/browser/userAgentHeader", document),
-                not(emptyString()));
+        String payload = gatewayOrderArgumentCaptor.getValue().getPayload();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/additional3DSData/@dfReferenceId")
+                .isEqualTo(authCardDetails.getWorldpay3dsFlexDdcResult().get());
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/additional3DSData/@challengeWindowSize")
+                .isEqualTo("390x400");
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/additional3DSData/@challengePreference")
+                .isEqualTo("noPreference");
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/paymentDetails/session/@id")
+                .isNotEmpty();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/shopper/browser/acceptHeader")
+                .isNotEmpty();
+        XmlAssert.assertThat(payload)
+                .valueByXPath("/paymentService/submit/order/shopper/browser/userAgentHeader")
+                .isNotEmpty();
     }
 
     @Test
