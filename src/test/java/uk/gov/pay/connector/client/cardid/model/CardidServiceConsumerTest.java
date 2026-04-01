@@ -77,9 +77,6 @@ public class CardidServiceConsumerTest {
                 .body(new PactDslJsonBody().stringValue("cardNumber", NOT_FOUND_CARD_NUMBER))
                 .willRespondWith()
                 .status(404)
-                .headers(Map.of("Content-Type", "application/json"))
-                .body(new PactDslJsonBody()
-                        .stringValue("cardNumber", NOT_FOUND_CARD_NUMBER))
                 .toPact();
     }
 
