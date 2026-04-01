@@ -160,7 +160,7 @@ class WorldpayCaptureHandlerTest {
                 is(String.valueOf(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L))));
     }
 
-    private class TestResponse extends GatewayClient.Response {
+    private static class TestResponse extends GatewayClient.Response {
 
         protected TestResponse(Response delegate) {
             super(delegate);
