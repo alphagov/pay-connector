@@ -114,8 +114,8 @@ import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 @ExtendWith(MockitoExtension.class)
 class WorldpayAuthoriseHandlerTest {
 
-    private final URI WORLDPAY_URL = URI.create("http://worldpay.url");
-    private final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
+    private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
+    private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
 
     @Mock
     private GatewayClient authoriseClient;
@@ -126,7 +126,6 @@ class WorldpayAuthoriseHandlerTest {
 
     private ChargeEntityFixture chargeEntityFixture;
     private GatewayAccountEntity gatewayAccountEntity;
-    private GatewayAccountCredentialsEntity creds;
     private WorldpayAuthoriseHandler worldpayAuthoriseHandler;
 
     @BeforeEach
@@ -134,7 +133,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
 
         gatewayAccountEntity = aServiceAccount();
-        creds = aGatewayAccountCredentialsEntity()
+        GatewayAccountCredentialsEntity creds = aGatewayAccountCredentialsEntity()
                 .withCredentials(Map.of(
                         ONE_OFF_CUSTOMER_INITIATED, Map.of(
                                 CREDENTIALS_MERCHANT_CODE, "MERCHANTCODE",
@@ -983,7 +982,7 @@ class WorldpayAuthoriseHandlerTest {
         Map<String, NewCookie> responseCookies =
                 Collections.singletonMap(
                         WORLDPAY_MACHINE_COOKIE_NAME,
-                        new NewCookie(WORLDPAY_MACHINE_COOKIE_NAME, "value-from-worldpay")
+                        new NewCookie.Builder(WORLDPAY_MACHINE_COOKIE_NAME).value("value-from-worldpay").build()
                 );
 
         Response response = mock(Response.class);
@@ -996,14 +995,12 @@ class WorldpayAuthoriseHandlerTest {
     }
 
     private GatewayAccountEntity aServiceAccount() {
-        GatewayAccountEntity gatewayAccount = GatewayAccountEntityFixture
+        return GatewayAccountEntityFixture
                 .aGatewayAccountEntity()
                 .withId(1L)
                 .withGatewayName(WORLDPAY.getName())
                 .withRequires3ds(false)
                 .build();
-
-        return gatewayAccount;
     }
 
     private CardAuthorisationGatewayRequest getCardAuthorisationRequest(ChargeEntity chargeEntity) {
