@@ -373,7 +373,7 @@ class WorldpayWalletAuthorisationHandlerTest {
             throws IOException {
         String fixturePath = withDDCResult ? "googlepay/example-3ds-auth-request-with-ddc.json" :
                 withPayerEmail ? "googlepay/example-3ds-auth-request.json" :
-                        "googlepay/example-3ds-auth-request-without-email.json";
+                "googlepay/example-3ds-auth-request-without-email.json";
         GooglePayAuthRequest googlePayAuthRequest = objectMapper.readValue(load(fixturePath), GooglePayAuthRequest.class);
         chargeEntity.getGatewayAccount().setRequires3ds(isRequires3ds);
         chargeEntity.getGatewayAccount().setSendPayerIpAddressToGateway(withIpAddress);
