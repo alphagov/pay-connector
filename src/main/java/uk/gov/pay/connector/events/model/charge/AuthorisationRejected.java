@@ -24,7 +24,7 @@ public class AuthorisationRejected extends PaymentEvent {
 
     public static AuthorisationRejected from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
-        if (charge.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
+        if (charge.getAuthorisationMode() == AuthorisationMode.AGREEMENT || charge.getGatewayRejectionReason() != null) {
             return new AuthorisationRejected(
                     charge.getServiceId(),
                     charge.getGatewayAccount().isLive(),

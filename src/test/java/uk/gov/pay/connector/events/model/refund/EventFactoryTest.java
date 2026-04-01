@@ -81,6 +81,7 @@ import java.util.Optional;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -478,6 +479,45 @@ class EventFactoryTest {
 
         AuthorisationRejectedEventDetails eventDetails = (AuthorisationRejectedEventDetails) event.getEventDetails();
         assertThat(eventDetails.getCanRetry(), is(true));
+        assertThat(eventDetails.getGatewayRejectionReason(), is(nullValue()));
+    }
+
+    @Test
+    void shouldCreateCorrectEventWithEventDetailsForAuthorisationRejectedWithReason() throws Exception {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity()
+                .withStatus(ChargeStatus.AUTHORISATION_REJECTED)
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .withGatewayRejectionReason("42 fraudulent")
+                .build();
+        Long chargeEventEntityId = 100L;
+        ChargeEventEntity chargeEventEntity = ChargeEventEntityFixture
+                .aValidChargeEventEntity()
+                .withCharge(charge)
+                .withChargeStatus(AUTHORISATION_REJECTED)
+                .withId(chargeEventEntityId)
+                .build();
+        charge.getEvents().add(chargeEventEntity);
+        when(chargeEventDao.findById(ChargeEventEntity.class, chargeEventEntityId)).thenReturn(
+                Optional.of(chargeEventEntity)
+        );
+        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
+        when(chargeService.createRefundAvailabilityUpdatedEvent(Charge.from(charge), chargeEventEntity.getUpdated().toInstant()))
+                .thenReturn(refundAvailabilityUpdated);
+
+        PaymentStateTransition paymentStateTransition = new PaymentStateTransition(chargeEventEntityId, AuthorisationRejected.class);
+        List<Event> events = eventFactory.createEvents(paymentStateTransition);
+
+        assertThat(events.size(), is(2));
+
+        AuthorisationRejected event = (AuthorisationRejected) events.getFirst();
+        assertThat(event, is(instanceOf(AuthorisationRejected.class)));
+
+        assertThat(event.getEventDetails(), instanceOf(AuthorisationRejectedEventDetails.class));
+        assertThat(event.getResourceExternalId(), is(chargeEventEntity.getChargeEntity().getExternalId()));
+
+        AuthorisationRejectedEventDetails eventDetails = (AuthorisationRejectedEventDetails) event.getEventDetails();
+        assertThat(eventDetails.getCanRetry(), is(nullValue()));
+        assertThat(eventDetails.getGatewayRejectionReason(), is("42 fraudulent"));
     }
 
     @Test
