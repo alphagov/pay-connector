@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.common.collect.ImmutableMap;
+import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,6 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.XPathUtils;
 
-import jakarta.ws.rs.core.Response;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 import java.net.URI;
@@ -70,9 +70,9 @@ class WorldpayCaptureHandlerTest {
     );
 
     Map<String, Object> recurringCredentials = Map.of(
-            RECURRING_CUSTOMER_INITIATED, Map.of( CREDENTIALS_MERCHANT_CODE, "CIT-MERCHANTCODE",
-            CREDENTIALS_USERNAME, "cit-username",
-            CREDENTIALS_PASSWORD, "cit-password"),
+            RECURRING_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "CIT-MERCHANTCODE",
+                    CREDENTIALS_USERNAME, "cit-username",
+                    CREDENTIALS_PASSWORD, "cit-password"),
             RECURRING_MERCHANT_INITIATED, Map.of(
                     CREDENTIALS_MERCHANT_CODE, "MIT-MERCHANTCODE",
                     CREDENTIALS_USERNAME, "mit-password",
@@ -86,8 +86,8 @@ class WorldpayCaptureHandlerTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {"250"})
-    void shouldCaptureAPaymentSuccessfully( Long corporateSurchargeAmount) throws Exception {
+    @ValueSource(strings = {"250"})
+    void shouldCaptureAPaymentSuccessfully(Long corporateSurchargeAmount) throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
         GatewayClient.Response response = new TestResponse(this.response);
