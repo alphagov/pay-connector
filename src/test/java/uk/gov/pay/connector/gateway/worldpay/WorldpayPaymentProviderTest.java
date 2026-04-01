@@ -307,16 +307,6 @@ class WorldpayPaymentProviderTest {
         }));
     }
 
-    private void verifyLoggingTypeOf3dsExemption(Exemption3dsType exemption3dsType, String externalId, int timesLoggingCalled) {
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(timesLoggingCalled)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Requesting %s exemption - charge_external_id=%s", exemption3dsType.name(), externalId);
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
-    }
-
     private void verifyLoggingWithOutExemptionReason(Exemption3ds exemption3ds, String externalId, int timesLoggingCalled) {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, times(timesLoggingCalled)).doAppend(loggingEventArgumentCaptor.capture());
@@ -731,7 +721,6 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
@@ -1072,7 +1061,7 @@ class WorldpayPaymentProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_using_recurring_payment_and_no_creds() throws Exception {
+    void should_throw_exception_when_using_recurring_payment_and_no_creds() {
         String providerSessionId = "provider-session-id";
         AgreementEntity agreementEntity = anAgreementEntity().build();
         ChargeEntity mockChargeEntity = chargeEntityFixture
@@ -1087,9 +1076,8 @@ class WorldpayPaymentProviderTest {
                         .build())
                 .build();
 
-        assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
-            worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
-        });
+        assertThrows(MissingCredentialsForRecurringPaymentException.class, () ->
+                worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity)));
     }
 
     @Test
@@ -1161,9 +1149,8 @@ class WorldpayPaymentProviderTest {
 
         ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
 
-        assertThrows(WebApplicationException.class, () -> {
-            worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
-        });
+        assertThrows(WebApplicationException.class, () ->
+                worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest));
     }
 
     @Test
