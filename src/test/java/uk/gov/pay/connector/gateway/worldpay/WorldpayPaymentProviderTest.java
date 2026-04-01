@@ -15,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -134,7 +135,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
-import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayPaymentProviderTest {
@@ -883,8 +883,9 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        assertXMLEqual(load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST),
-                gatewayOrderArgumentCaptor.getValue().getPayload());
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .and(load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST))
+                .areIdentical();
     }
 
     @Test
@@ -909,8 +910,9 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        assertXMLEqual(load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST),
-                gatewayOrderArgumentCaptor.getValue().getPayload());
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .and(load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST))
+                .areIdentical();
     }
 
     @Test
@@ -936,8 +938,9 @@ class WorldpayPaymentProviderTest {
                 .replace("{{agreementId}}", agreement.getExternalId())
                 .replace("{{paymentTokenId}}", token);
 
-        assertXMLEqual(expectedRequestBody,
-                gatewayOrderArgumentCaptor.getValue().getPayload());
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .and(expectedRequestBody)
+                .areIdentical();
     }
 
     @Test
