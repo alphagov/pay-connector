@@ -215,7 +215,7 @@ class WorldpayPaymentProviderTest {
                                         CREDENTIALS_MERCHANT_CODE, ONE_OFF_MERCHANT_CODE,
                                         CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
                                         CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD)
-                                ))
+                        ))
                         .build())
                 .withGatewayAccountEntity(gatewayAccountEntity);
 
@@ -296,7 +296,7 @@ class WorldpayPaymentProviderTest {
             return loggingEvent.getFormattedMessage().contains(log);
         }));
     }
-    
+
     private void verifyLoggingTypeOf3dsExemption(Exemption3dsType exemption3dsType, String externalId) {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, atLeast(1)).doAppend(loggingEventArgumentCaptor.capture());
@@ -395,9 +395,9 @@ class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setRequires3ds(true);
         gatewayAccountEntity.setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity()
-                        .withExemptionEngine(false)
-                        .withCorporateExemptions(true)
-                        .build());
+                .withExemptionEngine(false)
+                .withCorporateExemptions(true)
+                .build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -510,11 +510,11 @@ class WorldpayPaymentProviderTest {
         verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "HIGH_RISK", chargeEntity.getExternalId(), 3);
 
         var exemptionRejectedEvent = new Gateway3dsExemptionResultObtainedEvent(
-                chargeEntity.getServiceId(), 
-                chargeEntity.getGatewayAccount().isLive(), 
-                chargeEntity.getGatewayAccount().getId(), 
-                chargeEntity.getExternalId(), 
-                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()), 
+                chargeEntity.getServiceId(),
+                chargeEntity.getGatewayAccount().isLive(),
+                chargeEntity.getGatewayAccount().getId(),
+                chargeEntity.getExternalId(),
+                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()),
                 instantSource.instant());
         verify(eventService).emitAndRecordEvent(exemptionRejectedEvent);
     }
@@ -849,11 +849,11 @@ class WorldpayPaymentProviderTest {
         verifyLoggingWithOutExemptionReason(EXEMPTION_REJECTED, chargeEntity.getExternalId(), 2);
 
         var exemptionRejectedEvent = new Gateway3dsExemptionResultObtainedEvent(
-                chargeEntity.getServiceId(), 
-                chargeEntity.getGatewayAccount().isLive(), 
-                chargeEntity.getGatewayAccount().getId(), 
-                chargeEntity.getExternalId(), 
-                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()), 
+                chargeEntity.getServiceId(),
+                chargeEntity.getGatewayAccount().isLive(),
+                chargeEntity.getGatewayAccount().getId(),
+                chargeEntity.getExternalId(),
+                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()),
                 instantSource.instant());
         verify(eventService).emitAndRecordEvent(exemptionRejectedEvent);
     }
