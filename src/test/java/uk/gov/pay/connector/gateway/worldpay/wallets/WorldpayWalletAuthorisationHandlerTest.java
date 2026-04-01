@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -15,7 +16,6 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.pay.connector.wallets.applepay.AppleDecryptedPaymentData;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
@@ -63,7 +63,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
-import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayWalletAuthorisationHandlerTest {
@@ -123,8 +122,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseApplePay(getApplePayGatewayAuthorisationRequest(false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -139,8 +139,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseApplePay(getApplePayGatewayAuthorisationRequest(true));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_EMAIL))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -155,8 +156,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseApplePay(getApplePayGatewayAuthorisationRequest(true));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -171,8 +173,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseApplePay(getApplePayGatewayAuthorisationRequest(false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -187,8 +190,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseApplePay(getApplePayGatewayAuthorisationRequest(false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION))
+                    .areIdentical();
         }
     }
 
@@ -198,8 +202,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequest(false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -213,8 +218,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequest(true));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_EMAIL))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -228,8 +234,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequest(false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION))
+                    .areIdentical();
         }
     }
 
@@ -240,8 +247,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequest(true));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -255,8 +263,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequest(false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -269,8 +278,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequestFor3ds(true, true, false, true));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_GOOGLE_PAY_3DS_REQUEST_WITH_DDC_RESULT))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -283,8 +293,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequestFor3ds(true, false, false, false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -297,7 +308,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequestFor3ds(true, true, false, false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS), gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -310,7 +323,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequestFor3ds(false, true, false, false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST), gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -324,8 +339,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequestFor3ds(true, false, true, false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_EMAIL),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_EMAIL))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -339,8 +355,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequestFor3ds(true, false, true, false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -354,8 +371,9 @@ class WorldpayWalletAuthorisationHandlerTest {
             worldpayWalletAuthorisationHandler.authoriseGooglePay(getGooglePayAuthorisationGatewayRequestFor3ds(true, false, false, false));
         } catch (GatewayErrorException _) {
             verify(mockGatewayClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), headers.capture());
-            assertXMLEqual(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS),
-                    gatewayOrderArgumentCaptor.getValue().getPayload());
+            XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                    .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS))
+                    .areIdentical();
             assertThat(headers.getValue().size(), is(1));
             String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((USERNAME + ":" + PASSWORD).getBytes(StandardCharsets.UTF_8));
             assertThat(headers.getValue(), hasEntry(AUTHORIZATION, expectedHeader));
@@ -417,5 +435,4 @@ class WorldpayWalletAuthorisationHandlerTest {
                         "7")
         );
     }
-
 }
