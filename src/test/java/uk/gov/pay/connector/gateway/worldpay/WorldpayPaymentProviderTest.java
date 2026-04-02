@@ -15,6 +15,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
+import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -134,7 +135,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
-import static wiremock.org.custommonkey.xmlunit.XMLAssert.assertXMLEqual;
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayPaymentProviderTest {
@@ -215,7 +215,7 @@ class WorldpayPaymentProviderTest {
                                         CREDENTIALS_MERCHANT_CODE, ONE_OFF_MERCHANT_CODE,
                                         CREDENTIALS_USERNAME, ONE_OFF_USERNAME,
                                         CREDENTIALS_PASSWORD, ONE_OFF_PASSWORD)
-                                ))
+                        ))
                         .build())
                 .withGatewayAccountEntity(gatewayAccountEntity);
 
@@ -296,20 +296,10 @@ class WorldpayPaymentProviderTest {
             return loggingEvent.getFormattedMessage().contains(log);
         }));
     }
-    
+
     private void verifyLoggingTypeOf3dsExemption(Exemption3dsType exemption3dsType, String externalId) {
         ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
         verify(mockAppender, atLeast(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Requesting %s exemption - charge_external_id=%s", exemption3dsType.name(), externalId);
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
-    }
-
-    private void verifyLoggingTypeOf3dsExemption(Exemption3dsType exemption3dsType, String externalId, int timesLoggingCalled) {
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(timesLoggingCalled)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
         assertTrue(logs.stream().anyMatch(loggingEvent -> {
             String log = format("Requesting %s exemption - charge_external_id=%s", exemption3dsType.name(), externalId);
@@ -395,9 +385,9 @@ class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setRequires3ds(true);
         gatewayAccountEntity.setIntegrationVersion3ds(1);
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity()
-                        .withExemptionEngine(false)
-                        .withCorporateExemptions(true)
-                        .build());
+                .withExemptionEngine(false)
+                .withCorporateExemptions(true)
+                .build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         ChargeEntity chargeEntity = chargeEntityFixture.build();
@@ -510,11 +500,11 @@ class WorldpayPaymentProviderTest {
         verifyLoggingWithExemptionReason(EXEMPTION_REJECTED, "HIGH_RISK", chargeEntity.getExternalId(), 3);
 
         var exemptionRejectedEvent = new Gateway3dsExemptionResultObtainedEvent(
-                chargeEntity.getServiceId(), 
-                chargeEntity.getGatewayAccount().isLive(), 
-                chargeEntity.getGatewayAccount().getId(), 
-                chargeEntity.getExternalId(), 
-                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()), 
+                chargeEntity.getServiceId(),
+                chargeEntity.getGatewayAccount().isLive(),
+                chargeEntity.getGatewayAccount().getId(),
+                chargeEntity.getExternalId(),
+                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()),
                 instantSource.instant());
         verify(eventService).emitAndRecordEvent(exemptionRejectedEvent);
     }
@@ -731,7 +721,6 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
         var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
-        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
@@ -849,11 +838,11 @@ class WorldpayPaymentProviderTest {
         verifyLoggingWithOutExemptionReason(EXEMPTION_REJECTED, chargeEntity.getExternalId(), 2);
 
         var exemptionRejectedEvent = new Gateway3dsExemptionResultObtainedEvent(
-                chargeEntity.getServiceId(), 
-                chargeEntity.getGatewayAccount().isLive(), 
-                chargeEntity.getGatewayAccount().getId(), 
-                chargeEntity.getExternalId(), 
-                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()), 
+                chargeEntity.getServiceId(),
+                chargeEntity.getGatewayAccount().isLive(),
+                chargeEntity.getGatewayAccount().getId(),
+                chargeEntity.getExternalId(),
+                new Gateway3dsExemptionResultObtainedEventDetails(EXEMPTION_REJECTED.toString()),
                 instantSource.instant());
         verify(eventService).emitAndRecordEvent(exemptionRejectedEvent);
     }
@@ -894,8 +883,9 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        assertXMLEqual(load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST),
-                gatewayOrderArgumentCaptor.getValue().getPayload());
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .and(load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST))
+                .areIdentical();
     }
 
     @Test
@@ -920,8 +910,9 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        assertXMLEqual(load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST),
-                gatewayOrderArgumentCaptor.getValue().getPayload());
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .and(load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST))
+                .areIdentical();
     }
 
     @Test
@@ -947,8 +938,9 @@ class WorldpayPaymentProviderTest {
                 .replace("{{agreementId}}", agreement.getExternalId())
                 .replace("{{paymentTokenId}}", token);
 
-        assertXMLEqual(expectedRequestBody,
-                gatewayOrderArgumentCaptor.getValue().getPayload());
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .and(expectedRequestBody)
+                .areIdentical();
     }
 
     @Test
@@ -1072,7 +1064,7 @@ class WorldpayPaymentProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_using_recurring_payment_and_no_creds() throws Exception {
+    void should_throw_exception_when_using_recurring_payment_and_no_creds() {
         String providerSessionId = "provider-session-id";
         AgreementEntity agreementEntity = anAgreementEntity().build();
         ChargeEntity mockChargeEntity = chargeEntityFixture
@@ -1087,9 +1079,8 @@ class WorldpayPaymentProviderTest {
                         .build())
                 .build();
 
-        assertThrows(MissingCredentialsForRecurringPaymentException.class, () -> {
-            worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity));
-        });
+        assertThrows(MissingCredentialsForRecurringPaymentException.class, () ->
+                worldpayPaymentProvider.authorise3dsResponse(get3dsResponseGatewayRequest(mockChargeEntity)));
     }
 
     @Test
@@ -1161,9 +1152,8 @@ class WorldpayPaymentProviderTest {
 
         ChargeQueryGatewayRequest chargeQueryGatewayRequest = ChargeQueryGatewayRequest.valueOf(Charge.from(chargeEntity), chargeEntity.getGatewayAccount(), chargeEntity.getGatewayAccountCredentialsEntity());
 
-        assertThrows(WebApplicationException.class, () -> {
-            worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest);
-        });
+        assertThrows(WebApplicationException.class, () ->
+                worldpayPaymentProvider.queryPaymentStatus(chargeQueryGatewayRequest));
     }
 
     @Test

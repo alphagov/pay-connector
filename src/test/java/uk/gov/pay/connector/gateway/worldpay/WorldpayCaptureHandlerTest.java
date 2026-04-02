@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.common.collect.ImmutableMap;
+import jakarta.ws.rs.core.Response;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.w3c.dom.Document;
+import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -18,11 +19,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.util.XPathUtils;
 
-import jakarta.ws.rs.core.Response;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathFactory;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -70,9 +67,9 @@ class WorldpayCaptureHandlerTest {
     );
 
     Map<String, Object> recurringCredentials = Map.of(
-            RECURRING_CUSTOMER_INITIATED, Map.of( CREDENTIALS_MERCHANT_CODE, "CIT-MERCHANTCODE",
-            CREDENTIALS_USERNAME, "cit-username",
-            CREDENTIALS_PASSWORD, "cit-password"),
+            RECURRING_CUSTOMER_INITIATED, Map.of(CREDENTIALS_MERCHANT_CODE, "CIT-MERCHANTCODE",
+                    CREDENTIALS_USERNAME, "cit-username",
+                    CREDENTIALS_PASSWORD, "cit-password"),
             RECURRING_MERCHANT_INITIATED, Map.of(
                     CREDENTIALS_MERCHANT_CODE, "MIT-MERCHANTCODE",
                     CREDENTIALS_USERNAME, "mit-password",
@@ -86,8 +83,8 @@ class WorldpayCaptureHandlerTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {"250"})
-    void shouldCaptureAPaymentSuccessfully( Long corporateSurchargeAmount) throws Exception {
+    @ValueSource(strings = {"250"})
+    void shouldCaptureAPaymentSuccessfully(Long corporateSurchargeAmount) throws Exception {
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
         GatewayClient.Response response = new TestResponse(this.response);
@@ -117,15 +114,13 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(xPath.evaluate("/paymentService/modify/orderModification/capture/amount/@value", document),
-                is(String.valueOf(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L))));
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
+                .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }
 
     @Test
     void shouldCaptureARecurringPaymentSuccessfully() throws Exception {
-
         when(response.getStatus()).thenReturn(HttpStatus.SC_OK);
         when(response.readEntity(String.class)).thenReturn(load("templates/worldpay/capture-success-response.xml"));
         GatewayClient.Response response = new TestResponse(this.response);
@@ -154,13 +149,12 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        Document document = XPathUtils.getDocumentXmlString(gatewayOrderArgumentCaptor.getValue().getPayload());
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        assertThat(xPath.evaluate("/paymentService/modify/orderModification/capture/amount/@value", document),
-                is(String.valueOf(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L))));
+        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+                .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
+                .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }
 
-    private class TestResponse extends GatewayClient.Response {
+    private static class TestResponse extends GatewayClient.Response {
 
         protected TestResponse(Response delegate) {
             super(delegate);
