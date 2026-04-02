@@ -26,6 +26,8 @@ import uk.gov.pay.connector.events.model.agreement.AgreementCreated;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,7 +65,7 @@ public class LedgerServiceConsumerTest {
     public RequestResponsePact getRecurringPaymentTransaction(PactDslWithProvider builder) {
         return builder
                 .given("a recurring card payment exists for agreement",
-                        Map.of("account_id", 3,
+                        Map.of("account_id", "3",
                                 "transaction_external_id", TRANSACTION_ID,
                                 "agreement_id", AGREEMENT_ID))
                 .uponReceiving("a recurring payment transaction request")
@@ -74,16 +76,17 @@ public class LedgerServiceConsumerTest {
                 .status(200)
                 .body(new PactDslJsonBody()
                         .stringValue("gateway_account_id", "3")
-                        .numberValue("amount", 12000)
+                        .numberType("amount", 12000)
                         .object("state", new PactDslJsonBody()
-                                .stringValue("status", "success"))
-                        .stringValue("description", "New passport application")
-                        .stringValue("reference", "1_86")
-                        .stringValue("language", "cy")
-                        .stringValue("return_url", "https://service-name.gov.uk/transactions/12345")
+                                .stringType("status", "success"))
+                        .stringType("description", "New passport application")
+                        .stringType("reference", "1_86")
+                        .stringType("language", "cy")
+                        .stringType("return_url", "https://service-name.gov.uk/transactions/12345")
                         .stringValue("payment_provider", "sandbox")
                         .stringValue("credential_external_id", CREDENTIAL_ID)
-                        .stringValue("created_date", "2020-02-13T16:26:04.204Z")
+                        .date("created_date", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                Date.from(OffsetDateTime.parse("2020-02-13T16:26:04.204Z").toInstant()))
                         .booleanValue("delayed_capture", false)
                         .stringValue("transaction_type", "PAYMENT")
                         .booleanValue("moto", false)
@@ -121,16 +124,18 @@ public class LedgerServiceConsumerTest {
                 .status(200)
                 .body(new PactDslJsonBody()
                         .stringValue("gateway_account_id", "3")
-                        .numberValue("amount", 12000)
+                        .numberType("amount", 12000)
                         .object("state", new PactDslJsonBody()
-                                .stringValue("status", "success"))
-                        .stringValue("description", "New passport application")
-                        .stringValue("reference", "1_86")
-                        .stringValue("language", "cy")
-                        .stringValue("return_url", "https://service-name.gov.uk/transactions/12345")
+                                .stringType("status", "success"))
+                        .stringType("description", "New passport application")
+                        .stringType("reference", "1_86")
+                        .stringType("language", "cy")
+                        .stringType("return_url", "https://service-name.gov.uk/transactions/12345")
+                        .stringType("email", "Joe.Bogs@example.org")
                         .stringValue("payment_provider", "sandbox")
                         .stringValue("credential_external_id", CREDENTIAL_ID)
-                        .stringValue("created_date", "2020-02-13T16:26:04.204Z")
+                        .date("created_date", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                Date.from(OffsetDateTime.parse("2020-02-13T16:26:04.204Z").toInstant()))
                         .booleanValue("delayed_capture", false)
                         .stringValue("transaction_type", "PAYMENT")
                         .booleanValue("moto", false)
@@ -169,9 +174,9 @@ public class LedgerServiceConsumerTest {
                 .status(200)
                 .body(new PactDslJsonBody()
                         .stringValue("gateway_account_id", "3")
-                        .numberValue("amount", 1000)
+                        .numberType("amount", 1000)
                         .object("state", new PactDslJsonBody()
-                                .stringValue("status", "success"))
+                                .stringType("status", "success"))
                         .stringValue("created_date", "2020-07-20T13:39:38.940Z")
                         .stringValue("transaction_type", "REFUND")
                         .stringValue("transaction_id", TRANSACTION_ID)
@@ -199,33 +204,35 @@ public class LedgerServiceConsumerTest {
                 .given("refund and dispute transactions for a transaction exist",
                         Map.of("gateway_account_id", "3",
                                 "transaction_external_id", TRANSACTION_ID))
-                .uponReceiving("a refund transaction request")
+                .uponReceiving("a refunds for payment request")
                 .path("/v1/transaction/" + TRANSACTION_ID + "/transaction")
                 .query("gateway_account_id=3&transaction_type=REFUND")
                 .method("GET")
                 .willRespondWith()
                 .status(200)
                 .body(new PactDslJsonBody()
-                        .stringValue("parent_transaction_id", TRANSACTION_ID)
+                        .stringType("parent_transaction_id", TRANSACTION_ID)
                         .array("transactions")
 
                         .object()
                         .stringValue("gateway_account_id", "3")
-                        .numberValue("amount", 100)
+                        .numberType("amount", 100)
                         .object("state", new PactDslJsonBody().stringValue("status", "submitted"))
-                        .stringValue("created_date", "2019-12-23T15:24:07.061Z")
+                        .date("created_date", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                Date.from(OffsetDateTime.parse("2019-12-23T15:24:07.061Z").toInstant()))
                         .stringValue("transaction_type", "REFUND")
-                        .stringValue("transaction_id", "nklfm1pk9flpu91j815kp2835o")
+                        .stringType("transaction_id", "nklfm1pk9flpu91j815kp2835o")
                         .stringValue("parent_transaction_id", "650516the13q5jpfo435f1m1fm")
                         .closeObject()
 
                         .object()
                         .stringValue("gateway_account_id", "3")
-                        .numberValue("amount", 110)
+                        .numberType("amount", 110)
                         .object("state", new PactDslJsonBody().stringValue("status", "error"))
-                        .stringValue("created_date", "2019-12-23T16:20:12.343Z")
+                        .date("created_date", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                Date.from(OffsetDateTime.parse("2019-12-23T16:20:12.343Z").toInstant()))
                         .stringValue("transaction_type", "REFUND")
-                        .stringValue("transaction_id", "migtkmlt6gvm16sim5h0p7oeje")
+                        .stringType("transaction_id", "migtkmlt6gvm16sim5h0p7oeje")
                         .stringValue("parent_transaction_id", "650516the13q5jpfo435f1m1fm")
                         .closeObject()
 
@@ -321,18 +328,19 @@ public class LedgerServiceConsumerTest {
                         .object("state", new PactDslJsonBody()
                                 .booleanValue("finished", false)
                                 .stringValue("status", "created"))
-                        .stringValue("description", "Test description")
-                        .stringValue("reference", "aReference")
+                        .stringType("description", "Test description")
+                        .stringType("reference", "aReference")
                         .stringValue("language", "en")
                         .stringValue("transaction_id", "ch_123abc456xyz")
                         .stringValue("gateway_transaction_id", "gateway-tx-123456")
-                        .stringValue("return_url", "https://somewhere.gov.uk/rainbow/1")
+                        .stringType("return_url", "https://somewhere.gov.uk/rainbow/1")
                         .stringValue("payment_provider", "sandbox")
-                        .stringValue("created_date", "2018-10-16T10:46:02.121Z")
+                        .date("created_date", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                Date.from(OffsetDateTime.parse("2018-10-16T10:46:02.121Z").toInstant()))
                         .object("refund_summary", new PactDslJsonBody()
                                 .stringValue("status", "available")
                                 .nullValue("user_external_id")
-                                .numberValue("amount_available", 100)
+                                .numberType("amount_available", 100)
                                 .numberValue("amount_submitted", 0))
                         .object("settlement_summary", new PactDslJsonBody()
                                 .nullValue("capture_submit_time")
