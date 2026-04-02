@@ -177,8 +177,7 @@ public class LedgerServiceConsumerTest {
                         .numberType("amount", 1000)
                         .object("state", new PactDslJsonBody()
                                 .stringType("status", "success"))
-                        .date("created_date", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                                Date.from(OffsetDateTime.parse("2020-07-20T13:39:38.940Z").toInstant()))
+                        .stringValue("created_date", "2020-07-20T13:39:38.940Z")
                         .stringValue("transaction_type", "REFUND")
                         .stringValue("transaction_id", TRANSACTION_ID)
                         .stringValue("parent_transaction_id", "64pcdagc9c13vgi7n904aio3n9"))
