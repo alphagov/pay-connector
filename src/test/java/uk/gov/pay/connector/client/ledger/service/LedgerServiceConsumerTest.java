@@ -177,7 +177,8 @@ public class LedgerServiceConsumerTest {
                         .numberType("amount", 1000)
                         .object("state", new PactDslJsonBody()
                                 .stringType("status", "success"))
-                        .stringValue("created_date", "2020-07-20T13:39:38.940Z")
+                        .date("created_date", "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                Date.from(OffsetDateTime.parse("2020-07-20T13:39:38.940Z").toInstant()))
                         .stringValue("transaction_type", "REFUND")
                         .stringValue("transaction_id", TRANSACTION_ID)
                         .stringValue("parent_transaction_id", "64pcdagc9c13vgi7n904aio3n9"))
@@ -222,7 +223,7 @@ public class LedgerServiceConsumerTest {
                                 Date.from(OffsetDateTime.parse("2019-12-23T15:24:07.061Z").toInstant()))
                         .stringValue("transaction_type", "REFUND")
                         .stringType("transaction_id", "nklfm1pk9flpu91j815kp2835o")
-                        .stringValue("parent_transaction_id", "650516the13q5jpfo435f1m1fm")
+                        .stringType("parent_transaction_id", "650516the13q5jpfo435f1m1fm")
                         .closeObject()
 
                         .object()
@@ -233,7 +234,7 @@ public class LedgerServiceConsumerTest {
                                 Date.from(OffsetDateTime.parse("2019-12-23T16:20:12.343Z").toInstant()))
                         .stringValue("transaction_type", "REFUND")
                         .stringType("transaction_id", "migtkmlt6gvm16sim5h0p7oeje")
-                        .stringValue("parent_transaction_id", "650516the13q5jpfo435f1m1fm")
+                        .stringType("parent_transaction_id", "650516the13q5jpfo435f1m1fm")
                         .closeObject()
 
                         .closeArray()
@@ -344,7 +345,7 @@ public class LedgerServiceConsumerTest {
                                 .numberValue("amount_submitted", 0))
                         .object("settlement_summary", new PactDslJsonBody()
                                 .nullValue("capture_submit_time")
-                                .nullValue("capture_date"))
+                                .nullValue("captured_date"))
                         .booleanValue("delayed_capture", false))
                 .toPact();
     }
