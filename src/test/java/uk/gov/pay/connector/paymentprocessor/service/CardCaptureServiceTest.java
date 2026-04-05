@@ -1,27 +1,22 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
+import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.persistence.OptimisticLockException;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -91,19 +86,18 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayErro
 @ExtendWith(MockitoExtension.class)
 class CardCaptureServiceTest extends CardServiceTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(CardCaptureService.class);
+
     @Mock
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
     @Mock
     private CaptureQueue mockCaptureQueue;
     @Mock
     private ConnectorConfiguration mockConfiguration;
     @Mock
     private Environment mockEnvironment;
-    @Captor
-    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
     @Mock
     private StateTransitionService mockStateTransitionService;
     @Mock
@@ -145,10 +139,6 @@ class CardCaptureServiceTest extends CardServiceTest {
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
                 INSTANT_SOURCE, mockCaptureQueue, mockEventService);
-
-        Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     private void worldpayWillRespondWithSuccess() {
@@ -168,7 +158,6 @@ class CardCaptureServiceTest extends CardServiceTest {
 
     @Test
     void doCapture_shouldCaptureAChargeForANonSandboxAccount() {
-
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
@@ -199,7 +188,6 @@ class CardCaptureServiceTest extends CardServiceTest {
 
     @Test
     void doCapture_shouldCaptureAChargeForStripeAccount() {
-
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWithFees("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
@@ -232,7 +220,6 @@ class CardCaptureServiceTest extends CardServiceTest {
 
     @Test
     void doCapture_shouldCaptureAChargeForWorldpayAccountAndShouldNotEmitFeeIncurredEvent() {
-
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWithFees("worldpay", 1L, CAPTURE_APPROVED, gatewayTxId);
 
@@ -426,12 +413,9 @@ class CardCaptureServiceTest extends CardServiceTest {
         cardCaptureService.markChargeAsCaptureError(charge.getExternalId());
 
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_ERROR)), isNull());
-
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
-        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
+        logs.assertContains(
+                "CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts"
+                        .formatted(charge.getExternalId()));
     }
 
     @Test
