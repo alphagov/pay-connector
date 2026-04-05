@@ -14,7 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -32,9 +31,6 @@ class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
 
     @InjectMocks
     ApplicationStartupDependentResourceChecker applicationStartupDependentResourceChecker;
-
-    @Mock
-    ConnectorConfiguration mockConnectorConfiguration;
 
     @Mock
     ApplicationStartupDependentResource mockApplicationStartupDependentResource;
