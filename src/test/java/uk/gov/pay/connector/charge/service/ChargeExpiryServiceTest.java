@@ -45,7 +45,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -153,7 +152,7 @@ class ChargeExpiryServiceTest {
             "CREATED",
             "ENTERING CARD DETAILS"
     })
-    public void shouldExpireChargesWithoutGateway_whenStateIsPreAuthorisation(String chargeStatus) throws Exception {
+    void shouldExpireChargesWithoutGateway_whenStateIsPreAuthorisation(String chargeStatus) throws Exception {
         var status = ChargeStatus.fromString(chargeStatus);
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
@@ -406,7 +405,7 @@ class ChargeExpiryServiceTest {
         chargeExpiryService.sweepAndExpireChargesAndTokensAndIdempotencyKeys();
         verify(mockAppender, times(5)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
+        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).toList(),
                 hasItems(
                         "Tokens deleted - number_of_tokens=1, since_date=2022-06-02T00:00:00Z",
                         "Idempotency keys deleted - number_of_idempotency_keys=1, since_date=2022-06-08T00:00:00Z",
@@ -418,7 +417,7 @@ class ChargeExpiryServiceTest {
     }
 
     @Test
-    void shouldCancelChargeWithGatewayWhenChargeInPreAuthorisedStateAndExistsWithGateway() throws Exception {
+    void shouldCancelChargeWithGatewayWhenChargeInPreAuthorisedStateAndExistsWithGateway() {
         ChargeEntity preAuthorisationCharge = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
