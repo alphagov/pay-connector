@@ -48,7 +48,6 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
 
 import java.time.Instant;
 import java.time.InstantSource;
@@ -129,7 +128,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
 
     private static final InstantSource INSTANT_SOURCE = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void beforeTest() {
@@ -199,7 +198,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    void doCapture_shouldCaptureAChargeForStripeAccount() throws QueueException {
+    void doCapture_shouldCaptureAChargeForStripeAccount() {
 
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWithFees("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
@@ -232,7 +231,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    void doCapture_shouldCaptureAChargeForWorldpayAccountAndShouldNotEmitFeeIncurredEvent() throws QueueException {
+    void doCapture_shouldCaptureAChargeForWorldpayAccountAndShouldNotEmitFeeIncurredEvent() {
 
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWithFees("worldpay", 1L, CAPTURE_APPROVED, gatewayTxId);
@@ -466,7 +465,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     }
 
     private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {
-        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
+        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(ChargeEntity chargeEntity) {
                 return chargeEntity.getStatus().equals(expectedStatus.getValue());
