@@ -23,7 +23,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
@@ -34,11 +33,9 @@ import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
-import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.time.Instant;
@@ -102,12 +99,6 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 @ExtendWith(MockitoExtension.class)
 class ChargeParityCheckerTest {
 
-    @Mock
-    private PaymentInstrumentService paymentInstrumentService;
-    @Mock
-    private ChargeService chargeService;
-    @Mock
-    private RefundService mockRefundService;
     @Mock
     private PaymentProviders mockProviders;
     @Mock
@@ -179,7 +170,6 @@ class ChargeParityCheckerTest {
 
     @Test
     void parityCheck_shouldMatchIfChargeMatchesWithLedgerTransaction() {
-
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
