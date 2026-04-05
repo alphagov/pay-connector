@@ -85,7 +85,6 @@ import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
@@ -139,7 +138,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ChargeEntity charge = createNewChargeWith(1L, ENTERING_CARD_DETAILS);
     private final String chargeExternalId = charge.getExternalId();
@@ -197,9 +196,6 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private TaskQueueService mockTaskQueueService;
-
-    @Mock
-    private ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
 
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
@@ -293,7 +289,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
     }
 
-    private GatewayResponse mockAuthErrorResponse(AuthoriseStatus authoriseStatus, String errorCode) {
+    private GatewayResponse mockAuthErrorResponse(String errorCode) {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
         when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
@@ -414,7 +410,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
+        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).toList(),
                 hasItems("Applied corporate card surcharge for charge"));
         assertThat(loggingEvents.getFirst().getArgumentArray(), hasItemInArray(kv("corporate_card_surcharge", 250L)));
 
@@ -510,8 +506,6 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 .withPayersCardPrepaidStatus(PayersCardPrepaidStatus.NOT_PREPAID)
                 .build();
 
-        CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("424242"), LastDigitsCardNumber.of("4242"),
-                "Mr Test", CardExpiryDate.valueOf("12/99"), "VISA", CardType.DEBIT, null);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
         charge.setAuthorisationMode(AuthorisationMode.EXTERNAL);
@@ -1074,7 +1068,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         mockRecordAuthorisationResult();
         providerWillRejectForMotoApiPayment();
 
-        AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
+        cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
@@ -1096,7 +1090,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         mockRecordAuthorisationResult();
         providerWillErrorForMotoApiPayment();
 
-        AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
+        cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
@@ -1170,7 +1164,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         mockRecordAuthorisationResult();
         providerWillRejectForMotoApiPayment();
 
-        AuthorisationResponse response = cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
+        cardAuthorisationService.doAuthoriseMotoApi(charge, aCardInformation().build(), authoriseRequest);
 
         CardDetailsEntity cardDetails = charge.getCardDetails();
         assertThat(cardDetails, is(notNullValue()));
@@ -1341,7 +1335,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     }
 
     @Test
-    void doAuthoriseUserNotPresent_shouldThrowExceptionIfNoPaymentInstrument() throws Exception {
+    void doAuthoriseUserNotPresent_shouldThrowExceptionIfNoPaymentInstrument() {
         charge.setAuthorisationMode(AuthorisationMode.AGREEMENT);
         charge.setPaymentInstrument(null);
 
@@ -1360,7 +1354,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 
-    private void providerWillRespondToUserNotPresentAuthoriseWith(GatewayResponse value, PaymentGatewayName paymentGatewayName) throws Exception {
+    private void providerWillRespondToUserNotPresentAuthoriseWith(GatewayResponse value, PaymentGatewayName paymentGatewayName) {
         when(mockedPaymentProvider.authoriseUserNotPresent(any())).thenReturn(value);
 
         when(mockedProviders.byName(paymentGatewayName)).thenReturn(mockedPaymentProvider);
@@ -1374,7 +1368,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 
-    private void providerWillRespondToAuthoriseUserNotPresentWith(GatewayResponse authResponse, PaymentGatewayName paymentGatewayName) throws GatewayException {
+    private void providerWillRespondToAuthoriseUserNotPresentWith(GatewayResponse authResponse, PaymentGatewayName paymentGatewayName) {
         when(mockedPaymentProvider.authoriseUserNotPresent(any())).thenReturn(authResponse);
 
         when(mockedProviders.byName(paymentGatewayName)).thenReturn(mockedPaymentProvider);
@@ -1393,7 +1387,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseMotoApiWith(authResponse);
     }
 
-    private void providerWillAuthoriseForUserNotPresentPayment(PaymentGatewayName paymentGatewayName) throws Exception {
+    private void providerWillAuthoriseForUserNotPresentPayment(PaymentGatewayName paymentGatewayName) {
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED);
         providerWillRespondToAuthoriseUserNotPresentWith(authResponse, paymentGatewayName);
     }
@@ -1404,7 +1398,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         providerWillRespondToAuthoriseWith(authResponse, paymentGatewayName);
     }
 
-    private void providerWillRejectUserNotPresent(PaymentGatewayName paymentGatewayName) throws Exception {
+    private void providerWillRejectUserNotPresent(PaymentGatewayName paymentGatewayName) {
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, REJECTED);
         providerWillRespondToUserNotPresentAuthoriseWith(authResponse, paymentGatewayName);
     }
@@ -1417,13 +1411,13 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     private void providerWillError(PaymentGatewayName paymentGatewayName) throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthErrorResponse(AuthoriseStatus.ERROR, "error-code");
+        GatewayResponse authResponse = mockAuthErrorResponse("error-code");
         providerWillRespondToAuthoriseWith(authResponse, paymentGatewayName);
     }
 
     private void providerWillErrorForMotoApiPayment() throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthErrorResponse(AuthoriseStatus.ERROR, "error-code");
+        GatewayResponse authResponse = mockAuthErrorResponse("error-code");
         providerWillRespondToAuthoriseMotoApiWith(authResponse);
     }
 
