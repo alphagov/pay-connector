@@ -122,12 +122,12 @@ class CardResourceAuthoriseTest {
 
     private final ChargeEntity chargeEntity = aValidChargeEntity().build();
     private TokenEntity tokenEntity;
-    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
+    private final Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         tokenEntity = new TokenEntity();
         tokenEntity.setUsed(false);
         tokenEntity.setChargeEntity(chargeEntity);
@@ -203,8 +203,7 @@ class CardResourceAuthoriseTest {
     @ParameterizedTest
     @MethodSource("expiryDateMonthOffsetAndExpectedResponseStatus")
     void authoriseMotoApiPaymentShouldReturnCorrectResponsesForExpiryDate(int monthsToAddOrSubstractFromCurrentMonthAndYear,
-                                                                          int expectedResponseCode,
-                                                                          String description) {
+                                                                          int expectedResponseCode) {
         String token = "one-time-token-123";
         String cardNumber = "4242424242424242";
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
@@ -423,7 +422,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -436,7 +435,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -448,7 +447,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Field [signed_message] must not be empty");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -460,7 +459,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Field [signature] must not be empty");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -472,7 +471,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -484,7 +483,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     private void verify422AndErrorMessage(Response response, String expectedErrorMessage) {
@@ -494,7 +493,7 @@ class CardResourceAuthoriseTest {
         assertThat(errorResponse.identifier(), is(GENERIC));
     }
 
-    private void verifyReceiptOfPayloadNotLogged(Response response, String logMessage) {
+    private void verifyReceiptOfPayloadNotLogged() {
         verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
