@@ -1,23 +1,17 @@
 package uk.gov.pay.connector.tasks.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -36,6 +30,7 @@ import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
+import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.time.Instant;
@@ -50,7 +45,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
@@ -99,16 +93,17 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 @ExtendWith(MockitoExtension.class)
 class ChargeParityCheckerTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(ChargeParityChecker.class);
+
+    @Mock
+    private RefundService dummyRefundService;
     @Mock
     private PaymentProviders mockProviders;
     @Mock
     private RefundEntityFactory mockRefundEntityFactory;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-    @Captor
-    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private ChargeEntity chargeEntity;
     private ChargeEntity chargeEntityWith3ds;
@@ -163,9 +158,6 @@ class ChargeParityCheckerTest {
                 .withEvents(List.of(chargeEventCreated, chargeEventCaptured, chargeEventCaptureSubmitted))
                 .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
                 .build();
-        Logger root = (Logger) LoggerFactory.getLogger(ChargeParityChecker.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
@@ -366,9 +358,7 @@ class ChargeParityCheckerTest {
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logStatement.getFirst().getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=created_date]"));
+        logs.assertContains("Field value does not match between ledger and connector [field_name=created_date]");
     }
 
     @Test
@@ -419,13 +409,12 @@ class ChargeParityCheckerTest {
                                                                      ConnectorAuthorisationSummaryState connectorAuthorisationSummaryState, LedgerAuthorisationSummaryState ledgerAuthorisationSummaryState) {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, ledgerTransaction);
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+
         StringBuilder expectedLogMessage = new StringBuilder("Field value does not match between ledger and connector [field_name=").append(fieldName).append(']');
         if (connectorAuthorisationSummaryState != null || ledgerAuthorisationSummaryState != null) {
             expectedLogMessage.append(" [calculated_states=").append(connectorAuthorisationSummaryState).append(",").append(ledgerAuthorisationSummaryState).append(']');
         }
-        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage.toString()));
+        logs.assertContains(expectedLogMessage.toString());
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepancies() {
@@ -574,11 +563,9 @@ class ChargeParityCheckerTest {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = "Field value does not match between ledger and connector [field_name=exemption] " +
                 "[calculated_states=" + connectorExemption3dsState + ',' + connectorExemption3DsRequestedState + ',' + ledgerExemptionState + ']';
-        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
+        logs.assertContains(expectedLogMessage);
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatch() {
