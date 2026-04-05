@@ -48,14 +48,14 @@ class WorldpayOrderStatusResponseTest {
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
-    
+
     @BeforeEach
     void setup() {
         Logger root = (Logger) LoggerFactory.getLogger(WorldpayOrderStatusResponse.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
-    
+
     @ParameterizedTest
     @ValueSource(strings = {"OUT_OF_SCOPE", "REJECTED"})
     void worldpay_response_should_be_soft_decline(String exemptionResponseResult) {
@@ -158,13 +158,13 @@ class WorldpayOrderStatusResponseTest {
 
     @ParameterizedTest
     @CsvSource(useHeadersInDisplayName = true, nullValues = "null", textBlock = """
-        refusedReturnCodeDescription, refusedReturnCode, outcome, present
-        fraudulent, 42, 42 fraudulent, true
-        fraudulent, null, fraudulent, true
-        null, 42, 42, true
-        null, null, null, false
-    """)
-    void get_gateway_rejection_reason_should_return_reduced_values(String refusedReturnCodeDescription, String refusedReturnCode, String outcome, Boolean present)  throws Exception {
+                refusedReturnCodeDescription, refusedReturnCode, outcome, present
+                fraudulent, 42, 42 fraudulent, true
+                fraudulent, null, fraudulent, true
+                null, 42, 42, true
+                null, null, null, false
+            """)
+    void get_gateway_rejection_reason_should_return_reduced_values(String refusedReturnCodeDescription, String refusedReturnCode, String outcome, Boolean present) throws Exception {
         var response = spy(WorldpayOrderStatusResponse.class);
         when(response.getRefusedReturnCode()).thenReturn(refusedReturnCode);
         when(response.getRefusedReturnCodeDescription()).thenReturn(refusedReturnCodeDescription);
