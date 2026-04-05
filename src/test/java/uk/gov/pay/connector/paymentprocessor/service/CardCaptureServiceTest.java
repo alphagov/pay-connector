@@ -8,6 +8,7 @@ import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
+import jakarta.persistence.OptimisticLockException;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,6 @@ import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.persistence.OptimisticLockException;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.time.ZonedDateTime;
@@ -110,10 +110,10 @@ class CardCaptureServiceTest extends CardServiceTest {
     @Mock
     private LedgerService ledgerService;
     @Mock
-    private EventService mockEventService;    
+    private EventService mockEventService;
     @Mock
     private PaymentInstrumentService mockPaymentInstrumentService;
-    @Mock 
+    @Mock
     private RefundService mockedRefundService;
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
@@ -326,7 +326,7 @@ class CardCaptureServiceTest extends CardServiceTest {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
-        
+
         assertThrows(ChargeNotFoundRuntimeException.class, () -> cardCaptureService.doCapture(chargeId));
         // verify an email notification is not sent when an unsuccessful capture
         verifyNoInteractions(mockUserNotificationService);
@@ -351,7 +351,7 @@ class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.ENTERING_CARD_DETAILS);
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
-        
+
         assertThrows(IllegalStateRuntimeException.class, () -> cardCaptureService.doCapture(charge.getExternalId()));
         assertThat(charge.getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
