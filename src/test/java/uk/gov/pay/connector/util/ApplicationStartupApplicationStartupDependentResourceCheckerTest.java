@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
- class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
+class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
 
     @InjectMocks
     ApplicationStartupDependentResourceChecker applicationStartupDependentResourceChecker;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     @BeforeEach
-     void setup() {
+    void setup() {
         Logger root = (Logger) LoggerFactory.getLogger(ApplicationStartupDependentResourceChecker.class);
         mockAppender = mockAppender();
         root.setLevel(Level.INFO);
@@ -53,7 +53,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void start_ShouldWaitAndLogUntilDatabaseIsAccessible() throws Exception {
+    void start_ShouldWaitAndLogUntilDatabaseIsAccessible() throws Exception {
 
         Connection mockConnection = mock(Connection.class);
         when(mockApplicationStartupDependentResource.getDatabaseConnection())
@@ -74,7 +74,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void start_ShouldProgressivelyIncrementSleepingTimeBetweenChecksForDBAccessibility() throws Exception {
+    void start_ShouldProgressivelyIncrementSleepingTimeBetweenChecksForDBAccessibility() throws Exception {
         Connection mockConnection = mock(Connection.class);
         when(mockApplicationStartupDependentResource.getDatabaseConnection())
                 .thenThrow(new SQLException("not there"))
@@ -99,7 +99,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void start_ShouldCloseAnyAcquiredConnectionWhenTheCheckIsDone() throws Exception {
+    void start_ShouldCloseAnyAcquiredConnectionWhenTheCheckIsDone() throws Exception {
         Connection mockConnection = mock(Connection.class);
         when(mockApplicationStartupDependentResource.getDatabaseConnection()).thenReturn(mockConnection);
 
