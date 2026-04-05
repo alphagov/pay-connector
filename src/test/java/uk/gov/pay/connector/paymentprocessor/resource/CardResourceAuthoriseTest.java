@@ -1,26 +1,22 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedExceptionMapper;
@@ -53,7 +49,6 @@ import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.YearMonth;
-import java.util.List;
 import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
@@ -66,8 +61,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
@@ -88,6 +81,9 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOK
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class CardResourceAuthoriseTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(CardResource.class);
 
     private static final CardAuthoriseService mockCardAuthoriseService = mock(CardAuthoriseService.class);
     private static final Card3dsResponseAuthService mockCard3dsResponseAuthService = mock(Card3dsResponseAuthService.class);
@@ -122,8 +118,6 @@ class CardResourceAuthoriseTest {
 
     private final ChargeEntity chargeEntity = aValidChargeEntity().build();
     private TokenEntity tokenEntity;
-    private final Appender<ILoggingEvent> mockAppender = mock(Appender.class);
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
@@ -131,9 +125,6 @@ class CardResourceAuthoriseTest {
         tokenEntity = new TokenEntity();
         tokenEntity.setUsed(false);
         tokenEntity.setChargeEntity(chargeEntity);
-        Logger root = (Logger) LoggerFactory.getLogger(CardResource.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     private static Object[] authoriseMotoApiPaymentInvalidInput() {
@@ -494,9 +485,8 @@ class CardResourceAuthoriseTest {
     }
 
     private void verifyReceiptOfPayloadNotLogged() {
-        verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
+        Assertions.assertThat(logs.size())
+                .isZero();
     }
 
 
