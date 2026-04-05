@@ -1,26 +1,22 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
+import io.github.netmikey.logunit.api.LogCapturer;
 import io.prometheus.client.CollectorRegistry;
 import org.apache.commons.lang3.tuple.Pair;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.cardtype.dao.CardTypeEntityBuilder;
@@ -82,19 +78,15 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.Instant;
 import java.time.InstantSource;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
-import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasItemInArray;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -135,6 +127,9 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 @ExtendWith(MockitoExtension.class)
 class CardAuthoriseServiceTest extends CardServiceTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(CardAuthoriseService.class);
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
@@ -210,16 +205,10 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     private AuthorisationConfig mockAuthorisationConfig;
 
     @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @Mock
     private IdempotencyDao mockIdempotencyDao;
 
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
 
@@ -389,10 +378,6 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(authCardDetails)).thenReturn(cardDetailsEntity);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
-        Logger root = (Logger) LoggerFactory.getLogger(CardAuthoriseService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         charge.getGatewayAccount().setCorporateCreditCardSurchargeAmount(250L);
         AuthorisationResponse response = cardAuthorisationService.doAuthoriseWeb(charge.getExternalId(), authCardDetails);
 
@@ -408,12 +393,10 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getCorporateSurcharge().get(), is(250L));
         assertThat(charge.getRequires3ds(), is(false));
 
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).toList(),
-                hasItems("Applied corporate card surcharge for charge"));
-        assertThat(loggingEvents.getFirst().getArgumentArray(), hasItemInArray(kv("corporate_card_surcharge", 250L)));
-
+        var loggingEvent = logs.assertContains("Applied corporate card surcharge for charge");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .extracting(Object::toString)
+                .contains("corporate_card_surcharge=250");
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 
