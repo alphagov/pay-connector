@@ -1,24 +1,17 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
-import org.junit.jupiter.api.BeforeEach;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.util.XMLUnmarshaller;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,8 +23,6 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
@@ -46,15 +37,8 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 @ExtendWith(MockitoExtension.class)
 class WorldpayOrderStatusResponseTest {
 
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @BeforeEach
-    void setup() {
-        Logger root = (Logger) LoggerFactory.getLogger(WorldpayOrderStatusResponse.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-    }
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(WorldpayOrderStatusResponse.class);
 
     @ParameterizedTest
     @ValueSource(strings = {"OUT_OF_SCOPE", "REJECTED"})
@@ -135,9 +119,10 @@ class WorldpayOrderStatusResponseTest {
     void get_expiry_date_should_return_empty_optional_but_no_log_when_expiry_date_fields_are_absent_from_failed_response() throws Exception {
         String response = load(WORLDPAY_AUTHORISATION_FAILED_RESPONSE);
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
+
         assertThat(worldpayOrderStatusResponse.getCardExpiryDate().isPresent(), is(false));
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
+        Assertions.assertThat(logs.size())
+                .isZero();
     }
 
     @Test
@@ -176,9 +161,8 @@ class WorldpayOrderStatusResponseTest {
     }
 
     private void verifyLogging(int invocations, String logMessage) {
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(invocations)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains(logMessage)), is(true));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(invocations);
+        logs.assertContains(logMessage);
     }
 }
