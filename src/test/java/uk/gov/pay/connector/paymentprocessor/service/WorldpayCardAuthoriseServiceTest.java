@@ -94,7 +94,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private CardExecutorService mockExecutorService;
@@ -125,7 +125,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
     private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
 
-    private AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
+    private final AuthCardDetails authCardDetails = AuthCardDetailsFixture.anAuthCardDetails().build();
     private CardAuthoriseService cardAuthorisationService;
     private ChargeEntity charge;
     private GatewayAccountEntity gatewayAccount;
