@@ -48,14 +48,14 @@ class RefundNotificationProcessorTest {
     RefundEntity refundEntity;
 
     private static final PaymentGatewayName paymentGatewayName = PaymentGatewayName.WORLDPAY;
-    private static final String paymentReference = "payment-reference";
-    private static final String refundGatewayTransactionId = "refund-gateway-tx-id";
-    private static final String transactionId = "transactionId";
-    private GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-    private ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+    private static final String PAYMENT_REFERENCE = "payment-reference";
+    private static final String REFUND_GATEWAY_TRANSACTION_ID = "refund-gateway-tx-id";
+    private static final String TRANSACTION_ID = "transactionId";
+    private final GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
+    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
             .withGatewayAccountEntity(gatewayAccountEntity)
-            .withReference(ServicePaymentReference.of(paymentReference))
-            .withTransactionId(transactionId)
+            .withReference(ServicePaymentReference.of(PAYMENT_REFERENCE))
+            .withTransactionId(TRANSACTION_ID)
             .build();
     private Charge charge;
 
@@ -80,15 +80,15 @@ class RefundNotificationProcessorTest {
     @Test
     void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, REFUND_GATEWAY_TRANSACTION_ID, TRANSACTION_ID, charge);
         verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
     void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, REFUND_GATEWAY_TRANSACTION_ID, TRANSACTION_ID, charge);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
@@ -96,9 +96,9 @@ class RefundNotificationProcessorTest {
     void shouldNotInvokeSendEmailNotifications_WhenRefundStatusWasAlreadySetAsRefunded() {
         refundEntity.setStatus(RefundStatus.REFUNDED);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, REFUND_GATEWAY_TRANSACTION_ID, TRANSACTION_ID, charge);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
@@ -106,18 +106,18 @@ class RefundNotificationProcessorTest {
     void shouldNotInvokeSendEmailNotifications_WhenRefundStatusWasSetAsRefundError() {
         refundEntity.setStatus(RefundStatus.REFUND_ERROR);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, REFUND_GATEWAY_TRANSACTION_ID, TRANSACTION_ID, charge);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
     void shouldLogFailedRefund_WhenRefundStatusWasSetAsRefundError() {
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, REFUND_GATEWAY_TRANSACTION_ID, TRANSACTION_ID, charge);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
@@ -129,9 +129,9 @@ class RefundNotificationProcessorTest {
     void shouldLogIllegalStateTransition_IfRefundedWhenRefundStatusWasSetAsRefundError() {
         refundEntity.setStatus(RefundStatus.REFUND_ERROR);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, REFUND_GATEWAY_TRANSACTION_ID, TRANSACTION_ID, charge);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
@@ -143,9 +143,9 @@ class RefundNotificationProcessorTest {
     void shouldLogIllegalStateTransition_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
         refundEntity.setStatus(RefundStatus.REFUNDED);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, REFUND_GATEWAY_TRANSACTION_ID, TRANSACTION_ID, charge);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
@@ -155,7 +155,7 @@ class RefundNotificationProcessorTest {
 
     @Test
     void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, TRANSACTION_ID, charge);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
@@ -167,7 +167,7 @@ class RefundNotificationProcessorTest {
 
     @Test
     void shouldLogError_whenRefundEntityIsNotAvailable() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, "unknown", transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, "unknown", TRANSACTION_ID, charge);
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
@@ -185,7 +185,7 @@ class RefundNotificationProcessorTest {
         when(refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, gatewayTransactionId))
                 .thenReturn(Optional.of(Refund.from(refundEntity)));
 
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, gatewayTransactionId, transactionId, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, gatewayTransactionId, TRANSACTION_ID, charge);
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
