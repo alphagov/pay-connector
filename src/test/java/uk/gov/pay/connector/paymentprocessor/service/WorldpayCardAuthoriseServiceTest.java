@@ -107,19 +107,19 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
-    
+
     @Mock
     ChargeEligibleForCaptureService mockChargeEligibleForCaptureService;
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
-    
+
     @Mock
     private ConnectorConfiguration mockConfiguration;
-    
+
     @Mock
     private AuthorisationConfig mockAuthorisationConfig;
-    
+
     @Mock
     private EventService mockEventService;
 
@@ -151,7 +151,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
         when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
-        
+
         cardAuthorisationService = new CardAuthoriseService(
                 mockedCardTypeDao,
                 mockedProviders,
@@ -312,7 +312,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
 
         verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
-    
+
     @Test
     void agreement_payment_type_not_logged_if_null() throws Exception {
         worldpayRespondsWith(null, load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
