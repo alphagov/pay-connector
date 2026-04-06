@@ -1,21 +1,17 @@
 package uk.gov.pay.connector.queue.tasks;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
@@ -42,6 +38,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.slf4j.event.Level.ERROR;
+import static org.slf4j.event.Level.INFO;
+import static org.slf4j.event.Level.WARN;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -56,18 +55,15 @@ import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificati
 @ExtendWith(MockitoExtension.class)
 class TaskQueueServiceTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(TaskQueueService.class);
+
     @Mock
     private TaskQueue mockTaskQueue;
 
     @Mock
     private ConnectorConfiguration mockConnectorConfiguration;
     private TaskQueueService taskQueueService;
-
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @Captor
-    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -79,9 +75,6 @@ class TaskQueueServiceTest {
         when(mockConnectorConfiguration.getSqsConfig()).thenReturn(mockSqsConfig);
         when(mockSqsConfig.getMaxAllowedDeliveryDelayInSeconds()).thenReturn(100);
         taskQueueService = new TaskQueueService(mockTaskQueue, objectMapper, mockConnectorConfiguration);
-        Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueService.class);
-        logger.setLevel(Level.INFO);
-        logger.addAppender(mockAppender);
     }
 
     @Test
@@ -201,11 +194,10 @@ class TaskQueueServiceTest {
 
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.WARN));
-        assertThat(loggingEvent.getMessage(), is("Error adding payment task message to queue"));
+        logs.assertContains(event ->
+                        event.getLevel().equals(WARN) &&
+                                event.getMessage().equals("Error adding payment task message to queue"),
+                "Expected WARN event not found.");
     }
 
     @Test
@@ -261,10 +253,11 @@ class TaskQueueServiceTest {
         doThrow(new QueueException("Something went wrong")).when(mockTaskQueue).addTaskToQueue(any());
         var task = new Task("some data", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
         taskQueueService.add(task);
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.ERROR));
-        assertThat(loggingEvent.getMessage(), is("Error adding task to queue"));
+
+        logs.assertContains(event ->
+                        event.getLevel().equals(ERROR) &&
+                                event.getMessage().equals("Error adding task to queue"),
+                "Expected ERROR event not found.");
     }
 
     @Test
@@ -312,10 +305,10 @@ class TaskQueueServiceTest {
             assertThat(task.getTaskType(), is(RETRY_FAILED_PAYMENT_OR_REFUND_EMAIL));
             assertThat(task.getData(), is("{\"resource_external_id\":\"external-id-1\",\"email_notification_type\":\"PAYMENT_CONFIRMED\",\"failed_attempt_time\":\"2020-01-01T10:10:10.100Z\"}"));
 
-            verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-            LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-            assertThat(loggingEvent.getLevel(), is(Level.INFO));
-            assertThat(loggingEvent.getMessage(), is("Added retry failed payment or refund email task message to queue"));
+            logs.assertContains(event ->
+                            event.getLevel().equals(INFO) &&
+                                    event.getMessage().equals("Added retry failed payment or refund email task message to queue"),
+                    "Expected INFO event not found.");
         }
 
         @Test
@@ -324,12 +317,10 @@ class TaskQueueServiceTest {
 
             taskQueueService.addRetryFailedPaymentOrRefundEmailTask(of(externalId, PAYMENT_CONFIRMED, instantSource.instant()));
 
-            verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-            LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-            assertThat(loggingEvent.getLevel(), is(Level.ERROR));
-            assertThat(loggingEvent.getMessage(), is("Error adding failed payment or refund email task message to queue"));
+            logs.assertContains(event ->
+                            event.getLevel().equals(ERROR) &&
+                                    event.getMessage().equals("Error adding failed payment or refund email task message to queue"),
+                    "Expected ERROR event not found.");
         }
     }
-
-
 }
