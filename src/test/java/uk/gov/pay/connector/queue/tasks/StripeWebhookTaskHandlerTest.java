@@ -64,7 +64,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.longThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -77,7 +76,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE_LOST_WITH_MULTIPLE_BALANCE_TRANSACTIONS;
 
 @ExtendWith(MockitoExtension.class)
-public class StripeWebhookTaskHandlerTest {
+class StripeWebhookTaskHandlerTest {
 
     @Mock
     private Appender<ILoggingEvent> mockLogAppender;
@@ -106,8 +105,6 @@ public class StripeWebhookTaskHandlerTest {
     private StripeWebhookTaskHandler stripeWebhookTaskHandler;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final String PLACEHOLDER_TYPE = "{{type}}";
-    private final String PLACEHOLDER_STATUS = "{{status}}";
 
     long gatewayAccountId = 1000L;
 
@@ -209,10 +206,8 @@ public class StripeWebhookTaskHandlerTest {
                 .withGatewayTransactionId("gateway-transaction-id")
                 .isLive(false)
                 .build();
-        Charge charge = Charge.from(transaction);
         StripeNotification stripeNotification = getDisputeNotification("charge.dispute.closed", "won", false);
         StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
-        RefundAvailabilityUpdated refundAvailabilityUpdated = mock(RefundAvailabilityUpdated.class);
 
         String resourceExternalId = RandomIdGenerator.idFromExternalId(stripeDisputeData.getId());
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
@@ -500,7 +495,6 @@ public class StripeWebhookTaskHandlerTest {
                 .isLive(true)
                 .build();
         StripeNotification stripeNotification = getDisputeNotification("charge.dispute.updated", "under_review", true);
-        StripeDisputeData stripeDisputeData = objectMapper.readValue(stripeNotification.getObject(), StripeDisputeData.class);
         when(ledgerService.getTransactionForProviderAndGatewayTransactionId(any(), any()))
                 .thenReturn(Optional.of(transaction));
         stripeWebhookTaskHandler.process(stripeNotification);
@@ -678,11 +672,13 @@ public class StripeWebhookTaskHandlerTest {
     }
 
     private StripeNotification getDisputeNotification(String webhookType, String status, boolean liveStripeAccount, String template) throws JsonProcessingException {
+        String placeholderType = "{{type}}";
+        String placeholderStatus = "{{status}}";
         String payload = TestTemplateResourceLoader.load(template)
-                .replace(PLACEHOLDER_TYPE, webhookType)
-                .replace(PLACEHOLDER_STATUS, status);
+                .replace(placeholderType, webhookType)
+                .replace(placeholderStatus, status);
         if (!liveStripeAccount) {
-            payload = payload.replaceAll("\"livemode\": true", "\"livemode\": false");
+            payload = payload.replace("\"livemode\": true", "\"livemode\": false");
         }
         return objectMapper.readValue(payload, StripeNotification.class);
     }
