@@ -25,11 +25,11 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
-import static org.hamcrest.CoreMatchers.containsString;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.never;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
- class RefundNotificationProcessorTest {
+class RefundNotificationProcessorTest {
 
     @Mock
     private RefundService refundService;
@@ -66,7 +66,7 @@ import static org.mockito.Mockito.when;
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     @BeforeEach
-     void setup() {
+    void setup() {
         charge = Charge.from(chargeEntity);
         refundEntity = aValidRefundEntity().build();
 
@@ -78,7 +78,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
+    void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), refundGatewayTransactionId)).thenReturn(optionalRefundEntity);
 
@@ -87,7 +87,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
+    void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, refundGatewayTransactionId, transactionId, charge);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
@@ -154,7 +154,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
+    void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, transactionId, charge);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
@@ -166,7 +166,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void shouldLogError_whenRefundEntityIsNotAvailable() {
+    void shouldLogError_whenRefundEntityIsNotAvailable() {
         refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUNDED, gatewayAccountEntity, "unknown", transactionId, charge);
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
 
@@ -180,7 +180,7 @@ import static org.mockito.Mockito.when;
     }
 
     @Test
-     void shouldLogWarning_whenNotificationIsForAnExpungedRefund() {
+    void shouldLogWarning_whenNotificationIsForAnExpungedRefund() {
         String gatewayTransactionId = "refund-gateway-tx-id123";
         when(refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, gatewayTransactionId))
                 .thenReturn(Optional.of(Refund.from(refundEntity)));
@@ -195,7 +195,7 @@ import static org.mockito.Mockito.when;
         assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
     }
 
-     static RefundEntityFixture aValidRefundEntity() {
+    static RefundEntityFixture aValidRefundEntity() {
         return new RefundEntityFixture();
     }
 }
