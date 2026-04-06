@@ -1,21 +1,18 @@
 package uk.gov.pay.connector.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.UnitOfWork;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.cardtype.dao.CardTypeDao;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
@@ -33,13 +30,10 @@ import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCred
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
@@ -60,6 +54,9 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 @ExtendWith(MockitoExtension.class)
 class GatewayAccountServiceDisableGatewayAccountTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(GatewayAccountService.class);
+
     private GatewayAccountService gatewayAccountService;
 
     @Mock
@@ -77,20 +74,11 @@ class GatewayAccountServiceDisableGatewayAccountTest {
     @Captor
     private ArgumentCaptor<GatewayAccountCredentialsEntity> updatedGatewayAccountCredentialsEntity;
 
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
     @BeforeEach
     void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mock(CardTypeDao.class),
                 mock(GatewayAccountCredentialsService.class), mockGatewayAccountCredentialsHistoryDao,
                 mockGatewayAccountCredentialsDao, mock(UnitOfWork.class));
-        Logger root = (Logger) LoggerFactory.getLogger(GatewayAccountService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
@@ -105,11 +93,10 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
 
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().getFirst().getFormattedMessage(),
-                containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
-                containsString("No credentials to redact."));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(2);
+        logs.assertContains("Disabling gateway accounts %s for service.".formatted(gatewayAccount.getExternalId()));
+        logs.assertContains("No credentials to redact.");
     }
 
     @Test
@@ -142,11 +129,10 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
 
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().getFirst().getFormattedMessage(),
-                containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
-                containsString("Credentials redacted"));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(2);
+        logs.assertContains("Disabling gateway accounts %s for service.".formatted(gatewayAccount.getExternalId()));
+        logs.assertContains("Credentials redacted");
     }
 
     @Test
@@ -181,11 +167,10 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
 
-        verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().getFirst().getFormattedMessage(),
-                containsString(format("Disabling gateway accounts %s for service.", gatewayAccount.getExternalId())));
-        assertThat(loggingEventArgumentCaptor.getAllValues().get(1).getFormattedMessage(),
-                containsString("Credentials redacted"));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(2);
+        logs.assertContains("Disabling gateway accounts %s for service.".formatted(gatewayAccount.getExternalId()));
+        logs.assertContains("Credentials redacted");
     }
 
     private void verifyExpectedGatewayAccountCredentialsAndStateIsRetired(GatewayCredentials expectedCredentials) {
