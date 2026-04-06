@@ -75,7 +75,7 @@ class PayoutReconcileProcessTest {
 
     @Mock
     private ConnectorConfiguration connectorConfiguration;
-    
+
     @Mock
     private GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
