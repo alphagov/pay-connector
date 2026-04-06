@@ -1,20 +1,17 @@
 package uk.gov.pay.connector.queue.tasks;
 
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
@@ -36,13 +33,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 
 @ExtendWith(MockitoExtension.class)
 class TaskQueueMessageHandlerTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(TaskQueueMessageHandler.class);
 
     @Mock
     private TaskQueue taskQueue;
@@ -64,11 +63,6 @@ class TaskQueueMessageHandlerTest {
     private QueryAndUpdatePaymentInSubmittedStateTaskHandler mockQueryAndUpdatePaymentInSubmittedStateTaskHandler;
     @Mock
     private ServiceArchivedTaskHandler mockServiceArchivedTaskHandler;
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     @Captor
     ArgumentCaptor<RetryPaymentOrRefundEmailTaskData> retryPaymentOrRefundEmailTaskDataArgumentCaptor;
@@ -97,10 +91,6 @@ class TaskQueueMessageHandlerTest {
                 mockServiceArchivedTaskHandler,
                 mockQueryAndUpdatePaymentInSubmittedStateTaskHandler,
                 objectMapper);
-
-        Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);
-        logger.setLevel(Level.INFO);
-        logger.addAppender(mockAppender);
     }
 
     @Test
@@ -112,10 +102,10 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
-        assertThat(loggingEvents.get(2).getFormattedMessage(), is("Successfully processed [collect_fee_for_stripe_failed_payment] task."));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(3);
+        logs.assertContains("Processing [collect_fee_for_stripe_failed_payment] task.");
+        logs.assertContains("Successfully processed [collect_fee_for_stripe_failed_payment] task.");
     }
 
     @Test
@@ -133,10 +123,10 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
-        assertThat(loggingEvents.get(2).getFormattedMessage(), is("Successfully processed [collect_fee_for_stripe_failed_payment] task."));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(3);
+        logs.assertContains("Processing [collect_fee_for_stripe_failed_payment] task.");
+        logs.assertContains("Successfully processed [collect_fee_for_stripe_failed_payment] task.");
     }
 
     @Test
