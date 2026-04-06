@@ -82,7 +82,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
     @Mock
     private Appender<ILoggingEvent> mockAppender;
-    
+
     @BeforeEach
     void setUp() {
         gatewayAccountService = new GatewayAccountService(mockGatewayAccountDao, mock(CardTypeDao.class),
@@ -129,7 +129,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
         verify(mockGatewayAccountDao).findByServiceId(serviceId);
 
         verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials();
-        
+
         var expectedWorldpay = new WorldpayCredentials();
 
         var oneOff = new WorldpayMerchantCodeCredentials("a-merchant-code-1", DELETED, DELETED);
@@ -137,7 +137,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         var recurring = new WorldpayMerchantCodeCredentials("a-merchant-code-3", DELETED, DELETED);
         expectedWorldpay.setRecurringMerchantInitiatedCredentials(recurring);
-        
+
         verifyExpectedGatewayAccountCredentialsAndStateIsRetired(expectedWorldpay);
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
@@ -203,7 +203,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         assertThat(actualMap, is(expectedMap));
     }
-    
+
     private void verifyGatewayAccountUpdatedWithDisabledAndNoNotificationCredentials() {
         verify(mockGatewayAccountDao).merge(updatedGatewayAccountEntity.capture());
         var capturedGatewayAccountEntity = updatedGatewayAccountEntity.getValue();
