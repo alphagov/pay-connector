@@ -38,14 +38,14 @@ public class WorldpayAuthoriseGooglePayIT {
 
     private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @BeforeEach
     void setUpLogger() {
         Logger root = (Logger) LoggerFactory.getLogger(CardResource.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
-    
+
     @Test
     void authorise_charge_success_google_pay() throws Exception {
         app.getWorldpayMockClient().mockAuthorisationSuccess();
@@ -63,7 +63,7 @@ public class WorldpayAuthoriseGooglePayIT {
         Map<String, Object> charge = app.getDatabaseTestHelper().getChargeByExternalId(chargeId);
         assertThat(charge.get("email"), is(googlePayload.get("payment_info").get("email").asText()));
     }
-    
+
 
     @Test
     void verify_auth_3ds_required_in_response_to_a_google_pay_request() throws Exception {
