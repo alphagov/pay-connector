@@ -52,10 +52,10 @@ class TaskQueueTest {
     @Captor
     ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         TaskQueueConfig taskQueueConfig = mock(TaskQueueConfig.class);
         SqsConfig sqsConfig = mock(SqsConfig.class);
         when(sqsConfig.getTaskQueueUrl()).thenReturn("");
