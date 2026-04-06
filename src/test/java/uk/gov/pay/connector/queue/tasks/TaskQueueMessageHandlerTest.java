@@ -86,7 +86,7 @@ class TaskQueueMessageHandlerTest {
     private final String chargeExternalId = "a-charge-external-id";
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         taskQueueMessageHandler = new TaskQueueMessageHandler(
                 taskQueue,
                 collectFeesForFailedPaymentsTaskHandler,
@@ -104,7 +104,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessNewCollectFeeTask() throws Exception {
+    void shouldProcessNewCollectFeeTask() throws Exception {
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
         String data = objectMapper.writeValueAsString(paymentTaskData);
         TaskMessage taskMessage = setupQueueMessage(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
@@ -119,7 +119,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessOldCollectFeeTask() throws Exception {
+    void shouldProcessOldCollectFeeTask() throws Exception {
         Task oldFormatTask = mock(Task.class);
         QueueMessage mockQueueMessage = mock(QueueMessage.class);
         TaskMessage taskMessage = TaskMessage.of(oldFormatTask, mockQueueMessage);
@@ -140,7 +140,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessDisputeCreatedTask() throws Exception {
+    void shouldProcessDisputeCreatedTask() throws Exception {
         TaskMessage taskMessage = setupQueueMessage("{ \"key\": \"value\"}", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
         taskQueueMessageHandler.processMessages();
         verify(stripeWebhookTaskHandler).process(any(StripeNotification.class));
@@ -148,7 +148,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessAuthoriseWithUserNotPresentTask() throws QueueException {
+    void shouldProcessAuthoriseWithUserNotPresentTask() throws QueueException {
         TaskMessage taskMessage = setupQueueMessage("{ \"payment_external_id\": \"external-charge-id\"}", TaskType.AUTHORISE_WITH_USER_NOT_PRESENT);
         taskQueueMessageHandler.processMessages();
         verify(authoriseWithUserNotPresentHandler).process("external-charge-id");
@@ -156,7 +156,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessDeleteStoredPaymentDetailsTask() throws Exception {
+    void shouldProcessDeleteStoredPaymentDetailsTask() throws Exception {
         TaskMessage taskMessage = setupQueueMessage("{ \"agreement_external_id\": \"external-agreement-id\", \"paymentInstrument_external_id\": \"external-paymentInstrument-id\"}", TaskType.DELETE_STORED_PAYMENT_DETAILS);
         taskQueueMessageHandler.processMessages();
         verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");
