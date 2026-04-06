@@ -226,7 +226,7 @@ class TaskQueueServiceTest {
         taskQueueService.offerTasksOnStateTransition(chargeEntity);
         String data = objectMapper.writeValueAsString(new PaymentTaskData(chargeEntity.getExternalId()));
         var expectedPaymentTask = new Task(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
-        verify(mockTaskQueue).addTaskToQueue(eq(expectedPaymentTask));
+        verify(mockTaskQueue).addTaskToQueue(expectedPaymentTask);
     }
 
     @Test
@@ -253,7 +253,7 @@ class TaskQueueServiceTest {
     void shouldAddTaskToQueue() throws QueueException, JsonProcessingException {
         var task = new Task("some data", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
         taskQueueService.add(task);
-        verify(mockTaskQueue).addTaskToQueue(eq(task));
+        verify(mockTaskQueue).addTaskToQueue(task);
     }
 
     @Test
@@ -278,7 +278,7 @@ class TaskQueueServiceTest {
         var data = new DeleteStoredPaymentDetailsTaskData("test-agreement-123", "test-paymentInstrument-123");
         var taskData = new Task(objectMapper.writeValueAsString(data), DELETE_STORED_PAYMENT_DETAILS);
         taskQueueService.addDeleteStoredPaymentDetailsTask(agreement, paymentInstrument);
-        verify(mockTaskQueue).addTaskToQueue(eq(taskData));
+        verify(mockTaskQueue).addTaskToQueue(taskData);
     }
 
     @Test
@@ -299,7 +299,7 @@ class TaskQueueServiceTest {
         ArgumentCaptor<Task> taskArgumentCaptor;
         private final String externalId = "external-id-1";
 
-        private InstantSource instantSource = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
+        private final InstantSource instantSource = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
 
         @Test
         void shouldAddRetryFailedPaymentOrRefundEmailTaskToQueue() throws QueueException, JsonProcessingException {
