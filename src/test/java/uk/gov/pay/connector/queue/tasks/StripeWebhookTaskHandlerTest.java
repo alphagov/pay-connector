@@ -1,21 +1,16 @@
 package uk.gov.pay.connector.queue.tasks;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hamcrest.core.Is;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -51,7 +46,6 @@ import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.time.Instant;
 import java.time.InstantSource;
-import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
@@ -65,7 +59,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -78,10 +71,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFI
 @ExtendWith(MockitoExtension.class)
 class StripeWebhookTaskHandlerTest {
 
-    @Mock
-    private Appender<ILoggingEvent> mockLogAppender;
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(StripeWebhookTaskHandler.class);
+
     @Mock
     private LedgerService ledgerService;
     @Mock
@@ -110,9 +102,6 @@ class StripeWebhookTaskHandlerTest {
 
     @BeforeEach
     void setUp() {
-        Logger logger = (Logger) LoggerFactory.getLogger(StripeWebhookTaskHandler.class);
-        logger.setLevel(Level.INFO);
-        logger.addAppender(mockLogAppender);
         when(configuration.getStripeConfig()).thenReturn(stripeGatewayConfig);
         stripeWebhookTaskHandler = new StripeWebhookTaskHandler(ledgerService, chargeService, eventService, stripePaymentProvider,
                 gatewayAccountService, gatewayAccountCredentialsService, configuration, instantSource);
@@ -161,13 +150,9 @@ class StripeWebhookTaskHandlerTest {
 
         verify(stripePaymentProvider, never()).submitTestDisputeEvidence(anyString(), anyString(), anyString());
 
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Skipping dispute notification: [status: warning_needs_response, type: charge.dispute.created, payment_intent: pi_1111111111, reason: general]";
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
-
+        logs.assertContains(
+                "Skipping dispute notification: " +
+                        "[status: warning_needs_response, type: charge.dispute.created, payment_intent: pi_1111111111, reason: general]");
         verifyNoInteractions(eventService);
     }
 
@@ -263,12 +248,7 @@ class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
         assertThat(eventDetails.getNetAmount(), is(stripeDisputeData.getBalanceTransactionList().getFirst().getNetAmount()));
 
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Event sent to payment event queue: " + disputeLost.getResourceExternalId();
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
+        logs.assertContains("Event sent to payment event queue: " + disputeLost.getResourceExternalId());
     }
 
     @Test
@@ -309,12 +289,7 @@ class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
         assertThat(eventDetails.getNetAmount(), is(-7950L));
 
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Event sent to payment event queue: " + disputeLost.getResourceExternalId();
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
+        logs.assertContains("Event sent to payment event queue: " + disputeLost.getResourceExternalId());
     }
 
     @Test
@@ -355,12 +330,7 @@ class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getAmount(), is(stripeDisputeData.getAmount()));
         assertThat(eventDetails.getNetAmount(), is(stripeDisputeData.getBalanceTransactionList().getFirst().getNetAmount()));
 
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Event sent to payment event queue: " + disputeLost.getResourceExternalId();
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
+        logs.assertContains("Event sent to payment event queue: " + disputeLost.getResourceExternalId());
     }
 
     @Test
@@ -391,10 +361,11 @@ class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getFee(), is(nullValue()));
         assertThat(eventDetails.getNetAmount(), is(nullValue()));
 
-        verify(mockLogAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = format("Skipping recharging for dispute du_1111111111 for payment %s as it was created before the date we started recharging from", transaction.getTransactionId());
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(2);
+        String expectedLogMessage = format("Skipping recharging for dispute du_1111111111 for payment %s as it was " +
+                "created before the date we started recharging from", transaction.getTransactionId());
+        logs.assertContains(expectedLogMessage);
     }
 
     @Test
@@ -425,10 +396,11 @@ class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getFee(), is(nullValue()));
         assertThat(eventDetails.getNetAmount(), is(nullValue()));
 
-        verify(mockLogAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = format("Skipping recharging for dispute du_1111111111 for payment %s as it was created before the date we started recharging from", transaction.getTransactionId());
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(2);
+        String expectedLogMessage = format("Skipping recharging for dispute du_1111111111 for payment %s as it was " +
+                "created before the date we started recharging from", transaction.getTransactionId());
+        logs.assertContains(expectedLogMessage);
     }
 
     @Test
@@ -476,13 +448,9 @@ class StripeWebhookTaskHandlerTest {
                 .thenReturn(Optional.of(transaction));
         stripeWebhookTaskHandler.process(stripeNotification);
 
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Skipping dispute notification: [status: warning_closed, type: charge.dispute.closed, payment_intent: pi_1111111111, reason: general]";
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
-
+        String expectedLogMessage = "Skipping dispute notification: " +
+                "[status: warning_closed, type: charge.dispute.closed, payment_intent: pi_1111111111, reason: general]";
+        logs.assertContains(expectedLogMessage);
         verifyNoInteractions(eventService);
     }
 
@@ -510,12 +478,8 @@ class StripeWebhookTaskHandlerTest {
         DisputeEvidenceSubmittedEventDetails eventDetails = (DisputeEvidenceSubmittedEventDetails) disputeEvidenceSubmitted.getEventDetails();
         assertThat(eventDetails.getGatewayAccountId(), is("1000"));
 
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Event sent to payment event queue: " + disputeEvidenceSubmitted.getResourceExternalId();
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
+        logs.assertContains(
+                "Event sent to payment event queue: " + disputeEvidenceSubmitted.getResourceExternalId());
     }
 
     @Test
@@ -531,13 +495,9 @@ class StripeWebhookTaskHandlerTest {
                 .thenReturn(Optional.of(transaction));
         stripeWebhookTaskHandler.process(stripeNotification);
 
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Skipping dispute notification: [status: warning_under_review, type: charge.dispute.updated, payment_intent: pi_1111111111, reason: general]";
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
-
+        String expectedLogMessage = "Skipping dispute notification: " +
+                "[status: warning_under_review, type: charge.dispute.updated, payment_intent: pi_1111111111, reason: general]";
+        logs.assertContains(expectedLogMessage);
         verifyNoInteractions(eventService);
     }
 
@@ -576,12 +536,9 @@ class StripeWebhookTaskHandlerTest {
         StripeNotification stripeNotification = getDisputeNotification("charge.dispute.updated", "needs_response", true);
 
         stripeWebhookTaskHandler.process(stripeNotification);
-        verify(mockLogAppender).doAppend(loggingEventArgumentCaptor.capture());
 
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = "Skipping dispute updated notification: [status: needs_response, payment_intent: pi_1111111111]";
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), Is.is(expectedLogMessage));
+        logs.assertContains(
+                "Skipping dispute updated notification: [status: needs_response, payment_intent: pi_1111111111]");
     }
 
     @Test
@@ -624,14 +581,12 @@ class StripeWebhookTaskHandlerTest {
         verify(eventService).emitEvent(paymentDisputed);
         verify(eventService).emitEvent(refundAvailabilityUpdated);
 
-        verify(mockLogAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+        Assertions.assertThat(logs.size())
+                .isEqualTo(4);
         String eventExpectedLogMessage = "Event sent to payment event queue: " + disputeCreated.getResourceExternalId();
         String submitEvidenceExpectedLogMessage = "Updated dispute [du_1111111111] with evidence [losing_evidence] for transaction [external-id]";
-
-        assertThat(logStatement.getFirst().getFormattedMessage(), is(eventExpectedLogMessage));
-        assertThat(logStatement.get(3).getFormattedMessage(), is(submitEvidenceExpectedLogMessage));
+        logs.assertContains(eventExpectedLogMessage);
+        logs.assertContains(submitEvidenceExpectedLogMessage);
     }
 
     @Test
