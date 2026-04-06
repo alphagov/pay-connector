@@ -1,18 +1,12 @@
 package uk.gov.pay.connector.charge.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.client.ledger.service.LedgerService;
 import uk.gov.pay.connector.events.model.agreement.AgreementSetUp;
@@ -28,16 +22,18 @@ import java.time.InstantSource;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.slf4j.event.Level.ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 
 @ExtendWith(MockitoExtension.class)
 class LinkPaymentInstrumentToAgreementServiceTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(LinkPaymentInstrumentToAgreementService.class);
 
     @Mock
     private PaymentInstrumentDao paymentInstrumentDao;
@@ -57,22 +53,12 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
 
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
     private InstantSource instantSource;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
 
     @BeforeEach
     void setUp() {
-        var logger = (Logger) LoggerFactory.getLogger(LinkPaymentInstrumentToAgreementService.class);
-        logger.setLevel(Level.ERROR);
-        logger.addAppender(mockAppender);
-
         instantSource = InstantSource.fixed(Instant.now());
         linkPaymentInstrumentToAgreementService = new LinkPaymentInstrumentToAgreementService(paymentInstrumentDao, ledgerService, taskQueueService, instantSource);
     }
@@ -129,12 +115,13 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        var loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.ERROR));
-        assertThat(loggingEvent.getFormattedMessage(),
-                is("Expected charge " + chargeEntity.getExternalId() + " to have a payment instrument but it does not have one"));
-
+        logs.assertContains(
+                event ->
+                        event.getLevel().equals(ERROR) &&
+                                event.getMessage().equals("Expected charge " +
+                                        chargeEntity.getExternalId() +
+                                        " to have a payment instrument but it does not have one"),
+                "Expected ERROR not found.");
         verifyNoInteractions(mockAgreementEntity);
         verifyNoInteractions(mockPaymentInstrumentEntity);
         verifyNoInteractions(ledgerService);
@@ -146,15 +133,15 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        var loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.ERROR));
-        assertThat(loggingEvent.getFormattedMessage(),
-                is("Expected charge " + chargeEntity.getExternalId() + " to have an agreement but it does not have one"));
-
+        logs.assertContains(
+                event ->
+                        event.getLevel().equals(ERROR) &&
+                                event.getMessage().equals("Expected charge " +
+                                        chargeEntity.getExternalId() +
+                                        " to have an agreement but it does not have one"),
+                "Expected ERROR not found.");
         verifyNoInteractions(mockAgreementEntity);
         verifyNoInteractions(mockPaymentInstrumentEntity);
         verifyNoInteractions(ledgerService);
     }
-
 }
