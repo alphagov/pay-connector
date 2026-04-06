@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.WebApplicationException;
 import net.logstash.logback.marker.ObjectAppendingMarker;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -37,9 +38,7 @@ import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -71,12 +70,12 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_BALANCE_AVAILABLE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT_PAYMENT_FAILED;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_BALANCE_AVAILABLE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 
 @ExtendWith(MockitoExtension.class)
 class StripeNotificationServiceTest {
@@ -154,7 +153,7 @@ class StripeNotificationServiceTest {
     private String signPayloadWithTestSecret(String payload) {
         return StripeNotificationUtilTest.generateSigHeader(webhookTestSigningSecret, payload);
     }
-    
+
     @Test
     void shouldLogForBalanceAvailableEvent() {
         Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
