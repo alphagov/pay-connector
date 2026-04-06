@@ -32,9 +32,7 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
-import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -135,12 +133,6 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     private LedgerService ledgerService;
 
     @Mock
-    private EventQueue eventQueue;
-
-    @Mock
-    private EmittedEventDao mockEmmittedEventDao;
-
-    @Mock
     protected WalletPaymentInfoToAuthCardDetailsConverter mockWalletPaymentInfoToAuthCardDetailsConverter;
 
     @Mock
@@ -205,7 +197,6 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         lenient().when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
         lenient().when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
-        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
@@ -566,9 +557,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
-    private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode, CardExpiryDate cardExpiryDate) {
+    private GatewayResponse mockAuthResponse(String transactionId, AuthoriseStatus authoriseStatus, String errorCode, CardExpiryDate cardExpiryDate) {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
-        lenient().when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
+        lenient().when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
         lenient().when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         lenient().when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
         lenient().when(worldpayResponse.getCardExpiryDate()).thenReturn(Optional.ofNullable(cardExpiryDate));
