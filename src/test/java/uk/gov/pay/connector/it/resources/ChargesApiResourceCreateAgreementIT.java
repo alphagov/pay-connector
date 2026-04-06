@@ -1,18 +1,12 @@
 package uk.gov.pay.connector.it.resources;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
-import org.junit.jupiter.api.BeforeEach;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.ArgumentCaptor;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
@@ -23,8 +17,6 @@ import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
@@ -33,12 +25,8 @@ import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_CREATED;
@@ -69,13 +57,14 @@ import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRando
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ChargesApiResourceCreateAgreementIT {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(TaskQueue.class);
+
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
-
-    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
 
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_SAVE_PAYMENT_INSTRUMENT_TO_AGREEMENT_KEY = "save_payment_instrument_to_agreement";
@@ -84,13 +73,6 @@ public class ChargesApiResourceCreateAgreementIT {
     private static final String JSON_TOO_LONG_AGREEMENT_ID_VALUE = "123456789012345678901234567890";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
     private static final String JSON_AGREEMENT_PAYMENT_TYPE = "agreement_payment_type";
-
-    @BeforeEach
-    void setUpLogger() {
-        Logger root = (Logger) LoggerFactory.getLogger(TaskQueue.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-    }
 
     @Test
     void shouldCreatePaymentWithAgreementIdAndSavePaymentInstrumentToAgreementTrueAndNoExplicitAgreementPaymentType() {
@@ -192,13 +174,10 @@ public class ChargesApiResourceCreateAgreementIT {
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
         testBaseExtension.assertAgreementPaymentTypeIs(chargeId, AgreementPaymentType.RECURRING);
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-
-        LoggingEvent log = logEvents.getFirst();
-        List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).toList();
-        assertThat(log.getMessage(), is("Task added to queue"));
-        assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
+        var loggingEvent = logs.assertContains("Task added to queue");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .extracting(Object::toString)
+                .contains("task_type=authorise_with_user_not_present");
     }
 
     @ParameterizedTest
@@ -239,14 +218,10 @@ public class ChargesApiResourceCreateAgreementIT {
         testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
         testBaseExtension.assertAgreementPaymentTypeIs(chargeId, expectedAgreementPaymentType);
-
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-
-        LoggingEvent log = logEvents.getFirst();
-        List<String> logArguments = Arrays.stream(log.getArgumentArray()).map(String::valueOf).toList();
-        assertThat(log.getMessage(), is("Task added to queue"));
-        assertThat(logArguments, hasItem("task_type=authorise_with_user_not_present"));
+        var loggingEvent = logs.assertContains("Task added to queue");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .extracting(Object::toString)
+                .contains("task_type=authorise_with_user_not_present");
     }
 
     @ParameterizedTest
