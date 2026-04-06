@@ -36,7 +36,7 @@ public class WorldpayAuthoriseGooglePayIT {
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
-    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
+    private final Appender<ILoggingEvent> mockAppender = mock(Appender.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
@@ -55,7 +55,7 @@ public class WorldpayAuthoriseGooglePayIT {
 
         testBaseExtension.givenSetup()
                 .body(googlePayload)
-                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
+                .post(ITestBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200);
 
@@ -74,7 +74,7 @@ public class WorldpayAuthoriseGooglePayIT {
 
         testBaseExtension.givenSetup()
                 .body(googlePayload)
-                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
+                .post(ITestBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(200);
 
@@ -89,7 +89,7 @@ public class WorldpayAuthoriseGooglePayIT {
 
         testBaseExtension.givenSetup()
                 .body(validPayload)
-                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
+                .post(ITestBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(BAD_REQUEST.getStatusCode())
                 .contentType(JSON)
@@ -107,7 +107,7 @@ public class WorldpayAuthoriseGooglePayIT {
 
         testBaseExtension.givenSetup()
                 .body(invalidPayload)
-                .post(testBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
+                .post(ITestBaseExtension.authoriseChargeUrlForGooglePay(chargeId))
                 .then()
                 .statusCode(422)
                 .body("message", contains("Field [signature] must not be empty"))
