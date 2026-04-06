@@ -39,9 +39,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 @ExtendWith(MockitoExtension.class)
 class LinkPaymentInstrumentToAgreementServiceTest {
 
-    private static final String AGREEMENT_ID = "I am very agreeable";
-    private static final long GATEWAY_ACCOUNT_ID = 1;
-
     @Mock
     private PaymentInstrumentDao paymentInstrumentDao;
 
@@ -71,7 +68,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     private LinkPaymentInstrumentToAgreementService linkPaymentInstrumentToAgreementService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         var logger = (Logger) LoggerFactory.getLogger(LinkPaymentInstrumentToAgreementService.class);
         logger.setLevel(Level.ERROR);
         logger.addAppender(mockAppender);
