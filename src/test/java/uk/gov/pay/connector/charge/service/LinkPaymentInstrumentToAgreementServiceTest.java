@@ -47,7 +47,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Mock
     private LedgerService ledgerService;
-    
+
     @Mock
     private TaskQueueService taskQueueService;
 
@@ -56,7 +56,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
     @Mock
     private PaymentInstrumentEntity mockPaymentInstrumentEntity;
-    
+
     @Mock
     private GatewayAccountEntity mockGatewayAccountEntity;
 
@@ -87,7 +87,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
         when(mockAgreementEntity.getExternalId()).thenReturn(agreementExternalId);
         when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
-        
+
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity)
                 .withAgreementEntity(mockAgreementEntity).build();
 
@@ -106,7 +106,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
     void shouldUpdatePreviousActivePaymentInstrumentsToCancelledAndAddToTaskQueue() {
         var oldPaymentInstrument1 = mock(PaymentInstrumentEntity.class);
         var oldPaymentInstrument2 = mock(PaymentInstrumentEntity.class);
-        
+
         String agreementExternalId = "an-agreement-external-id";
         when(mockAgreementEntity.getGatewayAccount()).thenReturn(mockGatewayAccountEntity);
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
@@ -117,9 +117,9 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity)
                 .withAgreementEntity(mockAgreementEntity).build();
-        
+
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
-        
+
         verify(oldPaymentInstrument1).setStatus(PaymentInstrumentStatus.CANCELLED);
         verify(oldPaymentInstrument2).setStatus(PaymentInstrumentStatus.CANCELLED);
         verify(taskQueueService).addDeleteStoredPaymentDetailsTask(mockAgreementEntity, oldPaymentInstrument1);
