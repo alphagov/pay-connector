@@ -1,18 +1,16 @@
 package uk.gov.pay.connector.charge.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.core.UriInfo;
+import org.assertj.core.api.Assertions;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -20,7 +18,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
@@ -99,7 +96,6 @@ import static jakarta.ws.rs.core.UriBuilder.fromUri;
 import static java.time.ZonedDateTime.now;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -112,7 +108,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -130,6 +125,9 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceCreateTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(ChargeService.class);
 
     private static final String SERVICE_HOST = "http://my-service";
     private static final long GATEWAY_ACCOUNT_ID = 10L;
@@ -215,9 +213,6 @@ class ChargeServiceCreateTest {
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
 
-    @Mock
-    Appender<ILoggingEvent> mockAppender;
-
     @Captor
     private ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor;
 
@@ -226,9 +221,6 @@ class ChargeServiceCreateTest {
 
     @Captor
     private ArgumentCaptor<IdempotencyEntity> idempotencyEntityArgumentCaptor;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
 
@@ -942,10 +934,6 @@ class ChargeServiceCreateTest {
                 "430350381314", "4492616950176228242",
                 VALID_CARD_NUMBER})
         void shouldNotCreateChargeWhenReferenceIsACardNumber_ForPaymentLinkPaymentsAndWhenFlagIsEnabled(String validCardNumber) {
-            Logger root = (Logger) LoggerFactory.getLogger(ChargeService.class);
-            root.setLevel(Level.INFO);
-            root.addAppender(mockAppender);
-
             when(mockedGatewayAccountDao.findById(GATEWAY_ACCOUNT_ID)).thenReturn(Optional.of(gatewayAccount));
             CardInformation cardInformation = aCardInformation().build();
 
@@ -964,11 +952,9 @@ class ChargeServiceCreateTest {
 
             verifyNoInteractions(mockedChargeDao);
             assertThat(exception.getMessage(), equalTo("Card number entered in a payment link reference"));
-
-            verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-            List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-            assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).toList(),
-                    hasItems("Card number entered in a payment link reference"));
+            Assertions.assertThat(logs.size())
+                    .isOne();
+            logs.assertContains("Card number entered in a payment link reference");
         }
 
         private ChargeService getNewChargeService() {
