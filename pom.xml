@@ -404,16 +404,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>au.com.dius</groupId>
-            <artifactId>pact-jvm-provider-junit</artifactId>
-            <version>4.0.10</version>
+            <groupId>au.com.dius.pact.consumer</groupId>
+            <artifactId>junit</artifactId>
+            <version>${pact.version}</version>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>xerces</groupId>
-                    <artifactId>xercesImpl</artifactId>
-                </exclusion>
-            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius.pact.provider</groupId>
+            <artifactId>junit</artifactId>
+            <version>${pact.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.exparity</groupId>
@@ -450,6 +450,16 @@
             <artifactId>testing-dropwizard-5</artifactId>
             <version>${pay-java-commons.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>au.com.dius</groupId>
+                    <artifactId>pact-jvm-provider-junit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>au.com.dius</groupId>
+                    <artifactId>pact-jvm-consumer-junit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
