@@ -1,22 +1,19 @@
 package uk.gov.pay.connector.wallets;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.apache.commons.lang3.tuple.Pair;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
@@ -32,9 +29,7 @@ import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.OperationAlreadyInProgressRuntimeException;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.model.api.ExternalTransactionStateFactory;
-import uk.gov.pay.connector.events.EventQueue;
 import uk.gov.pay.connector.events.EventService;
-import uk.gov.pay.connector.events.dao.EmittedEventDao;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -66,7 +61,6 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.time.Instant;
 import java.time.InstantSource;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -84,7 +78,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -111,9 +104,12 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 @ExtendWith(MockitoExtension.class)
 class WalletAuthoriseServiceTest extends CardServiceTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(WalletAuthoriseService.class);
+
     private static final ProviderSessionIdentifier SESSION_IDENTIFIER = ProviderSessionIdentifier.of("session-identifier");
     private static final String TRANSACTION_ID = "transaction-id";
-    
+
     private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("01/30");
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -133,12 +129,6 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private LedgerService ledgerService;
-
-    @Mock
-    private EventQueue eventQueue;
-
-    @Mock
-    private EmittedEventDao mockEmmittedEventDao;
 
     @Mock
     protected WalletPaymentInfoToAuthCardDetailsConverter mockWalletPaymentInfoToAuthCardDetailsConverter;
@@ -180,9 +170,6 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                     .build();
 
     @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @Mock
     private EventService mockEventService;
 
     @InjectMocks
@@ -205,7 +192,6 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         lenient().when(mockConfiguration.getAuthorisationConfig()).thenReturn(mockAuthorisationConfig);
         lenient().when(mockAuthorisationConfig.getAsynchronousAuthTimeoutInMilliseconds()).thenReturn(1000);
 
-        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         AuthorisationService authorisationService = new AuthorisationService(mockExecutorService, mockEnvironment, mockConfiguration);
         ChargeService chargeService = spy(new ChargeService(null, mockedChargeDao, mockedChargeEventDao,
                 null, null, null, mockConfiguration, null, mockStateTransitionService,
@@ -219,14 +205,6 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 mockWalletPaymentInfoToAuthCardDetailsConverter,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging()),
                 mockEnvironment);
-
-        setUpLogging();
-    }
-
-    private void setUpLogging() {
-        Logger root = (Logger) LoggerFactory.getLogger(WalletAuthoriseService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
@@ -234,12 +212,11 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse gatewayResponse = providerWillAuthoriseApplePay();
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(4)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains(
-                format("APPLE_PAY authorisation - charge status=AUTHORISATION SUCCESS, request status=success, charge_external_id=%s, payment provider response=%s", charge.getExternalId(), gatewayResponse.toString()))
-        ), is(true));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(4);
+        logs.assertContains(format("APPLE_PAY authorisation - charge status=AUTHORISATION SUCCESS, " +
+                        "request status=success, charge_external_id=%s, payment provider response=%s",
+                charge.getExternalId(), gatewayResponse.toString()));
 
         String expectedMetric = format("gateway-operations.%s.%s.authorise.%s.result.%s",
                 "sandbox",
@@ -288,7 +265,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        
+
         GooglePayAuthRequest authorisationData =
                 objectMapper.readValue(load("googlepay/example-auth-request.json"), GooglePayAuthRequest.class);
 
@@ -324,7 +301,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillAuthoriseGooglePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
-        
+
         GooglePayAuthRequest authorisationData =
                 objectMapper.readValue(load("googlepay/auth-request-with-empty-last-digits-card-number.json"), GooglePayAuthRequest.class);
 
@@ -381,18 +358,15 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
 
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, atLeast(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream().anyMatch(le -> le.getFormattedMessage().contains("APPLE_PAY authorisation - charge status=AUTHORISATION REJECTED, request status=success")
-        ), is(true));
+        logs.assertContains(
+                "APPLE_PAY authorisation - charge status=AUTHORISATION REJECTED, request status=success");
 
         String expectedMetric = format("gateway-operations.%s.%s.authorise.%s.result.%s",
                 "sandbox",
                 "test",
                 "apple-pay",
                 "failure");
-        
+
         verify(mockMetricRegistry).counter(expectedMetric);
     }
 
@@ -432,8 +406,8 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillError();
         GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code", null);
         when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
-        
-        
+
+
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(response.getGatewayError().isPresent(), is(true));
@@ -566,9 +540,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         verify(mockEventService, never()).emitAndRecordEvent(any(GatewayDoesNotRequire3dsAuthorisation.class));
     }
 
-    private GatewayResponse mockAuthResponse(String TRANSACTION_ID, AuthoriseStatus authoriseStatus, String errorCode, CardExpiryDate cardExpiryDate) {
+    private GatewayResponse mockAuthResponse(String transactionId, AuthoriseStatus authoriseStatus, String errorCode, CardExpiryDate cardExpiryDate) {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
-        lenient().when(worldpayResponse.getTransactionId()).thenReturn(TRANSACTION_ID);
+        lenient().when(worldpayResponse.getTransactionId()).thenReturn(transactionId);
         lenient().when(worldpayResponse.authoriseStatus()).thenReturn(authoriseStatus);
         lenient().when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
         lenient().when(worldpayResponse.getCardExpiryDate()).thenReturn(Optional.ofNullable(cardExpiryDate));

@@ -1,15 +1,9 @@
 package uk.gov.pay.connector.queue.tasks;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.ArgumentCaptor;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
@@ -24,12 +18,8 @@ import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
@@ -51,23 +41,21 @@ import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class AuthoriseWithUserNotPresentTaskHandlerIT {
+
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(CaptureQueue.class);
+
     private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
     private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
     private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
 
-    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-
     @BeforeEach
-    public void setUp() {
-        Logger root = (Logger) LoggerFactory.getLogger(CaptureQueue.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-        app.getDatabaseTestHelper().enableRecurring(Long.valueOf(testBaseExtension.getAccountId()));
+    void setUp() {
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
     }
 
     @Test
@@ -83,11 +71,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
         testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_QUEUED.getValue());
         testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_SUCCESS.getStatus());
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(
-                loggingEventArgumentCaptor.getValue().getFormattedMessage(),
-                containsString("Charge [" + chargeWithValidAgreementAndPaymentInstrument + "] added to capture queue.")
-        );
+        logs.assertContains("Charge [" + chargeWithValidAgreementAndPaymentInstrument + "] added to capture queue.");
     }
 
     @Test
@@ -102,7 +86,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_REJECTED.getValue());
         testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_FAILED_REJECTED.getStatus());
-        verifyNoInteractions(mockAppender);
+        assertThat(logs.size())
+                .isZero();
     }
 
     @Test
@@ -117,7 +102,8 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_ERROR.getValue());
         testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
-        verifyNoInteractions(mockAppender);
+        assertThat(logs.size())
+                .isZero();
     }
 
     private String setupChargeWithAgreementAndPaymentInstrument(String first6Digits, String last4Digits) {

@@ -1,20 +1,17 @@
 package uk.gov.pay.connector.queue.tasks;
 
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
@@ -36,13 +33,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType.PAYMENT_CONFIRMED;
 
 @ExtendWith(MockitoExtension.class)
 class TaskQueueMessageHandlerTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(TaskQueueMessageHandler.class);
 
     @Mock
     private TaskQueue taskQueue;
@@ -64,11 +63,6 @@ class TaskQueueMessageHandlerTest {
     private QueryAndUpdatePaymentInSubmittedStateTaskHandler mockQueryAndUpdatePaymentInSubmittedStateTaskHandler;
     @Mock
     private ServiceArchivedTaskHandler mockServiceArchivedTaskHandler;
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     @Captor
     ArgumentCaptor<RetryPaymentOrRefundEmailTaskData> retryPaymentOrRefundEmailTaskDataArgumentCaptor;
@@ -86,7 +80,7 @@ class TaskQueueMessageHandlerTest {
     private final String chargeExternalId = "a-charge-external-id";
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         taskQueueMessageHandler = new TaskQueueMessageHandler(
                 taskQueue,
                 collectFeesForFailedPaymentsTaskHandler,
@@ -97,14 +91,10 @@ class TaskQueueMessageHandlerTest {
                 mockServiceArchivedTaskHandler,
                 mockQueryAndUpdatePaymentInSubmittedStateTaskHandler,
                 objectMapper);
-
-        Logger logger = (Logger) LoggerFactory.getLogger(TaskQueueMessageHandler.class);
-        logger.setLevel(Level.INFO);
-        logger.addAppender(mockAppender);
     }
 
     @Test
-    public void shouldProcessNewCollectFeeTask() throws Exception {
+    void shouldProcessNewCollectFeeTask() throws Exception {
         var paymentTaskData = new PaymentTaskData(chargeExternalId);
         String data = objectMapper.writeValueAsString(paymentTaskData);
         TaskMessage taskMessage = setupQueueMessage(data, TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT);
@@ -112,14 +102,14 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
-        assertThat(loggingEvents.get(2).getFormattedMessage(), is("Successfully processed [collect_fee_for_stripe_failed_payment] task."));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(3);
+        logs.assertContains("Processing [collect_fee_for_stripe_failed_payment] task.");
+        logs.assertContains("Successfully processed [collect_fee_for_stripe_failed_payment] task.");
     }
 
     @Test
-    public void shouldProcessOldCollectFeeTask() throws Exception {
+    void shouldProcessOldCollectFeeTask() throws Exception {
         Task oldFormatTask = mock(Task.class);
         QueueMessage mockQueueMessage = mock(QueueMessage.class);
         TaskMessage taskMessage = TaskMessage.of(oldFormatTask, mockQueueMessage);
@@ -133,14 +123,14 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processing [collect_fee_for_stripe_failed_payment] task."));
-        assertThat(loggingEvents.get(2).getFormattedMessage(), is("Successfully processed [collect_fee_for_stripe_failed_payment] task."));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(3);
+        logs.assertContains("Processing [collect_fee_for_stripe_failed_payment] task.");
+        logs.assertContains("Successfully processed [collect_fee_for_stripe_failed_payment] task.");
     }
 
     @Test
-    public void shouldProcessDisputeCreatedTask() throws Exception {
+    void shouldProcessDisputeCreatedTask() throws Exception {
         TaskMessage taskMessage = setupQueueMessage("{ \"key\": \"value\"}", TaskType.HANDLE_STRIPE_WEBHOOK_NOTIFICATION);
         taskQueueMessageHandler.processMessages();
         verify(stripeWebhookTaskHandler).process(any(StripeNotification.class));
@@ -148,7 +138,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessAuthoriseWithUserNotPresentTask() throws QueueException {
+    void shouldProcessAuthoriseWithUserNotPresentTask() throws QueueException {
         TaskMessage taskMessage = setupQueueMessage("{ \"payment_external_id\": \"external-charge-id\"}", TaskType.AUTHORISE_WITH_USER_NOT_PRESENT);
         taskQueueMessageHandler.processMessages();
         verify(authoriseWithUserNotPresentHandler).process("external-charge-id");
@@ -156,7 +146,7 @@ class TaskQueueMessageHandlerTest {
     }
 
     @Test
-    public void shouldProcessDeleteStoredPaymentDetailsTask() throws Exception {
+    void shouldProcessDeleteStoredPaymentDetailsTask() throws Exception {
         TaskMessage taskMessage = setupQueueMessage("{ \"agreement_external_id\": \"external-agreement-id\", \"paymentInstrument_external_id\": \"external-paymentInstrument-id\"}", TaskType.DELETE_STORED_PAYMENT_DETAILS);
         taskQueueMessageHandler.processMessages();
         verify(deleteStoredPaymentDetailsHandler).process("external-agreement-id", "external-paymentInstrument-id");

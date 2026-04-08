@@ -1,20 +1,16 @@
 package uk.gov.pay.connector.charge.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ChargeSweepConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -45,17 +41,14 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
@@ -74,6 +67,9 @@ import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.Gatewa
 @ExtendWith(MockitoExtension.class)
 class ChargeExpiryServiceTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(ChargeExpiryService.class);
+
     private ChargeExpiryService chargeExpiryService;
 
     private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2022-06-09T00:00:00Z"));
@@ -89,7 +85,7 @@ class ChargeExpiryServiceTest {
 
     @Mock
     private IdempotencyDao mockIdempotencyDao;
-    
+
     @Mock
     private PaymentProviders mockPaymentProviders;
 
@@ -107,12 +103,6 @@ class ChargeExpiryServiceTest {
 
     @Mock
     private ConnectorConfiguration mockedConfig;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
 
     private static final List<ChargeStatus> EXPIRABLE_REGULAR_STATUSES = List.of(
             CREATED,
@@ -149,11 +139,11 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "CREATED",
             "ENTERING CARD DETAILS"
     })
-    public void shouldExpireChargesWithoutGateway_whenStateIsPreAuthorisation(String chargeStatus) throws Exception {
+    void shouldExpireChargesWithoutGateway_whenStateIsPreAuthorisation(String chargeStatus) throws Exception {
         var status = ChargeStatus.fromString(chargeStatus);
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
@@ -172,7 +162,7 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY"
     })
@@ -197,7 +187,7 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION SUCCESS",
             "AWAITING CAPTURE REQUEST"
     })
@@ -236,7 +226,7 @@ class ChargeExpiryServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION SUCCESS",
@@ -279,7 +269,7 @@ class ChargeExpiryServiceTest {
 
 
     @ParameterizedTest
-    @ValueSource( strings = {
+    @ValueSource(strings = {
             "AUTHORISATION 3DS REQUIRED",
             "AUTHORISATION 3DS READY",
             "AUTHORISATION SUCCESS",
@@ -361,10 +351,6 @@ class ChargeExpiryServiceTest {
 
     @Test
     void shouldSweepAndExpireCharges() throws Exception {
-        Logger root = (Logger) LoggerFactory.getLogger(ChargeExpiryService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         ChargeEntity chargeEntityAwaitingCapture = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))
@@ -404,21 +390,20 @@ class ChargeExpiryServiceTest {
         when(mockChargeService.transitionChargeState(any(ChargeEntity.class), any())).thenReturn(expiredCharge);
 
         chargeExpiryService.sweepAndExpireChargesAndTokensAndIdempotencyKeys();
-        verify(mockAppender, times(5)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream().map(LoggingEvent::getFormattedMessage).collect(Collectors.toList()),
-                hasItems(
-                        "Tokens deleted - number_of_tokens=1, since_date=2022-06-02T00:00:00Z",
-                        "Idempotency keys deleted - number_of_idempotency_keys=1, since_date=2022-06-08T00:00:00Z",
-                        "Charges found for expiry - number_of_charges=2, since_date=2022-06-08T22:30:00Z, updated_before=2022-06-08T23:58:00Z, awaiting_capture_date=2022-06-04T00:00:00Z"
-                ));
+
+        Assertions.assertThat(logs.size())
+                .isEqualTo(5);
+        logs.assertContains("Tokens deleted - number_of_tokens=1, since_date=2022-06-02T00:00:00Z");
+        logs.assertContains("Idempotency keys deleted - number_of_idempotency_keys=1, since_date=2022-06-08T00:00:00Z");
+        logs.assertContains(
+                "Charges found for expiry - number_of_charges=2, since_date=2022-06-08T22:30:00Z, updated_before=2022-06-08T23:58:00Z, awaiting_capture_date=2022-06-04T00:00:00Z");
         verify(mockChargeService).transitionChargeState(chargeEntityAwaitingCapture.getExternalId(), EXPIRED);
         verify(mockChargeService).transitionChargeState(chargeEntityAuthorisationSuccess.getExternalId(), EXPIRED);
         verify(mockIdempotencyDao).deleteIdempotencyKeysOlderThanSpecifiedDateTime(Instant.parse("2022-06-08T00:00:00Z"));
     }
 
     @Test
-    void shouldCancelChargeWithGatewayWhenChargeInPreAuthorisedStateAndExistsWithGateway() throws Exception {
+    void shouldCancelChargeWithGatewayWhenChargeInPreAuthorisedStateAndExistsWithGateway() {
         ChargeEntity preAuthorisationCharge = ChargeEntityFixture.aValidChargeEntity()
                 .withAmount(200L)
                 .withCreatedDate(Instant.now().minus(Duration.ofHours(48)).plus(Duration.ofMinutes(1)))

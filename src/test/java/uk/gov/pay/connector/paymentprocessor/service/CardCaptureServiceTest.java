@@ -1,26 +1,22 @@
 package uk.gov.pay.connector.paymentprocessor.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
+import io.github.netmikey.logunit.api.LogCapturer;
+import jakarta.persistence.OptimisticLockException;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.hamcrest.HamcrestArgumentMatcher;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
@@ -47,9 +43,7 @@ import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import uk.gov.pay.connector.refund.service.RefundService;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
-import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.persistence.OptimisticLockException;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.time.ZonedDateTime;
@@ -92,28 +86,27 @@ import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayErro
 @ExtendWith(MockitoExtension.class)
 class CardCaptureServiceTest extends CardServiceTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(CardCaptureService.class);
+
     @Mock
     private UserNotificationService mockUserNotificationService;
     private CardCaptureService cardCaptureService;
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
     @Mock
     private CaptureQueue mockCaptureQueue;
     @Mock
     private ConnectorConfiguration mockConfiguration;
     @Mock
     private Environment mockEnvironment;
-    @Captor
-    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
     @Mock
     private StateTransitionService mockStateTransitionService;
     @Mock
     private LedgerService ledgerService;
     @Mock
-    private EventService mockEventService;    
+    private EventService mockEventService;
     @Mock
     private PaymentInstrumentService mockPaymentInstrumentService;
-    @Mock 
+    @Mock
     private RefundService mockedRefundService;
     @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
@@ -129,7 +122,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
 
     private static final InstantSource INSTANT_SOURCE = InstantSource.fixed(Instant.parse("2020-01-01T10:10:10.100Z"));
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void beforeTest() {
@@ -146,10 +139,6 @@ class CardCaptureServiceTest extends CardServiceTest {
 
         cardCaptureService = new CardCaptureService(chargeService, mockedProviders, mockUserNotificationService, mockEnvironment,
                 INSTANT_SOURCE, mockCaptureQueue, mockEventService);
-
-        Logger root = (Logger) LoggerFactory.getLogger(CardCaptureService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     private void worldpayWillRespondWithSuccess() {
@@ -169,7 +158,6 @@ class CardCaptureServiceTest extends CardServiceTest {
 
     @Test
     void doCapture_shouldCaptureAChargeForANonSandboxAccount() {
-
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWith("worldpay", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
@@ -199,8 +187,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    void doCapture_shouldCaptureAChargeForStripeAccount() throws QueueException {
-
+    void doCapture_shouldCaptureAChargeForStripeAccount() {
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWithFees("stripe", 1L, AUTHORISATION_SUCCESS, gatewayTxId);
 
@@ -232,8 +219,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     }
 
     @Test
-    void doCapture_shouldCaptureAChargeForWorldpayAccountAndShouldNotEmitFeeIncurredEvent() throws QueueException {
-
+    void doCapture_shouldCaptureAChargeForWorldpayAccountAndShouldNotEmitFeeIncurredEvent() {
         String gatewayTxId = "theTxId";
         ChargeEntity charge = createNewChargeWithFees("worldpay", 1L, CAPTURE_APPROVED, gatewayTxId);
 
@@ -326,7 +312,7 @@ class CardCaptureServiceTest extends CardServiceTest {
         String chargeId = "jgk3erq5sv2i4cds6qqa9f1a8a";
         when(mockedChargeDao.findByExternalId(chargeId))
                 .thenReturn(Optional.empty());
-        
+
         assertThrows(ChargeNotFoundRuntimeException.class, () -> cardCaptureService.doCapture(chargeId));
         // verify an email notification is not sent when an unsuccessful capture
         verifyNoInteractions(mockUserNotificationService);
@@ -351,7 +337,7 @@ class CardCaptureServiceTest extends CardServiceTest {
         ChargeEntity charge = createNewChargeWith(chargeId, ChargeStatus.ENTERING_CARD_DETAILS);
         when(mockedChargeDao.findByExternalId(charge.getExternalId()))
                 .thenReturn(Optional.of(charge));
-        
+
         assertThrows(IllegalStateRuntimeException.class, () -> cardCaptureService.doCapture(charge.getExternalId()));
         assertThat(charge.getStatus(), is(ChargeStatus.ENTERING_CARD_DETAILS.getValue()));
         // verify an email notification is not sent when an unsuccessful capture
@@ -427,12 +413,9 @@ class CardCaptureServiceTest extends CardServiceTest {
         cardCaptureService.markChargeAsCaptureError(charge.getExternalId());
 
         verify(mockedChargeEventDao).persistChargeEventOf(argThat(chargeEntityHasStatus(CAPTURE_ERROR)), isNull());
-
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        String expectedLogMessage = String.format("CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts", charge.getExternalId());
-        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
+        logs.assertContains(
+                "CAPTURE_ERROR for charge [charge_external_id=%s] - reached maximum number of capture attempts"
+                        .formatted(charge.getExternalId()));
     }
 
     @Test
@@ -466,7 +449,7 @@ class CardCaptureServiceTest extends CardServiceTest {
     }
 
     private HamcrestArgumentMatcher<ChargeEntity> chargeEntityHasStatus(ChargeStatus expectedStatus) {
-        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<ChargeEntity>() {
+        return new HamcrestArgumentMatcher<>(new TypeSafeMatcher<>() {
             @Override
             protected boolean matchesSafely(ChargeEntity chargeEntity) {
                 return chargeEntity.getStatus().equals(expectedStatus.getValue());

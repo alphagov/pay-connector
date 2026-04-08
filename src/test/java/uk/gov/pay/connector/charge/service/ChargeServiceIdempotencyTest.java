@@ -1,20 +1,15 @@
 package uk.gov.pay.connector.charge.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.netmikey.logunit.api.LogCapturer;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.app.CaptureProcessConfig;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -47,7 +42,6 @@ import uk.gov.pay.connector.token.dao.TokenDao;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.charge.ExternalMetadata;
 
-import jakarta.ws.rs.core.UriInfo;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.Map;
@@ -61,7 +55,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.ChargeCreateRequestBuilder.aChargeCreateRequest;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -70,6 +63,9 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 
 @ExtendWith(MockitoExtension.class)
 class ChargeServiceIdempotencyTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(ChargeService.class);
 
     private static final String SERVICE_HOST = "http://my-service";
     private static final long GATEWAY_ACCOUNT_ID = 10L;
@@ -138,18 +134,12 @@ class ChargeServiceIdempotencyTest {
 
     @Mock
     private Worldpay3dsFlexJwtService mockWorldpay3dsFlexJwtService;
-    
+
     @Mock
     private IdempotencyDao mockIdempotencyDao;
 
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
-
-    @Mock
-    Appender<ILoggingEvent> mockAppender;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     private final InstantSource fixedInstantSource = InstantSource.fixed(Instant.parse("2024-11-11T10:07:00Z"));
 
@@ -185,7 +175,7 @@ class ChargeServiceIdempotencyTest {
                 .withAuthorisationMode(AuthorisationMode.AGREEMENT)
                 .withReturnUrl(null)
                 .build();
-        
+
         when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.empty());
 
         assertFalse(chargeService.checkForChargeCreatedWithIdempotencyKey(chargeCreateRequest, GATEWAY_ACCOUNT_ID,
@@ -214,23 +204,19 @@ class ChargeServiceIdempotencyTest {
         IdempotencyEntity idempotencyEntity = new IdempotencyEntity(idempotencyKey, gatewayAccount,
                 existingChargeExternalId, requestBody, Instant.now());
 
-        doAnswer(invocation -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
+        doAnswer(_ -> fromUri(SERVICE_HOST)).when(this.mockedUriInfo).getBaseUriBuilder();
         when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockedPaymentProvider);
         when(mockedPaymentProvider.getExternalChargeRefundAvailability(any(Charge.class), anyList())).thenReturn(EXTERNAL_AVAILABLE);
         when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.of(idempotencyEntity));
         when(mockedChargeDao.findByExternalId(existingChargeExternalId)).thenReturn(Optional.of(chargeEntity));
 
         ChargeResponse response = chargeService.checkForChargeCreatedWithIdempotencyKey(chargeCreateRequest, GATEWAY_ACCOUNT_ID, idempotencyKey, mockedUriInfo).get();
-        
+
         assertThat(response.getChargeId(), is(existingChargeExternalId));
     }
 
     @Test
     void shouldThrowException_whenIdempotencyExistsAndRequestBodyNotMatch() {
-        Logger root = (Logger) LoggerFactory.getLogger(ChargeService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String existingChargeExternalId = "existing-id";
         String idempotencyKey = "an-idempotency-key";
         ChargeCreateRequest newChargeCreateRequest = aChargeCreateRequest()
@@ -254,13 +240,12 @@ class ChargeServiceIdempotencyTest {
         });
         IdempotencyEntity idempotencyEntity = new IdempotencyEntity(idempotencyKey, gatewayAccount,
                 existingChargeExternalId, requestBody, Instant.now());
-        
+
         when(mockIdempotencyDao.findByGatewayAccountIdAndKey(GATEWAY_ACCOUNT_ID, idempotencyKey)).thenReturn(Optional.of(idempotencyEntity));
 
         assertThrows(IdempotencyKeyUsedException.class, () -> chargeService.checkForChargeCreatedWithIdempotencyKey(newChargeCreateRequest, GATEWAY_ACCOUNT_ID, idempotencyKey, mockedUriInfo).get());
-
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent value = loggingEventArgumentCaptor.getValue();
-        assertThat(value.getMessage(), is("Idempotency-Key [an-idempotency-key] was already used to create a charge with a different request body. Existing payment external id: existing-id"));
+        logs.assertContains(
+                "Idempotency-Key [an-idempotency-key] was already used to create a charge with a " +
+                        "different request body. Existing payment external id: existing-id");
     }
 }

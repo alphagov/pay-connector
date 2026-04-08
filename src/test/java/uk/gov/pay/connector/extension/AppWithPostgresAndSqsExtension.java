@@ -145,12 +145,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
         injector = InjectorLookup.getInjector(dropwizardAppExtension.getApplication()).get();
     }
-    
+
     private void resetIfRunning(WireMockServer server) {
         if (server.isRunning()) {
             server.resetRequests();
         }
     }
+
     public void resetWireMockServer() {
         resetIfRunning(wireMockServer);
         resetIfRunning(worldpayWireMockServer);

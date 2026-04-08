@@ -1,28 +1,25 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
@@ -69,7 +66,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
@@ -107,6 +103,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 @ExtendWith(MockitoExtension.class)
 class WorldpayAuthoriseHandlerTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(WorldpayAuthoriseHandler.class);
+
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
     private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
 
@@ -114,8 +113,6 @@ class WorldpayAuthoriseHandlerTest {
     private GatewayClient authoriseClient;
     @Mock
     private GatewayClient.Response authorisationSuccessResponse;
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
 
     private ChargeEntityFixture chargeEntityFixture;
     private GatewayAccountEntity gatewayAccountEntity;
@@ -148,10 +145,6 @@ class WorldpayAuthoriseHandlerTest {
         chargeEntityFixture = aValidChargeEntity()
                 .withGatewayAccountCredentialsEntity(creds)
                 .withGatewayAccountEntity(gatewayAccountEntity);
-
-        Logger root = (Logger) LoggerFactory.getLogger(WorldpayAuthoriseHandler.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
@@ -200,13 +193,11 @@ class WorldpayAuthoriseHandlerTest {
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS))
                 .areIdentical();
 
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = "Authorisation request will be posted not MOTO and with billing address and without email address and with IP address and with 3DS data for uniqueSessionId (worldpay 1)";
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
+        Assertions.assertThat(logs.size())
+                .isOne();
+        logs.assertContains(
+                "Authorisation request will be posted not MOTO and with billing address and without " +
+                        "email address and with IP address and with 3DS data for uniqueSessionId (worldpay 1)");
     }
 
     @Test
@@ -234,13 +225,11 @@ class WorldpayAuthoriseHandlerTest {
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS))
                 .areIdentical();
 
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = "Authorisation request will be posted not MOTO and with billing address and without email address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)";
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
+        Assertions.assertThat(logs.size())
+                .isOne();
+        logs.assertContains(
+                "Authorisation request will be posted not MOTO and with billing address and without " +
+                        "email address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)");
     }
 
     @ParameterizedTest
@@ -439,13 +428,11 @@ class WorldpayAuthoriseHandlerTest {
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_EMAIL))
                 .areIdentical();
 
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = "Authorisation request will be posted not MOTO and with billing address and with email address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)";
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
+        Assertions.assertThat(logs.size())
+                .isOne();
+        logs.assertContains(
+                "Authorisation request will be posted not MOTO and with billing address and with email " +
+                        "address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)");
     }
 
     @Test

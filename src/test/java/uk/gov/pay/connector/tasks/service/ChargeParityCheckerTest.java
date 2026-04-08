@@ -1,29 +1,22 @@
 package uk.gov.pay.connector.tasks.service;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Auth3dsRequiredEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.Exemption3dsType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.client.ledger.model.AuthorisationSummary;
 import uk.gov.pay.connector.client.ledger.model.CardDetails;
@@ -34,7 +27,6 @@ import uk.gov.pay.connector.client.ledger.model.ThreeDSecure;
 import uk.gov.pay.connector.fee.model.Fee;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
-import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
@@ -53,7 +45,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultCardDetails;
@@ -102,23 +93,18 @@ import static uk.gov.service.payments.commons.model.Source.CARD_PAYMENT_LINK;
 @ExtendWith(MockitoExtension.class)
 class ChargeParityCheckerTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(ChargeParityChecker.class);
+
     @Mock
-    private PaymentInstrumentService paymentInstrumentService;
-    @Mock
-    private ChargeService chargeService;
-    @Mock
-    private RefundService mockRefundService;
+    private RefundService dummyRefundService;
     @Mock
     private PaymentProviders mockProviders;
     @Mock
     private RefundEntityFactory mockRefundEntityFactory;
     @InjectMocks
     ChargeParityChecker chargeParityChecker;
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-    @Captor
-    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-    
+
     private ChargeEntity chargeEntity;
     private ChargeEntity chargeEntityWith3ds;
     private final List<RefundEntity> refundEntities = List.of();
@@ -154,14 +140,14 @@ class ChargeParityCheckerTest {
         Auth3dsRequiredEntity auth3dsRequiredEntity = anAuth3dsRequiredEntity()
                 .withThreeDsVersion("2.1.0")
                 .build();
-        
+
         chargeEntity = aValidChargeEntity()
                 .withStatus(CAPTURED)
                 .withCardDetails(defaultCardDetails())
                 .withGatewayAccountEntity(defaultGatewayAccountEntity())
                 .withMoto(true)
                 .withSource(CARD_PAYMENT_LINK)
-                .withFee(Fee.of(null,10L))
+                .withFee(Fee.of(null, 10L))
                 .withCorporateSurcharge(25L)
                 .withWalletType(APPLE_PAY)
                 .withDelayedCapture(true)
@@ -172,14 +158,10 @@ class ChargeParityCheckerTest {
                 .withEvents(List.of(chargeEventCreated, chargeEventCaptured, chargeEventCaptureSubmitted))
                 .withAuth3dsDetailsEntity(auth3dsRequiredEntity)
                 .build();
-        Logger root = (Logger) LoggerFactory.getLogger(ChargeParityChecker.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
     void parityCheck_shouldMatchIfChargeMatchesWithLedgerTransaction() {
-
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         LedgerTransaction transaction = from(chargeEntity, refundEntities).build();
@@ -376,9 +358,7 @@ class ChargeParityCheckerTest {
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logStatement.getFirst().getFormattedMessage(), is("Field value does not match between ledger and connector [field_name=created_date]"));
+        logs.assertContains("Field value does not match between ledger and connector [field_name=created_date]");
     }
 
     @Test
@@ -419,23 +399,22 @@ class ChargeParityCheckerTest {
                 .withAuthorisationSummary(null)
                 .build();
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeBeforeDate, transaction);
-        
+
         assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
     }
-    
+
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepancies(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction, String fieldName,
                                                                      ConnectorAuthorisationSummaryState connectorAuthorisationSummaryState, LedgerAuthorisationSummaryState ledgerAuthorisationSummaryState) {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, ledgerTransaction);
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
+
         StringBuilder expectedLogMessage = new StringBuilder("Field value does not match between ledger and connector [field_name=").append(fieldName).append(']');
         if (connectorAuthorisationSummaryState != null || ledgerAuthorisationSummaryState != null) {
             expectedLogMessage.append(" [calculated_states=").append(connectorAuthorisationSummaryState).append(",").append(ledgerAuthorisationSummaryState).append(']');
         }
-        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage.toString()));
+        logs.assertContains(expectedLogMessage.toString());
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnDataMismatchFor3dsDataDiscrepancies() {
@@ -462,14 +441,14 @@ class ChargeParityCheckerTest {
                         "authorisation_summary.three_d_secure.version", null, null)
         );
     }
-    
+
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldNotReturnMismatchWhenExemption3dsRequestedIsOptimisedAndExemptions3dsNullAndExemptionOutcomeNotSet(
             Exemption3dsType chargeExemption3dsRequested,
             Exemption3ds chargeExemption3ds,
             Exemption transactionExemption
-            ) {
+    ) {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         chargeEntity.setExemption3ds(chargeExemption3ds);
@@ -491,20 +470,21 @@ class ChargeParityCheckerTest {
                 Arguments.of(CORPORATE, null, createExemption(true))
         );
     }
+
     private static Exemption createExemption(boolean requested) {
         return new Exemption(requested, null, null);
     }
-    
+
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldNotReturnMismatchIfExemption3dsDataMatches(
             Exemption3dsType chargeExemption3dsType,
-            Exemption3ds chargeExemption3ds, 
-            String transactionExemptionOutcomeResult, 
+            Exemption3ds chargeExemption3ds,
+            String transactionExemptionOutcomeResult,
             Boolean setRequested
     ) {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
-        
+
         Exemption exemption = new Exemption(setRequested, null, new ExemptionOutcome(transactionExemptionOutcomeResult));
 
         chargeEntity.setExemption3ds(chargeExemption3ds);
@@ -517,7 +497,7 @@ class ChargeParityCheckerTest {
 
         assertThat(parityCheckStatus, is(EXISTS_IN_LEDGER));
     }
-    
+
     private static Stream<Arguments> parityCheck_shouldNotReturnMismatchIfExemption3dsDataMatches() {
         return Stream.of(
                 Arguments.of(null, EXEMPTION_HONOURED, "honoured", true),
@@ -528,7 +508,7 @@ class ChargeParityCheckerTest {
                 Arguments.of(OPTIMISED, EXEMPTION_OUT_OF_SCOPE, "out of scope", true)
         );
     }
-    
+
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldNotReturnMismatchIfExemption3dsDataMatchesWithExemptionAndTypeCorporate(
@@ -540,7 +520,7 @@ class ChargeParityCheckerTest {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         Exemption exemption = new Exemption(setRequested, "corporate", new ExemptionOutcome(transactionExemptionOutcomeResult));
-        
+
         chargeEntity.setExemption3ds(chargeExemption3ds);
         chargeEntity.setExemption3dsRequested(chargeExemption3dsType);
 
@@ -567,7 +547,7 @@ class ChargeParityCheckerTest {
             Exemption3ds chargeExemption3ds,
             String transactionExemptionOutcomeResult,
             Boolean setRequested,
-            Connector3dsExemptionResultState  connectorExemption3dsState,
+            Connector3dsExemptionResultState connectorExemption3dsState,
             Connector3dsExemptionRequestedState connectorExemption3DsRequestedState,
             LedgerExemptionState ledgerExemptionState
     ) {
@@ -583,11 +563,9 @@ class ChargeParityCheckerTest {
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logStatement = loggingEventArgumentCaptor.getAllValues();
         String expectedLogMessage = "Field value does not match between ledger and connector [field_name=exemption] " +
                 "[calculated_states=" + connectorExemption3dsState + ',' + connectorExemption3DsRequestedState + ',' + ledgerExemptionState + ']';
-        assertThat(logStatement.getFirst().getFormattedMessage(), is(expectedLogMessage));
+        logs.assertContains(expectedLogMessage);
     }
 
     private static Stream<Arguments> parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatch() {
@@ -609,7 +587,7 @@ class ChargeParityCheckerTest {
         );
     }
 
-    
+
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatchWithExemptionTypeCorporate(
@@ -648,13 +626,13 @@ class ChargeParityCheckerTest {
         chargeEntity.setExemption3dsRequested(OPTIMISED);
 
         LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithExemption3ds(chargeEntity);
-        transaction.setExemption(null); 
+        transaction.setExemption(null);
 
         ParityCheckStatus parityCheckStatus = chargeParityChecker.checkParity(chargeEntity, transaction);
 
         assertThat(parityCheckStatus, is(DATA_MISMATCH));
     }
-    
+
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldReturnMatchIf3dsDataMatchesExactly(ChargeEntity chargeEntity, LedgerTransaction ledgerTransaction) {
@@ -676,7 +654,7 @@ class ChargeParityCheckerTest {
     }
 
     @Test
-    void parityCheck_shouldAllowNullAgreementPaymentTypeFields(){
+    void parityCheck_shouldAllowNullAgreementPaymentTypeFields() {
         when(mockProviders.byName(any())).thenReturn(new SandboxPaymentProvider(mockRefundEntityFactory));
 
         ChargeEntity chargeEntity = ChargeEntityFactory.createWithAgreementPaymentType(null);
@@ -715,7 +693,7 @@ class ChargeParityCheckerTest {
     @EnumSource(AgreementPaymentType.class)
     void parityCheck_shouldFailForNonNullAgreementPaymentTypeInLedgerAndNullAgreementPaymentTypeInConnector(AgreementPaymentType agreementPaymentType) {
         ChargeEntity chargeEntity = ChargeEntityFactory.createWithAgreementPaymentType(null);
-        
+
         LedgerTransaction transaction = LedgerTransactionFactory.buildTransactionWithAgreementPaymentType(chargeEntity);
         transaction.setAgreementPaymentType(agreementPaymentType);
 
@@ -734,7 +712,7 @@ class ChargeParityCheckerTest {
         }
         return List.copyOf(arguments);
     }
-    
+
     private static Stream<Arguments> parityCheck_shouldReturnMatchIf3dsDataMatchesExactly() {
         return Stream.of(
                 Arguments.of(CHARGE_ENTITY_WITH_3DS_REQUIRED_TRUE, LEDGER_TRANSACTION_WITH_3DS_REQUIRED_TRUE),
@@ -781,7 +759,7 @@ class ChargeParityCheckerTest {
                     .withExemption3ds(EXEMPTION_HONOURED)
                     .build();
         }
-        
+
         private static LedgerTransaction buildTransactionWithAgreementPaymentType(ChargeEntity chargeEntity) {
             return from(chargeEntity, Collections.emptyList())
                     .withAgreementPaymentType(chargeEntity.getAgreementPaymentType())
@@ -815,11 +793,11 @@ class ChargeParityCheckerTest {
             } else {
                 chargeEntity.set3dsRequiredDetails(null);
             }
-            
+
             chargeEntity.setRequires3ds(isRequired);
             return chargeEntity;
         }
-        
+
         public static ChargeEntity createWith3dsRequiredNull() {
             List<ChargeEventEntity> chargeEvents = createChargeEvents();
             return aValidChargeEntity()
@@ -828,7 +806,7 @@ class ChargeParityCheckerTest {
                     .withRequires3ds(null)
                     .build();
         }
-        
+
         public static ChargeEntity createWith3dsRequiredDetailsBut3dsRequiredNull() {
             List<ChargeEventEntity> chargeEvents = createChargeEvents();
             Auth3dsRequiredEntity auth3dsRequiredEntity = new Auth3dsRequiredEntity();
@@ -863,10 +841,10 @@ class ChargeParityCheckerTest {
 
             return List.of(chargeEventEntity);
         }
-        
+
         private static ChargeEntity createWithAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
             List<ChargeEventEntity> chargeEvents = createChargeEvents();
-            
+
             return aValidChargeEntity()
                     .withStatus(CAPTURED)
                     .withEvents(chargeEvents)

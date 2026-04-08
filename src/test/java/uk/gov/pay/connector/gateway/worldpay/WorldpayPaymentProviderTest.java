@@ -1,20 +1,17 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import io.dropwizard.core.setup.Environment;
+import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.WebApplicationException;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -83,7 +80,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -139,6 +135,9 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 @ExtendWith(MockitoExtension.class)
 class WorldpayPaymentProviderTest {
 
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(WorldpayPaymentProvider.class);
+
     private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
     private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
     public static final String ONE_OFF_MERCHANT_CODE = "MERCHANTCODE";
@@ -171,9 +170,7 @@ class WorldpayPaymentProviderTest {
     @Mock
     private RefundEntityFactory refundEntityFactory;
     @Mock
-    private GatewayClient.Response response = mock(GatewayClient.Response.class);
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
+    private GatewayClient.Response response;
     @Mock
     private ChargeDao chargeDao;
     @Mock
@@ -218,10 +215,6 @@ class WorldpayPaymentProviderTest {
                         ))
                         .build())
                 .withGatewayAccountEntity(gatewayAccountEntity);
-
-        Logger root = (Logger) LoggerFactory.getLogger(WorldpayPaymentProvider.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     @Test
@@ -288,33 +281,24 @@ class WorldpayPaymentProviderTest {
     }
 
     private void verifyLoggingWithExemptionReason(Exemption3ds exemption3ds, String reason, String externalId, int timesLoggingCalled) {
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(timesLoggingCalled)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Updated exemption_3ds of charge to %s (reason %s) - charge_external_id=%s", exemption3ds.name(), reason, externalId);
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(timesLoggingCalled);
+        logs.assertContains(
+                format("Updated exemption_3ds of charge to %s (reason %s) - charge_external_id=%s",
+                        exemption3ds.name(), reason, externalId));
     }
 
     private void verifyLoggingTypeOf3dsExemption(Exemption3dsType exemption3dsType, String externalId) {
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, atLeast(1)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Requesting %s exemption - charge_external_id=%s", exemption3dsType.name(), externalId);
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
+        logs.assertContains(
+                format("Requesting %s exemption - charge_external_id=%s", exemption3dsType.name(), externalId));
     }
 
     private void verifyLoggingWithOutExemptionReason(Exemption3ds exemption3ds, String externalId, int timesLoggingCalled) {
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(timesLoggingCalled)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Updated exemption_3ds of charge to %s - charge_external_id=%s", exemption3ds.name(), externalId);
-            return loggingEvent.getFormattedMessage().contains(log);
-        }));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(timesLoggingCalled);
+        logs.assertContains(
+                format("Updated exemption_3ds of charge to %s - charge_external_id=%s",
+                        exemption3ds.name(), externalId));
     }
 
     @Test
@@ -766,21 +750,13 @@ class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
 
-        ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logs = loggingEventArgumentCaptor.getAllValues();
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = format("Authorisation with billing address and without email address and with 3DS data and without device data " +
-                    "collection result for %s", chargeEntity.getExternalId());
-            return loggingEvent.getMessage().contains(log);
-        }));
-        assertTrue(logs.stream().anyMatch(loggingEvent -> {
-            String log = "Worldpay authorisation response (orderCode: transaction-id, lastEvent: REFUSED, " +
-                    "exemptionResponse result: REJECTED, exemptionResponse reason: HIGH_RISK)";
-            return loggingEvent.getMessage().contains(log);
-        }));
-        assertTrue(logs.stream().anyMatch(loggingEvent ->
-                loggingEvent.getMessage().contains("AUTHORISATION READY -> AUTHORISATION READY")));
+        Assertions.assertThat(logs.size())
+                .isEqualTo(3);
+        logs.assertContains(format("Authorisation with billing address and without email address and with 3DS data " +
+                "and without device data collection result for %s", chargeEntity.getExternalId()));
+        logs.assertContains("Worldpay authorisation response (orderCode: transaction-id, " +
+                "lastEvent: REFUSED, exemptionResponse result: REJECTED, exemptionResponse reason: HIGH_RISK)");
+        logs.assertContains("AUTHORISATION READY -> AUTHORISATION READY");
     }
 
     private GatewayResponse<WorldpayOrderStatusResponse> getGatewayResponse(String responseFile) throws Exception {

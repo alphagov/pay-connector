@@ -1,23 +1,22 @@
 package uk.gov.pay.connector.paymentprocessor.resource;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import io.github.netmikey.logunit.api.LogCapturer;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.exception.InvalidAttributeValueExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationErrorExceptionMapper;
 import uk.gov.pay.connector.charge.exception.motoapi.AuthorisationRejectedExceptionMapper;
@@ -49,11 +48,7 @@ import uk.gov.pay.connector.token.model.domain.TokenEntity;
 import uk.gov.pay.connector.wallets.WalletService;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.time.YearMonth;
-import java.util.List;
 import java.util.Optional;
 
 import static java.time.ZoneOffset.UTC;
@@ -66,8 +61,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED;
@@ -88,6 +81,9 @@ import static uk.gov.service.payments.commons.model.ErrorIdentifier.ONE_TIME_TOK
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class CardResourceAuthoriseTest {
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(CardResource.class);
 
     private static final CardAuthoriseService mockCardAuthoriseService = mock(CardAuthoriseService.class);
     private static final Card3dsResponseAuthService mockCard3dsResponseAuthService = mock(Card3dsResponseAuthService.class);
@@ -122,18 +118,13 @@ class CardResourceAuthoriseTest {
 
     private final ChargeEntity chargeEntity = aValidChargeEntity().build();
     private TokenEntity tokenEntity;
-    private Appender<ILoggingEvent> mockAppender = mock(Appender.class);
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor = ArgumentCaptor.forClass(LoggingEvent.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         tokenEntity = new TokenEntity();
         tokenEntity.setUsed(false);
         tokenEntity.setChargeEntity(chargeEntity);
-        Logger root = (Logger) LoggerFactory.getLogger(CardResource.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
     }
 
     private static Object[] authoriseMotoApiPaymentInvalidInput() {
@@ -203,8 +194,7 @@ class CardResourceAuthoriseTest {
     @ParameterizedTest
     @MethodSource("expiryDateMonthOffsetAndExpectedResponseStatus")
     void authoriseMotoApiPaymentShouldReturnCorrectResponsesForExpiryDate(int monthsToAddOrSubstractFromCurrentMonthAndYear,
-                                                                          int expectedResponseCode,
-                                                                          String description) {
+                                                                          int expectedResponseCode) {
         String token = "one-time-token-123";
         String cardNumber = "4242424242424242";
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
@@ -413,7 +403,7 @@ class CardResourceAuthoriseTest {
         assertThat(errorResponse.messages(), hasItem("InterpretedStatus not found for Gateway response"));
         assertThat(errorResponse.identifier(), is(GENERIC));
     }
-    
+
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfCardholderNameIsTooLong() throws JsonProcessingException {
         String payloadStr = load("googlepay/example-auth-request.json").replace("Example Name", "A".repeat(256));
@@ -423,20 +413,20 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
     void authoriseGooglePayWorldpayShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
-        String payloadStr = load("googlepay/example-auth-request.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");
-        
+        String payloadStr = load("googlepay/example-auth-request.json").replace("example@test.example", "A".repeat(250) + "@" + "email.com");
+
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -448,7 +438,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Field [signed_message] must not be empty");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -460,7 +450,7 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Field [signature] must not be empty");
-        verifyReceiptOfPayloadNotLogged(response, "Received encrypted payload for charge with id");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
@@ -472,19 +462,19 @@ class CardResourceAuthoriseTest {
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Card holder name must be a maximum of 255 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     @Test
     void authoriseGooglePayStripeShouldReturn422IfEmailIsTooLong() throws JsonProcessingException {
-        String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("example@test.example","A".repeat(250) + "@" + "email.com");
+        String payloadStr = load("googlepay/example-auth-request-stripe.json").replace("example@test.example", "A".repeat(250) + "@" + "email.com");
         JsonNode payload = objectMapper.readTree(payloadStr);
 
         Response response = resources.target("/v1/frontend/charges/a-valid-chargeId/wallets/google")
                 .request().post(Entity.entity(payload, MediaType.APPLICATION_JSON_TYPE));
 
         verify422AndErrorMessage(response, "Email must be a maximum of 254 chars");
-        verifyReceiptOfPayloadNotLogged(response, "Received wallet payment info");
+        verifyReceiptOfPayloadNotLogged();
     }
 
     private void verify422AndErrorMessage(Response response, String expectedErrorMessage) {
@@ -493,14 +483,13 @@ class CardResourceAuthoriseTest {
         assertThat(errorResponse.messages(), hasItem(expectedErrorMessage));
         assertThat(errorResponse.identifier(), is(GENERIC));
     }
-    
-    private void verifyReceiptOfPayloadNotLogged(Response response, String logMessage) {
-        verify(mockAppender, times(0)).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> logEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(logEvents.stream().anyMatch(e -> e.getFormattedMessage().contains("Received encrypted payload for charge with id")), is(false));
+
+    private void verifyReceiptOfPayloadNotLogged() {
+        Assertions.assertThat(logs.size())
+                .isZero();
     }
-    
-    
+
+
     private void mockGatewayError(GatewayError gatewayError) {
         GatewayResponse<BaseAuthoriseResponse> operationResponse = mock(GatewayResponse.class);
         when(operationResponse.getGatewayError()).thenReturn(Optional.of(gatewayError));

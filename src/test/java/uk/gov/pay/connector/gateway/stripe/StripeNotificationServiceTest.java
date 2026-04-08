@@ -1,18 +1,16 @@
 package uk.gov.pay.connector.gateway.stripe;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.logstash.logback.marker.ObjectAppendingMarker;
+import io.github.netmikey.logunit.api.LogCapturer;
+import jakarta.ws.rs.WebApplicationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -20,7 +18,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.service.ChargeService;
@@ -37,18 +34,14 @@ import uk.gov.pay.connector.util.IpAddressMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.ws.rs.WebApplicationException;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItemInArray;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -62,6 +55,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.slf4j.event.Level.ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_READY;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -71,21 +65,28 @@ import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.PAYOUT_
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.UNKNOWN;
 import static uk.gov.pay.connector.gateway.stripe.StripeNotificationType.byType;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_ACCOUNT_UPDATED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_BALANCE_AVAILABLE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_DISPUTE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_PAYMENT_INTENT_PAYMENT_FAILED;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_NOTIFICATION_BALANCE_AVAILABLE;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_PAYOUT_NOTIFICATION;
 
 @ExtendWith(MockitoExtension.class)
 class StripeNotificationServiceTest {
+
+    @RegisterExtension
+    LogCapturer stripeNotificationServiceLogs = LogCapturer.create().captureForType(StripeNotificationService.class);
+    @RegisterExtension
+    LogCapturer stripeRefundUpdatedHandlerLogs = LogCapturer.create().captureForType(StripeRefundUpdatedHandler.class);
+    @RegisterExtension
+    LogCapturer stripeAccountUpdatedHandlerLogs = LogCapturer.create().captureForType(StripeAccountUpdatedHandler.class);
+
     private static final String FORWARDED_IP_ADDRESSES = "102.108.0.6, 1.2.3.4";
     private static final Set<String> ALLOWED_IP_ADDRESSES = CidrUtils.getIpAddresses(Set.of("1.2.3.0/24", "9.9.9.9/32"));
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private StripeNotificationService notificationService;
-    private StripeAccountUpdatedHandler stripeAccountUpdatedHandler;
 
     @Mock
     private Card3dsResponseAuthService mockCard3dsResponseAuthService;
@@ -100,14 +101,9 @@ class StripeNotificationServiceTest {
     @Mock
     private PayoutEmitterService mockPayoutEmitterService;
     @Mock
-    private Appender<ILoggingEvent> mockAppender;
-    @Mock
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
     @Mock
     private TaskQueueService mockTaskQueueService;
-
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
     @Captor
     private ArgumentCaptor<Payout> payoutArgumentCaptor;
@@ -121,7 +117,7 @@ class StripeNotificationServiceTest {
 
     @BeforeEach
     void setup() {
-        stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(mockGatewayAccountCredentialsService, objectMapper);
+        StripeAccountUpdatedHandler stripeAccountUpdatedHandler = new StripeAccountUpdatedHandler(mockGatewayAccountCredentialsService, objectMapper);
         notificationService = new StripeNotificationService(
                 mockCard3dsResponseAuthService,
                 mockChargeService,
@@ -154,28 +150,21 @@ class StripeNotificationServiceTest {
     private String signPayloadWithTestSecret(String payload) {
         return StripeNotificationUtilTest.generateSigHeader(webhookTestSigningSecret, payload);
     }
-    
+
     @Test
     void shouldLogForBalanceAvailableEvent() {
-        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_BALANCE_AVAILABLE);
 
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
+
         assertTrue(result);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getFormattedMessage(), containsString("Logging stripe balance"));
+        Assertions.assertThat(stripeNotificationServiceLogs.size())
+                .isEqualTo(3);
+        stripeNotificationServiceLogs.assertContains("Logging stripe balance");
     }
 
     @Test
     void shouldLogForDisputeCreatedEvent() {
-        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
         payload = payload
                 .replace("{{type}}", "charge.dispute.created")
@@ -184,18 +173,15 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getFormattedMessage(), containsString("Received a charge.dispute.created event"));
-        assertThat(loggingEvent.getArgumentArray().length, is(1));
+        Assertions.assertThat(stripeNotificationServiceLogs.size())
+                .isEqualTo(3);
+        var loggingEvent = stripeNotificationServiceLogs.assertContains("Received a charge.dispute.created event");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .hasSize(1);
     }
 
     @Test
     void shouldLogForDisputeUpdatedEvent() {
-        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
         payload = payload
                 .replace("{{type}}", "charge.dispute.updated")
@@ -204,18 +190,15 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getFormattedMessage(), containsString("Received a charge.dispute.updated event"));
-        assertThat(loggingEvent.getArgumentArray().length, is(1));
+        Assertions.assertThat(stripeNotificationServiceLogs.size())
+                .isEqualTo(3);
+        var loggingEvent = stripeNotificationServiceLogs.assertContains("Received a charge.dispute.updated event");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .hasSize(1);
     }
 
     @Test
     void shouldLogForDisputeClosedEvent() {
-        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_DISPUTE);
         payload = payload
                 .replace("{{type}}", "charge.dispute.closed")
@@ -224,66 +207,58 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getFormattedMessage(), containsString("Received a charge.dispute.closed event"));
-        assertThat(loggingEvent.getArgumentArray().length, is(1));
+        Assertions.assertThat(stripeNotificationServiceLogs.size())
+                .isEqualTo(3);
+        var loggingEvent = stripeNotificationServiceLogs.assertContains("Received a charge.dispute.closed event");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .hasSize(1);
     }
 
     @Test
     void shouldLogTheRequirementsAndPayoutsDisabledJson_whenAnAccountUpdatedEventIsReceived() {
-        Logger root = (Logger) LoggerFactory.getLogger(StripeAccountUpdatedHandler.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_ACCOUNT_UPDATED);
 
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getMessage(), containsString("Received an account.updated event for stripe account"));
-        assertThat(loggingEvent.getArgumentArray().length, is(4));
+
+        Assertions.assertThat(stripeAccountUpdatedHandlerLogs.size())
+                .isOne();
+        var loggingEvent = stripeAccountUpdatedHandlerLogs.assertContains("Received an account.updated event for stripe account");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .hasSize(4);
     }
 
     @Test
     void shouldLogWhenChargeRefundEventReceivedWithStatusFailed() {
-        Logger root = (Logger) LoggerFactory.getLogger(StripeRefundUpdatedHandler.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String payload = TestTemplateResourceLoader.load(STRIPE_NOTIFICATION_CHARGE_REFUND_UPDATED);
 
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getMessage(), containsString("Received a charge.refund.updated event with status failed"));
-        assertThat(loggingEvent.getArgumentArray().length, is(3));
+        Assertions.assertThat(stripeRefundUpdatedHandlerLogs.size())
+                .isOne();
+        var loggingEvent = stripeRefundUpdatedHandlerLogs.assertContains(
+                "Received a charge.refund.updated event with status failed");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .hasSize(3);
     }
 
     @Test
     void shouldLogTheIdOfThePayoutCreatedEvent_whenItIsReceived() {
-        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
-        root.setLevel(Level.INFO);
-        root.addAppender(mockAppender);
-
         String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                 "evt_id", PAYOUT_CREATED);
 
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockAppender, times(3)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getMessage(),
-                containsString("Processing stripe payout created notification with id [evt_aaaaaaaaaaaaaaaaaaaaa]"));
-
-        Object[] arguments = loggingEvent.getArgumentArray();
-        assertThat(arguments.length, is(1));
-        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("stripe_connect_account_id", "connect_account_id")));
+        Assertions.assertThat(stripeNotificationServiceLogs.size())
+                .isEqualTo(3);
+        var loggingEvent = stripeNotificationServiceLogs.assertContains(
+                "Processing stripe payout created notification with id [evt_aaaaaaaaaaaaaaaaaaaaa]");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .extracting(Object::toString)
+                .containsExactly("stripe_connect_account_id=connect_account_id");
     }
 
     @Test
@@ -327,23 +302,24 @@ class StripeNotificationServiceTest {
     void shouldLogErrorIfPayoutCouldNotBeSentToPayoutReconcileQueue() throws QueueException, JsonProcessingException {
         String payload = sampleStripeNotification(STRIPE_PAYOUT_NOTIFICATION,
                 "evt_id", PAYOUT_CREATED);
-        Logger root = (Logger) LoggerFactory.getLogger(StripeNotificationService.class);
-        root.setLevel(Level.ERROR);
-        root.addAppender(mockAppender);
         doThrow(new QueueException("Failed to send to queue")).when(mockPayoutReconcileQueue).sendPayout(any());
 
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        verify(mockAppender, times(1)).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getMessage(),
-                containsString("Error sending payout to payout reconcile queue: exception [Failed to send to queue]"));
-
-        Object[] arguments = loggingEvent.getArgumentArray();
-        assertThat(arguments.length, is(2));
-        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("stripe_connect_account_id", "connect_account_id")));
-        assertThat(arguments, hasItemInArray(new ObjectAppendingMarker("gateway_payout_id", "po_aaaaaaaaaaaaaaaaaaaaa")));
+        Assertions.assertThat(stripeNotificationServiceLogs.getEvents())
+                .filteredOn(event -> event.getLevel().equals(ERROR))
+                .hasSize(1);
+        var loggingEvent = stripeNotificationServiceLogs.assertContains(event ->
+                        event.getLevel().equals(ERROR) &&
+                                event.getMessage()
+                                        .equals("Error sending payout to payout reconcile queue: exception [Failed to send to queue]"),
+                "Expected ERROR not found.");
+        Assertions.assertThat(loggingEvent.getArguments())
+                .extracting(Object::toString)
+                .containsExactlyInAnyOrder(
+                        "stripe_connect_account_id=connect_account_id",
+                        "gateway_payout_id=po_aaaaaaaaaaaaaaaaaaaaa");
     }
 
     @Test
