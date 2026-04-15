@@ -33,7 +33,7 @@ public class CardidServiceConsumerTest {
     private static final String NOT_FOUND_CARD_NUMBER = "1000000000000000";
 
     @Rule
-    public PactProviderRule mockCardId = new PactProviderRule("cardid", this);
+    public PactProviderRule mockProvider = new PactProviderRule("cardid", this);
 
     @Mock
     private ConnectorConfiguration configuration;
@@ -42,7 +42,7 @@ public class CardidServiceConsumerTest {
 
     @Before
     public void setUp() {
-        when(configuration.getCardidBaseUrl()).thenReturn(mockCardId.getUrl());
+        when(configuration.getCardidBaseUrl()).thenReturn(mockProvider.getUrl());
         Client client = RestClientFactory.buildClient(new RestClientConfig(), null);
         cardidService = new CardidService(client, configuration);
     }
