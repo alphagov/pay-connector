@@ -50,7 +50,7 @@ public class CardidServiceConsumerTest {
     @Pact(consumer = "connector")
     public RequestResponsePact cardNumberFound(PactDslWithProvider builder) {
         return builder
-                .uponReceiving("a get card information request when the card number is found in the BIN ranges")
+                .uponReceiving("a card information request when the card number is found in the BIN ranges")
                 .path("/v1/api/card")
                 .headers("Content-Type", "application/json")
                 .method("POST")
@@ -70,7 +70,7 @@ public class CardidServiceConsumerTest {
     @Pact(consumer = "connector")
     public RequestResponsePact cardNumberNotFound(PactDslWithProvider builder) {
         return builder
-                .uponReceiving("a get card information request when the card number is not found in the BIN ranges")
+                .uponReceiving("a card information request when the card number is not found in the BIN ranges")
                 .path("/v1/api/card")
                 .headers("Content-Type", "application/json")
                 .method("POST")
