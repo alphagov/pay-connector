@@ -278,9 +278,9 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 .build();
     }
 
-    private GatewayResponse mockAuthErrorResponse(String errorCode) {
+    private GatewayResponse mockAuthErrorResponse() {
         WorldpayOrderStatusResponse worldpayResponse = mock(WorldpayOrderStatusResponse.class);
-        when(worldpayResponse.getErrorCode()).thenReturn(errorCode);
+        when(worldpayResponse.getErrorCode()).thenReturn("error-code");
         GatewayResponseBuilder<WorldpayOrderStatusResponse> gatewayResponseBuilder = responseBuilder();
         return gatewayResponseBuilder
                 .withResponse(worldpayResponse)
@@ -1394,13 +1394,13 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
     private void providerWillError(PaymentGatewayName paymentGatewayName) throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthErrorResponse("error-code");
+        GatewayResponse authResponse = mockAuthErrorResponse();
         providerWillRespondToAuthoriseWith(authResponse, paymentGatewayName);
     }
 
     private void providerWillErrorForMotoApiPayment() throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
-        GatewayResponse authResponse = mockAuthErrorResponse("error-code");
+        GatewayResponse authResponse = mockAuthErrorResponse();
         providerWillRespondToAuthoriseMotoApiWith(authResponse);
     }
 
