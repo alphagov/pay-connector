@@ -587,7 +587,6 @@ class ChargeParityCheckerTest {
         );
     }
 
-
     @ParameterizedTest
     @MethodSource
     void parityCheck_shouldReturnMismatchIfExemption3dsDataDoesNotMatchWithExemptionTypeCorporate(
@@ -597,8 +596,7 @@ class ChargeParityCheckerTest {
             Boolean setRequested
     ) {
         Exemption exemption = new Exemption(setRequested, "corporate", new ExemptionOutcome(transactionExemptionOutcomeResult));
-
-
+        
         chargeEntity.setExemption3ds(chargeExemption3ds);
         chargeEntity.setExemption3dsRequested(chargeExemption3dsType);
 
