@@ -489,7 +489,6 @@ class CardResourceAuthoriseTest {
                 .isZero();
     }
 
-
     private void mockGatewayError(GatewayError gatewayError) {
         GatewayResponse<BaseAuthoriseResponse> operationResponse = mock(GatewayResponse.class);
         when(operationResponse.getGatewayError()).thenReturn(Optional.of(gatewayError));
