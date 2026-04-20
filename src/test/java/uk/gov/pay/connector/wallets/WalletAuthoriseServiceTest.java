@@ -406,8 +406,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         providerWillError();
         GatewayResponse authResponse = mockAuthResponse(null, AuthoriseStatus.ERROR, "error-code", null);
         when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
-
-
+        
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
         assertThat(response.getGatewayError().isPresent(), is(true));
