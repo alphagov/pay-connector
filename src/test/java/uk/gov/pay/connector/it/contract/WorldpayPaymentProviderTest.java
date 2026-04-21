@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import io.dropwizard.core.setup.Environment;
+import jakarta.ws.rs.client.ClientBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -53,10 +54,8 @@ import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
-import jakarta.ws.rs.client.ClientBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.time.Clock;
 import java.time.InstantSource;
 import java.util.List;
@@ -205,7 +204,7 @@ class WorldpayPaymentProviderTest {
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getBaseResponse().get().getLastEvent().isPresent());
@@ -227,7 +226,7 @@ class WorldpayPaymentProviderTest {
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getBaseResponse().get().getLastEvent().isPresent());
@@ -246,7 +245,7 @@ class WorldpayPaymentProviderTest {
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
@@ -261,7 +260,7 @@ class WorldpayPaymentProviderTest {
                 .withWorldpay3dsFlexDdcResult(UUID.randomUUID().toString())
                 .build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
         response.getBaseResponse().ifPresent(res -> {
@@ -279,7 +278,7 @@ class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
@@ -290,7 +289,7 @@ class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).withAddress(null).build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
@@ -307,7 +306,7 @@ class WorldpayPaymentProviderTest {
         usAddress.setCountry("US");
         AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).withAddress(usAddress).build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
@@ -324,7 +323,7 @@ class WorldpayPaymentProviderTest {
         canadaAddress.setCountry("CA");
         AuthCardDetails authCardDetails = anAuthCardDetails().withCardNo(cardNumber).withAddress(canadaAddress).build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
     }
@@ -339,7 +338,7 @@ class WorldpayPaymentProviderTest {
                 .build();
 
         ChargeEntity charge = createChargeWithRequires3ds();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
 
         assertTrue(response.getBaseResponse().isPresent());
@@ -359,7 +358,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity charge = createChargeEntity();
         charge.setSavePaymentInstrumentToAgreement(true);
         charge.setAgreementEntity(anAgreementEntity().build());
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         assertTrue(response.getBaseResponse().isPresent());
         assertTrue(response.getBaseResponse().get().getGatewayRecurringAuthToken().isPresent());
@@ -414,7 +413,7 @@ class WorldpayPaymentProviderTest {
                 .build();
 
         ChargeEntity charge = createChargeWithRequires3ds();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
 
         assertTrue(response.getBaseResponse().isPresent());
@@ -445,7 +444,7 @@ class WorldpayPaymentProviderTest {
                 .withCardHolder(MAGIC_CARDHOLDER_NAME_THAT_MAKES_WORLDPAY_TEST_REQUIRE_3DS)
                 .build();
 
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
 
@@ -480,7 +479,7 @@ class WorldpayPaymentProviderTest {
                 .withWorldpay3dsFlexDdcResult(null)
                 .build();
 
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
 
@@ -512,7 +511,7 @@ class WorldpayPaymentProviderTest {
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
 
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
         String transactionId = response.getBaseResponse().get().getTransactionId();
 
@@ -537,7 +536,7 @@ class WorldpayPaymentProviderTest {
         WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
         ChargeEntity charge = createChargeEntity();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(request, charge);
 
         assertThat(response.getBaseResponse().isPresent(), is(true));
@@ -580,7 +579,7 @@ class WorldpayPaymentProviderTest {
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .build();
         AuthCardDetails authCardDetails = anAuthCardDetails().build();
-        CardAuthorisationGatewayRequest request = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         assertFalse(paymentProvider.authorise(request, charge).getBaseResponse().isPresent());
     }
 
@@ -675,7 +674,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity setUpAgreementCharge = createChargeEntity();
         setUpAgreementCharge.setSavePaymentInstrumentToAgreement(true);
         setUpAgreementCharge.setAgreementEntity(agreement);
-        var request = new CardAuthorisationGatewayRequest(setUpAgreementCharge, authCardDetails);
+        var request = CardAuthorisationGatewayRequest.valueOf(setUpAgreementCharge, authCardDetails);
         GatewayResponse<WorldpayOrderStatusResponse> setUpAgreementResponse = paymentProvider.authorise(request, setUpAgreementCharge);
 
         Map<String, String> recurringAuthToken = setUpAgreementResponse.getBaseResponse().get().getGatewayRecurringAuthToken().get();

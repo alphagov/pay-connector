@@ -232,7 +232,7 @@ class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
                 .thenReturn(responseBuilder().withGatewayError(gatewayConnectionError("connetion problemo")).build());
@@ -251,7 +251,7 @@ class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, DO_NOT_SEND_EXEMPTION_REQUEST))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -327,7 +327,7 @@ class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, DO_NOT_SEND_EXEMPTION_REQUEST))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -358,7 +358,7 @@ class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, DO_NOT_SEND_EXEMPTION_REQUEST))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -391,7 +391,7 @@ class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
 
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().withCorporateCard(false).build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().withCorporateCard(false).build());
 
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, DO_NOT_SEND_EXEMPTION_REQUEST))
                 .thenReturn(getGatewayResponse(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
@@ -422,7 +422,7 @@ class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
@@ -453,7 +453,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().withCorporateCard(true).build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, DO_NOT_SEND_EXEMPTION_REQUEST))
@@ -484,7 +484,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().withCorporateCard(true).build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_CORPORATE_EXEMPTION_REQUEST))
@@ -519,7 +519,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails()
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails()
                 .withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
@@ -553,7 +553,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails()
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails()
                 .withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
@@ -585,7 +585,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails()
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails()
                 .withCorporateCard(false).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
@@ -619,7 +619,7 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails()
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails()
                 .withCorporateCard(true).build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
@@ -651,7 +651,7 @@ class WorldpayPaymentProviderTest {
         gatewayAccountEntity.setWorldpay3dsFlexCredentialsEntity(aWorldpay3dsFlexCredentialsEntity().withExemptionEngine(true).build());
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(chargeDao.merge(any(ChargeEntity.class))).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
@@ -699,7 +699,7 @@ class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(chargeDao.merge(any(ChargeEntity.class))).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST)).thenReturn(getGatewayResponse(worldpayXmlResponse));
@@ -720,7 +720,7 @@ class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayAccountEntity(gatewayAccountEntity);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(chargeDao.merge(chargeEntity)).thenReturn(chargeEntity);
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
@@ -747,7 +747,7 @@ class WorldpayPaymentProviderTest {
         chargeEntityFixture.withGatewayTransactionId(gatewayTransactionId);
         ChargeEntity chargeEntity = chargeEntityFixture.build();
 
-        var cardAuthRequest = new CardAuthorisationGatewayRequest(chargeEntity, anAuthCardDetails().build());
+        var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
                 .thenReturn(getGatewayResponse(WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_REJECTED_RESPONSE));

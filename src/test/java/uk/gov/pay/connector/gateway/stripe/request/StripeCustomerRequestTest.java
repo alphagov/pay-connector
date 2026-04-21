@@ -49,8 +49,8 @@ class StripeCustomerRequestTest {
         var charge = aValidChargeEntity()
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .build();
-        
-        var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+
+        var authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         var agreementEntity = anAgreementEntity()
                 .withExternalId(AGREEMENT_EXTERNAL_ID)
                 .withDescription(AGREEMENT_DESCRIPTION)

@@ -28,7 +28,7 @@ class WorldpayAuthoriseDescriptionHelperTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
         
-        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, null);
+        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, null);
 
         String actual = descriptionHelper.getDescription(cardAuthorisationGatewayRequest);
         assertThat(actual, is(DESCRIPTION));
@@ -44,7 +44,7 @@ class WorldpayAuthoriseDescriptionHelperTest {
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .build();
 
-        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, null);
+        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, null);
 
         String actual = descriptionHelper.getDescription(cardAuthorisationGatewayRequest);
         assertThat(actual, is(REFERENCE));

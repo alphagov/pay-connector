@@ -4,9 +4,9 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 
 public class CardAuthorisationGatewayRequest extends AuthorisationGatewayRequest {
-    private AuthCardDetails authCardDetails;
+    private final AuthCardDetails authCardDetails;
 
-    public CardAuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails) {
+    private CardAuthorisationGatewayRequest(ChargeEntity charge, AuthCardDetails authCardDetails) {
         super(charge);
         this.authCardDetails = authCardDetails;
     }

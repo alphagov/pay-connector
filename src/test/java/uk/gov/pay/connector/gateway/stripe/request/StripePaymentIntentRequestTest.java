@@ -139,7 +139,7 @@ class StripePaymentIntentRequestTest {
 
     @Test
     void shouldIncludeCustomerIdAndSetupFutureUsageFlagForSetupFutureUsageRequest() {
-        var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        var authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, new AuthCardDetails());
         var stripePaymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithSetupFutureUsage(
                 authorisationGatewayRequest, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
         String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
@@ -192,7 +192,7 @@ class StripePaymentIntentRequestTest {
     }
 
     private StripePaymentIntentRequest createOneOffStripePaymentIntentRequest() {
-        var authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        var authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, new AuthCardDetails());
         return StripePaymentIntentRequest.createOneOffPaymentIntentRequest(authorisationGatewayRequest, paymentMethodId, stripeGatewayConfig, frontendUrl);
     }
 }
