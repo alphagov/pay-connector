@@ -33,7 +33,9 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 class LinkPaymentInstrumentToAgreementServiceTest {
 
     @RegisterExtension
-    LogCapturer logs = LogCapturer.create().captureForType(LinkPaymentInstrumentToAgreementService.class);
+    LogCapturer errorLogs = LogCapturer.create()
+            .captureForType(LinkPaymentInstrumentToAgreementService.class)
+            .forLevel(ERROR);
 
     @Mock
     private PaymentInstrumentDao paymentInstrumentDao;
@@ -115,13 +117,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
-        logs.assertContains(
-                event ->
-                        event.getLevel().equals(ERROR) &&
-                                event.getMessage().equals("Expected charge " +
-                                        chargeEntity.getExternalId() +
-                                        " to have a payment instrument but it does not have one"),
-                "Expected ERROR not found.");
+        errorLogs.assertContains("Expected charge " + chargeEntity.getExternalId() +
+                " to have a payment instrument but it does not have one");
         verifyNoInteractions(mockAgreementEntity);
         verifyNoInteractions(mockPaymentInstrumentEntity);
         verifyNoInteractions(ledgerService);
@@ -133,13 +130,8 @@ class LinkPaymentInstrumentToAgreementServiceTest {
 
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
-        logs.assertContains(
-                event ->
-                        event.getLevel().equals(ERROR) &&
-                                event.getMessage().equals("Expected charge " +
-                                        chargeEntity.getExternalId() +
-                                        " to have an agreement but it does not have one"),
-                "Expected ERROR not found.");
+        errorLogs.assertContains("Expected charge " + chargeEntity.getExternalId() +
+                " to have an agreement but it does not have one");
         verifyNoInteractions(mockAgreementEntity);
         verifyNoInteractions(mockPaymentInstrumentEntity);
         verifyNoInteractions(ledgerService);
