@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.util.ConnectorAppWithCustomInjector;
 import uk.gov.pay.connector.util.DnsPointerResourceRecord;
+import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.util.Optional;
 
@@ -14,9 +15,9 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.util.ConnectorModuleWithOverrides.reverseDnsLookup;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_NOTIFICATION;
 
 public class AdyenNotificationResourceIT {
-
 
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(ConnectorAppWithCustomInjector.class);
@@ -33,9 +34,12 @@ public class AdyenNotificationResourceIT {
 
     @Test
     void shouldHandleAValidJsonNotification() {
+        String validHmacSignature = "coqCmt/IZ4E3CzPvMY8zTjQVL5hYJUiBRg8UU+iCWo0="; // pragma: allowlist secret
+        String payload = TestTemplateResourceLoader.load(ADYEN_NOTIFICATION)
+                .replace("{{HMAC_SIGNATURE}}", validHmacSignature);
         given()
                 .port(app.getLocalPort())
-                .body("{\"notificationItems\":[{\"NotificationRequestItem\":{\"eventCode\":\"AUTHORISATION\"}}]}")
+                .body(payload)
                 .header("X-Forwarded-For", ADYEN_IP_ADDRESS)
                 .contentType(APPLICATION_JSON)
                 .post(NOTIFICATION_PATH)
@@ -73,5 +77,18 @@ public class AdyenNotificationResourceIT {
                 .post(NOTIFICATION_PATH)
                 .then()
                 .statusCode(415);
+    }
+
+    @Test
+    void shouldReturn500WhenInvalidJsonPayload() {
+        String payload = "not-json";
+        given()
+                .port(app.getLocalPort())
+                .body(payload)
+                .header("X-Forwarded-For", ADYEN_IP_ADDRESS)
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(500);
     }
 }

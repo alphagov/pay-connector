@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
 
 public class AdyenConfigUtil {
 
@@ -34,5 +35,18 @@ public class AdyenConfigUtil {
             merchantAccountId = adyenGatewayConfig.getMerchantAccountIds().test();
         }
         return merchantAccountId;
+    }
+
+    public static String getHmacKey(AdyenGatewayConfig adyenGatewayConfig, boolean live) {
+        WebhookHmacKeys webhookHmacKeys;
+
+        if (live) {
+            webhookHmacKeys = adyenGatewayConfig.getHmacKeys().payments().live();
+        } else {
+            webhookHmacKeys = adyenGatewayConfig.getHmacKeys().payments().test();
+        }
+
+        return webhookHmacKeys.getPrimary()
+                .orElseThrow(() -> new IllegalStateException("Missing primary Adyen HMAC key"));
     }
 }
