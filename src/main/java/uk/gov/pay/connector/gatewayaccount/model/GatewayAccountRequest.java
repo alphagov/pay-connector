@@ -7,9 +7,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.dropwizard.validation.ValidationMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 
-import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 
 import static com.google.common.collect.Maps.newHashMap;
@@ -22,7 +22,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
         visible = true,
         defaultImpl = GatewayAccountRequest.class)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = StripeGatewayAccountRequest.class, name = "stripe")
+        @JsonSubTypes.Type(value = StripeGatewayAccountRequest.class, name = "stripe"),
+        @JsonSubTypes.Type(value = AdyenGatewayAccountRequest.class, name = "adyen")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GatewayAccountRequest {
@@ -49,16 +50,16 @@ public class GatewayAccountRequest {
 
     @JsonIgnore
     private boolean requires3ds;
-    
+
     @JsonIgnore
     private boolean allowApplePay;
-    
+
     @JsonIgnore
     private boolean allowGooglePay;
-    
+
     @JsonIgnore
     private boolean sendPayerEmailToGateway;
-    
+
     @JsonIgnore
     private boolean sendPayerIpAddressToGateway;
 
@@ -99,7 +100,7 @@ public class GatewayAccountRequest {
         try {
             GatewayAccountType.fromString(providerAccountType);
             return true;
-        } catch (IllegalArgumentException iae) {
+        } catch (IllegalArgumentException _) {
             return false;
         }
     }

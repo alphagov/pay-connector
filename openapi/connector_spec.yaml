@@ -3336,6 +3336,53 @@ components:
         postcode:
           type: string
           example: AB1 2CD
+    AdyenCredentials:
+      type: object
+      properties:
+        legal_entity_id:
+          type: string
+        store_id:
+          type: string
+    AdyenGatewayAccountRequest:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/GatewayAccountRequest"
+      - type: object
+        properties:
+          allow_apple_pay:
+            type: boolean
+            writeOnly: true
+          allow_google_pay:
+            type: boolean
+            writeOnly: true
+          analytics_id:
+            type: string
+            writeOnly: true
+          credentials:
+            $ref: "#/components/schemas/AdyenCredentials"
+          description:
+            type: string
+          payment_provider:
+            type: string
+            writeOnly: true
+          requires_3ds:
+            type: boolean
+            writeOnly: true
+          send_payer_email_to_gateway:
+            type: boolean
+            writeOnly: true
+          send_payer_ip_address_to_gateway:
+            type: boolean
+            writeOnly: true
+          service_id:
+            type: string
+            writeOnly: true
+          service_name:
+            type: string
+            writeOnly: true
+          type:
+            type: string
+            writeOnly: true
     AgreementCancelRequest:
       type: object
       properties:

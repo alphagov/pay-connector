@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gatewayaccountcredentials.model;
 
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.SandboxCredentials;
@@ -12,17 +13,22 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.isA;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SMARTPAY;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials.ADYEN_LEGAL_ENTITY_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials.ADYEN_STORE_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.StripeCredentials.STRIPE_ACCOUNT_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
@@ -84,6 +90,39 @@ class GatewayAccountCredentialsEntityTest {
         StripeCredentials stripeCredentials = (StripeCredentials) credentials;
         assertThat(stripeCredentials.hasCredentials(), is(true));
         assertThat(stripeCredentials.getStripeAccountId(), is(stripeAccountId));
+    }
+
+    @Test
+    void getCredentialsObject_shouldReturnEmptyAdyenCredentials_whenCredentialsEmpty() {
+        var credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(ADYEN.getName())
+                .withCredentials(Map.of())
+                .build();
+
+        var credentials = credentialsEntity.getCredentialsObject();
+
+        assertThat(credentials, instanceOf(AdyenCredentials.class));
+        assertNull(((AdyenCredentials) credentials).legalEntityId());
+        assertNull(((AdyenCredentials) credentials).storeId());
+    }
+
+    @Test
+    void getCredentialsObject_shouldReturnPopulatedAdyenCredentials() {
+        var legalEntityId = "a-legal-entity-id";
+        var storeId = "a-store-id";
+        var credentialsEntity = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(ADYEN.getName())
+                .withCredentials(Map.of(
+                        ADYEN_LEGAL_ENTITY_ID, legalEntityId,
+                        ADYEN_STORE_ID, storeId)
+                ).build();
+
+        var credentials = credentialsEntity.getCredentialsObject();
+
+        assertThat(credentials, instanceOf(AdyenCredentials.class));
+        AdyenCredentials adyenCredentials = (AdyenCredentials) credentials;
+        assertThat(adyenCredentials.legalEntityId(), is(legalEntityId));
+        assertThat(adyenCredentials.storeId(), is(storeId));
     }
 
     @Test

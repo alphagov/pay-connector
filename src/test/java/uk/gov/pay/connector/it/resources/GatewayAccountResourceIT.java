@@ -28,9 +28,12 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsMapContaining.hasKey;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials.ADYEN_LEGAL_ENTITY_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials.ADYEN_STORE_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -44,6 +47,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.CREATED;
 import static uk.gov.pay.connector.gatewayaccountcredentials.resource.GatewayAccountCredentialsRequestValidator.FIELD_GATEWAY_MERCHANT_ID;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_SERVICE_ID_URL;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.ACCOUNTS_API_URL;
@@ -52,8 +56,8 @@ import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 
 public class GatewayAccountResourceIT {
     @RegisterExtension
@@ -477,7 +481,7 @@ public class GatewayAccountResourceIT {
         }
 
         @Test
-        void shouldReturnAccountInformationForGetAccountById_withWorldpayCredentials() {
+        void shouldReturnAccountInformation_withWorldpayCredentials() {
             long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(WORLDPAY.getName())
@@ -581,7 +585,7 @@ public class GatewayAccountResourceIT {
         }
 
         @Test
-        void shouldReturnAccountInformationForGetAccountById_withStripeCredentials() {
+        void shouldReturnAccountInformation_withStripeCredentials() {
             long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(STRIPE.getName())
@@ -613,7 +617,43 @@ public class GatewayAccountResourceIT {
         }
 
         @Test
-        void shouldReturnAccountInformationForGetAccountById_withEpdqCredentials() {
+        void shouldReturnAccountInformation_withAdyenCredentials() {
+            var accountId = secureRandomInt();
+            var gatewayAccountCredentialsExternalId = String.valueOf(secureRandomInt());
+            var storeId = "ST00000000000000000000001";
+            var legalEntityId = "LEM0000000000000001";
+            var params = anAddGatewayAccountCredentialsParams()
+                    .withExternalId(gatewayAccountCredentialsExternalId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .withGatewayAccountId(accountId)
+                    .withState(CREATED)
+                    .withCredentials(Map.of(
+                            ADYEN_STORE_ID, storeId,
+                            ADYEN_LEGAL_ENTITY_ID, legalEntityId
+                    )).build();
+            DatabaseFixtures.withDatabaseTestHelper(app.getDatabaseTestHelper())
+                    .aTestAccount()
+                    .withAccountId(accountId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .withGatewayAccountCredentials(List.of(params))
+                    .insert();
+
+            app.givenSetup()
+                    .get(ACCOUNTS_API_URL + accountId)
+                    .then()
+                    .statusCode(200)
+                    .body("gateway_account_credentials.size()", is(1))
+                    .body("gateway_account_credentials[0].external_id", is(gatewayAccountCredentialsExternalId))
+                    .body("gateway_account_credentials[0].payment_provider", is("adyen"))
+                    .body("gateway_account_credentials[0].credentials",
+                            hasEntry(ADYEN_STORE_ID, storeId))
+                    .body("gateway_account_credentials[0].credentials",
+                            hasEntry(ADYEN_LEGAL_ENTITY_ID, legalEntityId))
+                    .body("gateway_account_credentials[0].state", is("CREATED"));
+        }
+
+        @Test
+        void shouldReturnAccountInformation_withEpdqCredentials() {
             long accountId = secureRandomInt();
             AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                     .withPaymentProvider(EPDQ.getName())
@@ -705,7 +745,7 @@ public class GatewayAccountResourceIT {
     }
 
     @Test
-    public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInOneOffPaymentCredentials() {
+    void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInOneOffPaymentCredentials() {
         long accountId = secureRandomInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
@@ -738,7 +778,7 @@ public class GatewayAccountResourceIT {
     }
 
     @Test
-    public void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
+    void shouldReturnAccountInformationWhenSearchingByWorldpayMerchantCodeInRecurringCustomerInitiatedCredentials() {
         long accountId = secureRandomInt();
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withPaymentProvider(WORLDPAY.getName())
@@ -771,7 +811,7 @@ public class GatewayAccountResourceIT {
     }
 
     @Test
-    public void shouldSetApplePayEnabledByDefaultForSandboxAccount() {
+    void shouldSetApplePayEnabledByDefaultForSandboxAccount() {
         String gatewayAccountId1 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().withProvider("sandbox").build());
         String gatewayAccountId2 = testHelpers.createGatewayAccount(aCreateGatewayAccountPayloadBuilder().withProvider("worldpay").build());
 
