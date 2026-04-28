@@ -6,6 +6,7 @@ import org.eclipse.persistence.annotations.Customizer;
 import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
 import uk.gov.pay.connector.common.model.domain.HistoryCustomizer;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.EpdqCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
@@ -100,18 +101,13 @@ public class GatewayAccountCredentialsEntity extends AbstractVersionedEntity {
     
     public GatewayCredentials getCredentialsObject() {
         Map<String, Object> credentialsMap = Optional.ofNullable(credentials).orElse(Map.of());
-        switch (PaymentGatewayName.valueFrom(paymentProvider)) {
-            case WORLDPAY:
-                return objectMapper.convertValue(credentialsMap, WorldpayCredentials.class);
-            case STRIPE:
-                return objectMapper.convertValue(credentialsMap, StripeCredentials.class);
-            case EPDQ:
-                return objectMapper.convertValue(credentialsMap, EpdqCredentials.class);
-            case SMARTPAY:
-            case SANDBOX:
-            default:
-                return objectMapper.convertValue(credentialsMap, SandboxCredentials.class);
-        }
+        return switch (PaymentGatewayName.valueFrom(paymentProvider)) {
+            case WORLDPAY -> objectMapper.convertValue(credentialsMap, WorldpayCredentials.class);
+            case STRIPE -> objectMapper.convertValue(credentialsMap, StripeCredentials.class);
+            case ADYEN ->  objectMapper.convertValue(credentialsMap, AdyenCredentials.class);
+            case EPDQ -> objectMapper.convertValue(credentialsMap, EpdqCredentials.class);
+            default -> objectMapper.convertValue(credentialsMap, SandboxCredentials.class);
+        };
     }
 
     public GatewayAccountCredentialState getState() {
