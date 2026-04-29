@@ -13,9 +13,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import java.net.URI;
-
-import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getBaseCheckoutUrl;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getAuthUrl;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
 
 public class AdyenAuthoriseHandler {
 
@@ -41,7 +40,9 @@ public class AdyenAuthoriseHandler {
             GatewayException.GatewayConnectionTimeoutException {
         logger.info("Calling Adyen for authorisation of charge");
         var authorisationRequest = new AdyenAuthorisationRequest(
-                getUrl(request),
+                getAuthUrl(adyenGatewayConfig, request),
+                getHeaders(adyenGatewayConfig, request),
+                request.getGatewayAccount().getType(),
                 adyenRequestFactory.createPaymentRequest(request),
                 jsonObjectMapper);
 
@@ -54,9 +55,5 @@ public class AdyenAuthoriseHandler {
         return GatewayResponse.GatewayResponseBuilder.responseBuilder()
                 .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
                 .build();
-    }
-
-    private URI getUrl(CardAuthorisationGatewayRequest request) {
-        return URI.create(getBaseCheckoutUrl(adyenGatewayConfig, request.getGatewayAccount().isLive()) + "/payments");
     }
 }

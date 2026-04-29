@@ -10,9 +10,9 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
-import uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,7 +49,7 @@ class AdyenConfigUtilTest {
             String result =
                     AdyenConfigUtil.getCompanyApiKey(mockAdyenGatewayConfig, true);
 
-            assertThat(result).isEqualTo("live-api-key");
+            assertThat(result, is("live-api-key"));
         }
 
         @Test
@@ -58,7 +58,7 @@ class AdyenConfigUtilTest {
 
             String result = AdyenConfigUtil.getCompanyApiKey(mockAdyenGatewayConfig, false);
 
-            assertThat(result).isEqualTo("test-api-key");
+            assertThat(result, is("test-api-key"));
         }
     }
 
@@ -72,7 +72,7 @@ class AdyenConfigUtilTest {
 
             String result = AdyenConfigUtil.getBaseCheckoutUrl(mockAdyenGatewayConfig, true);
 
-            assertThat(result).isEqualTo("https://checkout-live.adyen.com");
+            assertThat(result, is("https://checkout-live.adyen.com"));
         }
 
         @Test
@@ -83,7 +83,7 @@ class AdyenConfigUtilTest {
 
             String result = AdyenConfigUtil.getBaseCheckoutUrl(mockAdyenGatewayConfig, false);
 
-            assertThat(result).isEqualTo("https://checkout-test.adyen.com");
+            assertThat(result, is("https://checkout-test.adyen.com"));
         }
     }
 
@@ -96,7 +96,7 @@ class AdyenConfigUtilTest {
 
             String result = AdyenConfigUtil.getMerchantAccountId(mockAdyenGatewayConfig, true);
 
-            assertThat(result).isEqualTo("live-merchant-123");
+            assertThat(result, is("live-merchant-123"));
 
             verify(mockMerchantAccountIds).live();
             verify(mockMerchantAccountIds, never()).test();
@@ -109,7 +109,7 @@ class AdyenConfigUtilTest {
 
             String result = AdyenConfigUtil.getMerchantAccountId(mockAdyenGatewayConfig, false);
 
-            assertThat(result).isEqualTo("test-merchant-123");
+            assertThat(result, is("test-merchant-123"));
 
             verify(mockMerchantAccountIds).test();
             verify(mockMerchantAccountIds, never()).live();

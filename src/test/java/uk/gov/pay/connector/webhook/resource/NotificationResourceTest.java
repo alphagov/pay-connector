@@ -8,7 +8,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -29,7 +30,7 @@ class NotificationResourceTest {
         when(adyenNotificationService.handleNotificationFor(anyString(), eq(forwardedIpAddress))).thenReturn(true);
 
         try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress)) {
-            assertThat(response.getStatus()).isEqualTo(200);
+            assertThat(response.getStatus(), is(200));
         }
     }
 
@@ -40,7 +41,7 @@ class NotificationResourceTest {
         when(adyenNotificationService.handleNotificationFor(anyString(), eq(forwardedIpAddress))).thenReturn(false);
 
         try (Response response = notificationResource.authoriseAdyenPaymentsNotifications(rawNotification, forwardedIpAddress)) {
-            assertThat(response.getStatus()).isEqualTo(403);
+            assertThat(response.getStatus(), is(403));
         }
     }
 }
