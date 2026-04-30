@@ -6,7 +6,6 @@ import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.WebApplicationException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +41,9 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -158,8 +160,7 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        Assertions.assertThat(stripeNotificationServiceLogs.size())
-                .isEqualTo(3);
+        assertThat(stripeNotificationServiceLogs.size(), is(3));
         stripeNotificationServiceLogs.assertContains("Logging stripe balance");
     }
 
@@ -173,11 +174,9 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        Assertions.assertThat(stripeNotificationServiceLogs.size())
-                .isEqualTo(3);
+        assertThat(stripeNotificationServiceLogs.size(), is(3));
         var loggingEvent = stripeNotificationServiceLogs.assertContains("Received a charge.dispute.created event");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .hasSize(1);
+        assertThat(loggingEvent.getArguments(), hasSize(1));
     }
 
     @Test
@@ -190,11 +189,9 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        Assertions.assertThat(stripeNotificationServiceLogs.size())
-                .isEqualTo(3);
+        assertThat(stripeNotificationServiceLogs.size(), is(3));
         var loggingEvent = stripeNotificationServiceLogs.assertContains("Received a charge.dispute.updated event");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .hasSize(1);
+        assertThat(loggingEvent.getArguments(), hasSize(1));
     }
 
     @Test
@@ -207,11 +204,9 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        Assertions.assertThat(stripeNotificationServiceLogs.size())
-                .isEqualTo(3);
+        assertThat(stripeNotificationServiceLogs.size(), is(3));
         var loggingEvent = stripeNotificationServiceLogs.assertContains("Received a charge.dispute.closed event");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .hasSize(1);
+        assertThat(loggingEvent.getArguments(), hasSize(1));
     }
 
     @Test
@@ -222,11 +217,9 @@ class StripeNotificationServiceTest {
 
         assertTrue(result);
 
-        Assertions.assertThat(stripeAccountUpdatedHandlerLogs.size())
-                .isOne();
+        assertThat(stripeAccountUpdatedHandlerLogs.size(), is(1));
         var loggingEvent = stripeAccountUpdatedHandlerLogs.assertContains("Received an account.updated event for stripe account");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .hasSize(4);
+        assertThat(loggingEvent.getArguments(), hasSize(4));
     }
 
     @Test
@@ -236,12 +229,10 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        Assertions.assertThat(stripeRefundUpdatedHandlerLogs.size())
-                .isOne();
+        assertThat(stripeRefundUpdatedHandlerLogs.size(), is(1));
         var loggingEvent = stripeRefundUpdatedHandlerLogs.assertContains(
                 "Received a charge.refund.updated event with status failed");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .hasSize(3);
+        assertThat(loggingEvent.getArguments(), hasSize(3));
     }
 
     @Test
@@ -252,13 +243,16 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        Assertions.assertThat(stripeNotificationServiceLogs.size())
-                .isEqualTo(3);
+        assertThat(stripeNotificationServiceLogs.size(), is(3));
         var loggingEvent = stripeNotificationServiceLogs.assertContains(
                 "Processing stripe payout created notification with id [evt_aaaaaaaaaaaaaaaaaaaaa]");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .extracting(Object::toString)
-                .containsExactly("stripe_connect_account_id=connect_account_id");
+
+        assertThat(loggingEvent.getArguments(), hasSize(1));
+        assertThat(loggingEvent.getArguments()
+                        .stream()
+                        .map(Object::toString)
+                        .toList(),
+                contains("stripe_connect_account_id=connect_account_id"));
     }
 
     @Test
@@ -307,19 +301,25 @@ class StripeNotificationServiceTest {
         final boolean result = notificationService.handleNotificationFor(payload, signPayload(payload), FORWARDED_IP_ADDRESSES);
 
         assertTrue(result);
-        Assertions.assertThat(stripeNotificationServiceLogs.getEvents())
-                .filteredOn(event -> event.getLevel().equals(ERROR))
-                .hasSize(1);
+        assertThat(stripeNotificationServiceLogs.getEvents()
+                        .stream()
+                        .filter(event -> event.getLevel().equals(ERROR))
+                        .toList(),
+                hasSize(1));
         var loggingEvent = stripeNotificationServiceLogs.assertContains(event ->
                         event.getLevel().equals(ERROR) &&
                                 event.getMessage()
                                         .equals("Error sending payout to payout reconcile queue: exception [Failed to send to queue]"),
                 "Expected ERROR not found.");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .extracting(Object::toString)
-                .containsExactlyInAnyOrder(
+        var argumentStrings = loggingEvent.getArguments()
+                .stream()
+                .map(Object::toString)
+                .toList();
+        assertThat(argumentStrings, hasSize(2));
+        assertThat(argumentStrings,
+                containsInAnyOrder(
                         "stripe_connect_account_id=connect_account_id",
-                        "gateway_payout_id=po_aaaaaaaaaaaaaaaaaaaaa");
+                        "gateway_payout_id=po_aaaaaaaaaaaaaaaaaaaaa"));
     }
 
     @Test

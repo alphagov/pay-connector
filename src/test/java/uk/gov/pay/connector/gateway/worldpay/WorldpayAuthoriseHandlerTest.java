@@ -10,7 +10,6 @@ import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -193,8 +192,7 @@ class WorldpayAuthoriseHandlerTest {
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS))
                 .areIdentical();
 
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         logs.assertContains(
                 "Authorisation request will be posted not MOTO and with billing address and without " +
                         "email address and with IP address and with 3DS data for uniqueSessionId (worldpay 1)");
@@ -225,8 +223,7 @@ class WorldpayAuthoriseHandlerTest {
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS))
                 .areIdentical();
 
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         logs.assertContains(
                 "Authorisation request will be posted not MOTO and with billing address and without " +
                         "email address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)");
@@ -428,8 +425,7 @@ class WorldpayAuthoriseHandlerTest {
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_EMAIL))
                 .areIdentical();
 
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         logs.assertContains(
                 "Authorisation request will be posted not MOTO and with billing address and with email " +
                         "address and without IP address and with 3DS data for uniqueSessionId (worldpay 1)");

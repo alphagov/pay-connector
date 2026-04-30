@@ -18,7 +18,7 @@ import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
 import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
@@ -86,8 +86,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_REJECTED.getValue());
         testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_FAILED_REJECTED.getStatus());
-        assertThat(logs.size())
-                .isZero();
+        assertThat(logs.size(), is(0));
     }
 
     @Test
@@ -102,8 +101,7 @@ public class AuthoriseWithUserNotPresentTaskHandlerIT {
 
         testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, AUTHORISATION_ERROR.getValue());
         testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_ERROR_GATEWAY.getStatus());
-        assertThat(logs.size())
-                .isZero();
+        assertThat(logs.size(), is(0));
     }
 
     private String setupChargeWithAgreementAndPaymentInstrument(String first6Digits, String last4Digits) {

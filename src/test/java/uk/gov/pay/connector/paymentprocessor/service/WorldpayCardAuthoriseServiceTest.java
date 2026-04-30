@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
 import io.github.netmikey.logunit.api.LogCapturer;
 import org.apache.commons.lang3.tuple.Pair;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +53,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -178,8 +178,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.REJECTED));
         assertThat(charge.getStatus(), is(AUTHORISATION_REJECTED.getValue()));
         assertThat(charge.getRequires3ds(), is(false));
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         logs.assertContains(
                 "Authorisation with billing address and without email address and with 3DS data and " +
                         "without device data collection result");
@@ -203,8 +202,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getRequires3ds(), is(false));
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         logs.assertContains(
                 "Authorisation with billing address and without email address and with 3DS data and " +
                         "without device data collection result");
@@ -318,8 +316,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(response.getAuthoriseStatus().get(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getRequires3ds(), is(false));
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         logs.assertContains(
                 "Authorisation with billing address and without email address and with 3DS data and " +
                         "without device data collection result");
@@ -349,12 +346,13 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.getRequires3ds(), is(false));
 
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         var loggingEvent = logs.assertContains("and with agreement payment type of " + agreementPaymentType.getName());
-        Assertions.assertThat(loggingEvent.getArguments())
-                .extracting(Object::toString)
-                .contains("agreement_payment_type=" + agreementPaymentType.name());
+        assertThat(loggingEvent.getArguments()
+                        .stream()
+                        .map(Object::toString)
+                        .toList(),
+                hasItem("agreement_payment_type=" + agreementPaymentType.name()));
     }
 
     private void verifyGatewayDoesNotRequire3dsEventWasEmitted(ChargeEntity chargeEntity) {

@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.worldpay;
 import io.dropwizard.core.setup.Environment;
 import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.WebApplicationException;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,6 +68,7 @@ import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -281,8 +281,7 @@ class WorldpayPaymentProviderTest {
     }
 
     private void verifyLoggingWithExemptionReason(Exemption3ds exemption3ds, String reason, String externalId, int timesLoggingCalled) {
-        Assertions.assertThat(logs.size())
-                .isEqualTo(timesLoggingCalled);
+        assertThat(logs.size(), is(equalTo(timesLoggingCalled)));
         logs.assertContains(
                 format("Updated exemption_3ds of charge to %s (reason %s) - charge_external_id=%s",
                         exemption3ds.name(), reason, externalId));
@@ -294,8 +293,7 @@ class WorldpayPaymentProviderTest {
     }
 
     private void verifyLoggingWithOutExemptionReason(Exemption3ds exemption3ds, String externalId, int timesLoggingCalled) {
-        Assertions.assertThat(logs.size())
-                .isEqualTo(timesLoggingCalled);
+        assertThat(logs.size(), is(equalTo(timesLoggingCalled)));
         logs.assertContains(
                 format("Updated exemption_3ds of charge to %s - charge_external_id=%s",
                         exemption3ds.name(), externalId));
@@ -750,8 +748,7 @@ class WorldpayPaymentProviderTest {
         assertTrue(response.getBaseResponse().isPresent());
         assertEquals(secondResponse.getBaseResponse().get(), response.getBaseResponse().get());
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(3);
+        assertThat(logs.size(), is(3));
         logs.assertContains(format("Authorisation with billing address and without email address and with 3DS data " +
                 "and without device data collection result for %s", chargeEntity.getExternalId()));
         logs.assertContains("Worldpay authorisation response (orderCode: transaction-id, " +

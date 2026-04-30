@@ -12,7 +12,9 @@ import org.slf4j.event.LoggingEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,12 +43,15 @@ class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
 
         verify(mockApplicationStartupDependentResource, times(2)).getDatabaseConnection();
         verify(mockApplicationStartupDependentResource).sleep(5000L);
-        assertThat(logs.getEvents())
-                .extracting(LoggingEvent::getMessage)
-                .containsExactly(
-                        "Checking for database availability >>>",
+        var eventMessages = logs.getEvents()
+                .stream()
+                .map(LoggingEvent::getMessage)
+                .toList();
+        assertThat(eventMessages, hasSize(3));
+        assertThat(eventMessages,
+                contains("Checking for database availability >>>",
                         "Waiting for 5 seconds till the database is available ...",
-                        "Database available.");
+                        "Database available."));
     }
 
     @Test
@@ -64,14 +69,17 @@ class ApplicationStartupApplicationStartupDependentResourceCheckerTest {
         verify(mockApplicationStartupDependentResource).sleep(5000L);
         verify(mockApplicationStartupDependentResource).sleep(10000L);
         verify(mockApplicationStartupDependentResource).sleep(15000L);
-        assertThat(logs.getEvents())
-                .extracting(LoggingEvent::getMessage)
-                .containsExactly(
-                        "Checking for database availability >>>",
+        var eventMessages = logs.getEvents()
+                .stream()
+                .map(LoggingEvent::getMessage)
+                .toList();
+        assertThat(eventMessages, hasSize(5));
+        assertThat(eventMessages,
+                contains("Checking for database availability >>>",
                         "Waiting for 5 seconds till the database is available ...",
                         "Waiting for 10 seconds till the database is available ...",
                         "Waiting for 15 seconds till the database is available ...",
-                        "Database available.");
+                        "Database available."));
     }
 
     @Test

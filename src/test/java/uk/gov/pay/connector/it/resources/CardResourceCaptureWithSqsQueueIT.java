@@ -15,7 +15,8 @@ import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.HOURS;
 import static java.time.temporal.ChronoUnit.MINUTES;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
@@ -43,8 +44,7 @@ public class CardResourceCaptureWithSqsQueueIT {
 
             testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
             testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
-            assertThat(logs.size())
-                    .isOne();
+            assertThat(logs.size(), is(1));
             logs.assertContains("Charge [" + chargeId + "] added to capture queue. Message ID [");
         }
     }
@@ -65,8 +65,7 @@ public class CardResourceCaptureWithSqsQueueIT {
 
             testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
             testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
-            assertThat(logs.size())
-                    .isOne();
+            assertThat(logs.size(), is(1));
             logs.assertContains("Charge [" + chargeId + "] added to capture queue. Message ID [");
         }
     }
@@ -88,8 +87,7 @@ public class CardResourceCaptureWithSqsQueueIT {
             testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_APPROVED.getValue());
             testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
-            assertThat(logs.size())
-                    .isOne();
+            assertThat(logs.size(), is(1));
             logs.assertContains("Charge [" + chargeId + "] added to capture queue. Message ID [");
         }
     }

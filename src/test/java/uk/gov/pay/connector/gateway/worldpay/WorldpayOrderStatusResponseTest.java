@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay;
 
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -16,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
@@ -121,8 +121,7 @@ class WorldpayOrderStatusResponseTest {
         WorldpayOrderStatusResponse worldpayOrderStatusResponse = XMLUnmarshaller.unmarshall(response, WorldpayOrderStatusResponse.class);
 
         assertThat(worldpayOrderStatusResponse.getCardExpiryDate().isPresent(), is(false));
-        Assertions.assertThat(logs.size())
-                .isZero();
+        assertThat(logs.size(), is(0));
     }
 
     @Test
@@ -161,8 +160,7 @@ class WorldpayOrderStatusResponseTest {
     }
 
     private void verifyLogging(int invocations, String logMessage) {
-        Assertions.assertThat(logs.size())
-                .isEqualTo(invocations);
+        assertThat(logs.size(), is(equalTo(invocations)));
         logs.assertContains(logMessage);
     }
 }

@@ -6,7 +6,6 @@ import io.dropwizard.core.setup.Environment;
 import io.github.netmikey.logunit.api.LogCapturer;
 import io.prometheus.client.CollectorRegistry;
 import org.apache.commons.lang3.tuple.Pair;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -83,6 +82,7 @@ import java.util.function.Supplier;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.String.format;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -394,9 +394,11 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         assertThat(charge.getRequires3ds(), is(false));
 
         var loggingEvent = logs.assertContains("Applied corporate card surcharge for charge");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .extracting(Object::toString)
-                .contains("corporate_card_surcharge=250");
+        assertThat(loggingEvent.getArguments()
+                        .stream()
+                        .map(Object::toString)
+                        .toList(),
+                hasItem("corporate_card_surcharge=250"));
         verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
     }
 

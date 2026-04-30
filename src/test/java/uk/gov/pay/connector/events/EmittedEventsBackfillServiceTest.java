@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.events;
 
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +31,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -104,8 +105,7 @@ class EmittedEventsBackfillServiceTest {
         emittedEventsBackfillService.backfillNotEmittedEvents();
 
         verify(emittedEventDao, never()).findNotEmittedEventsOlderThan(any(Instant.class), anyInt(), anyLong(), eq(maxId), any());
-        Assertions.assertThat(logs.size())
-                .isOne();
+        assertThat(logs.size(), is(1));
         logs.assertContains("Finished processing not emitted events [lastProcessedId=0, maxId=none]");
     }
 
@@ -120,8 +120,7 @@ class EmittedEventsBackfillServiceTest {
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(Instant.class), anyInt(), eq(0L), eq(maxId), any());
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any(), isNull());
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         logs.assertContains(
                 "Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00:00Z]");
         logs.assertContains("Finished processing not emitted events [lastProcessedId=1, maxId=2]");
@@ -147,8 +146,7 @@ class EmittedEventsBackfillServiceTest {
 
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(Instant.class), anyInt(), eq(0L), eq(maxId), any());
         verify(stateTransitionService, times(1)).offerStateTransition(any(), any(), isNull());
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         logs.assertContains(
                 "Processing not emitted events [lastProcessedId=0, no.of.events=1, oldestDate=2019-09-20T10:00:00Z]");
         logs.assertContains("Finished processing not emitted events [lastProcessedId=1, maxId=2]");
@@ -179,8 +177,7 @@ class EmittedEventsBackfillServiceTest {
         verify(emittedEventDao, times(1)).findNotEmittedEventsOlderThan(any(Instant.class), anyInt(), eq(0L), eq(maxId), any());
         // 2 events emitted for payment event and refund event
         verify(stateTransitionService, times(2)).offerStateTransition(any(), any(), isNull());
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         logs.assertContains(
                 "Processing not emitted events [lastProcessedId=0, no.of.events=2, oldestDate=2019-09-20T09:00:00Z]");
         logs.assertContains("Finished processing not emitted events [lastProcessedId=2, maxId=2]");

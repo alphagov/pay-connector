@@ -10,7 +10,6 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -485,8 +484,7 @@ class CardResourceAuthoriseTest {
     }
 
     private void verifyReceiptOfPayloadNotLogged() {
-        Assertions.assertThat(logs.size())
-                .isZero();
+        assertThat(logs.size(), is(0));
     }
 
     private void mockGatewayError(GatewayError gatewayError) {

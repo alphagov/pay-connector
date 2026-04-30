@@ -3,7 +3,6 @@ package uk.gov.pay.connector.queue.tasks;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -102,8 +101,7 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(3);
+        assertThat(logs.size(), is(3));
         logs.assertContains("Processing [collect_fee_for_stripe_failed_payment] task.");
         logs.assertContains("Successfully processed [collect_fee_for_stripe_failed_payment] task.");
     }
@@ -123,8 +121,7 @@ class TaskQueueMessageHandlerTest {
         verify(collectFeesForFailedPaymentsTaskHandler).collectAndPersistFees(paymentTaskData);
         verify(taskQueue).markMessageAsProcessed(taskMessage.getQueueMessage());
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(3);
+        assertThat(logs.size(), is(3));
         logs.assertContains("Processing [collect_fee_for_stripe_failed_payment] task.");
         logs.assertContains("Successfully processed [collect_fee_for_stripe_failed_payment] task.");
     }

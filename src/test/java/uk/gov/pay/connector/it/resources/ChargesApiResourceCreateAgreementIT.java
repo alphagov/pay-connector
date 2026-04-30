@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources;
 
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,7 +24,9 @@ import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
@@ -175,9 +176,11 @@ public class ChargesApiResourceCreateAgreementIT {
         testBaseExtension.assertAgreementPaymentTypeIs(chargeId, AgreementPaymentType.RECURRING);
 
         var loggingEvent = logs.assertContains("Task added to queue");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .extracting(Object::toString)
-                .contains("task_type=authorise_with_user_not_present");
+        assertThat(loggingEvent.getArguments()
+                        .stream()
+                        .map(Object::toString)
+                        .toList(),
+                hasItem("task_type=authorise_with_user_not_present"));
     }
 
     @ParameterizedTest
@@ -219,9 +222,11 @@ public class ChargesApiResourceCreateAgreementIT {
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
         testBaseExtension.assertAgreementPaymentTypeIs(chargeId, expectedAgreementPaymentType);
         var loggingEvent = logs.assertContains("Task added to queue");
-        Assertions.assertThat(loggingEvent.getArguments())
-                .extracting(Object::toString)
-                .contains("task_type=authorise_with_user_not_present");
+        assertThat(loggingEvent.getArguments()
+                        .stream()
+                        .map(Object::toString)
+                        .toList(),
+                hasItem("task_type=authorise_with_user_not_present"));
     }
 
     @ParameterizedTest

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.core.setup.Environment;
 import io.github.netmikey.logunit.api.LogCapturer;
 import org.apache.commons.lang3.tuple.Pair;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -212,8 +211,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse gatewayResponse = providerWillAuthoriseApplePay();
         walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(4);
+        assertThat(logs.size(), is(4));
         logs.assertContains(format("APPLE_PAY authorisation - charge status=AUTHORISATION SUCCESS, " +
                         "request status=success, charge_external_id=%s, payment provider response=%s",
                 charge.getExternalId(), gatewayResponse.toString()));

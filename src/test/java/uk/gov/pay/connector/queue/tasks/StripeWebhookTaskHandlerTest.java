@@ -3,7 +3,6 @@ package uk.gov.pay.connector.queue.tasks;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -361,8 +360,7 @@ class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getFee(), is(nullValue()));
         assertThat(eventDetails.getNetAmount(), is(nullValue()));
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         String expectedLogMessage = format("Skipping recharging for dispute du_1111111111 for payment %s as it was " +
                 "created before the date we started recharging from", transaction.getTransactionId());
         logs.assertContains(expectedLogMessage);
@@ -396,8 +394,7 @@ class StripeWebhookTaskHandlerTest {
         assertThat(eventDetails.getFee(), is(nullValue()));
         assertThat(eventDetails.getNetAmount(), is(nullValue()));
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         String expectedLogMessage = format("Skipping recharging for dispute du_1111111111 for payment %s as it was " +
                 "created before the date we started recharging from", transaction.getTransactionId());
         logs.assertContains(expectedLogMessage);
@@ -581,8 +578,7 @@ class StripeWebhookTaskHandlerTest {
         verify(eventService).emitEvent(paymentDisputed);
         verify(eventService).emitEvent(refundAvailabilityUpdated);
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(4);
+        assertThat(logs.size(), is(4));
         String eventExpectedLogMessage = "Event sent to payment event queue: " + disputeCreated.getResourceExternalId();
         String submitEvidenceExpectedLogMessage = "Updated dispute [du_1111111111] with evidence [losing_evidence] for transaction [external-id]";
         logs.assertContains(eventExpectedLogMessage);

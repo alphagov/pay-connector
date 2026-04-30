@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.charge.service;
 
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -391,8 +390,7 @@ class ChargeExpiryServiceTest {
 
         chargeExpiryService.sweepAndExpireChargesAndTokensAndIdempotencyKeys();
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(5);
+        assertThat(logs.size(), is(5));
         logs.assertContains("Tokens deleted - number_of_tokens=1, since_date=2022-06-02T00:00:00Z");
         logs.assertContains("Idempotency keys deleted - number_of_idempotency_keys=1, since_date=2022-06-08T00:00:00Z");
         logs.assertContains(

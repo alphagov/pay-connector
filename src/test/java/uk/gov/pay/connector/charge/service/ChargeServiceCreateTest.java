@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.netmikey.logunit.api.LogCapturer;
 import jakarta.ws.rs.core.UriInfo;
-import org.assertj.core.api.Assertions;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -952,8 +951,7 @@ class ChargeServiceCreateTest {
 
             verifyNoInteractions(mockedChargeDao);
             assertThat(exception.getMessage(), equalTo("Card number entered in a payment link reference"));
-            Assertions.assertThat(logs.size())
-                    .isOne();
+            assertThat(logs.size(), is(1));
             logs.assertContains("Card number entered in a payment link reference");
         }
 

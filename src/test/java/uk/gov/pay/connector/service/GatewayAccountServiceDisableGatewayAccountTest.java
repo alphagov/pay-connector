@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.persist.UnitOfWork;
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,8 +92,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         gatewayAccountService.disableAccountsAndRedactOrDeleteCredentials(serviceId);
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         logs.assertContains("Disabling gateway accounts %s for service.".formatted(gatewayAccount.getExternalId()));
         logs.assertContains("No credentials to redact.");
     }
@@ -129,8 +127,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         logs.assertContains("Disabling gateway accounts %s for service.".formatted(gatewayAccount.getExternalId()));
         logs.assertContains("Credentials redacted");
     }
@@ -167,8 +164,7 @@ class GatewayAccountServiceDisableGatewayAccountTest {
 
         verify(mockGatewayAccountCredentialsHistoryDao).delete(serviceId);
 
-        Assertions.assertThat(logs.size())
-                .isEqualTo(2);
+        assertThat(logs.size(), is(2));
         logs.assertContains("Disabling gateway accounts %s for service.".formatted(gatewayAccount.getExternalId()));
         logs.assertContains("Credentials redacted");
     }
