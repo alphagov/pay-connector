@@ -14,6 +14,7 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -63,6 +64,52 @@ class AdyenRequestFactoryTest {
         var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
 
         assertThat(request.billingAddress(), is(FULL_BILLING_ADDRESS));
+        assertThat(request.paymentMethod().cvc(), is("737"));
+        assertThat(request.paymentMethod().number(), is("4444333322221111"));
+        assertThat(request.paymentMethod().expiryMonth(), is("10"));
+        assertThat(request.paymentMethod().expiryYear(), is("2099"));
+        assertThat(request.paymentMethod().holderName(), is("John Doe"));
+        assertThat(request.paymentMethod().type(), is("scheme"));
+        assertThat(request.amount().value(), is(Long.valueOf("6234")));
+        assertThat(request.amount().currency(), is("GBP"));
+        assertThat(request.channel(), is("Web"));
+        assertThat(request.shopperInteraction(), is("Ecommerce"));
+        assertThat(request.returnUrl(), is("https://www.example.com"));
+        assertThat(request.reference(), is("gov_uk_payment_id"));
+        assertThat(request.merchantAccount(), is("test"));
+        assertThat(request.store(), is("store_id"));
+    }
+
+    @Test
+    void should_create_PaymentRequest_with_partial_billing_address() {
+
+        var partialBillingAddress = new Address(
+                "line1",
+                null,
+                null,
+                null,
+                null,
+                null);
+
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAddress(partialBillingAddress)
+                        .withCardNo("4444333322221111")
+                        .withCardHolder("John Doe")
+                        .withCvc("737")
+                        .withEndDate(CardExpiryDate.valueOf("10/99"))
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withAmount("6234")
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.billingAddress().houseNumberOrName(), is(partialBillingAddress.getLine1()));
+        assertThat(request.billingAddress().street(), nullValue());
+        assertThat(request.billingAddress().city(), nullValue());
+        assertThat(request.billingAddress().country(), nullValue());
+        assertThat(request.billingAddress().postalCode(), nullValue());
         assertThat(request.paymentMethod().cvc(), is("737"));
         assertThat(request.paymentMethod().number(), is("4444333322221111"));
         assertThat(request.paymentMethod().expiryMonth(), is("10"));

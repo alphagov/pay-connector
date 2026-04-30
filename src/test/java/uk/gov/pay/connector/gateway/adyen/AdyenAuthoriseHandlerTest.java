@@ -114,6 +114,28 @@ class AdyenAuthoriseHandlerTest {
     }
 
     @Test
+    void should_send_request_to_Adyen_with_partial_billing_address() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        givenAdyenReturnsASuccessResponse();
+
+        var partialBillingAddress = new Address();
+        partialBillingAddress.setLine1("line1");
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAddress(partialBillingAddress)
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .build();
+        authoriseHandler.authorise(authoriseRequest);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        String payload = captor.getValue().getGatewayOrder().getPayload();
+        JsonAssert.with(payload).assertEquals("$.billingAddress.houseNumberOrName", partialBillingAddress.getLine1());
+        JsonAssert.with(payload).assertNotDefined("$.billingAddress.city");
+        JsonAssert.with(payload).assertNotDefined("$.billingAddress.country");
+        JsonAssert.with(payload).assertNotDefined("$.billingAddress.postalCode");
+    }
+
+    @Test
     void should_log_when_calling_Adyen_authorisation_of_charge() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
         givenAdyenReturnsASuccessResponse();
         var request = aCardAuthorisationGatewayRequest()

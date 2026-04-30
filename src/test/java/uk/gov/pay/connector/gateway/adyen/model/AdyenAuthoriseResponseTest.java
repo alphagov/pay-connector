@@ -5,10 +5,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static uk.gov.pay.connector.gateway.adyen.model.ActionFixture.anAction;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.gateway.adyen.model.AdyenPaymentResponseFixture.anAdyenPaymentResponse;
+import static uk.gov.pay.connector.gateway.adyen.model.json.ActionFixture.anAction;
 
 class AdyenAuthoriseResponseTest {
 
@@ -29,8 +31,7 @@ class AdyenAuthoriseResponseTest {
 
         var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(response);
 
-        assertThat(adyenAuthoriseResponse.authoriseStatus())
-                .isEqualTo(expectedStatus);
+        assertThat(adyenAuthoriseResponse.authoriseStatus(), is(expectedStatus));
     }
 
     @Test
@@ -42,9 +43,9 @@ class AdyenAuthoriseResponseTest {
                 "0",
                 null);
 
-        assertThatThrownBy(() -> AdyenAuthoriseResponse.of(response))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Unexpected value: " + "UNRECOGNISED_RESULT_CODE");
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> AdyenAuthoriseResponse.of(response));
+        assertThat(exception.getMessage(), is("Unexpected value: UNRECOGNISED_RESULT_CODE"));
     }
 
     @Test
@@ -55,8 +56,7 @@ class AdyenAuthoriseResponseTest {
 
         var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
 
-        assertThat(adyenAuthoriseResponse.getRedirectUrl())
-                .isNull();
+        assertThat(adyenAuthoriseResponse.getRedirectUrl(), is(nullValue()));
     }
 
     @Test
@@ -67,8 +67,7 @@ class AdyenAuthoriseResponseTest {
 
         var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
 
-        assertThat(adyenAuthoriseResponse.getRedirectUrl())
-                .isNull();
+        assertThat(adyenAuthoriseResponse.getRedirectUrl(), is(nullValue()));
     }
 
     @Test
@@ -79,7 +78,6 @@ class AdyenAuthoriseResponseTest {
 
         var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
 
-        assertThat(adyenAuthoriseResponse.getRedirectUrl())
-                .isEqualTo("/redirectUrl");
+        assertThat(adyenAuthoriseResponse.getRedirectUrl(), is("/redirectUrl"));
     }
 }
