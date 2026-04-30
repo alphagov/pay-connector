@@ -46,6 +46,7 @@ public final class GatewayAccountEntityFixture {
     private boolean blockPrepaidCards;
     private boolean disabled = false;
     private boolean sendPayerEmailAddressToGateway;
+    private boolean sendReferenceToGateway = false;
 
     private GatewayAccountEntityFixture() {
     }
@@ -149,6 +150,11 @@ public final class GatewayAccountEntityFixture {
         return this;
     }
 
+    public GatewayAccountEntityFixture withSendReferenceToGateway(boolean sendReferenceToGateway) {
+        this.sendReferenceToGateway = sendReferenceToGateway;
+        return this;
+    }
+
     public GatewayAccountEntity build() {
         GatewayAccountEntity gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountEntity.setId(id);
@@ -175,6 +181,7 @@ public final class GatewayAccountEntityFixture {
         gatewayAccountEntity.setBlockPrepaidCards(blockPrepaidCards);
         gatewayAccountEntity.setDisabled(disabled);
         gatewayAccountEntity.setAllowMoto(allowMoto);
+        gatewayAccountEntity.setSendReferenceToGateway(sendReferenceToGateway);
 
         if (credentials != null && !credentials.isEmpty() && gatewayAccountCredentialsEntities != null
                 && gatewayAccountCredentialsEntities.isEmpty()) {
