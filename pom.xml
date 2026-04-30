@@ -12,7 +12,7 @@
         <pay-java-commons.version>1.0.20260427090804</pay-java-commons.version>
         <surefire.version>3.5.5</surefire.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <pact.version>4.7.0</pact.version>
+        <pact.version>4.7.1</pact.version>
         <eclipselink.version>4.0.9</eclipselink.version>
         <swagger-version>2.2.48</swagger-version>
         <prometheus.version>0.16.0</prometheus.version>
