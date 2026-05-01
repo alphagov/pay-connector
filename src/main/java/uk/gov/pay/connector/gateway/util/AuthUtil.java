@@ -48,10 +48,13 @@ public class AuthUtil {
         return merchantCodeCredentials.getMerchantCode();
     }
 
-    public static Map<String, String> getWorldpayAuthHeader(GatewayCredentials credentials, AuthorisationMode authorisationMode, boolean isRecurring) {
+    public static WorldpayMerchantCodeCredentials getWorldpayMerchantCodeCredentials(GatewayCredentials credentials, AuthorisationMode authorisationMode, boolean isRecurring) {
         WorldpayCredentials worldpayCredentials = castGatewayCredentialsToWorldpayCredentials(credentials);
-        WorldpayMerchantCodeCredentials merchantCodeCredentials = getWorldpayMerchantCodeCredentials(worldpayCredentials, authorisationMode, isRecurring);
-        return getWorldpayAuthHeader(merchantCodeCredentials);
+        return getWorldpayMerchantCodeCredentials(worldpayCredentials, authorisationMode, isRecurring);
+    }
+
+    public static Map<String, String> getWorldpayAuthHeader(GatewayCredentials credentials, AuthorisationMode authorisationMode, boolean isRecurring) {
+        return getWorldpayAuthHeader(getWorldpayMerchantCodeCredentials(credentials, authorisationMode, isRecurring));
     }
 
     private static WorldpayMerchantCodeCredentials getWorldpayMerchantCodeCredentials(WorldpayCredentials worldpayCredentials, AuthorisationMode authorisationMode, boolean isRecurring) {
