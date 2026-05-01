@@ -23,6 +23,7 @@ import static io.swagger.v3.oas.annotations.enums.ParameterIn.HEADER;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -127,6 +128,26 @@ public class NotificationResource {
         String response = "[OK]";
         logResponseMessage(response, STRIPE);
         return Response.ok(response).build();
+    }
+
+    @POST
+    @Consumes(APPLICATION_JSON)
+    @Path("/v1/api/notifications/adyen/payments")
+    @Operation(
+            summary = "Handle Adyen payment notifications",
+            description = "Accepts Adyen payment webhooks as JSON and preserves the raw request body for signature verification.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "405", description = "Method Not Allowed - Unsupported HTTP method"),
+                    @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
+            }
+    )
+    public Response authoriseAdyenPaymentsNotifications(String notification,
+                                                        @Parameter(in = HEADER, example = "5.6.7.8")
+                                                        @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        
+        logResponseMessage("[accepted]", ADYEN);
+        return Response.ok().build();
     }
 
     private void logRejectionMessage(String forwardedIpAddresses, PaymentGatewayName gateway) {
