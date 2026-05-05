@@ -2,7 +2,7 @@ package uk.gov.pay.connector.app.adyen;
 
 import io.dropwizard.core.Configuration;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import uk.gov.pay.connector.app.JerseyClientOverrides;
 
@@ -17,7 +17,7 @@ public class AdyenGatewayConfig extends Configuration {
     @Valid
     @NotNull
     private AdyenIds merchantAccountIds;
-    
+
     @Valid
     @NotNull
     private AdyenIds balancePlatformIds;
@@ -26,7 +26,7 @@ public class AdyenGatewayConfig extends Configuration {
     @NotNull
     private ApiKeys apiKeys;
 
-    @NotEmpty
+    @NotBlank
     private String notificationDomain;
 
     @Valid

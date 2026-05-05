@@ -15,6 +15,7 @@ import software.amazon.awssdk.awscore.client.builder.AwsSyncClientBuilder;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
+import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.charge.service.Worldpay3dsFlexJwtService;
 import uk.gov.pay.connector.charge.util.JwtGenerator;
 import uk.gov.pay.connector.common.validator.RequestValidator;
@@ -130,6 +131,11 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public StripeGatewayConfig stripeGatewayConfig(ConnectorConfiguration connectorConfiguration) {
         return connectorConfiguration.getStripeConfig();
+    }
+
+    @Provides
+    public AdyenGatewayConfig adyenGatewayConfig(ConnectorConfiguration connectorConfiguration) {
+        return connectorConfiguration.getAdyenGatewayConfig();
     }
 
     @Provides
