@@ -1,11 +1,12 @@
 package uk.gov.pay.connector.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import java.io.IOException;
 
 import static java.lang.String.format;
@@ -13,7 +14,7 @@ import static uk.gov.pay.connector.util.ResponseUtil.serviceErrorResponse;
 
 public class JsonObjectMapper {
     private final Logger logger = LoggerFactory.getLogger(JsonObjectMapper.class);
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     @Inject
     public JsonObjectMapper(ObjectMapper objectMapper) {
@@ -28,6 +29,16 @@ public class JsonObjectMapper {
             throw new WebApplicationException(serviceErrorResponse(
                     format("There was an exception parsing the payload [%s] into an [%s], e=[%s]",
                     jsonResponse, targetType, e.getMessage())));
+        }
+    }
+
+    public String objectToString(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            logger.info("There was an exception converting object to string");
+            throw new WebApplicationException(serviceErrorResponse(
+                    format("There was an exception converting object to string, e=[%s]", e.getMessage())));
         }
     }
 }
