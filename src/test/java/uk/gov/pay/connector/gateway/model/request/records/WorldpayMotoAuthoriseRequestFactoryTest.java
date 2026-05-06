@@ -59,7 +59,7 @@ class WorldpayMotoAuthoriseRequestFactoryTest {
         
         AuthCardDetails authCardDetails = AuthCardDetails.of(authoriseRequest, chargeEntity, cardInformation);
 
-        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, authCardDetails);
+        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, authCardDetails);
         
         given(mockDescriptionHelper.getDescription(cardAuthorisationGatewayRequest)).willReturn(descriptionOrReference);
         given(mockCredentialsHelper.getOneOffCredentials(cardAuthorisationGatewayRequest)).willReturn(new WorldpayMerchantCodeCredentials(merchantCode, username, password));

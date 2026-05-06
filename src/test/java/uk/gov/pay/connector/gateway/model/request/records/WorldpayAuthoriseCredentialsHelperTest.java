@@ -56,7 +56,7 @@ class WorldpayAuthoriseCredentialsHelperTest {
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .build();
 
-        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = new CardAuthorisationGatewayRequest(chargeEntity, null);
+        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, null);
 
         WorldpayMerchantCodeCredentials expected = new WorldpayMerchantCodeCredentials(merchantCode, username, password);
 

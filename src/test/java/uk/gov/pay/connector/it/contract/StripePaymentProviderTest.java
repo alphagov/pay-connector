@@ -310,7 +310,7 @@ public class StripePaymentProviderTest {
     private ChargeEntity setUpAgreement() {
         AuthCardDetails authCardDetails = anAuthCardDetails().withEndDate(CardExpiryDate.valueOf(validCardExpiryDate)).build();
         ChargeEntity setUpAgreementCharge = getChargeWithAgreement();
-        var request = new CardAuthorisationGatewayRequest(setUpAgreementCharge, authCardDetails);
+        var request = CardAuthorisationGatewayRequest.valueOf(setUpAgreementCharge, authCardDetails);
         GatewayResponse<StripeAuthorisationResponse> setUpAgreementResponse = stripePaymentProvider.authorise(request, setUpAgreementCharge);
 
         Map<String, String> recurringAuthToken = setUpAgreementResponse.getBaseResponse().get().getGatewayRecurringAuthToken().get();

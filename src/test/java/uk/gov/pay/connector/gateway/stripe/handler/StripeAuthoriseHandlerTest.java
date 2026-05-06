@@ -23,7 +23,11 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
-import uk.gov.pay.connector.gateway.stripe.request.*;
+import uk.gov.pay.connector.gateway.stripe.request.StripeCustomerRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePaymentMethodRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripePostRequest;
+import uk.gov.pay.connector.gateway.stripe.request.StripeTokenRequest;
 import uk.gov.pay.connector.gateway.stripe.response.Stripe3dsRequiredParams;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
@@ -677,11 +681,11 @@ public class StripeAuthoriseHandlerTest {
     }
 
     private CardAuthorisationGatewayRequest buildTestAuthorisationRequest(ChargeEntity chargeEntity) {
-        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestAuthCardDetails());
+        return CardAuthorisationGatewayRequest.valueOf(chargeEntity, buildTestAuthCardDetails());
     }
 
     private CardAuthorisationGatewayRequest buildTestUsAuthorisationRequest(ChargeEntity chargeEntity) {
-        return new CardAuthorisationGatewayRequest(chargeEntity, buildTestUsAuthCardDetails());
+        return CardAuthorisationGatewayRequest.valueOf(chargeEntity, buildTestUsAuthCardDetails());
     }
 
     private AuthCardDetails buildTestAuthCardDetails() {

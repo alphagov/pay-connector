@@ -70,7 +70,7 @@ class StripeAuthoriseRequestTest {
         when(charge.getAmount()).thenReturn(amount);
         when(charge.getGatewayAccountCredentialsEntity()).thenReturn(gatewayAccountCredentialsEntity);
 
-        authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, new AuthCardDetails());
+        authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, new AuthCardDetails());
 
         stripeAuthoriseRequest = StripeAuthoriseRequest.of(stripeSourceId, authorisationGatewayRequest, stripeGatewayConfig);
     }
