@@ -9,7 +9,6 @@ import uk.gov.pay.connector.app.JerseyClientOverrides;
 import java.util.Optional;
 
 public class AdyenGatewayConfig extends Configuration {
-
     @Valid
     @NotNull
     private BaseUrls baseUrls;
