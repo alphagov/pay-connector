@@ -1,6 +1,4 @@
-package uk.gov.pay.connector.gateway.adyen.model;
-
-import uk.gov.pay.connector.gateway.adyen.model.json.Action;
+package uk.gov.pay.connector.gateway.adyen.model.json;
 
 import java.util.Map;
 
@@ -11,7 +9,7 @@ public class ActionFixture {
         Map<String,String> data;
         String paymentData;
 
-        static ActionFixture anAction (){
+    public static ActionFixture anAction() {
             return new ActionFixture();
         }
         
