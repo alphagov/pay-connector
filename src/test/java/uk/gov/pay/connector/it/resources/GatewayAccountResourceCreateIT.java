@@ -367,7 +367,7 @@ public class GatewayAccountResourceCreateIT {
         @Test
         void should_create_Adyen_gateway_account_with_credentials() {
             // language=JSON
-            var requestBodyWithoutCredentials = """
+            var requestBodyWithCredentials = """
                     {
                        "payment_provider": "adyen",
                        "type": "test",
@@ -380,7 +380,7 @@ public class GatewayAccountResourceCreateIT {
                      }""";
 
             var accountId = app.givenSetup()
-                    .body(requestBodyWithoutCredentials)
+                    .body(requestBodyWithCredentials)
                     .post(ACCOUNTS_API_URL)
                     .then()
                     .statusCode(201)
