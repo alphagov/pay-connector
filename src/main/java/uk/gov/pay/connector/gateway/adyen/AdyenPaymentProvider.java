@@ -41,6 +41,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
     private final GatewayClient client;
     private final AdyenGatewayConfig adyenGatewayConfig;
     private final ConnectorConfiguration connectorConfiguration;
+    private final AdyenAuthoriseHandler adyenAuthoriseHandler;
 
     @Inject
     public AdyenPaymentProvider(
@@ -52,6 +53,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
         this.adyenGatewayConfig = connectorConfiguration.getAdyenGatewayConfig();
         this.connectorConfiguration = connectorConfiguration;
         this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
+        adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
     }
 
     @Override
@@ -66,7 +68,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+        return adyenAuthoriseHandler.authorise(request);
     }
 
     @Override

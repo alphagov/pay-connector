@@ -131,7 +131,8 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_SUBMIT_DISPUTE_EVIDENCE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/dispute_submit_evidence_response.json";
     public static final String STRIPE_SEARCH_TRANSFERS_FOR_CAPTURED_PAYMENT_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_transfers_for_captured_payment_response.json";
     public static final String STRIPE_SEARCH_TRANSFERS_EMPTY_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_transfers_empty_response.json";
-    
+
+    public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address.json";
 
     public static final String SQS_SEND_MESSAGE_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/send-message-response.json";
 
