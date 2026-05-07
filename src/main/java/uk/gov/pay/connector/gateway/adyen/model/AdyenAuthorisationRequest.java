@@ -13,7 +13,11 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
-public record AdyenAuthorisationRequest(URI url, PaymentRequest requestPayload, JsonObjectMapper jsonObjectMapper) implements GatewayClientPostRequest {
+public record AdyenAuthorisationRequest(URI url,
+                                        Map<String, String> headers,
+                                        String gatewayAccountType,
+                                        PaymentRequest requestPayload,
+                                        JsonObjectMapper jsonObjectMapper) implements GatewayClientPostRequest {
     @Override
     public URI getUrl() {
         return url;
@@ -27,12 +31,12 @@ public record AdyenAuthorisationRequest(URI url, PaymentRequest requestPayload, 
 
     @Override
     public Map<String, String> getHeaders() {
-        return Map.of();
+        return headers;
     }
 
     @Override
     public String getGatewayAccountType() {
-        return "";
+        return gatewayAccountType;
     }
 
     @Override

@@ -55,7 +55,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
         this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
     }
-
+    
     @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return ADYEN;

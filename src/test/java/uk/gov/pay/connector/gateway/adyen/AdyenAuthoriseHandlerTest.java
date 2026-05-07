@@ -16,6 +16,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
+import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -26,8 +27,6 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import java.net.URI;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
@@ -37,8 +36,6 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,6 +67,12 @@ class AdyenAuthoriseHandlerTest {
         AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
         when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
+        
+        ApiKeys mockApiKeys = mock(ApiKeys.class);
+        ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
+        when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
+        when(mockCompanyApiKeys.test()).thenReturn("test");
+        when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
         when(mockConfig.getAdyenGatewayConfig()).thenReturn(mockAdyenGatewayConfig);
 
         authoriseHandler = new AdyenAuthoriseHandler(mockClient, mockConfig, jsonObjectMapper);
@@ -97,20 +100,20 @@ class AdyenAuthoriseHandlerTest {
     }
 
     @Test
-    void should_construct_correct_authorisation_URL() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+    void should_send_request_to_Adyen_with_no_billing_address() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
         givenAdyenReturnsASuccessResponse();
 
-        var request = aCardAuthorisationGatewayRequest()
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAddress(null)
+                        .build())
                 .withCredentials(ADYEN_CREDENTIALS)
-                .withGatewayAccount(aGatewayAccountEntity().withType(LIVE).build())
                 .build();
-        authoriseHandler.authorise(request);
+        authoriseHandler.authorise(authoriseRequest);
 
-        then(mockClient).should()
-                .postRequestFor(captor.capture());
-
-        assertThat(captor.getValue().getUrl(), is(URI.create(LIVE_ADYEN_CHECKOUT_BASE_URL + "/payments")));
-                
+        then(mockClient).should().postRequestFor(captor.capture());
+        String payload = captor.getValue().getGatewayOrder().getPayload();
+        JsonAssert.with(payload).assertNotDefined("$.billingAddress");
     }
 
     @Test
@@ -158,7 +161,7 @@ class AdyenAuthoriseHandlerTest {
                 .withCredentials(ADYEN_CREDENTIALS)
                 .build();
         GatewayResponse<BaseAuthoriseResponse> response = authoriseHandler.authorise(authoriseRequest);
-        
+
         assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(response.getBaseResponse().get(), hasProperty("transactionId", equalTo("adyen-PSP-reference")));
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
