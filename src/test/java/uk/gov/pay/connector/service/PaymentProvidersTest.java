@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
+import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
 import uk.gov.pay.connector.gateway.sandbox.SandboxPaymentProvider;
 import uk.gov.pay.connector.gateway.stripe.StripePaymentProvider;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
@@ -19,6 +20,9 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 @ExtendWith(MockitoExtension.class)
 class PaymentProvidersTest {
 
+    @Mock
+    private AdyenPaymentProvider adyenPaymentProvider;
+    
     @Mock
     private WorldpayPaymentProvider worldpayPaymentProvider;
     
@@ -32,7 +36,7 @@ class PaymentProvidersTest {
 
     @BeforeEach
     void setup() {
-        providers = new PaymentProviders(worldpayPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
+        providers = new PaymentProviders(adyenPaymentProvider, worldpayPaymentProvider, sandboxPaymentProvider, stripePaymentProvider);
     }
 
     @Test
