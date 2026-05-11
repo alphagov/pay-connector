@@ -29,6 +29,16 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 
+/**
+ * This is an integration test with Adyen that can be run locally, but is ignored and so it won't be run by CI.
+ * In order to make it work you need to set the following environment variables:
+ * - GDS_CONNECTOR_ADYEN_MERCHANT_ACCOUNT_ID_TEST: set this to the Gov pay merchant account ID which can be found in Adyen test account dashboard 
+ * - GDS_CONNECTOR_ADYEN_COMPANY_ACCOUNT_API_KEY_TEST: set this to the "Payments API Key" for the Adyen test environment
+ * To run tests using test runner, add env variables to the DropwizardAppWithPostgresRule parameters as config overrides like so:
+ * - ConfigOverride.config("adyen.merchantAccountIds.test", gdsConnectorAdyenMerchantAccountIdTest),
+ * - ConfigOverride.config("adyen.apiKeys.companyAccount.test", gdsConnectorAdyenCompanyAccountApiKeyTest)
+ */
+
 @Ignore
 public class AdyenPaymentProviderTest {
 
