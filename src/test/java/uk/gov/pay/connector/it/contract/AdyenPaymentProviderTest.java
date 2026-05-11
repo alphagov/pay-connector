@@ -1,11 +1,11 @@
 package uk.gov.pay.connector.it.contract;
 
-import com.codahale.metrics.MetricFilter;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
+import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -16,11 +16,9 @@ import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCreden
 import uk.gov.pay.connector.rules.DropwizardAppWithPostgresRule;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static java.time.format.DateTimeFormatter.ofPattern;
 import static java.util.UUID.randomUUID;
 import static junit.framework.TestCase.assertTrue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -34,31 +32,26 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
 @Ignore
 public class AdyenPaymentProviderTest {
 
-    private static final Long chargeAmount = 500L;
+    private static final Long AMOUNT = 500L;
 
     @Rule
-    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(false);
+    public DropwizardAppWithPostgresRule app = new DropwizardAppWithPostgresRule(
+            false);
 
     private AdyenPaymentProvider adyenPaymentProvider;
 
     private GatewayAccountEntity gatewayAccountEntity;
     private GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity;
 
-    private final String validCardExpiryDate = ZonedDateTime.now().plusYears(1).format(ofPattern("MM/yy"));
-
     @Before
     public void setup() {
-        // set required env variables
         envOrThrow("GDS_CONNECTOR_ADYEN_MERCHANT_ACCOUNT_ID_TEST");
         envOrThrow("GDS_CONNECTOR_ADYEN_COMPANY_ACCOUNT_API_KEY_TEST");
-        app.getEnvironment().metrics().removeMatching(MetricFilter.ALL); // stops the duplicated metric error
-        
-        
 
         adyenPaymentProvider = app.getInstanceFromGuiceContainer(AdyenPaymentProvider.class);
         gatewayAccountEntity = new GatewayAccountEntity();
         gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
-                .withCredentials(Map.of("legal_entity_id","legal-entity-id","store_id", "store-id"))
+                .withCredentials(Map.of("legal_entity_id", "legal-entity-id")) // no store-id
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withPaymentProvider(ADYEN.getName())
                 .withState(ACTIVE)
@@ -69,17 +62,45 @@ public class AdyenPaymentProviderTest {
     }
 
     @Test
-    public void authoriseAPayment() throws GatewayException {
-        GatewayResponse gatewayResponse = authorisePayment();
+    public void authoriseAPaymentWithFullBillingAddress() throws GatewayException {
+        var fullAddress = new Address(
+                "line1",
+                "line2",
+                "postcode",
+                "city",
+                "county",
+                "GB"
+        );
+        GatewayResponse gatewayResponse = authorisePayment(fullAddress);
         assertTrue(gatewayResponse.getBaseResponse().isPresent());
     }
 
-    private GatewayResponse<BaseAuthoriseResponse> authorisePayment() throws GatewayException {
+    @Test
+    public void authoriseAPaymentWithNoBillingAddress() throws GatewayException {
+        GatewayResponse gatewayResponse = authorisePayment(null);
+        assertTrue(gatewayResponse.getBaseResponse().isPresent());
+    }
+
+    @Test
+    public void authoriseAPaymentWithPartialBillingAddress() throws GatewayException {
+        var partialAddress = new Address("line1",
+                "line2",
+                null,
+                null,
+                null,
+                null);
+
+        GatewayResponse gatewayResponse = authorisePayment(partialAddress);
+        assertTrue(gatewayResponse.getBaseResponse().isPresent());
+    }
+
+    private GatewayResponse<BaseAuthoriseResponse> authorisePayment(Address address) throws GatewayException {
         ChargeEntity charge = getCharge();
         CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge,
                 anAuthCardDetails()
                         .withCardNo("4111112014267661")
                         .withCvc("737")
+                        .withAddress(address)
                         .withEndDate(CardExpiryDate.valueOf("12/30"))
                         .build());
         return adyenPaymentProvider.authorise(request, charge);
@@ -89,7 +110,7 @@ public class AdyenPaymentProviderTest {
         return aValidChargeEntity()
                 .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
                 .withGatewayAccountEntity(gatewayAccountEntity)
-                .withAmount(chargeAmount)
+                .withAmount(AMOUNT)
                 .withTransactionId(randomUUID().toString())
                 .withDescription("Adyen payment provider test charge")
                 .build();
