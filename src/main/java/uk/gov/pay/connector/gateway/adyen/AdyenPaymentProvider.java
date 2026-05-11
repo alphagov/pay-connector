@@ -17,7 +17,6 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -112,12 +111,10 @@ public class AdyenPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public AuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity,
-                                                                           AuthCardDetails authCardDetails,
-                                                                           boolean isSetUpAgreement) {
-        return new AuthorisationRequestSummary() {
-            // TODO: Implement AdyenAuthorisationRequestSummary
-        };
+    public AdyenAuthorisationRequestSummary generateAuthorisationRequestSummary(ChargeEntity chargeEntity,
+                                                                                AuthCardDetails authCardDetails,
+                                                                                boolean isSetUpAgreement) {
+        return new AdyenAuthorisationRequestSummary(authCardDetails, isSetUpAgreement);
     }
 
     @Override

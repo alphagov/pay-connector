@@ -10,6 +10,7 @@ import uk.gov.pay.connector.gateway.adyen.model.AdyenAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.model.AdyenAuthoriseResponse;
 import uk.gov.pay.connector.gateway.adyen.model.AdyenPaymentResponse;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
@@ -38,6 +39,11 @@ public class AdyenAuthoriseHandler {
             GatewayException.GatewayErrorException,
             GatewayException.GenericGatewayException,
             GatewayException.GatewayConnectionTimeoutException {
+
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
+                .GatewayResponseBuilder
+                .responseBuilder();
+
         logger.info("Calling Adyen for authorisation of charge");
         var authorisationRequest = new AdyenAuthorisationRequest(
                 getAuthUrl(adyenGatewayConfig, request),
@@ -46,14 +52,20 @@ public class AdyenAuthoriseHandler {
                 adyenRequestFactory.createPaymentRequest(request),
                 jsonObjectMapper);
 
-        var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
+        try {
+            var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
+            var paymentResponse = jsonObjectMapper.getObject(
+                    jsonResponse,
+                    AdyenPaymentResponse.class);
 
-        var paymentResponse = jsonObjectMapper.getObject(
-                jsonResponse,
-                AdyenPaymentResponse.class);
-
-        return GatewayResponse.GatewayResponseBuilder.responseBuilder()
-                .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
-                .build();
+            return responseBuilder
+                    .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
+                    .build();
+        } catch (GatewayException.GatewayConnectionTimeoutException
+                 | GatewayException.GenericGatewayException
+                 | GatewayException.GatewayErrorException e) {
+            logger.error("GatewayException occurred, error:\n {0}", e);
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
+        }
     }
 }

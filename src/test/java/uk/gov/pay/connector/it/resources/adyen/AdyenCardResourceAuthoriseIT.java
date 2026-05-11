@@ -152,4 +152,63 @@ class AdyenCardResourceAuthoriseIT {
         assertThat(charge.get().getStatus(), is("AUTHORISATION SUCCESS"));
         assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
     }
+
+    @Test
+    void declined_authorisation() {
+        var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
+        var pspReferenceFromAdyen = "883617895215577D";
+        stubFor(post("/v71/payments")
+                .willReturn(aResponse().withBody("""
+                        {
+                          "pspReference": "%s",
+                          "refusalReason": "Expired Card",
+                          "resultCode": "Refused",
+                          "refusalReasonCode": "6"
+                        }""".formatted(pspReferenceFromAdyen))));
+
+
+        var response = app.givenSetup()
+                .body(anAuthCardDetails().build())
+                .post("/v1/frontend/charges/{chargeId}/cards", chargeId);
+
+        Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is("AUTHORISATION REJECTED"));
+        assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
+
+        response.then()
+                .statusCode(400)
+                .body("error_identifier", is("GENERIC"))
+                .body("message[0]", is("This transaction was declined."));
+    }
+
+
+    @Test
+    void unknown_error_from_Adyen() {
+        var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
+        var pspReferenceFromAdyen = "851563882585825A";
+        stubFor(post("/v71/payments")
+                .willReturn(aResponse().withBody("""
+                        {
+                          "pspReference": "%s",
+                          "refusalReason": "Acquirer Error",
+                          "resultCode": "Error",
+                          "refusalReasonCode": "4"
+                        }""".formatted(pspReferenceFromAdyen))));
+
+
+        var response = app.givenSetup()
+                .body(anAuthCardDetails().build())
+                .post("/v1/frontend/charges/{chargeId}/cards", chargeId);
+
+        Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is("AUTHORISATION ERROR"));
+        assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
+
+        response.then()
+                .statusCode(402)
+                .body("error_identifier", is("GENERIC"))
+                .body("message[0]", is("There was an error authorising the transaction."));
+    }
 }
