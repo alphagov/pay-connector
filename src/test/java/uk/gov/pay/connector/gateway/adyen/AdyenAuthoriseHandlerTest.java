@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.adyen;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonassert.JsonAssert;
 import io.github.netmikey.logunit.api.LogCapturer;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
@@ -35,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
@@ -167,6 +170,24 @@ class AdyenAuthoriseHandlerTest {
         assertThat(response.getBaseResponse().get().authoriseStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED));
     }
 
+    @Test
+    void should_not_authorise_when_payment_provider_returns_unexpected_status_code() throws Exception {
+        givenAdyenReturnsAnUnexpectedResponse();
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAddress(makeFullBillingAddress())
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .build();
+
+        GatewayResponse<BaseAuthoriseResponse> response = authoriseHandler.authorise(authoriseRequest);
+
+        assertThat(response.getGatewayError().isPresent(), Is.is(true));
+        assertThat(response.getGatewayError().get().getMessage(),
+                containsString("server error"));
+        assertThat(response.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
+    }
+
     private void givenAdyenReturnsASuccessResponse() throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
         when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
         when(mockGatewayClientResponse.getEntity()).thenReturn("""
@@ -176,6 +197,19 @@ class AdyenAuthoriseHandlerTest {
                   "merchantReference": "merchant-reference"
                 }
                 """);
+    }
+
+    private void givenAdyenReturnsAnUnexpectedResponse() throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockClient.postRequestFor(any()))
+                .thenThrow(new GatewayException.GatewayErrorException("server error", """
+                        {
+                           "status": 500,
+                           "errorCode": "905",
+                           "message": "Payment details are not supported",
+                           "errorType": "configuration",
+                           "pspReference": "adyen-PSP-reference"
+                         }
+                        """, 500));
     }
 
     private static Address makeFullBillingAddress() {
