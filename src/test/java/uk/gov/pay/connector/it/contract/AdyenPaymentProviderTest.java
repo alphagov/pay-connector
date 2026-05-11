@@ -34,7 +34,7 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
  * In order to make it work you need to set the following environment variables:
  * - GDS_CONNECTOR_ADYEN_MERCHANT_ACCOUNT_ID_TEST: set this to the Gov pay merchant account ID which can be found in Adyen test account dashboard 
  * - GDS_CONNECTOR_ADYEN_COMPANY_ACCOUNT_API_KEY_TEST: set this to the "Payments API Key" for the Adyen test environment
- * To run tests using test runner, add env variables to the DropwizardAppWithPostgresRule parameters as config overrides like so:
+ * To run tests using test runner, add env variables to the AppWithPostgresAndSqsExtension parameters as config overrides like so:
  * - ConfigOverride.config("adyen.merchantAccountIds.test", gdsConnectorAdyenMerchantAccountIdTest),
  * - ConfigOverride.config("adyen.apiKeys.companyAccount.test", gdsConnectorAdyenCompanyAccountApiKeyTest)
  * If you get an error referring to duplicated metrics, add app.getAppRule().getEnvironment().metrics().removeMatching(MetricFilter.ALL); to the setup method 
