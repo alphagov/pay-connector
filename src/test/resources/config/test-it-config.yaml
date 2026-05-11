@@ -63,7 +63,7 @@ adyen:
   hmacKeys:
     payments:
       test:
-        primary: adyen-test-payments-hmac-primary
+        primary: 44782DEF547AAA06C910C43932B1EB0C71FC68D9D0C057550C48EC2ACF6BA056 # pragma: allowlist secret
         secondary: ""
       live:
         primary: adyen-live-payments-hmac-primary
