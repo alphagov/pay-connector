@@ -1,0 +1,22 @@
+{
+  "organization" : {
+    "doingBusinessAs" : "{{serviceName}}",
+    "email" : "organization@example.com",
+    "legalName" : "{{serviceName}}",
+    "registeredAddress" : {
+      "city" : "London",
+      "country" : "GB",
+      "postalCode" : "E1 8QS",
+      "street" : "10 WCB"
+    },
+    "registrationNumber" : "34179503",
+    "taxInformation" : [ {
+      "country" : "GB",
+      "number" : "12345678901",
+      "type" : "ABN"
+    } ],
+    "type" : "governmentalOrganization",
+    "vatNumber" : "12345678"
+  },
+  "type" : "organization"
+}

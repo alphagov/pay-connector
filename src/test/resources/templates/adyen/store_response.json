@@ -1,0 +1,19 @@
+{
+  "id": "STORE_ID_123",
+  "address": {
+    "country": "GB",
+    "line1": "10 WCB",
+    "city": "London",
+    "postalCode": "E1 8QS"
+  },
+  "description": "A local council",
+  "merchantId": "adyen-test-merchant-account-id",
+  "shopperStatement": "TEST DESCRIPTOR",
+  "phoneNumber": "+13123456789",
+  "status": "active",
+  "_links": {
+    "self": {
+      "href": "https://management-test.adyen.com/v1/stores/STORE_ID_123"
+    }
+  }
+}

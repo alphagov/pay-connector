@@ -1,0 +1,7 @@
+{
+  "businessLineId" : "SE322KT223222D5FJ7TJN2986",
+  "countries" : [ "GB" ],
+  "currencies" : [ "GBP" ],
+  "storeIds" : [ "STORE_ID_123" ],
+  "type" : "{{type}}"
+}
