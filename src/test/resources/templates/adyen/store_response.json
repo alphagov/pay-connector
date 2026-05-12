@@ -2,9 +2,9 @@
   "id": "STORE_ID_123",
   "address": {
     "country": "GB",
-    "line1": "10 WCB",
+    "line1": "10 Park Row",
     "city": "London",
-    "postalCode": "E1 8QS"
+    "postalCode": "AB1 2BC"
   },
   "description": "A local council",
   "merchantId": "adyen-test-merchant-account-id",

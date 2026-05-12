@@ -5,8 +5,8 @@
     "registeredAddress": {
       "city": "London",
       "country": "GB",
-      "postalCode": "E1 8QS",
-      "street": "10 WCB"
+      "postalCode" : "AB1 2BC",
+      "street" : "10 Park Row"
     },
     "type": "governmentalOrganization"
   },
