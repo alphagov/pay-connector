@@ -1,0 +1,8 @@
+{
+  "id": "LE00000000000000000000001",
+  "type": "adyenForPlatformsAdvanced",
+  "language": "en",
+  "document": "file_content",
+  "termsOfServiceDocumentId": "doc123",
+  "termsOfServiceDocumentFormat": "JSON"
+}

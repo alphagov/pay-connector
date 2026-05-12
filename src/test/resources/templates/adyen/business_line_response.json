@@ -1,0 +1,15 @@
+{
+  "service": "paymentProcessing",
+  "industryCode": "9399",
+  "legalEntityId": "LE00000000000000000000001",
+  "salesChannels": [
+    "eCommerce",
+    "ecomMoto"
+  ],
+  "webData": [
+    {
+      "webAddress": "https://gov.uk"
+    }
+  ],
+  "id": "SE322KT223222D5FJ7TJN2986"
+}
