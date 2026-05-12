@@ -3,6 +3,8 @@ package uk.gov.pay.connector.gateway.adyen.model.json;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record PaymentRequest(
         @JsonProperty("amount")
@@ -22,5 +24,7 @@ public record PaymentRequest(
         @JsonProperty("store")
         String store,
         @JsonProperty("channel")
-        String channel) {
+        String channel,
+        @JsonProperty("additionalData")
+        HashMap<String,String> additionalData) {
 }
