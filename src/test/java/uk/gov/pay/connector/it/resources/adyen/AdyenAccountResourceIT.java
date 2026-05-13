@@ -74,7 +74,7 @@ public class AdyenAccountResourceIT {
         app.givenSetup()
                 .body(Map.of("service_name", serviceName))
                 .post(format("/v1/api/service/%s/request-adyen-test-account", serviceId))
-                .then().statusCode(200)
+                .then().statusCode(SC_OK)
                 .body("gateway_account_id", is(notNullValue()))
                 .body("legal_entity_id", is(legalEntityId))
                 .body("store_id" , is("STORE_ID_123"))
