@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 
 import java.net.URI;
@@ -11,15 +12,21 @@ import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getCompan
 
 public class AdyenRequestUtil {
 
+    private AdyenRequestUtil() {}
+    
     public static URI getAuthUrl(AdyenGatewayConfig adyenGatewayConfig, CardAuthorisationGatewayRequest request) {
         return URI.create(getBaseCheckoutUrl(adyenGatewayConfig, request.getGatewayAccount().isLive()) + "/payments");
     }
 
-    public static Map<String, String> getHeaders(AdyenGatewayConfig adyenGatewayConfig, CardAuthorisationGatewayRequest request) {
+    public static URI getCaptureUrl(AdyenGatewayConfig adyenGatewayConfig, CaptureGatewayRequest request) {
+        return URI.create(getBaseCheckoutUrl(adyenGatewayConfig, request.getGatewayAccount().isLive()) + "/payments/" + request.getGatewayTransactionId() + "/captures");
+    }
+
+    public static Map<String, String> getHeaders(AdyenGatewayConfig adyenGatewayConfig, boolean isLive) {
         return Map.of("X-API-Key",
                 getCompanyApiKey(
                         adyenGatewayConfig,
-                        request.getGatewayAccount().isLive()
+                        isLive
                 ));
     }
 }

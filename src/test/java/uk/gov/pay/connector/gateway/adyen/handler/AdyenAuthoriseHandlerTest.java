@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.adyen;
+package uk.gov.pay.connector.gateway.adyen.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonassert.JsonAssert;
