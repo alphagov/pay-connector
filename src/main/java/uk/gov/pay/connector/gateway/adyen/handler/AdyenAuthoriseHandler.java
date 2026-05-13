@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.adyen;
+package uk.gov.pay.connector.gateway.adyen.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,6 +6,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.model.AdyenAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.model.AdyenAuthoriseResponse;
 import uk.gov.pay.connector.gateway.adyen.model.AdyenPaymentResponse;
@@ -47,7 +48,7 @@ public class AdyenAuthoriseHandler {
         logger.info("Calling Adyen for authorisation of charge");
         var authorisationRequest = new AdyenAuthorisationRequest(
                 getAuthUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
                 request.getGatewayAccount().getType(),
                 adyenRequestFactory.createPaymentRequest(request),
                 jsonObjectMapper);
