@@ -44,7 +44,11 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 @ExtendWith(MockitoExtension.class)
 class AdyenAuthoriseHandlerTest {
 
-    public static final AdyenCredentials ADYEN_CREDENTIALS = new AdyenCredentials("legal_entity_id", "store_id");
+    public static final AdyenCredentials ADYEN_CREDENTIALS = new AdyenCredentials(
+            "legal_entity_id",
+            "store_id",
+            "account_holder_id",
+            "balance_account_id");
     public static final String LIVE_ADYEN_CHECKOUT_BASE_URL = "https://example.com/live/v71";
     public static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/v71";
     @Mock

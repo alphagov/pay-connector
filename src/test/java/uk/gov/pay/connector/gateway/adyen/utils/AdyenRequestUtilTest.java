@@ -27,7 +27,11 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 class AdyenRequestUtilTest {
     @Mock
     private AdyenGatewayConfig mockAdyenGatewayConfig;
-    public final AdyenCredentials adyenCredentials = new AdyenCredentials("legal_entity_id", "store_id");
+    public final AdyenCredentials adyenCredentials = new AdyenCredentials(
+            "legal_entity_id",
+            "store_id",
+            "account_holder_id",
+            "balance_account_id");
     private CardAuthorisationGatewayRequest mockAuthoriseRequest;
     private CaptureGatewayRequest mockCaptureRequest;
 
