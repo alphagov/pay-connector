@@ -3367,6 +3367,10 @@ components:
     AdyenCredentials:
       type: object
       properties:
+        account_holder_id:
+          type: string
+        balance_account_id:
+          type: string
         legal_entity_id:
           type: string
         store_id:

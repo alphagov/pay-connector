@@ -358,7 +358,7 @@ public class GatewayAccountResourceCreateIT {
             var gatewayAccount = gatewayAccountDao.findById(Long.valueOf(accountId));
             assertTrue(gatewayAccount.isPresent());
 
-            Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentials = 
+            Optional<GatewayAccountCredentialsEntity> gatewayAccountCredentials =
                     gatewayAccount.get().getGatewayAccountCredentials().stream().findFirst();
             assertTrue(gatewayAccountCredentials.isPresent());
             assertThat(gatewayAccountCredentials.get().getPaymentProvider(), is("adyen"));
@@ -375,7 +375,9 @@ public class GatewayAccountResourceCreateIT {
                        "service_id": "service-ext-id-2",
                        "credentials": {
                          "legal_entity_id": "LEM0000000000000001",
-                         "store_id": "ST00000000000000000000001"
+                         "store_id": "ST00000000000000000000001",
+                         "account_holder_id": "AH3227C223222H5J4DCLW9VBV",
+                         "balance_account_id": "BA0000000000000000000001"
                        }
                      }""";
 
@@ -413,6 +415,8 @@ public class GatewayAccountResourceCreateIT {
             AdyenCredentials credentialsObject = (AdyenCredentials) gatewayAccountCredentials.get().getCredentialsObject();
             assertThat(credentialsObject.legalEntityId(), is("LEM0000000000000001"));
             assertThat(credentialsObject.storeId(), is("ST00000000000000000000001"));
+            assertThat(credentialsObject.accountHolderId(), is("AH3227C223222H5J4DCLW9VBV"));
+            assertThat(credentialsObject.balanceAccountId(), is("BA0000000000000000000001"));
         }
 
         @Test

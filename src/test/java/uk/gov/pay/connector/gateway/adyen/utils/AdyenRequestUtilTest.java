@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
-import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -27,7 +26,11 @@ class AdyenRequestUtilTest {
 
     @Mock
     private AdyenGatewayConfig mockAdyenGatewayConfig;
-    public final AdyenCredentials adyenCredentials = new AdyenCredentials("legal_entity_id", "store_id");
+    public final AdyenCredentials adyenCredentials = new AdyenCredentials(
+            "legal_entity_id",
+            "store_id",
+            "account_holder_id",
+            "balance_account_id");
     private CardAuthorisationGatewayRequest mockAuthoriseRequest;
 
     @BeforeEach
