@@ -91,7 +91,9 @@ class GatewayAccountRequestTest {
                   "payment_provider": "adyen",
                   "credentials": {
                     "legal_entity_id": "LEM0000000000000001",
-                    "store_id": "ST00000000000000000000001"
+                    "store_id": "ST00000000000000000000001",
+                    "account_holder_id": "AH3227C223222H5J4DCLW9VBV",
+                    "balance_account_id": "BA0000000000000000000001"
                   }
                 }""";
 
@@ -100,6 +102,8 @@ class GatewayAccountRequestTest {
         var credentials = anAdyenCredentials()
                 .withLegalEntityId("LEM0000000000000001")
                 .withStoreId("ST00000000000000000000001")
+                .withAccountHolderId("AH3227C223222H5J4DCLW9VBV")
+                .withBalanceAccountId("BA0000000000000000000001")
                 .build();
         var expectedRequest = anAdyenGatewayAccountRequest()
                 .withPaymentProvider("adyen")
@@ -120,5 +124,6 @@ class GatewayAccountRequestTest {
         assertThat(deserializedRequest.isAllowGooglePay(), is(expectedRequest.isAllowGooglePay()));
         assertThat(deserializedRequest.isSendPayerEmailToGateway(), is(expectedRequest.isSendPayerEmailToGateway()));
         assertThat(deserializedRequest.isSendPayerIpAddressToGateway(), is(expectedRequest.isSendPayerIpAddressToGateway()));
+        assertThat(deserializedRequest.getCredentialsAsMap(), is(expectedRequest.getCredentialsAsMap()));
     }
 }
