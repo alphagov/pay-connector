@@ -12,6 +12,9 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil;
 import uk.gov.pay.connector.gateway.exception.AdyenNotificationException;
+import uk.gov.pay.connector.queue.tasks.TaskQueueService;
+import uk.gov.pay.connector.queue.tasks.TaskType;
+import uk.gov.pay.connector.queue.tasks.model.Task;
 import uk.gov.pay.connector.util.IpDomainMatcher;
 
 import java.security.SignatureException;
@@ -28,11 +31,13 @@ public class AdyenNotificationService {
     private final AdyenGatewayConfig adyenGatewayConfig;
     private final IpDomainMatcher ipDomainMatcher;
     private final HMACValidator hmacValidator;
+    private final TaskQueueService taskQueueService;
 
     @Inject
-    public AdyenNotificationService(AdyenGatewayConfig adyenGatewayConfig, IpDomainMatcher ipDomainMatcher) {
+    public AdyenNotificationService(AdyenGatewayConfig adyenGatewayConfig, IpDomainMatcher ipDomainMatcher, TaskQueueService taskQueueService) {
         this.adyenGatewayConfig = adyenGatewayConfig;
         this.ipDomainMatcher = ipDomainMatcher;
+        this.taskQueueService = taskQueueService;
         this.hmacValidator = new HMACValidator();
     }
 
@@ -66,6 +71,13 @@ public class AdyenNotificationService {
                 if (!isValidHmac(item, hmacKey)) {
                     return false;
                 }
+                if (!"CAPTURE".equals(item.getEventCode())) {
+                    LOGGER.info("Ignored Adyen notification",
+                            kv("originalReference", item.getOriginalReference()),
+                            kv("eventCode", item.getEventCode()));
+                    continue;
+                }
+                addNotificationToTaskQueue(payload, item);
             }
         } catch (AdyenNotificationException e) {
             LOGGER.error("Failed to validate Adyen notification payload", e);
@@ -77,6 +89,20 @@ public class AdyenNotificationService {
                 kv("notification_source", forwardedIpAddresses));
 
         return true;
+    }
+
+    private void addNotificationToTaskQueue(String payload, NotificationRequestItem item) {
+        try {
+            taskQueueService.add(new Task(payload, TaskType.HANDLE_ADYEN_WEBHOOK_NOTIFICATION));
+        } catch (Exception e) {
+            LOGGER.error("Error sending Adyen webhook notification to task SQS queue",
+                    kv("pspReference", item.getPspReference()),
+                    kv("eventCode", item.getEventCode()),
+                    e);
+            throw new WebApplicationException(
+                    "Error sending message to task SQS queue",
+                    e);
+        }
     }
 
     private NotificationRequest deserialisePayloadToNotificationRequest(String rawAdyenJson) {
