@@ -131,7 +131,26 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_SUBMIT_DISPUTE_EVIDENCE_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/dispute_submit_evidence_response.json";
     public static final String STRIPE_SEARCH_TRANSFERS_FOR_CAPTURED_PAYMENT_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_transfers_for_captured_payment_response.json";
     public static final String STRIPE_SEARCH_TRANSFERS_EMPTY_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_transfers_empty_response.json";
-    
+
+    public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address.json";
+    public static final String ADYEN_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/notification.json";
+    public static final String ADYEN_CREATE_LEGAL_ENTITY_REQUEST = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_request.json";
+    public static final String ADYEN_CREATE_LEGAL_ENTITY_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_response.json";
+    public static final String ADYEN_CREATE_INDIVIDUAL_REQUEST =  TEMPLATE_BASE_NAME + "/adyen/create_individual_request.json";
+    public static final String ADYEN_CREATE_INDIVIDUAL_RESPONSE =  TEMPLATE_BASE_NAME + "/adyen/create_individual_response.json";
+    public static final String ADYEN_UPDATE_LEGAL_ENTITY_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/update_legal_entity_response.json";
+    public static final String ADYEN_BUSINESS_LINE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/business_line_response.json";
+    public static final String ADYEN_TRANSFER_INSTRUMENT_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/transfer_instrument_response.json";
+    public static final String ADYEN_STORE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/store_response.json";
+    public static final String ADYEN_PAYMENT_METHOD_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/payment_method_response.json";
+    public static final String ADYEN_ACCOUNT_HOLDER_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/account_holder_response.json";
+    public static final String ADYEN_BALANCE_ACCOUNT_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/balance_account_response.json";
+    public static final String ADYEN_TERMS_OF_SERVICE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/terms_of_service_response.json";
+    public static final String ADYEN_ACCEPT_TERMS_OF_SERVICE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/accept_terms_of_service_response.json";
+    public static final String ADYEN_PCI_QUESTIONNAIRE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/pci_questionnaire_response.json";
+    public static final String ADYEN_SIGN_PCI_QUESTIONNAIRE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/sign_pci_questionnaire_response.json";
+    public static final String ADYEN_ERROR_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/error_response.json";
+    public static final String ADYEN_PAYMENT_METHOD_REQUEST = TEMPLATE_BASE_NAME + "/adyen/payment_method_request.json";
 
     public static final String SQS_SEND_MESSAGE_RESPONSE = TEMPLATE_BASE_NAME + "/sqs/send-message-response.json";
 

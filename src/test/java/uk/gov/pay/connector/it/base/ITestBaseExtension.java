@@ -45,8 +45,10 @@ import static org.hamcrest.Matchers.notNullValue;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_ADYEN_LEGAL_ENTITY_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -162,6 +164,8 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public void createCredentialParams() {
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
+        } else if (paymentProvider.equals(ADYEN.getName())){
+            credentials = Map.of(CREDENTIALS_ADYEN_LEGAL_ENTITY_ID, "legal_entity_id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
             credentials = Map.of(
                     ONE_OFF_CUSTOMER_INITIATED, Map.of(

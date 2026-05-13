@@ -1,0 +1,8 @@
+{
+  "balancePlatform": "adyen-test-balance-platform-id",
+  "description": "Liable account holder used for A local council",
+  "legalEntityId": "LE00000000000000000000001",
+  "reference": "A local council",
+  "id": "AH3227C223222H5J4DCLW9VBV",
+  "status": "active"
+}

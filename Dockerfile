@@ -1,11 +1,11 @@
-FROM maven:3.9.13-eclipse-temurin-25-alpine@sha256:f84bdf17fd844ed6bae8b33fd7d29f2697c6ce750d1b0860566584d8366866a8 AS builder
+FROM maven:3.9.14-eclipse-temurin-25-alpine@sha256:8ddee0a12ef5882e3973b87e555b24463aed07cca06673d43c7e205958167b80 AS builder
 
 WORKDIR /home/build
 COPY . .
 
 RUN ["mvn", "clean", "--no-transfer-progress", "package", "-DskipTests"]
 
-FROM eclipse-temurin:25-jre-alpine@sha256:f10d6259d0798c1e12179b6bf3b63cea0d6843f7b09c9f9c9c422c50e44379ec AS final
+FROM eclipse-temurin:25-jre-alpine@sha256:c707c0d18cb9e8556380719f80d96a7529d0746fbb42143893949b98ed2f8943 AS final
 
 RUN ["apk", "--no-cache", "upgrade"]
 

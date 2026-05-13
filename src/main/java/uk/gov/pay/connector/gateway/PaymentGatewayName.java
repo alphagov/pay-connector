@@ -5,13 +5,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public enum PaymentGatewayName {
-    SANDBOX("sandbox"), SMARTPAY("smartpay"), WORLDPAY("worldpay"), EPDQ("epdq"), STRIPE("stripe");
+    ADYEN("adyen"), EPDQ("epdq"), SANDBOX("sandbox"), SMARTPAY("smartpay"), STRIPE("stripe"), WORLDPAY("worldpay");
 
     private final String gatewayName;
-    
+
     private static final Set<String> UNSUPPORTED = Set.of(SMARTPAY.gatewayName, EPDQ.gatewayName);
 
-    private static final Set<String> PAYMENT_GATEWAY_NAMES = EnumSet.allOf(PaymentGatewayName.class).stream().map(x -> x.gatewayName).collect(Collectors.toSet());
+    private static final Set<String> PAYMENT_GATEWAY_NAMES = EnumSet.allOf(PaymentGatewayName.class)
+            .stream()
+            .map(x -> x.gatewayName)
+            .collect(Collectors.toSet());
 
     PaymentGatewayName(String gatewayName) {
         this.gatewayName = gatewayName;
@@ -20,21 +23,26 @@ public enum PaymentGatewayName {
     public String getName() {
         return gatewayName;
     }
-    
+
     public static boolean isUnsupported(String gatewayName) {
         return UNSUPPORTED.contains(gatewayName);
     }
 
     public static class Unsupported extends RuntimeException {
-        public Unsupported() { super(); }
-        public Unsupported(String msg) { super(msg); }
+        public Unsupported() {
+            super();
+        }
+
+        public Unsupported(String msg) {
+            super(msg);
+        }
     }
 
     public static boolean isValidPaymentGateway(String name) {
         try {
             valueFrom(name);
             return true;
-        } catch (Unsupported e){
+        } catch (Unsupported _) {
             return false;
         }
     }

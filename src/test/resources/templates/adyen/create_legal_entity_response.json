@@ -1,0 +1,15 @@
+{
+  "organization": {
+    "legalName": "service-name",
+    "registrationNumber": "34179503",
+    "registeredAddress": {
+      "city": "London",
+      "country": "GB",
+      "postalCode" : "AB1 2BC",
+      "street" : "10 Park Row"
+    },
+    "type": "governmentalOrganization"
+  },
+  "type": "organization",
+  "id": "LE00000000000000000000001"
+}

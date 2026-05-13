@@ -77,6 +77,15 @@ class AuthUtilTest {
     }
 
     @Test
+    void shouldGetCredentialsForOneOffPayment() {
+        WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
+
+        WorldpayMerchantCodeCredentials actual = AuthUtil.getWorldpayMerchantCodeCredentials(credentials, AuthorisationMode.WEB, false);
+        WorldpayMerchantCodeCredentials expected = new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword);
+        assertThat(actual, is(expected));
+    }
+
+    @Test
     void shouldGetAuthHeaderForManagingTokens() {
         WorldpayCredentials credentials = getWorldpayCredentialsWithAllPaymentChannels();
         String expectedHeader = "Basic " + Base64.getEncoder().encodeToString(new String(citUsername + ":" + citPassword).getBytes(StandardCharsets.UTF_8));

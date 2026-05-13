@@ -87,7 +87,7 @@ public class SandboxPaymentProviderTest {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(AUTH_SUCCESS_CARD_NUMBER);
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
+        GatewayResponse gatewayResponse = provider.authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
@@ -141,7 +141,7 @@ public class SandboxPaymentProviderTest {
                 .withPaymentProvider(SANDBOX.getName())
                 .withCardDetails(ChargeEntityFixture.defaultCardDetails())
                 .build();
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
+        GatewayResponse gatewayResponse = provider.authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
@@ -163,7 +163,7 @@ public class SandboxPaymentProviderTest {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(AUTH_REJECTED_CARD_NUMBER);
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
+        GatewayResponse gatewayResponse = provider.authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(false));
@@ -184,7 +184,7 @@ public class SandboxPaymentProviderTest {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(AUTH_ERROR_CARD_NUMBER);
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
+        GatewayResponse gatewayResponse = provider.authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
@@ -202,7 +202,7 @@ public class SandboxPaymentProviderTest {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo("3456789987654567");
         ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().build();
-        GatewayResponse gatewayResponse = provider.authorise(new CardAuthorisationGatewayRequest(charge, authCardDetails), charge);
+        GatewayResponse gatewayResponse = provider.authorise(CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails), charge);
 
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(false));
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));

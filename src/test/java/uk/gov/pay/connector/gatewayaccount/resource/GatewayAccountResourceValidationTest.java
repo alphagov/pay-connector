@@ -4,15 +4,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.pay.connector.common.model.api.ErrorResponse;
 import uk.gov.pay.connector.common.validator.RequestValidator;
+import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,17 +25,27 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class GatewayAccountResourceValidationTest {
 
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
+    private static final GatewayAccountService gatewayAccountServiceStub = mock(GatewayAccountService.class);
     private static final ResourceExtension resources = ResourceTestRuleWithCustomExceptionMappersBuilder
             .getBuilder()
-            .addResource(new GatewayAccountResource(null,null,
-                    new GatewayAccountRequestValidator(new RequestValidator()), null,null))
+            .addResource(new GatewayAccountResource(gatewayAccountServiceStub, null,
+                    new GatewayAccountRequestValidator(new RequestValidator()), null, null))
             .build();
+
+    @BeforeAll
+    static void setUpGatewayAccountServiceStub() {
+        when(gatewayAccountServiceStub.createGatewayAccount(any(), any()))
+                .thenReturn(new CreateGatewayAccountResponse.GatewayAccountResponseBuilder().build());
+    }
 
     @Test
     void shouldReturn422_whenEverythingMissing() {
@@ -75,18 +90,35 @@ class GatewayAccountResourceValidationTest {
 
     @Test
     void shouldReturn422_whenPaymentProviderIsInvalid() {
+        var payload = Map.of(
+                "service_id", "a-valid-service-id",
+                "payment_provider", "blockchain");
 
-        Map<String, Object> payload = Map.of("service_id", "a-valid-service-id", "payment_provider", "blockchain");
-
-        Response response = resources.client()
+        var response = resources.client()
                 .target("/v1/api/accounts")
                 .request()
                 .post(Entity.json(payload));
 
         assertThat(response.getStatus(), is(422));
-
-        String errorMessage = response.readEntity(JsonNode.class).get("message").get(0).textValue();
+        var errorMessage = response.readEntity(JsonNode.class)
+                .get("message")
+                .get(0)
+                .textValue();
         assertThat(errorMessage, is("Unsupported payment provider value."));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"sandbox", "smartpay", "worldpay", "epdq", "stripe", "adyen"})
+    void shouldReturn201_whenPaymentProviderIsValid(String paymentProvider) {
+        var payload = Map.of(
+                "service_id", "a-valid-service-id",
+                "payment_provider", paymentProvider);
+
+        var response = resources.target("/v1/api/accounts")
+                .request()
+                .post(Entity.json(payload));
+
+        assertThat(response.getStatus(), is(201));
     }
 
     @Test

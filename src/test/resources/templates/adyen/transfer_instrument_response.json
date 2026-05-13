@@ -1,0 +1,14 @@
+{
+  "bankAccount": {
+    "accountIdentification": {
+      "type": "ukLocal",
+      "accountNumber": "12345678",
+      "sortCode": "123456"
+    },
+    "countryCode": "GB",
+    "trustedSource": false
+  },
+  "legalEntityId": "LE00000000000000000000001",
+  "type": "bankAccount",
+  "id": "SE3293N223226C5M9TQ9GFBRV"
+}

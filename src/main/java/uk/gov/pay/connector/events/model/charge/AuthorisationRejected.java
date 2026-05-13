@@ -2,7 +2,9 @@ package uk.gov.pay.connector.events.model.charge;
 
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
+import uk.gov.pay.connector.events.eventdetails.charge.AuthorisationRejectedAgreementPaymentEventDetails;
 import uk.gov.pay.connector.events.eventdetails.charge.AuthorisationRejectedEventDetails;
+import uk.gov.pay.connector.events.eventdetails.charge.AuthorisationRejectedWebPaymentEventDetails;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.time.Instant;
@@ -18,10 +20,10 @@ public class AuthorisationRejected extends PaymentEvent {
     }
 
     private AuthorisationRejected(String serviceId, boolean live, Long gatewayAccountId, String resourceExternalId,
-                                 AuthorisationRejectedEventDetails eventDetails, Instant timestamp) {
+                                  AuthorisationRejectedEventDetails eventDetails, Instant timestamp) {
         super(serviceId, live, gatewayAccountId, resourceExternalId, eventDetails, timestamp);
     }
-
+    
     public static AuthorisationRejected from(ChargeEventEntity chargeEvent) {
         ChargeEntity charge = chargeEvent.getChargeEntity();
         if (charge.getAuthorisationMode() == AuthorisationMode.AGREEMENT) {
@@ -30,7 +32,16 @@ public class AuthorisationRejected extends PaymentEvent {
                     charge.getGatewayAccount().isLive(),
                     charge.getGatewayAccount().getId(),
                     charge.getExternalId(),
-                    AuthorisationRejectedEventDetails.from(charge),
+                    AuthorisationRejectedAgreementPaymentEventDetails.from(charge),
+                    chargeEvent.getUpdated().toInstant()
+            );
+        } else if (charge.getGatewayRejectionReason() != null) {
+            return new AuthorisationRejected(
+                    charge.getServiceId(),
+                    charge.getGatewayAccount().isLive(),
+                    charge.getGatewayAccount().getId(),
+                    charge.getExternalId(),
+                    AuthorisationRejectedWebPaymentEventDetails.from(charge),
                     chargeEvent.getUpdated().toInstant()
             );
         }

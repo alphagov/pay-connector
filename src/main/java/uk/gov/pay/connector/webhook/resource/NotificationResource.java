@@ -4,13 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
-import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
-
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.HeaderParam;
@@ -18,11 +11,19 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
+import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
+import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
 
 import static io.swagger.v3.oas.annotations.enums.ParameterIn.HEADER;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -38,14 +39,18 @@ public class NotificationResource {
     private final WorldpayNotificationService worldpayNotificationService;
     private final SandboxNotificationService sandboxNotificationService;
     private final StripeNotificationService stripeNotificationService;
+    private final AdyenNotificationService adyenNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 SandboxNotificationService sandboxNotificationService,
-                                StripeNotificationService stripeNotificationService) {
+                                StripeNotificationService stripeNotificationService,
+                                AdyenNotificationService adyenNotificationService
+    ) {
         this.worldpayNotificationService = worldpayNotificationService;
         this.sandboxNotificationService = sandboxNotificationService;
         this.stripeNotificationService = stripeNotificationService;
+        this.adyenNotificationService = adyenNotificationService;
     }
 
     @POST
@@ -127,6 +132,30 @@ public class NotificationResource {
         String response = "[OK]";
         logResponseMessage(response, STRIPE);
         return Response.ok(response).build();
+    }
+
+    @POST
+    @Consumes(APPLICATION_JSON)
+    @Path("/v1/api/notifications/adyen/payments")
+    @Operation(
+            summary = "Handle Adyen payment notifications",
+            description = "Accepts Adyen payment webhooks as JSON and preserves the raw request body for signature verification.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected"),
+                    @ApiResponse(responseCode = "405", description = "Method Not Allowed - Unsupported HTTP method"),
+                    @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
+            }
+    )
+    public Response authoriseAdyenPaymentsNotifications(String notification,
+                                                        @Parameter(in = HEADER, example = "5.6.7.8")
+                                                        @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        if (!adyenNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
+            logRejectionMessage(forwardedIpAddresses, ADYEN);
+            return forbiddenErrorResponse();
+        }
+        logResponseMessage("[accepted]", ADYEN);
+        return Response.ok().build();
     }
 
     private void logRejectionMessage(String forwardedIpAddresses, PaymentGatewayName gateway) {

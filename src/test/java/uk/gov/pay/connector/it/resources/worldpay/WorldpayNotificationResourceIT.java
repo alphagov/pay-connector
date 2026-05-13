@@ -1,19 +1,15 @@
 package uk.gov.pay.connector.it.resources.worldpay;
 
-import io.dropwizard.core.setup.Environment;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import uk.gov.pay.connector.app.ConnectorApp;
-import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.ConnectorModule;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.util.ConnectorAppWithCustomInjector;
 import uk.gov.pay.connector.util.DnsPointerResourceRecord;
 import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import java.time.ZonedDateTime;
@@ -28,21 +24,20 @@ import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_SUBMITTED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.ConnectorModuleWithOverrides.reverseDnsLookup;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_NOTIFICATION;
 
 public class WorldpayNotificationResourceIT {
-    private static final ReverseDnsLookup reverseDnsLookup = mock(ReverseDnsLookup.class);
 
     // App must be instantiated after mock is set
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(WorldpayNotificationResourceIT.ConnectorAppWithCustomInjector.class, config("worldpay.notificationDomain", ".worldpay.com"));
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(ConnectorAppWithCustomInjector.class, config("worldpay.notificationDomain", ".worldpay.com"));
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("worldpay", app.getLocalPort(), app.getDatabaseTestHelper());
 
@@ -253,23 +248,4 @@ public class WorldpayNotificationResourceIT {
         return externalChargeId;
     }
 
-    public static class ConnectorAppWithCustomInjector extends ConnectorApp {
-
-        @Override
-        protected ConnectorModule getModule(ConnectorConfiguration configuration, Environment environment) {
-            return new ConnectorModuleWithOverrides(configuration, environment);
-        }
-    }
-
-    private static class ConnectorModuleWithOverrides extends ConnectorModule {
-
-        public ConnectorModuleWithOverrides(ConnectorConfiguration configuration, Environment environment) {
-            super(configuration, environment);
-        }
-
-        @Override
-        protected ReverseDnsLookup getReverseDnsLookup() {
-            return reverseDnsLookup;
-        }
-    }
 }

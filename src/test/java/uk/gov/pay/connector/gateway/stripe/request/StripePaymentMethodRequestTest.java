@@ -81,7 +81,7 @@ class StripePaymentMethodRequestTest {
         authCardDetails.setCvc(cvc);
         authCardDetails.setEndDate(CardExpiryDate.valueOf(endMonth + "/" + endYear));
 
-        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
     }
@@ -95,7 +95,7 @@ class StripePaymentMethodRequestTest {
         address.setCountry(country);
         address.setPostcode(postcode);
         authCardDetails.setAddress(address);
-        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 
@@ -121,7 +121,7 @@ class StripePaymentMethodRequestTest {
         address.setCountry("CA");
         address.setPostcode("X0A0A0");
         authCardDetails.setAddress(address);
-        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 
@@ -141,7 +141,7 @@ class StripePaymentMethodRequestTest {
         address.setCountry("US");
         address.setPostcode("90210");
         authCardDetails.setAddress(address);
-        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 
@@ -154,7 +154,7 @@ class StripePaymentMethodRequestTest {
 
     @Test
     void shouldHaveCorrectParametersWithoutAddress() {
-        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
         
         String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
@@ -174,7 +174,7 @@ class StripePaymentMethodRequestTest {
         address.setCountry(null);
         address.setPostcode(null);
         authCardDetails.setAddress(address);
-        CardAuthorisationGatewayRequest authorisationGatewayRequest = new CardAuthorisationGatewayRequest(charge, authCardDetails);
+        CardAuthorisationGatewayRequest authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 

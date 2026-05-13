@@ -1,0 +1,29 @@
+{
+  "amount": {
+    "currency": "GBP",
+    "value": 6234
+  },
+  "billingAddress": {
+    "houseNumberOrName": "line1",
+    "street": "line2",
+    "city": "city",
+    "country": "country",
+    "postalCode": "postcode"
+  },
+  "merchantAccount": "adyen-test-merchant-account-id",
+  "paymentMethod": {
+    "cvc": "737",
+    "expiryMonth": "03",
+    "expiryYear": "2030",
+    "holderName": "John Doe",
+    "number": "4444333322221111",
+    "type": "scheme"
+  },
+  "reference": "%s",
+  "returnUrl": "http://CardFrontend/",
+  "shopperInteraction": "Ecommerce",
+  "channel": "Web",
+  "additionalData" : {
+    "manualCapture" : "true"
+  }
+}

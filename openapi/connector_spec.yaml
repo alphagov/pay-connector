@@ -1130,6 +1130,34 @@ paths:
       summary: Resolve charge status discrepancy
       tags:
       - Discrepancies
+  /v1/api/notifications/adyen/payments:
+    post:
+      description: Accepts Adyen payment webhooks as JSON and preserves the raw request
+        body for signature verification.
+      operationId: authoriseAdyenPaymentsNotifications
+      parameters:
+      - example: 5.6.7.8
+        in: header
+        name: X-Forwarded-For
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden - notification rejected
+        "405":
+          description: Method Not Allowed - Unsupported HTTP method
+        "415":
+          description: Unsupported Media Type - Unsupported content type
+      summary: Handle Adyen payment notifications
+      tags:
+      - Notifications
   /v1/api/notifications/sandbox:
     post:
       description: This endpoint returns a HTTP status code of 200 for authorized
@@ -3336,6 +3364,57 @@ components:
         postcode:
           type: string
           example: AB1 2CD
+    AdyenCredentials:
+      type: object
+      properties:
+        account_holder_id:
+          type: string
+        balance_account_id:
+          type: string
+        legal_entity_id:
+          type: string
+        store_id:
+          type: string
+    AdyenGatewayAccountRequest:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/GatewayAccountRequest"
+      - type: object
+        properties:
+          allow_apple_pay:
+            type: boolean
+            writeOnly: true
+          allow_google_pay:
+            type: boolean
+            writeOnly: true
+          analytics_id:
+            type: string
+            writeOnly: true
+          credentials:
+            $ref: "#/components/schemas/AdyenCredentials"
+          description:
+            type: string
+          payment_provider:
+            type: string
+            writeOnly: true
+          requires_3ds:
+            type: boolean
+            writeOnly: true
+          send_payer_email_to_gateway:
+            type: boolean
+            writeOnly: true
+          send_payer_ip_address_to_gateway:
+            type: boolean
+            writeOnly: true
+          service_id:
+            type: string
+            writeOnly: true
+          service_name:
+            type: string
+            writeOnly: true
+          type:
+            type: string
+            writeOnly: true
     AgreementCancelRequest:
       type: object
       properties:

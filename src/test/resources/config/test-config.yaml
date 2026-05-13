@@ -37,6 +37,46 @@ worldpay:
     auth:
       readTimeout: 222ms
 
+adyen:
+  baseUrls:
+    checkout:
+      test: https://checkout-test.adyen.com/v71
+      live: https://checkout-live.adyen.com/v71
+    balancePlatform:
+      test: https://balanceplatform-api-test.adyen.com
+      live: https://balanceplatform-api-live.adyen.com
+    legalEntityManagement:
+      test: https://kyc-test.adyen.com/lem/v4
+      live: https://kyc-live.adyen.com/lem/v4
+    management:
+      test: https://management-test.adyen.com/v3
+      live: https://management-live.adyen.com/v3
+  merchantAccountIds:
+    test: adyen-test-merchant-account-id
+    live: adyen-live-merchant-account-id
+  balancePlatformIds:
+    test: adyen-test-balance-platform-id
+    live: adyen-live-balance-platform-id
+  apiKeys:
+    companyAccount:
+      test: adyen-test-company-api-key
+      live: adyen-live-company-api-key
+    balancePlatform:
+      test: adyen-test-balance-platform-api-key
+      live: adyen-live-balance-platform-api-key
+    legalEntityManagement:
+      test: adyen-test-legal-entity-management-api-key
+      live: adyen-live-legal-entity-management-api-key
+  notificationDomain: .adyen.com
+  hmacKeys:
+    payments:
+      test:
+        primary: adyen-test-payments-hmac-primary
+        secondary: ""
+      live:
+        primary: adyen-live-payments-hmac-primary
+        secondary: ""
+
 sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS:-[]}
 
