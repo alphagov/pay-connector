@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gateway.adyen.model.json.PaymentRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
@@ -91,7 +92,8 @@ class AdyenAuthorisationRequestTest {
                 "frontend-3ds-url",
                 "Ecommerce",
                 "store-id",
-                "Web"
+                "Web",
+                new HashMap<>(Map.of("manualCapture", "true"))
         );
     }
 }

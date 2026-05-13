@@ -78,6 +78,7 @@ class AdyenRequestFactoryTest {
         assertThat(request.reference(), is("gov_uk_payment_id"));
         assertThat(request.merchantAccount(), is("test"));
         assertThat(request.store(), is("store_id"));
+        assertThat(request.additionalData().get("manualCapture"), is("true"));
     }
 
     @Test
@@ -124,6 +125,7 @@ class AdyenRequestFactoryTest {
         assertThat(request.reference(), is("gov_uk_payment_id"));
         assertThat(request.merchantAccount(), is("test"));
         assertThat(request.store(), is("store_id"));
+        assertThat(request.additionalData().get("manualCapture"), is("true"));
     }
 
     @Test
