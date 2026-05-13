@@ -4149,6 +4149,8 @@ components:
           type: object
           additionalProperties:
             type: object
+      required:
+      - metadata
     ExternalTransactionState:
       type: object
       description: A structure representing the current state of the payment in its
