@@ -9,14 +9,14 @@ class AdyenCredentialsTest {
 
     @Test
     void should_have_credentials_if_legal_entity_ID_is_not_null() {
-        var adyenCredentialsWithCredentials = new AdyenCredentials("legal-entity-ID", null);
+        var adyenCredentialsWithCredentials = new AdyenCredentials("legal-entity-ID", null, null, null);
 
         assertTrue(adyenCredentialsWithCredentials.hasCredentials());
     }
 
     @Test
     void should_NOT_have_credentials_if_legal_entity_ID_is_null() {
-        var adyenCredentialsWithoutCredentials = new AdyenCredentials(null, null);
+        var adyenCredentialsWithoutCredentials = new AdyenCredentials(null, null, null, null);
 
         assertFalse(adyenCredentialsWithoutCredentials.hasCredentials());
     }

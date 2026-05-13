@@ -32,7 +32,11 @@ class AdyenRequestFactoryTest {
     private final ConnectorConfiguration mockConfig = mock(ConnectorConfiguration.class);
     private final LinksConfig mockedLinksConfig = mock(LinksConfig.class);
     private final AdyenRequestFactory adyenRequestFactory = new AdyenRequestFactory(mockConfig);
-    public static final AdyenCredentials ADYEN_CREDENTIALS = new AdyenCredentials("legal_entity_id", "store_id");
+    public static final AdyenCredentials ADYEN_CREDENTIALS = new AdyenCredentials(
+            "legal_entity_id",
+            "store_id",
+            "account_holder_id",
+            "balance_account_id");
 
     @BeforeEach
     void setUp() {
