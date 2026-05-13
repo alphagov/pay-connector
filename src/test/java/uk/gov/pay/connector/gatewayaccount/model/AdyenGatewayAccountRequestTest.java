@@ -25,8 +25,6 @@ class AdyenGatewayAccountRequestTest {
                                 .build())
                 .build();
 
-        System.out.println(request);
-
         assertThat(request.getCredentialsAsMap().get(ADYEN_LEGAL_ENTITY_ID), is("LEM0000000000000001"));
         assertThat(request.getCredentialsAsMap().get(ADYEN_STORE_ID), is("ST00000000000000000000001"));
         assertThat(request.getCredentialsAsMap().get(ADYEN_ACCOUNT_HOLDER_ID), is("AH3227C223222H5J4DCLW9VBV"));
