@@ -84,6 +84,9 @@ adyen:
     legalEntityManagement:
       test: ${GDS_CONNECTOR_ADYEN_BASE_URL_LEGAL_ENTITY_MANAGEMENT_TEST:-https://kyc-test.adyen.com/lem/v4}
       live: ${GDS_CONNECTOR_ADYEN_BASE_URL_LEGAL_ENTITY_MANAGEMENT_LIVE}
+    management:
+      test: ${GDS_CONNECTOR_ADYEN_BASE_URL_MANAGEMENT_TEST:-https://management-test.adyen.com/v3}
+      live: ${GDS_CONNECTOR_ADYEN_BASE_URL_MANAGEMENT_LIVE}
   merchantAccountIds:
     test: ${GDS_CONNECTOR_ADYEN_MERCHANT_ACCOUNT_ID_TEST}
     live: ${GDS_CONNECTOR_ADYEN_MERCHANT_ACCOUNT_ID_LIVE}

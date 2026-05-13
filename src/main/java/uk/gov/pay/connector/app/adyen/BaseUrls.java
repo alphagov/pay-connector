@@ -14,7 +14,11 @@ public record BaseUrls(
 
         @Valid
         @NotNull
-        LegalEntityManagementUrls legalEntityManagement
+        LegalEntityManagementUrls legalEntityManagement,
+        
+        @Valid
+        @NotNull
+        ManagementUrls management
 ) {
     public record CheckoutUrls(@NotNull String test, @NotNull String live) {
     }
@@ -25,4 +29,6 @@ public record BaseUrls(
     public record BalancePlatformUrls(@NotNull String test, @NotNull String live) {
     }
 
+    public record ManagementUrls(@NotNull String test, @NotNull String live) {
+    }
 }

@@ -1,0 +1,24 @@
+{
+  "individual": {
+    "email": "s.eller@example.com",
+    "phone": {
+      "number": "+31858888138",
+      "type": "mobile"
+    },
+    "birthData": {
+      "dateOfBirth": "1990-06-21"
+    },
+    "name": {
+      "firstName": "Shelly",
+      "lastName": "Eller"
+    },
+    "residentialAddress": {
+      "city" : "London",
+      "country" : "GB",
+      "postalCode" : "AB1 2BC",
+      "street" : "10 Park Row"
+    }
+  },
+  "type": "individual",
+  "id": "LE00000000000000000000001"
+}

@@ -48,6 +48,9 @@ adyen:
     legalEntityManagement:
       test: https://kyc-test.adyen.com/lem/v4
       live: https://kyc-live.adyen.com/lem/v4
+    management:
+      test: https://management-test.adyen.com/v3
+      live: https://management-live.adyen.com/v3
   merchantAccountIds:
     test: adyen-test-merchant-account-id
     live: adyen-live-merchant-account-id

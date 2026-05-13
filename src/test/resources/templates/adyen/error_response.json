@@ -1,0 +1,6 @@
+{
+  "status": 500,
+  "errorCode": "703",
+  "message": "Server could not process request",
+  "errorType": "internal"
+}
