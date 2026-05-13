@@ -539,6 +539,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     public boolean isStripeGatewayAccount() {
         return PaymentGatewayName.STRIPE.getName().equals(this.getGatewayName());
     }
+
+    public boolean isAdyenGatewayAccount() {
+        return PaymentGatewayName.ADYEN.getName().equals(this.getGatewayName());
+    }
     
     public boolean isWorldpayGatewayAccount() {
         return PaymentGatewayName.WORLDPAY.getName().equals(this.getGatewayName());
