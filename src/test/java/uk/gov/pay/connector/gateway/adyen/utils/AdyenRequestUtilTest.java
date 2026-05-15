@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -8,19 +9,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
@@ -37,6 +45,7 @@ class AdyenRequestUtilTest {
     private CardAuthorisationGatewayRequest mockAuthoriseRequest;
     private CancelGatewayRequest mockCancelRequest;
     private CaptureGatewayRequest mockCaptureRequest;
+    ChargeEntity chargeEntity;
 
     public static final String GATEWAY_TRANSACTION_ID = "gateway-transaction-id";
 
@@ -48,13 +57,13 @@ class AdyenRequestUtilTest {
                 .withGatewayAccount(aGatewayAccountEntity().withType(TEST).build())
                 .build();
 
-        var charge = new ChargeEntityFixture()
+        chargeEntity = new ChargeEntityFixture()
                 .withGatewayAccountEntity(
                         aGatewayAccountEntity().withType(TEST).build())
                 .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
                 .build();
-        mockCaptureRequest = CaptureGatewayRequest.valueOf(charge);
-        mockCancelRequest = CancelGatewayRequest.valueOf(charge);
+        mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        mockCancelRequest = CancelGatewayRequest.valueOf(chargeEntity);
     }
 
     @Test
@@ -73,6 +82,63 @@ class AdyenRequestUtilTest {
         var captureUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
 
         assertThat(captureUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
+
+        BaseUrls mockBaseUrls = mock(BaseUrls.class);
+        lenient().when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
+        lenient().when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
+    }
+
+    @Test
+    void should_create_adyen_checkout_authorisation_url() {
+        var testCheckoutUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
+        assertThat(testCheckoutUrl, is("https://example.com/test/v71/payments"));
+    }
+
+    @Test
+    void should_create_adyen_checkout_capture_url() {
+        mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        var testCheckoutUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
+        assertThat(testCheckoutUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
+    }
+
+    @Nested
+    class TestGetRefundUrl {
+        private RefundGatewayRequest mockRefundRequest;
+        RefundEntity refundEntity;
+
+        @BeforeEach
+        void setUp() {
+            refundEntity = new RefundEntityFixture()
+                    .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
+                    .withExternalId("refund-external-id")
+                    .build();
+        }
+
+        @Test
+        void should_create_adyen_checkout_refund_url_for_test() {
+            chargeEntity.getGatewayAccount().setType(TEST);
+            mockRefundRequest = RefundGatewayRequest.valueOf(
+                    Charge.from(chargeEntity),
+                    refundEntity,
+                    chargeEntity.getGatewayAccount(),
+                    chargeEntity.getGatewayAccountCredentialsEntity());
+
+            var testCheckoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
+            assertThat(testCheckoutUrl, is(String.format("https://example.com/test/v71/payments/%s/refunds", GATEWAY_TRANSACTION_ID)));
+        }
+
+        @Test
+        void should_create_adyen_checkout_refund_url_for_live() {
+            chargeEntity.getGatewayAccount().setType(LIVE);
+            mockRefundRequest = RefundGatewayRequest.valueOf(
+                    Charge.from(chargeEntity),
+                    refundEntity,
+                    chargeEntity.getGatewayAccount(),
+                    chargeEntity.getGatewayAccountCredentialsEntity());
+
+            var testCheckoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
+            assertThat(testCheckoutUrl, is(String.format("https://example.com/live/v71/payments/%s/refunds", GATEWAY_TRANSACTION_ID)));
+        }
     }
 
     @Test
