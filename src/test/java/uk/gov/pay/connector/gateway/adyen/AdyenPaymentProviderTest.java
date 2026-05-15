@@ -9,16 +9,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
+import uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,5 +70,19 @@ class AdyenPaymentProviderTest {
     @Test
     void shouldGenerateEmptyTransactionId() {
         assertThat(provider.generateTransactionId().isEmpty(), is(true));
+    }
+
+    @Test
+    void shouldCalculateRefundAvailabilityUsingDefaultCalculator() {
+        Charge charge = Charge.from(
+                aValidChargeEntity().withAmount(1000L)
+                        .withStatus(ChargeStatus.CAPTURED)
+                        .build());
+        assertThat(provider.getExternalChargeRefundAvailability(charge, List.of()), is(ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE));
+    }
+
+    @Test
+    void shouldReturnRefundEntityFactory() {
+        assertThat(provider.getRefundEntityFactory(), is(refundEntityFactory));
     }
 }
