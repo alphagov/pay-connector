@@ -7,14 +7,21 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
+import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
+
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -23,11 +30,15 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 class AdyenRequestFactoryTest {
-
     public static final BillingAddress FULL_BILLING_ADDRESS = new BillingAddress(
             "line1",
             "line2",
@@ -161,11 +172,46 @@ class AdyenRequestFactoryTest {
         assertThat(paymentCancelRequest.merchantAccount(), is(liveMerchantAccountId));
     }
 
+    @Test
+    void should_create_a_RefundRequestPayload() {
+        var refundExternalId = "refund-external-id";
+        RefundGatewayRequest refundGatewayRequest = makeRefundGatewayRequest(refundExternalId);
+        RefundRequestPayload refundRequestPayload = adyenRequestFactory.createRefundRequestPayload(refundGatewayRequest);
+
+        assertThat(refundRequestPayload.reference(), is(refundExternalId));
+        assertThat(refundRequestPayload.merchantAccount(), is("test"));
+        assertThat(refundRequestPayload.amount().value(), is(500L));
+        assertThat(refundRequestPayload.amount().currency(), is("GBP"));
+        assertThat(refundRequestPayload.storeId(), is("store-123"));
+    }
+
+    private static RefundGatewayRequest makeRefundGatewayRequest(String refundExternalId) {
+        Charge charge = Charge.from(
+                aValidChargeEntity()
+                        .build()
+        );
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of("store_id", "store-123"))
+                .withPaymentProvider(ADYEN.getName())
+                .withState(ACTIVE)
+                .build();
+        GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity().build();
+
+        RefundEntity refundEntity = RefundEntityFixture.aValidRefundEntity()
+                .withExternalId(refundExternalId)
+                .withAmount(500L)
+                .build();
+
+        return RefundGatewayRequest.valueOf(charge, refundEntity,
+                gatewayAccountEntity, gatewayAccountCredentialsEntity);
+    }
+
+
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
-        var chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+        var chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
                 .withGatewayAccountEntity(
-                        GatewayAccountEntityFixture.aGatewayAccountEntity()
+                        aGatewayAccountEntity()
                                 .withType(GatewayAccountType.LIVE)
                                 .build())
                 .build();
