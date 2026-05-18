@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.adyen.model.json;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
