@@ -23,6 +23,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.pay.connector.rules.AdyenMockClient;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.NotifyStub;
@@ -58,6 +59,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final int worldpayWireMockPort;
     private final int ledgerWireMockPort;
     private final int stripeWireMockPort;
+    private final int adyenWireMockPort;
     private final int notifyWireMockPort;
 
     protected static DatabaseTestHelper databaseTestHelper;
@@ -65,9 +67,11 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private WireMockServer worldpayWireMockServer;
     private WireMockServer ledgerWireMockServer;
     private WireMockServer stripeWireMockServer;
+    private WireMockServer adyenWireMockServer;
     private WireMockServer notifyWireMockServer;
     private WorldpayMockClient worldpayMockClient;
     private StripeMockClient stripeMockClient;
+    private AdyenMockClient adyenMockClient;
     private LedgerStub ledgerStub;
     private CardidStub cardidStub;
     private NotifyStub notifyStub;
@@ -95,11 +99,13 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         wireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         worldpayWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         stripeWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
+        adyenWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         ledgerWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
         notifyWireMockServer = new WireMockServer(wireMockConfig().dynamicPort().bindAddress("localhost"));
 
         wireMockServer.start();
         worldpayWireMockServer.start();
+        adyenWireMockServer.start();
         stripeWireMockServer.start();
         ledgerWireMockServer.start();
         notifyWireMockServer.start();
@@ -107,6 +113,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         wireMockPort = wireMockServer.port();
         worldpayWireMockPort = worldpayWireMockServer.port();
         stripeWireMockPort = stripeWireMockServer.port();
+        adyenWireMockPort = adyenWireMockServer.port();
         ledgerWireMockPort = ledgerWireMockServer.port();
         notifyWireMockPort = notifyWireMockServer.port();
 
@@ -135,6 +142,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
         stripeMockClient = new StripeMockClient(stripeWireMockServer);
+        adyenMockClient = new AdyenMockClient(adyenWireMockServer);
 
         ledgerStub = new LedgerStub(ledgerWireMockServer);
         cardidStub = new CardidStub(wireMockServer);
@@ -145,18 +153,20 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
         injector = InjectorLookup.getInjector(dropwizardAppExtension.getApplication()).get();
     }
-    
+
     private void resetIfRunning(WireMockServer server) {
         if (server.isRunning()) {
             server.resetRequests();
         }
     }
+
     public void resetWireMockServer() {
         resetIfRunning(wireMockServer);
         resetIfRunning(worldpayWireMockServer);
         resetIfRunning(ledgerWireMockServer);
         resetIfRunning(stripeWireMockServer);
         resetIfRunning(notifyWireMockServer);
+        resetIfRunning(adyenWireMockServer);
         ledgerStub.acceptPostEvent();
     }
 
@@ -190,6 +200,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     public void afterAll(ExtensionContext context) {
         if (context.getRequiredTestClass().getEnclosingClass() == null) {
             wireMockServer.stop();
+            adyenWireMockServer.stop();
             worldpayWireMockServer.stop();
             stripeWireMockServer.stop();
             ledgerWireMockServer.stop();
@@ -217,6 +228,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.test", "http://localhost:" + worldpayWireMockPort + "/shopper/3ds/ddc.html"));
         newConfigOverride.add(config("worldpay.threeDsFlexDdcUrls.live", "http://localhost:" + worldpayWireMockPort + "/shopper/3ds/ddc.html"));
         newConfigOverride.add(config("stripe.url", "http://localhost:" + stripeWireMockPort));
+        newConfigOverride.add(config("adyen.baseUrls.checkout.test", "http://localhost:" + adyenWireMockPort));
         newConfigOverride.add(config("ledgerBaseURL", "http://localhost:" + ledgerWireMockPort));
         newConfigOverride.add(config("cardidBaseURL", "http://localhost:" + wireMockPort));
         newConfigOverride.add(config("notifyConfig.notificationBaseURL", "http://localhost:" + notifyWireMockPort));
@@ -278,6 +290,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         return stripeWireMockServer;
     }
 
+    public WireMockServer getAdyenWireMockServer() {
+        return adyenWireMockServer;
+    }
+
     public DatabaseTestHelper getDatabaseTestHelper() {
         return databaseTestHelper;
     }
@@ -296,6 +312,10 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
     public StripeMockClient getStripeMockClient() {
         return stripeMockClient;
+    }
+
+    public AdyenMockClient getAdyenMockClient() {
+        return adyenMockClient;
     }
 
     public LedgerStub getLedgerStub() {

@@ -62,10 +62,8 @@ public class AdyenAuthoriseHandler {
             return responseBuilder
                     .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
                     .build();
-        } catch (GatewayException.GatewayConnectionTimeoutException
-                 | GatewayException.GenericGatewayException
-                 | GatewayException.GatewayErrorException e) {
-            logger.error("GatewayException occurred, error:\n {0}", e);
+        } catch (GatewayException e) {
+            logger.error("GatewayException occurred when authorising payment", e);
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }
