@@ -81,7 +81,7 @@ public class AdyenCaptureHandler implements CaptureHandler {
 
             return fromBaseCaptureResponse(adyenErrorResponse, null, transactionId);
         } catch (Exception _) {
-            LOGGER.warn("failed to deserialise Adyen error");
+            LOGGER.warn("Failed to deserialise Adyen error during capture");
             return CaptureResponse.fromGatewayError(e.toGatewayError());
         }
     }
