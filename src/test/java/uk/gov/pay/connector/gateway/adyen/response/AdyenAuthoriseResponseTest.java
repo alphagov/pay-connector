@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.adyen.response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenPaymentResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import static org.hamcrest.MatcherAssert.assertThat;

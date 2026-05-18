@@ -9,7 +9,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenAuthoriseResponse;
-import uk.gov.pay.connector.gateway.adyen.response.AdyenPaymentResponse;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenPaymentResponse;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;

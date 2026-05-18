@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.adyen.response;
 
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -38,7 +37,6 @@ class AdyenCaptureResponseTest {
         var captureResponse = aSuccessfulCaptureResponse();
         captureResponse.stringify();
         assertThat(captureResponse.stringify(), containsString("Adyen capture response(" +
-                "merchantAccount: gov merchant account, " +
                 "paymentPspReference: gateway-transaction-id, " +
                 "pspReference: pspReferece-for-captured-payment, " +
                 "status: received)"));
@@ -46,21 +44,19 @@ class AdyenCaptureResponseTest {
 
     private static AdyenCaptureResponse aSuccessfulCaptureResponse() {
         return new AdyenCaptureResponse(
-                "gov merchant account",
                 "gateway-transaction-id",
                 "pspReferece-for-captured-payment",
                 "received",
-                new Amount("GBP", 500L),
-                null);
+                null
+        );
     }
 
     private static AdyenCaptureResponse anUnsuccessfulCaptureResponse() {
         return new AdyenCaptureResponse(
                 null,
                 null,
-                null,
                 "401",
-                null,
-                "HTTP Status Response - Unauthorized");
+                "HTTP Status Response - Unauthorized"
+        );
     }
 }

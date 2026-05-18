@@ -58,6 +58,15 @@ public class AdyenCaptureHandler implements CaptureHandler {
 
             return fromBaseCaptureResponse(AdyenCaptureResponse.from(captureResponse), PENDING);
         } catch (GatewayErrorException e) {
+            return handleGatewayException(request, e, transactionId);
+        } catch (GatewayException.GenericGatewayException
+                 | GatewayException.GatewayConnectionTimeoutException e) {
+            return CaptureResponse.fromGatewayError(e.toGatewayError());
+        }
+    }
+
+    private CaptureResponse handleGatewayException(CaptureGatewayRequest request, GatewayErrorException e, String transactionId) {
+        try {
             var jsonResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
             var adyenErrorResponse = AdyenCaptureResponse.from(jsonResponse);
 
@@ -69,8 +78,8 @@ public class AdyenCaptureHandler implements CaptureHandler {
             );
 
             return fromBaseCaptureResponse(adyenErrorResponse, null, transactionId);
-        } catch (GatewayException.GenericGatewayException
-                 | GatewayException.GatewayConnectionTimeoutException e) {
+        } catch (Exception _) {
+            LOGGER.warn("failed to deserialise Adyen error");
             return CaptureResponse.fromGatewayError(e.toGatewayError());
         }
     }
