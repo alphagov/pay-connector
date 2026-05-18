@@ -26,7 +26,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -95,29 +94,7 @@ class AdyenCaptureHandlerTest {
     }
 
     @Test
-    void should_return_GatewayError_when_Adyen_returns_SERVER_ERROR() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
-        var errorResponseBody = """
-                 {
-                 "status": 500,
-                 "errorCode": "905",
-                 "message": "Payment details are not supported",
-                 "errorType": "configuration",
-                 "pspReference": "capture-psp-reference"
-                }""";
-        when(mockClient.postRequestFor(any())).thenThrow(errorFromAdyen("server error", errorResponseBody, 500));
-
-        CaptureGatewayRequest captureRequest = createCaptureRequest();
-        var response = captureHandler.capture(captureRequest);
-
-        assertThat(response.isSuccessful(), is(false));
-        assertThat(response.getErrorMessage().isPresent(), is(true));
-        assertThat(response.getTransactionId().isPresent(), is(false));
-        assertNull(response.state());
-        assertThat(response.getErrorMessage().get(), equalTo("An internal server error occurred when capturing charge_external_id: " + captureRequest.getExternalId()));
-    }
-
-    @Test
-    void should_return_CaptureResponse_when_Adyen_returns_CLIENT_ERROR() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+    void should_return_CaptureResponse_when_Adyen_returns_GatewayException() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
         var errorResponseBody = """
                 {
                            "status": 403,
@@ -136,20 +113,21 @@ class AdyenCaptureHandlerTest {
         assertNull(response.state());
         assertThat(response.getTransactionId().isPresent(), is(true));
         assertThat(response.getTransactionId().get(), is("gateway-transaction-id"));
-        assertThat(response.getErrorMessage().get(), equalTo("Adyen capture response(pspReference: capture-psp-reference, status: 403, errorMessage: Invalid Merchant Account)"));
+        assertThat(response.getErrorMessage().get(), equalTo("Adyen capture response(status: 403, errorMessage: Invalid Merchant Account)"));
     }
 
     @Test
-    void should_throw_RuntimeException_when_Adyen_returns_unrecognised_response() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
-        var errorResponseBody = """
-                {"status": 700}
-                """;
-        when(mockClient.postRequestFor(any())).thenThrow(errorFromAdyen("other error", errorResponseBody, 700));
+    void should_return_CaptureResponse_when_Adyen_returns_GenericError() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockClient.postRequestFor(any())).thenThrow(errorFromAdyen("server error", null, 500));
 
         CaptureGatewayRequest captureRequest = createCaptureRequest();
-        var exception = assertThrows(RuntimeException.class, () -> captureHandler.capture(captureRequest));
+        var response = captureHandler.capture(captureRequest);
 
-        assertThat(exception.getMessage(), equalTo("Unrecognised response status during capture."));
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getErrorMessage().isPresent(), is(true));
+        assertNull(response.state());
+        assertThat(response.getTransactionId().isPresent(), is(false));
+        assertThat(response.getErrorMessage().get(), equalTo("server error"));
     }
 
     private CaptureGatewayRequest createCaptureRequest() {
@@ -177,8 +155,10 @@ class AdyenCaptureHandlerTest {
                 """);
     }
 
-    private GatewayException.GatewayErrorException errorFromAdyen(String errorMessage, String responseBody, int status) {
-        return new GatewayException.GatewayErrorException(errorMessage, responseBody, status);
+    private GatewayException errorFromAdyen(String errorMessage, String responseBody, int status) {
+        return responseBody == null
+                ? new GatewayException.GenericGatewayException(errorMessage)
+                : new GatewayException.GatewayErrorException(errorMessage, responseBody, status);
     }
 
 }

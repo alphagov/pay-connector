@@ -1,30 +1,44 @@
-package uk.gov.pay.connector.gateway.adyen.model;
+package uk.gov.pay.connector.gateway.adyen.response;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.gateway.adyen.model.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenCapture;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 
 import java.util.StringJoiner;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public record AdyenCaptureResponse(
-        @JsonProperty("merchantAccount")
         String merchantAccount,
-        @JsonProperty("paymentPspReference")
         String paymentPspReference,
-        @JsonProperty("pspReference")
         String pspReference,
-        @JsonProperty("status")
         String status,
-        @JsonProperty("amount")
         Amount amount,
-        @JsonProperty("message")
         String errorMessage
 ) implements BaseCaptureResponse {
+
+    public static AdyenCaptureResponse from(AdyenCapture adyenCapture) {
+        return new AdyenCaptureResponse(
+                null,
+                adyenCapture.paymentPspReference(),
+                adyenCapture.pspReference(),
+                adyenCapture.status(),
+                adyenCapture.amount(),
+                null
+        );
+    }
+
+    public static AdyenCaptureResponse from(AdyenError adyenError) {
+        return new AdyenCaptureResponse(
+                null,
+                null,
+                null,
+                adyenError.status(),
+                null,
+                adyenError.message()
+        );
+    }
+
     /**
      * PSP reference provided when payment is authorised
      */
@@ -48,7 +62,7 @@ public record AdyenCaptureResponse(
         if (StringUtils.isNotBlank(status)) {
             joiner.add("status: " + status);
         }
-        if (StringUtils.isNotBlank(errorMessage )) {
+        if (StringUtils.isNotBlank(errorMessage)) {
             joiner.add("errorMessage: " + errorMessage);
         }
         return joiner.toString();

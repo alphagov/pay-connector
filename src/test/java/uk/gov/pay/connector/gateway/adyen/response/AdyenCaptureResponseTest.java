@@ -1,7 +1,7 @@
-package uk.gov.pay.connector.gateway.adyen.model;
+package uk.gov.pay.connector.gateway.adyen.response;
 
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.gateway.adyen.model.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;

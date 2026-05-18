@@ -1,4 +1,6 @@
-package uk.gov.pay.connector.gateway.adyen.model.json;
+package uk.gov.pay.connector.gateway.adyen.response;
+
+import uk.gov.pay.connector.gateway.adyen.response.json.Action;
 
 import java.util.Map;
 

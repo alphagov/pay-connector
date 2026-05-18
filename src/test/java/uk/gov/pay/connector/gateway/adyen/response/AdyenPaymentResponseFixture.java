@@ -1,6 +1,6 @@
-package uk.gov.pay.connector.gateway.adyen.model;
+package uk.gov.pay.connector.gateway.adyen.response;
 
-import uk.gov.pay.connector.gateway.adyen.model.json.Action;
+import uk.gov.pay.connector.gateway.adyen.response.json.Action;
 
 public class AdyenPaymentResponseFixture {
         String pspReference;

@@ -8,7 +8,7 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.adyen.model.json.BillingAddress;
+import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
