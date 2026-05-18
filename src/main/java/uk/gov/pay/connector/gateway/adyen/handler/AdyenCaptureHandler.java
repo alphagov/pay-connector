@@ -65,7 +65,9 @@ public class AdyenCaptureHandler implements CaptureHandler {
         }
     }
 
-    private CaptureResponse handleGatewayException(CaptureGatewayRequest request, GatewayErrorException e, String transactionId) {
+    private CaptureResponse handleGatewayException(CaptureGatewayRequest request, 
+                                                   GatewayErrorException e, 
+                                                   String transactionId) {
         try {
             var jsonResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
             var adyenErrorResponse = AdyenCaptureResponse.from(jsonResponse);
