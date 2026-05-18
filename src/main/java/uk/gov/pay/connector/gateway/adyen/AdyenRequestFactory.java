@@ -5,8 +5,10 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.Capture;
+import uk.gov.pay.connector.gateway.adyen.request.json.PaymentCancelRequest;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentRequest;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
@@ -53,6 +55,13 @@ public class AdyenRequestFactory {
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true"))
+        );
+    }
+
+    public PaymentCancelRequest createPaymentCancelRequest(CancelGatewayRequest request) {
+        return new PaymentCancelRequest(
+                request.getExternalChargeId(),
+                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive())
         );
     }
 

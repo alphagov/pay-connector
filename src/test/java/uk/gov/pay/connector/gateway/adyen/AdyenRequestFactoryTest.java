@@ -7,21 +7,27 @@ import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 class AdyenRequestFactoryTest {
+
     public static final BillingAddress FULL_BILLING_ADDRESS = new BillingAddress(
             "line1",
             "line2",
@@ -42,7 +48,6 @@ class AdyenRequestFactoryTest {
     void setUp() {
         when(mockConfig.getLinks()).thenReturn(mockedLinksConfig);
         when(mockedLinksConfig.getFrontendUrl()).thenReturn("https://www.example.com");
-
         BaseUrls mockBaseUrls = mock(BaseUrls.class);
         when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
         AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
@@ -87,7 +92,6 @@ class AdyenRequestFactoryTest {
 
     @Test
     void should_create_PaymentRequest_with_partial_billing_address() {
-
         var partialBillingAddress = new Address(
                 "line1",
                 null,
@@ -95,7 +99,6 @@ class AdyenRequestFactoryTest {
                 null,
                 null,
                 null);
-
         var authoriseRequest = aCardAuthorisationGatewayRequest()
                 .withAuthCardDetails(anAuthCardDetails()
                         .withAddress(partialBillingAddress)
@@ -145,6 +148,36 @@ class AdyenRequestFactoryTest {
         assertThat(exception.getMessage(), is("Expected provided GatewayCredentials to be of type AdyenCredentials"));
     }
 
+    @Test
+    void should_create_a_PaymentCancelRequest() {
+        var liveMerchantAccountId = "a-live-merchant-account-id";
+        var externalChargeId = "a-charge-id";
+        givenMerchantAccountIds("a-test-merchant-account-id", liveMerchantAccountId);
+
+        var cancelGatewayRequest = makeCancelGatewayRequestWithExternalChargeId(externalChargeId);
+        var paymentCancelRequest = adyenRequestFactory.createPaymentCancelRequest(cancelGatewayRequest);
+
+        assertThat(paymentCancelRequest.reference(), is(externalChargeId));
+        assertThat(paymentCancelRequest.merchantAccount(), is(liveMerchantAccountId));
+    }
+
+    private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
+        var chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+                .withExternalId(externalChargeId)
+                .withGatewayAccountEntity(
+                        GatewayAccountEntityFixture.aGatewayAccountEntity()
+                                .withType(GatewayAccountType.LIVE)
+                                .build())
+                .build();
+        return CancelGatewayRequest.valueOf(chargeEntity);
+    }
+
+    private void givenMerchantAccountIds(String test, String live) {
+        var mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
+        given(mockConfig.getAdyenGatewayConfig()).willReturn(mockAdyenGatewayConfig);
+        given(mockAdyenGatewayConfig.getMerchantAccountIds()).willReturn(new AdyenIds(test, live));
+    }
+
     private static Address makeFullBillingAddress() {
         Address billingAddress = new Address();
         billingAddress.setLine1("line1");
@@ -155,5 +188,4 @@ class AdyenRequestFactoryTest {
         billingAddress.setCountry("country");
         return billingAddress;
     }
-
 }
