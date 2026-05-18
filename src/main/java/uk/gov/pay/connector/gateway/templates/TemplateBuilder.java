@@ -11,7 +11,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Locale;
 
-import static freemarker.template.Configuration.VERSION_2_3_20;
+import static freemarker.template.Configuration.VERSION_2_3_34;
 
 public class TemplateBuilder implements PayloadBuilder {
     private Template template;
@@ -31,7 +31,7 @@ public class TemplateBuilder implements PayloadBuilder {
     }
 
     private void templateSetup(String templateDir, String templateName) {
-        Configuration cfg = new Configuration(VERSION_2_3_20);
+        Configuration cfg = new Configuration(VERSION_2_3_34);
         cfg.setDefaultEncoding("UTF-8");
         cfg.setLocale(Locale.ENGLISH);
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
