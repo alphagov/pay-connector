@@ -130,6 +130,20 @@ class AdyenCaptureHandlerTest {
         assertThat(response.getErrorMessage().get(), equalTo("server error"));
     }
 
+    @Test
+    void should_return_CaptureResponse_when_AdyenError_cannot_be_deserialised() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockClient.postRequestFor(any())).thenThrow(errorFromAdyen("unknown error", "ERROR", 500));
+
+        CaptureGatewayRequest captureRequest = createCaptureRequest();
+        var response = captureHandler.capture(captureRequest);
+
+        assertThat(response.isSuccessful(), is(false));
+        assertThat(response.getErrorMessage().isPresent(), is(true));
+        assertNull(response.state());
+        assertThat(response.getTransactionId().isPresent(), is(false));
+        assertThat(response.getErrorMessage().get(), equalTo("unknown error"));
+    }
+
     private CaptureGatewayRequest createCaptureRequest() {
         var charge = ChargeEntityFixture.aValidChargeEntity()
                 .withGatewayTransactionId("gateway-transaction-id")
