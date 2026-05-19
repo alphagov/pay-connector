@@ -5,7 +5,7 @@ import io.dropwizard.jackson.Jackson;
 import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.gateway.adyen.model.json.PaymentCancelRequest;
+import uk.gov.pay.connector.gateway.adyen.request.json.PaymentCancelRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;
