@@ -1,11 +1,11 @@
-package uk.gov.pay.connector.gateway.adyen.model;
+package uk.gov.pay.connector.gateway.adyen.request;
 
 import com.jayway.jsonassert.JsonAssert;
 import io.dropwizard.jackson.Jackson;
 import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.gateway.adyen.request.json.PaymentCancelRequest;
+import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;
@@ -30,7 +30,7 @@ class AdyenCancelRequestTest {
 
     @BeforeEach
     void createCancelRequest() {
-        var cancelPayload = new PaymentCancelRequest(REFERENCE, MERCHANT_ACCOUNT);
+        var cancelPayload = new CancelRequestPayload(REFERENCE, MERCHANT_ACCOUNT);
         var jsonObjectMapper = new JsonObjectMapper(Jackson.newObjectMapper());
         request = new AdyenCancelRequest(TEST_URI, HEADERS, cancelPayload, GATEWAY_ACCOUNT_TYPE, jsonObjectMapper);
     }

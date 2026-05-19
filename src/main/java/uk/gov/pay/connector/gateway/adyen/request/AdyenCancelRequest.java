@@ -1,9 +1,9 @@
-package uk.gov.pay.connector.gateway.adyen.model;
+package uk.gov.pay.connector.gateway.adyen.request;
 
 import jakarta.ws.rs.core.MediaType;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.adyen.request.json.PaymentCancelRequest;
+import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -15,7 +15,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
 public record AdyenCancelRequest(URI url,
                                  Map<String, String> headers,
-                                 PaymentCancelRequest paymentCancelRequest,
+                                 CancelRequestPayload paymentCancelRequest,
                                  String gatewayAccountType,
                                  JsonObjectMapper objectMapper) implements GatewayClientPostRequest {
 

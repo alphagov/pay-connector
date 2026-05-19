@@ -5,7 +5,7 @@ import com.jayway.jsonassert.JsonAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
-import uk.gov.pay.connector.gateway.adyen.request.json.Capture;
+import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;
@@ -40,7 +40,7 @@ class AdyenCaptureRequestTest {
     }
 
     private AdyenCaptureRequest buildValidCaptureRequest() {
-        var capturePayload = new Capture(
+        var capturePayload = new CaptureRequestPayload(
                 new Amount("GBP", 500L),
                 MERCHANT_ID);
         return new AdyenCaptureRequest(

@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen.response;
 
 import uk.gov.pay.connector.gateway.adyen.response.json.Action;
-import uk.gov.pay.connector.gateway.adyen.response.json.AdyenPaymentResponse;
+import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 
 public class AdyenPaymentResponseFixture {
         String pspReference;
@@ -39,7 +39,7 @@ public class AdyenPaymentResponseFixture {
             return this;
         }
 
-        public AdyenPaymentResponse build() {
-            return new AdyenPaymentResponse(pspReference, resultCode, refusalReason, refusalReasonCode, action);
+        public AuthoriseResponseBody build() {
+            return new AuthoriseResponseBody(pspReference, resultCode, refusalReason, refusalReasonCode, action);
         }
     }

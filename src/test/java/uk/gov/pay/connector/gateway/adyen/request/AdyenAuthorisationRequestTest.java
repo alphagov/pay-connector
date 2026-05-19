@@ -5,9 +5,9 @@ import com.jayway.jsonassert.JsonAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
-import uk.gov.pay.connector.gateway.adyen.request.json.PaymentRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;
@@ -67,7 +67,7 @@ class AdyenAuthorisationRequestTest {
                 jsonObjectMapper);
     }
 
-    private PaymentRequest makePaymentRequestWithFullBillingAddress() {
+    private AuthoriseRequestPayload makePaymentRequestWithFullBillingAddress() {
         var billingAddress = new BillingAddress(
                 "houseNumberOrName",
                 "street",
@@ -83,7 +83,7 @@ class AdyenAuthorisationRequestTest {
                 "4444333322221111",
                 "scheme");
 
-        return new PaymentRequest(
+        return new AuthoriseRequestPayload(
                 new Amount("GBP", 1000L),
                 billingAddress,
                 "adyen-test-merchant-account-id",

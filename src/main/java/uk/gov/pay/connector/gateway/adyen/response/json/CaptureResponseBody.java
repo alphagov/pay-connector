@@ -7,7 +7,7 @@ import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record AdyenCapture(
+public record CaptureResponseBody(
         @JsonProperty("merchantAccount")
         String merchantAccount,
         @JsonProperty("paymentPspReference")

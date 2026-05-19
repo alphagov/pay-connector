@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashMap;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record PaymentRequest(
+public record AuthoriseRequestPayload(
         @JsonProperty("amount")
         Amount amount,
         @JsonProperty("billingAddress")

@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.adyen.response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import uk.gov.pay.connector.gateway.adyen.response.json.AdyenPaymentResponse;
+import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,7 +23,7 @@ class AdyenAuthoriseResponseTest {
             "Error, ERROR"
     })
     void should_map_Adyen_result_codes_to_Pay_AuthoriseStatuses(String adyenResultCode, BaseAuthoriseResponse.AuthoriseStatus expectedStatus) {
-        var response = new AdyenPaymentResponse(
+        var response = new AuthoriseResponseBody(
                 "psp-reference",
                 adyenResultCode,
                 "refusal-reason",
@@ -37,7 +37,7 @@ class AdyenAuthoriseResponseTest {
 
     @Test
     void should_throw_IllegalStateException_on_an_unrecognised_Adyen_result_code() {
-        var response = new AdyenPaymentResponse(
+        var response = new AuthoriseResponseBody(
                 "psp-reference",
                 "UNRECOGNISED_RESULT_CODE",
                 "refusal-reason",
