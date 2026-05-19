@@ -77,8 +77,8 @@ public class AdyenRequestFactory {
     public RefundRequestPayload createRefundRequestPayload(RefundGatewayRequest request) {
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
         return new RefundRequestPayload(
-                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
                 new Amount("GBP", Long.valueOf(request.getAmount())),
+                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
                 request.getRefundExternalId(),
                 adyenCredentials.storeId()
         );

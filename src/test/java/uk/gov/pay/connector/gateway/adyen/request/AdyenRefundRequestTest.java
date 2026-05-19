@@ -58,8 +58,8 @@ class AdyenRefundRequestTest {
 
     private AdyenRefundRequest buildValidRefundRequest() {
         var refundPayload = new RefundRequestPayload(
-                MERCHANT_ID,
                 new Amount("GBP", 500L),
+                MERCHANT_ID,
                 REFUND_EXTERNAL_ID,
                 STORE_ID
         );
