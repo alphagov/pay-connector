@@ -1,11 +1,11 @@
-package uk.gov.pay.connector.gateway.adyen.model;
+package uk.gov.pay.connector.gateway.adyen.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonassert.JsonAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uk.gov.pay.connector.gateway.adyen.model.json.Amount;
-import uk.gov.pay.connector.gateway.adyen.model.json.Capture;
+import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.Capture;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;

@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.adyen.model.json;
+package uk.gov.pay.connector.gateway.adyen.response.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
