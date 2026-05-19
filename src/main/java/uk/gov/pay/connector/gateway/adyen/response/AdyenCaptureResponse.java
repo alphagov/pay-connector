@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.gateway.adyen.response;
 
 import org.apache.commons.lang3.StringUtils;
-import uk.gov.pay.connector.gateway.adyen.response.json.AdyenCapture;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
+import uk.gov.pay.connector.gateway.adyen.response.json.CaptureResponseBody;
 import uk.gov.pay.connector.gateway.model.response.BaseCaptureResponse;
 
 import java.util.StringJoiner;
@@ -14,11 +14,11 @@ public record AdyenCaptureResponse(
         String errorMessage
 ) implements BaseCaptureResponse {
 
-    public static AdyenCaptureResponse from(AdyenCapture adyenCapture) {
+    public static AdyenCaptureResponse from(CaptureResponseBody captureResponseBody) {
         return new AdyenCaptureResponse(
-                adyenCapture.paymentPspReference(),
-                adyenCapture.pspReference(),
-                adyenCapture.status(),
+                captureResponseBody.paymentPspReference(),
+                captureResponseBody.pspReference(),
+                captureResponseBody.status(),
                 null
         );
     }

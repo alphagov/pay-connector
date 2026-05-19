@@ -12,8 +12,8 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenCaptureRequest;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenCaptureResponse;
-import uk.gov.pay.connector.gateway.adyen.response.json.AdyenCapture;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
+import uk.gov.pay.connector.gateway.adyen.response.json.CaptureResponseBody;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -54,7 +54,7 @@ public class AdyenCaptureHandler implements CaptureHandler {
 
         try {
             var jsonResponse = gatewayClient.postRequestFor(adyenCaptureRequest).getEntity();
-            var captureResponse = jsonObjectMapper.getObject(jsonResponse, AdyenCapture.class);
+            var captureResponse = jsonObjectMapper.getObject(jsonResponse, CaptureResponseBody.class);
 
             return fromBaseCaptureResponse(AdyenCaptureResponse.from(captureResponse), PENDING);
         } catch (GatewayErrorException e) {

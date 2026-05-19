@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.adyen.request.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record Capture(
+public record CaptureRequestPayload(
         @JsonProperty("amount")
         Amount amount,
         @JsonProperty("merchantAccount")

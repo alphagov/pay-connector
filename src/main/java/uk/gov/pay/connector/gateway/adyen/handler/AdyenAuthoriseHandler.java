@@ -9,7 +9,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenAuthoriseResponse;
-import uk.gov.pay.connector.gateway.adyen.response.json.AdyenPaymentResponse;
+import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -57,7 +57,7 @@ public class AdyenAuthoriseHandler {
             var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
             var paymentResponse = jsonObjectMapper.getObject(
                     jsonResponse,
-                    AdyenPaymentResponse.class);
+                    AuthoriseResponseBody.class);
 
             return responseBuilder
                     .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
