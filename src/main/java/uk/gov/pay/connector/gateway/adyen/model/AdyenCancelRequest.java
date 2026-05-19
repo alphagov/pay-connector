@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.adyen.model;
 import jakarta.ws.rs.core.MediaType;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.adyen.model.json.PaymentCancelRequest;
+import uk.gov.pay.connector.gateway.adyen.request.json.PaymentCancelRequest;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
