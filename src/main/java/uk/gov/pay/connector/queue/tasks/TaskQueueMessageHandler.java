@@ -1,11 +1,14 @@
 package uk.gov.pay.connector.queue.tasks;
 
+import com.adyen.model.notification.NotificationRequestItem;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sentry.Sentry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
+import uk.gov.pay.connector.queue.tasks.handlers.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
@@ -36,6 +39,7 @@ public class TaskQueueMessageHandler {
     private final TaskQueue taskQueue;
     private final CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler;
     private final StripeWebhookTaskHandler stripeWebhookTaskHandler;
+    private final AdyenWebhookTaskHandler adyenWebhookTaskHandler;
     private final AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
     private final DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler;
     private final RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler;
@@ -47,6 +51,7 @@ public class TaskQueueMessageHandler {
     public TaskQueueMessageHandler(TaskQueue taskQueue,
                                    CollectFeesForFailedPaymentsTaskHandler collectFeesForFailedPaymentsTaskHandler,
                                    StripeWebhookTaskHandler stripeWebhookTaskHandler,
+                                   AdyenWebhookTaskHandler adyenWebhookTaskHandler,
                                    AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler,
                                    DeleteStoredPaymentDetailsTaskHandler deleteStoredPaymentDetailsHandler,
                                    RetryPaymentOrRefundEmailTaskHandler retryPaymentOrRefundEmailTaskHandler,
@@ -56,6 +61,7 @@ public class TaskQueueMessageHandler {
         this.taskQueue = taskQueue;
         this.collectFeesForFailedPaymentsTaskHandler = collectFeesForFailedPaymentsTaskHandler;
         this.stripeWebhookTaskHandler = stripeWebhookTaskHandler;
+        this.adyenWebhookTaskHandler = adyenWebhookTaskHandler;
         this.authoriseWithUserNotPresentHandler = authoriseWithUserNotPresentHandler;
         this.deleteStoredPaymentDetailsHandler = deleteStoredPaymentDetailsHandler;
         this.retryPaymentOrRefundEmailTaskHandler = retryPaymentOrRefundEmailTaskHandler;
@@ -92,6 +98,10 @@ public class TaskQueueMessageHandler {
                         MDC.put(STRIPE_EVENT_ID, stripeNotification.getId());
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         stripeWebhookTaskHandler.process(stripeNotification);
+                        break; 
+                    case HANDLE_ADYEN_WEBHOOK_NOTIFICATION:
+                        LOGGER.info("Processing [{}] task.", taskType.getName());
+                        adyenWebhookTaskHandler.processAdyenWebhookNotification(taskMessage.getTask().getData());
                         break;
                     case AUTHORISE_WITH_USER_NOT_PRESENT:
                         var taskData = objectMapper.readValue(taskMessage.getTask().getData(), PaymentTaskData.class);

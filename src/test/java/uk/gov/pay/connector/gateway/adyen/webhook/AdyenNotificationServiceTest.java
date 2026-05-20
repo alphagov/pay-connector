@@ -82,9 +82,8 @@ class AdyenNotificationServiceTest {
         when(mockAdyenGatewayConfig.getNotificationDomain()).thenReturn("out.adyen.com.");
         when(ipDomainMatcher.ipMatchesDomain("5.6.7.8", "out.adyen.com.")).thenReturn(true);
         when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-
-        String payload = TestTemplateResourceLoader.load(ADYEN_NOTIFICATION)
-                .replace("{{HMAC_SIGNATURE}}", validHmacSigniture);
+        
+        String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
 
         boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
 
@@ -120,10 +119,8 @@ class AdyenNotificationServiceTest {
         @Test
         void shouldReturnTrueForValidHmacKey() {
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-
-            String payload = TestTemplateResourceLoader
-                    .load(ADYEN_NOTIFICATION)
-                    .replace("{{HMAC_SIGNATURE}}", validHmacSigniture);
+            
+            String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
 
             boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
 

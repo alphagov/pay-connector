@@ -12,6 +12,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
+import uk.gov.pay.connector.queue.tasks.handlers.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;
@@ -52,6 +53,9 @@ class TaskQueueMessageHandlerTest {
     private StripeWebhookTaskHandler stripeWebhookTaskHandler;
 
     @Mock
+    AdyenWebhookTaskHandler mockAdyenWebhookTaskHandler;
+
+    @Mock
     private AuthoriseWithUserNotPresentHandler authoriseWithUserNotPresentHandler;
 
     @Mock
@@ -84,6 +88,7 @@ class TaskQueueMessageHandlerTest {
                 taskQueue,
                 collectFeesForFailedPaymentsTaskHandler,
                 stripeWebhookTaskHandler,
+                mockAdyenWebhookTaskHandler,
                 authoriseWithUserNotPresentHandler,
                 deleteStoredPaymentDetailsHandler,
                 mockRetryPaymentOrRefundEmailTaskHandler,
