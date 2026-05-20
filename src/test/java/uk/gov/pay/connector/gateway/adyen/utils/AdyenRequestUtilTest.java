@@ -9,6 +9,7 @@ import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
@@ -25,6 +26,7 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 
 @ExtendWith(MockitoExtension.class)
 class AdyenRequestUtilTest {
+
     @Mock
     private AdyenGatewayConfig mockAdyenGatewayConfig;
     public final AdyenCredentials adyenCredentials = new AdyenCredentials(
@@ -33,6 +35,7 @@ class AdyenRequestUtilTest {
             "account_holder_id",
             "balance_account_id");
     private CardAuthorisationGatewayRequest mockAuthoriseRequest;
+    private CancelGatewayRequest mockCancelRequest;
     private CaptureGatewayRequest mockCaptureRequest;
 
     public static final String GATEWAY_TRANSACTION_ID = "gateway-transaction-id";
@@ -51,30 +54,38 @@ class AdyenRequestUtilTest {
                 .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
                 .build();
         mockCaptureRequest = CaptureGatewayRequest.valueOf(charge);
+        mockCancelRequest = CancelGatewayRequest.valueOf(charge);
     }
 
     @Test
-    void should_create_adyen_checkout_authorisation_url() {
-        BaseUrls mockBaseUrls = mock(BaseUrls.class);
-        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
-        when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
+    void should_create_Adyen_checkout_authorisation_URL() {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
 
-        var testCheckoutUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
-        assertThat(testCheckoutUrl, is("https://example.com/test/v71/payments"));
+        var authUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
+
+        assertThat(authUrl, is("https://example.com/test/v71/payments"));
     }
 
     @Test
-    void should_create_adyen_checkout_capture_url() {
-        BaseUrls mockBaseUrls = mock(BaseUrls.class);
-        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
-        when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
+    void should_create_Adyen_checkout_capture_URL() {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
 
-        var testCheckoutUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
-        assertThat(testCheckoutUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
+        var captureUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
+
+        assertThat(captureUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
     }
 
     @Test
-    void should_create_api_key_headers_for_checkout_url() {
+    void should_create_Adyen_checkout_cancel_URL() {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+
+        var cancelUrl = AdyenRequestUtil.getCancelUrl(mockAdyenGatewayConfig, mockCancelRequest).toString();
+
+        assertThat(cancelUrl, is(String.format("https://example.com/test/v71/payments/%s/cancels", GATEWAY_TRANSACTION_ID)));
+    }
+
+    @Test
+    void should_create_api_key_headers_for_checkout_URL() {
         ApiKeys mockApiKeys = mock(ApiKeys.class);
         ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
         when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
@@ -82,6 +93,13 @@ class AdyenRequestUtilTest {
         when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
 
         var headers = AdyenRequestUtil.getHeaders(mockAdyenGatewayConfig, mockAuthoriseRequest.getGatewayAccount().isLive());
+
         assertThat(headers, hasEntry("X-API-Key", "test"));
+    }
+
+    private void stubCheckoutBaseUrls(String test, String live) {
+        BaseUrls mockBaseUrls = mock(BaseUrls.class);
+        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls(test, live));
+        when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
     }
 }
