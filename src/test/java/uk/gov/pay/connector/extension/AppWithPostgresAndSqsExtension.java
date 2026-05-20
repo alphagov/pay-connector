@@ -23,7 +23,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.InjectorLookup;
 import uk.gov.pay.connector.app.config.AuthorisationConfig;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
-import uk.gov.pay.connector.rules.AdyenMockClient;
+import uk.gov.pay.connector.rules.AdyenCheckoutMockClient;
 import uk.gov.pay.connector.rules.CardidStub;
 import uk.gov.pay.connector.rules.LedgerStub;
 import uk.gov.pay.connector.rules.NotifyStub;
@@ -50,11 +50,11 @@ import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRando
 public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, BeforeAllCallback, AfterEachCallback, AfterAllCallback {
     private static final Logger logger = LoggerFactory.getLogger(AppWithPostgresAndSqsExtension.class);
     private static final String JPA_UNIT = "ConnectorUnit";
-    private static String CONFIG_PATH = resourceFilePath("config/test-it-config.yaml");
+    private static final String CONFIG_PATH = resourceFilePath("config/test-it-config.yaml");
     private final Jdbi jdbi;
     private final SqsClient sqsClient;
     private final DropwizardAppExtension<ConnectorConfiguration> dropwizardAppExtension;
-    private Injector injector;
+    private final Injector injector;
     private final int wireMockPort;
     private final int worldpayWireMockPort;
     private final int ledgerWireMockPort;
@@ -63,18 +63,18 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
     private final int notifyWireMockPort;
 
     protected static DatabaseTestHelper databaseTestHelper;
-    private WireMockServer wireMockServer;
-    private WireMockServer worldpayWireMockServer;
-    private WireMockServer ledgerWireMockServer;
-    private WireMockServer stripeWireMockServer;
-    private WireMockServer adyenWireMockServer;
-    private WireMockServer notifyWireMockServer;
-    private WorldpayMockClient worldpayMockClient;
-    private StripeMockClient stripeMockClient;
-    private AdyenMockClient adyenMockClient;
-    private LedgerStub ledgerStub;
-    private CardidStub cardidStub;
-    private NotifyStub notifyStub;
+    private final WireMockServer wireMockServer;
+    private final WireMockServer worldpayWireMockServer;
+    private final WireMockServer ledgerWireMockServer;
+    private final WireMockServer stripeWireMockServer;
+    private final WireMockServer adyenWireMockServer;
+    private final WireMockServer notifyWireMockServer;
+    private final WorldpayMockClient worldpayMockClient;
+    private final StripeMockClient stripeMockClient;
+    private final AdyenCheckoutMockClient adyenCheckoutMockClient;
+    private final LedgerStub ledgerStub;
+    private final CardidStub cardidStub;
+    private final NotifyStub notifyStub;
 
     protected static String accountId = String.valueOf(secureRandomInt());
     protected static ObjectMapper mapper;
@@ -142,7 +142,7 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
 
         worldpayMockClient = new WorldpayMockClient(worldpayWireMockServer);
         stripeMockClient = new StripeMockClient(stripeWireMockServer);
-        adyenMockClient = new AdyenMockClient(adyenWireMockServer);
+        adyenCheckoutMockClient = new AdyenCheckoutMockClient(adyenWireMockServer);
 
         ledgerStub = new LedgerStub(ledgerWireMockServer);
         cardidStub = new CardidStub(wireMockServer);
@@ -314,8 +314,8 @@ public class AppWithPostgresAndSqsExtension implements BeforeEachCallback, Befor
         return stripeMockClient;
     }
 
-    public AdyenMockClient getAdyenMockClient() {
-        return adyenMockClient;
+    public AdyenCheckoutMockClient getAdyenCheckoutMockClient() {
+        return adyenCheckoutMockClient;
     }
 
     public LedgerStub getLedgerStub() {
