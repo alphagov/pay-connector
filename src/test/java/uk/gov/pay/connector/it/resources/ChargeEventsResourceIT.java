@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ import uk.gov.pay.connector.it.base.ITestBaseExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.matcher.TransactionEventMatcher;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.util.RandomTestDataGeneratorUtils;
 import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.time.ZonedDateTime;
@@ -36,7 +34,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.it.dao.DatabaseFixtures.withDatabaseTestHelper;
 import static uk.gov.pay.connector.matcher.TransactionEventMatcher.withState;
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.*;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.randomAlphanumeric;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 
 public class ChargeEventsResourceIT {
@@ -46,6 +44,7 @@ public class ChargeEventsResourceIT {
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("sandbox", app.getLocalPort(), app.getDatabaseTestHelper());
 
+    public static final ZonedDateTime NOW = ZonedDateTime.parse("2026-05-20T10:06:24.996Z");
     public static final String SUBMITTED_BY = "r378y387y8weriyi";
     public static final String USER_EMAIL = "test@test.com";
     private static final String SERVICE_ID = "a-valid-service-id";
@@ -90,9 +89,9 @@ public class ChargeEventsResourceIT {
     @Nested
     class ByServiceIdAndAccountType {
         @Test
-        public void shouldGetCorrectEventsForAGivenChargeWithoutRefunds() {
+        void shouldGetCorrectEventsForAGivenChargeWithoutRefunds() {
             //set up charge events for a successful payment journey that took place yesterday
-            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime createdDate = NOW.minusDays(1);
             ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
             ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
             ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
@@ -112,9 +111,9 @@ public class ChargeEventsResourceIT {
         }
 
         @Test
-        public void shouldGetAllEventsForAGivenChargeWithRefunds() {
+        void shouldGetAllEventsForAGivenChargeWithRefunds() {
             //set up charge events for a successful payment journey that took place yesterday
-            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime createdDate = NOW.minusDays(1);
             ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
             ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
             ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
@@ -167,7 +166,7 @@ public class ChargeEventsResourceIT {
         }
 
         @Test
-        public void shouldReturn404WhenServiceIdIsIncorrect() {
+        void shouldReturn404WhenServiceIdIsIncorrect() {
             app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/charges/%s/events", "incorrect-service-id", GatewayAccountType.TEST, CHARGE_EXTERNAL_ID))
                     .then()
@@ -178,7 +177,7 @@ public class ChargeEventsResourceIT {
         }
 
         @Test
-        public void shouldReturn404WhenChargeIdDoesNotExist() {
+        void shouldReturn404WhenChargeIdDoesNotExist() {
             app.givenSetup()
                     .get(format("/v1/api/service/%s/account/%s/charges/%s/events", SERVICE_ID, GatewayAccountType.TEST, "non-existent-charge"))
                     .then()
@@ -193,9 +192,9 @@ public class ChargeEventsResourceIT {
     @Nested
     class ByGatewayAccountId {
         @Test
-        public void shouldGetCorrectEventsForAGivenChargeWithoutRefunds() {
+        void shouldGetCorrectEventsForAGivenChargeWithoutRefunds() {
             //set up charge events for a successful payment journey that took place yesterday
-            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime createdDate = NOW.minusDays(1);
             ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
             ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
             ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
@@ -215,9 +214,9 @@ public class ChargeEventsResourceIT {
         }
 
         @Test
-        public void shouldGetAllEventsForAGivenChargeWithRefunds() {
+        void shouldGetAllEventsForAGivenChargeWithRefunds() {
             //set up charge events for a successful payment journey that took place yesterday
-            ZonedDateTime createdDate = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime createdDate = NOW.minusDays(1);
             ZonedDateTime enteringCardDetailsDate = createdDate.plusSeconds(1);
             ZonedDateTime authorisationReadyDate = enteringCardDetailsDate.plusSeconds(1);
             ZonedDateTime captureApprovedDate = authorisationReadyDate.plusSeconds(1);
@@ -270,7 +269,7 @@ public class ChargeEventsResourceIT {
         }
 
         @Test
-        public void shouldReturn404WhenAccountIdIsNonNumeric() {
+        void shouldReturn404WhenAccountIdIsNonNumeric() {
             app.givenSetup()
                     .get(format("/v1/api/accounts/%s/charges/%s/events", "invalid-account-id", CHARGE_EXTERNAL_ID))
                     .then()
@@ -281,7 +280,7 @@ public class ChargeEventsResourceIT {
         }
 
         @Test
-        public void shouldReturn404WhenChargeIdDoesNotExist() {
+        void shouldReturn404WhenChargeIdDoesNotExist() {
             app.givenSetup()
                     .get(format("/v1/api/accounts/%s/charges/%s/events", gatewayAccountId, "non-existent-charge"))
                     .then()
