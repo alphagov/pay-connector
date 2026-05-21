@@ -29,16 +29,18 @@ import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER_PAYMENT_ID;
 public class AdyenCaptureHandler implements CaptureHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenCaptureHandler.class);
 
-    private final GatewayClient gatewayClient;
-    private final AdyenGatewayConfig adyenGatewayConfig;
+    private final GatewayClient client;
+    private final AdyenGatewayConfig config;
+    private final AdyenRequestFactory requestFactory;
     private final JsonObjectMapper jsonObjectMapper;
-    private final AdyenRequestFactory adyenRequestFactory;
 
-    public AdyenCaptureHandler(GatewayClient client, ConnectorConfiguration configuration, JsonObjectMapper jsonObjectMapper) {
-        this.gatewayClient = client;
-        this.adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+    public AdyenCaptureHandler(GatewayClient client,
+                               ConnectorConfiguration connectorConfig,
+                               JsonObjectMapper jsonObjectMapper) {
+        this.client = client;
+        this.config = connectorConfig.getAdyenGatewayConfig();
         this.jsonObjectMapper = jsonObjectMapper;
-        this.adyenRequestFactory = new AdyenRequestFactory(configuration);
+        this.requestFactory = new AdyenRequestFactory(connectorConfig);
     }
 
     @Override
@@ -46,14 +48,14 @@ public class AdyenCaptureHandler implements CaptureHandler {
         String transactionId = request.getGatewayTransactionId();
 
         var adyenCaptureRequest = new AdyenCaptureRequest(
-                AdyenRequestUtil.getCaptureUrl(adyenGatewayConfig, request),
-                AdyenRequestUtil.getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
-                adyenRequestFactory.createCapturePayload(request),
+                AdyenRequestUtil.getCaptureUrl(config, request),
+                AdyenRequestUtil.getHeaders(config, request.getGatewayAccount().isLive()),
+                requestFactory.createCapturePayload(request),
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);
 
         try {
-            var jsonResponse = gatewayClient.postRequestFor(adyenCaptureRequest).getEntity();
+            var jsonResponse = client.postRequestFor(adyenCaptureRequest).getEntity();
             var captureResponse = jsonObjectMapper.getObject(jsonResponse, CaptureResponseBody.class);
 
             return fromBaseCaptureResponse(AdyenCaptureResponse.from(captureResponse), PENDING);
@@ -65,8 +67,8 @@ public class AdyenCaptureHandler implements CaptureHandler {
         }
     }
 
-    private CaptureResponse handleGatewayException(CaptureGatewayRequest request, 
-                                                   GatewayErrorException e, 
+    private CaptureResponse handleGatewayException(CaptureGatewayRequest request,
+                                                   GatewayErrorException e,
                                                    String transactionId) {
         try {
             var jsonResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);

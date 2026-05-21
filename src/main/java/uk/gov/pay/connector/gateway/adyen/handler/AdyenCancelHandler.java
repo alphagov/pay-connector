@@ -18,13 +18,15 @@ import static uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.Can
 public class AdyenCancelHandler {
 
     private final GatewayClient client;
-    private final AdyenRequestFactory requestFactory;
     private final AdyenGatewayConfig config;
+    private final AdyenRequestFactory requestFactory;
 
-    public AdyenCancelHandler(GatewayClient client, AdyenRequestFactory requestFactory, AdyenGatewayConfig config) {
+    public AdyenCancelHandler(GatewayClient client,
+                              AdyenGatewayConfig config,
+                              AdyenRequestFactory requestFactory) {
         this.client = client;
-        this.requestFactory = requestFactory;
         this.config = config;
+        this.requestFactory = requestFactory;
     }
 
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
