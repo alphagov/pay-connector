@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.adyen.model.json;
+package uk.gov.pay.connector.gateway.adyen.request.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashMap;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record PaymentRequest(
+public record AuthoriseRequestPayload(
         @JsonProperty("amount")
         Amount amount,
         @JsonProperty("billingAddress")

@@ -2,11 +2,13 @@ package uk.gov.pay.connector.gateway.adyen;
 
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.gateway.adyen.model.json.Amount;
-import uk.gov.pay.connector.gateway.adyen.model.json.BillingAddress;
-import uk.gov.pay.connector.gateway.adyen.model.json.Capture;
-import uk.gov.pay.connector.gateway.adyen.model.json.PaymentMethod;
-import uk.gov.pay.connector.gateway.adyen.model.json.PaymentRequest;
+import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
+import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
@@ -27,7 +29,7 @@ public class AdyenRequestFactory {
         this.configuration = configuration;
     }
 
-    public PaymentRequest createPaymentRequest(CardAuthorisationGatewayRequest request) {
+    public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
         var mappedAddress = authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
@@ -42,7 +44,7 @@ public class AdyenRequestFactory {
 
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
 
-        return new PaymentRequest(
+        return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
                 getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
@@ -56,8 +58,15 @@ public class AdyenRequestFactory {
         );
     }
 
-    public Capture createCapturePayload(CaptureGatewayRequest request) {
-        return new Capture(
+    public CancelRequestPayload createPaymentCancelRequest(CancelGatewayRequest request) {
+        return new CancelRequestPayload(
+                request.getExternalChargeId(),
+                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive())
+        );
+    }
+
+    public CaptureRequestPayload createCapturePayload(CaptureGatewayRequest request) {
+        return new CaptureRequestPayload(
                 new Amount("GBP", request.getAmount()),
                 getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive())
         );

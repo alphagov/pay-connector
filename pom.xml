@@ -9,12 +9,12 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <pay-java-commons.version>1.0.20260511082750</pay-java-commons.version>
+        <pay-java-commons.version>1.0.20260518084244</pay-java-commons.version>
         <surefire.version>3.5.5</surefire.version>
         <jjwt.version>0.13.0</jjwt.version>
         <pact.version>4.7.1</pact.version>
         <eclipselink.version>4.0.9</eclipselink.version>
-        <swagger-version>2.2.49</swagger-version>
+        <swagger-version>2.2.50</swagger-version>
         <prometheus.version>0.16.0</prometheus.version>
 
         <PACT_BROKER_URL/>
@@ -57,7 +57,7 @@
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>bom</artifactId>
-                <version>2.44.4</version>
+                <version>2.44.7</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -280,7 +280,7 @@
         <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
-            <version>3.21.3</version>
+            <version>3.21.4</version>
         </dependency>
         <dependency>
             <groupId>black.door</groupId>

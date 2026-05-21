@@ -47,6 +47,13 @@ public class CaptureResponse {
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState,null, captureResponse.stringify());
     }
 
+    public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState, String transactionId) {
+        if (isNotBlank(captureResponse.getErrorCode())) {
+            return new CaptureResponse(transactionId, chargeState, genericGatewayError(captureResponse.stringify()), captureResponse.stringify());
+        } else
+            return new CaptureResponse(transactionId, chargeState, null, captureResponse.stringify());
+    }
+
     public static CaptureResponse fromBaseCaptureResponse(BaseCaptureResponse captureResponse, ChargeState chargeState, List<Fee> feeList) {
         if (isNotBlank(captureResponse.getErrorCode())) {
             return new CaptureResponse(captureResponse.getTransactionId(), chargeState, genericGatewayError(captureResponse.stringify()), captureResponse.stringify());

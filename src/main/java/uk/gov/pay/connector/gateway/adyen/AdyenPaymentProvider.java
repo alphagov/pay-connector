@@ -16,6 +16,8 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.adyen.handler.AdyenAuthoriseHandler;
+import uk.gov.pay.connector.gateway.adyen.handler.AdyenCaptureHandler;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -41,6 +43,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
     private final AdyenGatewayConfig adyenGatewayConfig;
     private final ConnectorConfiguration connectorConfiguration;
     private final AdyenAuthoriseHandler adyenAuthoriseHandler;
+    private final AdyenCaptureHandler adyenCaptureHandler;
 
     @Inject
     public AdyenPaymentProvider(
@@ -53,6 +56,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
         this.connectorConfiguration = connectorConfiguration;
         this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
+        adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
     }
     
     @Override
@@ -87,7 +91,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+       return adyenCaptureHandler.capture(request);
     }
 
     @Override

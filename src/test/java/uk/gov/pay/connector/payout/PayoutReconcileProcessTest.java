@@ -1,23 +1,18 @@
 package uk.gov.pay.connector.payout;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.stripe.exception.StripeException;
 import com.stripe.model.BalanceTransaction;
 import com.stripe.model.Charge;
 import com.stripe.model.Transfer;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.charge.PaymentIncludedInPayout;
@@ -43,9 +38,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -57,6 +50,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.slf4j.event.Level.ERROR;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata.GOVUK_PAY_TRANSACTION_EXTERNAL_ID;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadata.REASON_KEY;
 import static uk.gov.pay.connector.gateway.stripe.request.StripeTransferMetadataReason.TRANSFER_DISPUTE_AMOUNT;
@@ -67,6 +61,11 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 @ExtendWith(MockitoExtension.class)
 class PayoutReconcileProcessTest {
 
+    @RegisterExtension
+    LogCapturer errorLogs = LogCapturer.create()
+            .forLevel(ERROR)
+            .captureForType(PayoutReconcileProcess.class);
+
     @Mock
     private PayoutReconcileQueue payoutReconcileQueue;
 
@@ -75,7 +74,7 @@ class PayoutReconcileProcessTest {
 
     @Mock
     private ConnectorConfiguration connectorConfiguration;
-    
+
     @Mock
     private GatewayAccountCredentialsService gatewayAccountCredentialsService;
 
@@ -85,17 +84,10 @@ class PayoutReconcileProcessTest {
     @Mock
     private PayoutEmitterService payoutEmitterService;
 
-    @Mock
-    private Appender<ILoggingEvent> logAppender;
-
     @InjectMocks
     private PayoutReconcileProcess payoutReconcileProcess;
 
-    @Captor
-    private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-
     private final String stripeAccountId = "acct_2RDpWRLXEC2XwBWp";
-    private final String stripeApiKey = "a-fake-api-key";
     private final String payoutId = "po_123dv3RPEC2XwBWpqiQfnJGQ";
     private final Instant payoutCreatedDate = Instant.parse("2020-05-01T10:30:00.000Z");
     private final String paymentExternalId = "payment-id";
@@ -113,10 +105,6 @@ class PayoutReconcileProcessTest {
                 .thenReturn(gatewayAccountEntity);
 
         setupMockBalanceTransactions("pending");
-
-        Logger errorLogger = (Logger) LoggerFactory.getLogger(PayoutReconcileProcess.class);
-        errorLogger.setLevel(Level.ERROR);
-        errorLogger.addAppender(logAppender);
     }
 
     @Test
@@ -215,8 +203,7 @@ class PayoutReconcileProcessTest {
 
         payoutReconcileProcess.processPayouts();
 
-        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Error sending PAYMENT_INCLUDED_IN_PAYOUT event"));
+        errorLogs.assertContains("Error sending PAYMENT_INCLUDED_IN_PAYOUT event");
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 
@@ -233,8 +220,7 @@ class PayoutReconcileProcessTest {
 
         payoutReconcileProcess.processPayouts();
 
-        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString("Transaction external ID missing in metadata"));
+        errorLogs.assertContains("Transaction external ID missing in metadata");
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 
@@ -256,8 +242,8 @@ class PayoutReconcileProcessTest {
 
         payoutReconcileProcess.processPayouts();
 
-        verify(logAppender).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getValue().getFormattedMessage(), containsString(format("Stripe balance transaction %s has unexpected 'reason' in metadata", balanceTransactionId)));
+        errorLogs.assertContains(
+                "Stripe balance transaction %s has unexpected 'reason' in metadata".formatted(balanceTransactionId));
         verify(payoutReconcileQueue, never()).markMessageAsProcessed(payoutReconcileMessage.getQueueMessage());
     }
 

@@ -1,6 +1,7 @@
-package uk.gov.pay.connector.gateway.adyen.model;
+package uk.gov.pay.connector.gateway.adyen.response;
 
-import uk.gov.pay.connector.gateway.adyen.model.json.Action;
+import uk.gov.pay.connector.gateway.adyen.response.json.Action;
+import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.Gateway3dsRequiredParams;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
@@ -12,12 +13,12 @@ public class AdyenAuthoriseResponse implements BaseAuthoriseResponse {
     private final AuthoriseStatus authoriseStatus;
     private final String redirectUrl;
 
-    public static AdyenAuthoriseResponse of(AdyenPaymentResponse adyenPaymentResponse) {
-        Action action = adyenPaymentResponse.action();
+    public static AdyenAuthoriseResponse of(AuthoriseResponseBody authoriseResponseBody) {
+        Action action = authoriseResponseBody.action();
         String url = Optional.ofNullable(action).map(Action::url).orElse(null);
         
-        return new AdyenAuthoriseResponse(adyenPaymentResponse.pspReference(),
-                adyenPaymentResponse.resultCode(),
+        return new AdyenAuthoriseResponse(authoriseResponseBody.pspReference(),
+                authoriseResponseBody.resultCode(),
                 url);
     }
 

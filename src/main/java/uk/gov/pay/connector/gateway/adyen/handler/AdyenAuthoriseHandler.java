@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.gateway.adyen;
+package uk.gov.pay.connector.gateway.adyen.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,9 +6,10 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.adyen.model.AdyenAuthorisationRequest;
-import uk.gov.pay.connector.gateway.adyen.model.AdyenAuthoriseResponse;
-import uk.gov.pay.connector.gateway.adyen.model.AdyenPaymentResponse;
+import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
+import uk.gov.pay.connector.gateway.adyen.request.AdyenAuthorisationRequest;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenAuthoriseResponse;
+import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -47,7 +48,7 @@ public class AdyenAuthoriseHandler {
         logger.info("Calling Adyen for authorisation of charge");
         var authorisationRequest = new AdyenAuthorisationRequest(
                 getAuthUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
                 request.getGatewayAccount().getType(),
                 adyenRequestFactory.createPaymentRequest(request),
                 jsonObjectMapper);
@@ -56,15 +57,13 @@ public class AdyenAuthoriseHandler {
             var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
             var paymentResponse = jsonObjectMapper.getObject(
                     jsonResponse,
-                    AdyenPaymentResponse.class);
+                    AuthoriseResponseBody.class);
 
             return responseBuilder
                     .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
                     .build();
-        } catch (GatewayException.GatewayConnectionTimeoutException
-                 | GatewayException.GenericGatewayException
-                 | GatewayException.GatewayErrorException e) {
-            logger.error("GatewayException occurred, error:\n {0}", e);
+        } catch (GatewayException e) {
+            logger.error("GatewayException occurred when authorising payment", e);
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }

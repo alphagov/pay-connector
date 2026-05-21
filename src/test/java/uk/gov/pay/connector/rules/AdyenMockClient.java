@@ -9,10 +9,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_OK;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_ERROR_RESPONSE;
 
-public abstract class AdyenMockClient {
+public class AdyenMockClient {
     protected WireMockServer wireMockServer;
 
     public AdyenMockClient(WireMockServer wireMockServer) {
@@ -27,9 +28,42 @@ public abstract class AdyenMockClient {
                         .withStatus(status)
                         .withBody(responseBody)));
     }
-    
+
     public void mockError(String path) {
         String responseBody = TestTemplateResourceLoader.load(ADYEN_ERROR_RESPONSE);
-        setupPostResponse(responseBody, path, SC_BAD_GATEWAY);
+        setupPostResponse(responseBody, path, SC_INTERNAL_SERVER_ERROR);
+    }
+
+    public void mockAuthorisationSuccess(String pspReferenceFromAdyen) {
+        String responseBody = """
+                {
+                  "pspReference": "%s",
+                  "resultCode": "Authorised",
+                  "merchantReference": "string"
+                }""".formatted(pspReferenceFromAdyen);
+
+        setupPostResponse(responseBody, "/payments", SC_OK);
+    }
+
+    public void mockAuthorisationRejected(String pspReferenceFromAdyen) {
+        String responseBody = """
+                {
+                  "pspReference": "%s",
+                  "refusalReason": "Expired Card",
+                  "resultCode": "Refused",
+                  "refusalReasonCode": "6"
+                }""".formatted(pspReferenceFromAdyen);
+        setupPostResponse(responseBody, "/payments", SC_OK);
+    }
+
+    public void mockAuthorisationError(String pspReferenceFromAdyen) {
+        String responseBody = """
+                {
+                  "pspReference": "%s",
+                  "refusalReason": "Acquirer Error",
+                  "resultCode": "Error",
+                  "refusalReasonCode": "4"
+                }""".formatted(pspReferenceFromAdyen);
+        setupPostResponse(responseBody, "/payments", SC_OK);
     }
 }
