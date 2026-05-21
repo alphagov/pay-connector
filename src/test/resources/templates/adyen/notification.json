@@ -4,6 +4,7 @@
     {
       "NotificationRequestItem": {
         "pspReference": "7914073381342284",
+        "originalReference": "79188877666242",
         "merchantAccountCode": "TestMerchant",
         "merchantReference": "TestPayment-1407325143704",
         "eventCode": "AUTHORISATION",

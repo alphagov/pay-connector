@@ -34,7 +34,7 @@ public class AdyenNotificationResourceIT {
 
     @Test
     void shouldHandleAValidJsonNotification() {
-        String validHmacSignature = "coqCmt/IZ4E3CzPvMY8zTjQVL5hYJUiBRg8UU+iCWo0="; // pragma: allowlist secret
+        String validHmacSignature = "9C3600/ujEuztt/Be8+EX74c6ysk7GyiWwsVi2KW+s0="; // pragma: allowlist secret
         String payload = TestTemplateResourceLoader.load(ADYEN_NOTIFICATION)
                 .replace("{{HMAC_SIGNATURE}}", validHmacSignature);
         given()
