@@ -50,7 +50,7 @@ class AdyenCardResourceAuthoriseIT {
         var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
         var pspReferenceFromAdyen = "993617895215577D";
 
-        app.getAdyenMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
+        app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
 
         var authCardDetails = anAuthCardDetails()
                 .withCardNo("4444333322221111")
@@ -91,7 +91,7 @@ class AdyenCardResourceAuthoriseIT {
         var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
         var pspReferenceFromAdyen = "993617895215577D";
 
-        app.getAdyenMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
+        app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
 
         var authCardDetails = anAuthCardDetails()
                 .withCardNo("4444333322221111")
@@ -134,7 +134,7 @@ class AdyenCardResourceAuthoriseIT {
         var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
         var pspReferenceFromAdyen = "883617895215577D";
 
-        app.getAdyenMockClient().mockAuthorisationRejected(pspReferenceFromAdyen);
+        app.getAdyenCheckoutMockClient().mockAuthorisationRejected(pspReferenceFromAdyen);
 
         app.givenSetup()
                 .body(anAuthCardDetails().build())
@@ -155,7 +155,7 @@ class AdyenCardResourceAuthoriseIT {
         var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
         var pspReferenceFromAdyen = "883617895215577D";
 
-        app.getAdyenMockClient().mockAuthorisationError(pspReferenceFromAdyen);
+        app.getAdyenCheckoutMockClient().mockAuthorisationError(pspReferenceFromAdyen);
 
         app.givenSetup()
                 .body(anAuthCardDetails().build())
@@ -176,7 +176,7 @@ class AdyenCardResourceAuthoriseIT {
     void should_return_402_for_unexpected_server_error() {
         var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
 
-        app.getAdyenMockClient().mockError("/payments");
+        app.getAdyenCheckoutMockClient().mockError("/payments");
 
         app.givenSetup()
                 .body(anAuthCardDetails().build())

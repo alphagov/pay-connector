@@ -81,27 +81,27 @@ public class AdyenAccountResourceIT {
                 .body("account_holder_id", is("AH3227C223222H5J4DCLW9VBV"))
                 .body("balance_account_id", is("BA0000000000000000000001"));
         
-        app.getAdyenKycWireMockServer().verify(postRequestedFor(urlEqualTo("/legalEntities"))
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/legalEntities"))
                 .withRequestBody(equalToJson(TestTemplateResourceLoader
                         .load(ADYEN_CREATE_LEGAL_ENTITY_REQUEST)
                         .replace("{{serviceName}}", serviceName))));
-        app.getAdyenKycWireMockServer().verify(postRequestedFor(urlEqualTo("/businessLines")));
-        app.getAdyenKycWireMockServer().verify(postRequestedFor(urlEqualTo("/legalEntities"))
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/businessLines")));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/legalEntities"))
                 .withRequestBody(equalToJson(TestTemplateResourceLoader
                         .load(ADYEN_CREATE_INDIVIDUAL_REQUEST))));
-        app.getAdyenKycWireMockServer().verify(patchRequestedFor(urlEqualTo(format("/legalEntities/%s", legalEntityId))));
-        app.getAdyenKycWireMockServer().verify(postRequestedFor(urlEqualTo("/transferInstruments")));
+        app.getAdyenWireMockServer().verify(patchRequestedFor(urlEqualTo(format("/legalEntities/%s", legalEntityId))));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/transferInstruments")));
         
-        app.getAdyenManagementWireMockServer().verify(postRequestedFor(urlEqualTo("/stores")));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/stores")));
         verifyPaymentMethodsRequest(paymentTypes, merchantId);
         
-        app.getAdyenBalancePlatformWireMockServer().verify(postRequestedFor(urlEqualTo("/accountHolders")));
-        app.getAdyenBalancePlatformWireMockServer().verify(postRequestedFor(urlEqualTo("/balanceAccounts")));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/accountHolders")));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/balanceAccounts")));
         
-        app.getAdyenKycWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", legalEntityId))));
-        app.getAdyenKycWireMockServer().verify(patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", legalEntityId, termsOfServiceDocumentId))));
-        app.getAdyenKycWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", legalEntityId))));
-        app.getAdyenKycWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", legalEntityId))));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", legalEntityId))));
+        app.getAdyenWireMockServer().verify(patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", legalEntityId, termsOfServiceDocumentId))));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", legalEntityId))));
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", legalEntityId))));
         
         app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
                 .then()
@@ -122,14 +122,14 @@ public class AdyenAccountResourceIT {
 
     private void verifyPaymentMethodsRequest(List<PaymentMethodSetupInfo.TypeEnum> paymentTypes, String merchantId) {
         for (PaymentMethodSetupInfo.TypeEnum paymentType : paymentTypes) {
-            app.getAdyenManagementWireMockServer()
+            app.getAdyenWireMockServer()
                     .verify(postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", merchantId))))
                             .withRequestBody(equalToJson(TestTemplateResourceLoader
                                     .load(ADYEN_PAYMENT_METHOD_REQUEST)
                                     .replace("{{type}}", paymentType.toString()))));
         }
         
-        app.getAdyenManagementWireMockServer().verify(paymentTypes.size(), 
+        app.getAdyenWireMockServer().verify(paymentTypes.size(), 
                 postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", merchantId)))));
     }
 
@@ -144,21 +144,21 @@ public class AdyenAccountResourceIT {
                 .post(format("/v1/api/service/%s/request-adyen-test-account", serviceId))
                 .then().statusCode(SC_BAD_GATEWAY);
 
-        app.getAdyenKycWireMockServer().verify(1, postRequestedFor(urlEqualTo("/legalEntities")));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo("/businessLines")));
-        app.getAdyenKycWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s", any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo("/transferInstruments")));
+        app.getAdyenWireMockServer().verify(1, postRequestedFor(urlEqualTo("/legalEntities")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/businessLines")));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/transferInstruments")));
         
-        app.getAdyenManagementWireMockServer().verify(0, postRequestedFor(urlEqualTo("/stores")));
-        app.getAdyenManagementWireMockServer().verify(0, postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", any(String.class))))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/stores")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", any(String.class))))));
         
-        app.getAdyenBalancePlatformWireMockServer().verify(0, postRequestedFor(urlEqualTo("/accountHolders")));
-        app.getAdyenBalancePlatformWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/accountHolders")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
         
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
     }
 
     @Test
@@ -176,20 +176,20 @@ public class AdyenAccountResourceIT {
                 .post(format("/v1/api/service/%s/request-adyen-test-account", serviceId))
                 .then().statusCode(SC_CONFLICT);
 
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo("/legalEntities")));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo("/businessLines")));
-        app.getAdyenKycWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s", any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo("/transferInstruments")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/legalEntities")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/businessLines")));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/transferInstruments")));
         
-        app.getAdyenManagementWireMockServer().verify(0, postRequestedFor(urlEqualTo("/stores")));
-        app.getAdyenManagementWireMockServer().verify(0, postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", any(String.class))))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/stores")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", any(String.class))))));
         
-        app.getAdyenBalancePlatformWireMockServer().verify(0, postRequestedFor(urlEqualTo("/accountHolders")));
-        app.getAdyenBalancePlatformWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/accountHolders")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
         
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
-        app.getAdyenKycWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
     }
 }
