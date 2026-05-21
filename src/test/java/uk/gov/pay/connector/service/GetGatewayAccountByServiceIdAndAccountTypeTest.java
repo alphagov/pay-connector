@@ -33,7 +33,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.RETIRED;
 
 @ExtendWith(MockitoExtension.class)
-public class GetGatewayAccountByServiceIdAndAccountTypeTest {
+class GetGatewayAccountByServiceIdAndAccountTypeTest {
 
     private GatewayAccountService gatewayAccountService;
 
@@ -47,6 +47,8 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
     private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
     
     private GatewayAccountEntity stripeGatewayAccount;
+    
+    private GatewayAccountEntity adyenGatewayAccount;
     
     private GatewayAccountEntity sandboxGatewayAccount;
     
@@ -64,6 +66,10 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
         stripeGatewayAccount = new GatewayAccountEntity(TEST);
         var stripeGatewayAccountCreds = new GatewayAccountCredentialsEntity(stripeGatewayAccount, "stripe", Map.of(), ACTIVE);
         stripeGatewayAccount.setGatewayAccountCredentials(List.of(stripeGatewayAccountCreds));
+
+        adyenGatewayAccount = new GatewayAccountEntity(TEST);
+        var adyenGatewayAccountCreds = new GatewayAccountCredentialsEntity(adyenGatewayAccount, "adyen", Map.of(), ACTIVE);
+        adyenGatewayAccount.setGatewayAccountCredentials(List.of(adyenGatewayAccountCreds));
         
         sandboxGatewayAccount = new GatewayAccountEntity(TEST);
         var sandboxGatewayAccountCreds = new GatewayAccountCredentialsEntity(sandboxGatewayAccount, "sandbox", Map.of(), ACTIVE);
@@ -87,6 +93,17 @@ public class GetGatewayAccountByServiceIdAndAccountTypeTest {
                 gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, TEST);
         assertTrue(gatewayAccount.isPresent());
         assertTrue(gatewayAccount.get().isStripeGatewayAccount());
+    }
+
+    @Test
+    void shouldReturnAdyenGatewayAccountWhenThereAreMultipleGatewayAccounts() {
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType(SERVICE_ID, TEST))
+                .thenReturn(List.of(worldpayGatewayAccount, sandboxGatewayAccount, adyenGatewayAccount));
+
+        Optional<GatewayAccountEntity> gatewayAccount =
+                gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(SERVICE_ID, TEST);
+        assertTrue(gatewayAccount.isPresent());
+        assertTrue(gatewayAccount.get().isAdyenGatewayAccount());
     }
     
     @Test

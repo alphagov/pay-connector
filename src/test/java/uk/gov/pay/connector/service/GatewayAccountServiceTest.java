@@ -48,6 +48,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
@@ -114,6 +115,25 @@ class GatewayAccountServiceTest {
                 false,false,false, true, true);
         
         assertThrows(MultiplePspTestGatewayAccountsException.class, 
+                () -> gatewayAccountService.createGatewayAccount(gatewayAccountRequest, null));
+    }
+
+    @Test
+    void shouldThrowErrorIfRequestIsForAdyenTestAccountButItAlreadyExists() {
+        GatewayAccountEntity gatewayAccount = new GatewayAccountEntity(TEST);
+        var adyenGatewayAccountCredentials = new GatewayAccountCredentialsEntity(gatewayAccount, ADYEN.getName(),
+                Map.of( "legal_entity_id", "LEM0000000000000001",
+                "store_id", "ST00000000000000000000001",
+                "account_holder_id", "AH3227C223222H5J4DCLW9VBV",
+                "balance_account_id", "BA0000000000000000000001"), ACTIVE);
+        gatewayAccount.setGatewayAccountCredentials(List.of(adyenGatewayAccountCredentials));
+        when(mockGatewayAccountDao.findByServiceIdAndAccountType("a-service-id", TEST)).thenReturn(List.of(gatewayAccount));
+
+        var gatewayAccountRequest = new GatewayAccountRequest(TEST.name(), ADYEN.getName(),
+                "a-service-name","a-service-id","description","analyticsId",
+                false,false,false, true, true);
+
+        assertThrows(MultiplePspTestGatewayAccountsException.class,
                 () -> gatewayAccountService.createGatewayAccount(gatewayAccountRequest, null));
     }
     
