@@ -13,11 +13,11 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_ERROR_RESPONSE;
 
-public class AdyenMockClient {
+public abstract class AdyenMockClient {
 
-    protected WireMockServer wireMockServer;
+    private final WireMockServer wireMockServer;
 
-    public AdyenMockClient(WireMockServer wireMockServer) {
+    AdyenMockClient(WireMockServer wireMockServer) {
         this.wireMockServer = wireMockServer;
     }
 
