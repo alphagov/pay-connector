@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -114,11 +115,15 @@ class AdyenCancelHandlerTest {
                 .assertEquals("merchantAccount", A_MERCHANT_ACCOUNT_ID);
     }
 
-    @Test
-    void should_POST_with_company_API_key_as_X_API_Key_header() throws Exception {
+    @ParameterizedTest
+    @CsvSource({
+            "LIVE," + LIVE_COMPANY_ACCOUNT_API_KEY,
+            "TEST," + TEST_COMPANY_ACCOUNT_API_KEY
+    })
+    void should_POST_with_company_API_key_as_X_API_Key_header(GatewayAccountType gatewayAccountType, String expectedApiKey) throws Exception {
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
-                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(LIVE))
+                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(gatewayAccountType))
                         .build());
 
         cancelHandler.cancel(request);
@@ -126,7 +131,7 @@ class AdyenCancelHandlerTest {
         then(mockGatewayClient).should()
                 .postRequestFor(captor.capture());
         var headers = captor.getValue().getHeaders();
-        assertThat(headers, hasEntry("X-API-Key", LIVE_COMPANY_ACCOUNT_API_KEY));
+        assertThat(headers, hasEntry("X-API-Key", expectedApiKey));
     }
 
     @ParameterizedTest
