@@ -58,17 +58,17 @@ class AdyenCancelHandlerTest {
         var mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
         given(mockAdyenGatewayConfig.getMerchantAccountIds())
                 .willReturn(mockAdyenIds);
-        var mockApiKeys = anApiKeys()
+        var apiKeys = anApiKeys()
                 .withCompanyAccount(
                         new CompanyAccountApiKeys(TEST_COMPANY_ACCOUNT_API_KEY, LIVE_COMPANY_ACCOUNT_API_KEY))
                 .build();
         given(mockAdyenGatewayConfig.getApiKeys())
-                .willReturn(mockApiKeys);
-        var mockBaseUrls = aBaseUrls()
+                .willReturn(apiKeys);
+        var baseUrls = aBaseUrls()
                 .withCheckout(new CheckoutUrls("https://example.com", LIVE_CHECKOUT_BASE_URL))
                 .build();
         given(mockAdyenGatewayConfig.getBaseUrls())
-                .willReturn(mockBaseUrls);
+                .willReturn(baseUrls);
         var mockConfiguration = mock(ConnectorConfiguration.class);
         given(mockConfiguration.getAdyenGatewayConfig())
                 .willReturn(mockAdyenGatewayConfig);
