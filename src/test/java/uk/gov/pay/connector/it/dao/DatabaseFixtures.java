@@ -42,8 +42,8 @@ import static uk.gov.pay.connector.util.AddChargeParams.AddChargeParamsBuilder.a
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
 import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccountParamsBuilder.anAddGatewayAccountParams;
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
-import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class DatabaseFixtures {
@@ -204,29 +204,36 @@ public class DatabaseFixtures {
     }
 
     public static class TestAddress {
+        
+        private String line1 = "line1";
+        private String line2 = "line2";
+        private String postcode = "postcode";
+        private String city = "city";
+        private String country = "country";
+        private String county = "county";
 
         public String getLine1() {
-            return "line1";
+            return line1;
         }
 
         public String getLine2() {
-            return "line2";
+            return line2;
         }
 
         public String getPostcode() {
-            return "postcode";
+            return postcode;
         }
 
         public String getCity() {
-            return "city";
+            return city;
         }
 
         public String getCounty() {
-            return "county";
+            return county;
         }
 
         public String getCountry() {
-            return "country";
+            return country;
         }
     }
 
@@ -838,7 +845,7 @@ public class DatabaseFixtures {
         }
 
         public TestCharge withCardDetails(TestCardDetails testCardDetails) {
-            cardDetails = testCardDetails;
+            this.cardDetails = testCardDetails;
             return this;
         }
 

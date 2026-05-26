@@ -32,7 +32,7 @@ public class AdyenRequestFactory {
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
-        var mappedAddress = request.isMoto()
+        var mappedAddress = request.isMoto() && !request.getAuthorisationMode().equals(MOTO_API)
                 ? null
                 : authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
