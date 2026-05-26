@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getMerchantAccountId;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 
 public class AdyenRequestFactory {
 
@@ -31,7 +32,9 @@ public class AdyenRequestFactory {
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
-        var mappedAddress = authCardDetails.getAddress()
+        var mappedAddress = request.isMoto()
+                ? null
+                : authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
                 .orElse(null);
 
@@ -44,6 +47,8 @@ public class AdyenRequestFactory {
 
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
 
+        var shopperInteraction = request.isMoto() || request.getAuthorisationMode().equals(MOTO_API) ? "Moto" : "Ecommerce";
+
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
@@ -51,7 +56,7 @@ public class AdyenRequestFactory {
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
                 configuration.getLinks().getFrontendUrl(),
-                "Ecommerce",
+                shopperInteraction,
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true"))

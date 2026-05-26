@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
+import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
@@ -164,7 +165,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public void createCredentialParams() {
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
-        } else if (paymentProvider.equals(ADYEN.getName())){
+        } else if (paymentProvider.equals(ADYEN.getName())) {
             credentials = Map.of(CREDENTIALS_ADYEN_LEGAL_ENTITY_ID, "legal_entity_id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
             credentials = Map.of(
@@ -351,36 +352,36 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public static String authoriseChargeUrlForApplePay(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/apple".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/apple" .replace("{chargeId}", chargeId);
     }
 
     public static String authoriseChargeUrlForGooglePayStripe(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/google/stripe".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/google/stripe" .replace("{chargeId}", chargeId);
     }
 
     public static String authoriseChargeUrlForGooglePayWorldpay(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/google/worldpay".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/google/worldpay" .replace("{chargeId}", chargeId);
     }
 
     public static String authoriseChargeUrlForGooglePay(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/google".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/google" .replace("{chargeId}", chargeId);
     }
 
 
     public static String authoriseChargeUrlFor(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/cards" .replace("{chargeId}", chargeId);
     }
 
     public static String authorise3dsChargeUrlFor(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/3ds".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/3ds" .replace("{chargeId}", chargeId);
     }
 
     public static String captureChargeUrlFor(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/capture" .replace("{chargeId}", chargeId);
     }
 
     public static String cancelChargeUrlFor(String accountId, String chargeId) {
-        return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
+        return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel" .replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 
     public Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
@@ -463,6 +464,24 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withGatewayCredentialId(credentialParams.getId())
                 .withAuthorisationMode(addChargeParameters.authorisationMode())
                 .build());
+    }
+
+    public String addChargeWithMoto(ChargeStatus chargeStatus, Boolean isMoto, long chargeId, String paymentProvider) {
+        ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
+        databaseTestHelper.addCharge(anAddChargeParams()
+                .withExternalChargeId(externalChargeId.toString())
+                .withChargeId(chargeId)
+                .withIsMoto(isMoto)
+                .withPaymentProvider(paymentProvider)
+                .withStatus(chargeStatus)
+                .withAmount(AMOUNT)
+                .withReturnUrl(RETURN_URL)
+                .withGatewayAccountId(accountId)
+                .withDescription("testing moto flag")
+                .withReference(ServicePaymentReference.of("reference"))
+                .withGatewayCredentialId(credentialParams.getId())
+                .build());
+        return externalChargeId.toString();
     }
 
     public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {

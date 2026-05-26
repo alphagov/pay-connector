@@ -14,12 +14,15 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -159,6 +162,46 @@ class AdyenRequestFactoryTest {
 
         assertThat(paymentCancelRequest.reference(), is(externalChargeId));
         assertThat(paymentCancelRequest.merchantAccount(), is(liveMerchantAccountId));
+    }
+
+    @Test
+    void should_create_a_PaymentRequest_without_a_billingAddress_when_isMoto_is_true() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withCardNo("4444333322221111")
+                        .withCardHolder("John Doe")
+                        .withCvc("737")
+                        .withEndDate(CardExpiryDate.valueOf("10/99"))
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withAmount("6234")
+                .withMoto(true)
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperInteraction(), is("Moto"));
+        assertNull(request.billingAddress());
+    }
+
+    @Test
+    void should_create_a_moto_PaymentRequest_when_authorisationMode_is_MOTO_API() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withCardNo("4444333322221111")
+                        .withCardHolder("John Doe")
+                        .withCvc("737")
+                        .withEndDate(CardExpiryDate.valueOf("10/99"))
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withAmount("6234")
+                .withAuthorisationMode(AuthorisationMode.MOTO_API)
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperInteraction(), is("Moto"));
+        assertThat(request.billingAddress(), notNullValue());
     }
 
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {

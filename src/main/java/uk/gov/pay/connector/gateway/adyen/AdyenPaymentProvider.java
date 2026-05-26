@@ -76,7 +76,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) throws GatewayException {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+        return adyenAuthoriseHandler.authorise(request);
     }
 
     @Override
