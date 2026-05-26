@@ -203,7 +203,7 @@ class AdyenCardResourceAuthoriseIT {
                 "adyen");
         var pspReferenceFromAdyen = "993617895215577D";
 
-        app.getAdyenMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
+        app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
 
         var authCardDetails = anAuthCardDetails()
                 .withCardNo("4444333322221111")
