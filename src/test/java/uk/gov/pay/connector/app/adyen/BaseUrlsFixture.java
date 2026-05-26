@@ -16,7 +16,7 @@ public class BaseUrlsFixture {
     private ManagementUrls management = new ManagementUrls(
             "https://management-test.example.com", "https://management.example.com");
 
-    public static BaseUrlsFixture aBaseUrls() {
+    public static BaseUrlsFixture someBaseUrls() {
         return new BaseUrlsFixture();
     }
 

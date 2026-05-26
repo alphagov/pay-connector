@@ -29,8 +29,8 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
 import static org.mockito.BDDMockito.then;
-import static uk.gov.pay.connector.app.adyen.ApiKeysFixture.anApiKeys;
-import static uk.gov.pay.connector.app.adyen.BaseUrlsFixture.aBaseUrls;
+import static uk.gov.pay.connector.app.adyen.ApiKeysFixture.someApiKeys;
+import static uk.gov.pay.connector.app.adyen.BaseUrlsFixture.someBaseUrls;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus.SUBMITTED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -59,13 +59,13 @@ class AdyenCancelHandlerTest {
         var mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
         given(mockAdyenGatewayConfig.getMerchantAccountIds())
                 .willReturn(mockAdyenIds);
-        var apiKeys = anApiKeys()
+        var apiKeys = someApiKeys()
                 .withCompanyAccount(
                         new CompanyAccountApiKeys(TEST_COMPANY_ACCOUNT_API_KEY, LIVE_COMPANY_ACCOUNT_API_KEY))
                 .build();
         given(mockAdyenGatewayConfig.getApiKeys())
                 .willReturn(apiKeys);
-        var baseUrls = aBaseUrls()
+        var baseUrls = someBaseUrls()
                 .withCheckout(new CheckoutUrls("https://example.com", LIVE_CHECKOUT_BASE_URL))
                 .build();
         given(mockAdyenGatewayConfig.getBaseUrls())

@@ -17,7 +17,7 @@ public class ApiKeysFixture {
             "test-legal-entity-management-API-key",
             "live-legal-entity-management-API-key");
 
-    public static ApiKeysFixture anApiKeys() {
+    public static ApiKeysFixture someApiKeys() {
         return new ApiKeysFixture();
     }
 
