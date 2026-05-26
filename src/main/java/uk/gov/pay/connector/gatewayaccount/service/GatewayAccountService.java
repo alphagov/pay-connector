@@ -10,7 +10,7 @@ import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActiveCredentialException;
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.MultipleLiveGatewayAccountsException;
-import uk.gov.pay.connector.gatewayaccount.exception.MultipleStripeTestGatewayAccountsException;
+import uk.gov.pay.connector.gatewayaccount.exception.MultiplePspTestGatewayAccountsException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
@@ -30,6 +30,7 @@ import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.UriInfo;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static java.util.Map.entry;
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -84,7 +86,7 @@ public class GatewayAccountService {
     private final GatewayAccountCredentialsHistoryDao gatewayAccountCredentialsHistoryDao;
     private final GatewayAccountCredentialsDao gatewayAccountCredentialsDao;
     private UnitOfWork unitOfWork;
-    
+
     @Inject
     public GatewayAccountService(GatewayAccountDao gatewayAccountDao, CardTypeDao cardTypeDao,
                                  GatewayAccountCredentialsService gatewayAccountCredentialsService,
@@ -150,8 +152,9 @@ public class GatewayAccountService {
                 throw MultipleLiveGatewayAccountsException.liveGatewayAccountAlreadyExists(gatewayAccountEntity.getServiceId());
             }
 
-            if (!gatewayAccountEntity.isLive() && gatewayAccountRequest.getPaymentProvider().equalsIgnoreCase(STRIPE.getName())) {
-                throwIfStripeTestAccountAlreadyExists(gatewayAccountRequest.getServiceId());
+            if (!gatewayAccountEntity.isLive() && (
+                    List.of(STRIPE.getName(), ADYEN.getName()).contains(gatewayAccountRequest.getPaymentProvider()))) {
+                throwIfStripeOrAdyenTestAccountAlreadyExists(gatewayAccountRequest.getServiceId());
             }
 
             LOGGER.info("Setting the new account to accept all card types by default");
@@ -179,33 +182,35 @@ public class GatewayAccountService {
         return GatewayAccountObjectConverter.createResponseFrom(gatewayAccount, uriInfo);
     }
 
-    private void throwIfStripeTestAccountAlreadyExists(String serviceId) {
+    public void throwIfStripeOrAdyenTestAccountAlreadyExists(String serviceId) {
         var maybeGatewayAccount = getGatewayAccountByServiceIdAndAccountType(serviceId, TEST);
         if (maybeGatewayAccount.isPresent() &&
                 maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().isPresent() &&
-                maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().get().getPaymentProvider().equalsIgnoreCase("stripe")) {
-            GatewayAccountEntity stripeGatewayAccount = maybeGatewayAccount.get();
-            throw new MultipleStripeTestGatewayAccountsException(serviceId, stripeGatewayAccount.getExternalId(),
-                    stripeGatewayAccount.getCurrentOrActiveGatewayAccountCredential().get().getExternalId());
+                List.of(STRIPE.getName(), ADYEN.getName())
+                        .contains(maybeGatewayAccount.get().getCurrentOrActiveGatewayAccountCredential().get().getPaymentProvider().toLowerCase())) {
+            GatewayAccountEntity pspGatewayAccount = maybeGatewayAccount.get();
+            throw new MultiplePspTestGatewayAccountsException(serviceId, pspGatewayAccount.getExternalId(),
+                    pspGatewayAccount.getCurrentOrActiveGatewayAccountCredential().get().getExternalId());
         }
     }
 
     public Optional<GatewayAccountEntity> getGatewayAccountByExternal(String gatewayAccountExternalId) {
         return gatewayAccountDao.findByExternalId(gatewayAccountExternalId);
     }
-    
+
     public Optional<GatewayAccountEntity> getGatewayAccountByServiceIdAndAccountType(String serviceId, GatewayAccountType accountType) {
         List<GatewayAccountEntity> gatewayAccounts = gatewayAccountDao.findByServiceIdAndAccountType(serviceId, accountType)
                 .stream()
                 .filter(GatewayAccountEntity::isLiveOrEnabled) // filter out any test accounts that are disabled
                 .toList();
-         
+
         if (accountType.equals(LIVE) && gatewayAccounts.size() > 1) {
             throw MultipleLiveGatewayAccountsException.multipleLiveGatewayAccounts(serviceId);
         }
 
         return gatewayAccounts.stream()
-                .filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst()
+                .filter(GatewayAccountEntity::isAdyenGatewayAccount).findFirst()
+                .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isStripeGatewayAccount).findFirst())
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isSandboxGatewayAccount).findFirst())
                 .or(() -> gatewayAccounts.stream().filter(GatewayAccountEntity::isWorldpayGatewayAccount).findFirst());
     }

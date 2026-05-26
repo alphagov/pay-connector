@@ -11,6 +11,7 @@ import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
 import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.CaptureConfirmedByGatewayNotification;
+import uk.gov.pay.connector.events.model.charge.CaptureErrored;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import jakarta.inject.Inject;
@@ -103,8 +104,17 @@ public class ChargeNotificationProcessor {
                 kv(PROVIDER_PAYMENT_ID, gatewayTransactionId),
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccount.getId()),
                 kv(PROVIDER, charge.getPaymentGatewayName()));
-        
-        Event event = new CaptureConfirmedByGatewayNotification(charge.getServiceId(), charge.isLive(), charge.getGatewayAccountId(), charge.getExternalId(), Instant.now());
+
+        Event event;
+        if (ChargeStatus.CAPTURED.equals(newStatus)) {
+            event = new CaptureConfirmedByGatewayNotification(charge.getServiceId(), charge.isLive(),
+                    charge.getGatewayAccountId(), charge.getExternalId(), Instant.now());
+
+        } else {
+            event = new CaptureErrored(charge.getServiceId(), charge.isLive(), charge.getGatewayAccountId(),
+                    charge.getExternalId(), Instant.now());
+        }
         eventService.emitEvent(event);
     }
+    
 }

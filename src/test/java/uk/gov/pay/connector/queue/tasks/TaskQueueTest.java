@@ -1,20 +1,14 @@
 package uk.gov.pay.connector.queue.tasks;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.SqsConfig;
@@ -28,7 +22,6 @@ import java.util.List;
 
 import static com.jayway.jsonassert.impl.matcher.IsCollectionWithSize.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -36,9 +29,15 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.slf4j.event.Level.ERROR;
 
 @ExtendWith(MockitoExtension.class)
 class TaskQueueTest {
+
+    @RegisterExtension
+    LogCapturer errorLogs = LogCapturer.create()
+            .forLevel(ERROR)
+            .captureForType(TaskQueue.class);
 
     @Mock
     SqsQueueService sqsQueueService;
@@ -46,16 +45,10 @@ class TaskQueueTest {
     @Mock
     ConnectorConfiguration connectorConfiguration;
 
-    @Mock
-    private Appender<ILoggingEvent> mockAppender;
-
-    @Captor
-    ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
-
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         TaskQueueConfig taskQueueConfig = mock(TaskQueueConfig.class);
         SqsConfig sqsConfig = mock(SqsConfig.class);
         when(sqsConfig.getTaskQueueUrl()).thenReturn("");
@@ -63,9 +56,6 @@ class TaskQueueTest {
         when(connectorConfiguration.getSqsConfig()).thenReturn(sqsConfig);
         when(connectorConfiguration.getTaskQueueConfig()).thenReturn(taskQueueConfig);
         when(taskQueueConfig.getDeliveryDelayInSeconds()).thenReturn(2);
-        Logger logger = (Logger) LoggerFactory.getLogger(TaskQueue.class);
-        logger.setLevel(Level.ERROR);
-        logger.addAppender(mockAppender);
     }
 
     @Test
@@ -110,10 +100,7 @@ class TaskQueueTest {
         assertEquals("payload data", taskMessages.getFirst().getTask().getData());
         assertEquals(TaskType.COLLECT_FEE_FOR_STRIPE_FAILED_PAYMENT, taskMessages.getFirst().getTask().getTaskType());
 
-        verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
-        LoggingEvent loggingEvent = loggingEventArgumentCaptor.getValue();
-        assertThat(loggingEvent.getLevel(), is(Level.ERROR));
-        assertThat(loggingEvent.getMessage(), is("Error parsing message from tasks queue"));
+        errorLogs.assertContains("Error parsing message from tasks queue");
     }
 
     @Test

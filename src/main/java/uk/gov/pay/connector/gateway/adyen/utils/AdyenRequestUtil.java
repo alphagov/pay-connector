@@ -1,8 +1,10 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 
 import java.net.URI;
 import java.util.Map;
@@ -12,21 +14,28 @@ import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getCompan
 
 public class AdyenRequestUtil {
 
-    private AdyenRequestUtil() {}
-    
-    public static URI getAuthUrl(AdyenGatewayConfig adyenGatewayConfig, CardAuthorisationGatewayRequest request) {
-        return URI.create(getBaseCheckoutUrl(adyenGatewayConfig, request.getGatewayAccount().isLive()) + "/payments");
+    private AdyenRequestUtil() {
     }
 
-    public static URI getCaptureUrl(AdyenGatewayConfig adyenGatewayConfig, CaptureGatewayRequest request) {
-        return URI.create(getBaseCheckoutUrl(adyenGatewayConfig, request.getGatewayAccount().isLive()) + "/payments/" + request.getGatewayTransactionId() + "/captures");
+    public static URI getAuthUrl(AdyenGatewayConfig config, CardAuthorisationGatewayRequest request) {
+        return getUrl(config, request, "/payments");
     }
 
-    public static Map<String, String> getHeaders(AdyenGatewayConfig adyenGatewayConfig, boolean isLive) {
-        return Map.of("X-API-Key",
-                getCompanyApiKey(
-                        adyenGatewayConfig,
-                        isLive
-                ));
+    public static URI getCancelUrl(AdyenGatewayConfig config, CancelGatewayRequest request) {
+        var path = "/payments/%s/cancels".formatted(request.getTransactionId());
+        return getUrl(config, request, path);
+    }
+
+    public static URI getCaptureUrl(AdyenGatewayConfig config, CaptureGatewayRequest request) {
+        var path = "/payments/%s/captures".formatted(request.getGatewayTransactionId());
+        return getUrl(config, request, path);
+    }
+
+    private static URI getUrl(AdyenGatewayConfig config, GatewayRequest request, String path) {
+        return URI.create(getBaseCheckoutUrl(config, request.getGatewayAccount().isLive()) + path);
+    }
+
+    public static Map<String, String> getHeaders(AdyenGatewayConfig config, boolean isLive) {
+        return Map.of("X-API-Key", getCompanyApiKey(config, isLive));
     }
 }

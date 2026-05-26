@@ -105,7 +105,7 @@ public class AdyenNotificationService {
         }
     }
 
-    private NotificationRequest deserialisePayloadToNotificationRequest(String rawAdyenJson) {
+    public NotificationRequest deserialisePayloadToNotificationRequest(String rawAdyenJson) {
         try {
             WebhookHandler webhookHandler = new WebhookHandler();
             return webhookHandler.handleNotificationJson(rawAdyenJson);
@@ -115,7 +115,7 @@ public class AdyenNotificationService {
         }
     }
 
-    private List<NotificationRequestItem> extractNotificationItem(NotificationRequest notificationRequest) {
+    public List<NotificationRequestItem> extractNotificationItem(NotificationRequest notificationRequest) {
         if (notificationRequest == null ||
                 (notificationRequest.getNotificationItems() == null || notificationRequest.getNotificationItems().isEmpty())) {
             LOGGER.info("Adyen notification request is empty or missing items");
