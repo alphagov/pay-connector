@@ -79,7 +79,7 @@ class AdyenCancelHandlerTest {
     }
 
     @Test
-    void should_POST_request_to_the_cancel_an_authorised_payment_URL_and_pass_the_gateway_transaction_ID_as_the_path_parameter() throws Exception {
+    void should_pass_the_gateway_transaction_ID_as_the_path_parameter_to_the_cancel_request() throws Exception {
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
                         .withGatewayTransactionId(A_GATEWAY_TRANSACTION_ID)
