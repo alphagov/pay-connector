@@ -17,6 +17,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenAuthoriseHandler;
+import uk.gov.pay.connector.gateway.adyen.handler.AdyenCancelHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenCaptureHandler;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
@@ -44,6 +45,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
     private final ConnectorConfiguration connectorConfiguration;
     private final AdyenAuthoriseHandler adyenAuthoriseHandler;
     private final AdyenCaptureHandler adyenCaptureHandler;
+    private final AdyenCancelHandler adyenCancelHandler;
 
     @Inject
     public AdyenPaymentProvider(
@@ -57,8 +59,9 @@ public class AdyenPaymentProvider implements PaymentProvider {
         this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
+        adyenCancelHandler = new AdyenCancelHandler(client, new AdyenRequestFactory(connectorConfiguration), adyenGatewayConfig);
     }
-    
+
     @Override
     public PaymentGatewayName getPaymentGatewayName() {
         return ADYEN;
@@ -91,7 +94,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public CaptureResponse capture(CaptureGatewayRequest request) {
-       return adyenCaptureHandler.capture(request);
+        return adyenCaptureHandler.capture(request);
     }
 
     @Override
@@ -106,7 +109,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) throws GatewayException {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+        return adyenCancelHandler.cancel(request);
     }
 
     @Override
