@@ -40,7 +40,7 @@ public class AdyenAccountResource {
     @Path("/v1/api/service/{serviceId}/request-adyen-test-account")
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Creates a Adyen Test Account " +
+            summary = "Creates an Adyen Test Account " +
                     "and associated entities",
             responses = {
                     @ApiResponse(responseCode = "201", description = "OK"),
@@ -77,5 +77,31 @@ public class AdyenAccountResource {
                 "account_holder_id", adyenCredentials.accountHolderId(),
                 "balance_account_id", adyenCredentials.balanceAccountId());
         return Response.ok(response).build();
+    }
+
+    @POST
+    @Path("/v1/api/service/{serviceId}/switch-to-adyen-test-account")
+    @Produces(APPLICATION_JSON)
+    @Operation(
+            summary = "Disables Stripe test account, " +
+                    "creates an Adyen Test Account " +
+                    "and associated entities",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "OK"),
+                    @ApiResponse(responseCode = "409", description = "Adyen account already exists"),
+                    @ApiResponse(responseCode = "502", description = "Bad gateway"),
+            }
+    )
+    public Response switchToAdyenTestAccount(
+            @Parameter(example = "service-external-id-123", description = "Service ID")
+            @PathParam("serviceId") String serviceId,
+            Map<String, String> payload) {
+        
+        gatewayAccountService.throwIfNoStripeTestAccount(serviceId);
+
+        var serviceName = payload.get("service_name");
+        adyenTestAccountService.createTestAccount(serviceName);
+
+        return Response.ok().build();
     }
 }
