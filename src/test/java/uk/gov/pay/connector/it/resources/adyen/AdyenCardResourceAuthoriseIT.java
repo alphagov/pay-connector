@@ -25,8 +25,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
-import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -196,11 +196,8 @@ class AdyenCardResourceAuthoriseIT {
 
     @Test
     void should_not_send_billingAddress_when_authorising_a_payment_with_moto_flag_set_to_true() {
-        var chargeId = testBaseExtension.addChargeWithMoto(
-                CREATED,
-                true,
-                secureRandomLong(),
-                "adyen");
+        var chargeParams = anAddChargeParameters().withChargeStatus(CREATED).withIsMoto(true).build();
+        var chargeId = testBaseExtension.addCharge(chargeParams);
         var pspReferenceFromAdyen = "993617895215577D";
 
         app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);

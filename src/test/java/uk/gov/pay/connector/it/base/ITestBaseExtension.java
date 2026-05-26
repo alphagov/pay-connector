@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
 import uk.gov.pay.connector.charge.model.FirstDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
-import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.it.util.ChargeUtils;
@@ -461,27 +460,10 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withLanguage(SupportedLanguage.ENGLISH)
                 .withDelayedCapture(false)
                 .withEmail(EMAIL)
+                .withIsMoto(addChargeParameters.isMoto())
                 .withGatewayCredentialId(credentialParams.getId())
                 .withAuthorisationMode(addChargeParameters.authorisationMode())
                 .build());
-    }
-
-    public String addChargeWithMoto(ChargeStatus chargeStatus, Boolean isMoto, long chargeId, String paymentProvider) {
-        ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
-        databaseTestHelper.addCharge(anAddChargeParams()
-                .withExternalChargeId(externalChargeId.toString())
-                .withChargeId(chargeId)
-                .withIsMoto(isMoto)
-                .withPaymentProvider(paymentProvider)
-                .withStatus(chargeStatus)
-                .withAmount(AMOUNT)
-                .withReturnUrl(RETURN_URL)
-                .withGatewayAccountId(accountId)
-                .withDescription("testing moto flag")
-                .withReference(ServicePaymentReference.of("reference"))
-                .withGatewayCredentialId(credentialParams.getId())
-                .build());
-        return externalChargeId.toString();
     }
 
     public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status) {

@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.gateway.adyen;
 
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
@@ -18,6 +17,7 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getMerchantAccountId;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
@@ -32,11 +32,8 @@ public class AdyenRequestFactory {
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
-        var mappedAddress = request.isMoto() && !request.getAuthorisationMode().equals(MOTO_API)
-                ? null
-                : authCardDetails.getAddress()
-                .map(AdyenRequestFactory::mapToBillingAddress)
-                .orElse(null);
+
+        var mappedAddress = mapToBillingAddress(request);
 
         var paymentMethod = new PaymentMethod(authCardDetails.getCvc(),
                 authCardDetails.getEndDate().getTwoDigitMonth(),
@@ -47,8 +44,6 @@ public class AdyenRequestFactory {
 
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
 
-        var shopperInteraction = request.isMoto() || request.getAuthorisationMode().equals(MOTO_API) ? "Moto" : "Ecommerce";
-
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
@@ -56,11 +51,15 @@ public class AdyenRequestFactory {
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
                 configuration.getLinks().getFrontendUrl(),
-                shopperInteraction,
+                getShopperInteraction(request),
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true"))
         );
+    }
+
+    private static String getShopperInteraction(CardAuthorisationGatewayRequest request) {
+        return request.isMoto() || request.getAuthorisationMode().equals(MOTO_API) ? "Moto" : "Ecommerce";
     }
 
     public CancelRequestPayload createPaymentCancelRequest(CancelGatewayRequest request) {
@@ -77,18 +76,27 @@ public class AdyenRequestFactory {
         );
     }
 
-    private static BillingAddress mapToBillingAddress(Address address) {
-        var northAmericanRegionMapper = new NorthAmericanRegionMapper();
-        String stateOrProvince = northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
-                .map(NorthAmericaRegion::getFullName)
-                .orElse(null);
-        return new BillingAddress(
-                address.getLine1(),
-                address.getLine2(),
-                address.getCity(),
-                address.getCountry(),
-                address.getPostcode(),
-                stateOrProvince);
+    private static BillingAddress mapToBillingAddress(CardAuthorisationGatewayRequest request) {
+        if (request.isMoto() && !request.getAuthorisationMode().equals(MOTO_API)) {
+            return null;
+        }
+
+        Optional<BillingAddress> result = request.getAuthCardDetails().getAddress().map(address -> {
+            var northAmericanRegionMapper = new NorthAmericanRegionMapper();
+            String stateOrProvince = northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
+                    .map(NorthAmericaRegion::getFullName)
+                    .orElse(null);
+            
+            return new BillingAddress(
+                    address.getLine1(),
+                    address.getLine2(),
+                    address.getCity(),
+                    address.getCountry(),
+                    address.getPostcode(),
+                    stateOrProvince);
+        });
+        
+        return result.orElse(null);
     }
 
     private static AdyenCredentials mapToAdyenCredentials(GatewayCredentials gatewayCredentials) {
