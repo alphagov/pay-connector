@@ -38,6 +38,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
@@ -227,8 +228,9 @@ class WorldpayPaymentProviderTest {
         ChargeEntity chargeEntity = chargeEntityFixture.build();
         var cardAuthRequest = CardAuthorisationGatewayRequest.valueOf(chargeEntity, anAuthCardDetails().build());
 
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> responseBuilder = responseBuilder();
         when(worldpayAuthoriseHandler.authorise(cardAuthRequest, SEND_EXEMPTION_ENGINE_REQUEST))
-                .thenReturn(responseBuilder().withGatewayError(gatewayConnectionError("connetion problemo")).build());
+                .thenReturn(responseBuilder.withGatewayError(gatewayConnectionError("connetion problemo")).build());
 
         worldpayPaymentProvider.authorise(cardAuthRequest, chargeEntity);
 
