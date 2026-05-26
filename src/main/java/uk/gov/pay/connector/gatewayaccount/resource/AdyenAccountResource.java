@@ -43,7 +43,7 @@ public class AdyenAccountResource {
             summary = "Creates an Adyen Test Account " +
                     "and associated entities",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "OK"),
+                    @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "409", description = "Adyen account already exists"),
                     @ApiResponse(responseCode = "502", description = "Bad gateway"),
             }
@@ -83,12 +83,10 @@ public class AdyenAccountResource {
     @Path("/v1/api/service/{serviceId}/switch-to-adyen-test-account")
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Disables Stripe test account, " +
-                    "creates an Adyen Test Account " +
-                    "and associated entities",
+            summary = "Disables Stripe test account, creates an Adyen Test Account and associated entities",
             responses = {
-                    @ApiResponse(responseCode = "201", description = "OK"),
-                    @ApiResponse(responseCode = "409", description = "Adyen account already exists"),
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - account ineligible for switch"),
                     @ApiResponse(responseCode = "502", description = "Bad gateway"),
             }
     )
