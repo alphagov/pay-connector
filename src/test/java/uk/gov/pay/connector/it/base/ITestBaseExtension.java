@@ -164,7 +164,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public void createCredentialParams() {
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
-        } else if (paymentProvider.equals(ADYEN.getName())){
+        } else if (paymentProvider.equals(ADYEN.getName())) {
             credentials = Map.of(CREDENTIALS_ADYEN_LEGAL_ENTITY_ID, "legal_entity_id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
             credentials = Map.of(
@@ -460,6 +460,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withLanguage(SupportedLanguage.ENGLISH)
                 .withDelayedCapture(false)
                 .withEmail(EMAIL)
+                .withIsMoto(addChargeParameters.isMoto())
                 .withGatewayCredentialId(credentialParams.getId())
                 .withAuthorisationMode(addChargeParameters.authorisationMode())
                 .build());
