@@ -22,18 +22,18 @@ public class AdyenAuthoriseHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(AdyenAuthoriseHandler.class);
 
-    private final GatewayClient client;
-    private final AdyenGatewayConfig config;
-    private final AdyenRequestFactory requestFactory;
+    private final GatewayClient gatewayClient;
+    private final AdyenGatewayConfig adyenGatewayConfig;
+    private final AdyenRequestFactory adyenRequestFactory;
     private final JsonObjectMapper jsonObjectMapper;
 
-    public AdyenAuthoriseHandler(GatewayClient client,
+    public AdyenAuthoriseHandler(GatewayClient gatewayClient,
                                  ConnectorConfiguration connectorConfig,
                                  JsonObjectMapper jsonObjectMapper) {
-        this.client = client;
-        this.config = connectorConfig.getAdyenGatewayConfig();
+        this.gatewayClient = gatewayClient;
+        this.adyenGatewayConfig = connectorConfig.getAdyenGatewayConfig();
         this.jsonObjectMapper = jsonObjectMapper;
-        this.requestFactory = new AdyenRequestFactory(connectorConfig);
+        this.adyenRequestFactory = new AdyenRequestFactory(connectorConfig);
     }
 
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws
@@ -47,14 +47,14 @@ public class AdyenAuthoriseHandler {
 
         logger.info("Calling Adyen for authorisation of charge");
         var authorisationRequest = new AdyenAuthorisationRequest(
-                getAuthUrl(config, request),
-                getHeaders(config, request.getGatewayAccount().isLive()),
+                getAuthUrl(adyenGatewayConfig, request),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
                 request.getGatewayAccount().getType(),
-                requestFactory.createPaymentRequest(request),
+                adyenRequestFactory.createPaymentRequest(request),
                 jsonObjectMapper);
 
         try {
-            var jsonResponse = client.postRequestFor(authorisationRequest).getEntity();
+            var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
             var paymentResponse = jsonObjectMapper.getObject(
                     jsonResponse,
                     AuthoriseResponseBody.class);
