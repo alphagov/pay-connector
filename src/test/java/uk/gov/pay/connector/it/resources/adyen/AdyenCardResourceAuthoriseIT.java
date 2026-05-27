@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.it.resources.adyen;
 
-import com.github.tomakehurst.wiremock.client.WireMock;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,7 +112,7 @@ class AdyenCardResourceAuthoriseIT {
 
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
-                .withRequestBody(WireMock.matchingJsonPath("$.billingAddress", absent()))
+                .withRequestBody(matchingJsonPath("$.billingAddress", absent()))
                 .withRequestBody(matchingJsonPath("$.paymentMethod",
                         equalToJson(""" 
                                 {
@@ -195,7 +194,7 @@ class AdyenCardResourceAuthoriseIT {
     }
 
     @Test
-    void should_not_send_billingAddress_when_authorising_a_payment_with_moto_flag_set_to_true() {
+    void successful_authorisation_of_a_moto_payment() {
         var chargeParams = anAddChargeParameters().withChargeStatus(CREATED).withIsMoto(true).build();
         var chargeId = testBaseExtension.addCharge(chargeParams);
         var pspReferenceFromAdyen = "993617895215577D";
@@ -208,14 +207,8 @@ class AdyenCardResourceAuthoriseIT {
                 .withCardHolder("John Doe")
                 .withCvc("737")
                 .withEndDate(CardExpiryDate.valueOf("03/30"))
-                .withAddress(new Address(
-                        "line1",
-                        "line2",
-                        "postcode",
-                        "city",
-                        "county",
-                        "country"
-                )).build();
+                .withAddress(null)
+                .build();
 
         app.givenSetup()
                 .body(authCardDetails)
@@ -226,7 +219,7 @@ class AdyenCardResourceAuthoriseIT {
 
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
-                .withRequestBody(WireMock.matchingJsonPath("$.billingAddress", absent()))
+                .withRequestBody(matchingJsonPath("$.billingAddress", absent()))
                 .withRequestBody(matchingJsonPath("$.paymentMethod",
                         equalToJson(""" 
                                 {

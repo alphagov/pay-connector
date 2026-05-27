@@ -44,6 +44,7 @@ import static uk.gov.pay.connector.util.AddGatewayAccountParams.AddGatewayAccoun
 import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
 import static uk.gov.pay.connector.util.RandomIdGenerator.randomUuid;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
+import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public class DatabaseFixtures {
@@ -918,6 +919,7 @@ public class DatabaseFixtures {
                     .withUpdatedDate(updatedDate)
                     .withServiceId(serviceId)
                     .withRequires3ds(requires3ds)
+                    .withIsMoto(authorisationMode.equals(MOTO_API))
                     .build());
 
             if (cardDetails != null) {
