@@ -31,14 +31,16 @@ public class AdyenCaptureHandler implements CaptureHandler {
 
     private final GatewayClient gatewayClient;
     private final AdyenGatewayConfig adyenGatewayConfig;
-    private final JsonObjectMapper jsonObjectMapper;
     private final AdyenRequestFactory adyenRequestFactory;
+    private final JsonObjectMapper jsonObjectMapper;
 
-    public AdyenCaptureHandler(GatewayClient client, ConnectorConfiguration configuration, JsonObjectMapper jsonObjectMapper) {
-        this.gatewayClient = client;
-        this.adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+    public AdyenCaptureHandler(GatewayClient gatewayClient,
+                               ConnectorConfiguration connectorConfig,
+                               JsonObjectMapper jsonObjectMapper) {
+        this.gatewayClient = gatewayClient;
+        this.adyenGatewayConfig = connectorConfig.getAdyenGatewayConfig();
         this.jsonObjectMapper = jsonObjectMapper;
-        this.adyenRequestFactory = new AdyenRequestFactory(configuration);
+        this.adyenRequestFactory = new AdyenRequestFactory(connectorConfig);
     }
 
     @Override
@@ -65,8 +67,8 @@ public class AdyenCaptureHandler implements CaptureHandler {
         }
     }
 
-    private CaptureResponse handleGatewayException(CaptureGatewayRequest request, 
-                                                   GatewayErrorException e, 
+    private CaptureResponse handleGatewayException(CaptureGatewayRequest request,
+                                                   GatewayErrorException e,
                                                    String transactionId) {
         try {
             var jsonResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);

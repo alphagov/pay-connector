@@ -75,8 +75,8 @@ class AdyenCancelHandlerTest {
                 .willReturn(mockAdyenGatewayConfig);
         cancelHandler = new AdyenCancelHandler(
                 mockGatewayClient,
-                new AdyenRequestFactory(mockConfiguration),
-                mockAdyenGatewayConfig);
+                mockAdyenGatewayConfig,
+                new AdyenRequestFactory(mockConfiguration));
     }
 
     @Test

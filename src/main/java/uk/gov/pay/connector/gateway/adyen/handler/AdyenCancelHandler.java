@@ -17,26 +17,28 @@ import static uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.Can
 
 public class AdyenCancelHandler {
 
-    private final GatewayClient client;
-    private final AdyenRequestFactory requestFactory;
-    private final AdyenGatewayConfig config;
+    private final GatewayClient gatewayClient;
+    private final AdyenGatewayConfig adyenGatewayConfig;
+    private final AdyenRequestFactory adyenRequestFactory;
 
-    public AdyenCancelHandler(GatewayClient client, AdyenRequestFactory requestFactory, AdyenGatewayConfig config) {
-        this.client = client;
-        this.requestFactory = requestFactory;
-        this.config = config;
+    public AdyenCancelHandler(GatewayClient gatewayClient,
+                              AdyenGatewayConfig adyenGatewayConfig,
+                              AdyenRequestFactory adyenRequestFactory) {
+        this.gatewayClient = gatewayClient;
+        this.adyenGatewayConfig = adyenGatewayConfig;
+        this.adyenRequestFactory = adyenRequestFactory;
     }
 
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
         var responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
         var cancelRequest = new AdyenCancelRequest(
-                getCancelUrl(config, request),
-                getHeaders(config, request.isLiveAccount()),
-                requestFactory.createPaymentCancelRequest(request),
+                getCancelUrl(adyenGatewayConfig, request),
+                getHeaders(adyenGatewayConfig, request.isLiveAccount()),
+                adyenRequestFactory.createPaymentCancelRequest(request),
                 request.getGatewayAccount().getType(),
                 new JsonObjectMapper(Jackson.newObjectMapper()));
         try {
-            client.postRequestFor(cancelRequest);
+            gatewayClient.postRequestFor(cancelRequest);
         } catch (GatewayException.GenericGatewayException e) {
             throw new RuntimeException(e);
         } catch (GatewayException.GatewayErrorException e) {
