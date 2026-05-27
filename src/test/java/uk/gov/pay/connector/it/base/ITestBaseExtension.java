@@ -380,7 +380,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public static String cancelChargeUrlFor(String accountId, String chargeId) {
-        return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel" .replace("{accountId}", accountId).replace("{chargeId}", chargeId);
+        return "/v1/api/accounts/{accountId}/charges/{chargeId}/cancel".replace("{accountId}", accountId).replace("{chargeId}", chargeId);
     }
 
     public Matcher<? super List<Map<String, Object>>> hasEvent(ChargeStatus chargeStatus) {
