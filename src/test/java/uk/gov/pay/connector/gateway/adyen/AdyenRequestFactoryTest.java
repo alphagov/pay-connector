@@ -14,7 +14,6 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.service.payments.commons.model.AuthorisationMode;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -173,26 +172,6 @@ class AdyenRequestFactoryTest {
                         .build())
                 .withCredentials(ADYEN_CREDENTIALS)
                 .withAmount("6234")
-                .withMoto(true)
-                .build();
-
-        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
-
-        assertThat(request.shopperInteraction(), is("Moto"));
-    }
-
-    @Test
-    void should_create_a_PaymentRequest_with_shopperInteraction_as_Moto_when_authorisationMode_is_MOTO_API() {
-        var authoriseRequest = aCardAuthorisationGatewayRequest()
-                .withAuthCardDetails(anAuthCardDetails()
-                        .withCardNo("4444333322221111")
-                        .withCardHolder("John Doe")
-                        .withCvc("737")
-                        .withEndDate(CardExpiryDate.valueOf("10/99"))
-                        .build())
-                .withCredentials(ADYEN_CREDENTIALS)
-                .withAmount("6234")
-                .withAuthorisationMode(AuthorisationMode.MOTO_API)
                 .withMoto(true)
                 .build();
 

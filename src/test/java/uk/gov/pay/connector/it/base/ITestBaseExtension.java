@@ -351,32 +351,32 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public static String authoriseChargeUrlForApplePay(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/apple" .replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/apple".replace("{chargeId}", chargeId);
     }
 
     public static String authoriseChargeUrlForGooglePayStripe(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/google/stripe" .replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/google/stripe".replace("{chargeId}", chargeId);
     }
 
     public static String authoriseChargeUrlForGooglePayWorldpay(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/google/worldpay" .replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/google/worldpay".replace("{chargeId}", chargeId);
     }
 
     public static String authoriseChargeUrlForGooglePay(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/wallets/google" .replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/wallets/google".replace("{chargeId}", chargeId);
     }
 
 
     public static String authoriseChargeUrlFor(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/cards" .replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/cards".replace("{chargeId}", chargeId);
     }
 
     public static String authorise3dsChargeUrlFor(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/3ds" .replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/3ds".replace("{chargeId}", chargeId);
     }
 
     public static String captureChargeUrlFor(String chargeId) {
-        return "/v1/frontend/charges/{chargeId}/capture" .replace("{chargeId}", chargeId);
+        return "/v1/frontend/charges/{chargeId}/capture".replace("{chargeId}", chargeId);
     }
 
     public static String cancelChargeUrlFor(String accountId, String chargeId) {
