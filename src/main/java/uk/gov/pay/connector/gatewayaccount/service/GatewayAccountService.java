@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountWithoutAnActi
 import uk.gov.pay.connector.gatewayaccount.exception.MissingWorldpay3dsFlexCredentialsEntityException;
 import uk.gov.pay.connector.gatewayaccount.exception.MultipleLiveGatewayAccountsException;
 import uk.gov.pay.connector.gatewayaccount.exception.MultiplePspTestGatewayAccountsException;
+import uk.gov.pay.connector.gatewayaccount.exception.NonStripeAccountException;
 import uk.gov.pay.connector.gatewayaccount.exception.NotSupportedGatewayAccountException;
 import uk.gov.pay.connector.gatewayaccount.model.CreateGatewayAccountResponse;
 import uk.gov.pay.connector.gatewayaccount.model.EmailCollectionMode;
@@ -25,6 +26,7 @@ import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsHistoryDao;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.service.payments.commons.model.jsonpatch.JsonPatchRequest;
 
@@ -191,6 +193,21 @@ public class GatewayAccountService {
             GatewayAccountEntity pspGatewayAccount = maybeGatewayAccount.get();
             throw new MultiplePspTestGatewayAccountsException(serviceId, pspGatewayAccount.getExternalId(),
                     pspGatewayAccount.getCurrentOrActiveGatewayAccountCredential().get().getExternalId());
+        }
+    }
+
+    public void throwIfNoStripeTestAccount(String serviceId) {
+        var gatewayAccount = getGatewayAccountByServiceIdAndAccountType(serviceId, TEST)
+                .orElseThrow(() -> new NonStripeAccountException(serviceId));
+
+        boolean isStripe = gatewayAccount.getCurrentOrActiveGatewayAccountCredential()
+                .map(GatewayAccountCredentialsEntity::getPaymentProvider)
+                .map(String::toLowerCase)
+                .filter(paymentProvider -> STRIPE.getName().equals(paymentProvider))
+                .isPresent();
+
+        if (!isStripe) {
+            throw new NonStripeAccountException(serviceId);
         }
     }
 

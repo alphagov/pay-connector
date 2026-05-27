@@ -2,6 +2,7 @@ package uk.gov.pay.connector.rules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_OK;
 
 public class AdyenCheckoutMockClient extends AdyenMockClient {
@@ -11,7 +12,7 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
     }
 
     public void mockAuthorisationSuccess(String pspReferenceFromAdyen) {
-        String responseBody = """
+        var responseBody = """
                 {
                   "pspReference": "%s",
                   "resultCode": "Authorised",
@@ -22,7 +23,7 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
     }
 
     public void mockAuthorisationRejected(String pspReferenceFromAdyen) {
-        String responseBody = """
+        var responseBody = """
                 {
                   "pspReference": "%s",
                   "refusalReason": "Expired Card",
@@ -33,7 +34,7 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
     }
 
     public void mockAuthorisationError(String pspReferenceFromAdyen) {
-        String responseBody = """
+        var responseBody = """
                 {
                   "pspReference": "%s",
                   "refusalReason": "Acquirer Error",
@@ -41,5 +42,18 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
                   "refusalReasonCode": "4"
                 }""".formatted(pspReferenceFromAdyen);
         setupPostResponse(responseBody, "/payments", SC_OK);
+    }
+
+    public void mockCancellationSuccess(String pspReferenceFromAdyen, String paymentPspReference) {
+        var responseBody = """
+                {
+                  "pspReference": "%s",
+                  "merchantAccount": "adyen-test-merchant-account-id",
+                  "paymentPspReference": "%s",
+                  "reference": "864vqloqrm71jn89r4bjkhvkv2",
+                  "status": "received"
+                }""".formatted(pspReferenceFromAdyen, paymentPspReference);
+        var path = "/payments/%s/cancels".formatted(paymentPspReference);
+        setupPostResponse(responseBody, path, SC_CREATED);
     }
 }

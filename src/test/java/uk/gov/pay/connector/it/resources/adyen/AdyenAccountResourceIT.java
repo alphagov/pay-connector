@@ -16,6 +16,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.CoreMatchers.any;
@@ -23,6 +24,8 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_CREATE_INDIVIDUAL_REQUEST;
@@ -176,20 +179,88 @@ public class AdyenAccountResourceIT {
                 .post(format("/v1/api/service/%s/request-adyen-test-account", serviceId))
                 .then().statusCode(SC_CONFLICT);
 
+        verifyNoRequests();
+    }
+
+    private static void verifyNoRequests() {
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/legalEntities")));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/businessLines")));
         app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s", any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/transferInstruments")));
-        
+
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/stores")));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", any(String.class))))));
-        
+
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/accountHolders")));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
-        
+
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
         app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
+    }
+
+    @Test
+    void switchTestAccountShouldReturnBadGatewayWhenAdyenRespondsWithError() {
+        var serviceId = RandomIdGenerator.randomUuid();
+
+        app.getDatabaseFixtures()
+                .aTestAccount()
+                .withServiceId(serviceId)
+                .withPaymentProvider(STRIPE.getName())
+                .insert();
+
+        app.getAdyenKycMockClient().mockError("/legalEntities");
+
+        app.givenSetup()
+                .body(Map.of("service_name", "Existing service"))
+                .post(format("/v1/api/service/%s/switch-to-adyen-test-account", serviceId))
+                .then().statusCode(SC_BAD_GATEWAY);
+
+        app.getAdyenWireMockServer().verify(1, postRequestedFor(urlEqualTo("/legalEntities")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/businessLines")));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/transferInstruments")));
+
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/stores")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", any(String.class))))));
+
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/accountHolders")));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
+
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
+    }
+
+    @Test
+    void switchTestAccountShouldReturnBadRequestWhenProviderIsNotStripe() {
+        var serviceId = RandomIdGenerator.randomUuid();
+
+        app.getDatabaseFixtures()
+                .aTestAccount()
+                .withServiceId(serviceId)
+                .withPaymentProvider(WORLDPAY.getName())
+                .insert();
+
+        app.givenSetup()
+                .body(Map.of("service_name", "Existing service"))
+                .post(format("/v1/api/service/%s/switch-to-adyen-test-account", serviceId))
+                .then().statusCode(SC_BAD_REQUEST);
+
+        verifyNoRequests();
+    }
+
+    @Test
+    void switchTestAccountShouldReturnBadRequestWhenStripeTestAccountDoesNotExist() {
+        var serviceId = RandomIdGenerator.randomUuid();
+        
+        app.givenSetup()
+                .body(Map.of("service_name", "Existing service"))
+                .post(format("/v1/api/service/%s/switch-to-adyen-test-account", serviceId))
+                .then().statusCode(SC_BAD_REQUEST);
+
+        verifyNoRequests();
     }
 }

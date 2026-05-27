@@ -24,16 +24,16 @@ public class AdyenAuthoriseHandler {
 
     private final GatewayClient gatewayClient;
     private final AdyenGatewayConfig adyenGatewayConfig;
-    private final JsonObjectMapper jsonObjectMapper;
     private final AdyenRequestFactory adyenRequestFactory;
+    private final JsonObjectMapper jsonObjectMapper;
 
     public AdyenAuthoriseHandler(GatewayClient gatewayClient,
-                                 ConnectorConfiguration configuration,
+                                 ConnectorConfiguration connectorConfig,
                                  JsonObjectMapper jsonObjectMapper) {
         this.gatewayClient = gatewayClient;
-        this.adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        this.adyenGatewayConfig = connectorConfig.getAdyenGatewayConfig();
         this.jsonObjectMapper = jsonObjectMapper;
-        this.adyenRequestFactory = new AdyenRequestFactory(configuration);
+        this.adyenRequestFactory = new AdyenRequestFactory(connectorConfig);
     }
 
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws
