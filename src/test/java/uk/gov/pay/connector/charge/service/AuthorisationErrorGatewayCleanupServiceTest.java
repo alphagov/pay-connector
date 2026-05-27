@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseInquiryResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayCancelResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.paymentprocessor.service.QueryService;
@@ -46,7 +47,6 @@ import static uk.gov.pay.connector.charge.service.AuthorisationErrorGatewayClean
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
-import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.MOTO_API;
 import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
@@ -122,10 +122,11 @@ class AuthorisationErrorGatewayCleanupServiceTest {
         when(mockQueryService.getChargeGatewayStatus(eq(stripeCharge))).thenReturn(stripeChargeQueryResponse);
         when(worldpayCancelResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.CANCELLED);
 
-        GatewayResponse worldpayCancelResponse = responseBuilder().withResponse(this.worldpayCancelResponse).build();
+        GatewayResponseBuilder<BaseCancelResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
+        GatewayResponse<BaseCancelResponse> worldpayCancelResponse = responseBuilder.withResponse(this.worldpayCancelResponse).build();
         when(mockWorldpayPaymentProvider.cancel(any())).thenReturn(worldpayCancelResponse);
         BaseCancelResponse stripeCancelResponse = buildStripeCancelResponse(stripeCharge.getGatewayTransactionId());
-        when(mockStripePaymentProvider.cancel(any())).thenReturn(responseBuilder().withResponse(stripeCancelResponse).build());
+        when(mockStripePaymentProvider.cancel(any())).thenReturn(responseBuilder.withResponse(stripeCancelResponse).build());
 
         Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
 
@@ -151,7 +152,8 @@ class AuthorisationErrorGatewayCleanupServiceTest {
         when(mockQueryService.getChargeGatewayStatus(eq(stripeCharge))).thenReturn(stripeChargeQueryResponse);
 
         BaseCancelResponse stripeCancelResponse = buildStripeCancelResponse(stripeCharge.getGatewayTransactionId());
-        when(mockStripePaymentProvider.cancel(any())).thenReturn(responseBuilder().withResponse(stripeCancelResponse).build());
+        GatewayResponseBuilder<BaseCancelResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
+        when(mockStripePaymentProvider.cancel(any())).thenReturn(responseBuilder.withResponse(stripeCancelResponse).build());
 
         Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
 
@@ -234,7 +236,8 @@ class AuthorisationErrorGatewayCleanupServiceTest {
         when(mockQueryService.getChargeGatewayStatus(eq(worldpayCharge))).thenReturn(chargeQueryResponse);
 
         when(worldpayCancelResponse.cancelStatus()).thenReturn(BaseCancelResponse.CancelStatus.ERROR);
-        GatewayResponse cancelResponse = responseBuilder().withResponse(worldpayCancelResponse).build();
+        GatewayResponseBuilder<BaseCancelResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
+        GatewayResponse<BaseCancelResponse> cancelResponse = responseBuilder.withResponse(worldpayCancelResponse).build();
         when(mockWorldpayPaymentProvider.cancel(any())).thenReturn(cancelResponse);
 
         Map<String, Integer> result = cleanupService.sweepAndCleanupAuthorisationErrors(10);
