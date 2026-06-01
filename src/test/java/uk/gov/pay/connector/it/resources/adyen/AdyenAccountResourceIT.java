@@ -334,6 +334,7 @@ public class AdyenAccountResourceIT {
                 .body("gateway_account_credentials[0].active_end_date", is(notNullValue()))
                 .body("gateway_account_credentials[1].payment_provider", is(ADYEN.getName()))
                 .body("gateway_account_credentials[1].state", is(ACTIVE.toString()))
+                .body("gateway_account_credentials[1].active_start_date", is(notNullValue()))
                 .body("gateway_account_credentials[1].credentials.legal_entity_id", is(legalEntityId))
                 .body("gateway_account_credentials[1].credentials.store_id", is("STORE_ID_123"))
                 .body("gateway_account_credentials[1].credentials.account_holder_id", is("AH3227C223222H5J4DCLW9VBV"))
