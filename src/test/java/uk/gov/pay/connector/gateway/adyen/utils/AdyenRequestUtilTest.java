@@ -83,20 +83,6 @@ class AdyenRequestUtilTest {
         assertThat(captureUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
     }
 
-    @Test
-    void should_create_adyen_checkout_authorisation_url() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
-        var testCheckoutUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
-        assertThat(testCheckoutUrl, is("https://example.com/test/v71/payments"));
-    }
-
-    @Test
-    void should_create_adyen_checkout_capture_url() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
-        mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
-        var testCheckoutUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
-        assertThat(testCheckoutUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
-    }
 
     @ParameterizedTest
     @CsvSource({
