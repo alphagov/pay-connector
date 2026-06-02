@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
@@ -96,7 +97,9 @@ public class WalletAuthoriseService {
                 }
 
                 chargeStatus = AuthorisationService.mapFromGatewayErrorException(e);
-                operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+                operationResponse = GatewayResponseBuilder.<BaseAuthoriseResponse>responseBuilder()
+                        .withGatewayError(e.toGatewayError())
+                        .build();
             }
 
             Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
