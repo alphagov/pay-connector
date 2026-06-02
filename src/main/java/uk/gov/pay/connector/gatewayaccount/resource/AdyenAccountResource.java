@@ -10,11 +10,13 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenGatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.AdyenTestAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
 
 import java.util.Map;
 
@@ -28,12 +30,15 @@ public class AdyenAccountResource {
 
     private final AdyenTestAccountService adyenTestAccountService;
     private final GatewayAccountService gatewayAccountService;
+    private final GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService;
 
     @Inject
     public AdyenAccountResource(AdyenTestAccountService adyenTestAccountService,
-                                GatewayAccountService gatewayAccountService) {
+                                GatewayAccountService gatewayAccountService,
+                                GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService) {
         this.adyenTestAccountService = adyenTestAccountService;
         this.gatewayAccountService = gatewayAccountService;
+        this.gatewayAccountSwitchPaymentProviderService = gatewayAccountSwitchPaymentProviderService;
     }
 
     @POST
@@ -96,10 +101,19 @@ public class AdyenAccountResource {
             Map<String, String> payload) {
         
         gatewayAccountService.throwIfNoStripeTestAccount(serviceId);
+        var gatewayAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId));
 
         var serviceName = payload.get("service_name");
-        adyenTestAccountService.createTestAccount(serviceName);
-
-        return Response.ok().build();
+        AdyenCredentials adyenCredentials = adyenTestAccountService.createTestAccount(serviceName);
+        gatewayAccountSwitchPaymentProviderService.switchStripeTestAccountToAdyen(gatewayAccount, adyenCredentials);
+        
+        Map<String, String> response = Map.of("gateway_account_id", serviceId,
+                "legal_entity_id", adyenCredentials.legalEntityId(),
+                "store_id", adyenCredentials.storeId(),
+                "account_holder_id", adyenCredentials.accountHolderId(),
+                "balance_account_id", adyenCredentials.balanceAccountId());
+        
+        return Response.ok(response).build();
     }
 }
