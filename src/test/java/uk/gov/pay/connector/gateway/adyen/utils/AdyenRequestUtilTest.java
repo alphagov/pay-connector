@@ -1,9 +1,10 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
@@ -17,18 +18,16 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
@@ -82,63 +81,44 @@ class AdyenRequestUtilTest {
         var captureUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
 
         assertThat(captureUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
-
-        BaseUrls mockBaseUrls = mock(BaseUrls.class);
-        lenient().when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
-        lenient().when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
     }
 
     @Test
     void should_create_adyen_checkout_authorisation_url() {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
         var testCheckoutUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
         assertThat(testCheckoutUrl, is("https://example.com/test/v71/payments"));
     }
 
     @Test
     void should_create_adyen_checkout_capture_url() {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
         mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
         var testCheckoutUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
         assertThat(testCheckoutUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
     }
 
-    @Nested
-    class TestGetRefundUrl {
-        private RefundGatewayRequest mockRefundRequest;
-        RefundEntity refundEntity;
+    @ParameterizedTest
+    @CsvSource({
+            "TEST,https://example.com/test/v71",
+            "LIVE,https://example.com/live/v71"
+    })
+    void should_create_adyen_checkout_refund_url(GatewayAccountType gatewayAccountType, String expectedCheckoutBaseUrl) {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        chargeEntity.getGatewayAccount().setType(gatewayAccountType);
 
-        @BeforeEach
-        void setUp() {
-            refundEntity = new RefundEntityFixture()
-                    .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
-                    .withExternalId("refund-external-id")
-                    .build();
-        }
+        var refundEntity = new RefundEntityFixture()
+                .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
+                .withExternalId("refund-external-id")
+                .build();
+        var mockRefundRequest = RefundGatewayRequest.valueOf(
+                Charge.from(chargeEntity),
+                refundEntity,
+                chargeEntity.getGatewayAccount(),
+                chargeEntity.getGatewayAccountCredentialsEntity());
 
-        @Test
-        void should_create_adyen_checkout_refund_url_for_test() {
-            chargeEntity.getGatewayAccount().setType(TEST);
-            mockRefundRequest = RefundGatewayRequest.valueOf(
-                    Charge.from(chargeEntity),
-                    refundEntity,
-                    chargeEntity.getGatewayAccount(),
-                    chargeEntity.getGatewayAccountCredentialsEntity());
-
-            var testCheckoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
-            assertThat(testCheckoutUrl, is(String.format("https://example.com/test/v71/payments/%s/refunds", GATEWAY_TRANSACTION_ID)));
-        }
-
-        @Test
-        void should_create_adyen_checkout_refund_url_for_live() {
-            chargeEntity.getGatewayAccount().setType(LIVE);
-            mockRefundRequest = RefundGatewayRequest.valueOf(
-                    Charge.from(chargeEntity),
-                    refundEntity,
-                    chargeEntity.getGatewayAccount(),
-                    chargeEntity.getGatewayAccountCredentialsEntity());
-
-            var testCheckoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
-            assertThat(testCheckoutUrl, is(String.format("https://example.com/live/v71/payments/%s/refunds", GATEWAY_TRANSACTION_ID)));
-        }
+        var checkoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
+        assertThat(checkoutUrl, is(String.format("%s/payments/%s/refunds", expectedCheckoutBaseUrl, GATEWAY_TRANSACTION_ID)));
     }
 
     @Test
