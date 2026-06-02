@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.adyen.handler;
 
-import io.dropwizard.jackson.Jackson;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -9,6 +8,7 @@ import uk.gov.pay.connector.gateway.adyen.request.AdyenCancelRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getCancelUrl;
@@ -20,31 +20,30 @@ public class AdyenCancelHandler {
     private final GatewayClient gatewayClient;
     private final AdyenGatewayConfig adyenGatewayConfig;
     private final AdyenRequestFactory adyenRequestFactory;
+    private final JsonObjectMapper jsonObjectMapper;
 
     public AdyenCancelHandler(GatewayClient gatewayClient,
                               AdyenGatewayConfig adyenGatewayConfig,
-                              AdyenRequestFactory adyenRequestFactory) {
+                              AdyenRequestFactory adyenRequestFactory,
+                              JsonObjectMapper jsonObjectMapper) {
         this.gatewayClient = gatewayClient;
         this.adyenGatewayConfig = adyenGatewayConfig;
         this.adyenRequestFactory = adyenRequestFactory;
+        this.jsonObjectMapper = jsonObjectMapper;
     }
 
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
-        var responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+        GatewayResponseBuilder<BaseCancelResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
         var cancelRequest = new AdyenCancelRequest(
                 getCancelUrl(adyenGatewayConfig, request),
                 getHeaders(adyenGatewayConfig, request.isLiveAccount()),
                 adyenRequestFactory.createPaymentCancelRequest(request),
                 request.getGatewayAccount().getType(),
-                new JsonObjectMapper(Jackson.newObjectMapper()));
+                jsonObjectMapper);
         try {
             gatewayClient.postRequestFor(cancelRequest);
-        } catch (GatewayException.GenericGatewayException e) {
-            throw new RuntimeException(e);
-        } catch (GatewayException.GatewayErrorException e) {
-            throw new RuntimeException(e);
-        } catch (GatewayException.GatewayConnectionTimeoutException e) {
-            throw new RuntimeException(e);
+        } catch (GatewayException e) {
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
         return responseBuilder.withResponse(new BaseCancelResponse() {
             @Override
