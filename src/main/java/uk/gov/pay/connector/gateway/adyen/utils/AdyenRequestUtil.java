@@ -22,8 +22,9 @@ public class AdyenRequestUtil {
         return getUrl(config, request, "/payments");
     }
     
-    public static URI getRefundUrl(AdyenGatewayConfig adyenGatewayConfig, RefundGatewayRequest request) {
-        return URI.create(getBaseCheckoutUrl(adyenGatewayConfig, request.getGatewayAccount().isLive()) + "/payments/" + request.getTransactionId() + "/refunds");
+    public static URI getRefundUrl(AdyenGatewayConfig config, RefundGatewayRequest request) {
+        var path =  "/payments/" + request.getTransactionId() + "/refunds";
+        return getUrl(config, request, path );
     }
 
     public static URI getCancelUrl(AdyenGatewayConfig config, CancelGatewayRequest request) {
