@@ -29,6 +29,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -46,6 +48,8 @@ public class AdyenPaymentProvider implements PaymentProvider {
     private final AdyenAuthoriseHandler adyenAuthoriseHandler;
     private final AdyenCaptureHandler adyenCaptureHandler;
     private final AdyenCancelHandler adyenCancelHandler;
+    private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
+    private final RefundEntityFactory refundEntityFactory;
 
     @Inject
     public AdyenPaymentProvider(
@@ -59,11 +63,10 @@ public class AdyenPaymentProvider implements PaymentProvider {
         this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
-        adyenCancelHandler = new AdyenCancelHandler(
-                client,
-                adyenGatewayConfig,
-                new AdyenRequestFactory(connectorConfiguration),
-                jsonObjectMapper);
+        adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration),jsonObjectMapper);
+        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        this.refundEntityFactory = refundEntityFactory;
+
     }
 
     @Override
@@ -117,8 +120,8 @@ public class AdyenPaymentProvider implements PaymentProvider {
     }
 
     @Override
-    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundEntityList) {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+    public ExternalChargeRefundAvailability getExternalChargeRefundAvailability(Charge charge, List<Refund> refundList) {
+        return externalRefundAvailabilityCalculator.calculate(charge, refundList);
     }
 
     @Override
@@ -130,6 +133,6 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public RefundEntityFactory getRefundEntityFactory() {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+        return refundEntityFactory;
     }
 }
