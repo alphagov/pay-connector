@@ -23,8 +23,8 @@ public class AdyenRequestUtil {
     }
     
     public static URI getRefundUrl(AdyenGatewayConfig config, RefundGatewayRequest request) {
-        var path =  "/payments/" + request.getTransactionId() + "/refunds";
-        return getUrl(config, request, path );
+        var path =  "/payments/%s/refunds".formatted(request.getTransactionId());
+        return getUrl(config, request, path);
     }
 
     public static URI getCancelUrl(AdyenGatewayConfig config, CancelGatewayRequest request) {
