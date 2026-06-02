@@ -9,8 +9,8 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.stripe.request.StripePaymentIntentCancelRequest;
 
 import static java.util.UUID.randomUUID;
@@ -28,7 +28,7 @@ public class StripeCancelHandler {
     }
 
     public GatewayResponse<BaseCancelResponse> cancel(CancelGatewayRequest request) {
-        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse.GatewayResponseBuilder.responseBuilder();
+        GatewayResponseBuilder<BaseCancelResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
 
         try {
             client.postRequestFor(StripePaymentIntentCancelRequest.of(request, stripeGatewayConfig));

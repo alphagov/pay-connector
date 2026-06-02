@@ -30,6 +30,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
@@ -137,7 +138,9 @@ public class CardAuthoriseService {
 
         } catch (GatewayException e) {
             newStatus = AuthorisationService.mapFromGatewayErrorException(e);
-            operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            operationResponse = GatewayResponseBuilder.<BaseAuthoriseResponse>responseBuilder()
+                    .withGatewayError(e.toGatewayError())
+                    .build();
         }
 
         return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
@@ -200,7 +203,9 @@ public class CardAuthoriseService {
 
         } catch (GatewayException e) {
             newStatus = AuthorisationService.mapFromGatewayErrorException(e);
-            operationResponse = GatewayResponse.GatewayResponseBuilder.responseBuilder().withGatewayError(e.toGatewayError()).build();
+            operationResponse = GatewayResponseBuilder.<BaseAuthoriseResponse>responseBuilder()
+                    .withGatewayError(e.toGatewayError())
+                    .build();
         }
 
         return Pair.of(operationResponse, newStatus);
