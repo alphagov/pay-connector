@@ -85,7 +85,7 @@ public class AdyenWebhookTaskHandler {
             }
 
         } else {
-            LOGGER.error("Charge not found in Connector or Ledger for Adyen capture webhook",
+            LOGGER.warn("Charge not found in Connector or Ledger for Adyen capture webhook",
                     kv("gatewayTransactionId", gatewayTransactionId));
         }
 
