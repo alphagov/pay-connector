@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenCancelRequest;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenCancelResponse;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -45,26 +46,8 @@ public class AdyenCancelHandler {
         } catch (GatewayException e) {
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
-        return responseBuilder.withResponse(new BaseCancelResponse() {
-            @Override
-            public String getTransactionId() {
-                return "";
-            }
-
-            @Override
-            public CancelStatus cancelStatus() {
-                return SUBMITTED;
-            }
-
-            @Override
-            public String getErrorCode() {
-                return "";
-            }
-
-            @Override
-            public String getErrorMessage() {
-                return "";
-            }
-        }).build();
+        return responseBuilder.withResponse(
+                        new AdyenCancelResponse("", SUBMITTED, "", ""))
+                .build();
     }
 }
