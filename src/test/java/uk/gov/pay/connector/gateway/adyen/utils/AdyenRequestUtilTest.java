@@ -23,6 +23,7 @@ import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
@@ -81,18 +82,20 @@ class AdyenRequestUtilTest {
         var captureUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
 
         assertThat(captureUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
+
+        BaseUrls mockBaseUrls = mock(BaseUrls.class);
+        lenient().when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
+        lenient().when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
     }
 
     @Test
     void should_create_adyen_checkout_authorisation_url() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
         var testCheckoutUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
         assertThat(testCheckoutUrl, is("https://example.com/test/v71/payments"));
     }
 
     @Test
     void should_create_adyen_checkout_capture_url() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
         mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
         var testCheckoutUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
         assertThat(testCheckoutUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
@@ -105,7 +108,6 @@ class AdyenRequestUtilTest {
 
         @BeforeEach
         void setUp() {
-            stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
             refundEntity = new RefundEntityFixture()
                     .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
                     .withExternalId("refund-external-id")
