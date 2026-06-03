@@ -10,7 +10,9 @@ import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
@@ -26,7 +28,6 @@ import static jakarta.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
-import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 
 public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerator {
@@ -50,6 +51,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
     public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
         LOGGER.info("Authorising user not present request: {}", request.getGatewayTransactionId().orElse("gatewayTransactionId is not present"));
 
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
         try {
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
@@ -64,12 +66,12 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
             GatewayError gatewayError = gatewayConnectionError(format("Non-success HTTP status code %s from gateway", e.getStatus().get()));
 
-            return responseBuilder().withGatewayError(gatewayError).build();
+            return responseBuilder.withGatewayError(gatewayError).build();
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
 
             LOGGER.error("GatewayException occurred, error:\n {}", e);
 
-            return responseBuilder().withGatewayError(e.toGatewayError()).build();
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }
 
@@ -81,6 +83,7 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         var worldpayOrderBuilder  = WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionRequest, acceptLanguageHeaderParser);
         logAuthorisationRequestToBePosted(request, worldpayOrderBuilder);
 
+        GatewayResponseBuilder<WorldpayOrderStatusResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
         try {            
             GatewayClient.Response response = authoriseClient.postRequestFor(
                     gatewayUrlMap.get(request.getGatewayAccount().getType()),
@@ -102,18 +105,18 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
 
                 GatewayError gatewayError = gatewayConnectionError(format("Non-success HTTP status code %s from gateway", e.getStatus().get()));
 
-                return responseBuilder().withGatewayError(gatewayError).build();
+                return responseBuilder.withGatewayError(gatewayError).build();
             }
 
             LOGGER.info("Unrecognised response status when authorising - status={}, response={}",
                     e.getStatus(), e.getResponseFromGateway());
-            return responseBuilder().withGatewayError(e.toGatewayError()).build();
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
 
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
 
             LOGGER.error("GatewayException occurred, error:\n {}", e);
 
-            return responseBuilder().withGatewayError(e.toGatewayError()).build();
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }
 

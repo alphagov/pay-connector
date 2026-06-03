@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,13 +15,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentialsFixture;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -324,6 +325,85 @@ class GatewayAccountSwitchPaymentProviderServiceTest {
             gatewayAccountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity1));
             var thrown = assertThrows(BadRequestException.class, () -> gatewayAccountSwitchPaymentProviderService.revertStripeTestAccountToSandbox(gatewayAccountEntity, request));
             assertThat(thrown.getMessage(), is(format("Stripe credential with ACTIVE state not found for account [gateway account id: %s]", gatewayAccountEntity.getId())));
+        }
+    }
+    
+    @Nested
+    class convertStripeTestAccountToAdyen {
+        AdyenCredentials adyenCredentials = new AdyenCredentialsFixture().build();
+        
+        @Test
+        void shouldConvertStripeTestGatewayToAdyen() {
+            var stripeTestCredential = aGatewayAccountCredentialsEntity()
+                    .withState(ACTIVE)
+                    .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                    .build();
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(stripeTestCredential));
+            gatewayAccountEntity.setDescription("Stripe test account for a service");
+            
+            ArgumentCaptor<List<GatewayAccountCredentialsEntity>> credentialsArgumentCaptor = ArgumentCaptor.forClass(List.class);
+            ArgumentCaptor<GatewayAccountEntity> gatewayArgumentCaptor = ArgumentCaptor.forClass(GatewayAccountEntity.class);
+
+            gatewayAccountSwitchPaymentProviderService.switchStripeTestAccountToAdyen(gatewayAccountEntity, adyenCredentials);
+
+            verify(mockGatewayAccountCredentialsDao, times(1)).mergeInSequence(credentialsArgumentCaptor.capture());
+            verify(mockGatewayAccountDao, times(1)).merge(gatewayArgumentCaptor.capture());
+
+            List<GatewayAccountCredentialsEntity> allCredentials = new ArrayList<>(credentialsArgumentCaptor.getValue());
+
+            Optional<GatewayAccountCredentialsEntity> activeCredential = allCredentials.stream().filter(credential -> ACTIVE.equals(credential.getState())).findFirst();
+            assertThat(activeCredential.get().getPaymentProvider(), is(PaymentGatewayName.ADYEN.getName()));
+
+            Optional<GatewayAccountCredentialsEntity> retiredCredential = allCredentials.stream().filter(credential -> RETIRED.equals(credential.getState())).findFirst();
+            assertThat(retiredCredential.get().getExternalId(), is(stripeTestCredential.getExternalId()));
+
+            GatewayAccountEntity gatewayAccount = gatewayArgumentCaptor.getValue();
+            assertThat(gatewayAccount.getDescription(), is("Adyen test account for a service"));
+        }
+
+        @Test
+        void shouldThrowExceptionWhenNoActiveStripeCredential() {
+            var worldpayGatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
+                    .withPaymentProvider(PaymentGatewayName.WORLDPAY.getName())
+                    .withState(ACTIVE)
+                    .build();
+            
+            gatewayAccountEntity.setType(GatewayAccountType.TEST);
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentialsEntity));
+            
+            var thrown = assertThrows(BadRequestException.class, () -> gatewayAccountSwitchPaymentProviderService.switchStripeTestAccountToAdyen(gatewayAccountEntity, adyenCredentials));
+            assertThat(thrown.getMessage(), is(format("Stripe credential with ACTIVE state not found for account [gateway account id: %s]", gatewayAccountEntity.getId())));
+        }
+
+        @ParameterizedTest
+        @MethodSource("provideParamsForGatewayDescription")
+        void shouldCorrectlyUpdateGatewayDescriptionWhenSwitchingStripeTestAccount(String gatewayDescription, String expectedDescription) {
+            gatewayAccountEntity.setGatewayAccountCredentials(List.of(
+                    aGatewayAccountCredentialsEntity()
+                            .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
+                            .withState(ACTIVE)
+                            .build()));
+            gatewayAccountEntity.setType(GatewayAccountType.TEST);
+            gatewayAccountEntity.setDescription(gatewayDescription);
+
+            ArgumentCaptor<GatewayAccountEntity> gatewayArgumentCaptor = ArgumentCaptor.forClass(GatewayAccountEntity.class);
+
+            gatewayAccountSwitchPaymentProviderService.switchStripeTestAccountToAdyen(gatewayAccountEntity, adyenCredentials);
+
+            verify(mockGatewayAccountDao, times(1)).merge(gatewayArgumentCaptor.capture());
+
+            GatewayAccountEntity gatewayAccount = gatewayArgumentCaptor.getValue();
+            assertThat(gatewayAccount.getDescription(), is(expectedDescription));
+        }
+
+        private static Stream<Arguments> provideParamsForGatewayDescription() {
+            return Stream.of(
+                    Arguments.of("Stripe test account", "Adyen test account"),
+                    Arguments.of("STRIPE test account", "Adyen test account"),
+                    Arguments.of("STriPe test account", "Adyen test account"),
+                    Arguments.of("", ""),
+                    Arguments.of(null, null)
+            );
         }
     }
 }

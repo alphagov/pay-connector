@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.GatewayAccountSwitchPaymentProviderRequest;
 import uk.gov.pay.connector.gatewayaccount.dao.GatewayAccountDao;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.dao.GatewayAccountCredentialsDao;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
@@ -151,6 +152,56 @@ public class GatewayAccountSwitchPaymentProviderService {
                 kv(PROVIDER, PaymentGatewayName.STRIPE.getName()),
                 kv("new_payment_provider", PaymentGatewayName.SANDBOX.getName()),
                 kv(USER_EXTERNAL_ID, request.getUserExternalId())
+        );
+    }
+
+    @Transactional
+    public void switchStripeTestAccountToAdyen(GatewayAccountEntity gatewayAccountEntity, AdyenCredentials adyenCredentials) {
+        List<GatewayAccountCredentialsEntity> gatewayAccountCredentials = gatewayAccountEntity.getGatewayAccountCredentials();
+
+        var activeStripeCredentialEntities = gatewayAccountCredentials.stream()
+                .filter(this::isActiveStripeCredential)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        if (activeStripeCredentialEntities.isEmpty()) {
+            throw new BadRequestException(format("Stripe credential with ACTIVE state not found for account [gateway account id: %s]",
+                    gatewayAccountEntity.getId()));
+        }
+        
+        var activeStripeCredential = findSingleCredentialEntityByState(activeStripeCredentialEntities, ACTIVE);
+
+        activeStripeCredential.setState(RETIRED);
+        activeStripeCredential.setActiveEndDate(Instant.now());
+
+        gatewayAccountEntity.setDescription(
+                replaceAllCaseInsensitive(
+                        gatewayAccountEntity.getDescription(),
+                        PaymentGatewayName.STRIPE.getName(),
+                        PaymentGatewayName.ADYEN.getName()
+                )
+        );
+        
+        var adyenCredentialEntity = new GatewayAccountCredentialsEntity(
+                gatewayAccountEntity,
+                PaymentGatewayName.ADYEN.getName(),
+                Map.of("legal_entity_id", adyenCredentials.legalEntityId(),
+                        "store_id", adyenCredentials.storeId(),
+                        "account_holder_id", adyenCredentials.accountHolderId(),
+                        "balance_account_id", adyenCredentials.balanceAccountId()),
+                ACTIVE
+        );
+
+        adyenCredentialEntity.setExternalId(randomUuid());
+        adyenCredentialEntity.setActiveStartDate(Instant.now());
+
+        gatewayAccountCredentialsDao.mergeInSequence(List.of(adyenCredentialEntity, activeStripeCredential));
+        gatewayAccountDao.merge(gatewayAccountEntity);
+
+        LOGGER.info("Gateway account [id={}] switched to Adyen", gatewayAccountEntity.getId(),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                kv(PROVIDER, PaymentGatewayName.STRIPE.getName()),
+                kv("new_payment_provider", PaymentGatewayName.ADYEN.getName())
         );
     }
 
