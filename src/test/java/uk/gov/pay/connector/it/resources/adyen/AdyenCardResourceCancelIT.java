@@ -50,4 +50,57 @@ public class AdyenCardResourceCancelIT {
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is(ChargeStatus.SYSTEM_CANCEL_SUBMITTED.toString()));
     }
+
+    @Test
+    void successful_user_cancellation_of_payment() {
+        var gatewayTransactionId = "XB7XNCQ8HXSKGK82";
+        var chargeExternalId = testBaseExtension.createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, gatewayTransactionId);
+        app.getAdyenCheckoutMockClient()
+                .mockCancellationSuccess("an-adyen-reference", gatewayTransactionId);
+
+        app.givenSetup()
+                .post("/v1/frontend/charges/{chargeId}/cancel", chargeExternalId);
+
+        app.getAdyenWireMockServer()
+                .verify(postRequestedFor(urlPathTemplate("/payments/{paymentPspReference}/cancels")));
+        var charge = chargeDao.findByExternalId(chargeExternalId);
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is(ChargeStatus.USER_CANCEL_SUBMITTED.toString()));
+    }
+
+    @Test
+    void failed_system_cancellation_of_payment() {
+        var gatewayTransactionId = "XB7XNCQ8HXSKGK82";
+        var chargeExternalId = testBaseExtension.createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, gatewayTransactionId);
+        app.getAdyenCheckoutMockClient()
+                .mockCancellationFailure(gatewayTransactionId);
+
+        app.givenSetup()
+                .post("/v1/api/accounts/{accountId}/charges/{chargeId}/cancel",
+                        testBaseExtension.getAccountId(),
+                        chargeExternalId);
+
+        app.getAdyenWireMockServer()
+                .verify(postRequestedFor(urlPathTemplate("/payments/{paymentPspReference}/cancels")));
+        var charge = chargeDao.findByExternalId(chargeExternalId);
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is(ChargeStatus.SYSTEM_CANCEL_ERROR.toString()));
+    }
+
+    @Test
+    void failed_user_cancellation_of_payment() {
+        var gatewayTransactionId = "XB7XNCQ8HXSKGK82";
+        var chargeExternalId = testBaseExtension.createNewChargeWith(ChargeStatus.AUTHORISATION_SUCCESS, gatewayTransactionId);
+        app.getAdyenCheckoutMockClient()
+                .mockCancellationFailure(gatewayTransactionId);
+
+        app.givenSetup()
+                .post("/v1/frontend/charges/{chargeId}/cancel", chargeExternalId);
+
+        app.getAdyenWireMockServer()
+                .verify(postRequestedFor(urlPathTemplate("/payments/{paymentPspReference}/cancels")));
+        var charge = chargeDao.findByExternalId(chargeExternalId);
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is(ChargeStatus.USER_CANCEL_ERROR.toString()));
+    }
 }

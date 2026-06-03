@@ -21,7 +21,7 @@
   },
   "reference": "%s",
   "returnUrl": "http://CardFrontend/",
-  "shopperInteraction": "Ecommerce",
+  "shopperInteraction": "%s",
   "channel": "Web",
   "additionalData" : {
     "manualCapture" : "true"

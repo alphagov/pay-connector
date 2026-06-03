@@ -12,7 +12,7 @@ import static uk.gov.service.payments.commons.model.AuthorisationMode.WEB;
 
 public record AddChargeParameters(long chargeId, String externalChargeId, ChargeStatus chargeStatus,
                                   ServicePaymentReference reference, Instant createdDate, String transactionId,
-                                  String paymentProvider, AuthorisationMode authorisationMode) {
+                                  String paymentProvider, AuthorisationMode authorisationMode, Boolean isMoto) {
 
 
     public static final class Builder {
@@ -24,6 +24,7 @@ public record AddChargeParameters(long chargeId, String externalChargeId, Charge
         private String transactionId = RandomIdGenerator.newId();
         private String paymentProvider = "sandbox";
         private AuthorisationMode authorisationMode = WEB;
+        private Boolean isMoto = false;
 
         public static Builder anAddChargeParameters() {
             return new Builder();
@@ -69,8 +70,13 @@ public record AddChargeParameters(long chargeId, String externalChargeId, Charge
             return this;
         }
 
+        public Builder withIsMoto(Boolean isMoto) {
+            this.isMoto = isMoto;
+            return this;
+        }
+
         public AddChargeParameters build() {
-            return new AddChargeParameters(chargeId, externalChargeId, chargeStatus, reference, createdDate, transactionId, paymentProvider, authorisationMode);
+            return new AddChargeParameters(chargeId, externalChargeId, chargeStatus, reference, createdDate, transactionId, paymentProvider, authorisationMode, isMoto);
         }
     }
 }

@@ -52,7 +52,8 @@ public record AddChargeParams(
         Boolean requires3ds,
         Exemption3ds exemption3ds,
         Exemption3dsType exemption3dsType,
-        AgreementPaymentType agreementPaymentType) {
+        AgreementPaymentType agreementPaymentType,
+        boolean isMoto) {
 
     public static final class AddChargeParamsBuilder {
 
@@ -65,7 +66,7 @@ public record AddChargeParams(
                     delayedCapture, corporateSurcharge, externalMetadata, parityCheckStatus, cardType, parityCheckDate,
                     gatewayCredentialId, serviceId, issuerUrl, agreementExternalId, savePaymentInstrumentToAgreement,
                     authorisationMode, updatedDate, paymentInstrumentId, canRetry, requires3ds, exemption3ds, exemption3dsType,
-                    agreementPaymentType);
+                    agreementPaymentType, isMoto);
         }
 
         private String agreementExternalId;
@@ -102,6 +103,7 @@ public record AddChargeParams(
         private Instant updatedDate;
         private long version = 1;
         private AgreementPaymentType agreementPaymentType;
+        private boolean isMoto = false;
 
         private AddChargeParamsBuilder() {
         }
@@ -112,6 +114,11 @@ public record AddChargeParams(
 
         public AddChargeParamsBuilder withChargeId(Long chargeId) {
             this.chargeId = chargeId;
+            return this;
+        }
+
+        public AddChargeParamsBuilder withIsMoto(boolean isMoto) {
+            this.isMoto = isMoto;
             return this;
         }
 

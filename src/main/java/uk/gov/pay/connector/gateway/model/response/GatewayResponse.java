@@ -84,7 +84,7 @@ public class GatewayResponse<T extends BaseResponse> {
             return this;
         }
 
-        public GatewayResponseBuilder withGatewayError(GatewayError gatewayError) {
+        public GatewayResponseBuilder<T> withGatewayError(GatewayError gatewayError) {
             this.gatewayError = gatewayError;
             return this;
         }

@@ -33,6 +33,7 @@ public class AdyenRequestFactory {
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
+
         var mappedAddress = authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
                 .orElse(null);
@@ -53,11 +54,15 @@ public class AdyenRequestFactory {
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
                 configuration.getLinks().getFrontendUrl(),
-                "Ecommerce",
+                getShopperInteraction(request),
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true"))
         );
+    }
+
+    private static String getShopperInteraction(CardAuthorisationGatewayRequest request) {
+        return request.isMoto() ? "Moto" : "Ecommerce";
     }
 
     public CancelRequestPayload createPaymentCancelRequest(CancelGatewayRequest request) {
