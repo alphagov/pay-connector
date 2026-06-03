@@ -47,12 +47,13 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 @ExtendWith(MockitoExtension.class)
 class AdyenCancelHandlerTest {
 
-    public static final String A_MERCHANT_ACCOUNT_ID = "a-merchant-account-id";
-    public static final String AN_EXTERNAL_ID = "a-charge-external-id";
-    public static final String LIVE_CHECKOUT_BASE_URL = "https://checkout.example.com";
-    public static final String A_GATEWAY_TRANSACTION_ID = "a-gateway-transaction-id";
-    public static final String TEST_COMPANY_ACCOUNT_API_KEY = "test-company-account-API-key"; // pragma: allowlist secret
-    public static final String LIVE_COMPANY_ACCOUNT_API_KEY = "live-company-account-API-key"; // pragma: allowlist secret
+    private static final String A_MERCHANT_ACCOUNT_ID = "a-merchant-account-id";
+    private static final String AN_EXTERNAL_ID = "a-charge-external-id";
+    private static final String LIVE_CHECKOUT_BASE_URL = "https://checkout.example.com";
+    private static final String A_GATEWAY_TRANSACTION_ID = "a-gateway-transaction-id";
+    private static final String TEST_COMPANY_ACCOUNT_API_KEY = "test-company-account-API-key"; // pragma: allowlist secret
+    private static final String LIVE_COMPANY_ACCOUNT_API_KEY = "live-company-account-API-key"; // pragma: allowlist secret
+
 
     @Mock
     private GatewayClient mockGatewayClient;
