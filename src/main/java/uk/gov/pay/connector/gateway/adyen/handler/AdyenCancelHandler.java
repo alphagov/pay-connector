@@ -6,6 +6,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenCancelRequest;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenCancelResponse;
+import uk.gov.pay.connector.gateway.adyen.response.json.CancelResponseBody;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -14,7 +15,6 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getCancelUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
-import static uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus.SUBMITTED;
 
 public class AdyenCancelHandler {
 
@@ -42,12 +42,12 @@ public class AdyenCancelHandler {
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);
         try {
-            gatewayClient.postRequestFor(cancelRequest);
+            var jsonResponse = gatewayClient.postRequestFor(cancelRequest).getEntity();
+            var cancelResponse = jsonObjectMapper.getObject(jsonResponse, CancelResponseBody.class);
+            return responseBuilder.withResponse(AdyenCancelResponse.from(cancelResponse))
+                    .build();
         } catch (GatewayException e) {
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
-        return responseBuilder.withResponse(
-                        new AdyenCancelResponse("", SUBMITTED, "", ""))
-                .build();
     }
 }

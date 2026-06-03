@@ -53,7 +53,14 @@ class AdyenCancelHandlerTest {
     private static final String A_GATEWAY_TRANSACTION_ID = "a-gateway-transaction-id";
     private static final String TEST_COMPANY_ACCOUNT_API_KEY = "test-company-account-API-key"; // pragma: allowlist secret
     private static final String LIVE_COMPANY_ACCOUNT_API_KEY = "live-company-account-API-key"; // pragma: allowlist secret
-
+    private static final String ADYEN_CANCEL_RESPONSE = """
+            {
+              "merchantAccount": "PAY_MERCHANT_ACCOUNT",
+              "paymentPspReference": "993617894903480A",
+              "reference": "OUR_UNIQUE_REFERENCE",
+              "pspReference": "993617894906488A",
+              "status": "received"
+            }""";
 
     @Mock
     private GatewayClient mockGatewayClient;
@@ -91,6 +98,7 @@ class AdyenCancelHandlerTest {
 
     @Test
     void should_pass_the_gateway_transaction_ID_as_the_path_parameter_to_the_cancel_request() throws Exception {
+        givenGatewayClientWillReturnResponseWithBody(ADYEN_CANCEL_RESPONSE);
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
                         .withGatewayTransactionId(A_GATEWAY_TRANSACTION_ID)
@@ -107,6 +115,7 @@ class AdyenCancelHandlerTest {
 
     @Test
     void should_POST_a_GatewayOrder_with_reference_and_merchant_account_in_payload() throws Exception {
+        givenGatewayClientWillReturnResponseWithBody(ADYEN_CANCEL_RESPONSE);
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
                         .withExternalId(AN_EXTERNAL_ID)
@@ -131,6 +140,7 @@ class AdyenCancelHandlerTest {
             "TEST," + TEST_COMPANY_ACCOUNT_API_KEY
     })
     void should_POST_with_company_API_key_as_X_API_Key_header(GatewayAccountType gatewayAccountType, String expectedApiKey) throws Exception {
+        givenGatewayClientWillReturnResponseWithBody(ADYEN_CANCEL_RESPONSE);
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
                         .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(gatewayAccountType))
@@ -147,6 +157,7 @@ class AdyenCancelHandlerTest {
     @ParameterizedTest
     @EnumSource(GatewayAccountType.class)
     void should_POST_request_with_account_type(GatewayAccountType type) throws Exception {
+        givenGatewayClientWillReturnResponseWithBody(ADYEN_CANCEL_RESPONSE);
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
                         .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(type))
@@ -161,7 +172,8 @@ class AdyenCancelHandlerTest {
     }
 
     @Test
-    void should_return_SUBMITTED_cancel_status() {
+    void should_return_SUBMITTED_cancel_status() throws GatewayException {
+        givenGatewayClientWillReturnResponseWithBody(ADYEN_CANCEL_RESPONSE);
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
                         .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(LIVE))
@@ -171,6 +183,30 @@ class AdyenCancelHandlerTest {
 
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get().cancelStatus(), is(SUBMITTED));
+    }
+
+    @Test
+    void should_map_transactionId_from_the_Adyen_response_paymentPspReference() throws GatewayException {
+        var paymentPspReference = "payment-psp-reference-from-adyen";
+        var adyenResponse = """
+                {
+                  "merchantAccount": "GovernmentDigitalService_UK",
+                  "paymentPspReference": "%s",
+                  "reference": "864vqloqrm71jn89r4bjkhvkv2",
+                  "pspReference": "993617894903480A",
+                  "status": "received"
+                }
+                """.formatted(paymentPspReference);
+        givenGatewayClientWillReturnResponseWithBody(adyenResponse);
+        var request = CancelGatewayRequest.valueOf(
+                aValidChargeEntity()
+                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(LIVE))
+                        .build());
+
+        var gatewayResponse = cancelHandler.cancel(request);
+
+        assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
+        assertThat(gatewayResponse.getBaseResponse().get().getTransactionId(), is(paymentPspReference));
     }
 
     @ParameterizedTest
@@ -187,6 +223,14 @@ class AdyenCancelHandlerTest {
         var gatewayResponse = cancelHandler.cancel(request);
 
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
+    }
+
+    private void givenGatewayClientWillReturnResponseWithBody(String response) throws GatewayException {
+        var mockGatewayClientResponse = mock(GatewayClient.Response.class);
+        given(mockGatewayClientResponse.getEntity())
+                .willReturn(response);
+        given(mockGatewayClient.postRequestFor(any()))
+                .willReturn(mockGatewayClientResponse);
     }
 
     private static GatewayAccountEntity makeGatewayAccountEntityForAccountType(GatewayAccountType type) {
