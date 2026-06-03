@@ -1,12 +1,14 @@
 package uk.gov.pay.connector.gateway.adyen.handler;
 
 import com.jayway.jsonassert.JsonAssert;
+import io.dropwizard.jackson.Jackson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -17,15 +19,21 @@ import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.ApiKeys.CompanyAccountApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls.CheckoutUrls;
 import uk.gov.pay.connector.gateway.GatewayClient;
+import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
+import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
 import static org.mockito.BDDMockito.then;
@@ -76,7 +84,8 @@ class AdyenCancelHandlerTest {
         cancelHandler = new AdyenCancelHandler(
                 mockGatewayClient,
                 mockAdyenGatewayConfig,
-                new AdyenRequestFactory(mockConfiguration));
+                new AdyenRequestFactory(mockConfiguration),
+                new JsonObjectMapper(Jackson.newObjectMapper()));
     }
 
     @Test
@@ -161,6 +170,22 @@ class AdyenCancelHandlerTest {
 
         assertThat(gatewayResponse.getBaseResponse().isPresent(), is(true));
         assertThat(gatewayResponse.getBaseResponse().get().cancelStatus(), is(SUBMITTED));
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {
+            GenericGatewayException.class, GatewayConnectionTimeoutException.class, GatewayErrorException.class})
+    void should_catch_client_exception_and_return_an_error_in_the_response(Class<? extends GatewayException> exceptionClass) throws GatewayException {
+        var request = CancelGatewayRequest.valueOf(
+                aValidChargeEntity()
+                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(LIVE))
+                        .build());
+        given(mockGatewayClient.postRequestFor(any()))
+                .willThrow(exceptionClass);
+
+        var gatewayResponse = cancelHandler.cancel(request);
+
+        assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
     }
 
     private static GatewayAccountEntity makeGatewayAccountEntityForAccountType(GatewayAccountType type) {

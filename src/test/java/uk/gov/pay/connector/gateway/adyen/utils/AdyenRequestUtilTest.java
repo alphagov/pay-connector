@@ -4,6 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
@@ -17,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 
@@ -139,6 +142,30 @@ class AdyenRequestUtilTest {
             var testCheckoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
             assertThat(testCheckoutUrl, is(String.format("https://example.com/live/v71/payments/%s/refunds", GATEWAY_TRANSACTION_ID)));
         }
+    }
+
+
+    @ParameterizedTest
+    @CsvSource({
+            "TEST,https://example.com/test/v71",
+            "LIVE,https://example.com/live/v71"
+    })
+    void should_create_adyen_checkout_refund_url(GatewayAccountType gatewayAccountType, String expectedCheckoutBaseUrl) {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        chargeEntity.getGatewayAccount().setType(gatewayAccountType);
+
+        var refundEntity = new RefundEntityFixture()
+                .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
+                .withExternalId("refund-external-id")
+                .build();
+        var mockRefundRequest = RefundGatewayRequest.valueOf(
+                Charge.from(chargeEntity),
+                refundEntity,
+                chargeEntity.getGatewayAccount(),
+                chargeEntity.getGatewayAccountCredentialsEntity());
+
+        var checkoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
+        assertThat(checkoutUrl, is(String.format("%s/payments/%s/refunds", expectedCheckoutBaseUrl, GATEWAY_TRANSACTION_ID)));
     }
 
     @Test

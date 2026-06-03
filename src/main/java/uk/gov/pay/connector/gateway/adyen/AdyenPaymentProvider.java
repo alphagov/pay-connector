@@ -65,7 +65,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
         this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
-        adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration));
+        adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration), jsonObjectMapper);
         adyenRefundHandler = new AdyenRefundHandler(client, connectorConfiguration, jsonObjectMapper);
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         this.refundEntityFactory = refundEntityFactory;
@@ -88,7 +88,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) throws GatewayException {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+        return adyenAuthoriseHandler.authorise(request);
     }
 
     @Override

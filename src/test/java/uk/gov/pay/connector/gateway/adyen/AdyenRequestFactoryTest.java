@@ -185,6 +185,25 @@ class AdyenRequestFactoryTest {
         assertThat(refundRequestPayload.storeId(), is("store-123"));
     }
 
+    @Test
+    void should_create_a_PaymentRequest_with_shopperInteraction_as_Moto_when_isMoto_is_true() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withCardNo("4444333322221111")
+                        .withCardHolder("John Doe")
+                        .withCvc("737")
+                        .withEndDate(CardExpiryDate.valueOf("10/99"))
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withAmount("6234")
+                .withMoto(true)
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperInteraction(), is("Moto"));
+    }
+    
     private static RefundGatewayRequest makeRefundGatewayRequest(String refundExternalId) {
         Charge charge = Charge.from(
                 aValidChargeEntity()
@@ -205,7 +224,6 @@ class AdyenRequestFactoryTest {
         return RefundGatewayRequest.valueOf(charge, refundEntity,
                 gatewayAccountEntity, gatewayAccountCredentialsEntity);
     }
-
 
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
