@@ -2100,4 +2100,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add http_method_3ds to charges table" author="">
+        <addColumn tableName="charges">
+            <column name="http_method_3ds" type="varchar(10)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

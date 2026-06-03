@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record RefundRequestPayload(
         @JsonProperty("merchantAccount")
-        String merchantAccount,
+        String merchantAccountId,
         @JsonProperty("amount")
         Amount amount,
         @JsonProperty("reference")

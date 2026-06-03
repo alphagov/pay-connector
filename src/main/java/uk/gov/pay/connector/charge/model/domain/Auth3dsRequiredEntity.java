@@ -17,7 +17,7 @@ public class Auth3dsRequiredEntity {
 
     @Column(name = "md_3ds")
     private String md;
-    
+
     @Column(name = "worldpay_challenge_acs_url_3ds")
     private String worldpayChallengeAcsUrl;
     
