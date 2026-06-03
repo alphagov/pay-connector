@@ -3,16 +3,23 @@ package uk.gov.pay.connector.gateway.adyen.utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
+import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
+import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -37,6 +44,7 @@ class AdyenRequestUtilTest {
     private CardAuthorisationGatewayRequest mockAuthoriseRequest;
     private CancelGatewayRequest mockCancelRequest;
     private CaptureGatewayRequest mockCaptureRequest;
+    ChargeEntity chargeEntity;
 
     public static final String GATEWAY_TRANSACTION_ID = "gateway-transaction-id";
 
@@ -48,13 +56,13 @@ class AdyenRequestUtilTest {
                 .withGatewayAccount(aGatewayAccountEntity().withType(TEST).build())
                 .build();
 
-        var charge = new ChargeEntityFixture()
+        chargeEntity = new ChargeEntityFixture()
                 .withGatewayAccountEntity(
                         aGatewayAccountEntity().withType(TEST).build())
                 .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
                 .build();
-        mockCaptureRequest = CaptureGatewayRequest.valueOf(charge);
-        mockCancelRequest = CancelGatewayRequest.valueOf(charge);
+        mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
+        mockCancelRequest = CancelGatewayRequest.valueOf(chargeEntity);
     }
 
     @Test
@@ -73,6 +81,30 @@ class AdyenRequestUtilTest {
         var captureUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
 
         assertThat(captureUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
+    }
+
+
+    @ParameterizedTest
+    @CsvSource({
+            "TEST,https://example.com/test/v71",
+            "LIVE,https://example.com/live/v71"
+    })
+    void should_create_adyen_checkout_refund_url(GatewayAccountType gatewayAccountType, String expectedCheckoutBaseUrl) {
+        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        chargeEntity.getGatewayAccount().setType(gatewayAccountType);
+
+        var refundEntity = new RefundEntityFixture()
+                .withGatewayTransactionId(GATEWAY_TRANSACTION_ID)
+                .withExternalId("refund-external-id")
+                .build();
+        var mockRefundRequest = RefundGatewayRequest.valueOf(
+                Charge.from(chargeEntity),
+                refundEntity,
+                chargeEntity.getGatewayAccount(),
+                chargeEntity.getGatewayAccountCredentialsEntity());
+
+        var checkoutUrl = AdyenRequestUtil.getRefundUrl(mockAdyenGatewayConfig, mockRefundRequest).toString();
+        assertThat(checkoutUrl, is(String.format("%s/payments/%s/refunds", expectedCheckoutBaseUrl, GATEWAY_TRANSACTION_ID)));
     }
 
     @Test

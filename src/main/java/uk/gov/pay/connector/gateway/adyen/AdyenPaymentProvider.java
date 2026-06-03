@@ -63,7 +63,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
         this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
-        adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration),jsonObjectMapper);
+        adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration), jsonObjectMapper);
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         this.refundEntityFactory = refundEntityFactory;
 

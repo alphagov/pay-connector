@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 
 import java.net.URI;
 import java.util.Map;
@@ -19,6 +20,11 @@ public class AdyenRequestUtil {
 
     public static URI getAuthUrl(AdyenGatewayConfig config, CardAuthorisationGatewayRequest request) {
         return getUrl(config, request, "/payments");
+    }
+    
+    public static URI getRefundUrl(AdyenGatewayConfig config, RefundGatewayRequest request) {
+        var path =  "/payments/%s/refunds".formatted(request.getTransactionId());
+        return getUrl(config, request, path);
     }
 
     public static URI getCancelUrl(AdyenGatewayConfig config, CancelGatewayRequest request) {
