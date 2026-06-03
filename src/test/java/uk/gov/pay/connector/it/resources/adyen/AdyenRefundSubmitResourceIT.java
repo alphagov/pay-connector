@@ -6,15 +6,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
+import uk.gov.service.payments.commons.model.ErrorIdentifier;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static io.dropwizard.testing.ConfigOverride.config;
 import static java.lang.String.format;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -33,11 +34,13 @@ import static uk.gov.pay.connector.util.RandomIdGenerator.randomLong;
 
 class AdyenRefundSubmitResourceIT {
     @RegisterExtension
-    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
+    public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
+            config("customJerseyClient.readTimeout", "100ms")
+    );
 
     private static final String SERVICE_ID = "a-valid-service-id";
-    private static final String TRANSACTION_ID = "991617895215577D";
-    private static final String ADYEN_STORE = "STORE_ID_123";
+    private static final String TRANSACTION_ID = "PSP-REF-123";
+    private static final String ADYEN_STORE = "store-id-123";
     private static final Map<String, Object> validAdyenCredentials = Map.of(
             ADYEN_LEGAL_ENTITY_ID, "legal_entity_id",
             ADYEN_STORE_ID, ADYEN_STORE
@@ -49,6 +52,8 @@ class AdyenRefundSubmitResourceIT {
 
     @BeforeEach
     void setUp() {
+        app.getAdyenWireMockServer().resetAll();
+
         accountId = randomLong();
         credentialsId = randomLong();
 
@@ -72,7 +77,7 @@ class AdyenRefundSubmitResourceIT {
         testCharge = DatabaseFixtures
                 .withDatabaseTestHelper(app.getDatabaseTestHelper())
                 .aTestCharge()
-                .withAmount(100L)
+                .withAmount(1000L)
                 .withTransactionId(TRANSACTION_ID)
                 .withTestAccount(testAccount)
                 .withChargeStatus(CAPTURED)
@@ -82,9 +87,9 @@ class AdyenRefundSubmitResourceIT {
     }
 
     @Test
-    void shouldSubmitRefundToAdyen() {
-        long refundAmount = 50L;
-        var refundPspReference = "883617895215577D";
+    void shouldSubmitSuccessfulFullRefundToAdyen() {
+        long refundAmount = 1000L;
+        var refundPspReference = "REFUND-PSP-REF-123";
         app.getAdyenCheckoutMockClient().mockRefundSuccess(refundPspReference, testCharge.getTransactionId());
 
         ValidatableResponse response = postRefundFor(accountId, testCharge.getExternalChargeId(), refundAmount, testCharge.getAmount())
@@ -100,19 +105,53 @@ class AdyenRefundSubmitResourceIT {
         response.body("_links.self.href", is(paymentUrl + "/refunds/" + refundId))
                 .body("_links.payment.href", is(paymentUrl));
 
-        var refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(testCharge.getExternalChargeId());
-        assertThat(refundsFoundByChargeExternalId.size(), is(1));
-        assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("charge_external_id", testCharge.getExternalChargeId()));
-        assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("gateway_transaction_id", refundPspReference));
-        assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("status", "REFUND SUBMITTED"));
+        assertRefundPersistedWithStatusAndGatewayTransactionId(refundPspReference, "REFUND SUBMITTED");
+        verifyAdyenRefundRequest(refundAmount, refundId);
+    }
 
-        var refundsStatusHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(testCharge.getExternalChargeId())
-                .stream()
-                .map(x -> x.get("status").toString())
-                .collect(Collectors.toList());
-        assertThat(refundsStatusHistory.size(), is(2));
-        assertThat(refundsStatusHistory, containsInAnyOrder("REFUND SUBMITTED", "CREATED"));
+    @Test
+    void shouldSubmitSuccessfulPartialRefundToAdyen() {
+        long refundAmount = 100L;
+        var refundPspReference = "REFUND-PSP-REF-123";
+        app.getAdyenCheckoutMockClient().mockRefundSuccess(refundPspReference, testCharge.getTransactionId());
 
+        ValidatableResponse response = postRefundFor(accountId, testCharge.getExternalChargeId(), refundAmount, testCharge.getAmount())
+                .statusCode(202)
+                .body("refund_id", is(notNullValue()))
+                .body("amount", is((int) refundAmount))
+                .body("status", is("submitted"))
+                .body("created_date", is(notNullValue()));
+        String refundId = response.extract().path("refund_id");
+
+        assertRefundPersistedWithStatusAndGatewayTransactionId(refundPspReference, "REFUND SUBMITTED");
+        verifyAdyenRefundRequest(refundAmount, refundId);
+    }
+
+    @Test
+    void shouldSetRefundErrorWhenAdyenReturnsNon2xxResponse() {
+        long refundAmount = 100L;
+        app.getAdyenCheckoutMockClient().mockRefundError(testCharge.getTransactionId());
+
+        postRefundFor(accountId, testCharge.getExternalChargeId(), refundAmount, testCharge.getAmount())
+                .statusCode(500)
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+
+        assertRefundPersistedWithStatusAndGatewayTransactionId(null, "REFUND ERROR");
+    }
+
+    @Test
+    void shouldSetRefundErrorWhenAdyenReturnsUnexpectedGatewayError() {
+        long refundAmount = 100L;
+        app.getAdyenCheckoutMockClient().mockError("/payments/" + testCharge.getTransactionId() + "/refunds");
+
+        postRefundFor(accountId, testCharge.getExternalChargeId(), refundAmount, testCharge.getAmount())
+                .statusCode(500)
+                .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
+
+        assertRefundPersistedWithStatusAndGatewayTransactionId(null, "REFUND ERROR");
+    }
+
+    private void verifyAdyenRefundRequest(long refundAmount, String refundId) {
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments/" + testCharge.getTransactionId() + "/refunds"))
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
                 .withRequestBody(matchingJsonPath("$.amount.currency", equalTo("GBP")))
@@ -120,6 +159,21 @@ class AdyenRefundSubmitResourceIT {
                 .withRequestBody(matchingJsonPath("$.merchantAccount", equalTo("adyen-test-merchant-account-id")))
                 .withRequestBody(matchingJsonPath("$.reference", equalTo(refundId)))
                 .withRequestBody(matchingJsonPath("$.store", equalTo(ADYEN_STORE))));
+    }
+
+    private void assertRefundPersistedWithStatusAndGatewayTransactionId(String gatewayTransactionId, String status) {
+        var refundsFoundByChargeExternalId = app.getDatabaseTestHelper().getRefundsByChargeExternalId(testCharge.getExternalChargeId());
+        assertThat(refundsFoundByChargeExternalId.size(), is(1));
+        assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("charge_external_id", testCharge.getExternalChargeId()));
+        assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("gateway_transaction_id", gatewayTransactionId));
+        assertThat(refundsFoundByChargeExternalId.getFirst(), hasEntry("status", status));
+
+        var refundsStatusHistory = app.getDatabaseTestHelper().getRefundsHistoryByChargeExternalId(testCharge.getExternalChargeId())
+                .stream()
+                .map(x -> x.get("status").toString())
+                .toList();
+        assertThat(refundsStatusHistory.size(), is(2));
+        assertThat(refundsStatusHistory, containsInAnyOrder(status, "CREATED"));
     }
 
     private ValidatableResponse postRefundFor(long accountId, String chargeId, Long refundAmount, Long refundAmountAvailable) {
