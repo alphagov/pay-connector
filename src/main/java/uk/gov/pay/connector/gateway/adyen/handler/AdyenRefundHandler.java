@@ -71,21 +71,30 @@ public class AdyenRefundHandler implements RefundHandler {
     }
 
     private GatewayRefundResponse handleGatewayErrorException(RefundGatewayRequest request, GatewayErrorException e) {
-        AdyenError adyenError = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
+        try {
+            AdyenError adyenError = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
 
-        LOGGER.warn("Refund failed for transaction",
-                kv(PAYMENT_EXTERNAL_ID, request.getChargeExternalId()),
-                kv(REFUND_EXTERNAL_ID, request.getRefundExternalId()),
-                kv(HTTP_STATUS, e.getStatus()),
-                kv(GATEWAY_ERROR, e.getMessage())
-        );
-        if (adyenError != null && isNotBlank(adyenError.errorCode())) {
-            return fromBaseRefundResponse(AdyenRefundResponse.from(adyenError), ERROR);
-        } else {
-            GatewayError gatewayError = genericGatewayError(
-                    "An internal server error occurred when refunding charge charge_external_id: "
-                            + request.getChargeExternalId());
-            return GatewayRefundResponse.fromGatewayError(gatewayError);
+            LOGGER.warn("Refund failed for transaction",
+                    kv(PAYMENT_EXTERNAL_ID, request.getChargeExternalId()),
+                    kv(REFUND_EXTERNAL_ID, request.getRefundExternalId()),
+                    kv(HTTP_STATUS, e.getStatus()),
+                    kv(GATEWAY_ERROR, e.getMessage())
+            );
+            if (adyenError != null && isNotBlank(adyenError.errorCode())) {
+                return fromBaseRefundResponse(AdyenRefundResponse.from(adyenError), ERROR);
+            } else {
+                GatewayError gatewayError = genericGatewayError(
+                        "An internal server error occurred when refunding charge charge_external_id: "
+                                + request.getChargeExternalId());
+                return GatewayRefundResponse.fromGatewayError(gatewayError);
+            }
+        } catch (Exception _) {
+            LOGGER.warn("Failed to deserialise Adyen error during refund",
+                    kv(PAYMENT_EXTERNAL_ID, request.getChargeExternalId()),
+                    kv(REFUND_EXTERNAL_ID, request.getRefundExternalId()),
+                    kv(GATEWAY_ERROR, e.getMessage())
+            );
+            return GatewayRefundResponse.fromGatewayError(e.toGatewayError());
         }
     }
 }
