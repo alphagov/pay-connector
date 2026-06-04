@@ -74,7 +74,7 @@ public class GatewayResponse<T extends BaseResponse> {
             return new GatewayResponseBuilder<>();
         }
 
-        public GatewayResponseBuilder withResponse(T response) {
+        public GatewayResponseBuilder<T> withResponse(T response) {
             this.response = response;
             return this;
         }
