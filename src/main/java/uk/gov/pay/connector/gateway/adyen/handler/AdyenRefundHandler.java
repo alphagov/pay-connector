@@ -21,6 +21,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.*;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
@@ -48,8 +49,8 @@ public class AdyenRefundHandler implements RefundHandler {
 
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         var adyenRefundRequest = new AdyenRefundRequest(
-                AdyenRequestUtil.getRefundUrl(adyenGatewayConfig, request),
-                AdyenRequestUtil.getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
+                getRefundUrl(adyenGatewayConfig, request),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
                 adyenRequestFactory.createRefundRequestPayload(request),
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);
