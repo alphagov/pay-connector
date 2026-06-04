@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenAuthoriseHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenCancelHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenCaptureHandler;
+import uk.gov.pay.connector.gateway.adyen.handler.AdyenRefundHandler;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
@@ -48,6 +49,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
     private final AdyenAuthoriseHandler adyenAuthoriseHandler;
     private final AdyenCaptureHandler adyenCaptureHandler;
     private final AdyenCancelHandler adyenCancelHandler;
+    private final AdyenRefundHandler adyenRefundHandler;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final RefundEntityFactory refundEntityFactory;
 
@@ -64,6 +66,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration), jsonObjectMapper);
+        adyenRefundHandler = new AdyenRefundHandler(client, connectorConfiguration, jsonObjectMapper);
         this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         this.refundEntityFactory = refundEntityFactory;
     }
@@ -105,7 +108,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
-        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
+        return adyenRefundHandler.refund(request);
     }
 
     @Override

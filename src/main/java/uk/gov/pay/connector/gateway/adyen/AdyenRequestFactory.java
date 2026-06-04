@@ -9,8 +9,10 @@ import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
@@ -77,7 +79,17 @@ public class AdyenRequestFactory {
         );
     }
 
-    static BillingAddress mapToBillingAddress(Address address) {
+    public RefundRequestPayload createRefundRequestPayload(RefundGatewayRequest request) {
+        var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
+        return new RefundRequestPayload(
+                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
+                new Amount("GBP", Long.valueOf(request.getAmount())),
+                request.getRefundExternalId(),
+                adyenCredentials.storeId()
+        );
+    }
+
+    private static BillingAddress mapToBillingAddress(Address address) {
         var northAmericanRegionMapper = new NorthAmericanRegionMapper();
         String stateOrProvince = northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
                 .map(NorthAmericaRegion::getFullName)
