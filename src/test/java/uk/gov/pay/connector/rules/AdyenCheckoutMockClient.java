@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
 public class AdyenCheckoutMockClient extends AdyenMockClient {
 
@@ -55,6 +56,18 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
                 }""".formatted(pspReferenceFromAdyen, paymentPspReference);
         var path = "/payments/%s/cancels".formatted(paymentPspReference);
         setupPostResponse(responseBody, path, SC_CREATED);
+    }
+
+    public void mockCancellationFailure(String paymentPspReference) {
+        var responseBody = """
+                {
+                  "status": 401,
+                  "errorCode": "000",
+                  "message": "HTTP Status Response - Unauthorized",
+                  "errorType": "security"
+                }""";
+        var path = "/payments/%s/cancels".formatted(paymentPspReference);
+        setupPostResponse(responseBody, path, SC_UNAUTHORIZED);
     }
 
     public void mockRefundSuccess(String pspReferenceFromAdyen, String paymentPspReference) {
