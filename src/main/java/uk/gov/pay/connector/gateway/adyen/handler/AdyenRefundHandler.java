@@ -13,7 +13,6 @@ import uk.gov.pay.connector.gateway.adyen.request.AdyenRefundRequest;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenRefundResponse;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
 import uk.gov.pay.connector.gateway.adyen.response.json.RefundResponseBody;
-import uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
@@ -21,7 +20,8 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.*;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getRefundUrl;
 import static uk.gov.pay.connector.gateway.model.GatewayError.genericGatewayError;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.ERROR;
 import static uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse.RefundState.PENDING;
