@@ -22,7 +22,7 @@ public record AdyenCancelResponse(
     public static AdyenCancelResponse from(AdyenError adyenError) {
         return new AdyenCancelResponse(
                 adyenError.pspReference(),
-                null,
+                CancelStatus.ERROR,
                 adyenError.errorCode(),
                 adyenError.message());
     }

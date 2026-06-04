@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
 import uk.gov.pay.connector.gateway.adyen.response.json.CancelResponseBody;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
+import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -39,5 +40,19 @@ class AdyenCancelResponseTest {
         assertThat(mappedCancelResponse.getErrorMessage(), is(ADYEN_ERROR_MESSAGE));
         assertThat(mappedCancelResponse.getErrorCode(), is(ADYEN_ERROR_CODE));
         assertThat(mappedCancelResponse.getTransactionId(), is(PSP_REFERENCE_OF_THE_PAYMENT));
+    }
+
+    @Test
+    void should_map_to_a_cancel_status_of_ERROR_from_Adyen_error_response() {
+        var adyenError = new AdyenError(
+                HTTP_RESPONSE_STATUS,
+                ADYEN_ERROR_MESSAGE,
+                ADYEN_ERROR_CODE,
+                ADYEN_ERROR_TYPE,
+                PSP_REFERENCE_OF_THE_PAYMENT);
+
+        BaseCancelResponse mappedCancelResponse = AdyenCancelResponse.from(adyenError);
+
+        assertThat(mappedCancelResponse.cancelStatus(), is(CancelStatus.ERROR));
     }
 }
