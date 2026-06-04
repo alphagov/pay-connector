@@ -39,6 +39,7 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 class AdyenRequestFactoryTest {
+
     public static final BillingAddress FULL_BILLING_ADDRESS = new BillingAddress(
             "line1",
             "line2",
@@ -203,7 +204,6 @@ class AdyenRequestFactoryTest {
 
         assertThat(request.shopperInteraction(), is("Moto"));
     }
-    
     private static RefundGatewayRequest makeRefundGatewayRequest(String refundExternalId) {
         Charge charge = Charge.from(
                 aValidChargeEntity()
@@ -224,6 +224,7 @@ class AdyenRequestFactoryTest {
         return RefundGatewayRequest.valueOf(charge, refundEntity,
                 gatewayAccountEntity, gatewayAccountCredentialsEntity);
     }
+
 
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
