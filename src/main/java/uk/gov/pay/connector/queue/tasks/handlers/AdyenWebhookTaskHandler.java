@@ -3,6 +3,7 @@ package uk.gov.pay.connector.queue.tasks.handlers;
 import com.adyen.model.notification.NotificationRequest;
 import com.adyen.model.notification.NotificationRequestItem;
 import com.google.inject.Inject;
+import com.google.inject.persist.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
@@ -24,7 +25,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERRO
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
-
 public class AdyenWebhookTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenWebhookTaskHandler.class);
     private final ChargeService chargeService;
@@ -33,7 +33,7 @@ public class AdyenWebhookTaskHandler {
     private final AdyenNotificationService adyenNotificationService;
 
     @Inject
-    public AdyenWebhookTaskHandler(ChargeService chargeService, 
+    public AdyenWebhookTaskHandler(ChargeService chargeService,
                                    ChargeNotificationProcessor chargeNotificationProcessor,
                                    GatewayAccountService gatewayAccountService,
                                    AdyenNotificationService adyenNotificationService) {
@@ -43,6 +43,7 @@ public class AdyenWebhookTaskHandler {
         this.adyenNotificationService = adyenNotificationService;
     }
 
+    @Transactional
     public void processAdyenWebhookNotification(String payload) {
         NotificationRequest notificationRequest =
                 adyenNotificationService.deserialisePayloadToNotificationRequest(payload);
@@ -90,5 +91,5 @@ public class AdyenWebhookTaskHandler {
         }
 
     }
-    
+
 }
