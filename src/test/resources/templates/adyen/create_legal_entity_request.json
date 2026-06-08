@@ -1,7 +1,12 @@
 {
   "organization" : {
+    "countryOfGoverningLaw" : "GB",
+    "dateOfIncorporation" : "2026-05-30",
     "doingBusinessAs" : "{{serviceName}}",
     "email" : "organization@example.com",
+    "financialReports" : [ {
+      "employeeCount" : "1"
+    } ],
     "legalName" : "{{serviceName}}",
     "registeredAddress" : {
       "city" : "London",
@@ -10,13 +15,14 @@
       "street" : "10 Park Row"
     },
     "registrationNumber" : "34179503",
-    "taxInformation" : [ {
-      "country" : "GB",
-      "number" : "12345678901",
-      "type" : "ABN"
-    } ],
+    "support" : {
+      "email" : "test@example.com",
+      "phone" : {
+        "number" : "+447500000000"
+      }
+    },
     "type" : "governmentalOrganization",
-    "vatNumber" : "12345678"
+    "vatNumber" : "GB123456789"
   },
   "type" : "organization"
 }
