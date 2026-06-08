@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
@@ -19,6 +21,8 @@ import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getCance
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
 
 public class AdyenCancelHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdyenCancelHandler.class);
 
     private final GatewayClient gatewayClient;
     private final AdyenGatewayConfig adyenGatewayConfig;
@@ -49,6 +53,11 @@ public class AdyenCancelHandler {
             return responseBuilder.withResponse(AdyenCancelResponse.from(cancelResponse))
                     .build();
         } catch (GatewayErrorException e) {
+            LOGGER.atError()
+                    .setMessage("Cancel failed for gateway transaction id {}. Charge External Id: {}.")
+                    .addArgument(request.getTransactionId())
+                    .addArgument(request.getExternalChargeId())
+                    .log();
             var adyenError = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
             return responseBuilder.withResponse(AdyenCancelResponse.from(adyenError))
                     .build();

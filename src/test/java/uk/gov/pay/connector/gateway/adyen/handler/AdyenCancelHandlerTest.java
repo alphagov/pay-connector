@@ -2,9 +2,12 @@ package uk.gov.pay.connector.gateway.adyen.handler;
 
 import com.jayway.jsonassert.JsonAssert;
 import io.dropwizard.jackson.Jackson;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -32,12 +35,14 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
 import static org.mockito.BDDMockito.then;
+import static org.slf4j.event.Level.ERROR;
 import static uk.gov.pay.connector.app.adyen.ApiKeysFixture.someApiKeys;
 import static uk.gov.pay.connector.app.adyen.BaseUrlsFixture.someBaseUrls;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -47,6 +52,11 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenCancelHandlerTest {
+
+    @RegisterExtension
+    LogCapturer errorLogs = LogCapturer.create()
+            .captureForType(AdyenCancelHandler.class)
+            .forLevel(ERROR);
 
     private static final String A_MERCHANT_ACCOUNT_ID = "a-merchant-account-id";
     private static final String AN_EXTERNAL_ID = "a-charge-external-id";
@@ -260,6 +270,39 @@ class AdyenCancelHandlerTest {
                 "errorCode=000, " +
                 "errorMessage=HTTP Status Response - Unauthorized]"));
         assertThat(gatewayError.getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
+    }
+
+    @Test
+    void should_log_on_GatewayErrorException() throws GatewayException {
+        var request = CancelGatewayRequest.valueOf(
+                aValidChargeEntity()
+                        .withGatewayTransactionId(A_GATEWAY_TRANSACTION_ID)
+                        .withExternalId(AN_EXTERNAL_ID)
+                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(LIVE))
+                        .build());
+        var adyenErrorResponse = """
+                {
+                  "errorCode": "000",
+                  "errorType": "security",
+                  "message": "HTTP Status Response - Unauthorized",
+                  "pspReference": "a-PSP-reference",
+                  "status": 401
+                }
+                """;
+        var gatewayErrorException = new GatewayErrorException(
+                "any-error-message",
+                adyenErrorResponse,
+                HttpStatus.SC_UNAUTHORIZED);
+        given(mockGatewayClient.postRequestFor(any()))
+                .willThrow(gatewayErrorException);
+
+        cancelHandler.cancel(request);
+
+        assertThat(errorLogs.size(), is(1));
+        var errorLogMessage = errorLogs.getEvents().getFirst().getMessage();
+        assertThat(errorLogMessage, containsString(
+                "Cancel failed for gateway transaction id %s. ".formatted(A_GATEWAY_TRANSACTION_ID) +
+                        "Charge External Id: %s.".formatted(AN_EXTERNAL_ID)));
     }
 
     private void givenGatewayClientWillReturnResponseWithBody(String response) throws GatewayException {
