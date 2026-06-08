@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutExc
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
+import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -58,7 +59,7 @@ class AdyenCancelHandlerTest {
               "merchantAccount": "PAY_MERCHANT_ACCOUNT",
               "paymentPspReference": "993617894903480A",
               "reference": "OUR_UNIQUE_REFERENCE",
-              "pspReference": "993617894906488A",
+              "pspReference": "a-psp-reference",
               "status": "received"
             }""";
 
@@ -193,7 +194,7 @@ class AdyenCancelHandlerTest {
                   "merchantAccount": "GovernmentDigitalService_UK",
                   "paymentPspReference": "%s",
                   "reference": "864vqloqrm71jn89r4bjkhvkv2",
-                  "pspReference": "993617894903480A",
+                  "pspReference": "a-psp-reference",
                   "status": "received"
                 }
                 """.formatted(paymentPspReference);
@@ -211,7 +212,7 @@ class AdyenCancelHandlerTest {
 
     @ParameterizedTest
     @ValueSource(classes = {
-            GenericGatewayException.class, GatewayConnectionTimeoutException.class, GatewayErrorException.class})
+            GenericGatewayException.class, GatewayConnectionTimeoutException.class})
     void should_catch_client_exception_and_return_an_error_in_the_response(Class<? extends GatewayException> exceptionClass) throws GatewayException {
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
@@ -223,6 +224,42 @@ class AdyenCancelHandlerTest {
         var gatewayResponse = cancelHandler.cancel(request);
 
         assertThat(gatewayResponse.getGatewayError().isPresent(), is(true));
+    }
+
+    @Test
+    void should_catch_GatewayErrorException_and_map_Adyen_error_in_message() throws GatewayException {
+        var request = CancelGatewayRequest.valueOf(
+                aValidChargeEntity()
+                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(LIVE))
+                        .build());
+        var adyenErrorResponse = """
+                {
+                  "errorCode": "000",
+                  "errorType": "security",
+                  "message": "HTTP Status Response - Unauthorized",
+                  "pspReference": "a-PSP-reference",
+                  "status": 401
+                }
+                """;
+        var gatewayErrorException = new GatewayErrorException(
+                "any-error-message",
+                adyenErrorResponse,
+                401);
+        given(mockGatewayClient.postRequestFor(any()))
+                .willThrow(gatewayErrorException);
+
+        var gatewayResponse = cancelHandler.cancel(request);
+
+        assertThat(
+                "GatewayResponse should have a gateway error",
+                gatewayResponse.getGatewayError().isPresent(), is(true));
+        var gatewayError = gatewayResponse.getGatewayError().get();
+        assertThat(gatewayError.getMessage(), is("AdyenCancelResponse[" +
+                "transactionId=a-PSP-reference, " +
+                "cancelStatus=ERROR, " +
+                "errorCode=000, " +
+                "errorMessage=HTTP Status Response - Unauthorized]"));
+        assertThat(gatewayError.getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
     }
 
     private void givenGatewayClientWillReturnResponseWithBody(String response) throws GatewayException {
