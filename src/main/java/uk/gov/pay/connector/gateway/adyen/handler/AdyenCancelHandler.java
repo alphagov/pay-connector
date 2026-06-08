@@ -1,10 +1,16 @@
 package uk.gov.pay.connector.gateway.adyen.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenCancelRequest;
+import uk.gov.pay.connector.gateway.adyen.response.AdyenCancelResponse;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
+import uk.gov.pay.connector.gateway.adyen.response.json.CancelResponseBody;
+import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -13,9 +19,10 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getCancelUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
-import static uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus.SUBMITTED;
 
 public class AdyenCancelHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdyenCancelHandler.class);
 
     private final GatewayClient gatewayClient;
     private final AdyenGatewayConfig adyenGatewayConfig;
@@ -41,30 +48,35 @@ public class AdyenCancelHandler {
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);
         try {
-            gatewayClient.postRequestFor(cancelRequest);
-        } catch (GatewayException e) {
-            return responseBuilder.withGatewayError(e.toGatewayError()).build();
+            var jsonResponse = gatewayClient.postRequestFor(cancelRequest).getEntity();
+            var cancelResponse = jsonObjectMapper.getObject(jsonResponse, CancelResponseBody.class);
+
+            return responseBuilder.withResponse(AdyenCancelResponse.from(cancelResponse)).build();
+        } catch (GatewayException.GatewayErrorException e) {
+            return handleGatewayException(e);
+        } catch (GatewayException.GenericGatewayException
+                 | GatewayException.GatewayConnectionTimeoutException e) {
+            return buildGatewayResponseFromError(e.toGatewayError());
+
         }
-        return responseBuilder.withResponse(new BaseCancelResponse() {
-            @Override
-            public String getTransactionId() {
-                return "";
-            }
+    }
 
-            @Override
-            public CancelStatus cancelStatus() {
-                return SUBMITTED;
-            }
+    private GatewayResponse buildGatewayResponseFromError(GatewayError gatewayError) {
+        return GatewayResponseBuilder.responseBuilder()
+                .withGatewayError(gatewayError).build();
+    }
 
-            @Override
-            public String getErrorCode() {
-                return "";
-            }
+    private GatewayResponse handleGatewayException(GatewayException.GatewayErrorException e) {
+        try {
+            var jsonResponse = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
+            var adyenErrorResponse = AdyenCancelResponse.from(jsonResponse);
 
-            @Override
-            public String getErrorMessage() {
-                return "";
-            }
-        }).build();
+            return GatewayResponseBuilder.responseBuilder()
+                    .withResponse(adyenErrorResponse).build();
+        } catch (Exception _) {
+            LOGGER.warn("Failed to deserialise Adyen error during cancel");
+            return GatewayResponseBuilder.responseBuilder()
+                    .withGatewayError(e.toGatewayError()).build();
+        }
     }
 }
