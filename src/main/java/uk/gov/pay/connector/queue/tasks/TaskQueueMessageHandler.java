@@ -1,12 +1,11 @@
 package uk.gov.pay.connector.queue.tasks;
 
-import com.adyen.model.notification.NotificationRequestItem;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sentry.Sentry;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
 import uk.gov.pay.connector.queue.tasks.handlers.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
@@ -22,7 +21,6 @@ import uk.gov.pay.connector.queue.tasks.model.RetryPaymentOrRefundEmailTaskData;
 import uk.gov.pay.connector.queue.tasks.model.ServiceArchivedTaskData;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
 
-import jakarta.inject.Inject;
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
