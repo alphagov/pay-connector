@@ -40,6 +40,16 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 
 class AdyenRequestFactoryTest {
 
+    final String acceptHeader = "text/html";
+    final String userAgent = "Mozilla/5.0";
+    final String shopperIp = "127.0.0.1";
+    final String language = "en-GB";
+    final String colorDepth = "24";
+    final String screenHeight = "900";
+    final String screenWidth = "1440";
+    final String timezoneOffset = "-60";
+    final String shopperEmail = "test@example.com";
+   
     public static final BillingAddress FULL_BILLING_ADDRESS = new BillingAddress(
             "line1",
             "line2",
@@ -226,6 +236,54 @@ class AdyenRequestFactoryTest {
     }
 
 
+    @Test
+    void should_include_browser_info_origin_shopper_email_and_ip_for_web_payment() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAcceptHeader(acceptHeader)
+                        .withUserAgentHeader(userAgent)
+                        .withIpAddress(shopperIp)
+                        .withJsNavigatorLanguage(language)
+                        .withJsScreenColorDepth(colorDepth)
+                        .withJsScreenHeight(screenHeight)
+                        .withJsScreenWidth(screenWidth)
+                        .withJsTimezoneOffsetMins(timezoneOffset)
+                        .withJsEnabled(true)
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withEmail(shopperEmail)
+                .build();
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.browserInfo().acceptHeader(), is(acceptHeader));
+        assertThat(request.browserInfo().colorDepth(), is(Integer.valueOf(colorDepth)));
+        assertThat(request.browserInfo().language(), is(language));
+        assertThat(request.browserInfo().screenHeight(), is(Integer.valueOf(screenHeight)));
+        assertThat(request.browserInfo().screenWidth(), is(Integer.valueOf(screenWidth)));
+        assertThat(request.browserInfo().timeZoneOffset(), is(Integer.valueOf(timezoneOffset)));
+        assertThat(request.browserInfo().userAgent(), is(userAgent));
+        assertThat(request.shopperEmail(), is(shopperEmail));
+        assertThat(request.shopperIP(), is(shopperIp));
+    }
+
+    @Test
+    void should_not_include_browser_info_origin_shopper_email_and_ip_for_moto_payment() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest().withMoto(true)
+                .withAuthCardDetails(anAuthCardDetails()
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withEmail("test@example.com")
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperInteraction(), is("Moto"));
+        assertThat(request.browserInfo(), nullValue());
+        assertThat(request.origin(), nullValue());
+        assertThat(request.shopperEmail(), nullValue());
+        assertThat(request.shopperIP(), nullValue());
+    }
+    
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)

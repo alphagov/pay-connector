@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
+import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;
@@ -54,7 +55,18 @@ class AdyenAuthorisationRequestTest {
                 .assertThat("$.returnUrl", is("frontend-3ds-url"))
                 .assertThat("$.shopperInteraction", is("Ecommerce"))
                 .assertThat("$.store", is("store-id"))
-                .assertThat("$.channel", is("Web"));
+                .assertThat("$.channel", is("Web"))
+                .assertThat("$.browserInfo.acceptHeader", is("text/html"))
+                .assertThat("$.browserInfo.colorDepth", is(24))
+                .assertThat("$.browserInfo.javaEnabled", is(false))
+                .assertThat("$.browserInfo.language", is("en-GB"))
+                .assertThat("$.browserInfo.screenHeight", is(900))
+                .assertThat("$.browserInfo.screenWidth", is(1440))
+                .assertThat("$.browserInfo.timeZoneOffset", is(-60))
+                .assertThat("$.browserInfo.userAgent", is("Mozilla/5.0"))
+                .assertThat("$.origin", is("https://frontend.pay.service.gov.uk"))
+                .assertThat("$.shopperEmail", is("test@example.com"))
+                .assertThat("$.shopperIP", is("127.0.0.1"));
     }
 
     private AdyenAuthorisationRequest buildValidRequestWithBillingAddress() {
@@ -82,6 +94,15 @@ class AdyenAuthorisationRequestTest {
                 "John Doe",
                 "4444333322221111",
                 "scheme");
+        
+        var browserInfo = new BrowserInfo("text/html", 
+                24,
+                false,
+                "en-GB",
+                900, 
+                1440, 
+                -60,
+                "Mozilla/5.0");
 
         return new AuthoriseRequestPayload(
                 new Amount("GBP", 1000L),
@@ -93,7 +114,11 @@ class AdyenAuthorisationRequestTest {
                 "Ecommerce",
                 "store-id",
                 "Web",
-                new HashMap<>(Map.of("manualCapture", "true"))
+                new HashMap<>(Map.of("manualCapture", "true")),
+                browserInfo,
+                "https://frontend.pay.service.gov.uk",
+                "test@example.com",
+                "127.0.0.1"
         );
     }
 }
