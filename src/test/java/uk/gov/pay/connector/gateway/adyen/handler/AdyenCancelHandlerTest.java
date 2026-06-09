@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.event.KeyValuePair;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
@@ -33,16 +34,16 @@ import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+import uk.gov.service.payments.logging.LoggingKeys;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
 import static org.mockito.BDDMockito.then;
-import static org.slf4j.event.Level.ERROR;
 import static uk.gov.pay.connector.app.adyen.ApiKeysFixture.someApiKeys;
 import static uk.gov.pay.connector.app.adyen.BaseUrlsFixture.someBaseUrls;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -54,10 +55,10 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 class AdyenCancelHandlerTest {
 
     @RegisterExtension
-    LogCapturer errorLogs = LogCapturer.create()
-            .captureForType(AdyenCancelHandler.class)
-            .forLevel(ERROR);
+    LogCapturer logs = LogCapturer.create()
+            .captureForType(AdyenCancelHandler.class);
 
+    public static final String A_GATEWAY_ERROR_MESSAGE = "a-gateway-error-message";
     private static final String A_MERCHANT_ACCOUNT_ID = "a-merchant-account-id";
     private static final String AN_EXTERNAL_ID = "a-charge-external-id";
     private static final String LIVE_CHECKOUT_BASE_URL = "https://checkout.example.com";
@@ -291,7 +292,7 @@ class AdyenCancelHandlerTest {
                 }
                 """;
         var gatewayErrorException = new GatewayErrorException(
-                "any-error-message",
+                A_GATEWAY_ERROR_MESSAGE,
                 adyenErrorResponse,
                 HttpStatus.SC_UNAUTHORIZED);
         given(mockGatewayClient.postRequestFor(any()))
@@ -299,11 +300,13 @@ class AdyenCancelHandlerTest {
 
         cancelHandler.cancel(request);
 
-        assertThat(errorLogs.size(), is(1));
-        var errorLogMessage = errorLogs.getEvents().getFirst().getMessage();
-        assertThat(errorLogMessage, containsString(
-                "Cancel failed for gateway transaction ID %s, ".formatted(A_GATEWAY_TRANSACTION_ID) +
-                        "external charge ID: %s.".formatted(AN_EXTERNAL_ID)));
+        assertThat(logs.size(), is(1));
+
+        var loggingEvent = logs.assertContains("Cancel failed for transaction");
+        assertThat(loggingEvent.getKeyValuePairs(), hasItems(
+                new KeyValuePair(LoggingKeys.PAYMENT_EXTERNAL_ID, AN_EXTERNAL_ID),
+                new KeyValuePair(LoggingKeys.HTTP_STATUS, String.valueOf(HttpStatus.SC_UNAUTHORIZED)),
+                new KeyValuePair(LoggingKeys.GATEWAY_ERROR, A_GATEWAY_ERROR_MESSAGE)));
     }
 
     private void givenGatewayClientWillReturnResponseWithBody(String response) throws GatewayException {

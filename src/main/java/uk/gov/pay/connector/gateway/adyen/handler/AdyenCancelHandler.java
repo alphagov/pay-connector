@@ -19,6 +19,9 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getCancelUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ERROR;
+import static uk.gov.service.payments.logging.LoggingKeys.HTTP_STATUS;
+import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class AdyenCancelHandler {
 
@@ -53,12 +56,13 @@ public class AdyenCancelHandler {
             return responseBuilder.withResponse(AdyenCancelResponse.from(cancelResponse))
                     .build();
         } catch (GatewayErrorException e) {
-            LOGGER.atError()
-                    .setMessage("Cancel failed for gateway transaction ID {}, external charge ID: {}.")
-                    .addArgument(request.getTransactionId())
-                    .addArgument(request.getExternalChargeId())
-                    .log();
             var adyenError = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
+            LOGGER.atWarn()
+                    .setMessage("Cancel failed for transaction")
+                    .addKeyValue(PAYMENT_EXTERNAL_ID, request.getExternalChargeId())
+                    .addKeyValue(HTTP_STATUS, adyenError.status())
+                    .addKeyValue(GATEWAY_ERROR, e.getMessage())
+                    .log();
             return responseBuilder.withResponse(AdyenCancelResponse.from(adyenError))
                     .build();
         } catch (GatewayException e) {
