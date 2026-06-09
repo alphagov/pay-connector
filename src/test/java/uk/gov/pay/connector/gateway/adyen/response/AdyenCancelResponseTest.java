@@ -28,12 +28,7 @@ class AdyenCancelResponseTest {
 
     @Test
     void should_map_error_code_error_message_and_transaction_ID_from_Adyen_error_response() {
-        var adyenError = new AdyenError(
-                HTTP_RESPONSE_STATUS,
-                ADYEN_ERROR_MESSAGE,
-                ADYEN_ERROR_CODE,
-                ADYEN_ERROR_TYPE,
-                PSP_REFERENCE_OF_THE_PAYMENT);
+        var adyenError = makeAdyenError();
 
         BaseCancelResponse mappedCancelResponse = AdyenCancelResponse.from(adyenError);
 
@@ -44,12 +39,7 @@ class AdyenCancelResponseTest {
 
     @Test
     void should_map_error_type_from_Adyen_error_response() {
-        var adyenError = new AdyenError(
-                HTTP_RESPONSE_STATUS,
-                ADYEN_ERROR_MESSAGE,
-                ADYEN_ERROR_CODE,
-                ADYEN_ERROR_TYPE,
-                PSP_REFERENCE_OF_THE_PAYMENT);
+        var adyenError = makeAdyenError();
 
         AdyenCancelResponse mappedCancelResponse = AdyenCancelResponse.from(adyenError);
 
@@ -58,15 +48,19 @@ class AdyenCancelResponseTest {
 
     @Test
     void should_map_to_a_cancel_status_of_ERROR_from_Adyen_error_response() {
-        var adyenError = new AdyenError(
+        var adyenError = makeAdyenError();
+
+        BaseCancelResponse mappedCancelResponse = AdyenCancelResponse.from(adyenError);
+
+        assertThat(mappedCancelResponse.cancelStatus(), is(CancelStatus.ERROR));
+    }
+
+    private static AdyenError makeAdyenError() {
+        return new AdyenError(
                 HTTP_RESPONSE_STATUS,
                 ADYEN_ERROR_MESSAGE,
                 ADYEN_ERROR_CODE,
                 ADYEN_ERROR_TYPE,
                 PSP_REFERENCE_OF_THE_PAYMENT);
-
-        BaseCancelResponse mappedCancelResponse = AdyenCancelResponse.from(adyenError);
-
-        assertThat(mappedCancelResponse.cancelStatus(), is(CancelStatus.ERROR));
     }
 }
