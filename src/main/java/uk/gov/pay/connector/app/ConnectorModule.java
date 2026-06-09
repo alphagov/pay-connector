@@ -1,5 +1,14 @@
 package uk.gov.pay.connector.app;
 
+import com.adyen.service.balanceplatform.AccountHoldersApi;
+import com.adyen.service.balanceplatform.BalanceAccountsApi;
+import com.adyen.service.legalentitymanagement.BusinessLinesApi;
+import com.adyen.service.legalentitymanagement.LegalEntitiesApi;
+import com.adyen.service.legalentitymanagement.PciQuestionnairesApi;
+import com.adyen.service.legalentitymanagement.TermsOfServiceApi;
+import com.adyen.service.legalentitymanagement.TransferInstrumentsApi;
+import com.adyen.service.management.AccountStoreLevelApi;
+import com.adyen.service.management.PaymentMethodsMerchantLevelApi;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -8,10 +17,11 @@ import com.google.inject.name.Named;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.db.DataSourceFactory;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.client.Client;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.awscore.client.builder.AwsSyncClientBuilder;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
@@ -41,15 +51,15 @@ import uk.gov.pay.connector.util.ReverseDnsLookup;
 import uk.gov.pay.connector.wallets.applepay.ApplePayDecrypter;
 import uk.gov.service.payments.commons.queue.sqs.SqsQueueService;
 
-import jakarta.inject.Singleton;
-import jakarta.ws.rs.client.Client;
 import java.net.URI;
 import java.time.InstantSource;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.adyen.enums.Environment.TEST;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CANCEL;
 import static uk.gov.pay.connector.gateway.GatewayOperation.CAPTURE;
@@ -339,5 +349,125 @@ public class ConnectorModule extends AbstractModule {
                 amazonSQS,
                 connectorConfiguration.getSqsConfig().getMessageMaximumWaitTimeInSeconds(),
                 connectorConfiguration.getSqsConfig().getMessageMaximumBatchSize());
+    }
+
+    @Provides
+    @Singleton
+    public BalanceAccountsApi provideBalanceAccountsApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client balancePlatformApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().balancePlatform().test(), TEST);
+        String balancePlatformBaseUrl = adyenGatewayConfig.getBaseUrls().balancePlatform().test();
+        
+        if (Objects.isNull(balancePlatformBaseUrl)) {
+            return new BalanceAccountsApi(balancePlatformApiClient);
+        }
+        return new BalanceAccountsApi(balancePlatformApiClient, balancePlatformBaseUrl);
+    }
+
+    @Provides
+    @Singleton
+    public AccountHoldersApi provideAccountHoldersApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client balancePlatformApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().balancePlatform().test(), TEST);
+        String balancePlatformBaseUrl = adyenGatewayConfig.getBaseUrls().balancePlatform().test();
+
+        if (Objects.isNull(balancePlatformBaseUrl)) {
+            return new AccountHoldersApi(balancePlatformApiClient);
+        }
+        return new AccountHoldersApi(balancePlatformApiClient, balancePlatformBaseUrl);
+    }
+
+    @Provides
+    @Singleton
+    public PciQuestionnairesApi providePciQuestionnairesApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client legalEntityManagementApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), TEST);
+        String legalEntityManagementBaseUrl = adyenGatewayConfig.getBaseUrls().legalEntityManagement().test();
+
+        if (Objects.isNull(legalEntityManagementBaseUrl)) {
+            return new PciQuestionnairesApi(legalEntityManagementApiClient);
+        }
+        return new PciQuestionnairesApi(legalEntityManagementApiClient, legalEntityManagementBaseUrl);
+    }
+    
+    @Provides
+    @Singleton
+    public TermsOfServiceApi provideTermsOfServiceApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client legalEntityManagementApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), TEST);
+        String legalEntityManagementBaseUrl = adyenGatewayConfig.getBaseUrls().legalEntityManagement().test();
+
+        if (Objects.isNull(legalEntityManagementBaseUrl)) {
+            return new TermsOfServiceApi(legalEntityManagementApiClient);
+        }
+        
+        return new TermsOfServiceApi(legalEntityManagementApiClient, legalEntityManagementBaseUrl);
+    }
+
+    @Provides
+    @Singleton
+    public LegalEntitiesApi provideLegalEntitiesApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client legalEntityManagementApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), TEST);
+        String legalEntityManagementBaseUrl = adyenGatewayConfig.getBaseUrls().legalEntityManagement().test();
+
+        if (Objects.isNull(legalEntityManagementBaseUrl)) {
+            return new LegalEntitiesApi(legalEntityManagementApiClient);
+        }
+
+        return new LegalEntitiesApi(legalEntityManagementApiClient, legalEntityManagementBaseUrl);
+    }
+
+    @Provides
+    @Singleton
+    public BusinessLinesApi provideBusinessLinesApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client legalEntityManagementApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), TEST);
+        String legalEntityManagementBaseUrl = adyenGatewayConfig.getBaseUrls().legalEntityManagement().test();
+        
+        if (Objects.isNull(legalEntityManagementBaseUrl)) {
+            return new BusinessLinesApi(legalEntityManagementApiClient);
+        }
+        return new BusinessLinesApi(legalEntityManagementApiClient, legalEntityManagementBaseUrl);
+    }
+
+
+    @Provides
+    @Singleton
+    public AccountStoreLevelApi provideAccountStoreLevelApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client companyApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().companyAccount().test(), TEST);
+        String managementBaseUrl = adyenGatewayConfig.getBaseUrls().management().test();
+        
+        if (Objects.isNull(managementBaseUrl)) {
+            return new AccountStoreLevelApi(companyApiClient);
+        } 
+        return new AccountStoreLevelApi(companyApiClient, managementBaseUrl);
+    }
+    
+    @Provides
+    @Singleton
+    public PaymentMethodsMerchantLevelApi providePaymentMethodsMerchantLevelApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client companyApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().companyAccount().test(), TEST);
+        String managementBaseUrl = adyenGatewayConfig.getBaseUrls().management().test();
+
+        if (Objects.isNull(managementBaseUrl)) {
+            return new PaymentMethodsMerchantLevelApi(companyApiClient);
+        }
+        return new PaymentMethodsMerchantLevelApi(companyApiClient, managementBaseUrl);
+    }
+
+    @Provides
+    @Singleton
+    public TransferInstrumentsApi provideTransferInstrumentsApi() {
+        AdyenGatewayConfig adyenGatewayConfig = configuration.getAdyenGatewayConfig();
+        com.adyen.Client legalEntityManagementApiClient = new com.adyen.Client(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), TEST);
+        String legalEntityManagementBaseUrl = adyenGatewayConfig.getBaseUrls().legalEntityManagement().test();
+
+        if (Objects.isNull(legalEntityManagementBaseUrl)) {
+            return new TransferInstrumentsApi(legalEntityManagementApiClient);
+        }
+        return new TransferInstrumentsApi(legalEntityManagementApiClient, legalEntityManagementBaseUrl);
     }
 }

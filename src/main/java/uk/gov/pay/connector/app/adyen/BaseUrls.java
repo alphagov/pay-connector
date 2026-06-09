@@ -23,12 +23,12 @@ public record BaseUrls(
     public record CheckoutUrls(@NotNull String test, @NotNull String live) {
     }
 
-    public record LegalEntityManagementUrls(@NotNull String test, @NotNull String live) {
+    public record LegalEntityManagementUrls(String test) {
     }
 
-    public record BalancePlatformUrls(@NotNull String test, @NotNull String live) {
+    public record BalancePlatformUrls(String test) {
     }
 
-    public record ManagementUrls(@NotNull String test, @NotNull String live) {
+    public record ManagementUrls(String test) {
     }
 }

@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gatewayaccount.service;
 
-import com.adyen.Client;
 import com.adyen.model.balanceplatform.AccountHolder;
 import com.adyen.model.balanceplatform.AccountHolderInfo;
 import com.adyen.model.balanceplatform.BalanceAccount;
@@ -55,7 +54,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.adyen.enums.Environment.TEST;
 import static com.adyen.model.legalentitymanagement.UKLocalAccountIdentification.TypeEnum.UKLOCAL;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
@@ -64,23 +62,38 @@ public class AdyenTestAccountService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenTestAccountService.class);
 
-    private final Client legalEntityManagementApiClient;
-    private final Client companyApiClient;
-    private final Client balancePlatformApiClient;
-    private final String balancePlatformTestUrl;
-    private final String legalEntityManagementTestUrl;
-    private final String managementTestUrl;
     private final AdyenGatewayConfig adyenGatewayConfig;
+    private final BalanceAccountsApi balanceAccountsApi;
+    private final AccountHoldersApi accountHoldersApi;
+    private final PciQuestionnairesApi pciQuestionnairesApi;
+    private final TermsOfServiceApi termsOfServiceApi;
+    private final LegalEntitiesApi legalEntitiesApi;
+    private final BusinessLinesApi businessLinesApi;
+    private final AccountStoreLevelApi accountStoreLevelApi;
+    private final PaymentMethodsMerchantLevelApi paymentMethodsMerchantLevelApi;
+    private final TransferInstrumentsApi transferInstrumentsApi;
 
     @Inject
-    public AdyenTestAccountService(AdyenGatewayConfig adyenGatewayConfig) {
-        legalEntityManagementApiClient = new Client(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), TEST);
-        companyApiClient = new Client(adyenGatewayConfig.getApiKeys().companyAccount().test(), TEST);
-        balancePlatformApiClient = new Client(adyenGatewayConfig.getApiKeys().balancePlatform().test(), TEST);
-        balancePlatformTestUrl = adyenGatewayConfig.getBaseUrls().balancePlatform().test();
-        legalEntityManagementTestUrl = adyenGatewayConfig.getBaseUrls().legalEntityManagement().test();
-        managementTestUrl = adyenGatewayConfig.getBaseUrls().management().test();
+    public AdyenTestAccountService(AdyenGatewayConfig adyenGatewayConfig, 
+                                   BalanceAccountsApi balanceAccountsApi, 
+                                   AccountHoldersApi accountHoldersApi, 
+                                   PciQuestionnairesApi pciQuestionnairesApi, 
+                                   TermsOfServiceApi termsOfServiceApi, 
+                                   LegalEntitiesApi legalEntitiesApi, 
+                                   BusinessLinesApi businessLinesApi, 
+                                   AccountStoreLevelApi accountStoreLevelApi, 
+                                   PaymentMethodsMerchantLevelApi paymentMethodsMerchantLevelApi, 
+                                   TransferInstrumentsApi transferInstrumentsApi) {
         this.adyenGatewayConfig = adyenGatewayConfig;
+        this.balanceAccountsApi = balanceAccountsApi;
+        this.accountHoldersApi = accountHoldersApi;
+        this.pciQuestionnairesApi = pciQuestionnairesApi;
+        this.termsOfServiceApi = termsOfServiceApi;
+        this.legalEntitiesApi = legalEntitiesApi;
+        this.businessLinesApi = businessLinesApi;
+        this.accountStoreLevelApi = accountStoreLevelApi;
+        this.paymentMethodsMerchantLevelApi = paymentMethodsMerchantLevelApi;
+        this.transferInstrumentsApi = transferInstrumentsApi;
     }
 
     public AdyenCredentials createTestAccount(String serviceName) {
@@ -115,8 +128,6 @@ public class AdyenTestAccountService {
 
     private void signPciQuestionnaire(String legalEntityId, String sroLegalEntityId) {
         try {
-            PciQuestionnairesApi pciQuestionnairesApi = new PciQuestionnairesApi(legalEntityManagementApiClient, legalEntityManagementTestUrl);
-
             GeneratePciDescriptionRequest generatePciDescriptionRequest = new GeneratePciDescriptionRequest()
                     .language("en");
 
@@ -138,8 +149,6 @@ public class AdyenTestAccountService {
 
     private void acceptTermsOfService(String legalEntityId, String sroLegalEntityId) {
         try {
-            TermsOfServiceApi termsOfServiceApi = new TermsOfServiceApi(legalEntityManagementApiClient, legalEntityManagementTestUrl);
-
             GetTermsOfServiceDocumentRequest getTermsOfServiceDocumentRequest = new GetTermsOfServiceDocumentRequest()
                     .type(GetTermsOfServiceDocumentRequest.TypeEnum.ADYENFORPLATFORMSADVANCED)
                     .language("en");
@@ -164,8 +173,7 @@ public class AdyenTestAccountService {
                     .description(String.format("Balance account for '%s' service", serviceName))
                     .defaultCurrencyCode("GBP")
                     .timeZone("Europe/London");
-
-            BalanceAccountsApi balanceAccountsApi = new BalanceAccountsApi(balancePlatformApiClient, balancePlatformTestUrl);
+            
             BalanceAccount balanceAccount = balanceAccountsApi.createBalanceAccount(balanceAccountInfo);
 
             return balanceAccount.getId();
@@ -181,8 +189,7 @@ public class AdyenTestAccountService {
                     .legalEntityId(legalEntityId)
                     .balancePlatform(balancePlatformId)
                     .description(String.format("Liable account holder used for %s", serviceName));
-
-            AccountHoldersApi accountHoldersApi = new AccountHoldersApi(balancePlatformApiClient, balancePlatformTestUrl);
+            
             AccountHolder accountHolder = accountHoldersApi.createAccountHolder(accountHolderInfo, null);
             return accountHolder.getId();
         } catch (ApiException | IOException e) {
@@ -211,8 +218,7 @@ public class AdyenTestAccountService {
             LegalEntityInfoRequiredType legalEntityInfoRequiredType = new LegalEntityInfoRequiredType()
                     .organization(organization)
                     .type(LegalEntityInfoRequiredType.TypeEnum.ORGANIZATION);
-
-            LegalEntitiesApi legalEntitiesApi = new LegalEntitiesApi(legalEntityManagementApiClient, legalEntityManagementTestUrl);
+            
             LegalEntity response = legalEntitiesApi.createLegalEntity(legalEntityInfoRequiredType, null);
 
             return response.getId();
@@ -240,8 +246,7 @@ public class AdyenTestAccountService {
                     .service(BusinessLineInfo.ServiceEnum.PAYMENTPROCESSING)
                     .webData(Collections.singletonList(webData))
                     .industryCode("921");
-
-            BusinessLinesApi businessLinesApi = new BusinessLinesApi(legalEntityManagementApiClient, legalEntityManagementTestUrl);
+            
             BusinessLine businessLine = businessLinesApi.createBusinessLine(businessLineInfo, null);
             return businessLine.getId();
         } catch (ApiException | IOException e) {
@@ -272,8 +277,7 @@ public class AdyenTestAccountService {
             LegalEntityInfoRequiredType legalEntityInfoRequiredType = new LegalEntityInfoRequiredType()
                     .individual(individual)
                     .type(LegalEntityInfoRequiredType.TypeEnum.INDIVIDUAL);
-
-            LegalEntitiesApi legalEntitiesApi = new LegalEntitiesApi(legalEntityManagementApiClient, legalEntityManagementTestUrl);
+            
             LegalEntity legalEntityIndividual = legalEntitiesApi.createLegalEntity(legalEntityInfoRequiredType, null);
 
             return legalEntityIndividual.getId();
@@ -301,8 +305,7 @@ public class AdyenTestAccountService {
 
             LegalEntityInfo legalEntityInfo = new LegalEntityInfo()
                     .entityAssociations(Arrays.asList(legalEntityAssociationSRO, legalEntityAssociationDirector, legalEntityAssociationSignatory));
-
-            LegalEntitiesApi legalEntitiesApi = new LegalEntitiesApi(legalEntityManagementApiClient, legalEntityManagementTestUrl);
+            
             legalEntitiesApi.updateLegalEntity(legalEntityId, legalEntityInfo, null);
         } catch (ApiException | IOException e) {
             throw new WebApplicationException("Error associating individuals to legal entity", e);
@@ -311,7 +314,6 @@ public class AdyenTestAccountService {
 
     private String createStore(String merchantAccountId, String serviceName, String businessLineId) {
         try {
-            AccountStoreLevelApi accountStoreLevelApi = new AccountStoreLevelApi(companyApiClient, managementTestUrl);
 
             StoreCreationWithMerchantCodeRequest request = new StoreCreationWithMerchantCodeRequest()
                     .merchantId(merchantAccountId)
@@ -332,8 +334,6 @@ public class AdyenTestAccountService {
     }
 
     private void addPaymentMethodsToStore(String merchantAccountIdTest, String storeId, String businessLineId) {
-        PaymentMethodsMerchantLevelApi paymentMethodsMerchantLevelApi =
-                new PaymentMethodsMerchantLevelApi(companyApiClient, managementTestUrl);
         var paymentTypes = List.of(
                 PaymentMethodSetupInfo.TypeEnum.VISA,
                 PaymentMethodSetupInfo.TypeEnum.MC,
@@ -381,9 +381,7 @@ public class AdyenTestAccountService {
                     .bankAccount(bankAccountInfo)
                     .legalEntityId(legalEntityId)
                     .type(TransferInstrumentInfo.TypeEnum.BANKACCOUNT);
-
-            TransferInstrumentsApi transferInstrumentsApi =
-                    new TransferInstrumentsApi(legalEntityManagementApiClient, legalEntityManagementTestUrl);
+            
             transferInstrumentsApi.createTransferInstrument(transferInstrumentInfo, null);
         } catch (IOException | ApiException e) {
             throw new WebApplicationException("Error creating bank account for Adyen test account", e);
