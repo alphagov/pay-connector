@@ -45,6 +45,8 @@ import com.adyen.service.management.AccountStoreLevelApi;
 import com.adyen.service.management.PaymentMethodsMerchantLevelApi;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 
@@ -55,9 +57,12 @@ import java.util.List;
 
 import static com.adyen.enums.Environment.TEST;
 import static com.adyen.model.legalentitymanagement.UKLocalAccountIdentification.TypeEnum.UKLOCAL;
+import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 
 public class AdyenTestAccountService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdyenTestAccountService.class);
 
     private final Client legalEntityManagementApiClient;
     private final Client companyApiClient;
@@ -97,6 +102,13 @@ public class AdyenTestAccountService {
 
         acceptTermsOfService(legalEntityId, sroLegalEntityId);
         signPciQuestionnaire(legalEntityId, sroLegalEntityId);
+
+        LOGGER.info("Adyen credentials created and linked",
+                kv("legal_entity_id", legalEntityId),
+                kv("store_id", storeId),
+                kv("account_holder_id", accountHolderId),
+                kv("balance_account_id", balanceAccountId)
+        );
 
         return new AdyenCredentials(legalEntityId, storeId, accountHolderId, balanceAccountId);
     }
