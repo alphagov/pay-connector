@@ -79,10 +79,24 @@ class AdyenCaptureHandlerTest {
         JsonAssert.with(payload).assertThat("$.merchantAccount", is("test"));
         JsonAssert.with(payload).assertThat("$.amount.value", is(500));
         JsonAssert.with(payload).assertThat("$.amount.currency", is("GBP"));
+    }
+
+    @Test
+    void should_send_a_capture_request_with_api_key_and_idempotency_key_headers() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
+        givenAdyenReturnsASuccessResponse();
+
+        CaptureGatewayRequest captureRequest = createCaptureRequest();
+        captureHandler.capture(captureRequest);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        String payload = captor.getValue().getGatewayOrder().getPayload();
+        JsonAssert.with(payload).assertThat("$.merchantAccount", is("test"));
+        JsonAssert.with(payload).assertThat("$.amount.value", is(500));
+        JsonAssert.with(payload).assertThat("$.amount.currency", is("GBP"));
         var headers = captor.getValue().getHeaders();
         assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
         assertThat(headers, hasEntry("Idempotency-Key", "capture-" + captureRequest.getExternalId()));
-
     }
 
     @Test

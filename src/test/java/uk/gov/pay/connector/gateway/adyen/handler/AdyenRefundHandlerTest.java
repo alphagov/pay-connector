@@ -101,6 +101,22 @@ class AdyenRefundHandlerTest {
     }
 
     @Test
+    void shouldSendRefundRequestToCorrectAdyenEndpointWithAPIKeyAndIdempotencyHeaders() throws Exception {
+        when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
+        givenAdyenReturnsSuccessfulRefundResponse();
+        var request = buildRefundGatewayRequest(1000L);
+
+        refundHandler.refund(request);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        assertThat(captor.getValue().getUrl().toString(),
+                is(TEST_CHECKOUT_BASE_URL + "/payments/" + PAYMENT_PSP_REFERENCE + "/refunds"));
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
+        assertThat(headers, hasEntry("Idempotency-Key", "refund-" + request.getRefundExternalId()));
+    }
+
+    @Test
     void shouldSendCorrectPayloadToAdyenForFullRefund() throws Exception {
         when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
         givenAdyenReturnsSuccessfulRefundResponse();
@@ -135,9 +151,8 @@ class AdyenRefundHandlerTest {
     void shouldSendCorrectPayloadToAdyenForPartialRefund() throws Exception {
         when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
         givenAdyenReturnsSuccessfulRefundResponse();
-        var request = buildRefundGatewayRequest(100L);
 
-        refundHandler.refund(request);
+        refundHandler.refund(buildRefundGatewayRequest(100L));
 
         then(mockClient).should().postRequestFor(captor.capture());
         String payload = captor.getValue().getGatewayOrder().getPayload();
@@ -147,10 +162,6 @@ class AdyenRefundHandlerTest {
                 .assertThat("$.amount.currency", is("GBP"))
                 .assertThat("$.reference", is(REFUND_EXTERNAL_ID))
                 .assertThat("$.store", is(STORE_ID));
-        var headers = captor.getValue().getHeaders();
-        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
-        assertThat(headers, hasEntry("Idempotency-Key", "refund-" + request.getRefundExternalId()));
-
     }
 
     @Test

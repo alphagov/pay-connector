@@ -89,6 +89,24 @@ class AdyenAuthoriseHandlerTest {
     }
 
     @Test
+    void should_send_request_to_Adyen_with_api_key_and_idempotency_key_headers() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        givenAdyenReturnsASuccessResponse();
+
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAddress(null)
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .build();
+        authoriseHandler.authorise(authoriseRequest);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
+        assertThat(headers, hasEntry("Idempotency-Key", "auth-" + authoriseRequest.getGovUkPayPaymentId()));
+    }
+
+    @Test
     void should_send_request_to_Adyen_with_full_billing_address() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
         givenAdyenReturnsASuccessResponse();
 
@@ -124,9 +142,6 @@ class AdyenAuthoriseHandlerTest {
         then(mockClient).should().postRequestFor(captor.capture());
         String payload = captor.getValue().getGatewayOrder().getPayload();
         JsonAssert.with(payload).assertNotDefined("$.billingAddress");
-        var headers = captor.getValue().getHeaders();
-        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
-        assertThat(headers, hasEntry("Idempotency-Key", "authorise-" + authoriseRequest.getGovUkPayPaymentId()));
     }
 
     @Test
