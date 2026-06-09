@@ -54,7 +54,7 @@ public class AdyenCancelHandler {
                     .build();
         } catch (GatewayErrorException e) {
             LOGGER.atError()
-                    .setMessage("Cancel failed for gateway transaction id {}. Charge External Id: {}.")
+                    .setMessage("Cancel failed for gateway transaction ID {}, external charge ID: {}.")
                     .addArgument(request.getTransactionId())
                     .addArgument(request.getExternalChargeId())
                     .log();

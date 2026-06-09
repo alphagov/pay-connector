@@ -302,8 +302,8 @@ class AdyenCancelHandlerTest {
         assertThat(errorLogs.size(), is(1));
         var errorLogMessage = errorLogs.getEvents().getFirst().getMessage();
         assertThat(errorLogMessage, containsString(
-                "Cancel failed for gateway transaction id %s. ".formatted(A_GATEWAY_TRANSACTION_ID) +
-                        "Charge External Id: %s.".formatted(AN_EXTERNAL_ID)));
+                "Cancel failed for gateway transaction ID %s, ".formatted(A_GATEWAY_TRANSACTION_ID) +
+                        "external charge ID: %s.".formatted(AN_EXTERNAL_ID)));
     }
 
     private void givenGatewayClientWillReturnResponseWithBody(String response) throws GatewayException {
