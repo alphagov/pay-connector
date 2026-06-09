@@ -77,6 +77,7 @@ class AdyenCardResourceAuthoriseIT {
 
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
+                .withHeader("Idempotency-Key", equalTo("auth-" + chargeId))
                 .withRequestBody(equalToJson(
                         load(ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS)
                                 .formatted(chargeId, "Ecommerce"))));

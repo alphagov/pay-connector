@@ -152,6 +152,7 @@ class AdyenRefundSubmitResourceIT {
     private void verifyAdyenRefundRequest(long refundAmount, String refundId) {
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments/" + testCharge.getTransactionId() + "/refunds"))
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
+                .withHeader("Idempotency-Key", equalTo("refund-" + refundId))
                 .withRequestBody(matchingJsonPath("$.amount.currency", equalTo("GBP")))
                 .withRequestBody(matchingJsonPath("$.amount.value", equalTo(String.valueOf(refundAmount))))
                 .withRequestBody(matchingJsonPath("$.merchantAccount", equalTo("adyen-test-merchant-account-id")))
