@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.adyen.handler;
 
+import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
@@ -56,17 +57,31 @@ public class AdyenCancelHandler {
             return responseBuilder.withResponse(AdyenCancelResponse.from(cancelResponse))
                     .build();
         } catch (GatewayErrorException e) {
-            var adyenError = jsonObjectMapper.getObject(e.getResponseFromGateway(), AdyenError.class);
+            return handleGatewayErrorException(request, e, responseBuilder);
+        } catch (GatewayException e) {
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
+        }
+    }
+
+    private GatewayResponse<BaseCancelResponse> handleGatewayErrorException(
+            CancelGatewayRequest request,
+            GatewayErrorException gatewayErrorException,
+            GatewayResponseBuilder<BaseCancelResponse> responseBuilder) {
+        try {
+            var adyenError = jsonObjectMapper.getObject(
+                    gatewayErrorException.getResponseFromGateway(), AdyenError.class);
             LOGGER.atWarn()
                     .setMessage("Cancel failed for transaction")
                     .addKeyValue(PAYMENT_EXTERNAL_ID, request.getExternalChargeId())
                     .addKeyValue(HTTP_STATUS, adyenError.status())
-                    .addKeyValue(GATEWAY_ERROR, e.getMessage())
+                    .addKeyValue(GATEWAY_ERROR, gatewayErrorException.getMessage())
                     .log();
             return responseBuilder.withResponse(AdyenCancelResponse.from(adyenError))
                     .build();
-        } catch (GatewayException e) {
-            return responseBuilder.withGatewayError(e.toGatewayError()).build();
+        } catch (WebApplicationException _) {
+            LOGGER.atWarn().setMessage("Failed to deserialise AdyenError during capture").log();
+            return responseBuilder.withGatewayError(gatewayErrorException.toGatewayError())
+                    .build();
         }
     }
 }

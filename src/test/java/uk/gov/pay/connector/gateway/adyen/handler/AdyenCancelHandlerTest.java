@@ -302,12 +302,39 @@ class AdyenCancelHandlerTest {
         cancelHandler.cancel(request);
 
         assertThat(logs.size(), is(1));
-
         var loggingEvent = logs.assertContains("Cancel failed for transaction");
         assertThat(loggingEvent.getKeyValuePairs(), hasItems(
                 new KeyValuePair(LoggingKeys.PAYMENT_EXTERNAL_ID, AN_EXTERNAL_ID),
                 new KeyValuePair(LoggingKeys.HTTP_STATUS, String.valueOf(HttpStatus.SC_UNAUTHORIZED)),
                 new KeyValuePair(LoggingKeys.GATEWAY_ERROR, A_GATEWAY_ERROR_MESSAGE)));
+    }
+
+    @Test
+    void should_log_on_error_response_deserialisation_failure_and_return_a_GATEWAY_ERROR() throws GatewayException {
+        var request = CancelGatewayRequest.valueOf(
+                aValidChargeEntity()
+                        .withGatewayTransactionId(A_GATEWAY_TRANSACTION_ID)
+                        .withExternalId(AN_EXTERNAL_ID)
+                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(LIVE))
+                        .build());
+        var unreadableAdyenResponse = "Not JSON";
+        var gatewayErrorException = new GatewayErrorException(
+                A_GATEWAY_ERROR_MESSAGE,
+                unreadableAdyenResponse,
+                HttpStatus.SC_UNAUTHORIZED);
+        given(mockGatewayClient.postRequestFor(any()))
+                .willThrow(gatewayErrorException);
+
+        var gatewayResponse = cancelHandler.cancel(request);
+
+        assertThat(
+                "GatewayResponse should have a gateway error",
+                gatewayResponse.getGatewayError().isPresent(), is(true));
+        var gatewayError = gatewayResponse.getGatewayError().get();
+        assertThat(gatewayError.getMessage(), is(A_GATEWAY_ERROR_MESSAGE));
+        assertThat(gatewayError.getErrorType(), is(ErrorType.GATEWAY_ERROR));
+        assertThat(logs.size(), is(1));
+        logs.assertContains("Failed to deserialise AdyenError during capture");
     }
 
     private void givenGatewayClientWillReturnResponseWithBody(String response) throws GatewayException {
