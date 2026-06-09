@@ -46,7 +46,7 @@ public class AdyenCancelHandler {
         GatewayResponseBuilder<BaseCancelResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
         var cancelRequest = new AdyenCancelRequest(
                 getCancelUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request.isLiveAccount()),
+                getHeaders(adyenGatewayConfig, request.isLiveAccount(), request.getRequestType(), request.getExternalChargeId()),
                 adyenRequestFactory.createPaymentCancelRequest(request),
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);

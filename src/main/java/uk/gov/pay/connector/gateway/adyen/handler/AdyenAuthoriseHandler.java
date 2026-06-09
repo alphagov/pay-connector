@@ -48,7 +48,7 @@ public class AdyenAuthoriseHandler {
         logger.info("Calling Adyen for authorisation of charge");
         var authorisationRequest = new AdyenAuthorisationRequest(
                 getAuthUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), request.getRequestType(), request.getGovUkPayPaymentId()),
                 request.getGatewayAccount().getType(),
                 adyenRequestFactory.createPaymentRequest(request),
                 jsonObjectMapper);

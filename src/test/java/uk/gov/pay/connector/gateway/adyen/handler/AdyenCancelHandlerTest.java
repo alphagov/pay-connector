@@ -151,7 +151,7 @@ class AdyenCancelHandlerTest {
             "LIVE," + LIVE_COMPANY_ACCOUNT_API_KEY,
             "TEST," + TEST_COMPANY_ACCOUNT_API_KEY
     })
-    void should_POST_with_company_API_key_as_X_API_Key_header(GatewayAccountType gatewayAccountType, String expectedApiKey) throws Exception {
+    void should_POST_with_company_API_key_as_X_API_Key_header_And_Idempotency_Key_Header(GatewayAccountType gatewayAccountType, String expectedApiKey) throws Exception {
         givenGatewayClientWillReturnResponseWithBody(ADYEN_CANCEL_RESPONSE);
         var request = CancelGatewayRequest.valueOf(
                 aValidChargeEntity()
@@ -164,6 +164,7 @@ class AdyenCancelHandlerTest {
                 .postRequestFor(captor.capture());
         var headers = captor.getValue().getHeaders();
         assertThat(headers, hasEntry("X-API-Key", expectedApiKey));
+        assertThat(headers, hasEntry("Idempotency-Key", "cancel-" + request.getExternalChargeId()));
     }
 
     @ParameterizedTest
