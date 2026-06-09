@@ -27,6 +27,15 @@ class AdyenCancelResponseTest {
     }
 
     @Test
+    void should_map_to_a_cancel_status_of_SUBMITTED_for_a_non_error_Adyen_response() {
+        var cancelResponseBody = new CancelResponseBody(PSP_REFERENCE_OF_THE_PAYMENT);
+
+        BaseCancelResponse mappedCancelResponse = AdyenCancelResponse.from(cancelResponseBody);
+
+        assertThat(mappedCancelResponse.cancelStatus(), is(CancelStatus.SUBMITTED));
+    }
+
+    @Test
     void should_map_error_code_error_message_and_transaction_ID_from_Adyen_error_response() {
         var adyenError = makeAdyenError();
 
