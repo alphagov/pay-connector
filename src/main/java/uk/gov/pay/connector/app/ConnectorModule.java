@@ -400,7 +400,6 @@ public class ConnectorModule extends AbstractModule {
         if (Objects.isNull(legalEntityManagementBaseUrl)) {
             return new TermsOfServiceApi(legalEntityManagementApiClient);
         }
-        
         return new TermsOfServiceApi(legalEntityManagementApiClient, legalEntityManagementBaseUrl);
     }
 
@@ -414,7 +413,6 @@ public class ConnectorModule extends AbstractModule {
         if (Objects.isNull(legalEntityManagementBaseUrl)) {
             return new LegalEntitiesApi(legalEntityManagementApiClient);
         }
-
         return new LegalEntitiesApi(legalEntityManagementApiClient, legalEntityManagementBaseUrl);
     }
 

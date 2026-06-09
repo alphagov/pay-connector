@@ -26,6 +26,6 @@ public class BaseUrlsFixture {
     }
 
     public BaseUrls build() {
-        return new BaseUrls(checkout,  balancePlatform, legalEntityManagement, management);
+        return new BaseUrls(checkout, balancePlatform, legalEntityManagement, management);
     }
 }
