@@ -118,7 +118,7 @@ class AdyenRequestUtilTest {
     }
 
     @Test
-    void should_create_api_key_headers_for_checkout_URL() {
+    void should_create_API_key_and_idempotency_key_headers_for_checkout_URL() {
         ApiKeys mockApiKeys = mock(ApiKeys.class);
         ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
         when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
