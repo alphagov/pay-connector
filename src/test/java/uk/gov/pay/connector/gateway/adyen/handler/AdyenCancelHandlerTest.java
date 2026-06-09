@@ -141,6 +141,7 @@ class AdyenCancelHandlerTest {
                 .postRequestFor(captor.capture());
         var headers = captor.getValue().getHeaders();
         assertThat(headers, hasEntry("X-API-Key", expectedApiKey));
+        assertThat(headers, hasEntry("Idempotency-Key", "cancel-" + request.getExternalChargeId()));
     }
 
     @ParameterizedTest

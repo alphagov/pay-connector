@@ -5,6 +5,7 @@ import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenCancelRequest;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -36,7 +37,7 @@ public class AdyenCancelHandler {
         GatewayResponseBuilder<BaseCancelResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
         var cancelRequest = new AdyenCancelRequest(
                 getCancelUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request.isLiveAccount()),
+                getHeaders(adyenGatewayConfig, request.isLiveAccount(), OrderRequestType.CANCEL, request.getExternalChargeId()),
                 adyenRequestFactory.createPaymentCancelRequest(request),
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);

@@ -30,9 +30,8 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -51,6 +50,8 @@ class AdyenAuthoriseHandlerTest {
             "balance_account_id");
     public static final String LIVE_ADYEN_CHECKOUT_BASE_URL = "https://example.com/live/v71";
     public static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/v71";
+    private static final String TEST_API_KEY = "test-api-key"; // pragma: allowlist secret
+    
     @Mock
     private GatewayClient mockClient;
     @Mock
@@ -78,7 +79,7 @@ class AdyenAuthoriseHandlerTest {
         ApiKeys mockApiKeys = mock(ApiKeys.class);
         ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
         when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
-        when(mockCompanyApiKeys.test()).thenReturn("test");
+        when(mockCompanyApiKeys.test()).thenReturn(TEST_API_KEY);
         when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
         when(mockConfig.getAdyenGatewayConfig()).thenReturn(mockAdyenGatewayConfig);
 
@@ -121,6 +122,9 @@ class AdyenAuthoriseHandlerTest {
         then(mockClient).should().postRequestFor(captor.capture());
         String payload = captor.getValue().getGatewayOrder().getPayload();
         JsonAssert.with(payload).assertNotDefined("$.billingAddress");
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
+        assertThat(headers, hasEntry("Idempotency-Key", "authorise-" + authoriseRequest.getGovUkPayPaymentId()));
     }
 
     @Test

@@ -29,6 +29,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
@@ -134,8 +135,9 @@ class AdyenRefundHandlerTest {
     void shouldSendCorrectPayloadToAdyenForPartialRefund() throws Exception {
         when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
         givenAdyenReturnsSuccessfulRefundResponse();
+        var request = buildRefundGatewayRequest(100L);
 
-        refundHandler.refund(buildRefundGatewayRequest(100L));
+        refundHandler.refund(request);
 
         then(mockClient).should().postRequestFor(captor.capture());
         String payload = captor.getValue().getGatewayOrder().getPayload();
@@ -145,6 +147,10 @@ class AdyenRefundHandlerTest {
                 .assertThat("$.amount.currency", is("GBP"))
                 .assertThat("$.reference", is(REFUND_EXTERNAL_ID))
                 .assertThat("$.store", is(STORE_ID));
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
+        assertThat(headers, hasEntry("Idempotency-Key", "refund-" + request.getRefundExternalId()));
+
     }
 
     @Test
