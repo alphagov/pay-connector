@@ -202,7 +202,7 @@ class AdyenCancelHandlerTest {
         var paymentPspReference = "payment-psp-reference-from-adyen";
         var adyenResponse = """
                 {
-                  "merchantAccount": "GovernmentDigitalService_UK",
+                  "merchantAccount": "testMerchantAccount",
                   "paymentPspReference": "%s",
                   "reference": "864vqloqrm71jn89r4bjkhvkv2",
                   "pspReference": "a-psp-reference",
