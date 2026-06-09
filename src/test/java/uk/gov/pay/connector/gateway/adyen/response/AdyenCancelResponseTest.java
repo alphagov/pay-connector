@@ -43,6 +43,20 @@ class AdyenCancelResponseTest {
     }
 
     @Test
+    void should_map_error_type_from_Adyen_error_response() {
+        var adyenError = new AdyenError(
+                HTTP_RESPONSE_STATUS,
+                ADYEN_ERROR_MESSAGE,
+                ADYEN_ERROR_CODE,
+                ADYEN_ERROR_TYPE,
+                PSP_REFERENCE_OF_THE_PAYMENT);
+
+        AdyenCancelResponse mappedCancelResponse = AdyenCancelResponse.from(adyenError);
+
+        assertThat(mappedCancelResponse.errorType(), is(ADYEN_ERROR_TYPE));
+    }
+
+    @Test
     void should_map_to_a_cancel_status_of_ERROR_from_Adyen_error_response() {
         var adyenError = new AdyenError(
                 HTTP_RESPONSE_STATUS,

@@ -8,6 +8,7 @@ public record AdyenCancelResponse(
         String transactionId,
         CancelStatus cancelStatus,
         String errorCode,
+        String errorType,
         String errorMessage
 ) implements BaseCancelResponse {
 
@@ -15,6 +16,7 @@ public record AdyenCancelResponse(
         return new AdyenCancelResponse(
                 cancelResponseBody.paymentPspReference(),
                 CancelStatus.SUBMITTED,
+                "",
                 "",
                 "");
     }
@@ -24,6 +26,7 @@ public record AdyenCancelResponse(
                 adyenError.pspReference(),
                 CancelStatus.ERROR,
                 adyenError.errorCode(),
+                adyenError.errorType(),
                 adyenError.message());
     }
 

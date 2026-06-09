@@ -268,6 +268,7 @@ class AdyenCancelHandlerTest {
                 "transactionId=a-PSP-reference, " +
                 "cancelStatus=ERROR, " +
                 "errorCode=000, " +
+                "errorType=security, " +
                 "errorMessage=HTTP Status Response - Unauthorized]"));
         assertThat(gatewayError.getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
     }
