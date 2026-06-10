@@ -5,6 +5,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import uk.gov.pay.connector.gateway.OrderRequestBuilder.TemplateData;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayRequest;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -24,6 +25,16 @@ public class TemplateBuilder implements PayloadBuilder {
         Writer responseWriter = new StringWriter();
         try {
             template.process(templateData, responseWriter);
+        } catch (TemplateException | IOException e) {
+            throw new RuntimeException("Could not render template " + template.getName(), e);
+        }
+        return responseWriter.toString();
+    }
+
+    public String buildWith(WorldpayRequest templateRecord) {
+        Writer responseWriter = new StringWriter();
+        try {
+            template.process(templateRecord, responseWriter);
         } catch (TemplateException | IOException e) {
             throw new RuntimeException("Could not render template " + template.getName(), e);
         }

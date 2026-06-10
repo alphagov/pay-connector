@@ -29,6 +29,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
@@ -97,6 +98,22 @@ class AdyenRefundHandlerTest {
         then(mockClient).should().postRequestFor(captor.capture());
         assertThat(captor.getValue().getUrl().toString(),
                 is(TEST_CHECKOUT_BASE_URL + "/payments/" + PAYMENT_PSP_REFERENCE + "/refunds"));
+    }
+
+    @Test
+    void shouldSendRefundRequestToCorrectAdyenEndpointWithAPIKeyAndIdempotencyHeaders() throws Exception {
+        when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
+        givenAdyenReturnsSuccessfulRefundResponse();
+        var request = buildRefundGatewayRequest(1000L);
+
+        refundHandler.refund(request);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        assertThat(captor.getValue().getUrl().toString(),
+                is(TEST_CHECKOUT_BASE_URL + "/payments/" + PAYMENT_PSP_REFERENCE + "/refunds"));
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
+        assertThat(headers, hasEntry("Idempotency-Key", "refund-" + request.getRefundExternalId()));
     }
 
     @Test

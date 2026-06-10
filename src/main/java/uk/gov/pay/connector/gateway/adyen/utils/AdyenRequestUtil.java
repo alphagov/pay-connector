@@ -1,6 +1,8 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -11,6 +13,7 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import java.net.URI;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getBaseCheckoutUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getCompanyApiKey;
 
@@ -46,7 +49,8 @@ public class AdyenRequestUtil {
         return URI.create(getBaseCheckoutUrl(config, request.getGatewayAccount().isLive()) + path);
     }
 
-    public static Map<String, String> getHeaders(AdyenGatewayConfig config, boolean isLive) {
-        return Map.of("X-API-Key", getCompanyApiKey(config, isLive));
+    public static Map<String, String> getHeaders(AdyenGatewayConfig config, boolean isLive, GatewayOperation requestType, String idempotencyKey) {
+        return Map.of("X-API-Key", getCompanyApiKey(config, isLive),
+                "Idempotency-Key", format("%s-%s", requestType.getConfigKey(), idempotencyKey));
     }
 }
