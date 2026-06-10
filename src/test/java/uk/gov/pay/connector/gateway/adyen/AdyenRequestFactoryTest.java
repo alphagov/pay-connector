@@ -11,7 +11,9 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -204,6 +206,18 @@ class AdyenRequestFactoryTest {
 
         assertThat(request.shopperInteraction(), is("Moto"));
     }
+    
+    @Test
+    void should_create_a_PaymentDetailsRequest_with_redirect_result() {
+        var auth3dsResult = new Auth3dsResult();
+        auth3dsResult.setRedirectResult("redirect-result-value");
+        var auth3dsRequest = Auth3dsResponseGatewayRequest.valueOf(aValidChargeEntity().build(), auth3dsResult);
+
+        var paymentDetailsRequest = adyenRequestFactory.createPaymentDetailsRequest(auth3dsRequest);
+
+        assertThat(paymentDetailsRequest.details().redirectResult(), is("redirect-result-value"));
+    }
+
     private static RefundGatewayRequest makeRefundGatewayRequest(String refundExternalId) {
         Charge charge = Charge.from(
                 aValidChargeEntity()

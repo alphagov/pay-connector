@@ -7,9 +7,11 @@ import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.request.json.PaymentDetailsRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -86,6 +88,12 @@ public class AdyenRequestFactory {
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 request.getRefundExternalId(),
                 adyenCredentials.storeId()
+        );
+    }
+    
+    public PaymentDetailsRequestPayload createPaymentDetailsRequest(Auth3dsResponseGatewayRequest request) {
+        return new PaymentDetailsRequestPayload(
+                new PaymentDetailsRequestPayload.Details(request.getAuth3dsResult().getRedirectResult())
         );
     }
 
