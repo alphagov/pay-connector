@@ -79,11 +79,11 @@ adyen:
       test: ${GDS_CONNECTOR_ADYEN_BASE_URL_CHECKOUT_TEST:-https://checkout-test.adyen.com/v71}
       live: ${GDS_CONNECTOR_ADYEN_BASE_URL_CHECKOUT_LIVE}
     balancePlatform:
-      test:
+      test: ${GDS_CONNECTOR_ADYEN_BASE_URL_BALANCE_PLATFORM_TEST:-}
     legalEntityManagement:
-      test:
+      test: ${GDS_CONNECTOR_ADYEN_BASE_URL_LEGAL_ENTITY_MANAGEMENT_TEST:-}
     management:
-      test:
+      test: ${GDS_CONNECTOR_ADYEN_BASE_URL_MANAGEMENT_TEST:-}
   merchantAccountIds:
     test: ${GDS_CONNECTOR_ADYEN_MERCHANT_ACCOUNT_ID_TEST}
     live: ${GDS_CONNECTOR_ADYEN_MERCHANT_ACCOUNT_ID_LIVE}
