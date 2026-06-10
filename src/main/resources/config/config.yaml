@@ -76,7 +76,7 @@ sandbox:
 adyen:
   baseUrls:
     checkout:
-      test: ${GDS_CONNECTOR_ADYEN_BASE_URL_CHECKOUT_TEST:-https://checkout-test.adyen.com/v71}
+      test: ${GDS_CONNECTOR_ADYEN_BASE_URL_CHECKOUT_TEST:-https://checkout-test.adyen.com/v72}
       live: ${GDS_CONNECTOR_ADYEN_BASE_URL_CHECKOUT_LIVE}
     balancePlatform:
       test: ${GDS_CONNECTOR_ADYEN_BASE_URL_BALANCE_PLATFORM_TEST:-https://balanceplatform-api-test.adyen.com}
