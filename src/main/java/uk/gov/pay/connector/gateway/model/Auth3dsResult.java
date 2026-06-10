@@ -25,6 +25,7 @@ public class Auth3dsResult {
     @JsonIgnore
     private String gatewayResponseStringified;
 
+    @Schema(description = "Adyen 3DS2 URL-encoded Redirect Result data")
     public String getRedirectResult() {
         return redirectResult;
     }

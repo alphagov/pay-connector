@@ -3549,6 +3549,9 @@ components:
           type: string
         pa_response:
           type: string
+        redirect_result:
+          type: string
+          description: Adyen 3DS2 URL-encoded Redirect Result data
     AuthCardDetails:
       type: object
       properties:
