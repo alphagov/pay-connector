@@ -110,8 +110,8 @@ public class Auth3dsResult {
     @Override
     public int hashCode() {
         int result = paResponse != null ? paResponse.hashCode() : 0;
-        result = 31 * result + (auth3dsResultOutcome != null ? auth3dsResultOutcome.hashCode() : 0);
         result = 31 * result + (redirectResult != null ? redirectResult.hashCode() : 0);
+        result = 31 * result + (auth3dsResultOutcome != null ? auth3dsResultOutcome.hashCode() : 0);
         result = 31 * result + (md != null ? md.hashCode() : 0);
         return result;
     }
