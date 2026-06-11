@@ -3,16 +3,16 @@ package uk.gov.pay.connector.gateway.adyen;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload.Details;
 import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
-import uk.gov.pay.connector.gateway.adyen.request.json.PaymentDetailsRequestPayload;
-import uk.gov.pay.connector.gateway.adyen.request.json.PaymentDetailsRequestPayload.Details;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
-import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -91,9 +91,9 @@ public class AdyenRequestFactory {
                 adyenCredentials.storeId()
         );
     }
-    
-    public PaymentDetailsRequestPayload createPaymentDetailsRequest(Auth3dsResponseGatewayRequest request) {
-        return new PaymentDetailsRequestPayload(
+
+    public Authorise3dsRequestPayload createPaymentDetailsRequest(Auth3dsResponseGatewayRequest request) {
+        return new Authorise3dsRequestPayload(
                 new Details(request.getAuth3dsResult().getRedirectResult())
         );
     }
