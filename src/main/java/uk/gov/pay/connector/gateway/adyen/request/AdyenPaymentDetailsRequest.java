@@ -28,7 +28,7 @@ public record AdyenPaymentDetailsRequest(
     @Override
     public GatewayOrder getGatewayOrder() {
         var payload = jsonObjectMapper.objectToString(requestPayload);
-        return new GatewayOrder(OrderRequestType.AUTHORISE_3DS, payload, MediaType.APPLICATION_JSON_TYPE);
+        return new GatewayOrder(AUTHORISE_3DS, payload, APPLICATION_JSON_TYPE);
     }
 
     @Override
