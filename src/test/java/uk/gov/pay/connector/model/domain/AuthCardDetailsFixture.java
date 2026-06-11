@@ -32,6 +32,7 @@ public final class AuthCardDetailsFixture {
     private String jsScreenHeight;
     private String jsScreenWidth;
     private String jsTimezoneOffsetMins;
+    private Boolean jsEnabled;
 
     private AuthCardDetailsFixture() {
     }
@@ -130,6 +131,11 @@ public final class AuthCardDetailsFixture {
         return this;
     }    
     
+    public  AuthCardDetailsFixture withJsEnabled(boolean jsEnabled) {
+        this.jsEnabled = jsEnabled;
+        return this;
+    }
+    
     public AuthCardDetailsFixture withAcceptLanguageHeader(String acceptLanguageHeader) {
         this.acceptLanguageHeader = acceptLanguageHeader;
         return this;
@@ -181,6 +187,7 @@ public final class AuthCardDetailsFixture {
         authCardDetails.setJsScreenHeight(jsScreenHeight);
         authCardDetails.setJsScreenWidth(jsScreenWidth);
         authCardDetails.setJsTimezoneOffsetMins(jsTimezoneOffsetMins);
+        authCardDetails.setJsEnabled(jsEnabled);
         return authCardDetails;
     }
 }
