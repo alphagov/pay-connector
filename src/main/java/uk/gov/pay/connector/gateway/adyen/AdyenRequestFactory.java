@@ -3,15 +3,18 @@ package uk.gov.pay.connector.gateway.adyen;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload.Details;
 import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
+import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -61,10 +64,10 @@ public class AdyenRequestFactory {
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true")),
-                 isMoto ? null : mapToBrowserInfo(authCardDetails), 
-                 isMoto ? null : configuration.getLinks().getFrontendUrl(),
-                 isMoto ? null : request.getEmail(),
-                 isMoto ? null : authCardDetails.getIpAddress().orElse(null)
+                isMoto ? null : mapToBrowserInfo(authCardDetails),
+                isMoto ? null : configuration.getLinks().getFrontendUrl(),
+                isMoto ? null : request.getEmail(),
+                isMoto ? null : authCardDetails.getIpAddress().orElse(null)
         );
     }
 
@@ -93,6 +96,12 @@ public class AdyenRequestFactory {
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 request.getRefundExternalId(),
                 adyenCredentials.storeId()
+        );
+    }
+
+    public Authorise3dsRequestPayload createPaymentDetailsRequest(Auth3dsResponseGatewayRequest request) {
+        return new Authorise3dsRequestPayload(
+                new Details(request.getAuth3dsResult().getRedirectResult())
         );
     }
 
