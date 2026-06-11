@@ -83,7 +83,7 @@ class AdyenRequestUtilTest {
 
     @Test
     void should_create_Adyen_checkout_payment_details_URL() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        stubCheckoutBaseUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion");
 
         var paymentDetailsUrl = AdyenRequestUtil.getPaymentDetailsUrl(mockAdyenGatewayConfig, mockAuth3dsResponseRequest).toString();
 
