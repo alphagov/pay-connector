@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.adyen.request.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
 
 import java.util.HashMap;
 
@@ -26,5 +27,14 @@ public record AuthoriseRequestPayload(
         @JsonProperty("channel")
         String channel,
         @JsonProperty("additionalData")
-        HashMap<String,String> additionalData) {
+        HashMap<String,String> additionalData,
+        @JsonProperty("browserInfo")
+        BrowserInfo browserInfo,
+        @JsonProperty("origin")
+        String origin,
+        @JsonProperty("shopperEmail")
+        String shopperEmail,
+        @JsonProperty("shopperIP")
+        String shopperIP
+) {
 }

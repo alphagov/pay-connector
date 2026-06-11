@@ -134,6 +134,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_SEARCH_TRANSFERS_EMPTY_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_transfers_empty_response.json";
 
     public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address.json";
+    public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS_AND_BROWSER_INFO = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address_and_browser_info.json";
     public static final String ADYEN_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/notification.json";
     public static final String ADYEN_CAPTURE_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/capture-successful.json";
     public static final String ADYEN_CREATE_LEGAL_ENTITY_REQUEST = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_request.json";
