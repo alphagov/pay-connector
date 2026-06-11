@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
@@ -52,16 +53,16 @@ class AdyenAuthorise3dsHandlerTest {
     @BeforeEach
     void setUp() {
         BaseUrls mockBaseUrls = mock(BaseUrls.class);
-        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls(TEST_ADYEN_CHECKOUT_BASE_URL, "https://example.com/live/someVersion"));
+        lenient().when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls(TEST_ADYEN_CHECKOUT_BASE_URL, "https://example.com/live/someVersion"));
         AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
-        when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
+        lenient().when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
 
         ApiKeys mockApiKeys = mock(ApiKeys.class);
         ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
-        when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
-        when(mockCompanyApiKeys.test()).thenReturn("test");
-        when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
-        when(mockConfig.getAdyenGatewayConfig()).thenReturn(mockAdyenGatewayConfig);
+        lenient().when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
+        lenient().when(mockCompanyApiKeys.test()).thenReturn("test");
+        lenient().when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
+        lenient().when(mockConfig.getAdyenGatewayConfig()).thenReturn(mockAdyenGatewayConfig);
 
         adyenAuthorise3dsHandler = new AdyenAuthorise3dsHandler(mockClient, mockConfig, jsonObjectMapper);
     }
@@ -96,6 +97,44 @@ class AdyenAuthorise3dsHandlerTest {
 
         assertThat(response.getMappedChargeStatus(), is(expectedStatus.getMappedChargeStatus()));
         assertThat(response.getTransactionId().get(), is("adyen-3ds-psp-reference"));
+    }
+
+    @Test
+    void should_map_null_result_code_to_authorisation_status_error() throws Exception {
+        when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
+        when(mockGatewayClientResponse.getEntity()).thenReturn(
+                """
+                {
+                  "pspReference": "adyen-3ds-psp-reference",
+                  "resultCode": null
+                }
+                """
+        );
+
+        var response = adyenAuthorise3dsHandler.authorise3dsResponse(buildRequestWith("redirect-result"));
+
+        assertThat(response.getMappedChargeStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.ERROR.getMappedChargeStatus()));
+        assertThat(response.getTransactionId().get(), is("adyen-3ds-psp-reference"));
+    }
+
+    @Test
+    void should_return_error_when_auth3ds_result_is_null() {
+        var response = adyenAuthorise3dsHandler.authorise3dsResponse(
+                Auth3dsResponseGatewayRequest.valueOf(aValidChargeEntity().withPaymentProvider("adyen").build(), null)
+        );
+
+        assertThat(response.getMappedChargeStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.ERROR.getMappedChargeStatus()));
+        assertThat(response.getTransactionId().isPresent(), is(false));
+    }
+
+    @Test
+    void should_handle_unexpected_exception_and_return_exception_status() throws Exception {
+        when(mockClient.postRequestFor(any())).thenThrow(new RuntimeException("boom"));
+
+        var response = adyenAuthorise3dsHandler.authorise3dsResponse(buildRequestWith("redirect-result"));
+
+        assertThat(response.isException(), is(true));
+        assertThat(response.toString(), is("boom"));
     }
 
     @Test
