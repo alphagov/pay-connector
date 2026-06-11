@@ -34,8 +34,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenCaptureHandlerTest {
-    public static final String LIVE_ADYEN_CHECKOUT_BASE_URL = "https://example.com/live/v71";
-    public static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/v71";
+    public static final String LIVE_ADYEN_CHECKOUT_BASE_URL = "https://example.com/live/someVersion";
+    public static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/someVersion";
     private static final String TEST_API_KEY = "test-api-key"; // pragma: allowlist secret
     @Mock
     private GatewayClient mockClient;

@@ -46,8 +46,8 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 @ExtendWith(MockitoExtension.class)
 class AdyenRefundHandlerTest {
 
-    private static final String TEST_CHECKOUT_BASE_URL = "https://checkout-test.example.com/v71";
-    private static final String LIVE_CHECKOUT_BASE_URL = "https://checkout.example.com/v71";
+    private static final String TEST_CHECKOUT_BASE_URL = "https://checkout-test.example.com/someVersion";
+    private static final String LIVE_CHECKOUT_BASE_URL = "https://checkout.example.com/someVersion";
     private static final String TEST_MERCHANT_ACCOUNT = "ADYEN_MERCHANT_ACCOUNT";
     private static final String PAYMENT_PSP_REFERENCE = "PSP-REF-123";
     private static final String REFUND_PSP_REFERENCE = "REFUND-PSP-REF-123";

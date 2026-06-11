@@ -73,7 +73,7 @@ class AdyenRequestFactoryTest {
         when(mockConfig.getLinks()).thenReturn(mockedLinksConfig);
         when(mockedLinksConfig.getFrontendUrl()).thenReturn("https://www.example.com");
         BaseUrls mockBaseUrls = mock(BaseUrls.class);
-        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
+        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion"));
         AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
         when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);

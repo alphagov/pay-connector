@@ -40,8 +40,8 @@ import static uk.gov.pay.connector.util.SystemUtils.envOrThrow;
  * To run tests using test runner, add env variables to the AppWithPostgresAndSqsExtension parameters as config overrides like so:
  * - ConfigOverride.config("adyen.merchantAccountIds.test", gdsConnectorAdyenMerchantAccountIdTest),
  * - ConfigOverride.config("adyen.apiKeys.companyAccount.test", gdsConnectorAdyenCompanyAccountApiKeyTest)
- * - ConfigOverride.config("adyen.baseUrls.checkout.test", "https://checkout-test.adyen.com/v71")
- * If you get an error referring to duplicated metrics, add app.getAppRule().getEnvironment().metrics().removeMatching(MetricFilter.ALL); to the setup method
+ * - ConfigOverride.config("adyen.baseUrls.checkout.test", "https://checkout-test.adyen.com/v72")
+ * If you get an error referring to duplicated metrics, add app.getAppRule().getEnvironment().metrics().removeMatching(MetricFilter.ALL); to the top of the setup method
  */
 
 @Disabled
