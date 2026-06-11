@@ -10,10 +10,9 @@ import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
+import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
-import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
-import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -65,10 +64,10 @@ public class AdyenRequestFactory {
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true")),
-                 isMoto ? null : mapToBrowserInfo(authCardDetails), 
-                 isMoto ? null : configuration.getLinks().getFrontendUrl(),
-                 isMoto ? null : request.getEmail(),
-                 isMoto ? null : authCardDetails.getIpAddress().orElse(null)
+                isMoto ? null : mapToBrowserInfo(authCardDetails),
+                isMoto ? null : configuration.getLinks().getFrontendUrl(),
+                isMoto ? null : request.getEmail(),
+                isMoto ? null : authCardDetails.getIpAddress().orElse(null)
         );
     }
 
