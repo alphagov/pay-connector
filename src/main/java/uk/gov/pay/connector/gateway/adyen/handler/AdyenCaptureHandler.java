@@ -49,7 +49,7 @@ public class AdyenCaptureHandler implements CaptureHandler {
 
         var adyenCaptureRequest = new AdyenCaptureRequest(
                 AdyenRequestUtil.getCaptureUrl(adyenGatewayConfig, request),
-                AdyenRequestUtil.getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
+                AdyenRequestUtil.getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), request.getRequestType(), request.getExternalId()),
                 adyenRequestFactory.createCapturePayload(request),
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);

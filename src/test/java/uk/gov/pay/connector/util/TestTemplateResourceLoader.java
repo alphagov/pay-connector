@@ -61,6 +61,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_EXEMPTION_OPTIMISED = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-exemption-optimised.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_3DS_REQUEST_CORPORATE_EXEMPTION_AUTHORISATION = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-3ds-request-corporate-exemption-authorisation.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST_WITH_REFERENCE_AS_DESCRIPTION = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-google-pay-with-reference-as-description.xml";
+    public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_MOTO_AUTHORISATION_REQUEST = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-moto-request.xml";
 
     public static final String WORLDPAY_3DS_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-response.xml";
     public static final String WORLDPAY_3DS_FLEX_RESPONSE = WORLDPAY_BASE_NAME + "/3ds-flex-response.xml";
@@ -133,6 +134,7 @@ public class TestTemplateResourceLoader {
     public static final String STRIPE_SEARCH_TRANSFERS_EMPTY_RESPONSE = TEMPLATE_BASE_NAME + "/stripe/search_transfers_empty_response.json";
 
     public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address.json";
+    public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS_AND_BROWSER_INFO = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address_and_browser_info.json";
     public static final String ADYEN_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/notification.json";
     public static final String ADYEN_CAPTURE_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/capture-successful.json";
     public static final String ADYEN_CREATE_LEGAL_ENTITY_REQUEST = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_request.json";

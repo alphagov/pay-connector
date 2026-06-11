@@ -35,8 +35,8 @@ worldpay:
 adyen:
   baseUrls:
     checkout:
-      test: https://checkout-test.adyen.com/v71
-      live: https://checkout-live.adyen.com/v71
+      test: https://checkout-test.adyen.com/someVersion
+      live: https://checkout-live.adyen.com/someVersion
     balancePlatform:
       test:
     legalEntityManagement:

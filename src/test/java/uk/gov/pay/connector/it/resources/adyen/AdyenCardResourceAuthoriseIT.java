@@ -26,7 +26,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS_AND_BROWSER_INFO;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -77,16 +77,51 @@ class AdyenCardResourceAuthoriseIT {
 
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
-                .withRequestBody(equalToJson(
-                        load(ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS)
-                                .formatted(chargeId, "Ecommerce"))));
+                .withHeader("Idempotency-Key", equalTo("auth-" + chargeId))
+                .withRequestBody(matchingJsonPath("$.billingAddress.houseNumberOrName", equalTo("line1")))
+                .withRequestBody(matchingJsonPath("$.billingAddress.street", equalTo("line2")))
+                .withRequestBody(matchingJsonPath("$.billingAddress.city", equalTo("city")))
+                .withRequestBody(matchingJsonPath("$.billingAddress.country", equalTo("country")))
+                .withRequestBody(matchingJsonPath("$.billingAddress.postalCode", equalTo("postcode"))));
 
         Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is("AUTHORISATION SUCCESS"));
         assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
     }
+    @Test
+    void should_send_browser_info_origin_email_and_ip_to_adyen_for_web_payment() {
+        var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
+        var pspReferenceFromAdyen = "993617895215577D";
 
+        app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
+
+        var authCardDetails = anAuthCardDetails()
+                .withAcceptHeader("text/html")
+                .withUserAgentHeader("Mozilla/5.0")
+                .withIpAddress("127.0.0.1")
+                .withJsNavigatorLanguage("en-GB")
+                .withJsScreenColorDepth("24")
+                .withJsScreenHeight("900")
+                .withJsScreenWidth("1440")
+                .withJsTimezoneOffsetMins("-60")
+                .withJsEnabled(true)
+                .build();
+
+        app.givenSetup()
+                .body(authCardDetails)
+                .post("/v1/frontend/charges/{chargeId}/cards", chargeId)
+                .then()
+                .statusCode(200)
+                .body("status", is("AUTHORISATION SUCCESS"));
+
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
+                .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
+                .withHeader("Idempotency-Key", equalTo("auth-" + chargeId))
+                .withRequestBody(equalToJson(
+                        load(ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS_AND_BROWSER_INFO)
+                                .formatted(chargeId, "Ecommerce"))));
+    }
     @Test
     void successful_authorisation_of_a_payment_without_a_billing_address() {
         var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);

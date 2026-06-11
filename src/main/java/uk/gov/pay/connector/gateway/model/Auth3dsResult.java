@@ -12,6 +12,8 @@ public class Auth3dsResult {
         AUTHORISED, DECLINED, ERROR, CANCELED
     }
 
+    private String redirectResult;
+
     private String paResponse;
 
     private Auth3dsResultOutcome auth3dsResultOutcome;
@@ -22,6 +24,16 @@ public class Auth3dsResult {
 
     @JsonIgnore
     private String gatewayResponseStringified;
+
+    @Schema(description = "Adyen 3DS2 Redirect Result data")
+    public String getRedirectResult() {
+        return redirectResult;
+    }
+
+    @JsonProperty("redirect_result")
+    public void setRedirectResult(String redirectResult) {
+        this.redirectResult = redirectResult;
+    }
 
     @JsonProperty("pa_response")
     public void setPaResponse(String paResponse) {
@@ -72,7 +84,8 @@ public class Auth3dsResult {
     @Override
     public String toString() {
         return "Auth3dsDetails{" +
-                "paResponse='" + paResponse + '\'' +
+                "redirectResult='" + redirectResult + '\'' +
+                ", paResponse='" + paResponse + '\'' +
                 ", auth3DsResult=" + auth3dsResultOutcome +
                 ", md='" + md + '\'' +
                 ", threeDsVersion='" + threeDsVersion + '\'' +
@@ -87,6 +100,7 @@ public class Auth3dsResult {
 
         Auth3dsResult that = (Auth3dsResult) o;
 
+        if (!Objects.equals(redirectResult, that.redirectResult)) return false;
         if (!Objects.equals(paResponse, that.paResponse)) return false;
         if (auth3dsResultOutcome != that.auth3dsResultOutcome) return false;
         if (!Objects.equals(threeDsVersion, that.threeDsVersion)) return false;
@@ -96,6 +110,7 @@ public class Auth3dsResult {
     @Override
     public int hashCode() {
         int result = paResponse != null ? paResponse.hashCode() : 0;
+        result = 31 * result + (redirectResult != null ? redirectResult.hashCode() : 0);
         result = 31 * result + (auth3dsResultOutcome != null ? auth3dsResultOutcome.hashCode() : 0);
         result = 31 * result + (md != null ? md.hashCode() : 0);
         return result;

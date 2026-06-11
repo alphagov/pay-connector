@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE paymentService PUBLIC "-//WorldPay//DTD WorldPay PaymentService v1//EN"
+        "http://dtd.worldpay.com/paymentService_v1.dtd">
+<paymentService version="1.4" merchantCode="MERCHANTCODE">
+    <submit>
+        <order orderCode="MyUniqueTransactionId">
+            <description>My description</description>
+            <amount currencyCode="GBP" exponent="2" value="2000"/>
+            <paymentDetails>
+                <CARD-SSL>
+                    <cardNumber>4242424242424242</cardNumber>
+                    <expiryDate>
+                        <date month="11" year="2030"/>
+                    </expiryDate>
+                    <cardHolderName>Alec Barley</cardHolderName>
+                    <cvc>123</cvc>
+                </CARD-SSL>
+            </paymentDetails>
+        </order>
+    </submit>
+</paymentService>

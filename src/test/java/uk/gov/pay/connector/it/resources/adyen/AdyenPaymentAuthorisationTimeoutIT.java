@@ -44,7 +44,7 @@ public class AdyenPaymentAuthorisationTimeoutIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(
             CustomConnectorApp.class,
-            ConfigOverride.config("adyen.baseUrls.checkout.test", "http://localhost:8081/v71"));
+            ConfigOverride.config("adyen.baseUrls.checkout.test", "http://localhost:8081/v72"));
 
     @RegisterExtension
     public static ITestBaseExtension testBaseExtension = new ITestBaseExtension(

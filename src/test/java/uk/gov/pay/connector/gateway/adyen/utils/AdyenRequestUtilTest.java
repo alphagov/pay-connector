@@ -13,6 +13,9 @@ import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
+import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -44,6 +47,7 @@ class AdyenRequestUtilTest {
     private CardAuthorisationGatewayRequest mockAuthoriseRequest;
     private CancelGatewayRequest mockCancelRequest;
     private CaptureGatewayRequest mockCaptureRequest;
+    private Auth3dsResponseGatewayRequest mockAuth3dsResponseRequest;
     ChargeEntity chargeEntity;
 
     public static final String GATEWAY_TRANSACTION_ID = "gateway-transaction-id";
@@ -63,34 +67,46 @@ class AdyenRequestUtilTest {
                 .build();
         mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
         mockCancelRequest = CancelGatewayRequest.valueOf(chargeEntity);
+        var auth3dsResult = new Auth3dsResult();
+        auth3dsResult.setRedirectResult("redirect-result-value");
+        mockAuth3dsResponseRequest = Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3dsResult);
     }
 
     @Test
     void should_create_Adyen_checkout_authorisation_URL() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        stubCheckoutBaseUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion");
 
         var authUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
 
-        assertThat(authUrl, is("https://example.com/test/v71/payments"));
+        assertThat(authUrl, is("https://example.com/test/someVersion/payments"));
+    }
+
+    @Test
+    void should_create_Adyen_checkout_payment_details_URL() {
+        stubCheckoutBaseUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion");
+
+        var paymentDetailsUrl = AdyenRequestUtil.get3dsAuthUrl(mockAdyenGatewayConfig, mockAuth3dsResponseRequest).toString();
+
+        assertThat(paymentDetailsUrl, is("https://example.com/test/someVersion/payments/details"));
     }
 
     @Test
     void should_create_Adyen_checkout_capture_URL() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        stubCheckoutBaseUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion");
 
         var captureUrl = AdyenRequestUtil.getCaptureUrl(mockAdyenGatewayConfig, mockCaptureRequest).toString();
 
-        assertThat(captureUrl, is(String.format("https://example.com/test/v71/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
+        assertThat(captureUrl, is(String.format("https://example.com/test/someVersion/payments/%s/captures", GATEWAY_TRANSACTION_ID)));
     }
 
 
     @ParameterizedTest
     @CsvSource({
-            "TEST,https://example.com/test/v71",
-            "LIVE,https://example.com/live/v71"
+            "TEST,https://example.com/test/someVersion",
+            "LIVE,https://example.com/live/someVersion"
     })
     void should_create_adyen_checkout_refund_url(GatewayAccountType gatewayAccountType, String expectedCheckoutBaseUrl) {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        stubCheckoutBaseUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion");
         chargeEntity.getGatewayAccount().setType(gatewayAccountType);
 
         var refundEntity = new RefundEntityFixture()
@@ -109,24 +125,25 @@ class AdyenRequestUtilTest {
 
     @Test
     void should_create_Adyen_checkout_cancel_URL() {
-        stubCheckoutBaseUrls("https://example.com/test/v71", "https://example.com/live/v71");
+        stubCheckoutBaseUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion");
 
         var cancelUrl = AdyenRequestUtil.getCancelUrl(mockAdyenGatewayConfig, mockCancelRequest).toString();
 
-        assertThat(cancelUrl, is(String.format("https://example.com/test/v71/payments/%s/cancels", GATEWAY_TRANSACTION_ID)));
+        assertThat(cancelUrl, is(String.format("https://example.com/test/someVersion/payments/%s/cancels", GATEWAY_TRANSACTION_ID)));
     }
 
     @Test
-    void should_create_api_key_headers_for_checkout_URL() {
+    void should_create_API_key_and_idempotency_key_headers_for_checkout_URL() {
         ApiKeys mockApiKeys = mock(ApiKeys.class);
         ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
         when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
         when(mockCompanyApiKeys.test()).thenReturn("test");
         when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
 
-        var headers = AdyenRequestUtil.getHeaders(mockAdyenGatewayConfig, mockAuthoriseRequest.getGatewayAccount().isLive());
+        var headers = AdyenRequestUtil.getHeaders(mockAdyenGatewayConfig, mockAuthoriseRequest.getGatewayAccount().isLive(), GatewayOperation.AUTHORISE, "some-unique-key");
 
         assertThat(headers, hasEntry("X-API-Key", "test"));
+        assertThat(headers, hasEntry("Idempotency-Key", "auth-some-unique-key"));
     }
 
     private void stubCheckoutBaseUrls(String test, String live) {

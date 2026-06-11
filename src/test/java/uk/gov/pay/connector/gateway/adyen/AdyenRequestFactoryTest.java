@@ -11,7 +11,9 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -40,6 +42,16 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 
 class AdyenRequestFactoryTest {
 
+    final String acceptHeader = "text/html";
+    final String userAgent = "Mozilla/5.0";
+    final String shopperIp = "127.0.0.1";
+    final String language = "en-GB";
+    final String colorDepth = "24";
+    final String screenHeight = "900";
+    final String screenWidth = "1440";
+    final String timezoneOffset = "-60";
+    final String shopperEmail = "test@example.com";
+   
     public static final BillingAddress FULL_BILLING_ADDRESS = new BillingAddress(
             "line1",
             "line2",
@@ -61,7 +73,7 @@ class AdyenRequestFactoryTest {
         when(mockConfig.getLinks()).thenReturn(mockedLinksConfig);
         when(mockedLinksConfig.getFrontendUrl()).thenReturn("https://www.example.com");
         BaseUrls mockBaseUrls = mock(BaseUrls.class);
-        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/v71", "https://example.com/live/v71"));
+        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion"));
         AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
         when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
@@ -204,6 +216,18 @@ class AdyenRequestFactoryTest {
 
         assertThat(request.shopperInteraction(), is("Moto"));
     }
+    
+    @Test
+    void should_create_a_PaymentDetailsRequest_with_redirect_result() {
+        var auth3dsResult = new Auth3dsResult();
+        auth3dsResult.setRedirectResult("redirect-result-value");
+        var auth3dsRequest = Auth3dsResponseGatewayRequest.valueOf(aValidChargeEntity().build(), auth3dsResult);
+
+        var paymentDetailsRequest = adyenRequestFactory.createPaymentDetailsRequest(auth3dsRequest);
+
+        assertThat(paymentDetailsRequest.details().redirectResult(), is("redirect-result-value"));
+    }
+
     private static RefundGatewayRequest makeRefundGatewayRequest(String refundExternalId) {
         Charge charge = Charge.from(
                 aValidChargeEntity()
@@ -226,6 +250,54 @@ class AdyenRequestFactoryTest {
     }
 
 
+    @Test
+    void should_include_browser_info_origin_shopper_email_and_ip_for_web_payment() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAcceptHeader(acceptHeader)
+                        .withUserAgentHeader(userAgent)
+                        .withIpAddress(shopperIp)
+                        .withJsNavigatorLanguage(language)
+                        .withJsScreenColorDepth(colorDepth)
+                        .withJsScreenHeight(screenHeight)
+                        .withJsScreenWidth(screenWidth)
+                        .withJsTimezoneOffsetMins(timezoneOffset)
+                        .withJsEnabled(true)
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withEmail(shopperEmail)
+                .build();
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.browserInfo().acceptHeader(), is(acceptHeader));
+        assertThat(request.browserInfo().colorDepth(), is(Integer.valueOf(colorDepth)));
+        assertThat(request.browserInfo().language(), is(language));
+        assertThat(request.browserInfo().screenHeight(), is(Integer.valueOf(screenHeight)));
+        assertThat(request.browserInfo().screenWidth(), is(Integer.valueOf(screenWidth)));
+        assertThat(request.browserInfo().timeZoneOffset(), is(Integer.valueOf(timezoneOffset)));
+        assertThat(request.browserInfo().userAgent(), is(userAgent));
+        assertThat(request.shopperEmail(), is(shopperEmail));
+        assertThat(request.shopperIP(), is(shopperIp));
+    }
+
+    @Test
+    void should_not_include_browser_info_origin_shopper_email_and_ip_for_moto_payment() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest().withMoto(true)
+                .withAuthCardDetails(anAuthCardDetails()
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withEmail("test@example.com")
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperInteraction(), is("Moto"));
+        assertThat(request.browserInfo(), nullValue());
+        assertThat(request.origin(), nullValue());
+        assertThat(request.shopperEmail(), nullValue());
+        assertThat(request.shopperIP(), nullValue());
+    }
+    
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)

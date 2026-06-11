@@ -2108,4 +2108,29 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="add_gateway_accounts_adyen_setup_table" author="">
+        <createTable tableName="gateway_accounts_adyen_setup">
+            <column name="id" type="bigserial" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="task" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="gateway_account_id" type="bigint">
+                <constraints
+                        foreignKeyName="fk__gateway_accounts_adyen_setup_gateway_accounts"
+                        referencedTableName="gateway_accounts"
+                        referencedColumnNames="id"
+                        nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_gateway_accounts_adyen_setup_gateway_account_id"
+                     tableName="gateway_accounts_adyen_setup">
+            <column name="gateway_account_id" type="bigint"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

@@ -50,7 +50,7 @@ public class AdyenRefundHandler implements RefundHandler {
     public GatewayRefundResponse refund(RefundGatewayRequest request) {
         var adyenRefundRequest = new AdyenRefundRequest(
                 getRefundUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive()),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), request.getRequestType(), request.getRefundExternalId()),
                 adyenRequestFactory.createRefundRequestPayload(request),
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);
