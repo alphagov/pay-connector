@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record PaymentDetailsResponseBody(
+public record Authorise3dsResponseBody(
         @JsonProperty("pspReference")
         String pspReference,
         @JsonProperty("resultCode")
