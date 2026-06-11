@@ -137,9 +137,7 @@ class AdyenAuthorise3dsHandlerTest {
         return """
                 {
                   "pspReference": "adyen-3ds-psp-reference",
-                  "resultCode": "%s",
-                  "refusalReason": null,
-                  "refusalReasonCode": null
+                  "resultCode": "%s"
                 }
                 """.formatted(resultCode);
     }
