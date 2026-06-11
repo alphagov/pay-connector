@@ -96,6 +96,7 @@ class AdyenAuthorise3dsHandlerTest {
         var response = adyenAuthorise3dsHandler.authorise3dsResponse(buildRequestWith("redirect-result"));
 
         assertThat(response.getMappedChargeStatus(), is(expectedStatus.getMappedChargeStatus()));
+        assertThat(response.getTransactionId().isPresent(), is(true));
         assertThat(response.getTransactionId().get(), is("adyen-3ds-psp-reference"));
     }
 
@@ -114,6 +115,7 @@ class AdyenAuthorise3dsHandlerTest {
         var response = adyenAuthorise3dsHandler.authorise3dsResponse(buildRequestWith("redirect-result"));
 
         assertThat(response.getMappedChargeStatus(), is(BaseAuthoriseResponse.AuthoriseStatus.ERROR.getMappedChargeStatus()));
+        assertThat(response.getTransactionId().isPresent(), is(true));
         assertThat(response.getTransactionId().get(), is("adyen-3ds-psp-reference"));
     }
 
