@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
-public record AdyenPaymentDetailsRequest(
+public record Adyen3dsAuthorisationRequest(
         URI url,
         Map<String, String> headers,
         String gatewayAccountType,
