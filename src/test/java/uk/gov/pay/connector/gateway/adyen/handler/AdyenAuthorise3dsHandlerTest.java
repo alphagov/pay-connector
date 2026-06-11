@@ -35,7 +35,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 @ExtendWith(MockitoExtension.class)
 class AdyenAuthorise3dsHandlerTest {
 
-    private static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/v71";
+    private static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/someVersion";
 
     @Mock
     private GatewayClient mockClient;
@@ -52,7 +52,7 @@ class AdyenAuthorise3dsHandlerTest {
     @BeforeEach
     void setUp() {
         BaseUrls mockBaseUrls = mock(BaseUrls.class);
-        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls(TEST_ADYEN_CHECKOUT_BASE_URL, "https://example.com/live/v71"));
+        when(mockBaseUrls.checkout()).thenReturn(new BaseUrls.CheckoutUrls(TEST_ADYEN_CHECKOUT_BASE_URL, "https://example.com/live/someVersion"));
         AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
         when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
 
@@ -75,7 +75,7 @@ class AdyenAuthorise3dsHandlerTest {
         adyenAuthorise3dsHandler.authorise3dsResponse(request);
 
         then(mockClient).should().postRequestFor(captor.capture());
-        assertThat(captor.getValue().getUrl().toString(), is("https://example.com/test/v71/payments/details"));
+        assertThat(captor.getValue().getUrl().toString(), is("https://example.com/test/someVersion/payments/details"));
         JsonAssert.with(captor.getValue().getGatewayOrder().getPayload())
                 .assertThat("$.details.redirectResult", equalTo("eyJ0cmFuc1N0YXR1cyI6IlkifQ=="));
     }
