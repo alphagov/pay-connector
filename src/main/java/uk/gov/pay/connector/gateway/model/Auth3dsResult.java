@@ -13,7 +13,7 @@ public class Auth3dsResult {
     }
 
     private String redirectResult;
-    
+
     private String paResponse;
 
     private Auth3dsResultOutcome auth3dsResultOutcome;
@@ -29,7 +29,7 @@ public class Auth3dsResult {
     public String getRedirectResult() {
         return redirectResult;
     }
-    
+
     @JsonProperty("redirect_result")
     public void setRedirectResult(String redirectResult) {
         this.redirectResult = redirectResult;
@@ -62,7 +62,6 @@ public class Auth3dsResult {
     public String getMd() {
         return this.md;
     }
-    
 
     public String getThreeDsVersion() {
         return threeDsVersion;
