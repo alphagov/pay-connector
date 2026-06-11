@@ -26,7 +26,7 @@ public class AdyenRequestUtil {
         return getUrl(config, request, "/payments");
     }
     
-    public static URI getPaymentDetailsUrl(AdyenGatewayConfig config, Auth3dsResponseGatewayRequest request) {
+    public static URI get3dsAuthUrl(AdyenGatewayConfig config, Auth3dsResponseGatewayRequest request) {
         return getUrl(config, request, "/payments/details");
     }
     
