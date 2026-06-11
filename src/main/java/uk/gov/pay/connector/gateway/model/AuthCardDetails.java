@@ -57,7 +57,9 @@ public class AuthCardDetails {
     private String jsTimezoneOffsetMins;
     @Schema(example = "fr;q=0.9, fr-CH;q=1.0, en;q=0.8, de;q=0.7, *;q=0.5")
     private String acceptLanguageHeader;
-
+    @Schema(example = "true")
+    private Boolean jsEnabled;
+    
     public static AuthCardDetails anAuthCardDetails() {
         return new AuthCardDetails();
     }
@@ -254,6 +256,15 @@ public class AuthCardDetails {
         return Optional.ofNullable(jsNavigatorLanguage);
     }
 
+    public Boolean getJsEnabled() {
+        return jsEnabled;
+    }
+
+    @JsonProperty("js_enabled")
+    public void setJsEnabled(Boolean jsEnabled) {
+        this.jsEnabled = jsEnabled;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -3,13 +3,18 @@ package uk.gov.pay.connector.gateway.adyen;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload.Details;
 import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.CancelRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.CaptureRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
-import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
+import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
+import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
@@ -33,6 +38,7 @@ public class AdyenRequestFactory {
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
+        boolean isMoto = "Moto".equals(getShopperInteraction(request));
 
         var mappedAddress = authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
@@ -57,7 +63,11 @@ public class AdyenRequestFactory {
                 getShopperInteraction(request),
                 adyenCredentials.storeId(),
                 "Web",
-                new HashMap<>(Map.of("manualCapture", "true"))
+                new HashMap<>(Map.of("manualCapture", "true")),
+                isMoto ? null : mapToBrowserInfo(authCardDetails),
+                isMoto ? null : configuration.getLinks().getFrontendUrl(),
+                isMoto ? null : request.getEmail(),
+                isMoto ? null : authCardDetails.getIpAddress().orElse(null)
         );
     }
 
@@ -89,6 +99,12 @@ public class AdyenRequestFactory {
         );
     }
 
+    public Authorise3dsRequestPayload createPaymentDetailsRequest(Auth3dsResponseGatewayRequest request) {
+        return new Authorise3dsRequestPayload(
+                new Details(request.getAuth3dsResult().getRedirectResult())
+        );
+    }
+
     private static BillingAddress mapToBillingAddress(Address address) {
         var northAmericanRegionMapper = new NorthAmericanRegionMapper();
         String stateOrProvince = northAmericanRegionMapper.getNorthAmericanRegionForCountry(address)
@@ -108,5 +124,18 @@ public class AdyenRequestFactory {
             throw new IllegalArgumentException("Expected provided GatewayCredentials to be of type AdyenCredentials");
         }
         return (AdyenCredentials) gatewayCredentials;
+    }
+
+    private BrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
+        return new BrowserInfo(
+                authCardDetails.getAcceptHeader(),
+                authCardDetails.getJsScreenColorDepth().map(Integer::valueOf).orElse(null),
+                authCardDetails.getJsEnabled(),
+                authCardDetails.getJsNavigatorLanguage().map(String::valueOf).orElse(null),
+                authCardDetails.getJsScreenHeight().map(Integer::valueOf).orElse(null),
+                authCardDetails.getJsScreenWidth().map(Integer::valueOf).orElse(null),
+                authCardDetails.getJsTimezoneOffsetMins().map(Integer::valueOf).orElse(null),
+                authCardDetails.getUserAgentHeader()
+        );
     }
 }

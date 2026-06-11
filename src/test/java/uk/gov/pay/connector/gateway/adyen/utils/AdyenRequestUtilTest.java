@@ -14,6 +14,8 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gateway.model.Auth3dsResult;
+import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -45,6 +47,7 @@ class AdyenRequestUtilTest {
     private CardAuthorisationGatewayRequest mockAuthoriseRequest;
     private CancelGatewayRequest mockCancelRequest;
     private CaptureGatewayRequest mockCaptureRequest;
+    private Auth3dsResponseGatewayRequest mockAuth3dsResponseRequest;
     ChargeEntity chargeEntity;
 
     public static final String GATEWAY_TRANSACTION_ID = "gateway-transaction-id";
@@ -64,6 +67,9 @@ class AdyenRequestUtilTest {
                 .build();
         mockCaptureRequest = CaptureGatewayRequest.valueOf(chargeEntity);
         mockCancelRequest = CancelGatewayRequest.valueOf(chargeEntity);
+        var auth3dsResult = new Auth3dsResult();
+        auth3dsResult.setRedirectResult("redirect-result-value");
+        mockAuth3dsResponseRequest = Auth3dsResponseGatewayRequest.valueOf(chargeEntity, auth3dsResult);
     }
 
     @Test
@@ -73,6 +79,15 @@ class AdyenRequestUtilTest {
         var authUrl = AdyenRequestUtil.getAuthUrl(mockAdyenGatewayConfig, mockAuthoriseRequest).toString();
 
         assertThat(authUrl, is("https://example.com/test/someVersion/payments"));
+    }
+
+    @Test
+    void should_create_Adyen_checkout_payment_details_URL() {
+        stubCheckoutBaseUrls("https://example.com/test/someVersion", "https://example.com/live/someVersion");
+
+        var paymentDetailsUrl = AdyenRequestUtil.get3dsAuthUrl(mockAdyenGatewayConfig, mockAuth3dsResponseRequest).toString();
+
+        assertThat(paymentDetailsUrl, is("https://example.com/test/someVersion/payments/details"));
     }
 
     @Test

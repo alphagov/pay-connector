@@ -41,7 +41,7 @@ public class ConnectorConfigurationIT {
         BaseUrls baseUrls = adyenGatewayConfig.getBaseUrls();
 
         assertThat(baseUrls.checkout().test(), is("https://checkout-test.adyen.com/someVersion"));
-        assertThat(baseUrls.checkout().live(), is("https://checkout-test.adyen.com/someVersion"));
+        assertThat(baseUrls.checkout().live(), is("https://checkout-live.adyen.com/someVersion"));
         assertThat(baseUrls.balancePlatform().test(), is("https://balanceplatform-api-test.adyen.com"));
         assertThat(baseUrls.balancePlatform().live(), is("https://balanceplatform-api-live.adyen.com"));
         assertThat(baseUrls.legalEntityManagement().test(), is("https://kyc-test.adyen.com/lem/v4"));

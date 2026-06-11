@@ -3549,6 +3549,9 @@ components:
           type: string
         pa_response:
           type: string
+        redirect_result:
+          type: string
+          description: Adyen 3DS2 Redirect Result data
     AuthCardDetails:
       type: object
       properties:
@@ -3590,6 +3593,9 @@ components:
         ip_address:
           type: string
           example: 127.0.0.1
+        js_enabled:
+          type: boolean
+          example: true
         js_navigator_language:
           type: string
           example: en-GB
