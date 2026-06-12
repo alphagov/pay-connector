@@ -165,6 +165,16 @@ class AdyenAuthorise3dsHandlerTest {
         assertThat(response.isException(), is(true));
     }
 
+    @Test
+    void should_handle_non_parseable_error_response_and_return_exception_status() throws Exception {
+        when(mockClient.postRequestFor(any())).thenThrow(new GatewayException.GatewayErrorException("non-success", "not-a-json", 502));
+
+        var response = adyenAuthorise3dsHandler.authorise3dsResponse(buildRequestWith("redirect-result"));
+
+        assertThat(response.isException(), is(true));
+        assertThat(response.toString(), is("non-success"));
+    }
+
     private Auth3dsResponseGatewayRequest buildRequestWith(String redirectResult) {
         var auth3dsResult = new Auth3dsResult();
         auth3dsResult.setRedirectResult(redirectResult);
