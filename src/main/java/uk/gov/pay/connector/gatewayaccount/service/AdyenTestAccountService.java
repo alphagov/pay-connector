@@ -88,7 +88,10 @@ public class AdyenTestAccountService {
         String storeId = createStore(merchantAccountIdTest, legalEntityId, businessLineId);
         addPaymentMethodsToStore(merchantAccountIdTest, storeId, businessLineId);
         
-        LOGGER.info("All payment methods added to store [{}] for business line [{}]", storeId, businessLineId);
+        LOGGER.info("All payment methods added to store",
+                kv("store_id", storeId),
+                kv("business_line_id", businessLineId)
+        );
 
         String balancePlatformIdTest = adyenGatewayConfig.getBalancePlatformIds().test();
         String accountHolderId = createAccountHolder(legalEntityId, balancePlatformIdTest, serviceName);
@@ -124,7 +127,9 @@ public class AdyenTestAccountService {
 
                 pciQuestionnairesApi.signPciQuestionnaire(sroLegalEntityId, pciSigningRequest);
 
-                LOGGER.info("PCI questionnaire signed by legal entity: {}", sroLegalEntityId);
+                LOGGER.info("PCI questionnaire signed by legal entity", 
+                        kv("sro_legal_entity_id", sroLegalEntityId)
+                );
             }
 
         } catch (ApiException | IOException e) {
@@ -148,7 +153,10 @@ public class AdyenTestAccountService {
             String termsOfServiceDocumentId = getTermsOfServiceDocumentResponse.getTermsOfServiceDocumentId();
             termsOfServiceApi.acceptTermsOfService(legalEntityId, termsOfServiceDocumentId, acceptTermsOfServiceRequest);
 
-            LOGGER.info("Terms of service [{}] accepted by legal entity [{}]", termsOfServiceDocumentId, sroLegalEntityId);
+            LOGGER.info("Terms of service accepted by legal entity",
+                    kv("terms_of_service_document_id", termsOfServiceDocumentId),
+                    kv("sro_legal_entity_id", sroLegalEntityId)
+            );
 
         } catch (ApiException | IOException e) {
             throw new WebApplicationException("Error getting or accepting terms of service", e);
@@ -168,7 +176,9 @@ public class AdyenTestAccountService {
             BalanceAccount balanceAccount = balanceAccountsApi.createBalanceAccount(balanceAccountInfo);
             String balanceAccountId = balanceAccount.getId();
             
-            LOGGER.info("Balance account created: {}", balanceAccountId);
+            LOGGER.info("Balance account created", 
+                    kv( "balance_account_id", balanceAccountId)
+            );
             
             return balanceAccountId;
         } catch (ApiException | IOException e) {
@@ -189,7 +199,9 @@ public class AdyenTestAccountService {
             AccountHolder accountHolder = accountHoldersApi.createAccountHolder(accountHolderInfo, null);
             String accountHolderId = accountHolder.getId();
             
-            LOGGER.info("Account holder created: {}", accountHolderId);
+            LOGGER.info("Account holder created",
+                    kv( "account_holder_id", accountHolderId)
+            );
             
             return accountHolderId;
         } catch (ApiException | IOException e) {
@@ -222,7 +234,10 @@ public class AdyenTestAccountService {
             LegalEntity legalEntity = legalEntitiesApi.createLegalEntity(legalEntityInfoRequiredType, null);
             String legalEntityId = legalEntity.getId();
             
-            LOGGER.info("Legal entity of type [{}] created: {}", legalEntity.getType(), legalEntityId);
+            LOGGER.info("Legal entity created",
+                    kv("type", legalEntity.getType()),
+                    kv("legal_entity_id", legalEntityId)
+            );
 
             return legalEntityId;
         } catch (ApiException | IOException e) {
@@ -255,7 +270,9 @@ public class AdyenTestAccountService {
             BusinessLine businessLine = businessLinesApi.createBusinessLine(businessLineInfo, null);
             String businessLineId = businessLine.getId();
             
-            LOGGER.info("Business line created: {}", businessLineId);
+            LOGGER.info("Business line created",
+                    kv("business_line_id", businessLineId)
+            );
             
             return businessLineId;
         } catch (ApiException | IOException e) {
@@ -290,7 +307,10 @@ public class AdyenTestAccountService {
             LegalEntity legalEntityIndividual = legalEntitiesApi.createLegalEntity(legalEntityInfoRequiredType, null);
             String legalEntityIndividualId = legalEntityIndividual.getId();
             
-            LOGGER.info("Legal entity of type [{}] created: {}", legalEntityIndividual.getType(), legalEntityIndividualId);
+            LOGGER.info("Legal entity created",
+                    kv("type", legalEntityIndividual.getType()),
+                    kv("legal_entity_id", legalEntityIndividualId)
+            );
             
             return legalEntityIndividualId;
         } catch (ApiException | IOException e) {
@@ -318,7 +338,8 @@ public class AdyenTestAccountService {
             LegalEntityInfo legalEntityInfo = new LegalEntityInfo()
                     .entityAssociations(Arrays.asList(legalEntityAssociationSRO, legalEntityAssociationDirector, legalEntityAssociationSignatory));
 
-            LOGGER.info("Associated individuals to legal entity {}", legalEntityId,
+            LOGGER.info("Associated individuals to legal entity",
+                    kv("legal_entity_id),", legalEntityId),
                     kv("sro", individualLegalEntityId),
                     kv("director", individualLegalEntityId),
                     kv("signatory", individualLegalEntityId)
@@ -349,7 +370,9 @@ public class AdyenTestAccountService {
             Store store = accountStoreLevelApi.createStore(request);
             String storeId = store.getId();
 
-            LOGGER.info("Store created: {}", storeId);
+            LOGGER.info("Store created",
+                    kv( "store_id", storeId)
+            );
             
             return storeId;
         } catch (ApiException | IOException e) {
@@ -410,7 +433,9 @@ public class AdyenTestAccountService {
                     .legalEntityId(legalEntityId)
                     .type(TransferInstrumentInfo.TypeEnum.BANKACCOUNT);
 
-            LOGGER.info("Transfer instrument created for legal entity: {}", legalEntityId);
+            LOGGER.info("Transfer instrument created for legal entity",
+                    kv( "legal_entity_id", legalEntityId)
+            );
             
            transferInstrumentsApi.createTransferInstrument(transferInstrumentInfo, null);
         } catch (IOException | ApiException e) {
