@@ -101,7 +101,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
 
     @Override
     public Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request) {
-        return adyenAuthorise3dsHandler.authorise3dsResponse(request);
+        throw new UnsupportedOperationException("Operation for Adyen is not Implemented yet");
     }
 
     @Override
