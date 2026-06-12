@@ -98,6 +98,7 @@ class AdyenAuthorisationRequestTest {
         var browserInfo = new BrowserInfo("text/html", 
                 24,
                 false,
+                false,
                 "en-GB",
                 900, 
                 1440, 

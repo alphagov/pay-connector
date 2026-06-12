@@ -81,4 +81,59 @@ class AdyenAuthoriseResponseTest {
 
         assertThat(adyenAuthoriseResponse.getRedirectUrl(), is("/redirectUrl"));
     }
+    
+    @Test
+    void should_set_httpMethod3ds_null_if_action_is_null() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withAction(null)
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        assertThat(adyenAuthoriseResponse.getHttpMethod3ds(), is(nullValue()));
+    }
+
+    @Test
+    void should_set_httpMethod3ds_null_if_action_method_is_null() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withAction(anAction().withMethod(null).build())
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        assertThat(adyenAuthoriseResponse.getHttpMethod3ds(), is(nullValue()));
+    }
+
+    @Test
+    void should_set_httpMethod3ds_to_action_method() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withAction(anAction().withMethod("GET").build())
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        assertThat(adyenAuthoriseResponse.getHttpMethod3ds(), is("GET"));
+    }
+
+    @Test
+    void should_extract_3ds_required_details_for_redirect_shopper_response() {
+        var redirectUrl = "https://checkoutshopper-test.adyen.com/checkoutshopper/threeDS/redirect";
+        var httpMethod = "GET";
+
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withResultCode("RedirectShopper")
+                .withAction(anAction()
+                        .withUrl(redirectUrl)
+                        .withMethod(httpMethod)
+                        .build())
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var auth3dsRequiredDetails = adyenAuthoriseResponse.extractAuth3dsRequiredDetails();
+
+        assertThat(auth3dsRequiredDetails.isPresent(), is(true));
+        assertThat(auth3dsRequiredDetails.get().getIssuerUrl(), is(redirectUrl));
+        assertThat(auth3dsRequiredDetails.get().getHttpMethod3ds(), is(httpMethod));
+    }
 }
