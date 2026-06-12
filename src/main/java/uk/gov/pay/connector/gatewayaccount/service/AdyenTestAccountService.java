@@ -309,7 +309,7 @@ public class AdyenTestAccountService {
             
             LOGGER.info("Legal entity created",
                     kv("type", legalEntityIndividual.getType()),
-                    kv("legal_entity_id", legalEntityIndividual)
+                    kv("legal_entity_id", legalEntityIndividualId)
             );
             
             return legalEntityIndividualId;
@@ -339,7 +339,7 @@ public class AdyenTestAccountService {
                     .entityAssociations(Arrays.asList(legalEntityAssociationSRO, legalEntityAssociationDirector, legalEntityAssociationSignatory));
 
             LOGGER.info("Associated individuals to legal entity",
-                    kv("legal_entity_id),", legalEntityInfo),
+                    kv("legal_entity_id),", legalEntityId),
                     kv("sro", individualLegalEntityId),
                     kv("director", individualLegalEntityId),
                     kv("signatory", individualLegalEntityId)
