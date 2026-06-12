@@ -38,14 +38,11 @@ adyen:
       test: https://checkout-test.adyen.com/someVersion
       live: https://checkout-live.adyen.com/someVersion
     balancePlatform:
-      test: https://balanceplatform-api-test.adyen.com
-      live: https://balanceplatform-api-live.adyen.com
+      test:
     legalEntityManagement:
-      test: https://kyc-test.adyen.com/lem/v4
-      live: https://kyc-live.adyen.com/lem/v4
+      test:
     management:
-      test: https://management-test.adyen.com/v3
-      live: https://management-live.adyen.com/v3
+      test:
   merchantAccountIds:
     test: adyen-test-merchant-account-id
     live: adyen-live-merchant-account-id
