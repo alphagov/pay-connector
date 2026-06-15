@@ -12,7 +12,7 @@ server:
     appenders: []
 
 logging:
-  level: ERROR
+  level: INFO
   appenders:
     - type: console
 
