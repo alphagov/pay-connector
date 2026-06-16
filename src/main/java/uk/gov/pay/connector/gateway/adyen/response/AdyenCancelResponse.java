@@ -48,6 +48,7 @@ public record AdyenCancelResponse(
         return errorMessage();
     }
     
+    @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ", "Adyen cancel response (", ")");
         joiner.add("PSP reference: " + transactionId);
