@@ -2,7 +2,8 @@ package uk.gov.pay.connector.it.resources.adyen;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -10,6 +11,10 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.provider.Arguments;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -36,127 +41,84 @@ class AdyenCardResourceAuthorise3dsIT {
         chargeDao = app.getInstanceFromGuiceContainer(ChargeDao.class);
     }
 
-    @Test
-    void should_submit_redirect_result_to_adyen_and_update_charge_to_success() {
-        var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseAuthorised(AUTH_RESULT_REFERENCE);
-
-        app.givenSetup()
-                .body(Map.of("redirect_result", REDIRECT_RESULT))
-                .post(authorise3dsChargeUrlFor(chargeId))
-                .then()
-                .statusCode(200)
-                .body("status", is("AUTHORISATION SUCCESS"));
-
-
-        var charge = chargeDao.findByExternalId(chargeId);
-        assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is("AUTHORISATION SUCCESS"));
-        assertThat(charge.get().getGatewayTransactionId(), is(AUTH_RESULT_REFERENCE));
+    private static Stream<Arguments> authorise3dsResponses() {
+        return Stream.of(
+                Arguments.of("authorised",
+                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseAuthorised(AUTH_RESULT_REFERENCE),
+                        200,
+                        "AUTHORISATION SUCCESS",
+                        "AUTHORISATION SUCCESS",
+                        AUTH_RESULT_REFERENCE),
+                Arguments.of("refused",
+                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseRefused(AUTH_RESULT_REFERENCE),
+                        400,
+                        "AUTHORISATION REJECTED",
+                        "AUTHORISATION REJECTED",
+                        AUTH_RESULT_REFERENCE),
+                Arguments.of("cancelled",
+                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseCancelled(AUTH_RESULT_REFERENCE),
+                        400,
+                        "AUTHORISATION CANCELLED",
+                        "AUTHORISATION CANCELLED",
+                        AUTH_RESULT_REFERENCE),
+                Arguments.of("error",
+                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseError(AUTH_RESULT_REFERENCE),
+                        400,
+                        "AUTHORISATION ERROR",
+                        "AUTHORISATION ERROR",
+                        AUTH_RESULT_REFERENCE),
+                Arguments.of("unknown_result_code",
+                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseWithUnknownResultCode(AUTH_RESULT_REFERENCE, "Pending"),
+                        400,
+                        "AUTHORISATION ERROR",
+                        "AUTHORISATION ERROR",
+                        AUTH_RESULT_REFERENCE),
+                Arguments.of("client_error",
+                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationClientError(),
+                        402,
+                        null,
+                        "AUTHORISATION ERROR",
+                        null),
+                Arguments.of("server_error",
+                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mockError("/payments/details"),
+                        402,
+                        null,
+                        "AUTHORISATION ERROR",
+                        null)
+        );
     }
 
-    @Test
-    void should_update_charge_to_rejected_when_adyen_returns_refused() {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("authorise3dsResponses")
+    void should_handle_adyen_3ds_responses(String description,
+                                           Consumer<AppWithPostgresAndSqsExtension> mockSetup,
+                                           int expectedHttpStatus,
+                                           String expectedBodyStatus,
+                                           String expectedChargeStatus,
+                                           String expectedGatewayTransactionId) {
         var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseRefused(AUTH_RESULT_REFERENCE);
+        mockSetup.accept(app);
 
-        app.givenSetup()
+        var response = app.givenSetup()
                 .body(Map.of("redirect_result", REDIRECT_RESULT))
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
-                .statusCode(400)
-                .body("status", is("AUTHORISATION REJECTED"));
+                .statusCode(expectedHttpStatus);
+
+        if (expectedBodyStatus != null) {
+            response.body("status", is(expectedBodyStatus));
+        }
 
         var charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is("AUTHORISATION REJECTED"));
-        assertThat(charge.get().getGatewayTransactionId(), is(AUTH_RESULT_REFERENCE));
-    }
 
-    @Test
-    void should_update_charge_to_cancelled_when_adyen_returns_cancelled() {
-        var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseCancelled(AUTH_RESULT_REFERENCE);
+        if (expectedChargeStatus != null) {
+            assertThat(charge.get().getStatus(), is(expectedChargeStatus));
+        }
 
-        app.givenSetup()
-                .body(Map.of("redirect_result", REDIRECT_RESULT))
-                .post(authorise3dsChargeUrlFor(chargeId))
-                .then()
-                .statusCode(400)
-                .body("status", is("AUTHORISATION CANCELLED"));
-
-        var charge = chargeDao.findByExternalId(chargeId);
-        assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is("AUTHORISATION CANCELLED"));
-        assertThat(charge.get().getGatewayTransactionId(), is(AUTH_RESULT_REFERENCE));
-    }
-
-    @Test
-    void should_update_charge_to_error_when_adyen_returns_error() {
-        var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseError(AUTH_RESULT_REFERENCE);
-
-        app.givenSetup()
-                .body(Map.of("redirect_result", REDIRECT_RESULT))
-                .post(authorise3dsChargeUrlFor(chargeId))
-                .then()
-                .statusCode(400)
-                .body("status", is("AUTHORISATION ERROR"));
-
-        var charge = chargeDao.findByExternalId(chargeId);
-        assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is("AUTHORISATION ERROR"));
-        assertThat(charge.get().getGatewayTransactionId(), is(AUTH_RESULT_REFERENCE));
-    }
-
-    @Test
-    void should_update_charge_to_error_when_adyen_returns_unhandled_result_code() {
-        var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseWithUnknownResultCode(AUTH_RESULT_REFERENCE, "Pending");
-
-        app.givenSetup()
-                .body(Map.of("redirect_result", REDIRECT_RESULT))
-                .post(authorise3dsChargeUrlFor(chargeId))
-                .then()
-                .statusCode(400)
-                .body("status", is("AUTHORISATION ERROR"));
-
-        var charge = chargeDao.findByExternalId(chargeId);
-        assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is("AUTHORISATION ERROR"));
-        assertThat(charge.get().getGatewayTransactionId(), is(AUTH_RESULT_REFERENCE));
-    }
-
-    @Test
-    void should_update_charge_to_error_when_adyen_returns_4xx_or_5xx() {
-        var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        app.getAdyenCheckoutMockClient().mock3dsAuthorisationClientError();
-
-        app.givenSetup()
-                .body(Map.of("redirect_result", REDIRECT_RESULT))
-                .post(authorise3dsChargeUrlFor(chargeId))
-                .then()
-                .statusCode(402);
-
-        var charge = chargeDao.findByExternalId(chargeId);
-        assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is("AUTHORISATION ERROR"));
-    }
-
-    @Test
-    void should_update_charge_to_error_when_adyen_returns_5xx() {
-        var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        app.getAdyenCheckoutMockClient().mockError("/payments/details");
-
-        app.givenSetup()
-                .body(Map.of("redirect_result", REDIRECT_RESULT))
-                .post(authorise3dsChargeUrlFor(chargeId))
-                .then()
-                .statusCode(402);
-
-        var charge = chargeDao.findByExternalId(chargeId);
-        assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is("AUTHORISATION ERROR"));
+        if (expectedGatewayTransactionId != null) {
+            assertThat(charge.get().getGatewayTransactionId(), is(expectedGatewayTransactionId));
+        }
     }
 }
 
