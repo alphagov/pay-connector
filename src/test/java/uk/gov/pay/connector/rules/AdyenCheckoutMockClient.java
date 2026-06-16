@@ -46,24 +46,16 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
         setupPostResponse(responseBody, "/payments", SC_OK);
     }
     
-    public void mock3dsAuthorisationResponseAuthorised(String pspReferenceFromAdyen) {
-        mock3dsAuthorisationResultCode(pspReferenceFromAdyen, "Authorised");
-    }
-    
-    public void mock3dsAuthorisationResponseRefused(String pspReferenceFromAdyen) {
-        mock3dsAuthorisationResultCode(pspReferenceFromAdyen, "Refused");
-    }
-    
-    public void mock3dsAuthorisationResponseCancelled(String pspReferenceFromAdyen) {
-        mock3dsAuthorisationResultCode(pspReferenceFromAdyen, "Cancelled");
-    }
-    
-    public void mock3dsAuthorisationResponseError(String pspReferenceFromAdyen) {
-        mock3dsAuthorisationResultCode(pspReferenceFromAdyen, "Error");
-    }
-    
-    public void mock3dsAuthorisationResponseWithUnknownResultCode(String pspReferenceFromAdyen, String resultCode) {
-        mock3dsAuthorisationResultCode(pspReferenceFromAdyen, resultCode);
+    public void mock3dsAuthorisationResponse(String pspReferenceFromAdyen, String resultCode) {
+        var responseBody = """
+                {
+                  "pspReference": "%s",
+                  "resultCode": "%s"
+                }""".formatted(
+                pspReferenceFromAdyen,
+                resultCode
+        );
+        setupPostResponse(responseBody, "/payments/details", SC_OK);
     }
     
     public void mock3dsAuthorisationClientError() {
@@ -78,18 +70,6 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
         setupPostResponse(responseBody, "/payments/details", SC_BAD_REQUEST);
     }
 
-    private void mock3dsAuthorisationResultCode(String pspReferenceFromAdyen,
-                                                String resultCode) {
-        var responseBody = """
-                {
-                  "pspReference": "%s",
-                  "resultCode": "%s"
-                }""".formatted(
-                pspReferenceFromAdyen,
-                resultCode
-        );
-        setupPostResponse(responseBody, "/payments/details", SC_OK);
-    }
 
     public void mockCancellationSuccess(String pspReferenceFromAdyen, String paymentPspReference) {
         var responseBody = """
