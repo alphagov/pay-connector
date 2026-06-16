@@ -266,12 +266,12 @@ class AdyenCancelHandlerTest {
                 "GatewayResponse should have a gateway error",
                 gatewayResponse.getGatewayError().isPresent(), is(true));
         var gatewayError = gatewayResponse.getGatewayError().get();
-        assertThat(gatewayError.getMessage(), is("AdyenCancelResponse[" +
-                "transactionId=a-PSP-reference, " +
-                "cancelStatus=ERROR, " +
-                "errorCode=000, " +
-                "errorType=security, " +
-                "errorMessage=HTTP Status Response - Unauthorized]"));
+        assertThat(gatewayError.getMessage(), is("Adyen cancel response (" +
+                "PSP reference: a-PSP-reference, " +
+                "Cancel status: ERROR, " +
+                "error code: 000, " +
+                "error type: security, " +
+                "error: HTTP Status Response - Unauthorized)"));
         assertThat(gatewayError.getErrorType(), is(ErrorType.GENERIC_GATEWAY_ERROR));
     }
 
