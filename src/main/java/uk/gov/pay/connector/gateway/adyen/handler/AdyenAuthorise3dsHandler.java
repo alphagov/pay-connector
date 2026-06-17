@@ -80,14 +80,6 @@ public class AdyenAuthorise3dsHandler {
                     .addKeyValue(GATEWAY_ERROR, e.getMessage())
                     .log();
             return Gateway3DSAuthorisationResponse.of(e.getMessage(), AuthoriseStatus.EXCEPTION);
-        } catch (Exception e) {
-            LOGGER.atWarn()
-                    .setCause(e)
-                    .setMessage("Adyen 3DS authorisation response could not be processed")
-                    .addKeyValue(PAYMENT_EXTERNAL_ID, request.getChargeExternalId())
-                    .addKeyValue(GATEWAY_ERROR, e.getMessage())
-                    .log();
-            return Gateway3DSAuthorisationResponse.of(e.getMessage(), AuthoriseStatus.EXCEPTION);
         }
     }
 
