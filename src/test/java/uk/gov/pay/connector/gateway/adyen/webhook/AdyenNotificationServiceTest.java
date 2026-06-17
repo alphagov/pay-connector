@@ -14,6 +14,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -229,12 +233,13 @@ class AdyenNotificationServiceTest {
                     .get(1)
                     .getFormattedMessage(), is("Failed to validate Adyen notification payload"));
         }
-        
-        @Test
-        void shouldAddTaskToQueueWhenValidCaptureNotificationIsReceived() {
+
+        @ParameterizedTest
+        @EnumSource(AdyenPaymentEvent.class)
+        void shouldAddTaskToQueueWhenValidCaptureNotificationIsReceived(AdyenPaymentEvent eventCode) {
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
 
-            String payload = getNotificationWithValidHmacSignature("CAPTURE");
+            String payload = getNotificationWithValidHmacSignature(eventCode.toString());
 
             boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
 
@@ -244,17 +249,19 @@ class AdyenNotificationServiceTest {
             verify(mockTaskQueueService).add(taskCaptor.capture());
 
             Task task = taskCaptor.getValue();
-            assertThat(task.getTaskType(), is(TaskType.HANDLE_ADYEN_WEBHOOK_NOTIFICATION));
+            assertThat(task.getTaskType(), is(TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION));
             assertThat(task.getData(), is(payload));
         }
         
-        @Test
-        void shouldIgnoreNonCaptureWebhookNotificationsAndNotAddToTaskQue() {
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"SOME_INVALID_VALUE"})
+        void shouldIgnoreNonCaptureWebhookNotificationsAndNotAddToTaskQue(String eventCode) {
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-            String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
+            String payload = getNotificationWithValidHmacSignature(eventCode);
 
             boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
-            
+
             assertTrue(result);
 
             verify(mockTaskQueueService, never()).add(any(Task.class));

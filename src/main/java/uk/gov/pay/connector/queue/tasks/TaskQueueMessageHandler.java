@@ -97,7 +97,7 @@ public class TaskQueueMessageHandler {
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         stripeWebhookTaskHandler.process(stripeNotification);
                         break; 
-                    case HANDLE_ADYEN_WEBHOOK_NOTIFICATION:
+                    case HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION:
                         LOGGER.info("Processing [{}] task.", taskType.getName());
                         adyenWebhookTaskHandler.processAdyenWebhookNotification(taskMessage.getTask().getData());
                         break;
