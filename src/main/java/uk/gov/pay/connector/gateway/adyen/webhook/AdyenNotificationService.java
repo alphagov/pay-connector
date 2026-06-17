@@ -71,13 +71,15 @@ public class AdyenNotificationService {
                 if (!isValidHmac(item, hmacKey)) {
                     return false;
                 }
-                if (!"CAPTURE".equals(item.getEventCode())) {
-                    LOGGER.info("Ignored Adyen notification",
-                            kv("originalReference", item.getOriginalReference()),
-                            kv("eventCode", item.getEventCode()));
+                
+                if (AdyenPaymentEvent.contains(item.getEventCode())) {
+                    addNotificationToTaskQueue(payload, item);
                     continue;
                 }
-                addNotificationToTaskQueue(payload, item);
+                
+                LOGGER.info("Ignored Adyen notification",
+                        kv("originalReference", item.getOriginalReference()),
+                        kv("eventCode", item.getEventCode()));
             }
         } catch (AdyenNotificationException e) {
             LOGGER.error("Failed to validate Adyen notification payload", e);
@@ -93,7 +95,7 @@ public class AdyenNotificationService {
 
     private void addNotificationToTaskQueue(String payload, NotificationRequestItem item) {
         try {
-            taskQueueService.add(new Task(payload, TaskType.HANDLE_ADYEN_WEBHOOK_NOTIFICATION));
+            taskQueueService.add(new Task(payload, TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION));
         } catch (Exception e) {
             LOGGER.error("Error sending Adyen webhook notification to task SQS queue",
                     kv("pspReference", item.getPspReference()),
