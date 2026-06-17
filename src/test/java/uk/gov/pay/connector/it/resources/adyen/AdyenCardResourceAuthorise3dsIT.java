@@ -12,7 +12,6 @@ import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
 
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.provider.Arguments;
@@ -45,27 +44,24 @@ class AdyenCardResourceAuthorise3dsIT {
     private static Stream<Arguments> authorise3dsOutcomeResponses() {
         return Stream.of(
                 Arguments.of("authorised",
-                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationResponse(AUTH_RESULT_REFERENCE, "Authorised"),
+                        "Authorised",
                         200,
-                        "AUTHORISATION SUCCESS",
-                        AUTH_RESULT_REFERENCE),
+                        "AUTHORISATION SUCCESS"),
                 Arguments.of("refused",
-                        (Consumer<AppWithPostgresAndSqsExtension>) a -> a.getAdyenCheckoutMockClient().mock3dsAuthorisationResponse(AUTH_RESULT_REFERENCE, "Refused"),
+                        "Refused",
                         400,
-                        "AUTHORISATION REJECTED",
-                        AUTH_RESULT_REFERENCE)
+                        "AUTHORISATION REJECTED")
         );
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("authorise3dsOutcomeResponses")
     void should_handle_adyen_3ds_outcome_responses(String description,
-                                                   Consumer<AppWithPostgresAndSqsExtension> mockSetup,
+                                                   String adyenResult,
                                                    int expectedHttpStatus,
-                                                   String expectedBodyAndChargeStatus,
-                                                   String expectedGatewayTransactionId) {
+                                                   String expectedBodyAndChargeStatus) {
         var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
-        mockSetup.accept(app);
+        app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponse(AUTH_RESULT_REFERENCE, adyenResult);
 
         app.givenSetup()
                 .body(Map.of("redirect_result", REDIRECT_RESULT))
@@ -77,7 +73,7 @@ class AdyenCardResourceAuthorise3dsIT {
         var charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is(expectedBodyAndChargeStatus));
-        assertThat(charge.get().getGatewayTransactionId(), is(expectedGatewayTransactionId));
+        assertThat(charge.get().getGatewayTransactionId(), is(AUTH_RESULT_REFERENCE));
     }
 
     @Test
