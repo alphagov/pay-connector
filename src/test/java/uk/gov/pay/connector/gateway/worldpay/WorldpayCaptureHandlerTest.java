@@ -11,7 +11,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.gateway.CaptureResponse;
 import uk.gov.pay.connector.gateway.GatewayClient;
@@ -19,6 +18,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.util.XmlAssertUtils;
 
 import java.net.URI;
 import java.util.List;
@@ -114,7 +114,7 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
                 .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }
@@ -149,7 +149,7 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
                 .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }

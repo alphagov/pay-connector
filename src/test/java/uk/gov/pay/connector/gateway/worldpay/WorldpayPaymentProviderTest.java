@@ -11,7 +11,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.charge.dao.ChargeDao;
@@ -51,6 +50,7 @@ import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
+import uk.gov.pay.connector.util.XmlAssertUtils;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.net.HttpCookie;
@@ -858,7 +858,7 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST))
                 .areIdentical();
     }
@@ -885,7 +885,7 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST))
                 .areIdentical();
     }
@@ -913,7 +913,7 @@ class WorldpayPaymentProviderTest {
                 .replace("{{agreementId}}", agreement.getExternalId())
                 .replace("{{paymentTokenId}}", token);
 
-        XmlAssert.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(expectedRequestBody)
                 .areIdentical();
     }

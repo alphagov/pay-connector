@@ -2,7 +2,6 @@ package uk.gov.pay.connector.gateway.templates;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.xmlunit.assertj3.XmlAssert;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -11,6 +10,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_MOTO_AUTHORISATION_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
+import static uk.gov.pay.connector.util.XmlAssertUtils.assertThat;
 
 class TemplateBuilderTest {
 
@@ -33,12 +33,12 @@ class TemplateBuilderTest {
             TemplateBuilder templateBuilder = new TemplateBuilder("/worldpay/WorldpayAuthoriseMotoOrderTemplate.ftlx");
             WorldpayMotoAuthoriseRequest motoOrder = createWorldpayMotoAuthoriseRequest();
 
-            XmlAssert.assertThat(templateBuilder.buildWith(motoOrder))
+            assertThat(templateBuilder.buildWith(motoOrder))
                     .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_MOTO_AUTHORISATION_REQUEST))
                     .areIdentical();
         }
     }
-    
+
     @Nested
     class TemplateBuilderAppliesAutoEscape {
         @Test
@@ -61,7 +61,7 @@ class TemplateBuilderTest {
             assertThat(renderedAuthoriseOrder, containsString("Alec &amp; Barley"));
         }
     }
-    
+
     @Nested
     class InvalidActionsThrowingException {
         @Test
@@ -69,13 +69,14 @@ class TemplateBuilderTest {
             var thrown = assertThrows(RuntimeException.class, () -> new TemplateBuilder("/worldpay/NonExistentOrderTemplate.xml"));
             assertThat(thrown.getMessage(), is("Could not load template /worldpay/NonExistentOrderTemplate.xml in dir /templates"));
         }
-        
+
         @Test
         void shouldThrowRuntimeExceptionWhenCannotRenderTemplate() {
             TemplateBuilder templateBuilder = new TemplateBuilder("/worldpay/WorldpayCancelOrderTemplate.xml");
             WorldpayMotoAuthoriseRequest motoOrder = createWorldpayMotoAuthoriseRequest();
-            
-            var thrown = assertThrows(RuntimeException.class, () -> {    templateBuilder.buildWith(motoOrder);
+
+            var thrown = assertThrows(RuntimeException.class, () -> {
+                templateBuilder.buildWith(motoOrder);
             });
             assertThat(thrown.getMessage(), is("Could not render template worldpay/WorldpayCancelOrderTemplate.xml"));
         }
