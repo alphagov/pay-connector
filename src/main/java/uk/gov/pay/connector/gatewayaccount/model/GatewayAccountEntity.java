@@ -556,6 +556,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
         return GatewayAccountType.TEST.toString().equals(this.getType()) && PaymentGatewayName.STRIPE.getName().equals(this.getGatewayName());
     }
 
+    public boolean isAdyenTestAccount() {
+        return GatewayAccountType.TEST.toString().equals(this.getType()) && PaymentGatewayName.ADYEN.getName().equals(this.getGatewayName());
+    }
+
     public boolean hasPendingWorldpayCredential() {
         return providerSwitchEnabled && gatewayAccountCredentials.stream()
                 .filter(credential -> credential.getPaymentProvider().equals(WORLDPAY.getName()))
