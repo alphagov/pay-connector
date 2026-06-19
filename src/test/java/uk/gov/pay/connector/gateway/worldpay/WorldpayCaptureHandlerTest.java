@@ -18,7 +18,7 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.util.XmlAssertUtils;
+import uk.gov.pay.connector.util.XmlAssertions;
 
 import java.net.URI;
 import java.util.List;
@@ -114,7 +114,7 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
                 .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }
@@ -149,7 +149,7 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
                 .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }

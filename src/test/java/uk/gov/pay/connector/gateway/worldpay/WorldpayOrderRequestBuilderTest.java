@@ -53,7 +53,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_DELETE_TOKEN_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST;
-import static uk.gov.pay.connector.util.XmlAssertUtils.assertThat;
+import static uk.gov.pay.connector.util.XmlAssertions.assertThat;
 
 class WorldpayOrderRequestBuilderTest {
 

@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALID_AUTHORISE_WORLDPAY_MOTO_AUTHORISATION_REQUEST;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
-import static uk.gov.pay.connector.util.XmlAssertUtils.assertThat;
+import static uk.gov.pay.connector.util.XmlAssertions.assertThat;
 
 class TemplateBuilderTest {
 

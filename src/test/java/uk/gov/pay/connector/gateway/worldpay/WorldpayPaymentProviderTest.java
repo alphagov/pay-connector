@@ -50,7 +50,7 @@ import uk.gov.pay.connector.paymentprocessor.service.AuthorisationService;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
-import uk.gov.pay.connector.util.XmlAssertUtils;
+import uk.gov.pay.connector.util.XmlAssertions;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.net.HttpCookie;
@@ -858,7 +858,7 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST))
                 .areIdentical();
     }
@@ -885,7 +885,7 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST))
                 .areIdentical();
     }
@@ -913,7 +913,7 @@ class WorldpayPaymentProviderTest {
                 .replace("{{agreementId}}", agreement.getExternalId())
                 .replace("{{paymentTokenId}}", token);
 
-        XmlAssertUtils.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(expectedRequestBody)
                 .areIdentical();
     }
