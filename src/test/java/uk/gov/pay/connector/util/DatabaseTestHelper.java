@@ -1275,6 +1275,14 @@ public class DatabaseTestHelper {
                         .bind("externalId", params.getExternalId())
                         .execute());
     }
+    
+    public List<Map<String, Object>> getAdyenAccountSetupTaskEntities(long gatewayAccountId) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT * FROM gateway_accounts_adyen_setup WHERE gateway_account_id = :gateway_account_id")
+                        .bind("gateway_account_id", gatewayAccountId)
+                        .mapToMap()
+                        .list());
+    }
 
     private PGobject buildCredentialsJson(AddGatewayAccountCredentialsParams params) {
         try {

@@ -1,11 +1,13 @@
 package uk.gov.pay.connector.it.resources.adyen;
 
 import com.adyen.model.management.PaymentMethodSetupInfo;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
@@ -28,6 +30,9 @@ import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
@@ -78,28 +83,28 @@ public class AdyenAccountResourceIT {
         app.getAdyenKycMockClient().mockCreateIndividual();
         app.getAdyenKycMockClient().mockUpdateLegalEntity(legalEntityId);
         app.getAdyenKycMockClient().mockCreateTransferInstrument();
-        
+
         app.getAdyenManagementMockClient().mockCreateStore();
         app.getAdyenManagementMockClient().mockRequestPaymentMethod(merchantId);
-        
+
         app.getAdyenBalancePlatformMockClient().mockCreateAccountHolder();
         app.getAdyenBalancePlatformMockClient().mockCreateBalanceAccount();
-        
+
         app.getAdyenKycMockClient().mockGetTermsOfServiceDocument(legalEntityId);
         app.getAdyenKycMockClient().mockAcceptTermsOfService(legalEntityId, termsOfServiceDocumentId);
         app.getAdyenKycMockClient().mockGeneratePciQuestionnaire(legalEntityId);
         app.getAdyenKycMockClient().mockSignPciTemplates(legalEntityId);
-        
+
         app.givenSetup()
                 .body(Map.of("service_name", serviceName))
                 .post(format("/v1/api/service/%s/request-adyen-test-account", serviceId))
                 .then().statusCode(SC_OK)
                 .body("gateway_account_id", is(notNullValue()))
                 .body("legal_entity_id", is(legalEntityId))
-                .body("store_id" , is("STORE_ID_123"))
+                .body("store_id", is("STORE_ID_123"))
                 .body("account_holder_id", is("AH3227C223222H5J4DCLW9VBV"))
                 .body("balance_account_id", is("BA0000000000000000000001"));
-        
+
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/legalEntities"))
                 .withRequestBody(equalToJson(TestTemplateResourceLoader
                         .load(ADYEN_CREATE_LEGAL_ENTITY_REQUEST)
@@ -110,18 +115,18 @@ public class AdyenAccountResourceIT {
                         .load(ADYEN_CREATE_INDIVIDUAL_REQUEST))));
         app.getAdyenWireMockServer().verify(patchRequestedFor(urlEqualTo(format("/legalEntities/%s", legalEntityId))));
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/transferInstruments")));
-        
+
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/stores")));
         verifyPaymentMethodsRequest(paymentTypes, merchantId);
-        
+
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/accountHolders")));
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/balanceAccounts")));
-        
+
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", legalEntityId))));
         app.getAdyenWireMockServer().verify(patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", legalEntityId, termsOfServiceDocumentId))));
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", legalEntityId))));
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", legalEntityId))));
-        
+
         app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
                 .then()
                 .statusCode(SC_OK)
@@ -137,6 +142,15 @@ public class AdyenAccountResourceIT {
                 .body("gateway_account_credentials[0].credentials.account_holder_id", is("AH3227C223222H5J4DCLW9VBV"))
                 .body("gateway_account_credentials[0].credentials.balance_account_id", is("BA0000000000000000000001"))
                 .body("gateway_account_credentials[0].external_id", is(notNullValue(String.class)));
+        
+        int accountId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId)).jsonPath().get("gateway_account_id");
+
+        var adyenAccountSetupTaskEntities = app.getDatabaseTestHelper().getAdyenAccountSetupTaskEntities(accountId);
+
+        assertFalse(adyenAccountSetupTaskEntities.isEmpty());
+        assertTrue(adyenAccountSetupTaskEntities.stream()
+                .allMatch(entity -> entity.get("status").equals("COMPLETED")));
+        assertEquals(AdyenAccountSetupTask.values().length, adyenAccountSetupTaskEntities.size());
     }
 
     private void verifyPaymentMethodsRequest(List<PaymentMethodSetupInfo.TypeEnum> paymentTypes, String merchantId) {
@@ -147,8 +161,8 @@ public class AdyenAccountResourceIT {
                                     .load(ADYEN_PAYMENT_METHOD_REQUEST)
                                     .replace("{{type}}", paymentType.toString()))));
         }
-        
-        app.getAdyenWireMockServer().verify(paymentTypes.size(), 
+
+        app.getAdyenWireMockServer().verify(paymentTypes.size(),
                 postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", merchantId)))));
     }
 
@@ -157,7 +171,7 @@ public class AdyenAccountResourceIT {
         var serviceId = RandomIdGenerator.randomUuid();
 
         app.getAdyenKycMockClient().mockError("/legalEntities");
-        
+
         app.givenSetup()
                 .body(Map.of("service_name", "Existing service"))
                 .post(format("/v1/api/service/%s/request-adyen-test-account", serviceId))
@@ -167,15 +181,15 @@ public class AdyenAccountResourceIT {
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/businessLines")));
         app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s", any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/transferInstruments")));
-        
+
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/stores")));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo((format("/merchants/%s/paymentMethodSettings", any(String.class))))));
-        
+
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/accountHolders")));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
-        
+
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
-        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class), any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
     }
@@ -211,7 +225,7 @@ public class AdyenAccountResourceIT {
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
 
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
-        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class), any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
     }
@@ -245,11 +259,11 @@ public class AdyenAccountResourceIT {
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo("/balanceAccounts")));
 
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService", any(String.class)))));
-        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class),  any(String.class)))));
+        app.getAdyenWireMockServer().verify(0, patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", any(String.class), any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", any(String.class)))));
         app.getAdyenWireMockServer().verify(0, postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", any(String.class)))));
     }
-    
+
     @Test
     void switchTestAccountShouldCreateAdyenEntitiesAndNewActiveCredential() {
         var serviceId = RandomIdGenerator.randomUuid();
@@ -258,7 +272,7 @@ public class AdyenAccountResourceIT {
                 .aTestAccount()
                 .withServiceId(serviceId)
                 .withServiceName(serviceName)
-                .withDescription("Stripe test account for " +  serviceName)
+                .withDescription("Stripe test account for " + serviceName)
                 .withPaymentProvider(STRIPE.getName())
                 .withAccountId(1337L)
                 .withGatewayAccountCredentials(List.of(anAddGatewayAccountCredentialsParams()
@@ -269,7 +283,7 @@ public class AdyenAccountResourceIT {
                         .withPaymentProvider(PaymentGatewayName.STRIPE.getName())
                         .build()))
                 .insert();
-        
+
         app.getAdyenKycMockClient().mockCreateLegalEntity();
         app.getAdyenKycMockClient().mockCreateBusinessLine();
         app.getAdyenKycMockClient().mockCreateIndividual();
@@ -294,7 +308,7 @@ public class AdyenAccountResourceIT {
                 .statusCode(SC_OK)
                 .body("gateway_account_id", is(notNullValue()))
                 .body("legal_entity_id", is(legalEntityId))
-                .body("store_id" , is("STORE_ID_123"))
+                .body("store_id", is("STORE_ID_123"))
                 .body("account_holder_id", is("AH3227C223222H5J4DCLW9VBV"))
                 .body("balance_account_id", is("BA0000000000000000000001"));
 
@@ -319,7 +333,7 @@ public class AdyenAccountResourceIT {
         app.getAdyenWireMockServer().verify(patchRequestedFor(urlEqualTo(format("/legalEntities/%s/termsOfService/%s", legalEntityId, termsOfServiceDocumentId))));
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/generatePciTemplates", legalEntityId))));
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo(format("/legalEntities/%s/pciQuestionnaires/signPciTemplates", legalEntityId))));
-        
+
         app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId))
                 .then()
                 .statusCode(SC_OK)
@@ -363,7 +377,7 @@ public class AdyenAccountResourceIT {
     @Test
     void switchTestAccountShouldReturnBadRequestWhenStripeTestAccountDoesNotExist() {
         var serviceId = RandomIdGenerator.randomUuid();
-        
+
         app.givenSetup()
                 .body(Map.of("service_name", "Existing service"))
                 .post(format("/v1/api/service/%s/switch-to-adyen-test-account", serviceId))

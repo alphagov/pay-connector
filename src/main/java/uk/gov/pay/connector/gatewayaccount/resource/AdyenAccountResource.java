@@ -14,6 +14,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenGatewayAccountRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupService;
 import uk.gov.pay.connector.gatewayaccount.service.AdyenTestAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountSwitchPaymentProviderService;
@@ -30,14 +31,16 @@ public class AdyenAccountResource {
 
     private final AdyenTestAccountService adyenTestAccountService;
     private final GatewayAccountService gatewayAccountService;
+    private final AdyenAccountSetupService adyenAccountSetupService;
     private final GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService;
 
     @Inject
     public AdyenAccountResource(AdyenTestAccountService adyenTestAccountService,
-                                GatewayAccountService gatewayAccountService,
+                                GatewayAccountService gatewayAccountService, AdyenAccountSetupService adyenAccountSetupService,
                                 GatewayAccountSwitchPaymentProviderService gatewayAccountSwitchPaymentProviderService) {
         this.adyenTestAccountService = adyenTestAccountService;
         this.gatewayAccountService = gatewayAccountService;
+        this.adyenAccountSetupService = adyenAccountSetupService;
         this.gatewayAccountSwitchPaymentProviderService = gatewayAccountSwitchPaymentProviderService;
     }
 
@@ -74,9 +77,10 @@ public class AdyenAccountResource {
                 .withAllowGooglePay(true)
                 .build();
 
-        GatewayAccountEntity adyenGatewayAccount = gatewayAccountService.createGatewayAccount(adyenGatewayAccountRequest);
-
-        Map<String, String> response = Map.of("gateway_account_id", adyenGatewayAccount.getId().toString(),
+        GatewayAccountEntity adyenTestGatewayAccount = gatewayAccountService.createGatewayAccount(adyenGatewayAccountRequest);
+        adyenAccountSetupService.completeTestAccountSetup(adyenTestGatewayAccount);
+        
+        Map<String, String> response = Map.of("gateway_account_id", adyenTestGatewayAccount.getId().toString(),
                 "legal_entity_id", adyenCredentials.legalEntityId(),
                 "store_id", adyenCredentials.storeId(),
                 "account_holder_id", adyenCredentials.accountHolderId(),
