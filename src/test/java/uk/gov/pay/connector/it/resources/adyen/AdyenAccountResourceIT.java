@@ -1,7 +1,6 @@
 package uk.gov.pay.connector.it.resources.adyen;
 
 import com.adyen.model.management.PaymentMethodSetupInfo;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -354,6 +353,15 @@ public class AdyenAccountResourceIT {
                 .body("gateway_account_credentials[1].credentials.account_holder_id", is("AH3227C223222H5J4DCLW9VBV"))
                 .body("gateway_account_credentials[1].credentials.balance_account_id", is("BA0000000000000000000001"))
                 .body("gateway_account_credentials[1].external_id", is(notNullValue(String.class)));
+        
+        int accountId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId)).jsonPath().get("gateway_account_id");
+
+        var adyenAccountSetupTaskEntities = app.getDatabaseTestHelper().getAdyenAccountSetupTaskEntities(accountId);
+
+        assertFalse(adyenAccountSetupTaskEntities.isEmpty());
+        assertTrue(adyenAccountSetupTaskEntities.stream()
+                .allMatch(entity -> entity.get("status").equals("COMPLETED")));
+        assertEquals(AdyenAccountSetupTask.values().length, adyenAccountSetupTaskEntities.size());
     }
 
     @Test

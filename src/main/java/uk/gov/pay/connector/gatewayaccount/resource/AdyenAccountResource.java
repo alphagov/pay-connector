@@ -111,6 +111,11 @@ public class AdyenAccountResource {
         var serviceName = payload.get("service_name");
         AdyenCredentials adyenCredentials = adyenTestAccountService.createTestAccount(serviceName);
         gatewayAccountSwitchPaymentProviderService.switchStripeTestAccountToAdyen(gatewayAccount, adyenCredentials);
+
+        var updatedGatewayAccount = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, TEST)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId));
+        
+        adyenAccountSetupService.completeTestAccountSetup(updatedGatewayAccount);
         
         Map<String, String> response = Map.of("gateway_account_id", serviceId,
                 "legal_entity_id", adyenCredentials.legalEntityId(),
