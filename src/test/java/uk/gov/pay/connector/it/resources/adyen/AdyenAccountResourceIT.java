@@ -6,8 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.util.RandomIdGenerator;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -145,11 +148,16 @@ public class AdyenAccountResourceIT {
         int accountId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId)).jsonPath().get("gateway_account_id");
 
         var adyenAccountSetupTaskEntities = app.getDatabaseTestHelper().getAdyenAccountSetupTaskEntities(accountId);
+        var gatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialByPaymentProvider(accountId, ADYEN.getName());
 
         assertFalse(adyenAccountSetupTaskEntities.isEmpty());
         assertTrue(adyenAccountSetupTaskEntities.stream()
-                .allMatch(entity -> entity.get("status").equals("COMPLETED")));
+                .allMatch(entity -> entity.get("status").equals("COMPLETED")), 
+                "Not all (or any) AdyenAccountSetupTasks have a COMPLETED status");
         assertEquals(AdyenAccountSetupTask.values().length, adyenAccountSetupTaskEntities.size());
+        assertTrue(adyenAccountSetupTaskEntities.stream()
+                .allMatch(entity -> (entity.get("gateway_account_credential_id")).equals(gatewayAccountCredentialId)), 
+                "Not all (or any) AdyenAccountSetupTasks have the expected Gateway Account Credential Id");
     }
 
     private void verifyPaymentMethodsRequest(List<PaymentMethodSetupInfo.TypeEnum> paymentTypes, String merchantId) {
@@ -357,11 +365,16 @@ public class AdyenAccountResourceIT {
         int accountId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId)).jsonPath().get("gateway_account_id");
 
         var adyenAccountSetupTaskEntities = app.getDatabaseTestHelper().getAdyenAccountSetupTaskEntities(accountId);
+        var gatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialByPaymentProvider(accountId, ADYEN.getName());
 
         assertFalse(adyenAccountSetupTaskEntities.isEmpty());
         assertTrue(adyenAccountSetupTaskEntities.stream()
-                .allMatch(entity -> entity.get("status").equals("COMPLETED")));
+                        .allMatch(entity -> entity.get("status").equals("COMPLETED")),
+                "Not all (or any) AdyenAccountSetupTasks have a COMPLETED status");
         assertEquals(AdyenAccountSetupTask.values().length, adyenAccountSetupTaskEntities.size());
+        assertTrue(adyenAccountSetupTaskEntities.stream()
+                        .allMatch(entity -> (entity.get("gateway_account_credential_id")).equals(gatewayAccountCredentialId)),
+                "Not all (or any) AdyenAccountSetupTasks have the expected Gateway Account Credential Id");
     }
 
     @Test
