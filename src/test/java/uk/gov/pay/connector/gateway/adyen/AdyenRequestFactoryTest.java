@@ -292,10 +292,10 @@ class AdyenRequestFactoryTest {
         var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
 
         assertThat(request.shopperInteraction(), is("Moto"));
-        assertThat(request.browserInfo(), nullValue());
-        assertThat(request.origin(), nullValue());
-        assertThat(request.shopperEmail(), nullValue());
-        assertThat(request.shopperIP(), nullValue());
+        assertThat(request.browserInfo(), is(nullValue()));
+        assertThat(request.origin(), is(nullValue()));
+        assertThat(request.shopperEmail(),is(nullValue()));
+        assertThat(request.shopperIP(), is(nullValue()));
     }
     
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {

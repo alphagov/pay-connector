@@ -120,4 +120,22 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
         var path = "/payments/%s/refunds".formatted(paymentPspReference);
         setupPostResponse(responseBody, path, 403);
     }
+    
+    public void mockAuthorisationRedirectShopper(String pspReferenceFromAdyen,
+                                                 String redirectUrl,
+                                                 String httpMethod) {
+        var responseBody = """
+            {
+              "pspReference": "%s",
+              "resultCode": "RedirectShopper",
+              "action": {
+                "paymentMethodType": "scheme",
+                "url": "%s",
+                "method": "%s",
+                "type": "redirect"
+              }
+            }""".formatted(pspReferenceFromAdyen, redirectUrl, httpMethod);
+
+        setupPostResponse(responseBody, "/payments", SC_OK);
+    }
 }

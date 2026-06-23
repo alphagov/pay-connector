@@ -6,6 +6,7 @@ public record BrowserInfo(
         @JsonProperty("acceptHeader") String acceptHeader,
         @JsonProperty("colorDepth") Integer colorDepth,
         @JsonProperty("javaEnabled") Boolean javaEnabled,
+        @JsonProperty("javaScriptEnabled") Boolean javaScriptEnabled,
         @JsonProperty("language") String language,
         @JsonProperty("screenHeight") Integer screenHeight,
         @JsonProperty("screenWidth") Integer screenWidth,

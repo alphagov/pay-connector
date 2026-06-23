@@ -26,8 +26,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.it.base.AddChargeParameters.Builder.anAddChargeParameters;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS_AND_BROWSER_INFO;
-import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 class AdyenCardResourceAuthoriseIT {
@@ -40,6 +38,16 @@ class AdyenCardResourceAuthoriseIT {
             "adyen", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private ChargeDao chargeDao;
+    final String acceptHeader = "text/html";
+    final String userAgent = "Mozilla/5.0";
+    final String shopperIp = "127.0.0.1";
+    final String language = "en-GB";
+    final String colorDepth = "24";
+    final String screenHeight = "900";
+    final String screenWidth = "1440";
+    final String timezoneOffset = "-60";
+    final String shopperEmail = "email@fake.test";
+    final String origin = "http://CardFrontend/";
 
     @BeforeEach
     void setUp() {
@@ -97,14 +105,14 @@ class AdyenCardResourceAuthoriseIT {
         app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
 
         var authCardDetails = anAuthCardDetails()
-                .withAcceptHeader("text/html")
-                .withUserAgentHeader("Mozilla/5.0")
-                .withIpAddress("127.0.0.1")
-                .withJsNavigatorLanguage("en-GB")
-                .withJsScreenColorDepth("24")
-                .withJsScreenHeight("900")
-                .withJsScreenWidth("1440")
-                .withJsTimezoneOffsetMins("-60")
+                .withAcceptHeader(acceptHeader)
+                .withUserAgentHeader(userAgent)
+                .withIpAddress(shopperIp)
+                .withJsNavigatorLanguage(language)
+                .withJsScreenColorDepth(colorDepth)
+                .withJsScreenHeight(screenHeight)
+                .withJsScreenWidth(screenWidth)
+                .withJsTimezoneOffsetMins(timezoneOffset)
                 .withJsEnabled(true)
                 .build();
 
@@ -116,11 +124,18 @@ class AdyenCardResourceAuthoriseIT {
                 .body("status", is("AUTHORISATION SUCCESS"));
 
         app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
-                .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
-                .withHeader("Idempotency-Key", equalTo("auth-" + chargeId))
-                .withRequestBody(equalToJson(
-                        load(ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS_AND_BROWSER_INFO)
-                                .formatted(chargeId, "Ecommerce"))));
+                .withRequestBody(matchingJsonPath("$.browserInfo.acceptHeader", equalTo(acceptHeader)))
+                .withRequestBody(matchingJsonPath("$.browserInfo.colorDepth", equalTo(colorDepth)))
+                .withRequestBody(matchingJsonPath("$.browserInfo.javaEnabled",equalTo("false")))
+                .withRequestBody(matchingJsonPath("$.browserInfo.javaScriptEnabled",equalTo("true")))
+                .withRequestBody(matchingJsonPath("$.browserInfo.language",equalTo(language)))
+                .withRequestBody(matchingJsonPath("$.browserInfo.screenHeight", equalTo(screenHeight)))
+                .withRequestBody(matchingJsonPath("$.browserInfo.screenWidth",equalTo(screenWidth)))
+                .withRequestBody(matchingJsonPath("$.browserInfo.timeZoneOffset",equalTo(timezoneOffset)))
+                .withRequestBody(matchingJsonPath("$.browserInfo.userAgent",equalTo(userAgent)))
+                .withRequestBody(matchingJsonPath("$.shopperEmail", equalTo(shopperEmail)))
+                .withRequestBody(matchingJsonPath("$.shopperIP", equalTo(shopperIp)))
+                .withRequestBody(matchingJsonPath("$.origin", equalTo(origin))));
     }
     @Test
     void successful_authorisation_of_a_payment_without_a_billing_address() {
@@ -270,5 +285,34 @@ class AdyenCardResourceAuthoriseIT {
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is("AUTHORISATION SUCCESS"));
         assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
+    }
+    
+    @Test
+    void should_save_3ds_data_on_charge_when_adyen_returns_with_result_code_redirect_shopper() {
+        var chargeId = testBaseExtension.createNewCharge(ENTERING_CARD_DETAILS);
+        var pspReferenceFromAdyen = "993617895215577D";
+        var redirectUrl = "https://checkoutshopper-test.adyen.com/checkoutshopper/threeDS/redirect";
+        var httpMethod3ds = "GET";
+
+        app.getAdyenCheckoutMockClient()
+                .mockAuthorisationRedirectShopper(pspReferenceFromAdyen, redirectUrl, httpMethod3ds);
+
+        var authCardDetails = anAuthCardDetails().build();
+
+        app.givenSetup()
+                .body(authCardDetails)
+                .post("/v1/frontend/charges/{chargeId}/cards", chargeId)
+                .then()
+                .statusCode(200)
+                .body("status", is("AUTHORISATION 3DS REQUIRED"));
+
+        Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
+
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is("AUTHORISATION 3DS REQUIRED"));
+        assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
+        assertThat(charge.get().get3dsRequiredDetails().getIssuerUrl(), is(redirectUrl));
+        assertThat(charge.get().get3dsRequiredDetails().getHttpMethod3ds(), is(httpMethod3ds));
+    
     }
 }

@@ -30,6 +30,9 @@ public class Auth3dsRequiredEntity {
     @Column(name = "version_3ds")
     private String threeDsVersion;
 
+    @Column(name = "http_method_3ds")
+    private String httpMethod3ds;
+
     public String getPaRequest() {
         return paRequest;
     }
@@ -93,6 +96,9 @@ public class Auth3dsRequiredEntity {
     public void setThreeDsVersion(String threeDsVersion) {
         this.threeDsVersion = threeDsVersion;
     }
-    
+
+    public String getHttpMethod3ds() {return httpMethod3ds;}
+
+    public void setHttpMethod3ds(String httpMethod3ds) {this.httpMethod3ds = httpMethod3ds;}
     
 }

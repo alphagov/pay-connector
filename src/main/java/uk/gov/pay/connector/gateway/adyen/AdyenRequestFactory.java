@@ -130,6 +130,7 @@ public class AdyenRequestFactory {
         return new BrowserInfo(
                 authCardDetails.getAcceptHeader(),
                 authCardDetails.getJsScreenColorDepth().map(Integer::valueOf).orElse(null),
+                false,
                 authCardDetails.getJsEnabled(),
                 authCardDetails.getJsNavigatorLanguage().map(String::valueOf).orElse(null),
                 authCardDetails.getJsScreenHeight().map(Integer::valueOf).orElse(null),
