@@ -11,7 +11,9 @@ examples.
 
 Note: All Jersey resources must be listed in [
 `src/main/resources/openapi-config.yaml`](src/main/resources/openapi-config.yaml). The OpenAPI Specification is
-regenerated during the `compile` phase of the Maven build.
+regenerated during the `compile` phase of the Maven build. Run `mvn clean compile` to invoke the phase locally. See
+the [Pay team manual](https://manual.payments.service.gov.uk/manual/how-to/re-generate-open-api-specification.html) (
+nonpublic).
 
 ## Environment Variables
 
