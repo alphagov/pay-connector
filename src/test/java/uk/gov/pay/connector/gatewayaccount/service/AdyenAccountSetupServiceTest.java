@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.AdyenAccountSetupDao;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
@@ -14,26 +13,26 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
-import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenAccountSetupServiceTest {
 
     @Mock
     private AdyenAccountSetupDao mockAdyenAccountSetupDao;
-
-    @Spy
-    private GatewayAccountEntity spyGatewayAccountEntity;
 
     private AdyenAccountSetupService adyenAccountSetupService;
 
@@ -48,16 +47,20 @@ class AdyenAccountSetupServiceTest {
     class completeTestAccountSetup {
         @Test
         void shouldCompleteAllTasks_WhenAccountIsAdyenAndTest() {
-            doReturn(TEST.toString()).when(spyGatewayAccountEntity).getType();
-            doReturn(ADYEN.getName()).when(spyGatewayAccountEntity).getGatewayName();
+            var gatewayAccountCredentials = aGatewayAccountCredentialsEntity().withPaymentProvider(ADYEN.getName()).build();
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withType(TEST)
+                    .withGatewayAccountCredentials(List.of(gatewayAccountCredentials))
+                    .build();
 
-            adyenAccountSetupService.completeTestAccountSetup(spyGatewayAccountEntity);
+            adyenAccountSetupService.completeTestAccountSetup(gatewayAccountEntity);
 
             ArgumentCaptor<AdyenAccountSetupTaskEntity> captor =
                     ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
 
             verify(mockAdyenAccountSetupDao, times(AdyenAccountSetupTask.values().length)).persist(captor.capture());
 
+            assertEquals(gatewayAccountCredentials.getId(), captor.getValue().getGatewayAccountCredential().getId());
             assertThat(captor.getAllValues())
                     .extracting(AdyenAccountSetupTaskEntity::getStatus)
                     .containsOnly(AdyenAccountSetupStatus.COMPLETED);
@@ -65,17 +68,24 @@ class AdyenAccountSetupServiceTest {
 
         @Test
         void shouldThrowIllegalArgException_WhenAccountIsNotTest() {
-            doReturn(LIVE.toString()).when(spyGatewayAccountEntity).getType();
-            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(spyGatewayAccountEntity));
+            var gatewayAccountCredentials = aGatewayAccountCredentialsEntity().withPaymentProvider(ADYEN.getName()).build();
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withType(LIVE)
+                    .withGatewayAccountCredentials(List.of(gatewayAccountCredentials))
+                    .build();
+            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(gatewayAccountEntity));
             verify(mockAdyenAccountSetupDao, times(0)).persist(any(AdyenAccountSetupTaskEntity.class));
             assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
         }
 
         @Test
         void shouldThrowIllegalArgException_WhenAccountIsNotAdyen() {
-            doReturn(TEST.toString()).when(spyGatewayAccountEntity).getType();
-            doReturn(SANDBOX.getName()).when(spyGatewayAccountEntity).getGatewayName();
-            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(spyGatewayAccountEntity));
+            var gatewayAccountCredentials = aGatewayAccountCredentialsEntity().withPaymentProvider(WORLDPAY.getName()).build();
+            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+                    .withType(TEST)
+                    .withGatewayAccountCredentials(List.of(gatewayAccountCredentials))
+                    .build();
+            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(gatewayAccountEntity));
             verify(mockAdyenAccountSetupDao, times(0)).persist(any(AdyenAccountSetupTaskEntity.class));
             assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
         }

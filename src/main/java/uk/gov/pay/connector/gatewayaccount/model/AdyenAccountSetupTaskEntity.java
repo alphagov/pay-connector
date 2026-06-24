@@ -11,6 +11,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
 @Entity
 @Table(name = "gateway_accounts_adyen_setup")
@@ -26,6 +28,10 @@ public class AdyenAccountSetupTaskEntity {
     @JoinColumn(name = "gateway_account_id", updatable = false)
     private GatewayAccountEntity gatewayAccount;
 
+    @ManyToOne
+    @JoinColumn(name = "gateway_account_credential_id", updatable = false)
+    private GatewayAccountCredentialsEntity gatewayAccountCredential;
+
     @Column(name = "task")
     @Enumerated(EnumType.STRING)
     private AdyenAccountSetupTask task;
@@ -34,10 +40,12 @@ public class AdyenAccountSetupTaskEntity {
     @Enumerated(EnumType.STRING)
     private AdyenAccountSetupStatus status;
 
-    public AdyenAccountSetupTaskEntity(GatewayAccountEntity gatewayAccount, AdyenAccountSetupTask task, AdyenAccountSetupStatus status) {
+    public AdyenAccountSetupTaskEntity(GatewayAccountEntity gatewayAccount, AdyenAccountSetupTask task, 
+                                       GatewayAccountCredentialsEntity gatewayAccountCredentials, AdyenAccountSetupStatus status) {
         this.gatewayAccount = gatewayAccount;
         this.task = task;
         this.status = status;
+        this.gatewayAccountCredential = gatewayAccountCredentials;
     }
 
     public AdyenAccountSetupTaskEntity() {
@@ -54,6 +62,10 @@ public class AdyenAccountSetupTaskEntity {
 
     public AdyenAccountSetupStatus getStatus() {
         return status;
+    }
+
+    public GatewayAccountCredentialsEntity getGatewayAccountCredential() {
+        return gatewayAccountCredential;
     }
 
     public void setGatewayAccount(GatewayAccountEntity gatewayAccount) {

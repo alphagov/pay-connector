@@ -10,6 +10,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
 import java.util.List;
 
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+
 public class AdyenAccountSetupService {
 
     private final AdyenAccountSetupDao aydenAccountSetupDao;
@@ -22,8 +24,9 @@ public class AdyenAccountSetupService {
     @Transactional
     public void completeTestAccountSetup(GatewayAccountEntity gatewayAccountEntity) {
         if (gatewayAccountEntity.isAdyenTestAccount()) {
+            var gatewayAccountCredentialsEntity = gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity(ADYEN.getName());
             List.of(AdyenAccountSetupTask.values()).forEach(task -> {
-                aydenAccountSetupDao.persist(new AdyenAccountSetupTaskEntity(gatewayAccountEntity, task, AdyenAccountSetupStatus.COMPLETED));
+                aydenAccountSetupDao.persist(new AdyenAccountSetupTaskEntity(gatewayAccountEntity, task, gatewayAccountCredentialsEntity, AdyenAccountSetupStatus.COMPLETED));
             });
         } else {
             throw new IllegalArgumentException("Gateway account type must be TEST and gateway name must be ADYEN");

@@ -1284,6 +1284,15 @@ public class DatabaseTestHelper {
                         .list());
     }
 
+    public Long getGatewayAccountCredentialByPaymentProvider(long gatewayAccountId, String paymentProvider) {
+        return jdbi.withHandle(handle ->
+                handle.createQuery("SELECT id FROM gateway_account_credentials WHERE gateway_account_id = :gateway_account_id AND payment_provider = :payment_provider")
+                        .bind("gateway_account_id", gatewayAccountId)
+                        .bind("payment_provider", paymentProvider)
+                        .mapTo(long.class)
+                        .first());
+    }
+
     private PGobject buildCredentialsJson(AddGatewayAccountCredentialsParams params) {
         try {
             PGobject credentialsJson = getJsonPGobject();
