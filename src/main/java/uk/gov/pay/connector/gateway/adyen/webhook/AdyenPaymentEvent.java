@@ -10,9 +10,9 @@ public enum AdyenPaymentEvent {
     REFUND_FAILED,
     REFUNDED_REVERSED;
 
-    public static boolean contains(String test) {
+    public static boolean contains(String eventName) {
         for (AdyenPaymentEvent e : AdyenPaymentEvent.values()) {
-            if (e.name().equals(test)) {
+            if (e.name().equals(eventName)) {
                 return true;
             }
         }
