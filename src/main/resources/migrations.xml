@@ -2140,7 +2140,7 @@
                         foreignKeyName="fk__gateway_account_credentials_adyen_setup_gateway_accounts"
                         referencedTableName="gateway_account_credentials"
                         referencedColumnNames="id"
-                        nullable="false"/>
+                        nullable="true"/>
             </column>
         </addColumn>
     </changeSet>
