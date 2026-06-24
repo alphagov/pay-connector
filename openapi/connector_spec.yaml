@@ -2302,6 +2302,34 @@ paths:
       summary: Validate Worldpay credentials by service ID and account type
       tags:
       - Gateway account credentials
+  /v1/api/service/{serviceId}/request-adyen-test-account:
+    post:
+      operationId: requestAdyenTestAccount
+      parameters:
+      - description: Service ID
+        example: service-external-id-123
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        "200":
+          description: OK
+        "409":
+          description: Adyen account already exists
+        "502":
+          description: Bad gateway
+      summary: Creates an Adyen Test Account and associated entities
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/request-stripe-test-account:
     post:
       operationId: requestStripeTestAccount
@@ -2324,6 +2352,35 @@ paths:
       summary: 1) Creates a Stripe Connect Account 2) Creates a gateway account in
         connector and links this with the Stripe Connect Account id 3) Disables the
         old sandbox account
+      tags:
+      - Gateway accounts
+  /v1/api/service/{serviceId}/switch-to-adyen-test-account:
+    post:
+      operationId: switchToAdyenTestAccount
+      parameters:
+      - description: Service ID
+        example: service-external-id-123
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad request - account ineligible for switch
+        "502":
+          description: Bad gateway
+      summary: "Disables Stripe test account, creates an Adyen Test Account and associated\
+        \ entities"
       tags:
       - Gateway accounts
   /v1/frontend/accounts/external-id/{externalId}:
