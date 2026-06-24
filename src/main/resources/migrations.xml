@@ -2133,4 +2133,16 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="add gateway_account_credential_id to gateway_accounts_adyen_setup table" author="">
+        <addColumn tableName="gateway_accounts_adyen_setup">
+            <column name="gateway_account_credential_id" type="bigint">
+                <constraints
+                        foreignKeyName="fk__gateway_account_credentials_adyen_setup_gateway_accounts"
+                        referencedTableName="gateway_account_credentials"
+                        referencedColumnNames="id"
+                        nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
