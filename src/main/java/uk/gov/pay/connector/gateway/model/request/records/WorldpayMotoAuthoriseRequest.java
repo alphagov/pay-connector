@@ -15,7 +15,7 @@ public record WorldpayMotoAuthoriseRequest(
         String expiryDateYearFourDigits,
         String cardholderName,
         String cvc
-) implements WorldpayRequest {
+) implements WorldpayAuthoriseRequest {
     @Override
     public String toString(){
         return getClass().getSimpleName() + '[' 
