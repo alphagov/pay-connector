@@ -2145,4 +2145,8 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="make gateway_accounts_adyen_setup.gateway_account_credential_id not nullable" author="">
+        <addNotNullConstraint tableName="gateway_accounts_adyen_setup" columnName="gateway_account_credential_id"/>
+    </changeSet>
+
 </databaseChangeLog>
