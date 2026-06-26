@@ -37,25 +37,25 @@ public class AdyenAccountSetupResourceIT {
 
     @Test
     void withAllTasksCompletedReturnsTrueFlags() {
-        testHelpers.createGatewayAccount(
+        String gatewayAccountId = testHelpers.createGatewayAccount(
                 aCreateGatewayAccountPayloadBuilder()
                         .withServiceId(serviceId)
                         .withProvider(ADYEN.getName())
                         .build());
         
-        Arrays.stream(AdyenAccountSetupTask.values()).forEach(task -> addCompletedTask(1L, 1L, task, COMPLETED));
+        Arrays.stream(AdyenAccountSetupTask.values()).forEach(task -> addTaskWithStatus(Long.parseLong(gatewayAccountId), 1L, task, COMPLETED));
         
         app.givenSetup()
                 .get( format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, accountType, credentialId))
                 .then()
                 .statusCode(SC_OK)
-                .body("bank_account", is(true))
-                .body("responsible_person", is(true))
-                .body("vat_number", is(true))
-                .body("company_number", is(true))
-                .body("director", is(true))
-                .body("government_entity_document", is(true))
-                .body("organisation_details", is(true));
+                .body("bank_account", is(COMPLETED.toString()))
+                .body("responsible_person", is(COMPLETED.toString()))
+                .body("vat_number", is(COMPLETED.toString()))
+                .body("company_number", is(COMPLETED.toString()))
+                .body("director", is(COMPLETED.toString()))
+                .body("government_entity_document", is(COMPLETED.toString()))
+                .body("organisation_details", is(COMPLETED.toString()));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class AdyenAccountSetupResourceIT {
                 .statusCode(SC_NOT_FOUND);
     }
 
-    private void addCompletedTask(long gatewayAccountId, long credentialId, AdyenAccountSetupTask task, AdyenAccountSetupStatus status) {
+    private void addTaskWithStatus(long gatewayAccountId, long credentialId, AdyenAccountSetupTask task, AdyenAccountSetupStatus status) {
         app.getDatabaseTestHelper().addGatewayAccountsAdyenSetupTask(gatewayAccountId, credentialId, task, status);
     }
 }
