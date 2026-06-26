@@ -135,6 +135,13 @@ class AuthUtilTest {
         assertThat(merchantId, is(oneOffMerchantCode));
     }
 
+    @Test
+    void shouldGetAuthHeaderFromUsernameAndPassword() {
+        String expectedHeader = "Basic " + Base64.getEncoder().encodeToString((oneOffUsername + ":" + oneOffPassword).getBytes(StandardCharsets.UTF_8));
+        Map<String, String> encodedHeader = AuthUtil.getAuthHeader(oneOffUsername, oneOffPassword);
+        assertThat(encodedHeader.get(AUTHORIZATION), is(expectedHeader));
+    }
+
     private WorldpayCredentials getWorldpayCredentialsWithAllPaymentChannels() {
         WorldpayCredentials worldpayCredentials = new WorldpayCredentials();
         worldpayCredentials.setOneOffCustomerInitiatedCredentials(new WorldpayMerchantCodeCredentials(oneOffMerchantCode, oneOffUsername, oneOffPassword));
