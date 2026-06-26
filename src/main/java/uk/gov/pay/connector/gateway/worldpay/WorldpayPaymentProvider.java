@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -38,6 +39,7 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
@@ -259,6 +261,11 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         }
 
         return response;
+    }
+
+    public GatewayResponse<WorldpayOrderStatusResponse> authorise(WorldpayAuthoriseRequest worldpayAuthoriseRequest,
+                                                                  String gatewayAccountType) throws GatewayException {
+        return worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, gatewayAccountType);
     }
 
     private static boolean authorisationWithExemptionRequestSoftDeclinedButRetryableWithoutExemption(GatewayResponse<WorldpayOrderStatusResponse> response, boolean corporateExemptionsEnabledAndCorporateCardUsed) {

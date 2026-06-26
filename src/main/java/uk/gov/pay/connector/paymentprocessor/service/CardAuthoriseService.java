@@ -28,6 +28,7 @@ import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -113,6 +114,7 @@ public class CardAuthoriseService {
 
         GatewayResponse<BaseAuthoriseResponse> operationResponse;
         ChargeStatus newStatus;
+        WorldpayAuthoriseRequest worldpayAuthoriseRequest = null;
 
         try {
             PaymentProvider paymentProvider = getPaymentProviderFor(charge);
@@ -120,7 +122,12 @@ public class CardAuthoriseService {
             switch (charge.getAuthorisationMode()) {
                 case WEB:
                     CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
-                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
+                    worldpayAuthoriseRequest = worldpayAuthoriseFactory.create(charge, request).orElse(null);
+                    if (worldpayAuthoriseRequest != null) {
+                        operationResponse = paymentProvider.authorise(worldpayAuthoriseRequest, charge.getGatewayAccount().getType());
+                    } else {
+                        operationResponse = paymentProvider.authorise(request, charge);
+                    }
                     break;
                 case AGREEMENT:
                     RecurringPaymentAuthorisationGatewayRequest recurringRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
@@ -143,7 +150,7 @@ public class CardAuthoriseService {
                     .build();
         }
 
-        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
+        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus, worldpayAuthoriseRequest);
     }
 
     public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, AuthoriseRequest authoriseRequest) {
@@ -156,7 +163,7 @@ public class CardAuthoriseService {
             GatewayResponse<BaseAuthoriseResponse> operationResponse = result.getLeft();
             ChargeStatus newStatus = result.getRight();
 
-            AuthorisationResponse authorisationResponse = updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
+            AuthorisationResponse authorisationResponse = updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus, null);
 
             authorisationResponse.getAuthoriseStatus().ifPresent(authoriseStatus -> {
                 if (authoriseStatus.getMappedChargeStatus() == AUTHORISATION_SUCCESS) {
@@ -212,9 +219,10 @@ public class CardAuthoriseService {
     }
 
     private AuthorisationResponse updateChargePostAuthorisation(AuthCardDetails authCardDetails, 
-                                                                ChargeEntity charge, 
+                                                                ChargeEntity charge,
                                                                 GatewayResponse<BaseAuthoriseResponse> operationResponse, 
-                                                                ChargeStatus newStatus) {
+                                                                ChargeStatus newStatus,
+                                                                WorldpayAuthoriseRequest worldpayAuthoriseRequest) {
         Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
         Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
         Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
@@ -247,19 +255,36 @@ public class CardAuthoriseService {
                 mayBeRejectedReason.orElse(null),
                 gatewayRejectionReason.orElse(null));
 
-        var authorisationRequestSummary = generateAuthorisationRequestSummary(updatedCharge, authCardDetails);
+        if (worldpayAuthoriseRequest != null) {
+            authorisationLogger.logChargeAuthorisation(
+                    LOGGER,
+                    worldpayAuthoriseRequest,
+                    authCardDetails,
+                    charge,
+                    transactionId.orElse("missing transaction ID"),
+                    operationResponse,
+                    charge.getChargeStatus(),
+                    newStatus
+            );
 
-        authorisationLogger.logChargeAuthorisation(
-                LOGGER,
-                authorisationRequestSummary,
-                updatedCharge,
-                transactionId.orElse("missing transaction ID"),
-                operationResponse,
-                charge.getChargeStatus(),
-                newStatus
-        );
+            incrementMetricsPostAuthorisation(newStatus, updatedCharge, authCardDetails);
+        } else{
+            var authorisationRequestSummary = generateAuthorisationRequestSummary(updatedCharge, authCardDetails)
 
-        incrementMetricsPostAuthorisation(newStatus, updatedCharge, authorisationRequestSummary);
+            authorisationLogger.logChargeAuthorisation(
+                    LOGGER,
+                    authorisationRequestSummary,
+                    updatedCharge,
+                    transactionId.orElse("missing transaction ID"),
+                    operationResponse,
+                    charge.getChargeStatus(),
+                    newStatus
+            );
+
+            incrementMetricsPostAuthorisation(newStatus, updatedCharge, authorisationRequestSummary);
+        }
+
+        
 
         return new AuthorisationResponse(operationResponse);
     }
@@ -284,6 +309,27 @@ public class CardAuthoriseService {
                 authorisationRequestSummary.billingAddress() == PRESENT ? "with-billing-address" : "without-billing-address",
                 authorisationRequestSummary.email() == PRESENT ? "with email address" : "without email address",
                 authorisationRequestSummary.ipAddress() != null ? "with ip address" : "without ip address",
+                newStatus)).inc();
+    }
+
+    private void incrementMetricsPostAuthorisation(ChargeStatus newStatus, ChargeEntity updatedCharge, AuthCardDetails authCardDetails) {
+        AUTHORISATION_RESULT_COUNTER.labels(
+                updatedCharge.getPaymentProvider().toLowerCase(),
+                updatedCharge.getGatewayAccount().getType().toLowerCase(),
+                "without-billing-address",
+                authCardDetails.isCorporateCard() ? "with corporate card" : "with non-corporate card",
+                Exemption3ds.EXEMPTION_NOT_REQUESTED.getDisplayName(),
+                "without email address",
+                "without ip address",
+                newStatus.toString().toLowerCase()).inc();
+
+        metricRegistry.counter(String.format(
+                "gateway-operations.%s.%s.authorise.%s.result.%s.%s.%s",
+                updatedCharge.getPaymentProvider(),
+                updatedCharge.getGatewayAccount().getType(),
+                "without-billing-address",
+                "without email address",
+                "without ip address",
                 newStatus)).inc();
     }
 

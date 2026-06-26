@@ -93,7 +93,7 @@ public class AuthUtil {
         return getAuthHeader(worldpayValidatableCredentials.getUsername(), worldpayValidatableCredentials.getPassword());
     }
 
-    private static Map<String, String> getAuthHeader(String username, String password) {
+    public static Map<String, String> getAuthHeader(String username, String password) {
         String value = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
         return Map.of(AUTHORIZATION, value);
     }

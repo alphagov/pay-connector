@@ -2,19 +2,24 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.inject.name.Named;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.response.BaseResponse;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.gateway.templates.TemplateBuilder;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import java.net.URI;
@@ -28,6 +33,7 @@ import static jakarta.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static java.lang.String.format;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gateway.util.AuthUtil.getAuthHeader;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayAuthHeader;
 
 public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerator {
@@ -37,15 +43,18 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
     private final GatewayClient authoriseClient;
     private final Map<String, URI> gatewayUrlMap;
     private final AcceptLanguageHeaderParser acceptLanguageHeaderParser;
+    private final TemplateBuilder templateBuilder;
 
     @Inject
     public WorldpayAuthoriseHandler(@Named("WorldpayAuthoriseGatewayClient") GatewayClient authoriseClient,
                                     @Named("WorldpayGatewayUrlMap") Map<String, URI> gatewayUrlMap,
-                                    AcceptLanguageHeaderParser acceptLanguageHeaderParser
+                                    AcceptLanguageHeaderParser acceptLanguageHeaderParser,
+                                    TemplateBuilder templateBuilder
     ) {
         this.acceptLanguageHeaderParser = acceptLanguageHeaderParser;
         this.authoriseClient = authoriseClient;
         this.gatewayUrlMap = gatewayUrlMap;
+        this.templateBuilder = templateBuilder;
     }
 
     public GatewayResponse<WorldpayOrderStatusResponse> authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
@@ -75,22 +84,38 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         }
     }
 
-    public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthorisationGatewayRequest request,
-                                                                  SendWorldpayExemptionRequest sendExemptionRequest) {
+    public GatewayResponse authorise(CardAuthorisationGatewayRequest request,
+                                     SendWorldpayExemptionRequest sendExemptionRequest) {
 
         logMissingDdcResultFor3dsFlexIntegration(request);
 
         var worldpayOrderBuilder  = WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionRequest, acceptLanguageHeaderParser);
         logAuthorisationRequestToBePosted(request, worldpayOrderBuilder);
 
+        GatewayOrder gatewayOrder = worldpayOrderBuilder.build();
+
+        Map<String, String> headers = getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment());
+
+        return getGatewayResponse(request.getGatewayAccount().getType(), gatewayOrder, headers);
+    }
+
+    public GatewayResponse authorise(WorldpayAuthoriseRequest worldpayAuthoriseRequest,
+                                     String gatewayAccountType) {
+        Map<String, String> headers = getAuthHeader(worldpayAuthoriseRequest.username(), worldpayAuthoriseRequest.password());
+        String body = templateBuilder.buildWith(worldpayAuthoriseRequest);
+        GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, body, MediaType.APPLICATION_XML_TYPE);
+        return getGatewayResponse(gatewayAccountType, gatewayOrder, headers);
+    }
+    
+    private GatewayResponse getGatewayResponse(String gatewayAccountType, GatewayOrder gatewayOrder, Map<String, String> headers) {
         GatewayResponseBuilder<WorldpayOrderStatusResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
         try {            
             GatewayClient.Response response = authoriseClient.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    gatewayUrlMap.get(gatewayAccountType),
                     WORLDPAY,
-                    request.getGatewayAccount().getType(),
-                    worldpayOrderBuilder.build(),
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
+                    gatewayAccountType,
+                    gatewayOrder,
+                    headers);
             
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required: %s", sanitiseMessage(response.getEntity())));
