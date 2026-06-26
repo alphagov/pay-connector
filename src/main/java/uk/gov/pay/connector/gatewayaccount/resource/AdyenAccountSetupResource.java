@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gatewayaccount.resource;
 
+import com.google.inject.Inject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,16 +11,26 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Response;
+import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
+import uk.gov.pay.connector.gatewayaccount.service.AydenAccountSetupService;
+import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.apache.http.HttpStatus.SC_OK;
 
 @Path("/")
 @Tag(name = "Gateway accounts")
 public class AdyenAccountSetupResource {
+    private final GatewayAccountService gatewayAccountService;
+    private final AydenAccountSetupService aydenAccountSetupService;
+
+    @Inject
+    public AdyenAccountSetupResource(GatewayAccountService gatewayAccountService, AydenAccountSetupService aydenAccountSetupService) {
+        this.gatewayAccountService = gatewayAccountService;
+        this.aydenAccountSetupService = aydenAccountSetupService;
+    }
+
     @GET
     @Path("/v1/api/service/{serviceId}/account/{accountType}/adyen-setup/{credentialId}")
     @Produces(APPLICATION_JSON)
@@ -31,11 +42,14 @@ public class AdyenAccountSetupResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public Response getAdyenAccountSetup(
+    public StripeAccountSetup getAdyenAccountSetup(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @Parameter(example = "1", description = "Credential ID") @PathParam("credentialId") Long credentialId) {
-        
-        return Response.status(SC_OK).build();
+
+        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
+                .map(gatewayAccountEntity -> aydenAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId(), credentialId))
+                .orElseThrow(() -> new IllegalStateException("Internal Server Error"));
     }
 }
