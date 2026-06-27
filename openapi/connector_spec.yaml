@@ -1158,6 +1158,39 @@ paths:
       summary: Handle Adyen payment notifications
       tags:
       - Notifications
+  /v1/api/notifications/adyen/tokens:
+    post:
+      description: Accepts Adyen recurring token lifecycle webhooks as JSON. The HMAC
+        signature is provided in the hmacSignature header.
+      operationId: authoriseAdyenTokenNotifications
+      parameters:
+      - example: nvsZjQiHBuscSdtcA2cl1E+PSLJfgjPeRdd0pSaRiA0=
+        in: header
+        name: hmacSignature
+        schema:
+          type: string
+      - example: 5.6.7.8
+        in: header
+        name: X-Forwarded-For
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden - notification rejected
+        "405":
+          description: Method Not Allowed - Unsupported HTTP method
+        "415":
+          description: Unsupported Media Type - Unsupported content type
+      summary: Handle Adyen recurring token notifications
+      tags:
+      - Notifications
   /v1/api/notifications/sandbox:
     post:
       description: This endpoint returns a HTTP status code of 200 for authorized

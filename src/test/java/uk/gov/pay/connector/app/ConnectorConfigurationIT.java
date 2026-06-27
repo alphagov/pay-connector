@@ -59,6 +59,8 @@ public class ConnectorConfigurationIT {
         
         assertThat(adyenGatewayConfig.getHmacKeys().payments().test().getPrimary().get(), is("adyen-test-payments-hmac-primary"));
         assertThat(adyenGatewayConfig.getHmacKeys().payments().live().getPrimary().get(), is("adyen-live-payments-hmac-primary"));
+        assertThat(adyenGatewayConfig.getHmacKeys().tokens().test().getPrimary().get(), is("adyen-test-tokens-hmac-primary"));
+        assertThat(adyenGatewayConfig.getHmacKeys().tokens().live().getPrimary().get(), is("adyen-live-tokens-hmac-primary"));
     }
 
 }

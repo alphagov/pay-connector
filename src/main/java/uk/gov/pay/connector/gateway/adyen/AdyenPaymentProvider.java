@@ -26,6 +26,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -92,6 +93,11 @@ public class AdyenPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) throws GatewayException {
         return adyenAuthoriseHandler.authorise(request);
+    }
+
+    @Override
+    public GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
+        return adyenAuthoriseHandler.authoriseUserNotPresent(request);
     }
 
     @Override

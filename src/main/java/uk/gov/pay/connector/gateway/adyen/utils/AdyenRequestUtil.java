@@ -5,7 +5,6 @@ import uk.gov.pay.connector.gateway.GatewayOperation;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 
@@ -21,7 +20,7 @@ public class AdyenRequestUtil {
     private AdyenRequestUtil() {
     }
 
-    public static URI getAuthUrl(AdyenGatewayConfig config, CardAuthorisationGatewayRequest request) {
+    public static URI getAuthUrl(AdyenGatewayConfig config, GatewayRequest request) {
         return getUrl(config, request, "/payments");
     }
 

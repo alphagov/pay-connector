@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenTokenNotificationService;
 import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
@@ -40,17 +41,20 @@ public class NotificationResource {
     private final SandboxNotificationService sandboxNotificationService;
     private final StripeNotificationService stripeNotificationService;
     private final AdyenNotificationService adyenNotificationService;
+    private final AdyenTokenNotificationService adyenTokenNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 SandboxNotificationService sandboxNotificationService,
                                 StripeNotificationService stripeNotificationService,
-                                AdyenNotificationService adyenNotificationService
+                                AdyenNotificationService adyenNotificationService,
+                                AdyenTokenNotificationService adyenTokenNotificationService
     ) {
         this.worldpayNotificationService = worldpayNotificationService;
         this.sandboxNotificationService = sandboxNotificationService;
         this.stripeNotificationService = stripeNotificationService;
         this.adyenNotificationService = adyenNotificationService;
+        this.adyenTokenNotificationService = adyenTokenNotificationService;
     }
 
     @POST
@@ -151,6 +155,32 @@ public class NotificationResource {
                                                         @Parameter(in = HEADER, example = "5.6.7.8")
                                                         @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
         if (!adyenNotificationService.handleNotificationFor(notification, forwardedIpAddresses)) {
+            logRejectionMessage(forwardedIpAddresses, ADYEN);
+            return forbiddenErrorResponse();
+        }
+        logResponseMessage("[accepted]", ADYEN);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Consumes(APPLICATION_JSON)
+    @Path("/v1/api/notifications/adyen/tokens")
+    @Operation(
+            summary = "Handle Adyen recurring token notifications",
+            description = "Accepts Adyen recurring token lifecycle webhooks as JSON. The HMAC signature is provided in the hmacSignature header.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected"),
+                    @ApiResponse(responseCode = "405", description = "Method Not Allowed - Unsupported HTTP method"),
+                    @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
+            }
+    )
+    public Response authoriseAdyenTokenNotifications(String notification,
+                                                     @Parameter(in = HEADER, example = "nvsZjQiHBuscSdtcA2cl1E+PSLJfgjPeRdd0pSaRiA0=")
+                                                     @HeaderParam("hmacSignature") String hmacSignature,
+                                                     @Parameter(in = HEADER, example = "5.6.7.8")
+                                                     @HeaderParam("X-Forwarded-For") String forwardedIpAddresses) {
+        if (!adyenTokenNotificationService.handleNotificationFor(notification, hmacSignature, forwardedIpAddresses)) {
             logRejectionMessage(forwardedIpAddresses, ADYEN);
             return forbiddenErrorResponse();
         }

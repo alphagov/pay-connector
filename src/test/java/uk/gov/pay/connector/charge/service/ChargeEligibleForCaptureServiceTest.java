@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.exception.ChargeNotFoundRuntimeException;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.exception.IllegalStateRuntimeException;
 import uk.gov.pay.connector.common.exception.InvalidStateTransitionException;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 import uk.gov.service.payments.commons.queue.exception.QueueException;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AWAITING_CAPTURE_REQUEST;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_APPROVED;
@@ -79,8 +81,10 @@ class ChargeEligibleForCaptureServiceTest {
 
     @Test
     void shouldChangeStateToCaptureApprovedAddToCaptureQueueSendPaymentConfirmedEmailAndLinkPaymentInstrumentToAgreement() throws QueueException {
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity().build();
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
-                .withDelayedCapture(false).withSavePaymentInstrumentToAgreement(true).build();
+                .withDelayedCapture(false).withSavePaymentInstrumentToAgreement(true)
+                .withPaymentInstrument(paymentInstrument).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
         ChargeEntity result = chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());
@@ -148,8 +152,10 @@ class ChargeEligibleForCaptureServiceTest {
 
     @Test
     void shouldChangeStateToAwaitingCaptureRequestButNotAddToCaptureQueueOrSendPaymentConfirmedEmailAndLinkPaymentInstrumentToAgreementIfDelayedCapture() {
+        PaymentInstrumentEntity paymentInstrument = aPaymentInstrumentEntity().build();
         ChargeEntity chargeEntity = aValidChargeEntity().withStatus(AUTHORISATION_SUCCESS)
-                .withDelayedCapture(true).withSavePaymentInstrumentToAgreement(true).build();
+                .withDelayedCapture(true).withSavePaymentInstrumentToAgreement(true)
+                .withPaymentInstrument(paymentInstrument).build();
         when(mockChargeDao.findByExternalId(chargeEntity.getExternalId())).thenReturn(Optional.of(chargeEntity));
 
         ChargeEntity result = chargeEligibleForCaptureService.markChargeAsEligibleForCapture(chargeEntity.getExternalId());

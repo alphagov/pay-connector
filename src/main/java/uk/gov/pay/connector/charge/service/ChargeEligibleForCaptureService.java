@@ -69,7 +69,7 @@ public class ChargeEligibleForCaptureService {
                 throw new IllegalStateRuntimeException(charge.getExternalId());
             }
 
-            if (charge.isSavePaymentInstrumentToAgreement()) {
+            if (charge.isSavePaymentInstrumentToAgreement() && charge.getPaymentInstrument().isPresent()) {
                 linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(charge);
             }
 

@@ -35,6 +35,12 @@ public record AuthoriseRequestPayload(
         @JsonProperty("shopperEmail")
         String shopperEmail,
         @JsonProperty("shopperIP")
-        String shopperIP
+        String shopperIP,
+        @JsonProperty("shopperReference")
+        String shopperReference,
+        @JsonProperty("storePaymentMethod")
+        Boolean storePaymentMethod,
+        @JsonProperty("recurringProcessingModel")
+        String recurringProcessingModel
 ) {
 }

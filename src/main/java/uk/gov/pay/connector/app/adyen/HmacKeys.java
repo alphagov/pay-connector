@@ -6,7 +6,11 @@ import jakarta.validation.constraints.NotNull;
 public record HmacKeys(
         @Valid
         @NotNull
-        WebhookHmacKeyPair payments
+        WebhookHmacKeyPair payments,
+
+        @Valid
+        @NotNull
+        WebhookHmacKeyPair tokens
 ) {
     public record WebhookHmacKeyPair(
             @Valid
