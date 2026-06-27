@@ -271,6 +271,24 @@ class AdyenNotificationServiceTest {
                     .getFormattedMessage(), is("Ignored Adyen notification"));
             assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processed Adyen notification"));
         }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"ACCOUNT_HOLDER_PAYOUT", "TRANSFER", "BANK_ACCOUNT_VERIFICATION", "SCHEDULED_TRANSFER", "ACCOUNT_HOLDER_CREATED", "BALANCE_ACCOUNT_CREATED", "PAYMENT_INSTRUMENT_CREATED"})
+        void shouldIgnorePaymentTransferEventsAndNotAddToTaskQue(String eventCode) {
+            when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
+            String payload = getNotificationWithValidHmacSignature(eventCode);
+
+            boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
+
+            assertTrue(result);
+
+            verify(mockTaskQueueService, never()).add(any(Task.class));
+            verify(mockAppender, times(2)).doAppend(loggingEventArgumentCaptor.capture());
+            List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+            assertThat(loggingEvents.getFirst()
+                    .getFormattedMessage(), is("Ignored Adyen payment transfer event"));
+            assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processed Adyen notification"));
+        }
         
         @Test
         void ShouldNotAddToTaskQueWhenHmacSignatureIsInvalid() {

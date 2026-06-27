@@ -72,6 +72,14 @@ public class AdyenNotificationService {
                     return false;
                 }
                 
+                // Ignore payment transfer/payout events
+                if (isPaymentTransferEvent(item.getEventCode())) {
+                    LOGGER.info("Ignored Adyen payment transfer event",
+                            kv("originalReference", item.getOriginalReference()),
+                            kv("eventCode", item.getEventCode()));
+                    continue;
+                }
+                
                 if (AdyenPaymentEvent.contains(item.getEventCode())) {
                     addNotificationToTaskQueue(payload, item);
                     continue;
@@ -142,5 +150,16 @@ public class AdyenNotificationService {
                     kv("eventCode", item.getEventCode()));
             throw new AdyenNotificationException("Failed to validate HMAC signature", e);
         }
+    }
+
+    private boolean isPaymentTransferEvent(String eventCode) {
+        // Ignore payment transfer/payout related events
+        return eventCode.equals("ACCOUNT_HOLDER_PAYOUT") ||
+                eventCode.equals("TRANSFER") ||
+                eventCode.equals("BANK_ACCOUNT_VERIFICATION") ||
+                eventCode.equals("SCHEDULED_TRANSFER") ||
+                eventCode.startsWith("ACCOUNT_HOLDER_") ||
+                eventCode.startsWith("BALANCE_ACCOUNT_") ||
+                eventCode.startsWith("PAYMENT_INSTRUMENT_");
     }
 }

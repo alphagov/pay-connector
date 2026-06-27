@@ -18,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.client.ledger.service.LedgerService;
+import uk.gov.pay.connector.events.EventService;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -25,6 +27,7 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.queue.tasks.handlers.AdyenWebhookTaskHandler;
 
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -57,6 +60,15 @@ public class AdyenWebhookTaskHandlerTest {
 
     @Mock
     private AdyenNotificationService mockAdyenNotificationService;
+
+    @Mock
+    private LedgerService mockLedgerService;
+
+    @Mock
+    private EventService mockEventService;
+
+    @Mock
+    private InstantSource mockInstantSource;
     
     @Mock
     private Charge mockCharge;
@@ -89,7 +101,7 @@ public class AdyenWebhookTaskHandlerTest {
     @BeforeEach
     void setUp() {
         adyenWebhookTaskHandler = new AdyenWebhookTaskHandler(mockChargeService, mockChargeNotificationProcessor,
-                mockGatewayAccountService, mockAdyenNotificationService);
+                mockGatewayAccountService, mockAdyenNotificationService, mockLedgerService, mockEventService, mockInstantSource);
         Logger root = (Logger) LoggerFactory.getLogger(AdyenWebhookTaskHandler.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);

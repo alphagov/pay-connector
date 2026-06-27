@@ -8,7 +8,13 @@ public enum AdyenPaymentEvent {
     EXPIRE,
     REFUND,
     REFUND_FAILED,
-    REFUNDED_REVERSED;
+    REFUNDED_REVERSED,
+    NOTIFICATION_OF_CHARGEBACK,
+    CHARGEBACK,
+    CHARGEBACK_REVERSED,
+    INFORMATION_SUPPLIED,
+    PREARBITRATION_WON,
+    PREARBITRATION_LOST;
 
     public static boolean contains(String eventName) {
         for (AdyenPaymentEvent e : AdyenPaymentEvent.values()) {
