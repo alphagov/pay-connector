@@ -1,0 +1,1 @@
+{"createdAt":"2025-06-30T16:40:23+02:00","eventId":"QBQQ9DLNRHHKGK38","environment":"test","data":{"merchantAccount":"adyen-test-merchant-account-id","storedPaymentMethodId":"M5N7TQ4TG5PFWR50","type":"visastandarddebit","operation":"created","shopperReference":"agreement-external-id"},"type":"recurring.token.created"}
