@@ -43,7 +43,8 @@ public class AdyenRequestFactory {
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
         boolean isMoto = "Moto".equals(getShopperInteraction(request));
-
+        String frontendUrl = configuration.getLinks().getFrontendUrl();
+        
         var mappedAddress = authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
                 .orElse(null);
@@ -56,20 +57,20 @@ public class AdyenRequestFactory {
                 "scheme");
 
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
-
+        
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
                 getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
-                configuration.getLinks().getFrontendUrl(),
+                String.format("%s/card_details/%s/3ds_required_in/adyen", frontendUrl, request.getGovUkPayPaymentId()),
                 getShopperInteraction(request),
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true")),
                 isMoto ? null : mapToBrowserInfo(authCardDetails),
-                isMoto ? null : configuration.getLinks().getFrontendUrl(),
+                isMoto ? null : frontendUrl,
                 isMoto ? null : request.getEmail(),
                 isMoto ? null : authCardDetails.getIpAddress().orElse(null)
         );
