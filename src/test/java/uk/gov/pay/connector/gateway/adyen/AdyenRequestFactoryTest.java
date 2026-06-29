@@ -297,6 +297,38 @@ class AdyenRequestFactoryTest {
         assertThat(request.shopperEmail(),is(nullValue()));
         assertThat(request.shopperIP(), is(nullValue()));
     }
+
+    @Test
+    void should_handle_null_or_invalid_browser_info_values_for_web_payment() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAcceptHeader("text/html")
+                        .withUserAgentHeader("Mozilla/5.0")
+                        .withIpAddress("127.0.0.1")
+                        .withJsNavigatorLanguage(null)
+                        .withJsScreenColorDepth("invalid")
+                        .withJsScreenHeight(null)
+                        .withJsScreenWidth("not-a-number")
+                        .withJsTimezoneOffsetMins("bad-offset")
+                        .withJsEnabled(null)
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withEmail("test@example.com")
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.browserInfo().acceptHeader(), is("text/html"));
+        assertThat(request.browserInfo().colorDepth(), is(nullValue()));
+        assertThat(request.browserInfo().javaEnabled(), is(false));
+        assertThat(request.browserInfo().javaScriptEnabled(), is(nullValue()));
+        assertThat(request.browserInfo().language(), is(nullValue()));
+        assertThat(request.browserInfo().screenHeight(), is(nullValue()));
+        assertThat(request.browserInfo().screenWidth(), is(nullValue()));
+        assertThat(request.browserInfo().timeZoneOffset(), is(nullValue()));
+        assertThat(request.browserInfo().userAgent(), is("Mozilla/5.0"));
+        assertThat(request.shopperIP(), is("127.0.0.1"));
+    }
     
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
