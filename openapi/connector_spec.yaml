@@ -3665,7 +3665,7 @@ components:
         js_screen_width:
           type: string
           example: "1440"
-        js_timezone_offset_min:
+        js_timezone_offset_mins:
           type: string
           example: "-60"
         prepaid:
