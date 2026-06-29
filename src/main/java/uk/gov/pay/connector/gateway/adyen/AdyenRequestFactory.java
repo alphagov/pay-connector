@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
@@ -25,12 +27,14 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getMerchantAccountId;
 
 public class AdyenRequestFactory {
 
     private final ConnectorConfiguration configuration;
+    private final Logger LOGGER = LoggerFactory.getLogger(AdyenRequestFactory.class);
 
     public AdyenRequestFactory(ConnectorConfiguration configuration) {
         this.configuration = configuration;
@@ -125,18 +129,26 @@ public class AdyenRequestFactory {
         }
         return (AdyenCredentials) gatewayCredentials;
     }
-
+    
     private BrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
         return new BrowserInfo(
                 authCardDetails.getAcceptHeader(),
-                authCardDetails.getJsScreenColorDepth().map(Integer::valueOf).orElse(null),
-                false,
+                authCardDetails.getJsScreenColorDepth().flatMap(this::parseInteger).orElse(null),                false,
                 authCardDetails.getJsEnabled(),
-                authCardDetails.getJsNavigatorLanguage().map(String::valueOf).orElse(null),
-                authCardDetails.getJsScreenHeight().map(Integer::valueOf).orElse(null),
-                authCardDetails.getJsScreenWidth().map(Integer::valueOf).orElse(null),
-                authCardDetails.getJsTimezoneOffsetMins().map(Integer::valueOf).orElse(null),
+                authCardDetails.getJsNavigatorLanguage().orElse(null),
+                authCardDetails.getJsScreenHeight().flatMap(this::parseInteger).orElse(null),
+                authCardDetails.getJsScreenWidth().flatMap(this::parseInteger).orElse(null),
+                authCardDetails.getJsTimezoneOffsetMins().flatMap(this::parseInteger).orElse(null),
                 authCardDetails.getUserAgentHeader()
         );
+    }
+
+    private Optional<Integer> parseInteger(String value) {
+        try {
+            return Optional.of(Integer.valueOf(value));
+        } catch (NumberFormatException e) {
+            LOGGER.warn("Unable to parse browser info integer '{}'", value, e);
+            return Optional.empty();
+        }
     }
 }
