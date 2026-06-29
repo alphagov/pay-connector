@@ -26,9 +26,9 @@ import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundNotificationProcessor {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private RefundService refundService;
-    private UserNotificationService userNotificationService;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final RefundService refundService;
+    private final UserNotificationService userNotificationService;
 
     @Inject
     RefundNotificationProcessor(RefundService refundService,
