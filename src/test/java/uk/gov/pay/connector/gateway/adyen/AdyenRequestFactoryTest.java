@@ -12,8 +12,8 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
-import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -107,7 +107,7 @@ class AdyenRequestFactoryTest {
         assertThat(request.amount().currency(), is("GBP"));
         assertThat(request.channel(), is("Web"));
         assertThat(request.shopperInteraction(), is("Ecommerce"));
-        assertThat(request.returnUrl(), is("https://www.example.com"));
+        assertThat(request.returnUrl(), is("https://www.example.com/card_details/gov_uk_payment_id/3ds_required_in/adyen"));
         assertThat(request.reference(), is("gov_uk_payment_id"));
         assertThat(request.merchantAccount(), is("test"));
         assertThat(request.store(), is("store_id"));
@@ -152,7 +152,7 @@ class AdyenRequestFactoryTest {
         assertThat(request.amount().currency(), is("GBP"));
         assertThat(request.channel(), is("Web"));
         assertThat(request.shopperInteraction(), is("Ecommerce"));
-        assertThat(request.returnUrl(), is("https://www.example.com"));
+        assertThat(request.returnUrl(), is("https://www.example.com/card_details/gov_uk_payment_id/3ds_required_in/adyen"));
         assertThat(request.reference(), is("gov_uk_payment_id"));
         assertThat(request.merchantAccount(), is("test"));
         assertThat(request.store(), is("store_id"));

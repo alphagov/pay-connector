@@ -125,7 +125,7 @@ public class AdyenCardResourceAuthoriseMotoApiPaymentIT {
                 .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
                 .withRequestBody(equalToJson(
                         load(ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS)
-                                .formatted(CHARGE_EXTERNAL_ID, "Moto"))));
+                                .formatted(CHARGE_EXTERNAL_ID, "http://CardFrontend//card_details/" + CHARGE_EXTERNAL_ID +"/3ds_required_in/adyen", "Moto"))));
 
     }
 
