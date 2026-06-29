@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.GatewayError;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -83,15 +85,24 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
         var worldpayOrderBuilder  = WorldpayOrderBuilder.buildAuthoriseOrder(request, sendExemptionRequest, acceptLanguageHeaderParser);
         logAuthorisationRequestToBePosted(request, worldpayOrderBuilder);
 
+        GatewayOrder gatewayOrder = worldpayOrderBuilder.build();
+
+        Map<String, String> headers = getWorldpayAuthHeader(request.getGatewayCredentials(),
+                request.getAuthorisationMode(), request.isForRecurringPayment());
+
+        return getGatewayResponse(request.getGatewayAccount().getType(), gatewayOrder, headers);
+    }
+
+    private GatewayResponse<WorldpayOrderStatusResponse> getGatewayResponse(String gatewayAccountType, GatewayOrder gatewayOrder, Map<String, String> headers) {
         GatewayResponseBuilder<WorldpayOrderStatusResponse> responseBuilder = GatewayResponseBuilder.responseBuilder();
-        try {            
+        try {
             GatewayClient.Response response = authoriseClient.postRequestFor(
-                    gatewayUrlMap.get(request.getGatewayAccount().getType()),
+                    gatewayUrlMap.get(gatewayAccountType),
                     WORLDPAY,
-                    request.getGatewayAccount().getType(),
-                    worldpayOrderBuilder.build(),
-                    getWorldpayAuthHeader(request.getGatewayCredentials(), request.getAuthorisationMode(), request.isForRecurringPayment()));
-            
+                    gatewayAccountType,
+                    gatewayOrder,
+                    headers);
+
             if (response.getEntity().contains("request3DSecure")) {
                 LOGGER.info(format("Worldpay authorisation response when 3ds required: %s", sanitiseMessage(response.getEntity())));
             }
