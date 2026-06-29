@@ -14,8 +14,13 @@ public class AydenAccountSetupService {
         this.adyenAccountSetupDao = adyenAccountSetupDao;
     }
 
-    public AdyenAccountSetup getCompletedTasks(long gatewayAccountId, long credentialId) {
+    public AdyenAccountSetup getCompletedTasks(String serviceId, long gatewayAccountId, String credentialExternalId) {
         AdyenAccountSetup adyenAccountSetup = new AdyenAccountSetup();
+        
+        adyenAccountSetup.setServiceId(serviceId);
+        adyenAccountSetup.setGatewayAccountId(gatewayAccountId);
+        adyenAccountSetup.setCredentialExternalId(credentialExternalId);
+        
         adyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(gatewayAccountId)
                 .forEach(adyenAccountSetupTaskEntity -> {
                     switch (adyenAccountSetupTaskEntity.getTask()) {

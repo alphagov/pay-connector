@@ -33,7 +33,7 @@ public class AdyenAccountSetupResource {
     }
 
     @GET
-    @Path("/v1/api/service/{serviceId}/account/{accountType}/adyen-setup/{credentialId}")
+    @Path("/v1/api/service/{serviceId}/account/{accountType}/adyen-setup/{credentialExternalId}")
     @Produces(APPLICATION_JSON)
     @Operation(
             summary = "Retrieve Adyen account setup tasks for a given gateway account ID, type and credential ID",
@@ -46,11 +46,11 @@ public class AdyenAccountSetupResource {
     public AdyenAccountSetup getAdyenAccountSetup(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            @Parameter(example = "1", description = "Credential ID") @PathParam("credentialId") Long credentialId) {
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId ) { // pragma: allowlist secret
 
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
-                .map(gatewayAccountEntity -> aydenAccountSetupService.getCompletedTasks(gatewayAccountEntity.getId(), credentialId))
+                .map(gatewayAccountEntity -> aydenAccountSetupService.getCompletedTasks(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
                 .orElseThrow(() -> new IllegalStateException("Internal Server Error"));
     }
 }
