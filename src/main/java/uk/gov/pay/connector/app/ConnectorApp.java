@@ -58,6 +58,7 @@ import uk.gov.pay.connector.filters.LoggingMDCRequestFilter;
 import uk.gov.pay.connector.filters.LoggingMDCResponseFilter;
 import uk.gov.pay.connector.filters.SchemeRewriteFilter;
 import uk.gov.pay.connector.gatewayaccount.resource.AdyenAccountResource;
+import uk.gov.pay.connector.gatewayaccount.resource.AdyenAccountSetupResource;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource;
 import uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource;
@@ -93,8 +94,8 @@ import uk.gov.service.payments.logging.LogstashConsoleAppenderFactory;
 
 import java.util.concurrent.TimeUnit;
 
-import static java.util.EnumSet.of;
 import static jakarta.servlet.DispatcherType.REQUEST;
+import static java.util.EnumSet.of;
 
 public class ConnectorApp extends Application<ConnectorConfiguration> {
 
@@ -195,6 +196,7 @@ public class ConnectorApp extends Application<ConnectorConfiguration> {
         environment.jersey().register(injector.getInstance(LoggingMDCResponseFilter.class));
         environment.jersey().register(injector.getInstance(AgreementsApiResource.class));
         environment.jersey().register(injector.getInstance(AdyenAccountResource.class));
+        environment.jersey().register(injector.getInstance(AdyenAccountSetupResource.class));
 
         if (configuration.getCaptureProcessConfig().getBackgroundProcessingEnabled()) {
             setupSchedulers(environment, injector);
