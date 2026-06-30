@@ -18,6 +18,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.get3dsAuthUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
+import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE_3DS;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.HTTP_STATUS;
@@ -54,7 +55,7 @@ public class AdyenAuthorise3dsHandler {
 
         var adyen3dsAuthorisationRequest = new Adyen3dsAuthorisationRequest(
                 get3dsAuthUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), request.getRequestType(), request.getChargeExternalId()),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), AUTHORISE_3DS, request.getChargeExternalId()),
                 request.getGatewayAccount().getType(),
                 adyenRequestFactory.createPaymentDetailsRequest(request),
                 jsonObjectMapper

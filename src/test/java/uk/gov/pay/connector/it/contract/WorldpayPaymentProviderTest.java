@@ -34,6 +34,7 @@ import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationG
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
@@ -655,7 +656,7 @@ class WorldpayPaymentProviderTest {
                 gatewayClient,
                 gatewayClient,
                 new WorldpayWalletAuthorisationHandler(gatewayClient, gatewayUrlMap(), mockApplePayDecrypter),
-                new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser()),
+                new WorldpayAuthoriseHandler(gatewayClient, gatewayUrlMap(), new AcceptLanguageHeaderParser(), new WorldpayRequestTemplateBuilder()),
                 new WorldpayCaptureHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundHandler(gatewayClient, gatewayUrlMap()),
                 new WorldpayRefundEntityFactory(),

@@ -131,7 +131,7 @@ public final class AuthCardDetailsFixture {
         return this;
     }    
     
-    public  AuthCardDetailsFixture withJsEnabled(boolean jsEnabled) {
+    public  AuthCardDetailsFixture withJsEnabled(Boolean jsEnabled) {
         this.jsEnabled = jsEnabled;
         return this;
     }

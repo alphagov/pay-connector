@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen.utils;
 
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
-import uk.gov.pay.connector.gateway.GatewayOperation;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
@@ -48,8 +48,8 @@ public class AdyenRequestUtil {
         return URI.create(getBaseCheckoutUrl(config, request.getGatewayAccount().isLive()) + path);
     }
 
-    public static Map<String, String> getHeaders(AdyenGatewayConfig config, boolean isLive, GatewayOperation requestType, String idempotencyKey) {
+    public static Map<String, String> getHeaders(AdyenGatewayConfig config, boolean isLive, OrderRequestType requestType, String idempotencyKey) {
         return Map.of("X-API-Key", getCompanyApiKey(config, isLive),
-                "Idempotency-Key", format("%s-%s", requestType.getConfigKey(), idempotencyKey));
+                "Idempotency-Key", format("%s-%s", requestType.toString(), idempotencyKey));
     }
 }

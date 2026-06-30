@@ -103,7 +103,7 @@ class AdyenAuthoriseHandlerTest {
         then(mockClient).should().postRequestFor(captor.capture());
         var headers = captor.getValue().getHeaders();
         assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
-        assertThat(headers, hasEntry("Idempotency-Key", "auth-" + authoriseRequest.getGovUkPayPaymentId()));
+        assertThat(headers, hasEntry("Idempotency-Key", "authorise-" + authoriseRequest.getGovUkPayPaymentId()));
     }
 
     @Test
