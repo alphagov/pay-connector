@@ -10,6 +10,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenPaymentEvent;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
@@ -31,16 +32,19 @@ public class AdyenWebhookTaskHandler {
     private final ChargeNotificationProcessor chargeNotificationProcessor;
     private final GatewayAccountService gatewayAccountService;
     private final AdyenNotificationService adyenNotificationService;
+    private final AdyenCancellationNotificationHandler adyenCancellationNotificationHandler;
 
     @Inject
     public AdyenWebhookTaskHandler(ChargeService chargeService,
                                    ChargeNotificationProcessor chargeNotificationProcessor,
                                    GatewayAccountService gatewayAccountService,
-                                   AdyenNotificationService adyenNotificationService) {
+                                   AdyenNotificationService adyenNotificationService,
+                                   AdyenCancellationNotificationHandler adyenCancellationNotificationHandler) {
         this.chargeService = chargeService;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.gatewayAccountService = gatewayAccountService;
         this.adyenNotificationService = adyenNotificationService;
+        this.adyenCancellationNotificationHandler = adyenCancellationNotificationHandler;
     }
 
     @Transactional
@@ -51,6 +55,10 @@ public class AdyenWebhookTaskHandler {
         List<NotificationRequestItem> items = adyenNotificationService.extractNotificationItem(notificationRequest);
 
         for (NotificationRequestItem item : items) {
+            if (AdyenPaymentEvent.CANCELLATION.name().equals(item.getEventCode())) {
+                adyenCancellationNotificationHandler.process(item);
+                continue;
+            }
             processCapturedNotification(item);
         }
     }

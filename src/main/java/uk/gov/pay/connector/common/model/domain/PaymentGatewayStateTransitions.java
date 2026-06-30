@@ -96,7 +96,9 @@ public class PaymentGatewayStateTransitions {
     private static Map<ChargeStatus, ModelledTypedEvent> eventsForForceUpdatingStatus = Map.of(
             CAPTURED, new ModelledTypedEvent<>(StatusCorrectedToCapturedToMatchGatewayStatus.class),
             AUTHORISATION_REJECTED, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus.class),
-            AUTHORISATION_ERROR, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class)
+            AUTHORISATION_ERROR, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class),
+            USER_CANCELLED, new ModelledTypedEvent<>(CancelledByUser.class),
+            SYSTEM_CANCELLED, new ModelledTypedEvent<>(CancelledByExternalService.class)
     );
 
     public static PaymentGatewayStateTransitions getInstance() {
