@@ -29,7 +29,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
-class AdyenAccountSetupServiceTest {
+class AdyenAccountSetupResponseServiceTest {
 
     @Mock
     private AdyenAccountSetupDao mockAdyenAccountSetupDao;

@@ -13,11 +13,12 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.COMPLETED;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.NOT_STARTED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 
-public class AdyenAccountSetupResourceIT {
+public class AdyenAccountSetupResponseResourceIT {
 
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
@@ -49,6 +50,36 @@ public class AdyenAccountSetupResourceIT {
                 .body("credential_external_id", is(credentialExternalId))
                 .body("gateway_account_id", is((int) gatewayAccountId))
                 .body("tasks.bank_account.status", is(NOT_STARTED.toString()))
+                .body("tasks.responsible_person.status", is(NOT_STARTED.toString()))
+                .body("tasks.vat_number.status", is(NOT_STARTED.toString()))
+                .body("tasks.company_number.status", is(NOT_STARTED.toString()))
+                .body("tasks.director.status", is(NOT_STARTED.toString()))
+                .body("tasks.government_entity_document.status", is(NOT_STARTED.toString()))
+                .body("tasks.organisation_details.status", is(NOT_STARTED.toString()));
+    }
+
+    @Test
+    void withSomeTasksCompleted() {
+        app.getDatabaseFixtures()
+                .aTestAccount()
+                .withServiceId(serviceId)
+                .withPaymentProvider(ADYEN.getName())
+                .insert();
+
+        int accountId = app.givenSetup().get(format("/v1/api/service/%s/account/test", serviceId)).jsonPath().get("gateway_account_id");
+        var gatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialByPaymentProvider(accountId, ADYEN.getName());
+        
+        
+        addTaskWithStatus(accountId, gatewayAccountCredentialId, AdyenAccountSetupTask.BANK_ACCOUNT, COMPLETED);
+
+        app.givenSetup()
+                .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, accountType, credentialExternalId))
+                .then()
+                .statusCode(SC_OK)
+                .body("service_id", is(serviceId))
+                .body("credential_external_id", is(credentialExternalId))
+                .body("gateway_account_id", is(accountId))
+                .body("tasks.bank_account.status", is(COMPLETED.toString()))
                 .body("tasks.responsible_person.status", is(NOT_STARTED.toString()))
                 .body("tasks.vat_number.status", is(NOT_STARTED.toString()))
                 .body("tasks.company_number.status", is(NOT_STARTED.toString()))

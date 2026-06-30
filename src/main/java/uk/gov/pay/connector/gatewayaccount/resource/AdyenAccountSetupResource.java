@@ -12,7 +12,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
-import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetup;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.service.AydenAccountSetupService;
@@ -43,14 +43,14 @@ public class AdyenAccountSetupResource {
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
-    public AdyenAccountSetup getAdyenAccountSetup(
+    public AdyenAccountSetupResponse getAdyenAccountSetup(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId ) { // pragma: allowlist secret
 
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
-                .map(gatewayAccountEntity -> aydenAccountSetupService.getCompletedTasks(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
+                .map(gatewayAccountEntity -> aydenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
                 .orElseThrow(() -> new IllegalStateException("Internal Server Error"));
     }
 }
