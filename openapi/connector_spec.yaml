@@ -3465,41 +3465,11 @@ components:
     AdyenAccountSetup:
       type: object
       properties:
-        bank_account:
-          type: string
-          enum:
-          - NOT_STARTED
-          - COMPLETED
-        company_number:
-          type: string
-          enum:
-          - NOT_STARTED
-          - COMPLETED
         credential_external_id:
           type: string
-        director:
-          type: string
-          enum:
-          - NOT_STARTED
-          - COMPLETED
         gateway_account_id:
           type: integer
           format: int64
-        government_entity_document:
-          type: string
-          enum:
-          - NOT_STARTED
-          - COMPLETED
-        organisation_details:
-          type: string
-          enum:
-          - NOT_STARTED
-          - COMPLETED
-        responsible_person:
-          type: string
-          enum:
-          - NOT_STARTED
-          - COMPLETED
         service_id:
           type: string
         tasks:
@@ -3511,11 +3481,6 @@ components:
               enum:
               - NOT_STARTED
               - COMPLETED
-        vat_number:
-          type: string
-          enum:
-          - NOT_STARTED
-          - COMPLETED
     AdyenAccountSetupResource:
       type: object
     AdyenCredentials:
