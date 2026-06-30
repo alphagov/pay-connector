@@ -62,7 +62,7 @@ public class RefundNotificationProcessor {
                     () -> logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
                             gatewayName, gatewayTransactionId, charge.getExternalId(),
                             kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), kv(PROVIDER, gatewayName),
-                            kv("provider_refund_id", transactionId),
+                            kv("payment_gateway_transaction_id", transactionId),
                             kv("gateway_transaction_id", gatewayTransactionId))
             );
             return;
@@ -98,7 +98,7 @@ public class RefundNotificationProcessor {
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
                 kv(PROVIDER, charge.getPaymentGatewayName()),
                 kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                kv("provider_refund_id", transactionId),
+                kv("payment_gateway_transaction_id", transactionId),
                 kv("gateway_transaction_id", gatewayTransactionId),
                 kv("from_status", oldStatus),
                 kv("to_status", newStatus)
