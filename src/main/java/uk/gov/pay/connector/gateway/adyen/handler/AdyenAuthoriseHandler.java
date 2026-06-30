@@ -17,6 +17,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getAuthUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
+import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE;
 
 public class AdyenAuthoriseHandler {
 
@@ -48,7 +49,7 @@ public class AdyenAuthoriseHandler {
         logger.info("Calling Adyen for authorisation of charge");
         var authorisationRequest = new AdyenAuthorisationRequest(
                 getAuthUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), request.getRequestType(), request.getGovUkPayPaymentId()),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), AUTHORISE, request.getGovUkPayPaymentId()),
                 request.getGatewayAccount().getType(),
                 adyenRequestFactory.createPaymentRequest(request),
                 jsonObjectMapper);
