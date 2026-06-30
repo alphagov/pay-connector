@@ -133,21 +133,26 @@ public class AdyenRequestFactory {
     private BrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
         return new BrowserInfo(
                 authCardDetails.getAcceptHeader(),
-                authCardDetails.getJsScreenColorDepth().flatMap(this::parseInteger).orElse(null),                false,
+                authCardDetails.getJsScreenColorDepth().flatMap(value -> parseInteger("js_screen_color_depth",value) ).orElse(null),                false,
                 authCardDetails.getJsEnabled(),
                 authCardDetails.getJsNavigatorLanguage().orElse(null),
-                authCardDetails.getJsScreenHeight().flatMap(this::parseInteger).orElse(null),
-                authCardDetails.getJsScreenWidth().flatMap(this::parseInteger).orElse(null),
-                authCardDetails.getJsTimezoneOffsetMins().flatMap(this::parseInteger).orElse(null),
+                authCardDetails.getJsScreenHeight().flatMap(value -> parseInteger("js_screen_height", value)).orElse(null),
+                authCardDetails.getJsScreenWidth().flatMap(value-> parseInteger("js_screen_width", value)).orElse(null),
+                authCardDetails.getJsTimezoneOffsetMins().flatMap(value -> parseInteger("js_timezone_offset_min", value)).orElse(null),
                 authCardDetails.getUserAgentHeader()
         );
     }
 
-    private Optional<Integer> parseInteger(String value) {
+    private Optional<Integer> parseInteger(String property, String value) {
         try {
             return Optional.of(Integer.valueOf(value));
         } catch (NumberFormatException e) {
-            LOGGER.warn("Unable to parse browser info integer '{}'", value, e);
+            LOGGER.atWarn()
+                    .setMessage("Unable to parse browser info integer")
+                    .addKeyValue("property", property)
+                    .addKeyValue("value", value)
+                    .setCause(e)
+                    .log();
             return Optional.empty();
         }
     }
