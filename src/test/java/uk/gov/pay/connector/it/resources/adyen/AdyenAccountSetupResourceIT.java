@@ -15,7 +15,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.it.resources.GatewayAccountResourceITHelpers.CreateGatewayAccountPayloadBuilder.aCreateGatewayAccountPayloadBuilder;
 
-public class AdyenAccountSetupResponseResourceIT {
+public class AdyenAccountSetupResourceIT {
 
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
