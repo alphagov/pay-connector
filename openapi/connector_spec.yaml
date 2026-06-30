@@ -3462,7 +3462,9 @@ components:
         postcode:
           type: string
           example: AB1 2CD
-    AdyenAccountSetup:
+    AdyenAccountSetupResource:
+      type: object
+    AdyenAccountSetupResponse:
       type: object
       properties:
         credential_external_id:
@@ -3481,8 +3483,6 @@ components:
               enum:
               - NOT_STARTED
               - COMPLETED
-    AdyenAccountSetupResource:
-      type: object
     AdyenCredentials:
       type: object
       properties:
