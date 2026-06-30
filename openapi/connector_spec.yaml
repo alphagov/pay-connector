@@ -1449,7 +1449,7 @@ paths:
           description: OK
         "404":
           description: Not found
-      summary: "Retrieve Adyen account setup tasks for a given gateway account ID,\
+      summary: "Retrieve Adyen account setup tasks for a given service ID, account\
         \ type and credential ID"
       tags:
       - Gateway accounts
