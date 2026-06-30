@@ -49,7 +49,7 @@ import static uk.gov.pay.connector.app.adyen.BaseUrlsFixture.someBaseUrls;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus.SUBMITTED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.*;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenCancelHandlerTest {
@@ -123,6 +123,24 @@ class AdyenCancelHandlerTest {
                 .postRequestFor(captor.capture());
         assertThat(captor.getValue().getUrl().toString(), is(
                 LIVE_CHECKOUT_BASE_URL + "/payments/" + A_GATEWAY_TRANSACTION_ID + "/cancels"));
+    }
+
+    @Test
+    void should_send_a_cancel_request_with_api_key_and_idempotency_key_headers() throws Exception {
+        givenGatewayClientWillReturnResponseWithBody(ADYEN_CANCEL_RESPONSE);
+        var request = CancelGatewayRequest.valueOf(
+                aValidChargeEntity()
+                        .withGatewayTransactionId(A_GATEWAY_TRANSACTION_ID)
+                        .withGatewayAccountEntity(makeGatewayAccountEntityForAccountType(TEST))
+                        .build());
+
+        cancelHandler.cancel(request);
+
+        then(mockGatewayClient).should()
+                .postRequestFor(captor.capture());
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", "test-company-account-API-key"));
+        assertThat(headers, hasEntry("Idempotency-Key", "cancel-" + request.getExternalChargeId()));
     }
 
     @Test

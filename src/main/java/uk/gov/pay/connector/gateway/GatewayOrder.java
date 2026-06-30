@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.gateway;
 
+import jakarta.ws.rs.core.MediaType;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
-import jakarta.ws.rs.core.MediaType;
+import java.util.Objects;
 
 public class GatewayOrder {
 
@@ -27,4 +28,21 @@ public class GatewayOrder {
     public MediaType getMediaType() {
         return mediaType;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        GatewayOrder that = (GatewayOrder) o;
+        return orderRequestType == that.orderRequestType
+                && Objects.equals(payload, that.payload)
+                && Objects.equals(mediaType, that.mediaType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(orderRequestType, payload, mediaType);
+    }
+
 }

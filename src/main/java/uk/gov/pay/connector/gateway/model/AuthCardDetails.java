@@ -88,7 +88,7 @@ public class AuthCardDetails {
         return Optional.ofNullable(jsTimezoneOffsetMins);
     }
 
-    @JsonProperty("js_timezone_offset_min")
+    @JsonProperty("js_timezone_offset_mins")
     public void setJsTimezoneOffsetMins(String jsTimezoneOffsetMins) {
         this.jsTimezoneOffsetMins = jsTimezoneOffsetMins;
     }
