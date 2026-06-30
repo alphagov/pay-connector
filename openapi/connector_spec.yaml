@@ -1019,7 +1019,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: "#/components/schemas/AuthoriseRequest"
+              $ref: "#/components/schemas/MotoApiAuthoriseRequest"
         required: true
       responses:
         "204":
@@ -3687,43 +3687,6 @@ components:
       properties:
         three_d_secure:
           $ref: "#/components/schemas/ThreeDSecure"
-    AuthoriseRequest:
-      type: object
-      properties:
-        card_number:
-          type: string
-          example: "4242424242424242"
-          maxLength: 19
-          minLength: 12
-        cardholder_name:
-          type: string
-          description: Cardholder name
-          example: Joe B
-          maxLength: 255
-          minLength: 1
-        cvc:
-          type: string
-          example: "123"
-          maxLength: 4
-          minLength: 3
-        expiry_date:
-          type: string
-          description: 5 character string in MM/YY format
-          example: 01/99
-          maxLength: 5
-          minLength: 5
-        one_time_token:
-          type: string
-          description: the one time token provided in the `auth_url_post` link of
-            the create payment API response
-          example: 123abc123
-          minLength: 1
-      required:
-      - card_number
-      - cardholder_name
-      - cvc
-      - expiry_date
-      - one_time_token
     CardExpiryDate:
       type: object
       description: The expiry date of the card the user paid with.
@@ -5512,6 +5475,43 @@ components:
       type: object
       description: The last 4 digits of the card the user paid with.
       example: 4242
+    MotoApiAuthoriseRequest:
+      type: object
+      properties:
+        card_number:
+          type: string
+          example: "4242424242424242"
+          maxLength: 19
+          minLength: 12
+        cardholder_name:
+          type: string
+          description: Cardholder name
+          example: Joe B
+          maxLength: 255
+          minLength: 1
+        cvc:
+          type: string
+          example: "123"
+          maxLength: 4
+          minLength: 3
+        expiry_date:
+          type: string
+          description: 5 character string in MM/YY format
+          example: 01/99
+          maxLength: 5
+          minLength: 5
+        one_time_token:
+          type: string
+          description: the one time token provided in the `auth_url_post` link of
+            the create payment API response
+          example: 123abc123
+          minLength: 1
+      required:
+      - card_number
+      - cardholder_name
+      - cvc
+      - expiry_date
+      - one_time_token
     NewChargeStatusRequest:
       type: object
       properties:
