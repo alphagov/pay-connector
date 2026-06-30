@@ -1,0 +1,23 @@
+{
+  "live": "false",
+  "notificationItems": [
+    {
+      "NotificationRequestItem": {
+        "pspReference": "7914073381342284",
+        "originalReference": "adyen-transaction-id-123",
+        "merchantAccountCode": "TestMerchant",
+        "merchantReference": "TestPayment-1407325143704",
+        "eventDate":"2026-06-05T15:54:01+02:00",
+        "eventCode": "CANCELLATION",
+        "success": "false",
+        "amount": {
+          "value": 1130,
+          "currency": "EUR"
+        },
+        "additionalData": {
+          "hmacSignature": "123123"
+        }
+      }
+    }
+  ]
+}

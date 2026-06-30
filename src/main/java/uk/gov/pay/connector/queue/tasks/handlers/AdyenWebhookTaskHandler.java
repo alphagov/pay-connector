@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenPaymentEvent;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -22,8 +23,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_CAPTURE;
-import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_REFUND;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
@@ -37,18 +36,21 @@ public class AdyenWebhookTaskHandler {
     private final RefundNotificationProcessor refundNotificationProcessor;
     private final GatewayAccountService gatewayAccountService;
     private final AdyenNotificationService adyenNotificationService;
+    private final AdyenCancellationNotificationHandler adyenCancellationNotificationHandler;
 
     @Inject
     public AdyenWebhookTaskHandler(ChargeService chargeService,
                                    ChargeNotificationProcessor chargeNotificationProcessor,
                                    RefundNotificationProcessor refundNotificationProcessor,
                                    GatewayAccountService gatewayAccountService,
-                                   AdyenNotificationService adyenNotificationService) {
+                                   AdyenNotificationService adyenNotificationService,
+                                   AdyenCancellationNotificationHandler adyenCancellationNotificationHandler) {
         this.chargeService = chargeService;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
         this.refundNotificationProcessor = refundNotificationProcessor;
         this.gatewayAccountService = gatewayAccountService;
         this.adyenNotificationService = adyenNotificationService;
+        this.adyenCancellationNotificationHandler = adyenCancellationNotificationHandler;
     }
 
     @Transactional
@@ -63,6 +65,11 @@ public class AdyenWebhookTaskHandler {
                 case EVENT_CODE_CAPTURE -> processCapturedNotification(item);
                 case EVENT_CODE_REFUND -> processRefundNotification(item);
             }
+            if (AdyenPaymentEvent.CANCELLATION.name().equals(item.getEventCode())) {
+                adyenCancellationNotificationHandler.process(item);
+                continue;
+            }
+            processCapturedNotification(item);
         }
     }
 
