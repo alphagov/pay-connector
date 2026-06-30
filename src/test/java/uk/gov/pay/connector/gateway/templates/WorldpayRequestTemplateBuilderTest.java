@@ -13,16 +13,16 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.WORLDPAY_VALI
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 import static uk.gov.pay.connector.util.XmlAssertions.assertThat;
 
-class TemplateBuilderTest {
+class WorldpayRequestTemplateBuilderTest {
+    private final WorldpayRequestTemplateBuilder worldpayRequestTemplateBuilder = new WorldpayRequestTemplateBuilder();
 
     @Nested
     class MotoAuthorisationRequest {
         @Test
         void shouldGenerateValidAuthoriseOrderRequestForWorldpayMotoAuthorisationRequest() {
-            TemplateBuilder templateBuilder = new TemplateBuilder("/worldpay/WorldpayAuthoriseMotoOrderTemplate.ftlx");
             WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
 
-            assertThat(templateBuilder.buildWith(motoOrder))
+            assertThat(worldpayRequestTemplateBuilder.buildWith("/worldpay/WorldpayAuthoriseMotoOrderTemplate.ftlx", motoOrder))
                     .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_MOTO_AUTHORISATION_REQUEST))
                     .areIdentical();
         }
@@ -32,12 +32,11 @@ class TemplateBuilderTest {
     class TemplateBuilderAppliesAutoEscape {
         @Test
         void shouldGenerateValidAuthoriseOrderRequestWithAutoEscape() {
-            TemplateBuilder templateBuilder = new TemplateBuilder("/worldpay/WorldpayAuthoriseMotoOrderTemplate.ftlx");
-
             WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture()
                     .withMerchantCode("MERCHANT\"\"CODE")
                     .withCardholderName("Alec & Barley").build();
-            String renderedAuthoriseOrder = templateBuilder.buildWith(motoOrder);
+            String renderedAuthoriseOrder = worldpayRequestTemplateBuilder.buildWith("/worldpay/WorldpayAuthoriseMotoOrderTemplate.ftlx", motoOrder);
+            
             assertThat(renderedAuthoriseOrder, containsString("MERCHANT&quot;&quot;CODE"));
             assertThat(renderedAuthoriseOrder, containsString("Alec &amp; Barley"));
         }
@@ -47,20 +46,21 @@ class TemplateBuilderTest {
     class InvalidActionsThrowingException {
         @Test
         void shouldThrowRuntimeExceptionWhenTemplateIsNotFound() {
-            var thrown = assertThrows(RuntimeException.class, () -> new TemplateBuilder("/worldpay/NonExistentOrderTemplate.xml"));
+            WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
+            var thrown = assertThrows(RuntimeException.class, () -> worldpayRequestTemplateBuilder.buildWith("/worldpay/NonExistentOrderTemplate.xml", motoOrder));
+            
             assertThat(thrown.getMessage(), is("Could not load template /worldpay/NonExistentOrderTemplate.xml in dir /templates"));
         }
 
         @Test
         void shouldThrowRuntimeExceptionWhenCannotRenderTemplate() {
-            TemplateBuilder templateBuilder = new TemplateBuilder("/worldpay/WorldpayCancelOrderTemplate.xml");
             WorldpayMotoAuthoriseRequest motoOrder = aWorldpayMotoAuthoriseRequestFixture().build();
 
             var thrown = assertThrows(RuntimeException.class, () -> {
-                templateBuilder.buildWith(motoOrder);
+                worldpayRequestTemplateBuilder.buildWith("/worldpay/WorldpayCancelOrderTemplate.xml", motoOrder);
             });
+            
             assertThat(thrown.getMessage(), is("Could not render template worldpay/WorldpayCancelOrderTemplate.xml"));
         }
     }
-
 }
