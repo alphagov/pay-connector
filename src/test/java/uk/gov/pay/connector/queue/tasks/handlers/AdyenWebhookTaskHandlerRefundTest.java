@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_REFUND_FAILURE_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_REFUND_SUCCESS_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 
@@ -97,5 +98,27 @@ class AdyenWebhookTaskHandlerRefundTest {
         then(mockStateTransitionService)
                 .should()
                 .offerRefundStateTransition(submittedRefundEntity, RefundStatus.REFUNDED);
+    }
+
+    @Test
+    void should_transition_refund_in_REFUND_SUBMITTED_state_to_REFUND_ERROR_on_unsuccessful_REFUND_event() throws IOException {
+        var adyenRefundFailureNotification = NotificationRequest.fromJson(load(ADYEN_REFUND_FAILURE_NOTIFICATION));
+        given(mockAdyenNotificationService.extractNotificationItems(any()))
+                .willReturn(adyenRefundFailureNotification.getNotificationItems());
+        given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
+                .willReturn(Optional.of(Charge.from(ChargeEntityFixture.aValidChargeEntity().build())));
+        given(mockGatewayAccountService.getGatewayAccount(anyLong()))
+                .willReturn(Optional.of(GatewayAccountEntityFixture.aGatewayAccountEntity().build()));
+        RefundEntity submittedRefundEntity = new RefundEntityFixture()
+                .withStatus(RefundStatus.REFUND_SUBMITTED)
+                .build();
+        given(mockRefundDao.findByChargeExternalIdAndGatewayTransactionId(any(), any()))
+                .willReturn(Optional.of(submittedRefundEntity));
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-successful-notification");
+
+        then(mockStateTransitionService)
+                .should()
+                .offerRefundStateTransition(submittedRefundEntity, RefundStatus.REFUND_ERROR);
     }
 }

@@ -74,7 +74,7 @@ public class AdyenWebhookTaskHandler {
                 charge.get().getGatewayAccountId());
         refundNotificationProcessor.invoke(
                 PaymentGatewayName.ADYEN,
-                RefundStatus.REFUNDED,
+                item.isSuccess() ? RefundStatus.REFUNDED : RefundStatus.REFUND_ERROR,
                 gatewayAccount.get(),
                 item.getPspReference(),
                 item.getOriginalReference(),

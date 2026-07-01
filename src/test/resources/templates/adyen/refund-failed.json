@@ -1,0 +1,22 @@
+{
+  "live":"false",
+  "notificationItems":[
+    {
+      "NotificationRequestItem":{
+        "amount":{
+          "currency":"GBP",
+          "value":2500
+        },
+        "eventCode":"REFUND",
+        "eventDate":"2021-11-01T00:19:34+01:00",
+        "merchantAccountCode":"TestMerchant",
+        "merchantReference": "{{merchantReference}}",
+        "originalReference":"adyen-transaction-id-123",
+        "paymentMethod":"visa",
+        "pspReference":"{{pspReference}}",
+        "reason":"",
+        "success":"false"
+      }
+    }
+  ]
+}
