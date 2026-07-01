@@ -23,6 +23,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_CAPTURE;
+import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_REFUND;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
@@ -61,6 +63,10 @@ public class AdyenWebhookTaskHandler {
         List<NotificationRequestItem> items = adyenNotificationService.extractNotificationItems(notificationRequest);
 
         for (NotificationRequestItem item : items) {
+            if (AdyenPaymentEvent.CANCELLATION.name().equals(item.getEventCode())) {
+                adyenCancellationNotificationHandler.process(item);
+                continue;
+            }
             switch (item.getEventCode()) {
                 case EVENT_CODE_CAPTURE -> processCapturedNotification(item);
                 case EVENT_CODE_REFUND -> processRefundNotification(item);
