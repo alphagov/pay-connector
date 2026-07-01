@@ -1019,7 +1019,7 @@ paths:
         content:
           '*/*':
             schema:
-              $ref: "#/components/schemas/AuthoriseRequest"
+              $ref: "#/components/schemas/MotoApiAuthoriseRequest"
         required: true
       responses:
         "204":
@@ -1412,7 +1412,7 @@ paths:
       summary: Create or update 3DS flex credentials (worldpay accounts)
       tags:
       - Gateway account credentials
-  /v1/api/service/{serviceId}/account/{accountType}/adyen-setup/{credentialId}:
+  /v1/api/service/{serviceId}/account/{accountType}/adyen-setup/{credentialExternalId}:
     get:
       operationId: getAdyenAccountSetup
       parameters:
@@ -1433,24 +1433,23 @@ paths:
           enum:
           - test
           - live
-      - description: Credential ID
-        example: 1
+      - description: Credential External ID
+        example: 46eb1b601348499196c99de90482ee68
         in: path
-        name: credentialId
+        name: credentialExternalId
         required: true
         schema:
-          type: integer
-          format: int64
+          type: string
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StripeAccountSetup"
+                $ref: "#/components/schemas/AdyenAccountSetupResource"
           description: OK
         "404":
           description: Not found
-      summary: "Retrieve Adyen account setup tasks for a given gateway account ID,\
+      summary: "Retrieve Adyen account setup tasks for a given service ID, account\
         \ type and credential ID"
       tags:
       - Gateway accounts
@@ -3463,6 +3462,27 @@ components:
         postcode:
           type: string
           example: AB1 2CD
+    AdyenAccountSetupResource:
+      type: object
+    AdyenAccountSetupResponse:
+      type: object
+      properties:
+        credential_external_id:
+          type: string
+        gateway_account_id:
+          type: integer
+          format: int64
+        service_id:
+          type: string
+        tasks:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+              enum:
+              - NOT_STARTED
+              - COMPLETED
     AdyenCredentials:
       type: object
       properties:
@@ -3707,7 +3727,7 @@ components:
         js_screen_width:
           type: string
           example: "1440"
-        js_timezone_offset_min:
+        js_timezone_offset_mins:
           type: string
           example: "-60"
         prepaid:
@@ -3729,43 +3749,6 @@ components:
       properties:
         three_d_secure:
           $ref: "#/components/schemas/ThreeDSecure"
-    AuthoriseRequest:
-      type: object
-      properties:
-        card_number:
-          type: string
-          example: "4242424242424242"
-          maxLength: 19
-          minLength: 12
-        cardholder_name:
-          type: string
-          description: Cardholder name
-          example: Joe B
-          maxLength: 255
-          minLength: 1
-        cvc:
-          type: string
-          example: "123"
-          maxLength: 4
-          minLength: 3
-        expiry_date:
-          type: string
-          description: 5 character string in MM/YY format
-          example: 01/99
-          maxLength: 5
-          minLength: 5
-        one_time_token:
-          type: string
-          description: the one time token provided in the `auth_url_post` link of
-            the create payment API response
-          example: 123abc123
-          minLength: 1
-      required:
-      - card_number
-      - cardholder_name
-      - cvc
-      - expiry_date
-      - one_time_token
     CardExpiryDate:
       type: object
       description: The expiry date of the card the user paid with.
@@ -5554,6 +5537,43 @@ components:
       type: object
       description: The last 4 digits of the card the user paid with.
       example: 4242
+    MotoApiAuthoriseRequest:
+      type: object
+      properties:
+        card_number:
+          type: string
+          example: "4242424242424242"
+          maxLength: 19
+          minLength: 12
+        cardholder_name:
+          type: string
+          description: Cardholder name
+          example: Joe B
+          maxLength: 255
+          minLength: 1
+        cvc:
+          type: string
+          example: "123"
+          maxLength: 4
+          minLength: 3
+        expiry_date:
+          type: string
+          description: 5 character string in MM/YY format
+          example: 01/99
+          maxLength: 5
+          minLength: 5
+        one_time_token:
+          type: string
+          description: the one time token provided in the `auth_url_post` link of
+            the create payment API response
+          example: 123abc123
+          minLength: 1
+      required:
+      - card_number
+      - cardholder_name
+      - cvc
+      - expiry_date
+      - one_time_token
     NewChargeStatusRequest:
       type: object
       properties:
