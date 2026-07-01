@@ -11,6 +11,8 @@ import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.charge.model.domain.ParityCheckStatus;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupTask;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
@@ -1323,5 +1325,17 @@ public class DatabaseTestHelper {
         PGobject pGobject = new PGobject();
         pGobject.setType("json");
         return pGobject;
+    }
+
+    public void addGatewayAccountsAdyenSetupTask(long accountId, long credentialId, AdyenAccountSetupTask task, AdyenAccountSetupStatus status) {
+        jdbi.withHandle(handle ->
+                handle
+                        .createUpdate("INSERT INTO gateway_accounts_adyen_setup(gateway_account_id, gateway_account_credential_id, task, status) VALUES (:accountId, :credentialId, :task, :status)")
+                        .bind("accountId", accountId)
+                        .bind("credentialId", credentialId)
+                        .bind("task", task)
+                        .bind("status", status)
+                        .execute()
+        );
     }
 }

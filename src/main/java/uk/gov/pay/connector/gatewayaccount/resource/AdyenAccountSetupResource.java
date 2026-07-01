@@ -49,7 +49,7 @@ public class AdyenAccountSetupResource {
 
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
-                .map(gatewayAccountEntity -> aydenAccountSetupService.getCompletedTasks(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
+                .map(gatewayAccountEntity -> aydenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
                 .orElseThrow(() -> new IllegalStateException("Internal Server Error"));
     }
 }

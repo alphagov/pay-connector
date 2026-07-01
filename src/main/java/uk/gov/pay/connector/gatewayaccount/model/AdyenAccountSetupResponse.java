@@ -9,7 +9,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
 public class AdyenAccountSetupResponse {
-    
+
     @JsonProperty("service_id")
     private String serviceId;
 
@@ -21,7 +21,7 @@ public class AdyenAccountSetupResponse {
 
     @JsonProperty("tasks")
     private Map<String, Map<String, AdyenAccountSetupStatus>> tasks;
-    
+
     public void setGatewayAccountId(long gatewayAccountId) {
         this.gatewayAccountId = gatewayAccountId;
     }
@@ -33,7 +33,7 @@ public class AdyenAccountSetupResponse {
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
     }
-    
+
     public void setTasks(Map<String, Map<String, AdyenAccountSetupStatus>> tasks) {
         this.tasks = tasks;
     }
