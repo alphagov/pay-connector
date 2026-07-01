@@ -37,6 +37,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
 
 @ExtendWith(MockitoExtension.class)
 class AuthorisationLoggerTest {
@@ -49,9 +50,6 @@ class AuthorisationLoggerTest {
 
     @Mock
     private AuthorisationRequestSummaryStructuredLogging mockAuthorisationRequestSummaryStructuredLogging;
-
-    @Mock
-    private WorldpayAuthoriseRequest mockWorldpayAuthoriseRequest;
 
     @Mock
     private AuthCardDetails mockAuthCardDetails;
@@ -67,6 +65,8 @@ class AuthorisationLoggerTest {
 
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
+
+    private final WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
 
     private final GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
             .withId(123L)
@@ -139,12 +139,12 @@ class AuthorisationLoggerTest {
     }
 
     @Test
-    void logsWithWorldayAuthorisationRequest() {
-        given(mockWorldpayAuthoriseRequestLogGenerator.generate(mockWorldpayAuthoriseRequest, mockAuthCardDetails))
+    void logsWithWorldpayAuthorisationRequest() {
+        given(mockWorldpayAuthoriseRequestLogGenerator.generate(worldpayAuthoriseRequest, mockAuthCardDetails))
                         .willReturn(new AuthorisationRequestLog(" with all the fancy details",
                                 List.of(kv("some", "fun"), kv("structured", "args"))));
 
-        authorisationLogger.logChargeAuthorisation(logger, mockWorldpayAuthoriseRequest, mockAuthCardDetails, chargeEntity,
+        authorisationLogger.logChargeAuthorisation(logger, worldpayAuthoriseRequest, mockAuthCardDetails, chargeEntity,
                 "payment-12345", mockGatewayResponse, ChargeStatus.ENTERING_CARD_DETAILS, ChargeStatus.AUTHORISATION_SUCCESS);
 
         verify(mockAppender).doAppend(loggingEventArgumentCaptor.capture());
