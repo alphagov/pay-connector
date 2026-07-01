@@ -31,7 +31,7 @@ public class RefundNotificationProcessor {
     private final UserNotificationService userNotificationService;
 
     @Inject
-    RefundNotificationProcessor(RefundService refundService,
+    public RefundNotificationProcessor(RefundService refundService,
                                 UserNotificationService userNotificationService) {
         this.refundService = refundService;
         this.userNotificationService = userNotificationService;
