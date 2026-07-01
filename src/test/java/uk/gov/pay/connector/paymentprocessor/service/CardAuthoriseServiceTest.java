@@ -67,7 +67,7 @@ import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.service.PaymentInstrumentService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -851,7 +851,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldPublishEvent() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         mockRecordAuthorisationResult();
         providerWillAuthoriseForMotoApiPayment();
@@ -875,7 +875,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldIgnoreCorporateCardSurchargeForChargeWithMotoApiAuthorisationMode() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         mockRecordAuthorisationResult();
         providerWillAuthoriseForMotoApiPayment();
@@ -901,7 +901,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldRespondCaptureQueued_overridingGeneratedTransactionId() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         mockRecordAuthorisationResult();
         providerWillAuthoriseForMotoApiPayment();
@@ -939,7 +939,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldRetainGeneratedTransactionId_WhenProviderAuthorisationFails() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         String generatedTransactionId = "generated-transaction-id";
         when(mockedProviders.byName(charge.getPaymentGatewayName())).thenReturn(mockedPaymentProvider);
@@ -959,7 +959,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldRespondAuthorisationRejected_whenProviderAuthorisationIsRejected() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation rejected"
         });
@@ -988,7 +988,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldRespondAuthorisationCancelled_whenProviderAuthorisationIsCancelled() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         double counterBefore = getMetricSample("gateway_operations_authorisation_result_total", new String[]{
                 "sandbox", "test", "without-billing-address", "with non-corporate card", "not requested", "without email address", "without ip address", "authorisation cancelled"
@@ -1020,7 +1020,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldRespondAuthorisationError() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
         mockRecordAuthorisationResult();
         providerWillErrorForMotoApiPayment();
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -1049,7 +1049,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldStoreCardDetails_IfAuthorisationRejected() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("424242"), LastDigitsCardNumber.of("4242"),
                 "Mr. Pay", CardExpiryDate.valueOf("11/99"), "VISA", CardType.DEBIT, null);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -1070,7 +1070,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldStoreCardDetails_ForAuthorisationError() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("424242"), LastDigitsCardNumber.of("4242"),
                 "Mr. Pay", CardExpiryDate.valueOf("11/99"), "VISA", CardType.DEBIT, null);
         when(mockAuthCardDetailsToCardDetailsEntityConverter.convert(any())).thenReturn(cardDetailsEntity);
@@ -1091,7 +1091,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldSetChargeStatusToAuthorisationTimeout_whenGatewayTimedout() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         mockRecordAuthorisationResult();
         providerWillRespondWithErrorForMotoApiPayment(new GatewayException.GatewayConnectionTimeoutException("Connection timed out"));
@@ -1109,7 +1109,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     void doAuthoriseMotoApi_shouldThrowAnIllegalStateRuntimeException_whenChargeIsInInvalidStatus() {
         charge.setAuthorisationMode(MOTO_API);
         ChargeEntity charge = createNewChargeWith(1L, ChargeStatus.UNDEFINED);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
 
@@ -1126,7 +1126,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseMotoApi_shouldReportUnexpectedError_whenProviderError() throws Exception {
         charge.setAuthorisationMode(MOTO_API);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
 
         mockRecordAuthorisationResult();
         providerWillRespondWithErrorForMotoApiPayment(new GatewayException.GatewayErrorException("Malformed response received"));
@@ -1145,7 +1145,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     @Test
     void doAuthoriseApi_shouldNotOverrideRequires3ds_IfAlreadyTrue() throws Exception {
         charge.setRequires3ds(true);
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Mr Test");
         CardDetailsEntity cardDetailsEntity = new CardDetailsEntity(FirstDigitsCardNumber.of("424242"), LastDigitsCardNumber.of("4242"),
                 "Mr. Pay", CardExpiryDate.valueOf("11/99"), "VISA", CardType.DEBIT, null);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
@@ -1169,7 +1169,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         charge.setAuthorisationMode(MOTO_API);
         when(mockedChargeDao.findByExternalId(charge.getExternalId())).thenReturn(Optional.of(charge));
         String cardholderName = "Mr Test";
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", cardholderName);
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", cardholderName);
         CardInformation cardInformation = aCardInformation().build();
         AuthCardDetails authCardDetails = AuthCardDetails.of(authoriseRequest, charge, cardInformation);
 

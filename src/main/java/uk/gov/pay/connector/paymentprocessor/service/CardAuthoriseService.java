@@ -31,11 +31,10 @@ import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationG
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
-import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.model.Exemption3ds;
 import uk.gov.pay.connector.paymentprocessor.model.OperationType;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
@@ -146,8 +145,8 @@ public class CardAuthoriseService {
         return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus);
     }
 
-    public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, AuthoriseRequest authoriseRequest) {
-        AuthCardDetails authCardDetails = AuthCardDetails.of(authoriseRequest, chargeEntity, cardInformation);
+    public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, MotoApiAuthoriseRequest motoApiAuthoriseRequest) {
+        AuthCardDetails authCardDetails = AuthCardDetails.of(motoApiAuthoriseRequest, chargeEntity, cardInformation);
         final ChargeEntity charge = prepareChargeForAuthorisation(chargeEntity.getExternalId(), authCardDetails);
 
         try {

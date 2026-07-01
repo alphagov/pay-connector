@@ -25,7 +25,7 @@ import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationRespon
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.token.TokenService;
@@ -346,16 +346,16 @@ public class CardResource {
                     @ApiResponse(responseCode = "500", description = "Authorisation error"),
             }
     )
-    public Response authorise(@Valid @NotNull AuthoriseRequest authoriseRequest) {
+    public Response authorise(@Valid @NotNull MotoApiAuthoriseRequest motoApiAuthoriseRequest) {
         // Fields are removed from the MDC when the API responds in LoggingMDCResponseFilter 
-        MDC.put(SECURE_TOKEN, authoriseRequest.getOneTimeToken());
-        authoriseRequest.validate();
+        MDC.put(SECURE_TOKEN, motoApiAuthoriseRequest.getOneTimeToken());
+        motoApiAuthoriseRequest.validate();
 
-        TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(authoriseRequest.getOneTimeToken());
+        TokenEntity tokenEntity = tokenService.validateAndMarkTokenAsUsedForMotoApi(motoApiAuthoriseRequest.getOneTimeToken());
         MDCUtils.addChargeAndGatewayAccountDetailsToMDC(tokenEntity.getChargeEntity());
-        CardInformation cardInformation = motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), authoriseRequest.getCardNumber());
+        CardInformation cardInformation = motoApiCardNumberValidationService.validateCardNumber(tokenEntity.getChargeEntity(), motoApiAuthoriseRequest.getCardNumber());
 
-        AuthorisationResponse response = cardAuthoriseService.doAuthoriseMotoApi(tokenEntity.getChargeEntity(), cardInformation, authoriseRequest);
+        AuthorisationResponse response = cardAuthoriseService.doAuthoriseMotoApi(tokenEntity.getChargeEntity(), cardInformation, motoApiAuthoriseRequest);
         return handleAuthResponseForMotoApi(response);
     }
 
