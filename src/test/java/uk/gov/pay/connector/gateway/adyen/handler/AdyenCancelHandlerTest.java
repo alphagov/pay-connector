@@ -49,7 +49,8 @@ import static uk.gov.pay.connector.app.adyen.BaseUrlsFixture.someBaseUrls;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.model.response.BaseCancelResponse.CancelStatus.SUBMITTED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
-import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.*;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenCancelHandlerTest {
