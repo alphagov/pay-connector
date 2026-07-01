@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -175,6 +176,56 @@ class RefundNotificationProcessorTest {
 
     @Nested
     @ParameterizedClass
+    @CsvSource({
+            "REFUNDED, REFUND_ERROR",
+            "REFUND_ERROR, REFUNDED"
+    })
+    class WhenStatusTransitionIsIllegal {
+
+        @Parameter(0)
+        RefundStatus oldStatus;
+        @Parameter(1)
+        RefundStatus newStatus;
+
+
+        @BeforeEach
+        void setUp() {
+            refundEntity.setStatus(oldStatus);
+            when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
+                    .thenReturn(Optional.of(refundEntity));
+        }
+
+        @Test
+        void shouldNotTransitionTheRefundState() {
+            invokeRefundNotificationProcessorWithNewStatus(newStatus);
+
+            then(refundService)
+                    .should(never())
+                    .transitionRefundState(any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldNotSendRefundIssuedEmail() {
+            invokeRefundNotificationProcessorWithNewStatus(newStatus);
+
+            then(userNotificationService)
+                    .should(never())
+                    .sendRefundIssuedEmail(any(), any(), any());
+        }
+
+        @Test
+        void shouldLogRedundantNotificationMessageAtInfoLevel() {
+            invokeRefundNotificationProcessorWithNewStatus(newStatus);
+
+            assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.INFO))));
+            logs.assertContains("Notification received for refund would cause an illegal state " +
+                    "transition: refund [%s] cannot be set as [%s] because it is already in state [%s].".formatted(
+                            refundEntity.getExternalId(), newStatus, oldStatus));
+        }
+    }
+
+    @Nested
+    @ParameterizedClass
     @EnumSource(RefundStatus.class)
     class WhenOldStatusIsTheSameAsTheNewStatus {
 
@@ -190,8 +241,7 @@ class RefundNotificationProcessorTest {
 
         @Test
         void shouldNotTransitionTheRefundState() {
-            var newStatus = status;
-            invokeRefundNotificationProcessorWithNewStatus(newStatus);
+            invokeRefundNotificationProcessorWithNewStatus(status);
 
             then(refundService)
                     .should(never())
