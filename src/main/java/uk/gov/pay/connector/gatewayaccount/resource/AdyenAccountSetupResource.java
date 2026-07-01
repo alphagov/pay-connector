@@ -7,10 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
@@ -45,11 +42,13 @@ public class AdyenAccountSetupResource {
     public AdyenAccountSetupResponse getAdyenAccountSetup(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId ) { // pragma: allowlist secret
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId) { // pragma: allowlist secret
 
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
-                .map(gatewayAccountEntity -> aydenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
-                .orElseThrow(() -> new IllegalStateException("Internal Server Error"));
+        var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType).orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+        if (!gatewayAccountEntity.getGatewayAccountCredentials().getFirst().getExternalId().equals(credentialExternalId)){
+            throw new NotFoundException();
+        }
+        
+        return aydenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), credentialExternalId);
     }
 }

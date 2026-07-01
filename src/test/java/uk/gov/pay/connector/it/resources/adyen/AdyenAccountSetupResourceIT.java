@@ -31,12 +31,10 @@ public class AdyenAccountSetupResourceIT {
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
     private String serviceId;
-    private String credentialExternalId;
 
     @BeforeEach
     void setUp() {
         serviceId = "service-123";
-        credentialExternalId = "credential-123";
     }
 
     @Test
@@ -49,6 +47,7 @@ public class AdyenAccountSetupResourceIT {
                 .insert();
 
         long gatewayAccountId = liveAccount.getAccountId();
+        var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
         
         app.givenSetup()
                 .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
@@ -76,6 +75,7 @@ public class AdyenAccountSetupResourceIT {
                 .insert();
 
         long gatewayAccountId = liveAccount.getAccountId();
+        var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
         
         var gatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialByPaymentProvider(gatewayAccountId, ADYEN.getName());
         markTasksAsCompleted(gatewayAccountId, gatewayAccountCredentialId, Arrays.asList(AdyenAccountSetupTask.values()));
@@ -106,6 +106,7 @@ public class AdyenAccountSetupResourceIT {
                 .insert();
 
         long gatewayAccountId = liveAccount.getAccountId();
+        var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
         var gatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialByPaymentProvider(gatewayAccountId, ADYEN.getName());
         
         var completedTasks = List.of(BANK_ACCOUNT, RESPONSIBLE_PERSON, VAT_NUMBER);
@@ -136,6 +137,7 @@ public class AdyenAccountSetupResourceIT {
                 .insert();
 
         long gatewayAccountId = testAccount.getAccountId();
+        var credentialExternalId = testAccount.getCredentials().getFirst().getExternalId();
         var gatewayAccountCredentialId = app.getDatabaseTestHelper().getGatewayAccountCredentialByPaymentProvider(gatewayAccountId, ADYEN.getName());
 
         var completedTasks = List.of(COMPANY_NUMBER, DIRECTOR, GOVERNMENT_ENTITY_DOCUMENT, ORGANISATION_DETAILS);
@@ -156,11 +158,25 @@ public class AdyenAccountSetupResourceIT {
                 .body("tasks.government_entity_document.status", is(COMPLETED.toString()))
                 .body("tasks.organisation_details.status", is(COMPLETED.toString()));
     }
-
+    
     @Test
     void returnsNotFoundResponseWhenGatewayAccountDoesNotExist() {
         app.givenSetup()
-                .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, credentialExternalId))
+                .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential-123"))
+                .then()
+                .statusCode(SC_NOT_FOUND);
+    }
+
+    @Test
+    void returnsNotFoundResponseWhenCredentialIdDoesNotExist() {
+        app.getDatabaseFixtures()
+                .aTestAccount()
+                .withServiceId(serviceId)
+                .withPaymentProvider(ADYEN.getName())
+                .insert();
+        
+        app.givenSetup()
+                .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential_does_not_exist"))
                 .then()
                 .statusCode(SC_NOT_FOUND);
     }
