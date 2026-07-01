@@ -38,7 +38,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 import uk.gov.pay.connector.paymentprocessor.service.Card3dsResponseAuthService;
 import uk.gov.pay.connector.paymentprocessor.service.CardAuthoriseService;
 import uk.gov.pay.connector.rules.ResourceTestRuleWithCustomExceptionMappersBuilder;
@@ -167,8 +167,8 @@ class CardResourceAuthoriseTest {
                                                                  String cardHolderName,
                                                                  String expectedMessage,
                                                                  ErrorIdentifier expectedErrorIdentifier) {
-        AuthoriseRequest request =
-                new AuthoriseRequest(oneTimeToken, cardNumber, cvc, expiryDate, cardHolderName);
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest(oneTimeToken, cardNumber, cvc, expiryDate, cardHolderName);
 
         Response response = resources.target("/v1/api/charges/authorise")
                 .request().post(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE));
@@ -198,7 +198,7 @@ class CardResourceAuthoriseTest {
         String cardNumber = "4242424242424242";
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
         YearMonth expiryMonthAndDate = YearMonth.now(UTC).plus(monthsToAddOrSubstractFromCurrentMonthAndYear, MONTHS);
-        AuthoriseRequest request = new AuthoriseRequest(token, cardNumber, "123",
+        MotoApiAuthoriseRequest request = new MotoApiAuthoriseRequest(token, cardNumber, "123",
                 expiryMonthAndDate.format(ofPattern("MM/yy")), "Job Bogs");
 
         mockAuthorisationResponse(AUTHORISED);
@@ -219,8 +219,8 @@ class CardResourceAuthoriseTest {
     void authoriseMotoApiPaymentShouldReturn204ForValidPayload() {
         String token = "one-time-token-123";
         String cardNumber = "4242424242424242";
-        AuthoriseRequest request =
-                new AuthoriseRequest(token, cardNumber, "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest(token, cardNumber, "123", "11/99", "Job Bogs");
 
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
         mockAuthorisationResponse(AUTHORISED);
@@ -233,8 +233,8 @@ class CardResourceAuthoriseTest {
 
     @Test
     void authoriseMotoApiPaymentShouldReturn400ForInvalidOneTimeTaken() {
-        AuthoriseRequest request =
-                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
 
         doThrow(new OneTimeTokenInvalidException()).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi("one-time-token-123");
 
@@ -250,8 +250,8 @@ class CardResourceAuthoriseTest {
 
     @Test
     void authoriseMotoApiPaymentShouldReturn400ForOneTimeTakenAlreadyUsed() {
-        AuthoriseRequest request =
-                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
 
         doThrow(new OneTimeTokenAlreadyUsedException()).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi("one-time-token-123");
 
@@ -267,8 +267,8 @@ class CardResourceAuthoriseTest {
 
     @Test
     void authoriseMotoApiPaymentShouldReturn400IfOneTimeTakenUsageIsInvalidForMotoApi() {
-        AuthoriseRequest request =
-                new AuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest("one-time-token-123", "4242424242424242", "123", "11/99", "Job Bogs");
 
         doThrow(new OneTimeTokenUsageInvalidForMotoApiException()).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi("one-time-token-123");
 
@@ -286,8 +286,8 @@ class CardResourceAuthoriseTest {
     void authoriseMotoApiPaymentShouldReturn402IfCardNumberIsNotValid() {
         String token = "one-time-token-123";
         String cardNumber = "4242424242424242";
-        AuthoriseRequest request =
-                new AuthoriseRequest(token, cardNumber, "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest(token, cardNumber, "123", "11/99", "Job Bogs");
 
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
         doThrow(new CardNumberRejectedException("Card number rejected")).when(mockMotoApiCardNumberValidationService).validateCardNumber(chargeEntity, cardNumber);
@@ -319,8 +319,8 @@ class CardResourceAuthoriseTest {
                                                                                         String expectedErrorMessage,
                                                                                         ErrorIdentifier expectedErrorIdentifier) {
         String token = "one-time-token-123";
-        AuthoriseRequest request =
-                new AuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
 
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
         mockAuthorisationResponse(authoriseStatus);
@@ -345,8 +345,8 @@ class CardResourceAuthoriseTest {
     @MethodSource("gatewayExceptions")
     void authoriseMotoApiPaymentShouldReturn500ForGatewayError(GatewayError gatewayError) {
         String token = "one-time-token-123";
-        AuthoriseRequest request =
-                new AuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
 
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
         mockGatewayError(gatewayError);
@@ -363,8 +363,8 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseMotoApiPaymentShouldReturn500ForUnexpectedAuthorisationState() {
         String token = "one-time-token-123";
-        AuthoriseRequest request =
-                new AuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
 
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
         mockAuthorisationResponse(REQUIRES_3DS);
@@ -381,8 +381,8 @@ class CardResourceAuthoriseTest {
     @Test
     void authoriseMotoApiPaymentShouldReturnGenericErrorWhenBothAuthorisationStatusAndGatewayErrorAreNotAvaialable() {
         String token = "one-time-token-123";
-        AuthoriseRequest request =
-                new AuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
+        MotoApiAuthoriseRequest request =
+                new MotoApiAuthoriseRequest(token, "4242424242424242", "123", "11/99", "Job Bogs");
 
         doReturn(tokenEntity).when(mockTokenService).validateAndMarkTokenAsUsedForMotoApi(token);
 

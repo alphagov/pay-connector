@@ -1,7 +1,11 @@
 package uk.gov.pay.connector.gateway.adyen;
 
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.event.KeyValuePair;
+import org.slf4j.event.Level;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
@@ -26,6 +30,9 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
@@ -67,6 +74,8 @@ class AdyenRequestFactoryTest {
             "store_id",
             "account_holder_id",
             "balance_account_id");
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(AdyenRequestFactory.class);
 
     @BeforeEach
     void setUp() {
@@ -299,37 +308,38 @@ class AdyenRequestFactoryTest {
     }
 
     @Test
-    void should_handle_null_or_invalid_browser_info_values_for_web_payment() {
+    void should_log_warning_when_browser_info_integer_cannot_be_parsed() {
         var authoriseRequest = aCardAuthorisationGatewayRequest()
                 .withAuthCardDetails(anAuthCardDetails()
-                        .withAcceptHeader("text/html")
-                        .withUserAgentHeader("Mozilla/5.0")
-                        .withIpAddress("127.0.0.1")
-                        .withJsNavigatorLanguage(null)
                         .withJsScreenColorDepth("invalid")
-                        .withJsScreenHeight(null)
                         .withJsScreenWidth("not-a-number")
                         .withJsTimezoneOffsetMins("bad-offset")
-                        .withJsEnabled(null)
                         .build())
                 .withCredentials(ADYEN_CREDENTIALS)
-                .withEmail("test@example.com")
                 .build();
 
-        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+        adyenRequestFactory.createPaymentRequest(authoriseRequest);
 
-        assertThat(request.browserInfo().acceptHeader(), is("text/html"));
-        assertThat(request.browserInfo().colorDepth(), is(nullValue()));
-        assertThat(request.browserInfo().javaEnabled(), is(false));
-        assertThat(request.browserInfo().javaScriptEnabled(), is(nullValue()));
-        assertThat(request.browserInfo().language(), is(nullValue()));
-        assertThat(request.browserInfo().screenHeight(), is(nullValue()));
-        assertThat(request.browserInfo().screenWidth(), is(nullValue()));
-        assertThat(request.browserInfo().timeZoneOffset(), is(nullValue()));
-        assertThat(request.browserInfo().userAgent(), is("Mozilla/5.0"));
-        assertThat(request.shopperIP(), is("127.0.0.1"));
+        var loggingEvents = logs.getEvents();
+
+        assertThat(loggingEvents.size(), is(3));
+
+        assertThat(loggingEvents, everyItem(hasProperty("level", is(Level.WARN))));
+        assertThat(loggingEvents, everyItem(hasProperty("message", is("Unable to parse browser info integer"))));
+        
+        var keyValuePairs = loggingEvents.stream()
+                .flatMap(event -> event.getKeyValuePairs().stream())
+                .toList();
+
+        assertThat(keyValuePairs, contains(
+                new KeyValuePair("property", "js_screen_color_depth"),
+                new KeyValuePair("value", "invalid"),
+                new KeyValuePair("property", "js_screen_width"),
+                new KeyValuePair("value", "not-a-number"),
+                new KeyValuePair("property", "js_timezone_offset_min"),
+                new KeyValuePair("value", "bad-offset")
+        ));
     }
-    
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)
