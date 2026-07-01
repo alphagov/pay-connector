@@ -1412,6 +1412,47 @@ paths:
       summary: Create or update 3DS flex credentials (worldpay accounts)
       tags:
       - Gateway account credentials
+  /v1/api/service/{serviceId}/account/{accountType}/adyen-setup/{credentialExternalId}:
+    get:
+      operationId: getAdyenAccountSetup
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - description: Credential External ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: credentialExternalId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdyenAccountSetupResource"
+          description: OK
+        "404":
+          description: Not found
+      summary: "Retrieve Adyen account setup tasks for a given service ID, account\
+        \ type and credential ID"
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/agreements:
     post:
       operationId: createAgreement_1
@@ -3421,6 +3462,27 @@ components:
         postcode:
           type: string
           example: AB1 2CD
+    AdyenAccountSetupResource:
+      type: object
+    AdyenAccountSetupResponse:
+      type: object
+      properties:
+        credential_external_id:
+          type: string
+        gateway_account_id:
+          type: integer
+          format: int64
+        service_id:
+          type: string
+        tasks:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+              enum:
+              - NOT_STARTED
+              - COMPLETED
     AdyenCredentials:
       type: object
       properties:

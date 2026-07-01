@@ -39,7 +39,7 @@ class AdyenAccountSetupServiceTest {
     private static final String EXPECTED_ERROR_MSG = "Gateway account type must be TEST and gateway name must be ADYEN";
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         this.adyenAccountSetupService = new AdyenAccountSetupService(mockAdyenAccountSetupDao);
     }
 

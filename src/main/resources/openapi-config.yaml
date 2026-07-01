@@ -8,6 +8,7 @@ resourceClasses:
   - uk.gov.pay.connector.events.resource.EmittedEventResource
   - uk.gov.pay.connector.expunge.resource.ExpungeResource
   - uk.gov.pay.connector.gatewayaccount.resource.AdyenAccountResource
+  - uk.gov.pay.connector.gatewayaccount.resource.AdyenAccountSetupResource
   - uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountResource
   - uk.gov.pay.connector.gatewayaccount.resource.StripeAccountResource
   - uk.gov.pay.connector.gatewayaccount.resource.StripeAccountSetupResource

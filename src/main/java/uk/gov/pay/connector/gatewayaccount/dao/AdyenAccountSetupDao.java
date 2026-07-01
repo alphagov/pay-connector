@@ -12,5 +12,4 @@ public class AdyenAccountSetupDao extends JpaDao<AdyenAccountSetupTaskEntity> {
     public AdyenAccountSetupDao(final Provider<EntityManager> entityManager) {
         super(entityManager);
     }
-
 }
