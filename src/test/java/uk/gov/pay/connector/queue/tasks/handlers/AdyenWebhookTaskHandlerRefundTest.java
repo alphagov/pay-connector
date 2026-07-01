@@ -2,6 +2,7 @@ package uk.gov.pay.connector.queue.tasks.handlers;
 
 import com.adyen.model.notification.NotificationRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -120,5 +121,28 @@ class AdyenWebhookTaskHandlerRefundTest {
         then(mockStateTransitionService)
                 .should()
                 .offerRefundStateTransition(submittedRefundEntity, RefundStatus.REFUND_ERROR);
+    }
+
+    @Test
+    @Disabled("Illegal refund transition, according to RefundNotificationProcessor")
+    void should_transition_refund_in_REFUND_ERROR_state_to_REFUNDED_on_successful_REFUND_event() throws IOException {
+        var adyenRefundFailureNotification = NotificationRequest.fromJson(load(ADYEN_REFUND_FAILURE_NOTIFICATION));
+        given(mockAdyenNotificationService.extractNotificationItems(any()))
+                .willReturn(adyenRefundFailureNotification.getNotificationItems());
+        given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
+                .willReturn(Optional.of(Charge.from(ChargeEntityFixture.aValidChargeEntity().build())));
+        given(mockGatewayAccountService.getGatewayAccount(anyLong()))
+                .willReturn(Optional.of(GatewayAccountEntityFixture.aGatewayAccountEntity().build()));
+        RefundEntity submittedRefundEntity = new RefundEntityFixture()
+                .withStatus(RefundStatus.REFUND_ERROR)
+                .build();
+        given(mockRefundDao.findByChargeExternalIdAndGatewayTransactionId(any(), any()))
+                .willReturn(Optional.of(submittedRefundEntity));
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-successful-notification");
+
+        then(mockStateTransitionService)
+                .should()
+                .offerRefundStateTransition(submittedRefundEntity, RefundStatus.REFUNDED);
     }
 }
