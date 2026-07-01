@@ -4,7 +4,7 @@
     {
       "NotificationRequestItem":{
         "amount":{
-          "currency":"EUR",
+          "currency":"GBP",
           "value":2500
         },
         "eventCode":"REFUND",
