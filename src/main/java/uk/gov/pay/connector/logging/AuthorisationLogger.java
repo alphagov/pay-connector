@@ -8,6 +8,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
+import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
@@ -54,7 +55,7 @@ public class AuthorisationLogger {
     }
 
     public void logChargeAuthorisation(Logger logger,
-                                       WorldpayAuthoriseRequest worldpayAuthoriseRequest,
+                                       AuthoriseRequest authoriseRequest,
                                        AuthCardDetails authCardDetails,
                                        ChargeEntity charge,
                                        String transactionId,
@@ -62,17 +63,21 @@ public class AuthorisationLogger {
                                        ChargeStatus oldStatus,
                                        ChargeStatus newStatus) {
 
-        AuthorisationRequestLog authoriseRequestLog = worldpayAuthoriseRequestLogGenerator.generate(
-                worldpayAuthoriseRequest, authCardDetails);
+        switch (authoriseRequest) {
+            case WorldpayAuthoriseRequest worldpayAuthoriseRequest -> {
+                AuthorisationRequestLog authoriseRequestLog = worldpayAuthoriseRequestLogGenerator.generate(
+                        worldpayAuthoriseRequest, authCardDetails);
 
-        logChargeAuthorisation(logger,
-                authoriseRequestLog.authorisationRequest(),
-                authoriseRequestLog.structuredArguments().toArray(new StructuredArgument[0]),
-                charge,
-                transactionId,
-                gatewayResponse,
-                oldStatus,
-                newStatus);
+                logChargeAuthorisation(logger,
+                        authoriseRequestLog.authorisationRequest(),
+                        authoriseRequestLog.structuredArguments().toArray(new StructuredArgument[0]),
+                        charge,
+                        transactionId,
+                        gatewayResponse,
+                        oldStatus,
+                        newStatus);
+            }
+        }
     }
 
     public void logChargeAuthorisation(Logger logger,
