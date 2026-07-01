@@ -8,6 +8,7 @@ import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,9 +34,13 @@ import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ErrorType;
 import uk.gov.pay.connector.gateway.model.GatewayError;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
@@ -49,11 +54,14 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -71,6 +79,7 @@ import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgre
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.GatewayOperation.AUTHORISE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_TRANSACTION_IDENTIFIER_KEY;
@@ -81,6 +90,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.ONE_OFF_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_CUSTOMER_INITIATED;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.RECURRING_MERCHANT_INITIATED;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentialsEntity.Worldpay3dsFlexCredentialsEntityBuilder.aWorldpay3dsFlexCredentialsEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
@@ -105,11 +115,20 @@ class WorldpayAuthoriseHandlerTest {
     @RegisterExtension
     LogCapturer logs = LogCapturer.create().captureForType(WorldpayAuthoriseHandler.class);
 
-    private static final URI WORLDPAY_URL = URI.create("http://worldpay.url");
-    private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(TEST.toString(), WORLDPAY_URL);
+    private static final URI TEST_WORLDPAY_URL = URI.create("https://test.worldpay.invalid/");
+    private static final URI LIVE_WORLDPAY_URL = URI.create("https://live.worldpay.invalid/");
+
+    private static final Map<String, URI> GATEWAY_URL_MAP = Map.of(
+            TEST.toString(), TEST_WORLDPAY_URL,
+            LIVE.toString(), LIVE_WORLDPAY_URL
+    );
 
     @Mock
     private GatewayClient authoriseClient;
+
+    @Mock
+    private WorldpayRequestTemplateBuilder worldpayRequestTemplateBuilder;
+
     @Mock
     private GatewayClient.Response authorisationSuccessResponse;
 
@@ -119,7 +138,7 @@ class WorldpayAuthoriseHandlerTest {
 
     @BeforeEach
     void setup() {
-        worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
+        worldpayAuthoriseHandler = new WorldpayAuthoriseHandler(authoriseClient, GATEWAY_URL_MAP, new AcceptLanguageHeaderParser(), worldpayRequestTemplateBuilder);
 
         gatewayAccountEntity = aServiceAccount();
         GatewayAccountCredentialsEntity creds = aGatewayAccountCredentialsEntity()
@@ -147,6 +166,36 @@ class WorldpayAuthoriseHandlerTest {
     }
 
     @Test
+    void shouldSendCorrectWorldpayAuthorisationRequestWhenCalledWithWorldpayAuthoriseRequest() throws Exception {
+        String gatewayAccountType = "live";
+        String username = "username";
+        String password = "password"; // pragma: allowlist secret
+        String worldpayRequestBody = "<xml><authorise this=\"payment\"></xml>";
+
+        WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture()
+                .withUsername(username).withPassword(password).build();
+
+        when(worldpayRequestTemplateBuilder.buildWith(WorldpayAuthoriseHandler.MOTO_TEMPLATE_PATH, 
+                worldpayAuthoriseRequest)).thenReturn(worldpayRequestBody);
+
+        GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, worldpayRequestBody,
+                MediaType.APPLICATION_XML_TYPE);
+
+        Map<String, String> headers = Map.of("Authorization",
+                "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(UTF_8)));
+
+        when(authoriseClient.postRequestFor(eq(LIVE_WORLDPAY_URL), eq(WORLDPAY), eq(gatewayAccountType),
+                eq(gatewayOrder), eq(headers)))
+                .thenReturn(authorisationSuccessResponse);
+
+        when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
+
+        var response = worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, gatewayAccountType);
+        assertThat(response.getBaseResponse().map(WorldpayOrderStatusResponse::authoriseStatus),
+                is(Optional.of(AuthoriseStatus.AUTHORISED)));
+    }
+
+    @Test
     void should_not_include_3ds_elements_when_3ds_toggle_disabled() throws Exception {
         when(authorisationSuccessResponse.getEntity()).thenReturn(load(WORLDPAY_AUTHORISATION_SUCCESS_RESPONSE));
 
@@ -161,7 +210,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise(getCardAuthorisationRequest(chargeEntity), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS))
                 .areIdentical();
@@ -187,7 +236,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_IP_ADDRESS))
                 .areIdentical();
@@ -218,7 +267,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS))
                 .areIdentical();
@@ -261,7 +310,7 @@ class WorldpayAuthoriseHandlerTest {
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
         verify(authoriseClient).postRequestFor(
-                eq(WORLDPAY_URL),
+                eq(TEST_WORLDPAY_URL),
                 eq(WORLDPAY), eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
@@ -292,7 +341,7 @@ class WorldpayAuthoriseHandlerTest {
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
         verify(authoriseClient).postRequestFor(
-                eq(WORLDPAY_URL),
+                eq(TEST_WORLDPAY_URL),
                 eq(WORLDPAY), eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
@@ -316,7 +365,7 @@ class WorldpayAuthoriseHandlerTest {
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
         verify(authoriseClient).postRequestFor(
-                eq(WORLDPAY_URL),
+                eq(TEST_WORLDPAY_URL),
                 eq(WORLDPAY), eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
@@ -350,7 +399,7 @@ class WorldpayAuthoriseHandlerTest {
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
 
         verify(authoriseClient).postRequestFor(
-                eq(WORLDPAY_URL),
+                eq(TEST_WORLDPAY_URL),
                 eq(WORLDPAY), eq("test"),
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
@@ -397,7 +446,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS))
                 .areIdentical();
@@ -424,7 +473,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_EMAIL))
                 .areIdentical();
@@ -456,7 +505,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS))
                 .areIdentical();
@@ -483,7 +532,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS))
                 .areIdentical();
@@ -510,7 +559,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_EXCLUDING_3DS))
                 .areIdentical();
@@ -537,7 +586,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITHOUT_IP_ADDRESS))
                 .areIdentical();
@@ -573,7 +622,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(templatePath))
                 .areIdentical();
@@ -604,7 +653,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_SETUP_AGREEMENT))
                 .areIdentical();
@@ -635,7 +684,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise(getCardAuthorisationRequest(chargeEntity, "127.0.0.1"), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_SETUP_AGREEMENT_WITH_EMAIL_AND_IP_ADDRESS))
                 .areIdentical();
@@ -674,7 +723,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
 
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(worldpayTemplate))
@@ -712,7 +761,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
 
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER))
@@ -739,7 +788,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
 
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITH_REFERENCE_IN_DESCRIPTION)
@@ -767,7 +816,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
 
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITH_REFERENCE_IN_DESCRIPTION)
@@ -796,7 +845,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authorise((CardAuthorisationGatewayRequest.valueOf(chargeEntity, getValidTestCard())), DO_NOT_SEND_EXEMPTION_REQUEST);
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
 
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_REQUEST_3DS_FLEX_NON_JS))
@@ -807,7 +856,8 @@ class WorldpayAuthoriseHandlerTest {
     void should_send_successfully_an_order_for_merchant() {
         Client mockClient = mockWorldpaySuccessfulOrderSubmitResponse();
 
-        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP,
+                new AcceptLanguageHeaderParser(), worldpayRequestTemplateBuilder);
 
         GatewayResponse<WorldpayOrderStatusResponse> response = handlerWithRealJerseyClient.authorise(getCardAuthorisationRequest(chargeEntityFixture.build()), DO_NOT_SEND_EXEMPTION_REQUEST);
         assertTrue(response.getBaseResponse().isPresent());
@@ -818,7 +868,8 @@ class WorldpayAuthoriseHandlerTest {
     void should_error_if_worldpay_returns_401() {
         Client mockClient = mockWorldpayResponse(401, load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE));
 
-        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP,
+                new AcceptLanguageHeaderParser(), worldpayRequestTemplateBuilder);
 
         GatewayResponse<WorldpayOrderStatusResponse> response =
                 handlerWithRealJerseyClient.authorise(getCardAuthorisationRequest(chargeEntityFixture.build()), DO_NOT_SEND_EXEMPTION_REQUEST);
@@ -831,7 +882,8 @@ class WorldpayAuthoriseHandlerTest {
     void should_error_if_worldpay_returns_500() {
         Client mockClient = mockWorldpayResponse(500, load(WORLDPAY_AUTHORISATION_PARES_PARSE_ERROR_RESPONSE));
 
-        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP, new AcceptLanguageHeaderParser());
+        var handlerWithRealJerseyClient = new WorldpayAuthoriseHandler(createGatewayClient(mockClient), GATEWAY_URL_MAP,
+                new AcceptLanguageHeaderParser(), worldpayRequestTemplateBuilder);
 
         GatewayResponse<WorldpayOrderStatusResponse> response =
                 handlerWithRealJerseyClient.authorise(getCardAuthorisationRequest(chargeEntityFixture.build()), DO_NOT_SEND_EXEMPTION_REQUEST);
@@ -876,7 +928,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
 
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER))
@@ -918,7 +970,7 @@ class WorldpayAuthoriseHandlerTest {
         worldpayAuthoriseHandler.authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest.valueOf(chargeEntity));
 
         ArgumentCaptor<GatewayOrder> gatewayOrderArgumentCaptor = ArgumentCaptor.forClass(GatewayOrder.class);
-        verify(authoriseClient).postRequestFor(eq(WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
+        verify(authoriseClient).postRequestFor(eq(TEST_WORLDPAY_URL), eq(WORLDPAY), eq("test"), gatewayOrderArgumentCaptor.capture(), anyMap());
 
         XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
                 .and(load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER))

@@ -61,7 +61,7 @@ public class AdyenNotificationService {
 
         try {
             NotificationRequest notificationRequest = deserialisePayloadToNotificationRequest(payload);
-            List<NotificationRequestItem> items = extractNotificationItem(notificationRequest);
+            List<NotificationRequestItem> items = extractNotificationItems(notificationRequest);
 
             boolean live = "true".equalsIgnoreCase(notificationRequest.getLive());
 
@@ -117,7 +117,7 @@ public class AdyenNotificationService {
         }
     }
 
-    public List<NotificationRequestItem> extractNotificationItem(NotificationRequest notificationRequest) {
+    public List<NotificationRequestItem> extractNotificationItems(NotificationRequest notificationRequest) {
         if (notificationRequest == null ||
                 (notificationRequest.getNotificationItems() == null || notificationRequest.getNotificationItems().isEmpty())) {
             LOGGER.info("Adyen notification request is empty or missing items");

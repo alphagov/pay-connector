@@ -24,6 +24,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
@@ -38,7 +39,6 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aVali
 class AdyenAuthorise3dsHandlerTest {
 
     private static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/someVersion";
-
     @Mock
     private GatewayClient mockClient;
     @Mock
@@ -63,6 +63,20 @@ class AdyenAuthorise3dsHandlerTest {
         when(mockConfig.getAdyenGatewayConfig()).thenReturn(mockAdyenGatewayConfig);
 
         adyenAuthorise3dsHandler = new AdyenAuthorise3dsHandler(mockClient, mockConfig, jsonObjectMapper);
+    }
+
+    @Test
+    void should_send_a_authorise3ds_request_with_api_key_and_idempotency_key_headers() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
+        when(mockGatewayClientResponse.getEntity()).thenReturn(successResponse("Authorised"));
+        var request = buildRequestWith("eyJ0cmFuc1N0YXR1cyI6IlkifQ==");
+
+        adyenAuthorise3dsHandler.authorise3dsResponse(request);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", "test-company-account-API-key"));
+        assertThat(headers, hasEntry("Idempotency-Key", "authorise3DS-" + request.getChargeExternalId()));
     }
 
     @Test

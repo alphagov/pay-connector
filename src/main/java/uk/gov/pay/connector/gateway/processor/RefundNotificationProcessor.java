@@ -26,9 +26,9 @@ import static uk.gov.service.payments.logging.LoggingKeys.REFUND_EXTERNAL_ID;
 
 public class RefundNotificationProcessor {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-    private RefundService refundService;
-    private UserNotificationService userNotificationService;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final RefundService refundService;
+    private final UserNotificationService userNotificationService;
 
     @Inject
     RefundNotificationProcessor(RefundService refundService,
@@ -62,7 +62,7 @@ public class RefundNotificationProcessor {
                     () -> logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
                             gatewayName, gatewayTransactionId, charge.getExternalId(),
                             kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), kv(PROVIDER, gatewayName),
-                            kv("provider_refund_id", transactionId),
+                            kv("payment_gateway_transaction_id", transactionId),
                             kv("gateway_transaction_id", gatewayTransactionId))
             );
             return;
@@ -98,7 +98,7 @@ public class RefundNotificationProcessor {
                 kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
                 kv(PROVIDER, charge.getPaymentGatewayName()),
                 kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                kv("provider_refund_id", transactionId),
+                kv("payment_gateway_transaction_id", transactionId),
                 kv("gateway_transaction_id", gatewayTransactionId),
                 kv("from_status", oldStatus),
                 kv("to_status", newStatus)

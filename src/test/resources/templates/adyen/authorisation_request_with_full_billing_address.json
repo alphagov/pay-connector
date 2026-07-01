@@ -20,7 +20,7 @@
     "type": "scheme"
   },
   "reference": "%s",
-  "returnUrl": "http://CardFrontend/",
+  "returnUrl": "%s",
   "shopperInteraction": "%s",
   "channel": "Web",
   "additionalData" : {

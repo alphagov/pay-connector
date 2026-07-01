@@ -9,16 +9,21 @@ import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
+import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_CAPTURE;
+import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_REFUND;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
@@ -29,16 +34,19 @@ public class AdyenWebhookTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenWebhookTaskHandler.class);
     private final ChargeService chargeService;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
+    private final RefundNotificationProcessor refundNotificationProcessor;
     private final GatewayAccountService gatewayAccountService;
     private final AdyenNotificationService adyenNotificationService;
 
     @Inject
     public AdyenWebhookTaskHandler(ChargeService chargeService,
                                    ChargeNotificationProcessor chargeNotificationProcessor,
+                                   RefundNotificationProcessor refundNotificationProcessor,
                                    GatewayAccountService gatewayAccountService,
                                    AdyenNotificationService adyenNotificationService) {
         this.chargeService = chargeService;
         this.chargeNotificationProcessor = chargeNotificationProcessor;
+        this.refundNotificationProcessor = refundNotificationProcessor;
         this.gatewayAccountService = gatewayAccountService;
         this.adyenNotificationService = adyenNotificationService;
     }
@@ -48,11 +56,29 @@ public class AdyenWebhookTaskHandler {
         NotificationRequest notificationRequest =
                 adyenNotificationService.deserialisePayloadToNotificationRequest(payload);
 
-        List<NotificationRequestItem> items = adyenNotificationService.extractNotificationItem(notificationRequest);
+        List<NotificationRequestItem> items = adyenNotificationService.extractNotificationItems(notificationRequest);
 
         for (NotificationRequestItem item : items) {
-            processCapturedNotification(item);
+            switch (item.getEventCode()) {
+                case EVENT_CODE_CAPTURE -> processCapturedNotification(item);
+                case EVENT_CODE_REFUND -> processRefundNotification(item);
+            }
         }
+    }
+
+    private void processRefundNotification(NotificationRequestItem item) {
+        var charge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
+                ADYEN.getName(),
+                item.getOriginalReference());
+        var gatewayAccount = gatewayAccountService.getGatewayAccount(
+                charge.get().getGatewayAccountId());
+        refundNotificationProcessor.invoke(
+                PaymentGatewayName.ADYEN,
+                RefundStatus.REFUNDED,
+                gatewayAccount.get(),
+                item.getPspReference(),
+                item.getOriginalReference(),
+                charge.get());
     }
 
     private void processCapturedNotification(NotificationRequestItem item) {

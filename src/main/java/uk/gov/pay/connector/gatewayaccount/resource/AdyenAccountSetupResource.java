@@ -14,7 +14,6 @@ import jakarta.ws.rs.Produces;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.service.AydenAccountSetupService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
@@ -36,10 +35,10 @@ public class AdyenAccountSetupResource {
     @Path("/v1/api/service/{serviceId}/account/{accountType}/adyen-setup/{credentialExternalId}")
     @Produces(APPLICATION_JSON)
     @Operation(
-            summary = "Retrieve Adyen account setup tasks for a given gateway account ID, type and credential ID",
+            summary = "Retrieve Adyen account setup tasks for a given service ID, account type and credential ID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = StripeAccountSetup.class))),
+                            content = @Content(schema = @Schema(implementation = AdyenAccountSetupResource.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )

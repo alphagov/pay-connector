@@ -12,7 +12,7 @@ import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -49,7 +49,7 @@ class WorldpayMotoAuthoriseRequestFactoryTest {
         long amountInPence = 2000L;
         
         
-        AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", cardNumber, cvc, expiryDateOnCard, cardholderName);
+        MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", cardNumber, cvc, expiryDateOnCard, cardholderName);
         CardInformation cardInformation = CardInformationFixture.aCardInformation().build();
 
         ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()

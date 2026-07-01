@@ -14,8 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
-import static java.lang.String.format;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static java.lang.String.format;
 
 public class AuthUtil {
     private static final String STRIPE_VERSION_HEADER = "Stripe-Version";
@@ -72,7 +72,7 @@ public class AuthUtil {
     }
 
     private static Map<String, String> getWorldpayAuthHeader(WorldpayMerchantCodeCredentials creds) {
-        return getAuthHeader(creds.getUsername(), creds.getPassword());
+        return getAuthorizationHeader(creds.getUsername(), creds.getPassword());
     }
 
     public static Map<String, String> getWorldpayAuthHeaderForManagingRecurringAuthTokens(GatewayCredentials credentials) {
@@ -90,10 +90,14 @@ public class AuthUtil {
     }
 
     public static Map<String, String> getWorldpayCredentialsCheckAuthHeader(WorldpayValidatableCredentials worldpayValidatableCredentials) {
-        return getAuthHeader(worldpayValidatableCredentials.getUsername(), worldpayValidatableCredentials.getPassword());
+        return getAuthorizationHeader(worldpayValidatableCredentials.getUsername(), worldpayValidatableCredentials.getPassword());
     }
 
-    private static Map<String, String> getAuthHeader(String username, String password) {
+    public static Map<String, String> getAuthHeader(String username, String password) {
+        return getAuthorizationHeader(username, password);
+    }
+
+    private static Map<String, String> getAuthorizationHeader(String username, String password) {
         String value = "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
         return Map.of(AUTHORIZATION, value);
     }

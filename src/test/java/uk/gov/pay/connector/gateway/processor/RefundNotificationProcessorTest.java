@@ -61,6 +61,26 @@ class RefundNotificationProcessorTest {
     }
 
     @Test
+    void shouldInvokeTransitionRefundStateForSuccessfulRefund() {
+        var targetRefundStatus = RefundStatus.REFUNDED;
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(
+                charge.getExternalId(),
+                REFUND_GATEWAY_TRANSACTION_ID))
+                .thenReturn(Optional.of(refundEntity));
+
+        refundNotificationProcessor.invoke(
+                paymentGatewayName,
+                targetRefundStatus,
+                gatewayAccountEntity,
+                REFUND_GATEWAY_TRANSACTION_ID,
+                TRANSACTION_ID,
+                charge);
+
+        verify(refundService)
+                .transitionRefundState(refundEntity, gatewayAccountEntity, targetRefundStatus, charge);
+    }
+
+    @Test
     void shouldInvokeSendEmailNotificationsForSuccessfulRefunds() {
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);

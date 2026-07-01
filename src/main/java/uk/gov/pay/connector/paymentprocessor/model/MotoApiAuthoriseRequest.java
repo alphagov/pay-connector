@@ -22,7 +22,7 @@ import static uk.gov.service.payments.commons.model.CardExpiryDate.CARD_EXPIRY_D
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class AuthoriseRequest {
+public class MotoApiAuthoriseRequest {
 
     @NotBlank(message = "Missing mandatory attribute: one_time_token")
     @Schema(example = "123abc123", requiredMode = REQUIRED,
@@ -48,11 +48,11 @@ public class AuthoriseRequest {
     @Schema(example = "Joe B", maxLength = 255, description = "Cardholder name", requiredMode = REQUIRED)
     private String cardholderName;
 
-    public AuthoriseRequest() {
+    public MotoApiAuthoriseRequest() {
         // for Jackson
     }
 
-    public AuthoriseRequest(String oneTimeToken, String cardNumber, String cvc, String expiryDate, String cardholderName) {
+    public MotoApiAuthoriseRequest(String oneTimeToken, String cardNumber, String cvc, String expiryDate, String cardholderName) {
         this.oneTimeToken = oneTimeToken;
         this.cardNumber = cardNumber;
         this.cvc = cvc;
@@ -113,7 +113,7 @@ public class AuthoriseRequest {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AuthoriseRequest request = (AuthoriseRequest) o;
+        MotoApiAuthoriseRequest request = (MotoApiAuthoriseRequest) o;
         return Objects.equals(oneTimeToken, request.oneTimeToken);
     }
 

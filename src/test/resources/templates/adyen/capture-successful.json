@@ -8,7 +8,7 @@
         "merchantAccountCode": "TestMerchant",
         "merchantReference": "TestPayment-1407325143704",
         "eventDate":"2026-06-05T15:54:01+02:00",
-        "eventCode": "AUTHORISATION",
+        "eventCode": "CAPTURE",
         "success": "true",
         "amount": {
           "value": 1130,
