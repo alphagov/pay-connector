@@ -14,25 +14,43 @@ public class AdyenAuthoriseResponse implements BaseAuthoriseResponse {
     private final String redirectUrl;
     private final String httpMethod3ds;
 
+    private final String paReq;
+    private final String md;
+
     public static AdyenAuthoriseResponse of(AuthoriseResponseBody authoriseResponseBody) {
         Action action = authoriseResponseBody.action();
         String url = Optional.ofNullable(action).map(Action::url).orElse(null);
         String method = Optional.ofNullable(action).map(Action::method).orElse(null);
-        
+        String paReq = Optional.ofNullable(action)
+                .map(Action::data)
+                .map(items -> items.get("PaReq"))
+                .orElse(null);
+
+        String md = Optional.ofNullable(action)
+                .map(Action::data)
+                .map(items -> items.get("MD"))
+                .orElse(null);
+
         return new AdyenAuthoriseResponse(authoriseResponseBody.pspReference(),
                 authoriseResponseBody.resultCode(),
                 url,
-                method);
+                method,
+                paReq,
+                md);
     }
 
     private AdyenAuthoriseResponse(String transactionId,
                                    String resultCode,
                                    String redirectUrl,
-                                   String httpMethod3ds) {
+                                   String httpMethod3ds,
+                                   String paReq,
+                                   String md) {
         this.transactionId = transactionId;
         authoriseStatus = mapAuthorisationStatusFrom(resultCode);
         this.redirectUrl = redirectUrl;
         this.httpMethod3ds = httpMethod3ds;
+        this.paReq = paReq;
+        this.md = md;
     }
 
     private static AuthoriseStatus mapAuthorisationStatusFrom(String resultCode) {
@@ -58,15 +76,23 @@ public class AdyenAuthoriseResponse implements BaseAuthoriseResponse {
     public String getRedirectUrl() {
         return redirectUrl;
     }
-    
+
     public String getHttpMethod3ds() {
         return httpMethod3ds;
+    }
+
+    public String getPaReq() {
+        return paReq;
+    }
+
+    public String getMd() {
+        return md;
     }
 
     @Override
     public Optional<? extends Gateway3dsRequiredParams> getGatewayParamsFor3ds() {
         if (AuthoriseStatus.REQUIRES_3DS == authoriseStatus) {
-            return Optional.of(new Adyen3dsRequiredParams(redirectUrl, httpMethod3ds));
+            return Optional.of(new Adyen3dsRequiredParams(redirectUrl, httpMethod3ds, paReq, md));
         }
         return Optional.empty();
     }
