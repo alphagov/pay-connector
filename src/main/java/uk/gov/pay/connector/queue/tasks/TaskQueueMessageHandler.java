@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import uk.gov.pay.connector.gateway.stripe.response.StripeNotification;
-import uk.gov.pay.connector.queue.tasks.handlers.AdyenWebhookTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.CollectFeesForFailedPaymentsTaskHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.DeleteStoredPaymentDetailsTaskHandler;

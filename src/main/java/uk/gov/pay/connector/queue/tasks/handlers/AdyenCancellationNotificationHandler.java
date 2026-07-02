@@ -6,11 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
-import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
@@ -25,34 +25,23 @@ public class AdyenCancellationNotificationHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenCancellationNotificationHandler.class);
 
-    private final ChargeService chargeService;
     private final ChargeNotificationProcessor chargeNotificationProcessor;
 
+    private final List<ChargeStatus> systemCancelledStatuses = List.of(SYSTEM_CANCEL_SUBMITTED, SYSTEM_CANCELLED, SYSTEM_CANCEL_ERROR);
+    private final List<ChargeStatus> userCancelledStatuses = List.of(USER_CANCEL_SUBMITTED, USER_CANCELLED, USER_CANCEL_ERROR);
+
     @Inject
-    public AdyenCancellationNotificationHandler(ChargeService chargeService,
-                                                ChargeNotificationProcessor chargeNotificationProcessor) {
-        this.chargeService = chargeService;
+    public AdyenCancellationNotificationHandler(ChargeNotificationProcessor chargeNotificationProcessor) {
         this.chargeNotificationProcessor = chargeNotificationProcessor;
     }
 
-    public void process(NotificationRequestItem item) {
+    public void process(NotificationRequestItem item, Charge foundCharge) {
         String gatewayTransactionId = item.getOriginalReference();
-
-        Optional<Charge> charge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
-                "adyen", gatewayTransactionId);
-
-        if (charge.isEmpty()) {
-            LOGGER.atInfo().setMessage("Charge not found in Connector for Adyen cancellation webhook")
-                    .addKeyValue("gatewayTransactionId", gatewayTransactionId).log();
-            return;
-        }
-
-        Charge foundCharge = charge.get();
 
         if (foundCharge.isHistoric()) {
             LOGGER.atInfo().setMessage("Ignored Adyen cancellation webhook for historic charge")
                     .addKeyValue(PAYMENT_EXTERNAL_ID, foundCharge.getExternalId())
-                    .addKeyValue("gatewayTransactionId", gatewayTransactionId)
+                    .addKeyValue("gateway_Transaction_id", gatewayTransactionId)
                     .log();
             return;
         }
@@ -66,46 +55,21 @@ public class AdyenCancellationNotificationHandler {
             return;
         }
 
-        if (isIgnoredDuplicateCancellation(currentStatus, item.isSuccess())) {
-            LOGGER.atInfo().setMessage("Ignored Adyen cancellation webhook")
-                    .addKeyValue(PAYMENT_EXTERNAL_ID, foundCharge.getExternalId())
-                    .addKeyValue("gatewayTransactionId", gatewayTransactionId)
-                    .addKeyValue("status", currentStatus.getValue())
-                    .addKeyValue("success", item.isSuccess()).log();
-            return;
-        }
-
-        LOGGER.atWarn().setMessage("Unexpected state transition for Adyen cancellation webhook")
+        LOGGER.atWarn().setMessage("Charge is not in expected state for cancellation: {}")
+                .addArgument(currentStatus.getValue())
                 .addKeyValue(PAYMENT_EXTERNAL_ID, foundCharge.getExternalId())
-                .addKeyValue("gatewayTransactionId", gatewayTransactionId)
+                .addKeyValue("gateway_transaction_id", gatewayTransactionId)
                 .addKeyValue("status", currentStatus.getValue())
                 .addKeyValue("success", item.isSuccess()).log();
     }
 
     private Optional<ChargeStatus> getCancellationTargetStatus(ChargeStatus currentStatus, boolean success) {
-        if (success) {
-            if (currentStatus == USER_CANCEL_SUBMITTED || currentStatus == USER_CANCEL_ERROR) {
-                return Optional.of(USER_CANCELLED);
-            }
-            if (currentStatus == SYSTEM_CANCEL_SUBMITTED || currentStatus == SYSTEM_CANCEL_ERROR) {
-                return Optional.of(SYSTEM_CANCELLED);
-            }
-            return Optional.empty();
+        if (systemCancelledStatuses.contains(currentStatus)) {
+            return success ? Optional.of(SYSTEM_CANCELLED) : Optional.of(SYSTEM_CANCEL_ERROR);
+        } else if (userCancelledStatuses.contains(currentStatus)) {
+            return success ? Optional.of(USER_CANCELLED) : Optional.of(USER_CANCEL_ERROR);
         }
 
-        if (currentStatus == USER_CANCEL_SUBMITTED) {
-            return Optional.of(USER_CANCEL_ERROR);
-        }
-        if (currentStatus == SYSTEM_CANCEL_SUBMITTED) {
-            return Optional.of(SYSTEM_CANCEL_ERROR);
-        }
         return Optional.empty();
-    }
-
-    private boolean isIgnoredDuplicateCancellation(ChargeStatus currentStatus, boolean success) {
-        if (success) {
-            return currentStatus == USER_CANCELLED || currentStatus == SYSTEM_CANCELLED;
-        }
-        return currentStatus == USER_CANCEL_ERROR || currentStatus == SYSTEM_CANCEL_ERROR;
     }
 }
