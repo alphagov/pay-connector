@@ -37,4 +37,20 @@ public class AdyenAccountSetupResponse {
     public void setTasks(Map<String, Map<String, AdyenAccountSetupStatus>> tasks) {
         this.tasks = tasks;
     }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public String getCredentialExternalId() {
+        return credentialExternalId;
+    }
+
+    public long getGatewayAccountId() {
+        return gatewayAccountId;
+    }
+
+    public Map<String, Map<String, AdyenAccountSetupStatus>> getTasks() {
+        return tasks;
+    }
 }

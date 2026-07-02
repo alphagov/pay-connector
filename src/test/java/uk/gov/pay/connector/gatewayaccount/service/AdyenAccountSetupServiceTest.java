@@ -8,17 +8,24 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.gatewayaccount.dao.AdyenAccountSetupDao;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
@@ -31,6 +38,9 @@ import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccoun
 @ExtendWith(MockitoExtension.class)
 class AdyenAccountSetupServiceTest {
 
+    public static final long GATEWAY_ACCOUNT_ID = 999L;
+    private static final String SERVICE_ID = "service-123";
+    private static final String CREDENTIAL_EXTERNAL_ID = "credential-123";
     @Mock
     private AdyenAccountSetupDao mockAdyenAccountSetupDao;
 
@@ -43,6 +53,21 @@ class AdyenAccountSetupServiceTest {
         this.adyenAccountSetupService = new AdyenAccountSetupService(mockAdyenAccountSetupDao);
     }
 
+    @Test
+    void shouldReturnAdyenAccountSetupWithNoTasksCompleted() {
+        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
+                .willReturn(Collections.emptyList());
+
+        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
+        
+        assertThat(tasksWithStatus.getServiceId(), is(SERVICE_ID));
+        assertThat(tasksWithStatus.getCredentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+        assertThat(tasksWithStatus.getGatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+
+        Arrays.stream(AdyenAccountSetupTask.values()).forEach(task -> 
+            assertThat(tasksWithStatus.getTasks().get(task.getValue()).get("status"), is(AdyenAccountSetupStatus.NOT_STARTED)));
+    }
+    
     @Nested
     class completeTestAccountSetup {
         @Test
@@ -61,9 +86,12 @@ class AdyenAccountSetupServiceTest {
             verify(mockAdyenAccountSetupDao, times(AdyenAccountSetupTask.values().length)).persist(captor.capture());
 
             assertEquals(gatewayAccountCredentials.getId(), captor.getValue().getGatewayAccountCredential().getId());
-            assertThat(captor.getAllValues())
-                    .extracting(AdyenAccountSetupTaskEntity::getStatus)
-                    .containsOnly(AdyenAccountSetupStatus.COMPLETED);
+            
+            List<AdyenAccountSetupStatus> statuses = captor.getAllValues().stream()
+                    .map(AdyenAccountSetupTaskEntity::getStatus)
+                    .collect(Collectors.toList());
+
+            assertThat(statuses, everyItem(is(AdyenAccountSetupStatus.COMPLETED)));
         }
 
         @Test
