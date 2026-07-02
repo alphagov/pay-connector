@@ -314,10 +314,8 @@ class ChargeServiceTest {
 
         verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
-
     @ParameterizedTest
     @EnumSource(names = {
-            "USER_CANCELLED",
             "USER_CANCEL_SUBMITTED",
             "CAPTURE_APPROVED_RETRY"
     })

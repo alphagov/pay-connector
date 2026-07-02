@@ -11,7 +11,6 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
-import uk.gov.pay.connector.gateway.adyen.webhook.AdyenPaymentEvent;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -23,6 +22,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_CANCELLATION;
 import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_CAPTURE;
 import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_REFUND;
 import static net.logstash.logback.argument.StructuredArguments.kv;
@@ -63,72 +63,68 @@ public class AdyenWebhookTaskHandler {
         List<NotificationRequestItem> items = adyenNotificationService.extractNotificationItems(notificationRequest);
 
         for (NotificationRequestItem item : items) {
-            if (AdyenPaymentEvent.CANCELLATION.name().equals(item.getEventCode())) {
-                adyenCancellationNotificationHandler.process(item);
-                continue;
+            var itemEventCode = item.getEventCode();
+            String gatewayTransactionId = item.getOriginalReference();
+
+            var charge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
+                    ADYEN.getName(),
+                    gatewayTransactionId);
+
+            if (charge.isEmpty()) {
+                LOGGER.atInfo()
+                        .setMessage("Charge not found in Connector or Ledger for Adyen {} webhook")
+                        .addArgument(itemEventCode.toLowerCase())
+                        .addKeyValue("gateway_Transaction_id", gatewayTransactionId)
+                        .log();
+                return;
             }
-            switch (item.getEventCode()) {
-                case EVENT_CODE_CAPTURE -> processCapturedNotification(item);
-                case EVENT_CODE_REFUND -> processRefundNotification(item);
+
+            Charge foundCharge = charge.get();
+
+            switch (itemEventCode) {
+                case EVENT_CODE_CAPTURE -> processCapturedNotification(item, foundCharge);
+                case EVENT_CODE_REFUND -> processRefundNotification(item, foundCharge);
+                case EVENT_CODE_CANCELLATION -> adyenCancellationNotificationHandler.process(item, foundCharge);
             }
-            if (AdyenPaymentEvent.CANCELLATION.name().equals(item.getEventCode())) {
-                adyenCancellationNotificationHandler.process(item);
-                continue;
-            }
-            processCapturedNotification(item);
         }
     }
 
-    private void processRefundNotification(NotificationRequestItem item) {
-        var charge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
-                ADYEN.getName(),
-                item.getOriginalReference());
+    private void processRefundNotification(NotificationRequestItem item, Charge foundCharge) {
         var gatewayAccount = gatewayAccountService.getGatewayAccount(
-                charge.get().getGatewayAccountId());
+                foundCharge.getGatewayAccountId());
         refundNotificationProcessor.invoke(
                 PaymentGatewayName.ADYEN,
                 RefundStatus.REFUNDED,
                 gatewayAccount.get(),
                 item.getPspReference(),
                 item.getOriginalReference(),
-                charge.get());
+                foundCharge);
     }
 
-    private void processCapturedNotification(NotificationRequestItem item) {
+    private void processCapturedNotification(NotificationRequestItem item, Charge foundCharge) {
         String gatewayTransactionId = item.getOriginalReference();
 
-        Optional<Charge> charge = chargeService.findByProviderAndTransactionIdFromDbOrLedger(
-                ADYEN.getName(), gatewayTransactionId);
+        ChargeStatus targetStatus = item.isSuccess() ? CAPTURED : CAPTURE_ERROR;
 
-        if (charge.isPresent()) {
-            Charge foundCharge = charge.get();
-            ChargeStatus targetStatus = item.isSuccess() ? CAPTURED : CAPTURE_ERROR;
+        if (foundCharge.isHistoric()) {
+            Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountService.getGatewayAccount(
+                    foundCharge.getGatewayAccountId());
 
-            if (foundCharge.isHistoric()) {
-                Optional<GatewayAccountEntity> gatewayAccount = gatewayAccountService.getGatewayAccount(
-                        foundCharge.getGatewayAccountId());
-
-                gatewayAccount.ifPresentOrElse(gatewayAccountEntity ->
-                                chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity,
-                                        gatewayTransactionId, foundCharge, targetStatus),
-                        () -> LOGGER.error("GatewayAccount not found for foundCharge",
-                                kv(PAYMENT_EXTERNAL_ID, foundCharge.getExternalId())));
-            } else {
-                chargeNotificationProcessor.invoke(gatewayTransactionId, foundCharge, targetStatus, ZonedDateTime.ofInstant(
-                        item.getEventDate().toInstant(), ZoneId.of("UTC")));
-            }
-
-            if (!item.isSuccess()) {
-                LOGGER.error("Capture failed",
-                        kv("gateway_transaction_id", gatewayTransactionId),
-                        kv("eventCode", item.getEventCode()));
-            }
-
+            gatewayAccount.ifPresentOrElse(gatewayAccountEntity ->
+                            chargeNotificationProcessor.processCaptureNotificationForExpungedCharge(gatewayAccountEntity,
+                                    gatewayTransactionId, foundCharge, targetStatus),
+                    () -> LOGGER.error("GatewayAccount not found for foundCharge",
+                            kv(PAYMENT_EXTERNAL_ID, foundCharge.getExternalId())));
         } else {
-            LOGGER.warn("Charge not found in Connector or Ledger for Adyen capture webhook",
-                    kv("gatewayTransactionId", gatewayTransactionId));
+            chargeNotificationProcessor.invoke(gatewayTransactionId, foundCharge, targetStatus, ZonedDateTime.ofInstant(
+                    item.getEventDate().toInstant(), ZoneId.of("UTC")));
         }
 
+        if (!item.isSuccess()) {
+            LOGGER.error("Capture failed",
+                    kv("gateway_transaction_id", gatewayTransactionId),
+                    kv("eventCode", item.getEventCode()));
+        }
     }
 
 }
