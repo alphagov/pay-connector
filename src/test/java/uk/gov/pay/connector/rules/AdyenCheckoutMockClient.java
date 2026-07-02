@@ -2,8 +2,8 @@ package uk.gov.pay.connector.rules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
-import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
@@ -45,7 +45,7 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
                 }""".formatted(pspReferenceFromAdyen);
         setupPostResponse(responseBody, "/payments", SC_OK);
     }
-    
+
     public void mock3dsAuthorisationResponse(String pspReferenceFromAdyen, String resultCode) {
         var responseBody = """
                 {
@@ -57,7 +57,7 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
         );
         setupPostResponse(responseBody, "/payments/details", SC_OK);
     }
-    
+
     public void mock3dsAuthorisationClientError() {
         var responseBody = """
                 {
@@ -120,21 +120,23 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
         var path = "/payments/%s/refunds".formatted(paymentPspReference);
         setupPostResponse(responseBody, path, 403);
     }
-    
+
     public void mockAuthorisationRedirectShopper(String pspReferenceFromAdyen,
                                                  String redirectUrl,
-                                                 String httpMethod) {
+                                                 String httpMethod,
+                                                 String data) {
         var responseBody = """
-            {
-              "pspReference": "%s",
-              "resultCode": "RedirectShopper",
-              "action": {
-                "paymentMethodType": "scheme",
-                "url": "%s",
-                "method": "%s",
-                "type": "redirect"
-              }
-            }""".formatted(pspReferenceFromAdyen, redirectUrl, httpMethod);
+                {
+                  "pspReference": "%s",
+                  "resultCode": "RedirectShopper",
+                  "action": {
+                    "paymentMethodType": "scheme",
+                    "url": "%s",
+                    "method": "%s",
+                    "type": "redirect"
+                    %s
+                  }
+                }""".formatted(pspReferenceFromAdyen, redirectUrl, httpMethod, data);
 
         setupPostResponse(responseBody, "/payments", SC_OK);
     }
