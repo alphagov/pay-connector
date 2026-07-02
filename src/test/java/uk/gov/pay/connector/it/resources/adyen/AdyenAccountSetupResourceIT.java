@@ -14,6 +14,7 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.COMPLETED;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.NOT_STARTED;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.BANK_ACCOUNT;
@@ -181,6 +182,24 @@ public class AdyenAccountSetupResourceIT {
                 .statusCode(SC_NOT_FOUND);
     }
 
+    @Test
+    void returnsNotFoundResponseWhenCredentialIdExistsButPaymentProviderIsNotAdyen() {
+        var liveAccount = app.getDatabaseFixtures()
+                .aTestAccount()
+                .withServiceId(serviceId)
+                .withType(LIVE)
+                .withPaymentProvider(WORLDPAY.getName())
+                .insert();
+        
+        var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
+
+        app.givenSetup()
+                .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                .then()
+                .statusCode(SC_NOT_FOUND)
+                .body("message", is("Credential is not associated with payment provider Adyen"));
+    }
+    
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {
         tasks.forEach(task -> app.getDatabaseTestHelper().addGatewayAccountsAdyenSetupTask(gatewayAccountId, credentialId, task, COMPLETED));
     }

@@ -13,8 +13,10 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.AydenAccountSetupService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
 @Path("/")
 @Tag(name = "Gateway accounts")
@@ -45,13 +47,18 @@ public class AdyenAccountSetupResource {
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId) { // pragma: allowlist secret
 
         var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType).orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
-        var gatewayAccountCredential = gatewayAccountEntity.getGatewayAccountCredentials()
+        var matchedGatewayAccountCredential = gatewayAccountEntity.getGatewayAccountCredentials()
                 .stream()
                 .filter(credentialsEntity -> 
-                        credentialsEntity.getExternalId().equals(credentialExternalId))
+                        credentialsEntity.getExternalId().equals(credentialExternalId) 
+                                && !credentialsEntity.getState().equals(GatewayAccountCredentialState.RETIRED))
                 .findFirst()
                 .orElseThrow(NotFoundException::new);
         
-        return aydenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), gatewayAccountCredential);
+        if (!matchedGatewayAccountCredential.getPaymentProvider().equals(ADYEN.getName())) {
+            throw new NotFoundException("Credential is not associated with payment provider Adyen");
+        }
+        
+        return aydenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), matchedGatewayAccountCredential);
     }
 }
