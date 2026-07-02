@@ -17,7 +17,6 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
@@ -30,6 +29,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.COMPLETED;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.NOT_STARTED;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.BANK_ACCOUNT;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.COMPANY_NUMBER;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.DIRECTOR;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.GOVERNMENT_ENTITY_DOCUMENT;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.ORGANISATION_DETAILS;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.RESPONSIBLE_PERSON;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.VAT_NUMBER;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -41,9 +49,28 @@ class AdyenAccountSetupServiceTest {
     public static final long GATEWAY_ACCOUNT_ID = 999L;
     private static final String SERVICE_ID = "service-123";
     private static final String CREDENTIAL_EXTERNAL_ID = "credential-123";
+    
     @Mock
     private AdyenAccountSetupDao mockAdyenAccountSetupDao;
 
+    @Mock
+    private AdyenAccountSetupTaskEntity mockBankDetailsTaskEntity;
+    @Mock
+    private AdyenAccountSetupTaskEntity mockResponsiblePersonTaskEntity;
+    @Mock
+    private AdyenAccountSetupTaskEntity mockVatNumberTaskEntity;
+    @Mock
+    private AdyenAccountSetupTaskEntity mockCompanyNumberTaskEntity;
+    @Mock
+    private AdyenAccountSetupTaskEntity mockDirectorTaskEntity;
+    @Mock
+    private AdyenAccountSetupTaskEntity mockGovernmentEntityDocumentTaskEntity;
+    @Mock
+    private AdyenAccountSetupTaskEntity mockOrganisationDetailsTaskEntity;
+
+    @Mock
+    private AdyenAccountSetupTask mockTasks;
+    
     private AdyenAccountSetupService adyenAccountSetupService;
 
     private static final String EXPECTED_ERROR_MSG = "Gateway account type must be TEST and gateway name must be ADYEN";
@@ -65,7 +92,46 @@ class AdyenAccountSetupServiceTest {
         assertThat(tasksWithStatus.getGatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
 
         Arrays.stream(AdyenAccountSetupTask.values()).forEach(task -> 
-            assertThat(tasksWithStatus.getTasks().get(task.getValue()).get("status"), is(AdyenAccountSetupStatus.NOT_STARTED)));
+            assertThat(tasksWithStatus.getTasks().get(task.getValue()).get("status"), is(NOT_STARTED)));
+    }
+
+    @Test
+    void shouldReturnAdyenAccountSetupWithAllTasksCompleted() {
+        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
+                .willReturn(Arrays.asList(mockResponsiblePersonTaskEntity,
+                        mockBankDetailsTaskEntity, mockVatNumberTaskEntity,
+                        mockCompanyNumberTaskEntity, mockDirectorTaskEntity,
+                        mockGovernmentEntityDocumentTaskEntity, mockOrganisationDetailsTaskEntity));
+        
+        given(mockBankDetailsTaskEntity.getTask()).willReturn(BANK_ACCOUNT);
+        given(mockBankDetailsTaskEntity.getStatus()).willReturn(COMPLETED);
+
+        given(mockResponsiblePersonTaskEntity.getTask()).willReturn(RESPONSIBLE_PERSON);
+        given(mockResponsiblePersonTaskEntity.getStatus()).willReturn(COMPLETED);
+        
+        given(mockVatNumberTaskEntity.getTask()).willReturn(VAT_NUMBER);
+        given(mockVatNumberTaskEntity.getStatus()).willReturn(COMPLETED);
+        
+        given(mockCompanyNumberTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
+        given(mockCompanyNumberTaskEntity.getStatus()).willReturn(COMPLETED);
+        
+        given(mockDirectorTaskEntity.getTask()).willReturn(DIRECTOR);
+        given(mockDirectorTaskEntity.getStatus()).willReturn(COMPLETED);
+        
+        given(mockGovernmentEntityDocumentTaskEntity.getTask()).willReturn(GOVERNMENT_ENTITY_DOCUMENT);
+        given(mockGovernmentEntityDocumentTaskEntity.getStatus()).willReturn(COMPLETED);
+        
+        given(mockOrganisationDetailsTaskEntity.getTask()).willReturn(ORGANISATION_DETAILS);
+        given(mockOrganisationDetailsTaskEntity.getStatus()).willReturn(COMPLETED);
+        
+        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
+
+        assertThat(tasksWithStatus.getServiceId(), is(SERVICE_ID));
+        assertThat(tasksWithStatus.getCredentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+        assertThat(tasksWithStatus.getGatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+
+        Arrays.stream(AdyenAccountSetupTask.values()).forEach(task ->
+                assertThat(tasksWithStatus.getTasks().get(task.getValue()).get("status"), is(COMPLETED)));
     }
     
     @Nested
@@ -89,7 +155,7 @@ class AdyenAccountSetupServiceTest {
             
             List<AdyenAccountSetupStatus> statuses = captor.getAllValues().stream()
                     .map(AdyenAccountSetupTaskEntity::getStatus)
-                    .collect(Collectors.toList());
+                    .toList();
 
             assertThat(statuses, everyItem(is(AdyenAccountSetupStatus.COMPLETED)));
         }
