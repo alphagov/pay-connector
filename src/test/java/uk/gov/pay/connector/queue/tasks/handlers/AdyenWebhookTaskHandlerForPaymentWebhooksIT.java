@@ -12,9 +12,13 @@ import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_SUBMITTED;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_CANCELLATION_FAILED_NOTIFICATION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_CANCELLATION_SUCCESS_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_CAPTURE_SUCCESS_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_REFUND_SUCCESS_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
@@ -43,6 +47,30 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
         var chargeFromDatabase = app.getDatabaseTestHelper()
                 .getChargeByExternalId(testCharge.getExternalChargeId());
         assertThat(chargeFromDatabase.get("status"), is(CAPTURED.name()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"USER_CANCEL_SUBMITTED,USER CANCELLED", "USER_CANCEL_ERROR,USER CANCELLED", "SYSTEM_CANCEL_SUBMITTED,SYSTEM CANCELLED"})
+    void should_update_charge_in_valid_cancelled_state_for_successful_capture_notification(ChargeStatus currentStatus, String expectedStatus) {
+        var testCharge = createTestChargeWithStatus(currentStatus);
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(load(ADYEN_CANCELLATION_SUCCESS_NOTIFICATION));
+
+        var chargeFromDatabase = app.getDatabaseTestHelper()
+                .getChargeByExternalId(testCharge.getExternalChargeId());
+        assertThat(chargeFromDatabase.get("status"), is(expectedStatus));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"USER_CANCEL_SUBMITTED,USER CANCEL ERROR", "SYSTEM_CANCEL_SUBMITTED,SYSTEM CANCEL ERROR"})
+    void should_update_charge_in_valid_cancelled_state_for_failed_capture_notification(ChargeStatus currentStatus, String expectedStatus) {
+        var testCharge = createTestChargeWithStatus(currentStatus);
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(load(ADYEN_CANCELLATION_FAILED_NOTIFICATION));
+
+        var chargeFromDatabase = app.getDatabaseTestHelper()
+                .getChargeByExternalId(testCharge.getExternalChargeId());
+        assertThat(chargeFromDatabase.get("status"), is(expectedStatus));
     }
 
     @Test
