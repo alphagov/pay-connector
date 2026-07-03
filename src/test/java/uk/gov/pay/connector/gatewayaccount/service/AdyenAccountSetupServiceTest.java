@@ -135,19 +135,9 @@ class AdyenAccountSetupServiceTest {
     @Test
     void shouldReturnAdyenAccountSetupWithSomeTasksCompleted() {
         given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
-                .willReturn(Arrays.asList(mockResponsiblePersonTaskEntity,
-                        mockBankDetailsTaskEntity, mockVatNumberTaskEntity,
+                .willReturn(Arrays.asList(
                         mockCompanyNumberTaskEntity, mockDirectorTaskEntity,
                         mockGovernmentEntityDocumentTaskEntity, mockOrganisationDetailsTaskEntity));
-
-        given(mockBankDetailsTaskEntity.getTask()).willReturn(BANK_ACCOUNT);
-        given(mockBankDetailsTaskEntity.getStatus()).willReturn(NOT_STARTED);
-
-        given(mockResponsiblePersonTaskEntity.getTask()).willReturn(RESPONSIBLE_PERSON);
-        given(mockResponsiblePersonTaskEntity.getStatus()).willReturn(NOT_STARTED);
-
-        given(mockVatNumberTaskEntity.getTask()).willReturn(VAT_NUMBER);
-        given(mockVatNumberTaskEntity.getStatus()).willReturn(NOT_STARTED);
 
         given(mockCompanyNumberTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
         given(mockCompanyNumberTaskEntity.getStatus()).willReturn(COMPLETED);
