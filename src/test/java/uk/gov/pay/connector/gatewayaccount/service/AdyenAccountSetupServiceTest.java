@@ -42,8 +42,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.VA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityFixture;
-import static uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityListWithAllTasksCompleted;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityFixture;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityListWithAllTasksCompleted;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
