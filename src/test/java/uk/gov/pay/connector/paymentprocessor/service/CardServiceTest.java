@@ -11,6 +11,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.charge.model.domain.FeeType;
 import uk.gov.pay.connector.chargeevent.dao.ChargeEventDao;
 import uk.gov.pay.connector.fee.model.Fee;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -19,6 +20,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 
 public abstract class CardServiceTest {
@@ -36,8 +38,11 @@ public abstract class CardServiceTest {
     protected CardTypeDao mockedCardTypeDao;
 
     protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status) {
-        ChargeEntity entity = ChargeEntityFixture
-                .aValidChargeEntity()
+        return createNewChargeWith(chargeId, status, aValidChargeEntity().build().getPaymentGatewayName());
+    }
+
+    protected ChargeEntity createNewChargeWith(Long chargeId, ChargeStatus status, PaymentGatewayName paymentGatewayName) {
+        ChargeEntity entity = aValidChargeEntity(paymentGatewayName)
                 .withId(chargeId)
                 .withStatus(status)
                 .withEvents(List.of(
@@ -58,8 +63,7 @@ public abstract class CardServiceTest {
 
     protected ChargeEntity createNewChargeWithFees(String provider, Long chargeId, ChargeStatus status, String gatewayTransactionId) {
         GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-        ChargeEntity entity = ChargeEntityFixture
-                .aValidChargeEntity()
+        ChargeEntity entity = aValidChargeEntity()
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withId(chargeId)
                 .withStatus(status)
@@ -73,8 +77,7 @@ public abstract class CardServiceTest {
 
     protected ChargeEntity createNewChargeWith(String provider, Long chargeId, ChargeStatus status, String gatewayTransactionId) {
         GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-        ChargeEntity entity = ChargeEntityFixture
-                .aValidChargeEntity()
+        ChargeEntity entity = aValidChargeEntity()
                 .withPaymentProvider(provider)
                 .withGatewayAccountEntity(gatewayAccountEntity)
                 .withId(chargeId)
