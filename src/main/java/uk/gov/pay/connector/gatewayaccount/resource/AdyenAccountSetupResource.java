@@ -14,7 +14,7 @@ import jakarta.ws.rs.Produces;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
-import uk.gov.pay.connector.gatewayaccount.service.AydenAccountSetupService;
+import uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -23,12 +23,12 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 @Tag(name = "Gateway accounts")
 public class AdyenAccountSetupResource {
     private final GatewayAccountService gatewayAccountService;
-    private final AydenAccountSetupService aydenAccountSetupService;
+    private final AdyenAccountSetupService adyenAccountSetupService;
 
     @Inject
-    public AdyenAccountSetupResource(GatewayAccountService gatewayAccountService, AydenAccountSetupService aydenAccountSetupService) {
+    public AdyenAccountSetupResource(GatewayAccountService gatewayAccountService, AdyenAccountSetupService adyenAccountSetupService) {
         this.gatewayAccountService = gatewayAccountService;
-        this.aydenAccountSetupService = aydenAccountSetupService;
+        this.adyenAccountSetupService = adyenAccountSetupService;
     }
 
     @GET
@@ -49,7 +49,7 @@ public class AdyenAccountSetupResource {
 
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
-                .map(gatewayAccountEntity -> aydenAccountSetupService.getCompletedTasks(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
+                .map(gatewayAccountEntity -> adyenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
                 .orElseThrow(() -> new IllegalStateException("Internal Server Error"));
     }
 }
