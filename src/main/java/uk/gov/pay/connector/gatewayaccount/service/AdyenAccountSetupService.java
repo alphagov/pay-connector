@@ -30,24 +30,19 @@ public class AdyenAccountSetupService {
     public void completeTestAccountSetup(GatewayAccountEntity gatewayAccountEntity) {
         if (gatewayAccountEntity.isAdyenTestAccount()) {
             var gatewayAccountCredentialsEntity = gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity(ADYEN.getName());
-            List.of(AdyenAccountSetupTask.values()).forEach(task -> {
-                adyenAccountSetupDao.persist(new AdyenAccountSetupTaskEntity(gatewayAccountEntity, task, gatewayAccountCredentialsEntity, AdyenAccountSetupStatus.COMPLETED));
-            });
+            List.of(AdyenAccountSetupTask.values()).forEach(task ->
+                adyenAccountSetupDao.persist(new AdyenAccountSetupTaskEntity(gatewayAccountEntity, task, gatewayAccountCredentialsEntity, AdyenAccountSetupStatus.COMPLETED)));
         } else {
             throw new IllegalArgumentException("Gateway account type must be TEST and gateway name must be ADYEN");
         }
     }
 
     public AdyenAccountSetupResponse buildResponse(String serviceId, long gatewayAccountId, String credentialExternalId) {
-        AdyenAccountSetupResponse adyenAccountSetupResponse = new AdyenAccountSetupResponse();
-
-        adyenAccountSetupResponse.setServiceId(serviceId);
-        adyenAccountSetupResponse.setGatewayAccountId(gatewayAccountId);
-        adyenAccountSetupResponse.setCredentialExternalId(credentialExternalId);
-
-        adyenAccountSetupResponse.setTasks(getTasksWithStatus(gatewayAccountId));
-
-        return adyenAccountSetupResponse;
+        
+        return new AdyenAccountSetupResponse(serviceId, 
+                credentialExternalId, 
+                gatewayAccountId, 
+                getTasksWithStatus(gatewayAccountId));
     }
 
     private HashMap<String, Map<String, AdyenAccountSetupStatus>> getTasksWithStatus(long gatewayAccountId) {

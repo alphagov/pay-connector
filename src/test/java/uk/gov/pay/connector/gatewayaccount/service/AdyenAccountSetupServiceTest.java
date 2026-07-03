@@ -85,12 +85,12 @@ class AdyenAccountSetupServiceTest {
 
         AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
         
-        assertThat(tasksWithStatus.getServiceId(), is(SERVICE_ID));
-        assertThat(tasksWithStatus.getCredentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
-        assertThat(tasksWithStatus.getGatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
+        assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+        assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
 
         Arrays.stream(AdyenAccountSetupTask.values()).forEach(task -> 
-            assertThat(tasksWithStatus.getTasks().get(task.getValue()).get(STATUS_KEY), is(NOT_STARTED)));
+            assertThat(tasksWithStatus.tasks().get(task.getValue()).get(STATUS_KEY), is(NOT_STARTED)));
     }
 
     @Test
@@ -124,12 +124,12 @@ class AdyenAccountSetupServiceTest {
         
         AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
 
-        assertThat(tasksWithStatus.getServiceId(), is(SERVICE_ID));
-        assertThat(tasksWithStatus.getCredentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
-        assertThat(tasksWithStatus.getGatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
+        assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+        assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
 
         Arrays.stream(AdyenAccountSetupTask.values()).forEach(task ->
-                assertThat(tasksWithStatus.getTasks().get(task.getValue()).get(STATUS_KEY), is(COMPLETED)));
+                assertThat(tasksWithStatus.tasks().get(task.getValue()).get(STATUS_KEY), is(COMPLETED)));
     }
 
     @Test
@@ -153,17 +153,17 @@ class AdyenAccountSetupServiceTest {
 
         AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
 
-        assertThat(tasksWithStatus.getServiceId(), is(SERVICE_ID));
-        assertThat(tasksWithStatus.getCredentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
-        assertThat(tasksWithStatus.getGatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+        assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
+        assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+        assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
 
-        assertThat(tasksWithStatus.getTasks().get(BANK_ACCOUNT.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-        assertThat(tasksWithStatus.getTasks().get(RESPONSIBLE_PERSON.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-        assertThat(tasksWithStatus.getTasks().get(VAT_NUMBER.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-        assertThat(tasksWithStatus.getTasks().get(COMPANY_NUMBER.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.getTasks().get(DIRECTOR.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.getTasks().get(GOVERNMENT_ENTITY_DOCUMENT.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.getTasks().get(ORGANISATION_DETAILS.getValue()).get(STATUS_KEY), is(COMPLETED));
+        assertThat(tasksWithStatus.tasks().get(BANK_ACCOUNT.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+        assertThat(tasksWithStatus.tasks().get(RESPONSIBLE_PERSON.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+        assertThat(tasksWithStatus.tasks().get(VAT_NUMBER.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+        assertThat(tasksWithStatus.tasks().get(COMPANY_NUMBER.getValue()).get(STATUS_KEY), is(COMPLETED));
+        assertThat(tasksWithStatus.tasks().get(DIRECTOR.getValue()).get(STATUS_KEY), is(COMPLETED));
+        assertThat(tasksWithStatus.tasks().get(GOVERNMENT_ENTITY_DOCUMENT.getValue()).get(STATUS_KEY), is(COMPLETED));
+        assertThat(tasksWithStatus.tasks().get(ORGANISATION_DETAILS.getValue()).get(STATUS_KEY), is(COMPLETED));
     }
     
     @Nested

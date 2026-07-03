@@ -8,49 +8,17 @@ import java.util.Map;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_NULL)
-public class AdyenAccountSetupResponse {
-
-    @JsonProperty("service_id")
-    private String serviceId;
-
-    @JsonProperty("credential_external_id")
-    private String credentialExternalId;
-
-    @JsonProperty("gateway_account_id")
-    private long gatewayAccountId;
-
-    @JsonProperty("tasks")
-    private Map<String, Map<String, AdyenAccountSetupStatus>> tasks;
-
-    public void setGatewayAccountId(long gatewayAccountId) {
-        this.gatewayAccountId = gatewayAccountId;
-    }
-
-    public void setCredentialExternalId(String credentialExternalId) {
-        this.credentialExternalId = credentialExternalId;
-    }
-
-    public void setServiceId(String serviceId) {
-        this.serviceId = serviceId;
-    }
-
-    public void setTasks(Map<String, Map<String, AdyenAccountSetupStatus>> tasks) {
-        this.tasks = tasks;
-    }
-
-    public String getServiceId() {
-        return serviceId;
-    }
-
-    public String getCredentialExternalId() {
-        return credentialExternalId;
-    }
-
-    public long getGatewayAccountId() {
-        return gatewayAccountId;
-    }
-
-    public Map<String, Map<String, AdyenAccountSetupStatus>> getTasks() {
-        return tasks;
-    }
+public record AdyenAccountSetupResponse(
+        @JsonProperty("service_id")
+        String serviceId,
+        
+        @JsonProperty("credential_external_id")
+        String credentialExternalId,
+        
+        @JsonProperty("gateway_account_id")
+        long gatewayAccountId,
+        
+        @JsonProperty("tasks")
+        Map<String, Map<String, AdyenAccountSetupStatus>> tasks
+) {
 }
