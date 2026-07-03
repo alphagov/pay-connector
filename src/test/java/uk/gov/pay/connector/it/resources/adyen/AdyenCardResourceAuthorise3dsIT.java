@@ -16,6 +16,10 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.params.provider.Arguments;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
@@ -70,6 +74,11 @@ class AdyenCardResourceAuthorise3dsIT {
                 .statusCode(expectedHttpStatus)
                 .body("status", is(expectedBodyAndChargeStatus));
 
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments/details"))
+                .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
+                .withHeader("Idempotency-Key", equalTo("authorise3DS-" + chargeId))
+                .withRequestBody(matchingJsonPath("$.details.redirectResult", equalTo(REDIRECT_RESULT))));
+
         var charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is(expectedBodyAndChargeStatus));
@@ -86,6 +95,11 @@ class AdyenCardResourceAuthorise3dsIT {
                 .post(authorise3dsChargeUrlFor(chargeId))
                 .then()
                 .statusCode(402);
+
+        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments/details"))
+                .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
+                .withHeader("Idempotency-Key", equalTo("authorise3DS-" + chargeId))
+                .withRequestBody(matchingJsonPath("$.details.redirectResult", equalTo(REDIRECT_RESULT))));
 
         var charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
