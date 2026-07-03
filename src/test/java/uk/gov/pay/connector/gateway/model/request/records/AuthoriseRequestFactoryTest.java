@@ -40,7 +40,7 @@ class AuthoriseRequestFactoryTest {
     @Test
     void shouldBuildWorldpayAuthoriseRequestIfWorldpay() {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider(PaymentGatewayName.WORLDPAY.toString())
+                .withPaymentProvider(PaymentGatewayName.WORLDPAY.getName())
                 .build();
 
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()

@@ -14,7 +14,7 @@ public class AuthoriseRequestFactory {
     }
 
     public Optional<? extends AuthoriseRequest> create(CardAuthorisationGatewayRequest request) {
-        if (PaymentGatewayName.WORLDPAY.toString().equals(request.getGatewayAccount().getGatewayName())) {
+        if (PaymentGatewayName.WORLDPAY.getName().equals(request.getGatewayAccount().getGatewayName())) {
             return worldpayAuthoriseRequestFactory.create(request);
         }
 
