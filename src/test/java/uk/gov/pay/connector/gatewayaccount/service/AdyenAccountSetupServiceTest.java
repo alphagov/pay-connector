@@ -13,6 +13,7 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +42,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.VA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
+import static uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityFixture;
+import static uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityListWithAllTasksCompleted;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,29 +56,26 @@ class AdyenAccountSetupServiceTest {
     
     @Mock
     private AdyenAccountSetupDao mockAdyenAccountSetupDao;
-
-    @Mock
-    private AdyenAccountSetupTaskEntity mockBankDetailsTaskEntity;
-    @Mock
-    private AdyenAccountSetupTaskEntity mockResponsiblePersonTaskEntity;
-    @Mock
-    private AdyenAccountSetupTaskEntity mockVatNumberTaskEntity;
-    @Mock
-    private AdyenAccountSetupTaskEntity mockCompanyNumberTaskEntity;
-    @Mock
-    private AdyenAccountSetupTaskEntity mockDirectorTaskEntity;
-    @Mock
-    private AdyenAccountSetupTaskEntity mockGovernmentEntityDocumentTaskEntity;
-    @Mock
-    private AdyenAccountSetupTaskEntity mockOrganisationDetailsTaskEntity;
     
     private AdyenAccountSetupService adyenAccountSetupService;
 
     private static final String EXPECTED_ERROR_MSG = "Gateway account type must be TEST and gateway name must be ADYEN";
+    private GatewayAccountEntity testGatewayAccountEntity;
+    private GatewayAccountCredentialsEntity adyenGatewayAccountCredentials;
 
     @BeforeEach
     void setUp() {
         this.adyenAccountSetupService = new AdyenAccountSetupService(mockAdyenAccountSetupDao);
+
+        adyenGatewayAccountCredentials = aGatewayAccountCredentialsEntity()
+                .withPaymentProvider(ADYEN.getName())
+                .build();
+        
+        testGatewayAccountEntity = aGatewayAccountEntity()
+                .withId(GATEWAY_ACCOUNT_ID)
+                .withType(TEST)
+                .withGatewayAccountCredentials(List.of(adyenGatewayAccountCredentials))
+                .build();
     }
 
     @Test
@@ -96,31 +96,7 @@ class AdyenAccountSetupServiceTest {
     @Test
     void shouldReturnAdyenAccountSetupWithAllTasksCompleted() {
         given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
-                .willReturn(Arrays.asList(mockResponsiblePersonTaskEntity,
-                        mockBankDetailsTaskEntity, mockVatNumberTaskEntity,
-                        mockCompanyNumberTaskEntity, mockDirectorTaskEntity,
-                        mockGovernmentEntityDocumentTaskEntity, mockOrganisationDetailsTaskEntity));
-        
-        given(mockBankDetailsTaskEntity.getTask()).willReturn(BANK_ACCOUNT);
-        given(mockBankDetailsTaskEntity.getStatus()).willReturn(COMPLETED);
-
-        given(mockResponsiblePersonTaskEntity.getTask()).willReturn(RESPONSIBLE_PERSON);
-        given(mockResponsiblePersonTaskEntity.getStatus()).willReturn(COMPLETED);
-        
-        given(mockVatNumberTaskEntity.getTask()).willReturn(VAT_NUMBER);
-        given(mockVatNumberTaskEntity.getStatus()).willReturn(COMPLETED);
-        
-        given(mockCompanyNumberTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
-        given(mockCompanyNumberTaskEntity.getStatus()).willReturn(COMPLETED);
-        
-        given(mockDirectorTaskEntity.getTask()).willReturn(DIRECTOR);
-        given(mockDirectorTaskEntity.getStatus()).willReturn(COMPLETED);
-        
-        given(mockGovernmentEntityDocumentTaskEntity.getTask()).willReturn(GOVERNMENT_ENTITY_DOCUMENT);
-        given(mockGovernmentEntityDocumentTaskEntity.getStatus()).willReturn(COMPLETED);
-        
-        given(mockOrganisationDetailsTaskEntity.getTask()).willReturn(ORGANISATION_DETAILS);
-        given(mockOrganisationDetailsTaskEntity.getStatus()).willReturn(COMPLETED);
+                .willReturn(anAdyenAccountSetupTaskEntityListWithAllTasksCompleted(testGatewayAccountEntity, adyenGatewayAccountCredentials));
         
         AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
 
@@ -134,56 +110,50 @@ class AdyenAccountSetupServiceTest {
 
     @Test
     void shouldReturnAdyenAccountSetupWithSomeTasksCompleted() {
+        var bankAccountCompletedTaskEntity = anAdyenAccountSetupTaskEntityFixture()
+                .withGatewayAccount(testGatewayAccountEntity)
+                .withGatewayAccountCredential(adyenGatewayAccountCredentials)
+                .withTask(BANK_ACCOUNT)
+                .withCompletedStatus()
+                .build();
+
+        var companyNumberCompletedTaskEntity = anAdyenAccountSetupTaskEntityFixture()
+                .withGatewayAccount(testGatewayAccountEntity)
+                .withGatewayAccountCredential(adyenGatewayAccountCredentials)
+                .withTask(COMPANY_NUMBER)
+                .withCompletedStatus()
+                .build();
+        
         given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
-                .willReturn(Arrays.asList(
-                        mockCompanyNumberTaskEntity, mockDirectorTaskEntity,
-                        mockGovernmentEntityDocumentTaskEntity, mockOrganisationDetailsTaskEntity));
-
-        given(mockCompanyNumberTaskEntity.getTask()).willReturn(COMPANY_NUMBER);
-        given(mockCompanyNumberTaskEntity.getStatus()).willReturn(COMPLETED);
-
-        given(mockDirectorTaskEntity.getTask()).willReturn(DIRECTOR);
-        given(mockDirectorTaskEntity.getStatus()).willReturn(COMPLETED);
-
-        given(mockGovernmentEntityDocumentTaskEntity.getTask()).willReturn(GOVERNMENT_ENTITY_DOCUMENT);
-        given(mockGovernmentEntityDocumentTaskEntity.getStatus()).willReturn(COMPLETED);
-
-        given(mockOrganisationDetailsTaskEntity.getTask()).willReturn(ORGANISATION_DETAILS);
-        given(mockOrganisationDetailsTaskEntity.getStatus()).willReturn(COMPLETED);
-
+                .willReturn(List.of(bankAccountCompletedTaskEntity, companyNumberCompletedTaskEntity));
+        
         AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
 
         assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
         assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
         assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
 
-        assertThat(tasksWithStatus.tasks().get(BANK_ACCOUNT.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+        assertThat(tasksWithStatus.tasks().get(BANK_ACCOUNT.getValue()).get(STATUS_KEY), is(COMPLETED));
         assertThat(tasksWithStatus.tasks().get(RESPONSIBLE_PERSON.getValue()).get(STATUS_KEY), is(NOT_STARTED));
         assertThat(tasksWithStatus.tasks().get(VAT_NUMBER.getValue()).get(STATUS_KEY), is(NOT_STARTED));
         assertThat(tasksWithStatus.tasks().get(COMPANY_NUMBER.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.tasks().get(DIRECTOR.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.tasks().get(GOVERNMENT_ENTITY_DOCUMENT.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.tasks().get(ORGANISATION_DETAILS.getValue()).get(STATUS_KEY), is(COMPLETED));
+        assertThat(tasksWithStatus.tasks().get(DIRECTOR.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+        assertThat(tasksWithStatus.tasks().get(GOVERNMENT_ENTITY_DOCUMENT.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+        assertThat(tasksWithStatus.tasks().get(ORGANISATION_DETAILS.getValue()).get(STATUS_KEY), is(NOT_STARTED));
     }
     
     @Nested
     class completeTestAccountSetup {
         @Test
         void shouldCompleteAllTasks_WhenAccountIsAdyenAndTest() {
-            var gatewayAccountCredentials = aGatewayAccountCredentialsEntity().withPaymentProvider(ADYEN.getName()).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
-                    .withType(TEST)
-                    .withGatewayAccountCredentials(List.of(gatewayAccountCredentials))
-                    .build();
-
-            adyenAccountSetupService.completeTestAccountSetup(gatewayAccountEntity);
+            adyenAccountSetupService.completeTestAccountSetup(testGatewayAccountEntity);
 
             ArgumentCaptor<AdyenAccountSetupTaskEntity> captor =
                     ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
 
             verify(mockAdyenAccountSetupDao, times(AdyenAccountSetupTask.values().length)).persist(captor.capture());
 
-            assertEquals(gatewayAccountCredentials.getId(), captor.getValue().getGatewayAccountCredential().getId());
+            assertEquals(adyenGatewayAccountCredentials.getId(), captor.getValue().getGatewayAccountCredential().getId());
             
             List<AdyenAccountSetupStatus> statuses = captor.getAllValues().stream()
                     .map(AdyenAccountSetupTaskEntity::getStatus)
@@ -194,24 +164,23 @@ class AdyenAccountSetupServiceTest {
 
         @Test
         void shouldThrowIllegalArgException_WhenAccountIsNotTest() {
-            var gatewayAccountCredentials = aGatewayAccountCredentialsEntity().withPaymentProvider(ADYEN.getName()).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+            GatewayAccountEntity liveGatewayAccountEntity = aGatewayAccountEntity()
                     .withType(LIVE)
-                    .withGatewayAccountCredentials(List.of(gatewayAccountCredentials))
+                    .withGatewayAccountCredentials(List.of(adyenGatewayAccountCredentials))
                     .build();
-            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(gatewayAccountEntity));
+            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(liveGatewayAccountEntity));
             verify(mockAdyenAccountSetupDao, times(0)).persist(any(AdyenAccountSetupTaskEntity.class));
             assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
         }
 
         @Test
         void shouldThrowIllegalArgException_WhenAccountIsNotAdyen() {
-            var gatewayAccountCredentials = aGatewayAccountCredentialsEntity().withPaymentProvider(WORLDPAY.getName()).build();
-            GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
+            var worldpayGatewayAccountCredentials = aGatewayAccountCredentialsEntity().withPaymentProvider(WORLDPAY.getName()).build();
+            GatewayAccountEntity worldpayGatewayAccountEntity = aGatewayAccountEntity()
                     .withType(TEST)
-                    .withGatewayAccountCredentials(List.of(gatewayAccountCredentials))
+                    .withGatewayAccountCredentials(List.of(worldpayGatewayAccountCredentials))
                     .build();
-            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(gatewayAccountEntity));
+            var ex = assertThrows(IllegalArgumentException.class, () -> adyenAccountSetupService.completeTestAccountSetup(worldpayGatewayAccountEntity));
             verify(mockAdyenAccountSetupDao, times(0)).persist(any(AdyenAccountSetupTaskEntity.class));
             assertEquals(EXPECTED_ERROR_MSG, ex.getMessage());
         }
