@@ -450,7 +450,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withExternalChargeId(addChargeParameters.externalChargeId())
                 .withGatewayAccountId(accountId)
                 .withServiceId(SERVICE_ID)
-                .withAmount(AMOUNT)
+                .withAmount(addChargeParameters.amount())
                 .withPaymentProvider(paymentProvider)
                 .withStatus(addChargeParameters.chargeStatus())
                 .withTransactionId(addChargeParameters.transactionId())
@@ -463,6 +463,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withIsMoto(addChargeParameters.isMoto())
                 .withGatewayCredentialId(credentialParams.getId())
                 .withAuthorisationMode(addChargeParameters.authorisationMode())
+                .withDescription(addChargeParameters.description())
                 .build());
     }
 
