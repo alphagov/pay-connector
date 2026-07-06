@@ -15,7 +15,6 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
-import uk.gov.pay.connector.queue.tasks.handlers.AdyenCancellationNotificationHandler;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZoneId;
