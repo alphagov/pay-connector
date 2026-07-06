@@ -42,6 +42,8 @@ import uk.gov.pay.connector.events.model.charge.RefundAvailabilityUpdated;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToSystemCancelledToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToUserCancelledToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UserEmailCollected;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.PaymentProvider;
@@ -108,6 +110,10 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
 import static uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity.ChargeEventEntityBuilder.aChargeEventEntity;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
@@ -315,9 +321,58 @@ class ChargeServiceTest {
         verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
     }
 
+    @Test
+    void forcingChargeToUserCancelledState_shouldSucceedAndEmitEvent() {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(USER_CANCEL_SUBMITTED).build();
+
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(USER_CANCELLED).build();
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class))).thenReturn(chargeEventEntity);
+
+        ZonedDateTime gatewayEventDate = ZonedDateTime.parse("2021-01-01T01:30:00.000Z");
+        ChargeEntity updatedCharge = chargeService.forceTransitionChargeState(charge, USER_CANCELLED, gatewayEventDate);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture(), eq(gatewayEventDate));
+        assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(USER_CANCELLED.getValue()));
+        assertThat(updatedCharge.getStatus(), is(USER_CANCELLED.getValue()));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(
+                charge.getExternalId(),
+                USER_CANCEL_SUBMITTED,
+                USER_CANCELLED,
+                chargeEventEntity,
+                StatusCorrectedToUserCancelledToMatchGatewayStatus.class);
+
+        verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
+    }
+
+    @Test
+    void forcingChargeToSystemCancelledState_shouldSucceedAndEmitEvent() {
+        ChargeEntity charge = ChargeEntityFixture.aValidChargeEntity().withStatus(SYSTEM_CANCEL_SUBMITTED).build();
+
+        ChargeEventEntity chargeEventEntity = aChargeEventEntity().withChargeEntity(charge).withStatus(SYSTEM_CANCELLED).build();
+        when(mockedChargeEventDao.persistChargeEventOf(any(ChargeEntity.class), any(ZonedDateTime.class))).thenReturn(chargeEventEntity);
+
+        ZonedDateTime gatewayEventDate = ZonedDateTime.parse("2021-01-01T01:30:00.000Z");
+        ChargeEntity updatedCharge = chargeService.forceTransitionChargeState(charge, SYSTEM_CANCELLED, gatewayEventDate);
+
+        ArgumentCaptor<ChargeEntity> chargeEntityArgumentCaptor = ArgumentCaptor.forClass(ChargeEntity.class);
+        verify(mockedChargeEventDao).persistChargeEventOf(chargeEntityArgumentCaptor.capture(), eq(gatewayEventDate));
+        assertThat(chargeEntityArgumentCaptor.getValue().getStatus(), is(SYSTEM_CANCELLED.getValue()));
+        assertThat(updatedCharge.getStatus(), is(SYSTEM_CANCELLED.getValue()));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(
+                charge.getExternalId(),
+                SYSTEM_CANCEL_SUBMITTED,
+                SYSTEM_CANCELLED,
+                chargeEventEntity,
+                StatusCorrectedToSystemCancelledToMatchGatewayStatus.class);
+
+        verify(mockTaskQueueService).offerTasksOnStateTransition(charge);
+    }
+    
     @ParameterizedTest
     @EnumSource(names = {
-            "USER_CANCELLED",
             "USER_CANCEL_SUBMITTED",
             "CAPTURE_APPROVED_RETRY"
     })

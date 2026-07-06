@@ -22,7 +22,7 @@ import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
-import uk.gov.pay.connector.queue.tasks.handlers.AdyenWebhookTaskHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 
 import java.time.Instant;
 import java.time.ZoneId;
