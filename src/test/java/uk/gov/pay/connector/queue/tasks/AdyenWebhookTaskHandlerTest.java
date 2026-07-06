@@ -20,6 +20,7 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
+import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.queue.tasks.handlers.AdyenWebhookTaskHandler;
@@ -41,8 +42,6 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
-
-
 @ExtendWith(MockitoExtension.class)
 class AdyenWebhookTaskHandlerTest {
 
@@ -54,6 +53,9 @@ class AdyenWebhookTaskHandlerTest {
 
     @Mock
     private ChargeNotificationProcessor mockChargeNotificationProcessor;
+
+    @Mock
+    private RefundNotificationProcessor mockRefundNotificationProcessor;
 
     @Mock
     private AdyenNotificationService mockAdyenNotificationService;
@@ -227,5 +229,40 @@ class AdyenWebhookTaskHandlerTest {
 
         assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage()
                 .equals("Charge not found in Connector or Ledger for Adyen capture webhook")), is(true));
+    }
+
+    @Test
+    void shouldNotProcessRefundNotificationWhenChargeNotFound() {
+        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+                .thenReturn(mockNotificationRequest);
+        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
+                .thenReturn(List.of(mockNotificationItem));
+        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_REFUND);
+        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
+                .thenReturn(Optional.empty());
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldNotProcessRefundNotificationWhenGatewayAccountNotFound() {
+        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+                .thenReturn(mockNotificationRequest);
+        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
+                .thenReturn(List.of(mockNotificationItem));
+        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_REFUND);
+        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
+                .thenReturn(Optional.of(mockCharge));
+        when(mockCharge.getGatewayAccountId()).thenReturn(gatewayAccountId);
+        when(mockGatewayAccountService.getGatewayAccount(gatewayAccountId))
+                .thenReturn(Optional.empty());
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+
+        verify(mockRefundNotificationProcessor, never()).invoke(any(), any(), any(), any(), any(), any());
     }
 }
