@@ -423,6 +423,27 @@ public class RefundServiceTest {
     }
 
     @Test
+    void shouldNotTransitionRefundFromRefundErrorToRefunded() {
+        chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transaction-id")
+                .withExternalId(externalChargeId)
+                .withStatus(CAPTURED)
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+
+        RefundEntity refundEntity = aValidRefundEntity()
+                .withChargeExternalId(externalChargeId)
+                .withStatus(REFUND_ERROR)
+                .build();
+
+        refundService.transitionRefundState(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
+
+        assertThat(refundEntity.getStatus(), is(REFUND_ERROR));
+        verify(mockStateTransitionService, never()).offerRefundStateTransition(any(), any());
+    }
+
+    @Test
     void shouldFailWhenGatewayAccountDisabled() {
         var disabledAccount = aGatewayAccountEntity()
                 .withId(accountId)
@@ -883,7 +904,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    void shouldNotTransitionWhenRefundIsInTerminalStateError() {
+    void shouldNotTransitionWhenRefundIsInRefundErrorState() {
         ChargeEntity charge = aValidChargeEntity().build();
         RefundEntity refundEntity = aValidRefundEntity()
                 .withAmount(100L)

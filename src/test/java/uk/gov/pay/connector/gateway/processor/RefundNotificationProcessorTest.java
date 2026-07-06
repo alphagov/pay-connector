@@ -133,13 +133,14 @@ class RefundNotificationProcessorTest {
     }
 
     @Test
-    void shouldLogIllegalStateTransition_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
+    void shouldLogIllegalStateTransitionAtInfoLevel_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
         refundEntity.setStatus(RefundStatus.REFUNDED);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
         invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUND_ERROR);
 
+        assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.INFO))));
         logs.assertContains("Notification received for refund would cause an illegal state transition");
     }
 
@@ -177,8 +178,8 @@ class RefundNotificationProcessorTest {
     @Nested
     @ParameterizedClass
     @CsvSource({
-            "REFUNDED, REFUND_ERROR",
-            "REFUND_ERROR, REFUNDED"
+        "REFUNDED, REFUND_ERROR",
+        "REFUND_ERROR, REFUNDED"
     })
     class WhenStatusTransitionIsIllegal {
 
@@ -214,7 +215,7 @@ class RefundNotificationProcessorTest {
         }
 
         @Test
-        void shouldLogRedundantNotificationMessageAtInfoLevel() {
+        void shouldLogIllegalStateTransitionAtInfoLevel() {
             invokeRefundNotificationProcessorWithNewStatus(newStatus);
 
             assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.INFO))));
