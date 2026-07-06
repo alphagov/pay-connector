@@ -1,4 +1,4 @@
-package uk.gov.pay.connector.queue.tasks.handlers;
+package uk.gov.pay.connector.queue.tasks.handlers.adyen;
 
 import com.adyen.model.notification.NotificationRequestItem;
 import com.google.inject.Inject;
