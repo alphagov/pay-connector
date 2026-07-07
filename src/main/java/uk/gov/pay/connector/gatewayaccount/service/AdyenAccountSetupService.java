@@ -8,6 +8,7 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,16 +38,15 @@ public class AdyenAccountSetupService {
         }
     }
 
-    public AdyenAccountSetupResponse buildResponse(String serviceId, long gatewayAccountId, String credentialExternalId) {
-        
+    public AdyenAccountSetupResponse buildResponse(String serviceId, long gatewayAccountId, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         return new AdyenAccountSetupResponse(serviceId, 
-                credentialExternalId, 
+                gatewayAccountCredentialsEntity.getExternalId(), 
                 gatewayAccountId, 
-                getTasksWithStatus(gatewayAccountId));
+                getTasksWithStatus(gatewayAccountId, gatewayAccountCredentialsEntity.getId()));
     }
 
-    private HashMap<String, Map<String, AdyenAccountSetupStatus>> getTasksWithStatus(long gatewayAccountId) {
-        List<AdyenAccountSetupTaskEntity> taskEntities = adyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(gatewayAccountId);
+    private HashMap<String, Map<String, AdyenAccountSetupStatus>> getTasksWithStatus(long gatewayAccountId, long credentialId) {
+        List<AdyenAccountSetupTaskEntity> taskEntities = adyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(gatewayAccountId, credentialId);
 
         Map<String, AdyenAccountSetupStatus> taskStatusMap = taskEntities.stream()
                 .collect(Collectors.toMap(task -> task.getTask().getValue(), AdyenAccountSetupTaskEntity::getStatus));
