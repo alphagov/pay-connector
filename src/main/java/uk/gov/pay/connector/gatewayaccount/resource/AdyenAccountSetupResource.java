@@ -60,16 +60,14 @@ public class AdyenAccountSetupResource {
     }
 
     private GatewayAccountCredentialsEntity validateGatewayAccountCredentialsEntity(String credentialExternalId, GatewayAccountEntity gatewayAccountEntity) {
-        var gatewayAccountCredentialsEntity = gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
+        var gatewayAccountCredentialsEntity = gatewayAccountEntity.getGatewayAccountCredentials().stream().filter(credentialsEntity ->
+                        credentialsEntity.getExternalId().equals(credentialExternalId)).findFirst()
                 .orElseThrow(NotFoundException::new);
 
         if (!gatewayAccountCredentialsEntity.getPaymentProvider().equals(ADYEN.getName())) {
             throw new NotFoundException("Credential is not associated with payment provider Adyen");
         }
 
-        if (!gatewayAccountCredentialsEntity.getExternalId().equals(credentialExternalId)) {
-            throw new NotFoundException();
-        }
         return gatewayAccountCredentialsEntity;
     }
 }
