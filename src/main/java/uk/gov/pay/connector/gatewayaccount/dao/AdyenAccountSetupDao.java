@@ -15,7 +15,7 @@ public class AdyenAccountSetupDao extends JpaDao<AdyenAccountSetupTaskEntity> {
         super(entityManager);
     }
 
-    public List<AdyenAccountSetupTaskEntity> findByGatewayAccountIdAndCredentialId(long gatewayAccountId, Long gatewayAccountCredentialsId) {
+    public List<AdyenAccountSetupTaskEntity> findByGatewayAccountIdAndCredentialId(long gatewayAccountId, long gatewayAccountCredentialsId) {
         String query = "SELECT s FROM AdyenAccountSetupTaskEntity s WHERE s.gatewayAccount.id = :gatewayAccountId AND s.gatewayAccountCredential.id = :gatewayAccountCredentialsId ";
 
         return entityManager
