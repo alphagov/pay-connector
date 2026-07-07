@@ -13,6 +13,8 @@ public class AdyenAuthoriseResponse implements BaseAuthoriseResponse {
     private final AuthoriseStatus authoriseStatus;
     private final String redirectUrl;
     private final String httpMethod3ds;
+    private final String refusalReason;
+    private final String refusalReasonCode;
 
     private final String paReq;
     private final String md;
@@ -36,7 +38,9 @@ public class AdyenAuthoriseResponse implements BaseAuthoriseResponse {
                 url,
                 method,
                 paReq,
-                md);
+                md,
+                authoriseResponseBody.refusalReason(), 
+                authoriseResponseBody.refusalReasonCode());
     }
 
     private AdyenAuthoriseResponse(String transactionId,
@@ -44,13 +48,17 @@ public class AdyenAuthoriseResponse implements BaseAuthoriseResponse {
                                    String redirectUrl,
                                    String httpMethod3ds,
                                    String paReq,
-                                   String md) {
+                                   String md,
+                                   String refusalReason,
+                                   String refusalReasonCode) {
         this.transactionId = transactionId;
         authoriseStatus = mapAuthorisationStatusFrom(resultCode);
         this.redirectUrl = redirectUrl;
         this.httpMethod3ds = httpMethod3ds;
         this.paReq = paReq;
         this.md = md;
+        this.refusalReason = refusalReason;
+        this.refusalReasonCode = refusalReasonCode;
     }
 
     private static AuthoriseStatus mapAuthorisationStatusFrom(String resultCode) {
@@ -61,6 +69,14 @@ public class AdyenAuthoriseResponse implements BaseAuthoriseResponse {
             case "Error" -> AuthoriseStatus.ERROR;
             default -> throw new IllegalStateException("Unexpected value: " + resultCode);
         };
+    }
+    
+    @Override
+    public Optional<String> getGatewayRejectionReason() {
+        if (refusalReason != null && refusalReasonCode != null ) {
+            return Optional.of(refusalReasonCode + " - " +  refusalReason  );
+        }
+        return Optional.empty();
     }
 
     @Override

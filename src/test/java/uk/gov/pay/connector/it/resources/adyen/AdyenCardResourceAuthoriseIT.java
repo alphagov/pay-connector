@@ -202,6 +202,7 @@ class AdyenCardResourceAuthoriseIT {
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is("AUTHORISATION REJECTED"));
         assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
+        assertThat(charge.get().getGatewayRejectionReason(), is("6 - Expired Card"));
     }
 
     @Test
