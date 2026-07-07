@@ -32,6 +32,7 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
@@ -86,6 +87,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse.WORLDPAY_RECURRING_AUTH_TOKEN_PAYMENT_TOKEN_ID_KEY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -494,6 +496,25 @@ class WorldpayPaymentProviderTest {
             assertThat(res.getGatewayParamsFor3ds().get().toAuth3dsRequiredEntity().getThreeDsVersion(), startsWith("2."));
 
         });
+    }
+
+    @ParameterizedTest
+    @MethodSource("worldpayTestCardNumbers")
+    void shouldBeAbleToSendWorldpayMotoAuthoriseRequest(String cardBrand, String cardNumber) {
+        WorldpayPaymentProvider paymentProvider = getValidWorldpayPaymentProvider();
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> worldpayCredentials = (Map<String, String>) validCredentials.get(ONE_OFF_CUSTOMER_INITIATED);
+        WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture()
+                .withMerchantCode(worldpayCredentials.get(CREDENTIALS_MERCHANT_CODE))
+                .withUsername(worldpayCredentials.get(CREDENTIALS_USERNAME))
+                .withPassword(worldpayCredentials.get(CREDENTIALS_PASSWORD))
+                .withOrderCode(randomUUID().toString())
+                .withCardNumber(cardNumber)
+                .build();
+
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(worldpayMotoAuthoriseRequest, TEST.toString());
+        assertTrue(response.getBaseResponse().isPresent());
     }
 
     /**
