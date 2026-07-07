@@ -12,6 +12,7 @@ import uk.gov.pay.connector.charge.model.LastDigitsCardNumber;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.chargeevent.model.domain.ChargeEventEntity;
 import uk.gov.pay.connector.fee.model.Fee;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
@@ -85,7 +86,19 @@ public class ChargeEntityFixture {
         return new ChargeEntityFixture();
     }
 
+    public static ChargeEntityFixture aValidChargeEntity(PaymentGatewayName paymentGatewayName) {
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = defaultGatewayAccountCredentialsEntity(paymentGatewayName);
+        return new ChargeEntityFixture()
+                .withPaymentProvider(paymentGatewayName.getName())
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredentialsEntity)
+                .withGatewayAccountEntity(defaultGatewayAccountEntity(paymentGatewayName));
+    }
+
     public static GatewayAccountEntity defaultGatewayAccountEntity() {
+        return defaultGatewayAccountEntity(PaymentGatewayName.SANDBOX);
+    }
+
+    private static GatewayAccountEntity defaultGatewayAccountEntity(PaymentGatewayName paymentGatewayName) {
         GatewayAccountEntity accountEntity = new GatewayAccountEntity(TEST);
         accountEntity.setId(1L);
         accountEntity.setServiceName("MyService");
@@ -95,15 +108,19 @@ public class ChargeEntityFixture {
         accountEntity.addNotification(EmailNotificationType.PAYMENT_CONFIRMED, emailNotificationEntity);
         accountEntity.addNotification(EmailNotificationType.REFUND_ISSUED, emailNotificationEntity);
 
-        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = defaultGatewayAccountCredentialsEntity();
+        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = defaultGatewayAccountCredentialsEntity(paymentGatewayName);
         accountEntity.setGatewayAccountCredentials(List.of(gatewayAccountCredentialsEntity));
 
         return accountEntity;
     }
 
     public static GatewayAccountCredentialsEntity defaultGatewayAccountCredentialsEntity() {
+        return defaultGatewayAccountCredentialsEntity(PaymentGatewayName.SANDBOX);
+    }
+
+    private static GatewayAccountCredentialsEntity defaultGatewayAccountCredentialsEntity(PaymentGatewayName paymentGatewayName) {
         return aGatewayAccountCredentialsEntity()
-                .withPaymentProvider("sandbox")
+                .withPaymentProvider(paymentGatewayName.getName())
                 .withCredentials(Map.of())
                 .withState(CREATED)
                 .build();

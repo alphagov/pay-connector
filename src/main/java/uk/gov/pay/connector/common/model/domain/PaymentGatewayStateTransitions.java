@@ -39,6 +39,8 @@ import uk.gov.pay.connector.events.model.charge.ServiceApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationErrorToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.StatusCorrectedToCapturedToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToSystemCancelledToMatchGatewayStatus;
+import uk.gov.pay.connector.events.model.charge.StatusCorrectedToUserCancelledToMatchGatewayStatus;
 import uk.gov.pay.connector.events.model.charge.UnexpectedGatewayErrorDuringAuthorisation;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCapture;
 import uk.gov.pay.connector.events.model.charge.UserApprovedForCaptureAwaitingServiceApproval;
@@ -96,7 +98,9 @@ public class PaymentGatewayStateTransitions {
     private static Map<ChargeStatus, ModelledTypedEvent> eventsForForceUpdatingStatus = Map.of(
             CAPTURED, new ModelledTypedEvent<>(StatusCorrectedToCapturedToMatchGatewayStatus.class),
             AUTHORISATION_REJECTED, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationRejectedToMatchGatewayStatus.class),
-            AUTHORISATION_ERROR, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class)
+            AUTHORISATION_ERROR, new ModelledTypedEvent<>(StatusCorrectedToAuthorisationErrorToMatchGatewayStatus.class),
+            USER_CANCELLED, new ModelledTypedEvent<>(StatusCorrectedToUserCancelledToMatchGatewayStatus.class),
+            SYSTEM_CANCELLED, new ModelledTypedEvent<>(StatusCorrectedToSystemCancelledToMatchGatewayStatus.class)
     );
 
     public static PaymentGatewayStateTransitions getInstance() {

@@ -152,10 +152,10 @@ class PaymentGatewayStateTransitionsTest {
     }
 
     @ParameterizedTest
-    @MethodSource( "intermediateStatesForTransitions")
+    @MethodSource("intermediateStatesForTransitions")
     void getIntermediateChargeStatusShouldDeriveStatusCorrectly(ChargeStatus expectedIntermediateStatus,
-                                                                       ChargeStatus fromStatus,
-                                                                       ChargeStatus toStatus) {
+                                                                ChargeStatus fromStatus,
+                                                                ChargeStatus toStatus) {
         Optional<ChargeStatus> actualStatus = transitions.getIntermediateChargeStatus(fromStatus, toStatus);
         assertThat(actualStatus.get(), is(expectedIntermediateStatus));
     }

@@ -6,6 +6,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
+import java.util.Map;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -81,7 +83,7 @@ class AdyenAuthoriseResponseTest {
 
         assertThat(adyenAuthoriseResponse.getRedirectUrl(), is("/redirectUrl"));
     }
-    
+
     @Test
     void should_set_httpMethod3ds_null_if_action_is_null() {
         var adyenPaymentResponse = anAdyenPaymentResponse()
@@ -116,6 +118,32 @@ class AdyenAuthoriseResponseTest {
     }
 
     @Test
+    void should_set_data_to_action_data() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withAction(anAction().withData(Map.of("MD", "testMD123", "PaReq", "testPaReq")).build())
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        assertThat(adyenAuthoriseResponse.getMd(), is("testMD123"));
+        assertThat(adyenAuthoriseResponse.getPaReq(), is("testPaReq"));
+    }
+
+    @Test
+    void should_not_set_data_to_action_data_if_Adyen_does_not_return_it() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withAction(anAction().withMethod("GET").build())
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        assertThat(adyenAuthoriseResponse.getHttpMethod3ds(), is("GET"));
+
+        assertThat(adyenAuthoriseResponse.getPaReq(), nullValue());
+        assertThat(adyenAuthoriseResponse.getMd(), nullValue());
+    }
+
+    @Test
     void should_extract_3ds_required_details_for_redirect_shopper_response() {
         var redirectUrl = "https://checkoutshopper-test.adyen.com/checkoutshopper/threeDS/redirect";
         var httpMethod = "GET";
@@ -125,6 +153,7 @@ class AdyenAuthoriseResponseTest {
                 .withAction(anAction()
                         .withUrl(redirectUrl)
                         .withMethod(httpMethod)
+                        .withData(Map.of("MD", "testMD123", "PaReq", "testPaReq123"))
                         .build())
                 .build();
 
@@ -135,5 +164,7 @@ class AdyenAuthoriseResponseTest {
         assertThat(auth3dsRequiredDetails.isPresent(), is(true));
         assertThat(auth3dsRequiredDetails.get().getIssuerUrl(), is(redirectUrl));
         assertThat(auth3dsRequiredDetails.get().getHttpMethod3ds(), is(httpMethod));
+        assertThat(auth3dsRequiredDetails.get().getPaRequest(), is("testPaReq123"));
+        assertThat(auth3dsRequiredDetails.get().getMd(), is("testMD123"));
     }
 }

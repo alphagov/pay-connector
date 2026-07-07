@@ -6,6 +6,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.Adyen3dsAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
@@ -67,11 +68,11 @@ public class AdyenAuthorise3dsHandler {
             var mappedStatus = mapStatus(responseBody.resultCode());
 
             return Gateway3DSAuthorisationResponse.of(
-                    jsonResponse,
+                    responseBody.toString(),
                     mappedStatus,
                     responseBody.pspReference()
             );
-        } catch (GatewayException.GatewayErrorException e) {
+        } catch (GatewayErrorException e) {
             return handleGatewayErrorException(request, e);
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
             LOGGER.atWarn()
@@ -86,7 +87,7 @@ public class AdyenAuthorise3dsHandler {
 
     private Gateway3DSAuthorisationResponse handleGatewayErrorException(
             Auth3dsResponseGatewayRequest request,
-            GatewayException.GatewayErrorException exception) {
+            GatewayErrorException exception) {
         try {
             var adyenError = jsonObjectMapper.getObject(exception.getResponseFromGateway(), AdyenError.class);
             LOGGER.atWarn()
