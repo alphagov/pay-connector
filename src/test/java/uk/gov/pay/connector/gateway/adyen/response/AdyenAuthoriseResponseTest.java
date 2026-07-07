@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -166,5 +167,21 @@ class AdyenAuthoriseResponseTest {
         assertThat(auth3dsRequiredDetails.get().getHttpMethod3ds(), is(httpMethod));
         assertThat(auth3dsRequiredDetails.get().getPaRequest(), is("testPaReq123"));
         assertThat(auth3dsRequiredDetails.get().getMd(), is("testMD123"));
+    }
+    
+    @Test
+    void should_return_gateway_rejection_reason_when_adyen_response_is_refused() {
+        var response = new AuthoriseResponseBody(
+                "851563882585825A",
+                "Refused",
+                "Expired Card",
+                "6",
+                null
+        );
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(response);
+
+        assertThat(adyenAuthoriseResponse.getGatewayRejectionReason(),
+                is(Optional.of("6 - Expired Card")));
     }
 }
