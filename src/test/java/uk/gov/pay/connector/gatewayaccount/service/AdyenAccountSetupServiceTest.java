@@ -53,7 +53,8 @@ class AdyenAccountSetupServiceTest {
     private static final String SERVICE_ID = "service-123";
     private static final String CREDENTIAL_EXTERNAL_ID = "credential-123";
     private static final String STATUS_KEY = "status";
-    
+    public static final Long CREDENTIAL_ID = 123L;
+
     @Mock
     private AdyenAccountSetupDao mockAdyenAccountSetupDao;
     
@@ -69,7 +70,9 @@ class AdyenAccountSetupServiceTest {
 
         adyenGatewayAccountCredentials = aGatewayAccountCredentialsEntity()
                 .withPaymentProvider(ADYEN.getName())
+                .withExternalId(CREDENTIAL_EXTERNAL_ID)
                 .build();
+        adyenGatewayAccountCredentials.setId(123L);
         
         testGatewayAccountEntity = aGatewayAccountEntity()
                 .withId(GATEWAY_ACCOUNT_ID)
@@ -80,10 +83,10 @@ class AdyenAccountSetupServiceTest {
 
     @Test
     void shouldReturnAdyenAccountSetupWithNoTasksCompleted() {
-        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
+        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
                 .willReturn(Collections.emptyList());
 
-        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
+        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
         
         assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
         assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
@@ -95,10 +98,10 @@ class AdyenAccountSetupServiceTest {
 
     @Test
     void shouldReturnAdyenAccountSetupWithAllTasksCompleted() {
-        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
+        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
                 .willReturn(anAdyenAccountSetupTaskEntityListWithAllTasksCompleted(testGatewayAccountEntity, adyenGatewayAccountCredentials));
         
-        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
+        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
 
         assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
         assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
@@ -124,10 +127,10 @@ class AdyenAccountSetupServiceTest {
                 .withCompletedStatus()
                 .build();
         
-        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID))
+        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
                 .willReturn(List.of(bankAccountCompletedTaskEntity, companyNumberCompletedTaskEntity));
         
-        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, CREDENTIAL_EXTERNAL_ID);
+        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
 
         assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
         assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));

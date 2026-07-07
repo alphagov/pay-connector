@@ -8,16 +8,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
 @Path("/")
 @Tag(name = "Gateway accounts")
@@ -47,9 +51,25 @@ public class AdyenAccountSetupResource {
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId ) { // pragma: allowlist secret
 
-        return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
-                .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
-                .map(gatewayAccountEntity -> adyenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), credentialExternalId))
-                .orElseThrow(() -> new IllegalStateException("Internal Server Error"));
+        var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
+
+        var gatewayAccountCredentialsEntity = validateGatewayAccountCredentialsEntity(credentialExternalId, gatewayAccountEntity);
+
+        return adyenAccountSetupService.buildResponse(serviceId, gatewayAccountEntity.getId(), gatewayAccountCredentialsEntity);
+    }
+
+    private GatewayAccountCredentialsEntity validateGatewayAccountCredentialsEntity(String credentialExternalId, GatewayAccountEntity gatewayAccountEntity) {
+        var gatewayAccountCredentialsEntity = gatewayAccountEntity.getCurrentOrActiveGatewayAccountCredential()
+                .orElseThrow(NotFoundException::new);
+
+        if (!gatewayAccountCredentialsEntity.getPaymentProvider().equals(ADYEN.getName())) {
+            throw new NotFoundException("Credential is not associated with payment provider Adyen");
+        }
+
+        if (!gatewayAccountCredentialsEntity.getExternalId().equals(credentialExternalId)) {
+            throw new NotFoundException();
+        }
+        return gatewayAccountCredentialsEntity;
     }
 }
