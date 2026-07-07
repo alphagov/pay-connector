@@ -20,10 +20,9 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 public class WorldpayAuthoriseRequestLogGenerator {
 
     public AuthorisationRequestLog generate(WorldpayAuthoriseRequest worldpayAuthoriseRequest, AuthCardDetails authCardDetails) {
-        if (worldpayAuthoriseRequest instanceof WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest) {
-            return generate(worldpayMotoAuthoriseRequest, authCardDetails);
-        }
-        throw new IllegalArgumentException("WorldpayAuthoriseRequest type not supported: " + worldpayAuthoriseRequest.getClass().getSimpleName());
+        return switch (worldpayAuthoriseRequest) {
+            case WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest -> generate(worldpayMotoAuthoriseRequest, authCardDetails);
+        };
     }
 
     private AuthorisationRequestLog generate(WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest, AuthCardDetails authCardDetails) {

@@ -9,7 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Objects;
@@ -64,7 +64,7 @@ public class AuthCardDetails {
         return new AuthCardDetails();
     }
 
-    public static AuthCardDetails of(AuthoriseRequest authoriseRequest, ChargeEntity chargeEntity, CardInformation cardInformation) {
+    public static AuthCardDetails of(MotoApiAuthoriseRequest authoriseRequest, ChargeEntity chargeEntity, CardInformation cardInformation) {
         AuthCardDetails authCardDetails = new AuthCardDetails();
         authCardDetails.setCardNo(authoriseRequest.getCardNumber());
         authCardDetails.setCardHolder(authoriseRequest.getCardholderName());
@@ -88,7 +88,7 @@ public class AuthCardDetails {
         return Optional.ofNullable(jsTimezoneOffsetMins);
     }
 
-    @JsonProperty("js_timezone_offset_min")
+    @JsonProperty("js_timezone_offset_mins")
     public void setJsTimezoneOffsetMins(String jsTimezoneOffsetMins) {
         this.jsTimezoneOffsetMins = jsTimezoneOffsetMins;
     }

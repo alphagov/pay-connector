@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gateway.adyen;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
@@ -25,12 +27,14 @@ import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getMerchantAccountId;
 
 public class AdyenRequestFactory {
 
     private final ConnectorConfiguration configuration;
+    private final Logger LOGGER = LoggerFactory.getLogger(AdyenRequestFactory.class);
 
     public AdyenRequestFactory(ConnectorConfiguration configuration) {
         this.configuration = configuration;
@@ -39,7 +43,8 @@ public class AdyenRequestFactory {
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
         boolean isMoto = "Moto".equals(getShopperInteraction(request));
-
+        String frontendUrl = configuration.getLinks().getFrontendUrl();
+        
         var mappedAddress = authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
                 .orElse(null);
@@ -52,20 +57,20 @@ public class AdyenRequestFactory {
                 "scheme");
 
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
-
+        
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
                 getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
-                configuration.getLinks().getFrontendUrl(),
+                String.format("%s/card_details/%s/3ds_required_in/adyen", frontendUrl, request.getGovUkPayPaymentId()),
                 getShopperInteraction(request),
                 adyenCredentials.storeId(),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true")),
                 isMoto ? null : mapToBrowserInfo(authCardDetails),
-                isMoto ? null : configuration.getLinks().getFrontendUrl(),
+                isMoto ? null : frontendUrl,
                 isMoto ? null : request.getEmail(),
                 isMoto ? null : authCardDetails.getIpAddress().orElse(null)
         );
@@ -125,18 +130,31 @@ public class AdyenRequestFactory {
         }
         return (AdyenCredentials) gatewayCredentials;
     }
-
+    
     private BrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
         return new BrowserInfo(
                 authCardDetails.getAcceptHeader(),
-                authCardDetails.getJsScreenColorDepth().map(Integer::valueOf).orElse(null),
-                false,
+                authCardDetails.getJsScreenColorDepth().flatMap(value -> parseInteger("js_screen_color_depth",value) ).orElse(null),                false,
                 authCardDetails.getJsEnabled(),
-                authCardDetails.getJsNavigatorLanguage().map(String::valueOf).orElse(null),
-                authCardDetails.getJsScreenHeight().map(Integer::valueOf).orElse(null),
-                authCardDetails.getJsScreenWidth().map(Integer::valueOf).orElse(null),
-                authCardDetails.getJsTimezoneOffsetMins().map(Integer::valueOf).orElse(null),
+                authCardDetails.getJsNavigatorLanguage().orElse(null),
+                authCardDetails.getJsScreenHeight().flatMap(value -> parseInteger("js_screen_height", value)).orElse(null),
+                authCardDetails.getJsScreenWidth().flatMap(value-> parseInteger("js_screen_width", value)).orElse(null),
+                authCardDetails.getJsTimezoneOffsetMins().flatMap(value -> parseInteger("js_timezone_offset_min", value)).orElse(null),
                 authCardDetails.getUserAgentHeader()
         );
+    }
+
+    private Optional<Integer> parseInteger(String property, String value) {
+        try {
+            return Optional.of(Integer.valueOf(value));
+        } catch (NumberFormatException e) {
+            LOGGER.atWarn()
+                    .setMessage("Unable to parse browser info integer")
+                    .addKeyValue("property", property)
+                    .addKeyValue("value", value)
+                    .setCause(e)
+                    .log();
+            return Optional.empty();
+        }
     }
 }

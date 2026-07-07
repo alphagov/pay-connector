@@ -21,6 +21,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static uk.gov.pay.connector.gateway.CaptureResponse.ChargeState.PENDING;
 import static uk.gov.pay.connector.gateway.CaptureResponse.fromBaseCaptureResponse;
+import static uk.gov.pay.connector.gateway.model.OrderRequestType.CAPTURE;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.HTTP_STATUS;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
@@ -49,7 +50,7 @@ public class AdyenCaptureHandler implements CaptureHandler {
 
         var adyenCaptureRequest = new AdyenCaptureRequest(
                 AdyenRequestUtil.getCaptureUrl(adyenGatewayConfig, request),
-                AdyenRequestUtil.getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), request.getRequestType(), request.getExternalId()),
+                AdyenRequestUtil.getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), CAPTURE, request.getExternalId()),
                 adyenRequestFactory.createCapturePayload(request),
                 request.getGatewayAccount().getType(),
                 jsonObjectMapper);

@@ -1,7 +1,11 @@
 package uk.gov.pay.connector.gateway.adyen;
 
+import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.event.KeyValuePair;
+import org.slf4j.event.Level;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
@@ -12,8 +16,8 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
-import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -26,6 +30,9 @@ import uk.gov.service.payments.commons.model.CardExpiryDate;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThrows;
@@ -67,6 +74,8 @@ class AdyenRequestFactoryTest {
             "store_id",
             "account_holder_id",
             "balance_account_id");
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(AdyenRequestFactory.class);
 
     @BeforeEach
     void setUp() {
@@ -107,7 +116,7 @@ class AdyenRequestFactoryTest {
         assertThat(request.amount().currency(), is("GBP"));
         assertThat(request.channel(), is("Web"));
         assertThat(request.shopperInteraction(), is("Ecommerce"));
-        assertThat(request.returnUrl(), is("https://www.example.com"));
+        assertThat(request.returnUrl(), is("https://www.example.com/card_details/gov_uk_payment_id/3ds_required_in/adyen"));
         assertThat(request.reference(), is("gov_uk_payment_id"));
         assertThat(request.merchantAccount(), is("test"));
         assertThat(request.store(), is("store_id"));
@@ -152,7 +161,7 @@ class AdyenRequestFactoryTest {
         assertThat(request.amount().currency(), is("GBP"));
         assertThat(request.channel(), is("Web"));
         assertThat(request.shopperInteraction(), is("Ecommerce"));
-        assertThat(request.returnUrl(), is("https://www.example.com"));
+        assertThat(request.returnUrl(), is("https://www.example.com/card_details/gov_uk_payment_id/3ds_required_in/adyen"));
         assertThat(request.reference(), is("gov_uk_payment_id"));
         assertThat(request.merchantAccount(), is("test"));
         assertThat(request.store(), is("store_id"));
@@ -297,7 +306,40 @@ class AdyenRequestFactoryTest {
         assertThat(request.shopperEmail(),is(nullValue()));
         assertThat(request.shopperIP(), is(nullValue()));
     }
-    
+
+    @Test
+    void should_log_warning_when_browser_info_integer_cannot_be_parsed() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withJsScreenColorDepth("invalid")
+                        .withJsScreenWidth("not-a-number")
+                        .withJsTimezoneOffsetMins("bad-offset")
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .build();
+
+        adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        var loggingEvents = logs.getEvents();
+
+        assertThat(loggingEvents.size(), is(3));
+
+        assertThat(loggingEvents, everyItem(hasProperty("level", is(Level.WARN))));
+        assertThat(loggingEvents, everyItem(hasProperty("message", is("Unable to parse browser info integer"))));
+        
+        var keyValuePairs = loggingEvents.stream()
+                .flatMap(event -> event.getKeyValuePairs().stream())
+                .toList();
+
+        assertThat(keyValuePairs, contains(
+                new KeyValuePair("property", "js_screen_color_depth"),
+                new KeyValuePair("value", "invalid"),
+                new KeyValuePair("property", "js_screen_width"),
+                new KeyValuePair("value", "not-a-number"),
+                new KeyValuePair("property", "js_timezone_offset_min"),
+                new KeyValuePair("value", "bad-offset")
+        ));
+    }
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)

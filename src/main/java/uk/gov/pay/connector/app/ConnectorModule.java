@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkWrapper;
+import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
 import uk.gov.pay.connector.gatewayaccount.resource.GatewayAccountRequestValidator;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountServicesFactory;
 import uk.gov.pay.connector.paymentprocessor.service.CardExecutorService;
@@ -79,6 +80,7 @@ public class ConnectorModule extends AbstractModule {
         bind(RequestValidator.class);
         bind(GatewayAccountRequestValidator.class).in(Singleton.class);
         bind(InetAddressValidator.class).in(Singleton.class);
+        bind(WorldpayRequestTemplateBuilder.class).in(Singleton.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));

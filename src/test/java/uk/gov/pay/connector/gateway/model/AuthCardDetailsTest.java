@@ -8,7 +8,7 @@ import uk.gov.pay.connector.client.cardid.model.CardInformation;
 import uk.gov.pay.connector.client.cardid.model.CardInformationFixture;
 import uk.gov.pay.connector.client.cardid.model.CardidCardType;
 import uk.gov.pay.connector.common.model.domain.Address;
-import uk.gov.pay.connector.paymentprocessor.model.AuthoriseRequest;
+import uk.gov.pay.connector.paymentprocessor.model.MotoApiAuthoriseRequest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -16,7 +16,7 @@ import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCar
 
 class AuthCardDetailsTest {
 
-    private final AuthoriseRequest authoriseRequest = new AuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Joe");
+    private final MotoApiAuthoriseRequest authoriseRequest = new MotoApiAuthoriseRequest("one-time-token", "4242424242424242", "123", "11/99", "Joe");
     private final CardInformation cardInformation = CardInformationFixture.aCardInformation().build();
 
     @Test

@@ -15,13 +15,14 @@ public class AdyenAccountSetupDao extends JpaDao<AdyenAccountSetupTaskEntity> {
         super(entityManager);
     }
 
-    public List<AdyenAccountSetupTaskEntity> findByGatewayAccountIdAndCredentialId(long gatewayAccountId) {
-        String query = "SELECT s FROM AdyenAccountSetupTaskEntity s WHERE s.gatewayAccount.id = :gatewayAccountId";
+    public List<AdyenAccountSetupTaskEntity> findByGatewayAccountIdAndCredentialId(long gatewayAccountId, Long gatewayAccountCredentialsId) {
+        String query = "SELECT s FROM AdyenAccountSetupTaskEntity s WHERE s.gatewayAccount.id = :gatewayAccountId AND s.gatewayAccountCredential.id = :gatewayAccountCredentialsId ";
 
         return entityManager
                 .get()
                 .createQuery(query, AdyenAccountSetupTaskEntity.class)
                 .setParameter("gatewayAccountId", gatewayAccountId)
+                .setParameter("gatewayAccountCredentialsId", gatewayAccountCredentialsId)
                 .getResultList();
     }
 }

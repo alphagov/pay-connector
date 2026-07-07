@@ -6,6 +6,7 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.Adyen3dsAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.response.json.AdyenError;
@@ -18,6 +19,7 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.get3dsAuthUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
+import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE_3DS;
 import static uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus.ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.HTTP_STATUS;
@@ -54,7 +56,7 @@ public class AdyenAuthorise3dsHandler {
 
         var adyen3dsAuthorisationRequest = new Adyen3dsAuthorisationRequest(
                 get3dsAuthUrl(adyenGatewayConfig, request),
-                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), request.getRequestType(), request.getChargeExternalId()),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), AUTHORISE_3DS, request.getChargeExternalId()),
                 request.getGatewayAccount().getType(),
                 adyenRequestFactory.createPaymentDetailsRequest(request),
                 jsonObjectMapper
@@ -66,11 +68,11 @@ public class AdyenAuthorise3dsHandler {
             var mappedStatus = mapStatus(responseBody.resultCode());
 
             return Gateway3DSAuthorisationResponse.of(
-                    jsonResponse,
+                    responseBody.toString(),
                     mappedStatus,
                     responseBody.pspReference()
             );
-        } catch (GatewayException.GatewayErrorException e) {
+        } catch (GatewayErrorException e) {
             return handleGatewayErrorException(request, e);
         } catch (GatewayException.GatewayConnectionTimeoutException | GatewayException.GenericGatewayException e) {
             LOGGER.atWarn()
@@ -85,7 +87,7 @@ public class AdyenAuthorise3dsHandler {
 
     private Gateway3DSAuthorisationResponse handleGatewayErrorException(
             Auth3dsResponseGatewayRequest request,
-            GatewayException.GatewayErrorException exception) {
+            GatewayErrorException exception) {
         try {
             var adyenError = jsonObjectMapper.getObject(exception.getResponseFromGateway(), AdyenError.class);
             LOGGER.atWarn()

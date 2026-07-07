@@ -35,6 +35,7 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -43,6 +44,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLo
 import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.exception.MissingCredentialsForRecurringPaymentException;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
@@ -94,6 +96,7 @@ import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORAT
 import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.OPTIMISED;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
+import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.gateway.util.XMLUnmarshaller.unmarshall;
 import static uk.gov.pay.connector.gateway.worldpay.SendWorldpayExemptionRequest.DO_NOT_SEND_EXEMPTION_REQUEST;
@@ -217,6 +220,23 @@ class WorldpayPaymentProviderTest {
                         ))
                         .build())
                 .withGatewayAccountEntity(gatewayAccountEntity);
+    }
+
+    @Test
+    void shouldPassWorldpayAuthoriseRequestToWorldpayAuthoriseHandler() throws GatewayException {
+        WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+
+        @SuppressWarnings("unchecked")
+        GatewayResponse<WorldpayOrderStatusResponse> expectedResponse =
+                (GatewayResponse<WorldpayOrderStatusResponse>) mock(GatewayResponse.class);
+
+        when(worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, GatewayAccountType.LIVE.toString()))
+                .thenReturn(expectedResponse);
+
+        GatewayResponse<WorldpayOrderStatusResponse> actualResponse = worldpayPaymentProvider.authorise(worldpayAuthoriseRequest,
+                GatewayAccountType.LIVE.toString());
+
+        assertThat(actualResponse, is(expectedResponse));
     }
 
     @Test
