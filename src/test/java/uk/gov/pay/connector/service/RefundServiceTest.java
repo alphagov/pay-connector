@@ -444,6 +444,27 @@ public class RefundServiceTest {
     }
 
     @Test
+    void shouldTransitionRefundFromRefundErrorToRefundedForAdyenWebhook() {
+        chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transaction-id")
+                .withExternalId(externalChargeId)
+                .withStatus(CAPTURED)
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+
+        RefundEntity refundEntity = aValidRefundEntity()
+                .withChargeExternalId(externalChargeId)
+                .withStatus(REFUND_ERROR)
+                .build();
+
+        refundService.transitionRefundStateForAdyenWebhook(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
+
+        assertThat(refundEntity.getStatus(), is(REFUNDED));
+        verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, REFUNDED);
+    }
+
+    @Test
     void shouldFailWhenGatewayAccountDisabled() {
         var disabledAccount = aGatewayAccountEntity()
                 .withId(accountId)

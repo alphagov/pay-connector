@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
@@ -77,13 +78,14 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        if (isRefundTransitionIllegal(oldStatus, newStatus)) {
-            logger.info("Notification received for refund would cause an illegal state transition: refund [{}] cannot be set as [{}] because it is already in state [{}].",
-                    refundEntity.getExternalId(), newStatus, oldStatus);
+        boolean isAdyenRefundErrorToRefundedTransition = isAdyenRefundErrorToRefundedTransition(gatewayName, oldStatus, newStatus);
+
+        if (isRefundTransitionIllegal(oldStatus, newStatus) && !isAdyenRefundErrorToRefundedTransition) {
+            logIllegalRefundTransition(refundEntity, gatewayName, newStatus, oldStatus);
             return;
         }
 
-        refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
+        transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge, isAdyenRefundErrorToRefundedTransition);
 
         if (newStatus == REFUNDED) {
             userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
@@ -110,6 +112,31 @@ public class RefundNotificationProcessor {
     }
 
     private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
-        return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
+        return (oldStatus == REFUNDED && newStatus == REFUND_ERROR)
+                || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
+    }
+
+    private boolean isAdyenRefundErrorToRefundedTransition(PaymentGatewayName gatewayName, RefundStatus oldStatus, RefundStatus newStatus) {
+        return gatewayName == ADYEN && oldStatus == REFUND_ERROR && newStatus == REFUNDED;
+    }
+
+    private void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
+                                       RefundStatus newStatus, Charge charge, boolean isAdyenRefundErrorToRefundedTransition) {
+        if (isAdyenRefundErrorToRefundedTransition) {
+            refundService.transitionRefundStateForAdyenWebhook(refundEntity, gatewayAccountEntity, newStatus, charge);
+            return;
+        }
+        refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
+    }
+
+    private void logIllegalRefundTransition(RefundEntity refundEntity, PaymentGatewayName gatewayName,
+                                            RefundStatus newStatus, RefundStatus oldStatus) {
+        String logMessage = String.format("Notification received for refund would cause an illegal state transition: refund [%s] cannot be set as [%s] because it is already in state [%s].",
+                refundEntity.getExternalId(), newStatus, oldStatus);
+        if (gatewayName == ADYEN) {
+            logger.error("Adyen {}", logMessage);
+            return;
+        }
+        logger.info(logMessage);
     }
 }

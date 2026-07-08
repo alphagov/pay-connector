@@ -2,7 +2,6 @@ package uk.gov.pay.connector.queue.tasks.handlers;
 
 import com.adyen.model.notification.NotificationRequest;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -10,21 +9,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.service.ChargeService;
-import uk.gov.pay.connector.client.ledger.service.LedgerService;
-import uk.gov.pay.connector.gateway.PaymentProviders;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
-import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
-import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
-import uk.gov.pay.connector.model.domain.RefundEntityFixture;
-import uk.gov.pay.connector.queue.statetransition.StateTransitionService;
-import uk.gov.pay.connector.refund.dao.RefundDao;
-import uk.gov.pay.connector.refund.model.domain.RefundEntity;
-import uk.gov.pay.connector.refund.model.domain.RefundStatus;
-import uk.gov.pay.connector.refund.service.RefundService;
-import uk.gov.pay.connector.usernotification.service.UserNotificationService;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCancellationNotificationHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenRefundNotificationHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -41,10 +31,6 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 class AdyenWebhookTaskHandlerRefundTest {
 
     @Mock
-    private RefundDao mockRefundDao;
-    @Mock
-    private StateTransitionService mockStateTransitionService;
-    @Mock
     private ChargeService mockChargeService;
     @Mock
     private ChargeNotificationProcessor mockChargeNotificationProcessor;
@@ -53,96 +39,58 @@ class AdyenWebhookTaskHandlerRefundTest {
     @Mock
     private AdyenNotificationService mockAdyenNotificationService;
     @Mock
-    private UserNotificationService mockUserNotificationService;
+    private AdyenCancellationNotificationHandler mockAdyenCancellationNotificationHandler;
     @Mock
-    private PaymentProviders mockPaymentproviders;
-    @Mock
-    private LedgerService mockLedgerService;
-    @Mock
-    private GatewayAccountCredentialsService mockGatewayAccountCredentialsService;
+    private AdyenRefundNotificationHandler mockAdyenRefundNotificationHandler;
+
     private AdyenWebhookTaskHandler adyenWebhookTaskHandler;
 
     @BeforeEach
     void setUp() {
-        RefundService refundService = new RefundService(
-                mockRefundDao,
-                mockPaymentproviders,
-                mockUserNotificationService,
-                mockStateTransitionService,
-                mockLedgerService,
-                mockGatewayAccountCredentialsService);
         adyenWebhookTaskHandler = new AdyenWebhookTaskHandler(
                 mockChargeService,
                 mockChargeNotificationProcessor,
-                new RefundNotificationProcessor(refundService, mockUserNotificationService),
                 mockGatewayAccountService,
-                mockAdyenNotificationService);
+                mockAdyenNotificationService,
+                mockAdyenCancellationNotificationHandler,
+                mockAdyenRefundNotificationHandler);
     }
 
     @Test
-    void should_transition_refund_in_REFUND_SUBMITTED_state_to_REFUNDED_on_successful_REFUND_event() throws IOException {
-        var adyenRefundSuccessNotification = NotificationRequest.fromJson(load(ADYEN_REFUND_SUCCESS_NOTIFICATION));
-        given(mockAdyenNotificationService.extractNotificationItems(any()))
-                .willReturn(adyenRefundSuccessNotification.getNotificationItems());
+    void should_transition_refund_in_REFUND_SUBMITTED_state_to_refund_handler_for_successful_REFUND_event() throws IOException {
+        var notification = NotificationRequest.fromJson(load(ADYEN_REFUND_SUCCESS_NOTIFICATION));
+        var charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().build());
+
+        given(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(any()))
+                .willReturn(notification);
+        given(mockAdyenNotificationService.extractNotificationItems(notification))
+                .willReturn(notification.getNotificationItems());
         given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
-                .willReturn(Optional.of(Charge.from(ChargeEntityFixture.aValidChargeEntity().build())));
-        given(mockGatewayAccountService.getGatewayAccount(anyLong()))
-                .willReturn(Optional.of(GatewayAccountEntityFixture.aGatewayAccountEntity().build()));
-        RefundEntity submittedRefundEntity = new RefundEntityFixture()
-                .withStatus(RefundStatus.REFUND_SUBMITTED)
-                .build();
-        given(mockRefundDao.findByChargeExternalIdAndGatewayTransactionId(any(), any()))
-                .willReturn(Optional.of(submittedRefundEntity));
+                .willReturn(Optional.of(charge));
 
         adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-successful-notification");
 
-        then(mockStateTransitionService)
+        then(mockAdyenRefundNotificationHandler)
                 .should()
-                .offerRefundStateTransition(submittedRefundEntity, RefundStatus.REFUNDED);
+                .process(any(), org.mockito.ArgumentMatchers.eq(charge));
     }
 
     @Test
-    void should_transition_refund_in_REFUND_SUBMITTED_state_to_REFUND_ERROR_on_unsuccessful_REFUND_event() throws IOException {
-        var adyenRefundFailureNotification = NotificationRequest.fromJson(load(ADYEN_REFUND_FAILURE_NOTIFICATION));
-        given(mockAdyenNotificationService.extractNotificationItems(any()))
-                .willReturn(adyenRefundFailureNotification.getNotificationItems());
+    void should_transition_refund_in_REFUND_SUBMITTED_state_to_refund_handler_for_failed_REFUND_event() throws IOException {
+        var notification = NotificationRequest.fromJson(load(ADYEN_REFUND_FAILURE_NOTIFICATION));
+        var charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().build());
+
+        given(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(any()))
+                .willReturn(notification);
+        given(mockAdyenNotificationService.extractNotificationItems(notification))
+                .willReturn(notification.getNotificationItems());
         given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
-                .willReturn(Optional.of(Charge.from(ChargeEntityFixture.aValidChargeEntity().build())));
-        given(mockGatewayAccountService.getGatewayAccount(anyLong()))
-                .willReturn(Optional.of(GatewayAccountEntityFixture.aGatewayAccountEntity().build()));
-        RefundEntity submittedRefundEntity = new RefundEntityFixture()
-                .withStatus(RefundStatus.REFUND_SUBMITTED)
-                .build();
-        given(mockRefundDao.findByChargeExternalIdAndGatewayTransactionId(any(), any()))
-                .willReturn(Optional.of(submittedRefundEntity));
+                .willReturn(Optional.of(charge));
 
-        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-successful-notification");
+        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-failed-notification");
 
-        then(mockStateTransitionService)
+        then(mockAdyenRefundNotificationHandler)
                 .should()
-                .offerRefundStateTransition(submittedRefundEntity, RefundStatus.REFUND_ERROR);
-    }
-
-    @Test
-    @Disabled("Illegal refund transition, according to RefundNotificationProcessor")
-    void should_transition_refund_in_REFUND_ERROR_state_to_REFUNDED_on_successful_REFUND_event() throws IOException {
-        var adyenRefundFailureNotification = NotificationRequest.fromJson(load(ADYEN_REFUND_FAILURE_NOTIFICATION));
-        given(mockAdyenNotificationService.extractNotificationItems(any()))
-                .willReturn(adyenRefundFailureNotification.getNotificationItems());
-        given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
-                .willReturn(Optional.of(Charge.from(ChargeEntityFixture.aValidChargeEntity().build())));
-        given(mockGatewayAccountService.getGatewayAccount(anyLong()))
-                .willReturn(Optional.of(GatewayAccountEntityFixture.aGatewayAccountEntity().build()));
-        RefundEntity submittedRefundEntity = new RefundEntityFixture()
-                .withStatus(RefundStatus.REFUND_ERROR)
-                .build();
-        given(mockRefundDao.findByChargeExternalIdAndGatewayTransactionId(any(), any()))
-                .willReturn(Optional.of(submittedRefundEntity));
-
-        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-successful-notification");
-
-        then(mockStateTransitionService)
-                .should()
-                .offerRefundStateTransition(submittedRefundEntity, RefundStatus.REFUNDED);
+                .process(any(), org.mockito.ArgumentMatchers.eq(charge));
     }
 }

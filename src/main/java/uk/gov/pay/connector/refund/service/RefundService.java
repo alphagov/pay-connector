@@ -196,24 +196,46 @@ public class RefundService {
 
     public void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
                                       RefundStatus refundStatus, Charge charge) {
-        String fromState = (refundEntity.hasStatus()) ? refundEntity.getStatus().getValue() : "UNDEFINED";
+        transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge, false);
+    }
+
+    public void transitionRefundStateForAdyenWebhook(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
+                                                      RefundStatus refundStatus, Charge charge) {
+        transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge, true);
+    }
+
+    private void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
+                                       RefundStatus refundStatus, Charge charge, boolean allowRefundErrorToRefunded) {
+        String fromState = refundEntity.hasStatus() ? refundEntity.getStatus().getValue() : "UNDEFINED";
+
+        if (allowRefundErrorToRefunded && REFUND_ERROR.getValue().equals(fromState) && refundStatus == REFUNDED) {
+            applyRefundTransition(refundEntity, gatewayAccountEntity, refundStatus, charge, fromState);
+            return;
+        }
+
         if (isRefundInTerminalState(fromState)) {
             logger.info("Skipping refund transition: refund [{}] cannot be set as [{}] because it is already in terminal state [{}].",
-            refundEntity.getExternalId(), refundStatus, fromState);
-        } else {
-            logger.info("Changing refund status for externalId [{}] [{}]->[{}]",
-                    refundEntity.getExternalId(), fromState, refundStatus.getValue(),
-                    kv(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId()),
-                    kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()),
-                    kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
-                    kv(PROVIDER, charge.getPaymentGatewayName()),
-                    kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                    kv("from_state", fromState),
-                    kv("to_state", refundStatus.getValue()));
-
-            refundEntity.setStatus(refundStatus);
-            stateTransitionService.offerRefundStateTransition(refundEntity, refundStatus);
+                    refundEntity.getExternalId(), refundStatus, fromState);
+            return;
         }
+
+        applyRefundTransition(refundEntity, gatewayAccountEntity, refundStatus, charge, fromState);
+    }
+
+    private void applyRefundTransition(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
+                                       RefundStatus refundStatus, Charge charge, String fromState) {
+        logger.info("Changing refund status for externalId [{}] [{}]->[{}]",
+                refundEntity.getExternalId(), fromState, refundStatus.getValue(),
+                kv(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId()),
+                kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()),
+                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                kv(PROVIDER, charge.getPaymentGatewayName()),
+                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                kv("from_state", fromState),
+                kv("to_state", refundStatus.getValue()));
+
+        refundEntity.setStatus(refundStatus);
+        stateTransitionService.offerRefundStateTransition(refundEntity, refundStatus);
     }
 
     private boolean isRefundInTerminalState(String fromState) {

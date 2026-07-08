@@ -16,7 +16,6 @@ import org.slf4j.event.Level;
 import uk.gov.pay.connector.charge.model.ServicePaymentReference;
 import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
-import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.refund.model.domain.Refund;
@@ -36,6 +35,10 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,12 +55,12 @@ class RefundNotificationProcessorTest {
     RefundNotificationProcessor refundNotificationProcessor;
     RefundEntity refundEntity;
 
-    private static final PaymentGatewayName paymentGatewayName = PaymentGatewayName.WORLDPAY;
+    private static PaymentGatewayName paymentGatewayName = PaymentGatewayName.WORLDPAY;
     private static final String PAYMENT_REFERENCE = "payment-reference";
     private static final String REFUND_GATEWAY_TRANSACTION_ID = "refund-gateway-tx-id";
     private static final String TRANSACTION_ID = "transactionId";
-    private final GatewayAccountEntity gatewayAccountEntity = ChargeEntityFixture.defaultGatewayAccountEntity();
-    private final ChargeEntity chargeEntity = ChargeEntityFixture.aValidChargeEntity()
+    private final GatewayAccountEntity gatewayAccountEntity = defaultGatewayAccountEntity();
+    private final ChargeEntity chargeEntity = aValidChargeEntity()
             .withGatewayAccountEntity(gatewayAccountEntity)
             .withReference(ServicePaymentReference.of(PAYMENT_REFERENCE))
             .withTransactionId(TRANSACTION_ID)
@@ -107,7 +110,7 @@ class RefundNotificationProcessorTest {
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUNDED);
+        invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUND_ERROR);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
@@ -122,25 +125,39 @@ class RefundNotificationProcessorTest {
     }
 
     @Test
-    void shouldLogIllegalStateTransition_IfRefundedWhenRefundStatusWasSetAsRefundError() {
+    void shouldTransitionRefund_WhenRefundStatusWasSetAsRefundError() {
         refundEntity.setStatus(RefundStatus.REFUND_ERROR);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUNDED);
+        refundNotificationProcessor.invoke(
+                PaymentGatewayName.ADYEN,
+                RefundStatus.REFUNDED,
+                gatewayAccountEntity,
+                REFUND_GATEWAY_TRANSACTION_ID,
+                TRANSACTION_ID,
+                charge);
 
-        logs.assertContains("Notification received for refund would cause an illegal state transition");
+        verify(refundService).transitionRefundStateForAdyenWebhook(refundEntity, gatewayAccountEntity, RefundStatus.REFUNDED, charge);
+        verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
-    void shouldLogIllegalStateTransitionAtInfoLevel_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
+    void shouldLogIllegalStateTransitionAtErrorLevel_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
+
         refundEntity.setStatus(RefundStatus.REFUNDED);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUND_ERROR);
+        refundNotificationProcessor.invoke(
+                PaymentGatewayName.ADYEN,
+                RefundStatus.REFUND_ERROR,
+                gatewayAccountEntity,
+                REFUND_GATEWAY_TRANSACTION_ID,
+                TRANSACTION_ID,
+                charge);
 
-        assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.INFO))));
+        assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.ERROR))));
         logs.assertContains("Notification received for refund would cause an illegal state transition");
     }
 
@@ -178,10 +195,10 @@ class RefundNotificationProcessorTest {
     @Nested
     @ParameterizedClass
     @CsvSource({
-        "REFUNDED, REFUND_ERROR",
-        "REFUND_ERROR, REFUNDED"
+            "REFUNDED, REFUND_ERROR",
+            "REFUND_ERROR, REFUNDED"
     })
-    class WhenStatusTransitionIsIllegal {
+    class WorldpayLogInfoWhenStatusTransitionIsIllegal {
 
         @Parameter(0)
         RefundStatus oldStatus;
@@ -191,9 +208,11 @@ class RefundNotificationProcessorTest {
 
         @BeforeEach
         void setUp() {
+            paymentGatewayName = WORLDPAY;
             refundEntity.setStatus(oldStatus);
             when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
                     .thenReturn(Optional.of(refundEntity));
+            
         }
 
         @Test
@@ -225,6 +244,63 @@ class RefundNotificationProcessorTest {
         }
     }
 
+
+    @Nested
+    @ParameterizedClass
+    @CsvSource({
+            "REFUNDED, REFUND_ERROR"
+    })
+    class AdyenLogErrorWhenStatusTransitionIsIllegal {
+
+        @Parameter(0)
+        RefundStatus oldStatus;
+        @Parameter(1)
+        RefundStatus newStatus;
+
+
+        @BeforeEach
+        void setUp() {
+            paymentGatewayName = ADYEN;
+            refundEntity.setStatus(oldStatus);
+            when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
+                    .thenReturn(Optional.of(refundEntity));
+
+        }
+
+
+        @Test
+        void shouldLogIllegalStateTransitionAtInfoLevel() {
+            invokeRefundNotificationProcessorWithNewStatus(newStatus);
+
+            assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.ERROR))));
+            logs.assertContains("Adyen Notification received for refund would cause an illegal state " +
+                    "transition: refund [%s] cannot be set as [%s] because it is already in state [%s].".formatted(
+                            refundEntity.getExternalId(), newStatus, oldStatus));
+        }
+
+        @Test
+        void shouldNotTransitionTheRefundState() {
+            invokeRefundNotificationProcessorWithNewStatus(newStatus);
+
+            then(refundService)
+                    .should(never())
+                    .transitionRefundState(any(), any(), any(), any());
+
+            then(refundService)
+                    .should(never())
+                    .transitionRefundStateForAdyenWebhook(any(), any(), any(), any());
+        }
+
+        @Test
+        void shouldNotSendRefundIssuedEmail() {
+            invokeRefundNotificationProcessorWithNewStatus(newStatus);
+
+            then(userNotificationService)
+                    .should(never())
+                    .sendRefundIssuedEmail(any(), any(), any());
+        }
+    }
+
     @Nested
     @ParameterizedClass
     @EnumSource(RefundStatus.class)
@@ -247,6 +323,7 @@ class RefundNotificationProcessorTest {
             then(refundService)
                     .should(never())
                     .transitionRefundState(any(), any(), any(), any());
+
         }
 
         @Test
