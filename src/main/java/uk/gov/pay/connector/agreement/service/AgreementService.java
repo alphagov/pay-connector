@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.agreement.service;
 
 import com.google.inject.persist.Transactional;
-import org.apache.hc.core5.http.HttpStatus;
+import org.apache.http.HttpStatus;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
 import uk.gov.pay.connector.agreement.exception.AgreementNotFoundException;
 import uk.gov.pay.connector.agreement.exception.RecurringCardPaymentsNotAllowedException;

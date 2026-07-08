@@ -25,8 +25,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 
-import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
-
+import static org.apache.http.HttpStatus.SC_CREATED;
 
 @Path("/")
 @Tag(name = "Agreements")
