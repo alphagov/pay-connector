@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.usernotification.model;
 
 
-import org.apache.hc.core5.http.NameValuePair;
+import org.apache.http.NameValuePair;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import java.time.ZonedDateTime;

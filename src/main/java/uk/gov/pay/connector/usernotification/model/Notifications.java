@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.usernotification.model;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.hc.core5.http.NameValuePair;
+import org.apache.http.NameValuePair;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
