@@ -172,6 +172,15 @@ public class RefundService {
         return refundEntity;
     }
 
+    @Transactional
+    @SuppressWarnings("WeakerAccess")
+    public RefundEntity forceTransitionRefundState(Long refundEntityId, GatewayAccountEntity gatewayAccountEntity,
+                                                   RefundStatus refundStatus, Charge charge) {
+        RefundEntity refundEntity = reloadRefundFromDatabase(refundEntityId);
+        forceTransitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge);
+        return refundEntity;
+    }
+
     private RefundStatus determineRefundStatus(GatewayRefundResponse gatewayRefundResponse) {
         if (gatewayRefundResponse.isSuccessful()) {
             return switch (gatewayRefundResponse.state()) {
@@ -196,30 +205,42 @@ public class RefundService {
 
     public void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
                                       RefundStatus refundStatus, Charge charge) {
-        transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge, false);
+        String fromState = (refundEntity.hasStatus()) ? refundEntity.getStatus().getValue() : "UNDEFINED";
+        if (isRefundInTerminalState(fromState)) {
+            logger.info("Skipping refund transition: refund [{}] cannot be set as [{}] because it is already in terminal state [{}].",
+            refundEntity.getExternalId(), refundStatus, fromState);
+        } else {
+            logger.info("Changing refund status for externalId [{}] [{}]->[{}]",
+                    refundEntity.getExternalId(), fromState, refundStatus.getValue(),
+                    kv(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId()),
+                    kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()),
+                    kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
+                    kv(PROVIDER, charge.getPaymentGatewayName()),
+                    kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
+                    kv("from_state", fromState),
+                    kv("to_state", refundStatus.getValue()));
+
+            refundEntity.setStatus(refundStatus);
+            stateTransitionService.offerRefundStateTransition(refundEntity, refundStatus);
+        }
     }
 
     public void transitionRefundStateForAdyenWebhook(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
                                                       RefundStatus refundStatus, Charge charge) {
-        transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge, true);
+        String fromState = (refundEntity.hasStatus()) ? refundEntity.getStatus().getValue() : "UNDEFINED";
+        if (REFUND_ERROR.getValue().equals(fromState) && refundStatus == REFUNDED) {
+            forceTransitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge);
+            return;
+        }
+
+        transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge);
     }
 
-    private void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
-                                       RefundStatus refundStatus, Charge charge, boolean allowRefundErrorToRefunded) {
+    public RefundEntity forceTransitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
+                                                   RefundStatus refundStatus, Charge charge) {
         String fromState = refundEntity.hasStatus() ? refundEntity.getStatus().getValue() : "UNDEFINED";
-
-        if (allowRefundErrorToRefunded && REFUND_ERROR.getValue().equals(fromState) && refundStatus == REFUNDED) {
-            applyRefundTransition(refundEntity, gatewayAccountEntity, refundStatus, charge, fromState);
-            return;
-        }
-
-        if (isRefundInTerminalState(fromState)) {
-            logger.info("Skipping refund transition: refund [{}] cannot be set as [{}] because it is already in terminal state [{}].",
-                    refundEntity.getExternalId(), refundStatus, fromState);
-            return;
-        }
-
         applyRefundTransition(refundEntity, gatewayAccountEntity, refundStatus, charge, fromState);
+        return refundEntity;
     }
 
     private void applyRefundTransition(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,

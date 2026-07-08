@@ -81,7 +81,11 @@ public class RefundNotificationProcessor {
         boolean isAdyenRefundErrorToRefundedTransition = isAdyenRefundErrorToRefundedTransition(gatewayName, oldStatus, newStatus);
 
         if (isRefundTransitionIllegal(oldStatus, newStatus) && !isAdyenRefundErrorToRefundedTransition) {
-            logIllegalRefundTransition(refundEntity, gatewayName, newStatus, oldStatus);
+            if (gatewayName == ADYEN) {
+                adyenLogIllegalRefundTransition(refundEntity, newStatus, oldStatus);
+            } else {
+                logIllegalRefundTransition(refundEntity, newStatus, oldStatus);
+            }
             return;
         }
 
@@ -128,14 +132,13 @@ public class RefundNotificationProcessor {
         refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
     }
 
-    private void logIllegalRefundTransition(RefundEntity refundEntity, PaymentGatewayName gatewayName,
-                                            RefundStatus newStatus, RefundStatus oldStatus) {
-        String logMessage = String.format("Notification received for refund would cause an illegal state transition: refund [%s] cannot be set as [%s] because it is already in state [%s].",
+    private void logIllegalRefundTransition(RefundEntity refundEntity, RefundStatus newStatus, RefundStatus oldStatus) {
+        logger.info("Notification received for refund would cause an illegal state transition: refund [{}] cannot be set as [{}] because it is already in state [{}].",
                 refundEntity.getExternalId(), newStatus, oldStatus);
-        if (gatewayName == ADYEN) {
-            logger.error("Adyen {}", logMessage);
-            return;
-        }
-        logger.info(logMessage);
+    }
+
+    private void adyenLogIllegalRefundTransition(RefundEntity refundEntity, RefundStatus newStatus, RefundStatus oldStatus) {
+        logger.error("Adyen Notification received for refund would cause an illegal state transition: refund [{}] cannot be set as [{}] because it is already in state [{}].",
+                refundEntity.getExternalId(), newStatus, oldStatus);
     }
 }

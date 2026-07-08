@@ -88,4 +88,5 @@ class AdyenRefundServiceTest {
         assertThat(refundEntity.getStatus(), is(RefundStatus.REFUNDED));
         verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, RefundStatus.REFUNDED);
     }
+
 }
