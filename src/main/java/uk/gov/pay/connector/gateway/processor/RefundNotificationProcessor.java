@@ -78,18 +78,18 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        boolean isAdyenRefundErrorToRefundedTransition = isAdyenRefundErrorToRefundedTransition(gatewayName, oldStatus, newStatus);
-
-        if (isRefundTransitionIllegal(oldStatus, newStatus) && !isAdyenRefundErrorToRefundedTransition) {
+        if (gatewayName == ADYEN && oldStatus == REFUND_ERROR && newStatus == REFUNDED) {
+            refundService.transitionRefundStateForAdyenWebhook(refundEntity, gatewayAccountEntity, newStatus, charge);
+        } else if (isRefundTransitionIllegal(oldStatus, newStatus)) {
             if (gatewayName == ADYEN) {
                 adyenLogIllegalRefundTransition(refundEntity, newStatus, oldStatus);
             } else {
                 logIllegalRefundTransition(refundEntity, newStatus, oldStatus);
             }
             return;
+        } else {
+            refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
         }
-
-        transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge, isAdyenRefundErrorToRefundedTransition);
 
         if (newStatus == REFUNDED) {
             userNotificationService.sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
@@ -117,19 +117,6 @@ public class RefundNotificationProcessor {
 
     private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
         return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
-    }
-
-    private boolean isAdyenRefundErrorToRefundedTransition(PaymentGatewayName gatewayName, RefundStatus oldStatus, RefundStatus newStatus) {
-        return gatewayName == ADYEN && oldStatus == REFUND_ERROR && newStatus == REFUNDED;
-    }
-
-    private void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
-                                       RefundStatus newStatus, Charge charge, boolean isAdyenRefundErrorToRefundedTransition) {
-        if (isAdyenRefundErrorToRefundedTransition) {
-            refundService.transitionRefundStateForAdyenWebhook(refundEntity, gatewayAccountEntity, newStatus, charge);
-            return;
-        }
-        refundService.transitionRefundState(refundEntity, gatewayAccountEntity, newStatus, charge);
     }
 
     private void logIllegalRefundTransition(RefundEntity refundEntity, RefundStatus newStatus, RefundStatus oldStatus) {
