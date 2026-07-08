@@ -31,7 +31,6 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -263,13 +262,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return response;
     }
 
-    public GatewayResponse<WorldpayOrderStatusResponse> authorise(AuthoriseRequest authoriseRequest,
+    public GatewayResponse<WorldpayOrderStatusResponse> authorise(WorldpayAuthoriseRequest worldpayAuthoriseRequest,
                                                                   String gatewayAccountType) {
-        if (authoriseRequest instanceof WorldpayAuthoriseRequest worldpayAuthoriseRequest) {
-            return worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, gatewayAccountType);
-        } else {
-            throw new IllegalArgumentException("AuthoriseRequest is not of type WorldpayAuthoriseRequest");
-        }
+        return worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, gatewayAccountType);
     }
 
     private static boolean authorisationWithExemptionRequestSoftDeclinedButRetryableWithoutExemption(GatewayResponse<WorldpayOrderStatusResponse> response, boolean corporateExemptionsEnabledAndCorporateCardUsed) {
