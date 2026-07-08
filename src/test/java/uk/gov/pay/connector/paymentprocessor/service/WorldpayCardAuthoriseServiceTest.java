@@ -29,8 +29,6 @@ import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthoris
 import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
-import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
@@ -102,9 +100,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private PaymentProvider mockedWorldpayPaymentProvider;
 
     @Mock
-    private AuthoriseRequestFactory mockAuthoriseRequestFactory;
-
-    @Mock
     private TaskQueueService mockTaskQueueService;
 
     @Mock
@@ -156,7 +151,6 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 mockedProviders,
                 new AuthorisationService(mockExecutorService, environment, mockConfiguration),
                 chargeService,
-                mockAuthoriseRequestFactory,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new WorldpayAuthoriseRequestLogGenerator()),
                 mockChargeEligibleForCaptureService,
                 mock(PaymentInstrumentEntityToAuthCardDetailsConverter.class),
@@ -374,8 +368,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
         GatewayResponse<WorldpayOrderStatusResponse> responseBuilder = responseBuilder()
                 .withResponse(worldpayOrderStatusResponse)
                 .withSessionIdentifier(sessionIdentifier).build();
-        when(mockedWorldpayPaymentProvider.authorise(any(CardAuthorisationGatewayRequest.class), any(ChargeEntity.class)))
-                .thenReturn(responseBuilder);
+        when(mockedWorldpayPaymentProvider.authorise(any(), any())).thenReturn(responseBuilder);
         return worldpayOrderStatusResponse;
     }
 
