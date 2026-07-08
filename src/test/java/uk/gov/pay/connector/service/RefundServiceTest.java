@@ -444,7 +444,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    void shouldForceTransitionRefundFromRefundErrorToRefunded() {
+    void shouldTransitionRefundFromRefundErrorToRefundedForAdyenWebhook() {
         chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
@@ -458,7 +458,7 @@ public class RefundServiceTest {
                 .withStatus(REFUND_ERROR)
                 .build();
 
-        refundService.forceTransitionRefundState(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
+        refundService.transitionRefundStateForAdyenWebhook(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
 
         assertThat(refundEntity.getStatus(), is(REFUNDED));
         verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, REFUNDED);
