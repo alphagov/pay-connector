@@ -78,7 +78,7 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        if (gatewayName == ADYEN && oldStatus == REFUND_ERROR && newStatus == REFUNDED) {
+        if (isAdyenRefundErrorToRefundedTransition(gatewayName, oldStatus, newStatus)) {
             refundService.transitionRefundStateForAdyenWebhook(refundEntity, gatewayAccountEntity, newStatus, charge);
         } else if (isRefundTransitionIllegal(oldStatus, newStatus)) {
             if (gatewayName == ADYEN) {
@@ -117,6 +117,10 @@ public class RefundNotificationProcessor {
 
     private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
         return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
+    }
+
+    private boolean isAdyenRefundErrorToRefundedTransition(PaymentGatewayName gatewayName, RefundStatus oldStatus, RefundStatus newStatus) {
+        return gatewayName == ADYEN && oldStatus == REFUND_ERROR && newStatus == REFUNDED;
     }
 
     private void logIllegalRefundTransition(RefundEntity refundEntity, RefundStatus newStatus, RefundStatus oldStatus) {
