@@ -5,14 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
@@ -28,6 +25,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.VA
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams.AddGatewayAccountCredentialsParamsBuilder.anAddGatewayAccountCredentialsParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 
 public class AdyenAccountSetupResourceIT {
 
@@ -42,13 +40,10 @@ public class AdyenAccountSetupResourceIT {
 
     @Test
     void getTasksShouldReturnSomeTasksCompletedForALiveAccount() {
-        LocalDateTime activeStartDate = LocalDate.parse("2021-02-01").atStartOfDay();
-        
+
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withGatewayAccountId(500L)
                 .withPaymentProvider(ADYEN.getName())
-                .withActiveStartDate(activeStartDate.toInstant(ZoneOffset.UTC))
-                .withState(GatewayAccountCredentialState.ACTIVE)
                 .build();
         
         var liveAccount = app.getDatabaseFixtures()
@@ -143,6 +138,46 @@ public class AdyenAccountSetupResourceIT {
                 .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, worldPayCredentialExternalId))
                 .then()
                 .statusCode(SC_NOT_FOUND);
+    }
+
+    @Test
+    void patchTasksShouldUpdateASingleTaskWithACompletedStatus() {
+        AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
+                .withGatewayAccountId(500L)
+                .withPaymentProvider(ADYEN.getName())
+                .build();
+
+        var liveAccount = app.getDatabaseFixtures()
+                .aTestAccount()
+                .withAccountId(500L)
+                .withServiceId(serviceId)
+                .withPaymentProvider(ADYEN.getName())
+                .withType(LIVE)
+                .withGatewayAccountCredentials(Collections.singletonList(credentialsParams))
+                .insert();
+
+        var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
+        
+        app.givenSetup()
+                .body(toJson(Collections.singletonList(Map.of(
+                        "op", "replace",
+                        "path", "bank_account",
+                        "value", "COMPLETED"))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                .then()
+                .statusCode(SC_OK);
+
+        app.givenSetup()
+                .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                .then()
+                .statusCode(SC_OK)
+                .body("tasks.bank_account.status", is(COMPLETED.toString()))
+                .body("tasks.responsible_person.status", is(COMPLETED.toString()))
+                .body("tasks.vat_number.status", is(NOT_STARTED.toString()))
+                .body("tasks.company_number.status", is(NOT_STARTED.toString()))
+                .body("tasks.director.status", is(NOT_STARTED.toString()))
+                .body("tasks.government_entity_document.status", is(NOT_STARTED.toString()))
+                .body("tasks.organisation_details.status", is(NOT_STARTED.toString()));
     }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {
