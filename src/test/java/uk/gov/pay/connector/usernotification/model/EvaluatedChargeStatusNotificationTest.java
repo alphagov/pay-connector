@@ -1,7 +1,7 @@
 package uk.gov.pay.connector.usernotification.model;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.junit.jupiter.api.Test;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 
