@@ -42,6 +42,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static uk.gov.pay.connector.charge.util.RefundCalculator.getTotalAmountAvailableToBeRefunded;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.refund.exception.RefundException.ErrorCode.NOT_SUFFICIENT_AMOUNT_AVAILABLE;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
@@ -196,8 +197,10 @@ public class RefundService {
 
     public void transitionRefundState(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
                                       RefundStatus refundStatus, Charge charge) {
-        String fromState = (refundEntity.hasStatus()) ? refundEntity.getStatus().getValue() : "UNDEFINED";
-        if (isRefundInTerminalState(fromState)) {
+        RefundStatus currentStatus = refundEntity.hasStatus() ? refundEntity.getStatus() : null;
+        String fromState = currentStatus != null ? currentStatus.getValue() : "UNDEFINED";
+
+        if (isRefundInTerminalState(currentStatus, charge.getPaymentGatewayName())) {
             logger.info("Skipping refund transition: refund [{}] cannot be set as [{}] because it is already in terminal state [{}].",
                     refundEntity.getExternalId(), refundStatus, fromState);
         } else {
@@ -216,39 +219,8 @@ public class RefundService {
         }
     }
 
-    public void transitionRefundStateForAdyenWebhook(RefundEntity refundEntity, GatewayAccountEntity gatewayAccountEntity,
-                                                     RefundStatus refundStatus, Charge charge) {
-        String fromState = (refundEntity.hasStatus()) ? refundEntity.getStatus().getValue() : "UNDEFINED";
-        if (REFUND_ERROR.getValue().equals(fromState) && refundStatus == REFUNDED) {
-            if (REFUNDED.getValue().equals(fromState)) {
-                logger.info("Skipping refund transition: refund [{}] cannot be set as [{}] because it is already in terminal state [{}].",
-                        refundEntity.getExternalId(), refundStatus, fromState);
-            } else {
-                logger.atInfo()
-                        .setMessage("Changing refund status for externalId [{}] [{}]->[{}]")
-                        .addArgument(refundEntity.getExternalId())
-                        .addArgument(fromState)
-                        .addArgument(refundStatus.getValue())
-                        .addArgument(kv(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId()))
-                        .addArgument(kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()))
-                        .addArgument(kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()))
-                        .addArgument(kv(PROVIDER, charge.getPaymentGatewayName()))
-                        .addArgument(kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()))
-                        .addArgument(kv("from_state", fromState))
-                        .addArgument(kv("to_state", refundStatus.getValue()))
-                        .log();
-
-                refundEntity.setStatus(refundStatus);
-                stateTransitionService.offerRefundStateTransition(refundEntity, refundStatus);
-            }
-            return;
-        }
-
-        transitionRefundState(refundEntity, gatewayAccountEntity, refundStatus, charge);
-    }
-
-    private boolean isRefundInTerminalState(String fromState) {
-        return REFUNDED.getValue().equals(fromState) || REFUND_ERROR.getValue().equals(fromState);
+    private boolean isRefundInTerminalState(RefundStatus currentStatus, String paymentGatewayName) {
+        return currentStatus == REFUNDED || (currentStatus == REFUND_ERROR && !ADYEN.getName().equals(paymentGatewayName));
     }
 
     private void checkIfRefundRequestIsInConflictOrTerminate(RefundRequest refundRequest, Charge reloadedCharge, long totalAmountToBeRefunded) {

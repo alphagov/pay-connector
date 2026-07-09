@@ -72,6 +72,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -423,7 +424,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    void shouldNotTransitionRefundFromRefundErrorToRefunded() {
+    void shouldNotTransitionRefundFromRefundErrorToRefundedForWorldPayWebhook() {
         chargeEntity = aValidChargeEntity()
                 .withGatewayAccountEntity(account)
                 .withTransactionId("transaction-id")
@@ -450,7 +451,7 @@ public class RefundServiceTest {
                 .withTransactionId("transaction-id")
                 .withExternalId(externalChargeId)
                 .withStatus(CAPTURED)
-                .withPaymentProvider(WORLDPAY.getName())
+                .withPaymentProvider(ADYEN.getName())
                 .build();
 
         RefundEntity refundEntity = aValidRefundEntity()
@@ -458,7 +459,7 @@ public class RefundServiceTest {
                 .withStatus(REFUND_ERROR)
                 .build();
 
-        refundService.transitionRefundStateForAdyenWebhook(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
+        refundService.transitionRefundState(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
 
         assertThat(refundEntity.getStatus(), is(REFUNDED));
         verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, REFUNDED);

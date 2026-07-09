@@ -266,4 +266,68 @@ class AdyenWebhookTaskHandlerTest {
 
         verify(mockAdyenRefundNotificationHandler).process(mockNotificationItem, mockCharge);
     }
+
+    @Test
+    void shouldProcessCancellationNotificationForConnectorCharge() {
+        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+                .thenReturn(mockNotificationRequest);
+        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
+                .thenReturn(List.of(mockNotificationItem));
+        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_CANCELLATION);
+        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
+                .thenReturn(Optional.of(mockCharge));
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+
+        verify(mockAdyenCancellationNotificationHandler).process(mockNotificationItem, mockCharge);
+        verify(mockAdyenRefundNotificationHandler, never()).process(any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldIgnoreUnsupportedNotificationItem() {
+        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+                .thenReturn(mockNotificationRequest);
+        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
+                .thenReturn(List.of(mockNotificationItem));
+        when(mockNotificationItem.getEventCode()).thenReturn("UNSUPPORTED_EVENT");
+        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
+                .thenReturn(Optional.of(mockCharge));
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+
+        verify(mockAdyenRefundNotificationHandler, never()).process(any(), any());
+        verify(mockAdyenCancellationNotificationHandler, never()).process(any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockChargeNotificationProcessor, never()).processCaptureNotificationForExpungedCharge(any(), any(), any(), any());
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getAllValues().stream()
+                .anyMatch(event -> event.getFormattedMessage().equals("Ignoring unsupported Adyen webhook item")), is(true));
+    }
+
+    @Test
+    void shouldLogErrorWhenHistoricCaptureChargeHasNoGatewayAccount() {
+        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
+                .thenReturn(mockNotificationRequest);
+        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
+                .thenReturn(List.of(mockNotificationItem));
+        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_CAPTURE);
+        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
+        when(mockNotificationItem.isSuccess()).thenReturn(true);
+        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
+                .thenReturn(Optional.of(mockCharge));
+        when(mockCharge.isHistoric()).thenReturn(true);
+        when(mockCharge.getGatewayAccountId()).thenReturn(gatewayAccountId);
+        when(mockGatewayAccountService.getGatewayAccount(gatewayAccountId)).thenReturn(Optional.empty());
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+
+        verify(mockChargeNotificationProcessor, never()).processCaptureNotificationForExpungedCharge(any(), any(), any(), any());
+        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+        assertThat(loggingEventArgumentCaptor.getAllValues().stream()
+                .anyMatch(event -> event.getFormattedMessage().equals("GatewayAccount not found for charge")), is(true));
+    }
 }

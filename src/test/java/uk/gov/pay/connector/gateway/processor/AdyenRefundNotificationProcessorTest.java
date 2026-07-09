@@ -68,6 +68,7 @@ class AdyenRefundNotificationProcessorTest {
     @Test
     void shouldTransitionRefund_WhenRefundStatusWasSetAsRefundError() {
         refundEntity.setStatus(RefundStatus.REFUND_ERROR);
+        
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
                 .thenReturn(Optional.of(refundEntity));
 
@@ -80,7 +81,7 @@ class AdyenRefundNotificationProcessorTest {
                 charge);
 
         verify(refundService)
-                .transitionRefundStateForAdyenWebhook(refundEntity, gatewayAccountEntity, RefundStatus.REFUNDED, charge);
+                .transitionRefundState(refundEntity, gatewayAccountEntity, RefundStatus.REFUNDED, charge);
         verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
@@ -103,7 +104,7 @@ class AdyenRefundNotificationProcessorTest {
                 .transitionRefundState(any(), any(), any(), any());
         then(refundService)
                 .should(never())
-                .transitionRefundStateForAdyenWebhook(any(), any(), any(), any());
+                .transitionRefundState(any(), any(), any(), any());
         then(userNotificationService)
                 .should(never())
                 .sendRefundIssuedEmail(any(), any(), any());

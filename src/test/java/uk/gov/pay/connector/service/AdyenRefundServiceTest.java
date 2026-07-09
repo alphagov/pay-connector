@@ -83,7 +83,7 @@ class AdyenRefundServiceTest {
                 .withStatus(RefundStatus.REFUND_ERROR)
                 .build();
 
-        refundService.transitionRefundStateForAdyenWebhook(refundEntity, account, RefundStatus.REFUNDED, Charge.from(chargeEntity));
+        refundService.transitionRefundState(refundEntity, account, RefundStatus.REFUNDED, Charge.from(chargeEntity));
 
         assertThat(refundEntity.getStatus(), is(RefundStatus.REFUNDED));
         verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, RefundStatus.REFUNDED);
