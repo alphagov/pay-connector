@@ -70,11 +70,27 @@ public class AdyenAccountSetupService {
     public void update(GatewayAccountEntity gatewayAccountEntity,
                        AdyenAccountSetupUpdateRequest updateRequest,
                        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+        
+        AdyenAccountSetupTask task = updateRequest.task();
+        AdyenAccountSetupStatus status = updateRequest.status();
+        Long gatewayAccountId = gatewayAccountEntity.getId();
+        Long gatewayAccountCredentialsId = gatewayAccountCredentialsEntity.getId();
+        
         AdyenAccountSetupTaskEntity adyenAccountSetupTaskEntity = new AdyenAccountSetupTaskEntity(
                 gatewayAccountEntity,
-                updateRequest.task(),
+                task,
                 gatewayAccountCredentialsEntity,
                 updateRequest.status());
+        
+        if (adyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(gatewayAccountId, gatewayAccountCredentialsId, task)){
+            adyenAccountSetupDao.updateTaskStatus(
+                    gatewayAccountId,
+                    gatewayAccountCredentialsId,
+                    task,
+                    status
+            ); 
+        } else {
         adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
+        }
     }
 }

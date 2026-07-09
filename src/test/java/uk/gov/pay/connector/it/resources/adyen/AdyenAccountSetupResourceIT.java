@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.util.AddGatewayAccountCredentialsParams;
 
@@ -141,7 +142,7 @@ public class AdyenAccountSetupResourceIT {
     }
 
     @Test
-    void patchTasksShouldUpdateASingleTaskWithACompletedStatus() {
+    void patchTasksShouldUpdateExistingTask() {
         AddGatewayAccountCredentialsParams credentialsParams = anAddGatewayAccountCredentialsParams()
                 .withGatewayAccountId(500L)
                 .withPaymentProvider(ADYEN.getName())
@@ -157,29 +158,36 @@ public class AdyenAccountSetupResourceIT {
                 .insert();
 
         var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
-        
-        app.givenSetup()
-                .body(toJson(Collections.singletonList(Map.of(
-                        "op", "replace",
-                        "path", "bank_account",
-                        "value", "COMPLETED"))))
-                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
-                .then()
-                .statusCode(SC_OK);
+
+        makePatchRequestForTaskAndStatus(credentialExternalId, BANK_ACCOUNT.getValue(), COMPLETED);
 
         app.givenSetup()
                 .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
                 .then()
                 .statusCode(SC_OK)
-                .body("tasks.bank_account.status", is(COMPLETED.toString()))
-                .body("tasks.responsible_person.status", is(NOT_STARTED.toString()))
-                .body("tasks.vat_number.status", is(NOT_STARTED.toString()))
-                .body("tasks.company_number.status", is(NOT_STARTED.toString()))
-                .body("tasks.director.status", is(NOT_STARTED.toString()))
-                .body("tasks.government_entity_document.status", is(NOT_STARTED.toString()))
-                .body("tasks.organisation_details.status", is(NOT_STARTED.toString()));
+                .body("tasks.bank_account.status", is(COMPLETED.toString()));
+
+        makePatchRequestForTaskAndStatus(credentialExternalId, BANK_ACCOUNT.getValue(), NOT_STARTED);
+
+        app.givenSetup()
+                .get(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                .then()
+                .statusCode(SC_OK)
+                .body("tasks.bank_account.status", is(NOT_STARTED.toString()));
     }
-    
+
+    private void makePatchRequestForTaskAndStatus(String credentialExternalId, String task, AdyenAccountSetupStatus status) {
+        app.givenSetup()
+                .body(toJson(Collections.singletonList(Map.of(
+                        "op", "replace",
+                        "path", task,
+                        "value", status))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                .then()
+                .statusCode(SC_OK);
+    }
+
+
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {
         tasks.forEach(task -> app.getDatabaseTestHelper().addGatewayAccountsAdyenSetupTask(gatewayAccountId, credentialId, task, COMPLETED));
     }
