@@ -25,6 +25,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Map;
@@ -340,6 +341,29 @@ class AdyenRequestFactoryTest {
                 new KeyValuePair("value", "bad-offset")
         ));
     }
+
+    @Test
+    void should_create_payment_request_for_cit_recurring_setup() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withCardNo("4444333322221111")
+                        .withCardHolder("John Doe")
+                        .withCvc("737")
+                        .withEndDate(CardExpiryDate.valueOf("10/99"))
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreementPaymentType(AgreementPaymentType.UNSCHEDULED)
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperReference(), is(authoriseRequest.getAgreement().get().getExternalId()));
+        assertThat(request.storePaymentMethod(), is(true));
+        assertThat(request.recurringProcessingModel(), is("UnscheduledCardOnFile"));
+        assertThat(request.shopperInteraction(), is("Ecommerce"));
+    }
+
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)

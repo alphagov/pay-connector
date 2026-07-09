@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getMerchantAccountId;
+import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRecurringProcessingModelMapper.fromAgreementPaymentType;
 
 public class AdyenRequestFactory {
 
@@ -57,7 +58,18 @@ public class AdyenRequestFactory {
                 "scheme");
 
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
-        
+
+        String shopperReference = null;
+        Boolean storePaymentMethod = null;
+        String recurringProcessingModel = null;
+        if (request.isSavePaymentInstrumentToAgreement()) {
+            shopperReference = request.getAgreement()
+                    .orElseThrow(() -> new IllegalArgumentException("Expected charge with savePaymentInstrumentToAgreement to have an agreement"))
+                    .getExternalId();
+            storePaymentMethod = true;
+            recurringProcessingModel = fromAgreementPaymentType(request.getAgreementPaymentType());
+        }
+
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
@@ -72,7 +84,10 @@ public class AdyenRequestFactory {
                 isMoto ? null : mapToBrowserInfo(authCardDetails),
                 isMoto ? null : frontendUrl,
                 isMoto ? null : request.getEmail(),
-                isMoto ? null : authCardDetails.getIpAddress().orElse(null)
+                isMoto ? null : authCardDetails.getIpAddress().orElse(null),
+                shopperReference,
+                storePaymentMethod,
+                recurringProcessingModel
         );
     }
 
