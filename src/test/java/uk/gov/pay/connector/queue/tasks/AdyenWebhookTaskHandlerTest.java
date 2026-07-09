@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
@@ -26,6 +27,7 @@ import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCancellationNotifica
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenRefundNotificationHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -36,6 +38,8 @@ import java.util.Optional;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -43,6 +47,10 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_REFUND_FAILURE_NOTIFICATION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_REFUND_SUCCESS_NOTIFICATION;
+import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
+
 @ExtendWith(MockitoExtension.class)
 class AdyenWebhookTaskHandlerTest {
 
@@ -329,5 +337,43 @@ class AdyenWebhookTaskHandlerTest {
         verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
         assertThat(loggingEventArgumentCaptor.getAllValues().stream()
                 .anyMatch(event -> event.getFormattedMessage().equals("GatewayAccount not found for charge")), is(true));
+    }
+
+    @Test
+    void should_transition_refund_in_REFUND_SUBMITTED_state_to_refund_handler_for_successful_REFUND_event() throws IOException {
+        var notification = NotificationRequest.fromJson(load(ADYEN_REFUND_SUCCESS_NOTIFICATION));
+        var charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().build());
+
+        given(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(any()))
+                .willReturn(notification);
+        given(mockAdyenNotificationService.extractNotificationItems(notification))
+                .willReturn(notification.getNotificationItems());
+        given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
+                .willReturn(Optional.of(charge));
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-successful-notification");
+
+        then(mockAdyenRefundNotificationHandler)
+                .should()
+                .process(any(), org.mockito.ArgumentMatchers.eq(charge));
+    }
+
+    @Test
+    void should_transition_refund_in_REFUND_SUBMITTED_state_to_refund_handler_for_failed_REFUND_event() throws IOException {
+        var notification = NotificationRequest.fromJson(load(ADYEN_REFUND_FAILURE_NOTIFICATION));
+        var charge = Charge.from(ChargeEntityFixture.aValidChargeEntity().build());
+
+        given(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(any()))
+                .willReturn(notification);
+        given(mockAdyenNotificationService.extractNotificationItems(notification))
+                .willReturn(notification.getNotificationItems());
+        given(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(any(), any()))
+                .willReturn(Optional.of(charge));
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification("refund-failed-notification");
+
+        then(mockAdyenRefundNotificationHandler)
+                .should()
+                .process(any(), org.mockito.ArgumentMatchers.eq(charge));
     }
 }

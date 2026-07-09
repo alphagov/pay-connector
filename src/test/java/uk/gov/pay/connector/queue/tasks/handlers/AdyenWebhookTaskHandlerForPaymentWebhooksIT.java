@@ -9,6 +9,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.dao.DatabaseFixtures;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
+import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -90,6 +91,26 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
     void should_update_charge_to_REFUND_ERROR_for_failed_refund_notification() {
         var testRefund = createRefundInSubmittedState();
         var payload = load(ADYEN_REFUND_FAILURE_NOTIFICATION).replace("{{pspReference}}", testRefund.getGatewayTransactionId()).replace("{{merchantReference}}", testRefund.getExternalRefundId());
+
+        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
+
+        assertRefundStatus(testRefund.getId(), REFUND_ERROR.getValue());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"REFUND_ERROR"})
+    void should_update_refund_in_valid_state_for_failed_refund_notification(RefundStatus currentStatus) {
+        var capturedCharge = createTestChargeWithStatus(CAPTURED);
+        var testRefund = app.getDatabaseFixtures()
+                .aTestRefund()
+                .withTestCharge(capturedCharge)
+                .withGatewayTransactionId("some-pspReference-returned-from-refund-request-to-Adyen")
+                .withChargeExternalId(CHARGE_EXTERNAL_ID)
+                .withRefundStatus(currentStatus)
+                .insert();
+        var payload = load(ADYEN_REFUND_FAILURE_NOTIFICATION)
+                .replace("{{pspReference}}", testRefund.getGatewayTransactionId())
+                .replace("{{merchantReference}}", testRefund.getExternalRefundId());
 
         adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
 
