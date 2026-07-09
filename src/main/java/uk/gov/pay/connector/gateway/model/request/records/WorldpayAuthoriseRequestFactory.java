@@ -1,5 +1,6 @@
 package uk.gov.pay.connector.gateway.model.request.records;
 
+import jakarta.inject.Inject;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.service.payments.commons.model.AuthorisationMode;
 
@@ -9,6 +10,7 @@ public class WorldpayAuthoriseRequestFactory {
 
     private final WorldpayMotoAuthoriseRequestFactory worldpayMotoAuthoriseRequestFactory;
 
+    @Inject
     public WorldpayAuthoriseRequestFactory(WorldpayMotoAuthoriseRequestFactory worldpayMotoAuthoriseRequestFactory) {
         this.worldpayMotoAuthoriseRequestFactory = worldpayMotoAuthoriseRequestFactory;
     }

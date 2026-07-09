@@ -13,6 +13,7 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.EMAIL;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.MOTO;
+import static uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator.GATEWAY_REQUEST_RECORD;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 class WorldpayAuthoriseRequestLogGeneratorTest {
@@ -36,6 +37,7 @@ class WorldpayAuthoriseRequestLogGeneratorTest {
                 " without billing address and with corporate card and with remote IP " + IP_ADDRESS));
 
         assertThat(result.structuredArguments(), containsInAnyOrder(
+                        kv(GATEWAY_REQUEST_RECORD, true),
                         kv(BILLING_ADDRESS, false),
                         kv(CORPORATE_CARD, true),
                         kv(EMAIL, false),
@@ -58,6 +60,7 @@ class WorldpayAuthoriseRequestLogGeneratorTest {
                 " without billing address and with remote IP " + IP_ADDRESS));
 
         assertThat(result.structuredArguments(), containsInAnyOrder(
+                kv(GATEWAY_REQUEST_RECORD, true),
                 kv(BILLING_ADDRESS, false),
                 kv(CORPORATE_CARD, false),
                 kv(EMAIL, false),
@@ -79,6 +82,7 @@ class WorldpayAuthoriseRequestLogGeneratorTest {
         assertThat(result.authorisationRequest(), is(" without billing address"));
 
         assertThat(result.structuredArguments(), containsInAnyOrder(
+                kv(GATEWAY_REQUEST_RECORD, true),
                 kv(BILLING_ADDRESS, false),
                 kv(CORPORATE_CARD, false),
                 kv(EMAIL, false),

@@ -31,10 +31,13 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
+import uk.gov.pay.connector.gateway.worldpay.WorldpayPaymentProvider;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
 import uk.gov.pay.connector.paymentprocessor.api.AuthorisationResponse;
 import uk.gov.pay.connector.paymentprocessor.exception.AuthorisationExecutorTimedOutException;
@@ -74,6 +77,7 @@ public class CardAuthoriseService {
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
+    private final AuthoriseRequestFactory authoriseRequestFactory;
     private final AuthorisationLogger authorisationLogger;
     private final ChargeEligibleForCaptureService chargeEligibleForCaptureService;
     private final PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter;
@@ -84,6 +88,7 @@ public class CardAuthoriseService {
                                 PaymentProviders providers,
                                 AuthorisationService authorisationService,
                                 ChargeService chargeService,
+                                AuthoriseRequestFactory authoriseRequestFactory,
                                 AuthorisationLogger authorisationLogger,
                                 ChargeEligibleForCaptureService chargeEligibleForCaptureService,
                                 PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter,
@@ -92,6 +97,7 @@ public class CardAuthoriseService {
         this.providers = providers;
         this.authorisationService = authorisationService;
         this.chargeService = chargeService;
+        this.authoriseRequestFactory = authoriseRequestFactory;
         this.authorisationLogger = authorisationLogger;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
         this.paymentInstrumentEntityToAuthCardDetailsConverter = paymentInstrumentEntityToAuthCardDetailsConverter;
@@ -115,22 +121,29 @@ public class CardAuthoriseService {
 
         GatewayResponse<BaseAuthoriseResponse> operationResponse;
         ChargeStatus newStatus;
+        AuthoriseRequest authoriseRequest = null;
 
         try {
             PaymentProvider paymentProvider = getPaymentProviderFor(charge);
 
-            switch (charge.getAuthorisationMode()) {
-                case WEB:
+            operationResponse = switch (charge.getAuthorisationMode()) {
+                case WEB -> {
                     CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
-                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authorise(request, charge);
-                    break;
-                case AGREEMENT:
+                    authoriseRequest = authoriseRequestFactory.create(request).orElse(null);
+                    yield switch (authoriseRequest) {
+                        case WorldpayAuthoriseRequest worldpayAuthoriseRequest
+                                when paymentProvider instanceof WorldpayPaymentProvider -> paymentProvider
+                                    .authorise(worldpayAuthoriseRequest, charge.getGatewayAccount().getType());
+                        case null, default -> paymentProvider.authorise(request, charge);
+                    };
+                }
+                case AGREEMENT -> {
                     RecurringPaymentAuthorisationGatewayRequest recurringRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
-                    operationResponse = (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authoriseUserNotPresent(recurringRequest);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Authorise operation does not support authorisation mode");
-            }
+                    yield (GatewayResponse<BaseAuthoriseResponse>) paymentProvider.authoriseUserNotPresent(recurringRequest);
+                }
+                default ->
+                        throw new IllegalArgumentException("Authorise operation does not support authorisation mode");
+            };
 
             if (operationResponse.getBaseResponse().isEmpty()) {
                 operationResponse.throwGatewayError();
@@ -145,7 +158,7 @@ public class CardAuthoriseService {
                     .build();
         }
 
-        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus, null);
+        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus, authoriseRequest);
     }
 
     public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, MotoApiAuthoriseRequest motoApiAuthoriseRequest) {

@@ -19,6 +19,8 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 
 public class WorldpayAuthoriseRequestLogGenerator {
 
+    public static String GATEWAY_REQUEST_RECORD = "gateway_request_record";
+
     public AuthorisationRequestLog generate(WorldpayAuthoriseRequest worldpayAuthoriseRequest, AuthCardDetails authCardDetails) {
         return switch (worldpayAuthoriseRequest) {
             case WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest -> generate(worldpayMotoAuthoriseRequest, authCardDetails);
@@ -27,6 +29,7 @@ public class WorldpayAuthoriseRequestLogGenerator {
 
     private AuthorisationRequestLog generate(WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest, AuthCardDetails authCardDetails) {
         List<StructuredArgument> structuredArguments = new ArrayList<>();
+        structuredArguments.add(kv(GATEWAY_REQUEST_RECORD, true));
 
         var stringJoiner = new StringJoiner(" and ", " ", "");
 
