@@ -20,6 +20,7 @@ import uk.gov.pay.connector.queue.tasks.TaskQueueService;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.Mockito.mock;
@@ -76,6 +77,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         var chargeEntity = aValidChargeEntity().withPaymentInstrument(mockPaymentInstrumentEntity)
                 .withAgreementEntity(mockAgreementEntity).build();
 
+        when(mockPaymentInstrumentEntity.getRecurringAuthToken()).thenReturn(Optional.of(Map.of("token", "token")));
         linkPaymentInstrumentToAgreementService.linkPaymentInstrumentFromChargeToAgreement(chargeEntity);
 
         verify(mockAgreementEntity).setPaymentInstrument(mockPaymentInstrumentEntity);
@@ -97,6 +99,7 @@ class LinkPaymentInstrumentToAgreementServiceTest {
         when(mockAgreementEntity.getPaymentInstrument()).thenReturn(Optional.of(mockPaymentInstrumentEntity));
         when(mockAgreementEntity.getExternalId()).thenReturn(agreementExternalId);
         when(mockPaymentInstrumentEntity.getExternalId()).thenReturn("payment instrument external ID");
+        when(mockPaymentInstrumentEntity.getRecurringAuthToken()).thenReturn(Optional.of(Map.of("token", "token")));
         when(paymentInstrumentDao.findPaymentInstrumentsByAgreementAndStatus(agreementExternalId, PaymentInstrumentStatus.ACTIVE))
                 .thenReturn(List.of(oldPaymentInstrument1, oldPaymentInstrument2));
 

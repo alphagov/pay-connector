@@ -119,7 +119,10 @@ class AdyenAuthorisationRequestTest {
                 browserInfo,
                 "https://frontend.pay.service.gov.uk",
                 "test@example.com",
-                "127.0.0.1"
+                "127.0.0.1",
+                null,
+                null,
+                null
         );
     }
 }
