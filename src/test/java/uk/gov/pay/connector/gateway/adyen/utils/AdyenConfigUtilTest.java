@@ -176,4 +176,29 @@ class AdyenConfigUtilTest {
             assertThat(exception.getMessage(), is("Missing primary Adyen HMAC key"));
         }
     }
+
+    @Nested
+    class TestGetsTokenHmacKeys {
+
+        @Mock
+        private HmacKeys mockHmacKeys;
+        @Mock
+        private HmacKeys.WebhookHmacKeyPair mockKeyPair;
+        @Mock
+        private WebhookHmacKeys mockLiveKeys;
+        @Mock
+        private WebhookHmacKeys mockTestKeys;
+
+        @Test
+        void shouldReturnLiveTokenHmacKeyWhenLiveIsTrue() {
+            when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(mockHmacKeys);
+            when(mockHmacKeys.tokens()).thenReturn(mockKeyPair);
+            when(mockKeyPair.live()).thenReturn(mockLiveKeys);
+            when(mockLiveKeys.getPrimary()).thenReturn(Optional.of("live-token-hmac-key"));
+
+            String result = AdyenConfigUtil.getTokenHmacKey(mockAdyenGatewayConfig, true);
+
+            assertThat(result, is("live-token-hmac-key"));
+        }
+    }
 }

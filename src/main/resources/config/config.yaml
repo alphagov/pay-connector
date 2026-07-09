@@ -109,6 +109,13 @@ adyen:
       live:
         primary: ${GDS_CONNECTOR_ADYEN_HMAC_KEY_PAYMENTS_LIVE_PRIMARY:-}
         secondary: ${GDS_CONNECTOR_ADYEN_HMAC_KEY_PAYMENTS_LIVE_SECONDARY:-}
+    tokens:
+      test:
+        primary: ${GDS_CONNECTOR_ADYEN_HMAC_KEY_TOKENS_TEST_PRIMARY:-}
+        secondary: ${GDS_CONNECTOR_ADYEN_HMAC_KEY_TOKENS_TEST_SECONDARY:-}
+      live:
+        primary: ${GDS_CONNECTOR_ADYEN_HMAC_KEY_TOKENS_LIVE_PRIMARY:-}
+        secondary: ${GDS_CONNECTOR_ADYEN_HMAC_KEY_TOKENS_LIVE_SECONDARY:-}
 
 stripe:
   allowedCidrs: ${STRIPE_ALLOWED_CIDRS}

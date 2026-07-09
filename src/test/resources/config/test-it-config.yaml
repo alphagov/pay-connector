@@ -68,6 +68,13 @@ adyen:
       live:
         primary: adyen-live-payments-hmac-primary
         secondary: ""
+    tokens:
+      test:
+        primary: 6D5BADA576A73109D879220DCB793FFD67DEF7AA18C74CCC0AB66FD87AC8AEEA # pragma: allowlist secret
+        secondary: ""
+      live:
+        primary: adyen-live-tokens-hmac-primary
+        secondary: ""
 
 sandbox:
   allowedCidrs: ["3.3.3.0/22", "6.6.6.6/32"]
