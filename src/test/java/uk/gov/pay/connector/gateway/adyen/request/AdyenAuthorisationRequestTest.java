@@ -88,12 +88,11 @@ class AdyenAuthorisationRequestTest {
                 "postalCode",
                 null);
 
-        var paymentMethod = new PaymentMethod("737",
+        var paymentMethod = PaymentMethod.card("737",
                 "03",
                 "2030",
                 "John Doe",
-                "4444333322221111",
-                "scheme");
+                "4444333322221111");
         
         var browserInfo = new BrowserInfo("text/html", 
                 24,
