@@ -13,6 +13,7 @@ import jakarta.ws.rs.client.Client;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.apache5.Apache5HttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.SqsClientBuilder;
@@ -316,7 +317,9 @@ public class ConnectorModule extends AbstractModule {
     @Provides
     public SqsClient sqsClient(ConnectorConfiguration connectorConfiguration) {
         
-        SqsClientBuilder clientBuilder = SqsClient.builder();
+        SqsClientBuilder clientBuilder = SqsClient
+                .builder()
+                .httpClient(Apache5HttpClient.create());
 
         if (connectorConfiguration.getSqsConfig().isNonStandardServiceEndpoint()) {
 

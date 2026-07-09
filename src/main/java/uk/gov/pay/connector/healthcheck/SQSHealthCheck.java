@@ -1,8 +1,9 @@
 package uk.gov.pay.connector.healthcheck;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
+import jakarta.inject.Inject;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -11,7 +12,6 @@ import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest;
 import software.amazon.awssdk.services.sqs.model.SqsException;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 
-import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.usernotification.model;
 
-import org.apache.http.NameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
 
 import java.time.ZonedDateTime;
 import java.util.List;
