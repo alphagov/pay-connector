@@ -78,12 +78,12 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        if (isIllegalRefundTransition(gatewayName, oldStatus, newStatus)) {
-            if (gatewayName == ADYEN) {
-                logAdyenIllegalRefundTransition(refundEntity, newStatus, oldStatus);
-            } else {
-                logIllegalRefundTransition(refundEntity, newStatus, oldStatus);
-            }
+        if(isAdyenRefundTransitionIllegal(gatewayName, oldStatus, newStatus)) {
+            logAdyenIllegalRefundTransition(refundEntity, newStatus, oldStatus);
+            return;
+        }
+        else if (gatewayName != ADYEN && isIllegalRefundTransition(oldStatus, newStatus)){
+            logIllegalRefundTransition(refundEntity, newStatus, oldStatus);
             return;
         }
 
@@ -116,13 +116,12 @@ public class RefundNotificationProcessor {
     private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
         return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
     }
-
-    private boolean isIllegalRefundTransition(PaymentGatewayName gatewayName, RefundStatus oldStatus, RefundStatus newStatus) {
-        return isRefundTransitionIllegal(oldStatus, newStatus) && !isAdyenRefundErrorToRefundedTransition(gatewayName, oldStatus, newStatus);
+    private boolean isIllegalRefundTransition(RefundStatus oldStatus, RefundStatus newStatus) {
+        return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
     }
 
-    private boolean isAdyenRefundErrorToRefundedTransition(PaymentGatewayName gatewayName, RefundStatus oldStatus, RefundStatus newStatus) {
-        return gatewayName == ADYEN && oldStatus == REFUND_ERROR && newStatus == REFUNDED;
+    private boolean isAdyenRefundTransitionIllegal(PaymentGatewayName gatewayName, RefundStatus oldStatus, RefundStatus newStatus) {
+        return gatewayName == ADYEN && oldStatus == REFUNDED && newStatus == REFUND_ERROR;
     }
 
     private void logIllegalRefundTransition(RefundEntity refundEntity, RefundStatus newStatus, RefundStatus oldStatus) {

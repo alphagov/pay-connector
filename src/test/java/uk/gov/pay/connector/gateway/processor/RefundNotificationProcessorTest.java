@@ -37,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defaultGatewayAccountEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
 
@@ -174,7 +175,7 @@ class RefundNotificationProcessorTest {
             refundEntity.setStatus(oldStatus);
             when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
                     .thenReturn(Optional.of(refundEntity));
-            
+
         }
 
         @Test
@@ -259,5 +260,76 @@ class RefundNotificationProcessorTest {
                 REFUND_GATEWAY_TRANSACTION_ID,
                 TRANSACTION_ID,
                 charge);
+    }
+
+    @Test
+    void shouldAdyenTransitionRefund_WhenRefundStatusWasSetAsRefundError() {
+        refundEntity.setStatus(RefundStatus.REFUND_ERROR);
+
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
+                .thenReturn(Optional.of(refundEntity));
+
+        refundNotificationProcessor.invoke(
+                ADYEN,
+                RefundStatus.REFUNDED,
+                gatewayAccountEntity,
+                REFUND_GATEWAY_TRANSACTION_ID,
+                TRANSACTION_ID,
+                charge);
+
+        verify(refundService)
+                .transitionRefundState(refundEntity, gatewayAccountEntity, RefundStatus.REFUNDED, charge);
+        verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
+    }
+
+    @Test
+    void shouldAdyenIgnoreDuplicateRefundErrorWebhookForAdyen() {
+        refundEntity.setStatus(RefundStatus.REFUND_ERROR);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
+                .thenReturn(Optional.of(refundEntity));
+
+        refundNotificationProcessor.invoke(
+                ADYEN,
+                RefundStatus.REFUND_ERROR,
+                gatewayAccountEntity,
+                REFUND_GATEWAY_TRANSACTION_ID,
+                TRANSACTION_ID,
+                charge);
+
+        then(refundService)
+                .should(never())
+                .transitionRefundState(any(), any(), any(), any());
+        then(refundService)
+                .should(never())
+                .transitionRefundState(any(), any(), any(), any());
+        then(userNotificationService)
+                .should(never())
+                .sendRefundIssuedEmail(any(), any(), any());
+        assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.INFO))));
+        logs.assertContains("Notification received for refund [someExternalId] is redundant and therefore ignored because refund is already in state [REFUND ERROR]");
+    }
+
+    @Test
+    void shouldAdyenLogIllegalStateTransitionAtErrorLevel_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
+        refundEntity.setStatus(RefundStatus.REFUNDED);
+        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
+                .thenReturn(Optional.of(refundEntity));
+
+        refundNotificationProcessor.invoke(
+                ADYEN,
+                RefundStatus.REFUND_ERROR,
+                gatewayAccountEntity,
+                REFUND_GATEWAY_TRANSACTION_ID,
+                TRANSACTION_ID,
+                charge);
+
+        assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.ERROR))));
+        logs.assertContains("Adyen Notification received for refund would cause an illegal state transition");
+        then(refundService)
+                .should(never())
+                .transitionRefundState(any(), any(), any(), any());
+        then(userNotificationService)
+                .should(never())
+                .sendRefundIssuedEmail(any(), any(), any());
     }
 }
