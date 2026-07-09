@@ -42,7 +42,7 @@ public class AdyenAccountSetupResource {
             summary = "Retrieve Adyen account setup tasks for a given service ID, account type and credential ID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = AdyenAccountSetupResource.class))),
+                            content = @Content(schema = @Schema(implementation = AdyenAccountSetupResponse.class))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
