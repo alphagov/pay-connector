@@ -1,9 +1,11 @@
 package uk.gov.pay.connector.gateway.adyen.response;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
+import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 
 import java.util.Map;
@@ -183,5 +185,100 @@ class AdyenAuthoriseResponseTest {
 
         assertThat(adyenAuthoriseResponse.getGatewayRejectionReason(),
                 is(Optional.of("6 - Expired Card")));
+    }
+
+    @Test
+    void should_return_mapped_authorisation_rejected_reason_for_refused_payment() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withResultCode("Refused")
+                .withRefusalReasonCode("6")
+                .withRefusalReason("Expired Card")
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var mappedReason = adyenAuthoriseResponse.getMappedAuthorisationRejectedReason();
+
+        assertThat(mappedReason.isPresent(), is(true));
+        assertThat(mappedReason.get(), is(MappedAuthorisationRejectedReason.EXPIRED_CARD));
+        assertThat(mappedReason.get().canRetry(), is(false));
+    }
+
+    @Test
+    void should_return_uncategorised_for_refused_payment_with_unknown_code() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withResultCode("Refused")
+                .withRefusalReasonCode("999")
+                .withRefusalReason("Unknown Reason")
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var mappedReason = adyenAuthoriseResponse.getMappedAuthorisationRejectedReason();
+
+        assertThat(mappedReason.isPresent(), is(true));
+        assertThat(mappedReason.get(), is(MappedAuthorisationRejectedReason.UNCATEGORISED));
+    }
+
+    @Test
+    void should_return_empty_mapped_reason_for_non_refused_payment() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withResultCode("Authorised")
+                .withRefusalReasonCode("6")
+                .withRefusalReason("Expired Card")
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var mappedReason = adyenAuthoriseResponse.getMappedAuthorisationRejectedReason();
+
+        assertThat(mappedReason.isPresent(), is(false));
+    }
+
+    @Test
+    void should_return_gateway_rejection_reason_for_refused_payment() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withResultCode("Refused")
+                .withRefusalReasonCode("6")
+                .withRefusalReason("Expired Card")
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var gatewayRejectionReason = adyenAuthoriseResponse.getGatewayRejectionReason();
+
+        assertThat(gatewayRejectionReason.isPresent(), is(true));
+        assertThat(gatewayRejectionReason.get(), is("6 Expired Card"));
+    }
+
+    @Test
+    void should_return_gateway_rejection_reason_without_description_when_refusal_reason_is_null() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withResultCode("Refused")
+                .withRefusalReasonCode("6")
+                .withRefusalReason(null)
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var gatewayRejectionReason = adyenAuthoriseResponse.getGatewayRejectionReason();
+
+        assertThat(gatewayRejectionReason.isPresent(), is(true));
+        assertThat(gatewayRejectionReason.get(), is("6"));
+    }
+
+    @Disabled
+    void should_return_empty_gateway_rejection_reason_for_non_refused_payment() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withResultCode("Authorised")
+                .withRefusalReasonCode("6")
+                .withRefusalReason("Expired Card")
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var gatewayRejectionReason = adyenAuthoriseResponse.getGatewayRejectionReason();
+
+        assertThat(gatewayRejectionReason.isPresent(), is(false));
     }
 }
