@@ -5,6 +5,7 @@ import io.dropwizard.jersey.PATCH;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -45,14 +46,44 @@ public class AdyenAccountSetupResource {
             summary = "Retrieve Adyen account setup tasks for a given service ID, account type and credential ID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(schema = @Schema(implementation = AdyenAccountSetupResource.class))),
+                            content = @Content(schema = @Schema(implementation = AdyenAccountSetupResponse.class), examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "service_id": "46eb1b601348499196c99de90482ee68",
+                                              "credential_external_id": "46eb1b601348499196c99de90482ee68",
+                                              "gateway_account_id": 123,
+                                              "tasks": {
+                                                       "bank_account": {
+                                                         "status": "COMPLETED"
+                                                       },
+                                                       "director": {
+                                                         "status": "COMPLETED"
+                                                       },
+                                                       "responsible_person": {
+                                                         "status": "COMPLETED"
+                                                       },
+                                                       "vat_number": {
+                                                         "status": "COMPLETED"
+                                                       },
+                                                       "company_number": {
+                                                         "status": "COMPLETED"
+                                                       },
+                                                       "government_entity_document": {
+                                                         "status": "COMPLETED"
+                                                       },
+                                                       "organisation_details": {
+                                                         "status": "COMPLETED"
+                                                       }
+                                                     }
+                                            }
+                                            """))),
                     @ApiResponse(responseCode = "404", description = "Not found")
             }
     )
     public AdyenAccountSetupResponse getAdyenAccountSetup(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId ) { // pragma: allowlist secret
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId) { // pragma: allowlist secret
 
         var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));

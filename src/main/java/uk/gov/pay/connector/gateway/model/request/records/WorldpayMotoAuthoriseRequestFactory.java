@@ -1,6 +1,5 @@
 package uk.gov.pay.connector.gateway.model.request.records;
 
-import jakarta.inject.Inject;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
 
@@ -9,7 +8,6 @@ public class WorldpayMotoAuthoriseRequestFactory {
     private final WorldpayAuthoriseDescriptionHelper descriptionHelper;
     private final WorldpayAuthoriseCredentialsHelper credentialsHelper;
 
-    @Inject
     public WorldpayMotoAuthoriseRequestFactory(WorldpayAuthoriseDescriptionHelper descriptionHelper, WorldpayAuthoriseCredentialsHelper credentialsHelper) {
         this.descriptionHelper = descriptionHelper;
         this.credentialsHelper = credentialsHelper;
