@@ -1444,8 +1444,27 @@ paths:
         "200":
           content:
             application/json:
+              example:
+                service_id: 46eb1b601348499196c99de90482ee68
+                credential_external_id: 46eb1b601348499196c99de90482ee68
+                gateway_account_id: 123
+                tasks:
+                  bank_account:
+                    status: COMPLETED
+                  director:
+                    status: COMPLETED
+                  responsible_person:
+                    status: COMPLETED
+                  vat_number:
+                    status: COMPLETED
+                  company_number:
+                    status: COMPLETED
+                  government_entity_document:
+                    status: COMPLETED
+                  organisation_details:
+                    status: COMPLETED
               schema:
-                $ref: "#/components/schemas/AdyenAccountSetupResource"
+                $ref: "#/components/schemas/AdyenAccountSetupResponse"
           description: OK
         "404":
           description: Not found
@@ -3462,8 +3481,6 @@ components:
         postcode:
           type: string
           example: AB1 2CD
-    AdyenAccountSetupResource:
-      type: object
     AdyenAccountSetupResponse:
       type: object
       properties:
