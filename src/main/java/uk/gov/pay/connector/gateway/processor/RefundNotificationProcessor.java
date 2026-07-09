@@ -70,20 +70,20 @@ public class RefundNotificationProcessor {
         }
 
         RefundEntity refundEntity = optionalRefundEntity.get();
-        RefundStatus oldStatus = refundEntity.getStatus();
+        RefundStatus currentStatus = refundEntity.getStatus();
 
-        if (isRefundTransitionRedundant(oldStatus, newStatus)) {
+        if (isRefundTransitionRedundant(currentStatus, newStatus)) {
             logger.info("Notification received for refund [{}] is redundant and therefore ignored because refund is already in state [{}]",
-                    refundEntity.getExternalId(), oldStatus);
+                    refundEntity.getExternalId(), currentStatus);
             return;
         }
 
-        if(isAdyenRefundTransitionIllegal(gatewayName, oldStatus, newStatus)) {
-            logAdyenIllegalRefundTransition(refundEntity, newStatus, oldStatus);
+        if(isAdyenRefundTransitionIllegal(gatewayName, currentStatus, newStatus)) {
+            logAdyenIllegalRefundTransition(refundEntity, newStatus, currentStatus);
             return;
         }
-        else if (gatewayName != ADYEN && isIllegalRefundTransition(oldStatus, newStatus)){
-            logIllegalRefundTransition(refundEntity, newStatus, oldStatus);
+        else if (gatewayName != ADYEN && isIllegalRefundTransition(currentStatus, newStatus)){
+            logIllegalRefundTransition(refundEntity, newStatus, currentStatus);
             return;
         }
 
@@ -104,7 +104,7 @@ public class RefundNotificationProcessor {
                 kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
                 kv("payment_gateway_transaction_id", transactionId),
                 kv("gateway_transaction_id", gatewayTransactionId),
-                kv("from_status", oldStatus),
+                kv("from_status", currentStatus),
                 kv("to_status", newStatus)
         );
     }
