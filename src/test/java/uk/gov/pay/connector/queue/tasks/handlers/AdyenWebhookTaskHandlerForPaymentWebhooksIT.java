@@ -97,24 +97,23 @@ class AdyenWebhookTaskHandlerForPaymentWebhooksIT {
         assertRefundStatus(testRefund.getId(), REFUND_ERROR.getValue());
     }
 
-    @ParameterizedTest
-    @CsvSource({"REFUND_ERROR"})
-    void should_update_refund_in_valid_state_for_failed_refund_notification(RefundStatus currentStatus) {
+    @Test
+    void should_update_refund_in_REFUND_ERROR_state_to_REFUNDED_for_successful_refund_notification() {
         var capturedCharge = createTestChargeWithStatus(CAPTURED);
         var testRefund = app.getDatabaseFixtures()
                 .aTestRefund()
                 .withTestCharge(capturedCharge)
                 .withGatewayTransactionId("some-pspReference-returned-from-refund-request-to-Adyen")
                 .withChargeExternalId(CHARGE_EXTERNAL_ID)
-                .withRefundStatus(currentStatus)
+                .withRefundStatus(REFUND_ERROR)
                 .insert();
-        var payload = load(ADYEN_REFUND_FAILURE_NOTIFICATION)
+        var payload = load(ADYEN_REFUND_SUCCESS_NOTIFICATION)
                 .replace("{{pspReference}}", testRefund.getGatewayTransactionId())
                 .replace("{{merchantReference}}", testRefund.getExternalRefundId());
 
         adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
 
-        assertRefundStatus(testRefund.getId(), REFUND_ERROR.getValue());
+        assertRefundStatus(testRefund.getId(), REFUNDED.getValue());
     }
 
     private static DatabaseFixtures.TestCharge createTestChargeWithStatus(ChargeStatus chargeStatus) {
