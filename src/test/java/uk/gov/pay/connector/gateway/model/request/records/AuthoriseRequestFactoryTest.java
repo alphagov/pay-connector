@@ -66,7 +66,7 @@ class AuthoriseRequestFactoryTest {
     @EnumSource(value = PaymentGatewayName.class,  mode = EXCLUDE, names = { "WORLDPAY" })
     void shouldBuildNothingIfNotWorldpay(PaymentGatewayName paymentGatewayName) {
         GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity = aGatewayAccountCredentialsEntity()
-                .withPaymentProvider(paymentGatewayName.toString())
+                .withPaymentProvider(paymentGatewayName.getName())
                 .build();
 
         GatewayAccountEntity gatewayAccountEntity = aGatewayAccountEntity()
