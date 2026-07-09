@@ -12,6 +12,7 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntity;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupUpdateRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
@@ -39,11 +41,11 @@ import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.GO
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.ORGANISATION_DETAILS;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.RESPONSIBLE_PERSON;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask.VAT_NUMBER;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityFixture;
+import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityListWithAllTasksCompleted;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.LIVE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
-import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityFixture;
-import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntityFixture.anAdyenAccountSetupTaskEntityListWithAllTasksCompleted;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
@@ -143,6 +145,33 @@ class AdyenAccountSetupServiceTest {
         assertThat(tasksWithStatus.tasks().get(DIRECTOR.getValue()).get(STATUS_KEY), is(NOT_STARTED));
         assertThat(tasksWithStatus.tasks().get(GOVERNMENT_ENTITY_DOCUMENT.getValue()).get(STATUS_KEY), is(NOT_STARTED));
         assertThat(tasksWithStatus.tasks().get(ORGANISATION_DETAILS.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+    }
+    
+    @Test
+    void shouldUpdateBankAccountStatusIfTaskNotPresent() {
+        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(false);
+
+        AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED);
+        adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
+        
+        ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
+        verify(mockAdyenAccountSetupDao).persist(entityArgumentCaptor.capture());
+        verify(mockAdyenAccountSetupDao, never()).updateTaskStatus(GATEWAY_ACCOUNT_ID, GATEWAY_ACCOUNT_ID, BANK_ACCOUNT, COMPLETED);
+        
+        AdyenAccountSetupTaskEntity entity = entityArgumentCaptor.getValue();
+        assertThat(entity.getTask(), is(BANK_ACCOUNT));
+        assertThat(entity.getStatus(), is(COMPLETED));
+    }
+
+    @Test
+    void shouldUpdateBankAccountStatusIfTaskIsPresent() {
+        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(true);
+
+        AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, NOT_STARTED);
+        adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
+
+        verify(mockAdyenAccountSetupDao).updateTaskStatus(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT, NOT_STARTED);
+        verify(mockAdyenAccountSetupDao, never()).persist(any(AdyenAccountSetupTaskEntity.class));
     }
     
     @Nested
