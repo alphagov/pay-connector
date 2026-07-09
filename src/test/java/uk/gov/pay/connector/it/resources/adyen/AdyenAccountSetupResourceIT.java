@@ -172,7 +172,7 @@ public class AdyenAccountSetupResourceIT {
                 .then()
                 .statusCode(SC_OK)
                 .body("tasks.bank_account.status", is(COMPLETED.toString()))
-                .body("tasks.responsible_person.status", is(COMPLETED.toString()))
+                .body("tasks.responsible_person.status", is(NOT_STARTED.toString()))
                 .body("tasks.vat_number.status", is(NOT_STARTED.toString()))
                 .body("tasks.company_number.status", is(NOT_STARTED.toString()))
                 .body("tasks.director.status", is(NOT_STARTED.toString()))

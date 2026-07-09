@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntity;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupUpdateRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
@@ -64,5 +65,16 @@ public class AdyenAccountSetupService {
             updatedTasks.put(taskName, statusHashMap);
         });
         return updatedTasks;
+    }
+
+    public void update(GatewayAccountEntity gatewayAccountEntity,
+                       AdyenAccountSetupUpdateRequest updateRequest,
+                       GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+        AdyenAccountSetupTaskEntity adyenAccountSetupTaskEntity = new AdyenAccountSetupTaskEntity(
+                gatewayAccountEntity,
+                updateRequest.task(),
+                gatewayAccountCredentialsEntity,
+                updateRequest.status());
+        adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
     }
 }

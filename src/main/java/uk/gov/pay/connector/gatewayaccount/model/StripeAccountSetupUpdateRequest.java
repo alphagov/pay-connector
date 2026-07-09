@@ -9,9 +9,9 @@ public class StripeAccountSetupUpdateRequest {
         this.completed = completed;
     }
     
-    public static StripeAccountSetupUpdateRequest from(StripeSetupPatchRequest patchRequest) {
-        StripeAccountSetupTask task = StripeAccountSetupTask.valueOf(patchRequest.getPath().toUpperCase());
-        return new StripeAccountSetupUpdateRequest(task, Boolean.parseBoolean(patchRequest.getValue()));
+    public static StripeAccountSetupUpdateRequest from(AccountSetupPatchRequest patchRequest) {
+        StripeAccountSetupTask task = StripeAccountSetupTask.valueOf(patchRequest.path().toUpperCase());
+        return new StripeAccountSetupUpdateRequest(task, Boolean.parseBoolean(patchRequest.value()));
     }
     
     public StripeAccountSetupTask getTask() {

@@ -17,12 +17,16 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
+import uk.gov.pay.connector.gatewayaccount.model.AccountSetupPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupUpdateRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.service.AdyenAccountSetupService;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+
+import java.util.List;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
@@ -121,13 +125,18 @@ public class AdyenAccountSetupResource {
     public Response patchAdyenAccountSetup(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId ) { // pragma: allowlist secret
-    
+            @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId, // pragma: allowlist secret
+            List<AccountSetupPatchRequest> requests) {
+
+        var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType).get();
+        AdyenAccountSetupUpdateRequest updateRequest = AdyenAccountSetupUpdateRequest.from(requests.getFirst());
+
+        var gatewayAccountCredentialsEntity = validateGatewayAccountCredentialsEntity(credentialExternalId, gatewayAccountEntity);
+        adyenAccountSetupService.update(gatewayAccountEntity, updateRequest, gatewayAccountCredentialsEntity);
+        
         return Response.ok().build();
     }
     
-    
-
     private GatewayAccountCredentialsEntity validateGatewayAccountCredentialsEntity(String credentialExternalId, GatewayAccountEntity gatewayAccountEntity) {
         var gatewayAccountCredentialsEntity = gatewayAccountEntity.getGatewayAccountCredentials().stream().filter(credentialsEntity ->
                         credentialsEntity.getExternalId().equals(credentialExternalId)).findFirst()
