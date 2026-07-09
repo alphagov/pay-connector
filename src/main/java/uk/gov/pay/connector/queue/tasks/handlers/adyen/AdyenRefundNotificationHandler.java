@@ -32,7 +32,7 @@ public class AdyenRefundNotificationHandler {
 
         gatewayAccountService.getGatewayAccount(charge.getGatewayAccountId())
                 .ifPresentOrElse(gatewayAccount -> {
-                            LOGGER.atDebug()
+                            LOGGER.atInfo()
                                     .setMessage("Processing Adyen refund notification")
                                     .addKeyValue(PAYMENT_EXTERNAL_ID, charge.getExternalId())
                                     .addKeyValue(GATEWAY_TRANSACTION_ID, item.getOriginalReference())
