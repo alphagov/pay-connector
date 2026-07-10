@@ -114,7 +114,7 @@ public class AdyenWebhookTaskHandler {
         }
 
         if (!item.isSuccess()) {
-            LOGGER.atWarn()
+            LOGGER.atError()
                     .setMessage("Capture failed")
                     .addKeyValue(GATEWAY_TRANSACTION_ID, gatewayTransactionId)
                     .addKeyValue("event_code", item.getEventCode())
