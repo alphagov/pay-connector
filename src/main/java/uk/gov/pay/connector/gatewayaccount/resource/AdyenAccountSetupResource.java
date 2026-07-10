@@ -104,18 +104,27 @@ public class AdyenAccountSetupResource {
             summary = "Update Adyen account setup tasks for a given service ID, account type and credential ID",
             description = "Support patching following paths: <br>" +
                     "bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details",
-            requestBody = @RequestBody(content = @Content(schema = @Schema(example = "[" +
-                    "    {" +
-                    "        \"op\": \"replace\"," +
-                    "        \"path\": \"bank_account\"," +
-                    "        \"value\": COMPLETED" +
-                    "    }," +
-                    "    {" +
-                    "        \"op\": \"replace\"," +
-                    "        \"path\": \"responsible_person\"," +
-                    "        \"value\": NOT_STARTED" +
-                    "    }" +
-                    "]"))),
+            requestBody = @RequestBody(
+                    content = @Content(
+                            schema = @Schema(implementation = AccountSetupPatchRequest.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            [
+                                              {
+                                                "op": "replace",
+                                                "path": "bank_account",
+                                                "value": "COMPLETED"
+                                              },
+                                              {
+                                                "op": "replace",
+                                                "path": "responsible_person",
+                                                "value": "NOT_STARTED"
+                                              }
+                                            ]
+                                            """
+                            )
+                    )
+            ),
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
                     @ApiResponse(responseCode = "404", description = "Not found"),

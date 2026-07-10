@@ -80,17 +80,17 @@ public class AdyenAccountSetupService {
                 gatewayAccountEntity,
                 task,
                 gatewayAccountCredentialsEntity,
-                updateRequest.status());
-        
-        if (adyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(gatewayAccountId, gatewayAccountCredentialsId, task)){
+                status);
+
+        if (adyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(gatewayAccountId, gatewayAccountCredentialsId, task)) {
             adyenAccountSetupDao.updateTaskStatus(
                     gatewayAccountId,
                     gatewayAccountCredentialsId,
                     task,
                     status
-            ); 
+            );
         } else {
-        adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
+            adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
         }
     }
 }
