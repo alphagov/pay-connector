@@ -47,6 +47,7 @@ public class WorldpayMotoAuthoriseRequestIT {
     private static final String CVC = "123";
     private static final CardExpiryDate EXPIRY_DATE = CardExpiryDate.valueOf("11/30");
     private static final String CARDHOLDER_NAME = "Alec Barley";
+    private static final String IP = "203.0.113.1";
 
     @Test
     void shouldSendCorrectRequestToWorldpayReturnCorrectResponseAndLog() throws JsonProcessingException {
@@ -68,6 +69,7 @@ public class WorldpayMotoAuthoriseRequestIT {
                 "cardholder_name", CARDHOLDER_NAME,
                 "accept_header", "text/html",
                 "user_agent_header", "Mozilla/5.0",
+                "ip_address", IP,
                 "prepaid", "NOT_PREPAID");
 
         String requestBody = objectMapper.writeValueAsString(requestParameters);
@@ -104,7 +106,7 @@ public class WorldpayMotoAuthoriseRequestIT {
                         .withRequestBody(hasNoSession())
                         .withRequestBody(hasNoShopper()));
 
-        logs.assertContains("Authorisation without billing address for " + externalChargeId);
+        logs.assertContains("Authorisation without billing address and with remote IP " + IP + " for " + externalChargeId);
         assertThat(logs.getEvents().stream().findFirst().isPresent(), is(true));
         List<String> structuredLogging = logs.getEvents().stream().findFirst().get()
                 .getArguments().stream().map(Object::toString).toList();
@@ -116,7 +118,8 @@ public class WorldpayMotoAuthoriseRequestIT {
                 "email_address=false",
                 "data_for_3ds=false",
                 "moto=true",
-                "corporate_card=false"
+                "corporate_card=false",
+                "remote_ip_address=" + IP
         ));
     }
 

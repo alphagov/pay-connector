@@ -15,6 +15,7 @@ import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStruc
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.CORPORATE_CARD;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.DATA_FOR_3DS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.EMAIL;
+import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.IP_ADDRESS;
 import static uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging.MOTO;
 
 public class WorldpayAuthoriseRequestLogGenerator {
@@ -43,7 +44,10 @@ public class WorldpayAuthoriseRequestLogGenerator {
             structuredArguments.add(kv(CORPORATE_CARD, false));
         }
 
-        authCardDetails.getIpAddress().ifPresent(ipAddress -> stringJoiner.add("with remote IP " + ipAddress));
+        authCardDetails.getIpAddress().ifPresent(ipAddress -> {
+            stringJoiner.add("with remote IP " + ipAddress);
+            structuredArguments.add(kv(IP_ADDRESS, ipAddress));
+        });
 
         structuredArguments.add(kv(EMAIL, false));
         structuredArguments.add(kv(DATA_FOR_3DS, false));
