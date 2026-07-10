@@ -174,6 +174,35 @@ class AdyenAccountSetupServiceTest {
         verify(mockAdyenAccountSetupDao, never()).persist(any(AdyenAccountSetupTaskEntity.class));
     }
     
+    @Test
+    void shouldUpdateMultipleTasks() {
+        List<AdyenAccountSetupUpdateRequest> requests = List.of( 
+                new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED),
+                new AdyenAccountSetupUpdateRequest(ORGANISATION_DETAILS, NOT_STARTED),
+                new AdyenAccountSetupUpdateRequest(RESPONSIBLE_PERSON, COMPLETED));
+
+        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(false);
+        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, ORGANISATION_DETAILS)).willReturn(false);
+        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, RESPONSIBLE_PERSON)).willReturn(false);
+        
+        requests.forEach(request -> adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials));
+        
+        ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
+        verify(mockAdyenAccountSetupDao, times(3)).persist(entityArgumentCaptor.capture());
+        
+        List<AdyenAccountSetupTaskEntity> entities = entityArgumentCaptor.getAllValues();
+        
+        assertThat(entities.size(), is(3));
+        assertThat(entities.getFirst().getTask(), is(BANK_ACCOUNT));
+        assertThat(entities.getFirst().getStatus(), is(COMPLETED));
+        
+        assertThat(entities.get(1).getTask(), is(ORGANISATION_DETAILS));
+        assertThat(entities.get(1).getStatus(), is(NOT_STARTED));
+        
+        assertThat(entities.get(2).getTask(), is(RESPONSIBLE_PERSON));
+        assertThat(entities.get(2).getStatus(), is(COMPLETED));
+    }
+    
     @Nested
     class completeTestAccountSetup {
         @Test
