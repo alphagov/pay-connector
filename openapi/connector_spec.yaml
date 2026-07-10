@@ -1472,6 +1472,58 @@ paths:
         \ type and credential ID"
       tags:
       - Gateway accounts
+    patch:
+      description: "Support patching following paths: <br>bank_account, responsible_person,\
+        \ vat_number, company_number, director, government_entity_document, organisation_details"
+      operationId: patchAdyenAccountSetup
+      parameters:
+      - description: Service ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: serviceId
+        required: true
+        schema:
+          type: string
+      - description: Account type
+        example: test
+        in: path
+        name: accountType
+        required: true
+        schema:
+          type: string
+          enum:
+          - test
+          - live
+      - description: Credential External ID
+        example: 46eb1b601348499196c99de90482ee68
+        in: path
+        name: credentialExternalId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*':
+            example:
+            - op: replace
+              path: bank_account
+              value: COMPLETED
+            - op: replace
+              path: responsible_person
+              value: NOT_STARTED
+            schema:
+              $ref: "#/components/schemas/AccountSetupPatchRequest"
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not found
+      summary: "Update Adyen account setup tasks for a given service ID, account type\
+        \ and credential ID"
+      tags:
+      - Gateway accounts
   /v1/api/service/{serviceId}/account/{accountType}/agreements:
     post:
       operationId: createAgreement_1
@@ -3460,6 +3512,15 @@ paths:
       - Tasks
 components:
   schemas:
+    AccountSetupPatchRequest:
+      type: object
+      properties:
+        op:
+          type: string
+        path:
+          type: string
+        value:
+          type: string
     Address:
       type: object
       properties:
@@ -5850,15 +5911,6 @@ components:
           type:
             type: string
             writeOnly: true
-    StripeSetupPatchRequest:
-      type: object
-      properties:
-        op:
-          type: string
-        path:
-          type: string
-        value:
-          type: string
     Supplemental:
       type: object
       properties:

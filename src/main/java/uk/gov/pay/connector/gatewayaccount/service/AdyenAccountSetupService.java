@@ -7,6 +7,7 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTask;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupTaskEntity;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupUpdateRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 
@@ -64,5 +65,32 @@ public class AdyenAccountSetupService {
             updatedTasks.put(taskName, statusHashMap);
         });
         return updatedTasks;
+    }
+
+    public void update(GatewayAccountEntity gatewayAccountEntity,
+                       AdyenAccountSetupUpdateRequest updateRequest,
+                       GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
+        
+        AdyenAccountSetupTask task = updateRequest.task();
+        AdyenAccountSetupStatus status = updateRequest.status();
+        Long gatewayAccountId = gatewayAccountEntity.getId();
+        Long gatewayAccountCredentialsId = gatewayAccountCredentialsEntity.getId();
+        
+        AdyenAccountSetupTaskEntity adyenAccountSetupTaskEntity = new AdyenAccountSetupTaskEntity(
+                gatewayAccountEntity,
+                task,
+                gatewayAccountCredentialsEntity,
+                status);
+
+        if (adyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(gatewayAccountId, gatewayAccountCredentialsId, task)) {
+            adyenAccountSetupDao.updateTaskStatus(
+                    gatewayAccountId,
+                    gatewayAccountCredentialsId,
+                    task,
+                    status
+            );
+        } else {
+            adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
+        }
     }
 }
