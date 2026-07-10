@@ -138,10 +138,12 @@ public class AdyenAccountSetupResource {
             List<AccountSetupPatchRequest> requests) {
 
         var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType).get();
-        AdyenAccountSetupUpdateRequest updateRequest = AdyenAccountSetupUpdateRequest.from(requests.getFirst());
-
         var gatewayAccountCredentialsEntity = validateGatewayAccountCredentialsEntity(credentialExternalId, gatewayAccountEntity);
-        adyenAccountSetupService.update(gatewayAccountEntity, updateRequest, gatewayAccountCredentialsEntity);
+
+        requests.forEach(patchRequest ->  {
+            AdyenAccountSetupUpdateRequest updateRequest = AdyenAccountSetupUpdateRequest.from(patchRequest);
+            adyenAccountSetupService.update(gatewayAccountEntity, updateRequest, gatewayAccountCredentialsEntity);
+        });
         
         return Response.ok().build();
     }
