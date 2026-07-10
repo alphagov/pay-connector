@@ -59,7 +59,7 @@ class AdyenAccountSetupServiceTest {
 
     @Mock
     private AdyenAccountSetupDao mockAdyenAccountSetupDao;
-    
+
     private AdyenAccountSetupService adyenAccountSetupService;
 
     private static final String EXPECTED_ERROR_MSG = "Gateway account type must be TEST and gateway name must be ADYEN";
@@ -74,8 +74,8 @@ class AdyenAccountSetupServiceTest {
                 .withPaymentProvider(ADYEN.getName())
                 .withExternalId(CREDENTIAL_EXTERNAL_ID)
                 .build();
-        adyenGatewayAccountCredentials.setId(123L);
-        
+        adyenGatewayAccountCredentials.setId(CREDENTIAL_ID);
+
         testGatewayAccountEntity = aGatewayAccountEntity()
                 .withId(GATEWAY_ACCOUNT_ID)
                 .withType(TEST)
@@ -83,128 +83,137 @@ class AdyenAccountSetupServiceTest {
                 .build();
     }
 
-    @Test
-    void shouldReturnAdyenAccountSetupWithNoTasksCompleted() {
-        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
-                .willReturn(Collections.emptyList());
-
-        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
-        
-        assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
-        assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
-        assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
-
-        Arrays.stream(AdyenAccountSetupTask.values()).forEach(task -> 
-            assertThat(tasksWithStatus.tasks().get(task.getValue()).get(STATUS_KEY), is(NOT_STARTED)));
-    }
-
-    @Test
-    void shouldReturnAdyenAccountSetupWithAllTasksCompleted() {
-        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
-                .willReturn(anAdyenAccountSetupTaskEntityListWithAllTasksCompleted(testGatewayAccountEntity, adyenGatewayAccountCredentials));
-        
-        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
-
-        assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
-        assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
-        assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
-
-        Arrays.stream(AdyenAccountSetupTask.values()).forEach(task ->
-                assertThat(tasksWithStatus.tasks().get(task.getValue()).get(STATUS_KEY), is(COMPLETED)));
-    }
-
-    @Test
-    void shouldReturnAdyenAccountSetupWithSomeTasksCompleted() {
-        var bankAccountCompletedTaskEntity = anAdyenAccountSetupTaskEntityFixture()
-                .withGatewayAccount(testGatewayAccountEntity)
-                .withGatewayAccountCredential(adyenGatewayAccountCredentials)
-                .withTask(BANK_ACCOUNT)
-                .withCompletedStatus()
-                .build();
-
-        var companyNumberCompletedTaskEntity = anAdyenAccountSetupTaskEntityFixture()
-                .withGatewayAccount(testGatewayAccountEntity)
-                .withGatewayAccountCredential(adyenGatewayAccountCredentials)
-                .withTask(COMPANY_NUMBER)
-                .withCompletedStatus()
-                .build();
-        
-        given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
-                .willReturn(List.of(bankAccountCompletedTaskEntity, companyNumberCompletedTaskEntity));
-        
-        AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
-
-        assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
-        assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
-        assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
-
-        assertThat(tasksWithStatus.tasks().get(BANK_ACCOUNT.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.tasks().get(RESPONSIBLE_PERSON.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-        assertThat(tasksWithStatus.tasks().get(VAT_NUMBER.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-        assertThat(tasksWithStatus.tasks().get(COMPANY_NUMBER.getValue()).get(STATUS_KEY), is(COMPLETED));
-        assertThat(tasksWithStatus.tasks().get(DIRECTOR.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-        assertThat(tasksWithStatus.tasks().get(GOVERNMENT_ENTITY_DOCUMENT.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-        assertThat(tasksWithStatus.tasks().get(ORGANISATION_DETAILS.getValue()).get(STATUS_KEY), is(NOT_STARTED));
-    }
-    
-    @Test
-    void shouldUpdateBankAccountStatusIfTaskNotPresent() {
-        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(false);
-
-        AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED);
-        adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
-        
-        ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
-        verify(mockAdyenAccountSetupDao).persist(entityArgumentCaptor.capture());
-        verify(mockAdyenAccountSetupDao, never()).updateTaskStatus(GATEWAY_ACCOUNT_ID, GATEWAY_ACCOUNT_ID, BANK_ACCOUNT, COMPLETED);
-        
-        AdyenAccountSetupTaskEntity entity = entityArgumentCaptor.getValue();
-        assertThat(entity.getTask(), is(BANK_ACCOUNT));
-        assertThat(entity.getStatus(), is(COMPLETED));
-    }
-
-    @Test
-    void shouldUpdateBankAccountStatusIfTaskIsPresent() {
-        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(true);
-
-        AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, NOT_STARTED);
-        adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
-
-        verify(mockAdyenAccountSetupDao).updateTaskStatus(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT, NOT_STARTED);
-        verify(mockAdyenAccountSetupDao, never()).persist(any(AdyenAccountSetupTaskEntity.class));
-    }
-    
-    @Test
-    void shouldUpdateMultipleTasks() {
-        List<AdyenAccountSetupUpdateRequest> requests = List.of( 
-                new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED),
-                new AdyenAccountSetupUpdateRequest(ORGANISATION_DETAILS, NOT_STARTED),
-                new AdyenAccountSetupUpdateRequest(RESPONSIBLE_PERSON, COMPLETED));
-
-        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(false);
-        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, ORGANISATION_DETAILS)).willReturn(false);
-        given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, RESPONSIBLE_PERSON)).willReturn(false);
-        
-        requests.forEach(request -> adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials));
-        
-        ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
-        verify(mockAdyenAccountSetupDao, times(3)).persist(entityArgumentCaptor.capture());
-        
-        List<AdyenAccountSetupTaskEntity> entities = entityArgumentCaptor.getAllValues();
-        
-        assertThat(entities.size(), is(3));
-        assertThat(entities.getFirst().getTask(), is(BANK_ACCOUNT));
-        assertThat(entities.getFirst().getStatus(), is(COMPLETED));
-        
-        assertThat(entities.get(1).getTask(), is(ORGANISATION_DETAILS));
-        assertThat(entities.get(1).getStatus(), is(NOT_STARTED));
-        
-        assertThat(entities.get(2).getTask(), is(RESPONSIBLE_PERSON));
-        assertThat(entities.get(2).getStatus(), is(COMPLETED));
-    }
-    
     @Nested
-    class completeTestAccountSetup {
+    class GetAdyenAccountSetupTasks {
+
+        @Test
+        void shouldReturnAdyenAccountSetupWithNoTasksCompleted() {
+            given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
+                    .willReturn(Collections.emptyList());
+
+            AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
+
+            assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
+            assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+            assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+
+            Arrays.stream(AdyenAccountSetupTask.values()).forEach(task ->
+                    assertThat(tasksWithStatus.tasks().get(task.getValue()).get(STATUS_KEY), is(NOT_STARTED)));
+        }
+
+        @Test
+        void shouldReturnAdyenAccountSetupWithAllTasksCompleted() {
+            given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
+                    .willReturn(anAdyenAccountSetupTaskEntityListWithAllTasksCompleted(testGatewayAccountEntity, adyenGatewayAccountCredentials));
+
+            AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
+
+            assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
+            assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+            assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+
+            Arrays.stream(AdyenAccountSetupTask.values()).forEach(task ->
+                    assertThat(tasksWithStatus.tasks().get(task.getValue()).get(STATUS_KEY), is(COMPLETED)));
+        }
+
+        @Test
+        void shouldReturnAdyenAccountSetupWithSomeTasksCompleted() {
+            var bankAccountCompletedTaskEntity = anAdyenAccountSetupTaskEntityFixture()
+                    .withGatewayAccount(testGatewayAccountEntity)
+                    .withGatewayAccountCredential(adyenGatewayAccountCredentials)
+                    .withTask(BANK_ACCOUNT)
+                    .withCompletedStatus()
+                    .build();
+
+            var companyNumberCompletedTaskEntity = anAdyenAccountSetupTaskEntityFixture()
+                    .withGatewayAccount(testGatewayAccountEntity)
+                    .withGatewayAccountCredential(adyenGatewayAccountCredentials)
+                    .withTask(COMPANY_NUMBER)
+                    .withCompletedStatus()
+                    .build();
+
+            given(mockAdyenAccountSetupDao.findByGatewayAccountIdAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID))
+                    .willReturn(List.of(bankAccountCompletedTaskEntity, companyNumberCompletedTaskEntity));
+
+            AdyenAccountSetupResponse tasksWithStatus = adyenAccountSetupService.buildResponse(SERVICE_ID, GATEWAY_ACCOUNT_ID, adyenGatewayAccountCredentials);
+
+            assertThat(tasksWithStatus.serviceId(), is(SERVICE_ID));
+            assertThat(tasksWithStatus.credentialExternalId(), is(CREDENTIAL_EXTERNAL_ID));
+            assertThat(tasksWithStatus.gatewayAccountId(), is(GATEWAY_ACCOUNT_ID));
+
+            assertThat(tasksWithStatus.tasks().get(BANK_ACCOUNT.getValue()).get(STATUS_KEY), is(COMPLETED));
+            assertThat(tasksWithStatus.tasks().get(RESPONSIBLE_PERSON.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+            assertThat(tasksWithStatus.tasks().get(VAT_NUMBER.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+            assertThat(tasksWithStatus.tasks().get(COMPANY_NUMBER.getValue()).get(STATUS_KEY), is(COMPLETED));
+            assertThat(tasksWithStatus.tasks().get(DIRECTOR.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+            assertThat(tasksWithStatus.tasks().get(GOVERNMENT_ENTITY_DOCUMENT.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+            assertThat(tasksWithStatus.tasks().get(ORGANISATION_DETAILS.getValue()).get(STATUS_KEY), is(NOT_STARTED));
+        }
+    }
+
+    @Nested
+    class UpdateAdyenAccountSetupTasks {
+
+        @Test
+        void shouldUpdateBankAccountStatusIfTaskNotPresent() {
+            given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(false);
+
+            AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED);
+            adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
+
+            ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
+            verify(mockAdyenAccountSetupDao).persist(entityArgumentCaptor.capture());
+            verify(mockAdyenAccountSetupDao, never()).updateTaskStatus(GATEWAY_ACCOUNT_ID, GATEWAY_ACCOUNT_ID, BANK_ACCOUNT, COMPLETED);
+
+            AdyenAccountSetupTaskEntity entity = entityArgumentCaptor.getValue();
+            assertThat(entity.getTask(), is(BANK_ACCOUNT));
+            assertThat(entity.getStatus(), is(COMPLETED));
+        }
+
+        @Test
+        void shouldUpdateBankAccountStatusIfTaskIsPresent() {
+            given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(true);
+
+            AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, NOT_STARTED);
+            adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
+
+            verify(mockAdyenAccountSetupDao).updateTaskStatus(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT, NOT_STARTED);
+            verify(mockAdyenAccountSetupDao, never()).persist(any(AdyenAccountSetupTaskEntity.class));
+        }
+
+        @Test
+        void shouldUpdateMultipleTasks() {
+            List<AdyenAccountSetupUpdateRequest> requests = List.of(
+                    new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED),
+                    new AdyenAccountSetupUpdateRequest(ORGANISATION_DETAILS, NOT_STARTED),
+                    new AdyenAccountSetupUpdateRequest(RESPONSIBLE_PERSON, COMPLETED));
+
+            given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(false);
+            given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, ORGANISATION_DETAILS)).willReturn(false);
+            given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, RESPONSIBLE_PERSON)).willReturn(false);
+
+            requests.forEach(request -> adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials));
+
+            ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
+            verify(mockAdyenAccountSetupDao, times(3)).persist(entityArgumentCaptor.capture());
+
+            List<AdyenAccountSetupTaskEntity> entities = entityArgumentCaptor.getAllValues();
+
+            assertThat(entities.size(), is(3));
+            assertThat(entities.getFirst().getTask(), is(BANK_ACCOUNT));
+            assertThat(entities.getFirst().getStatus(), is(COMPLETED));
+
+            assertThat(entities.get(1).getTask(), is(ORGANISATION_DETAILS));
+            assertThat(entities.get(1).getStatus(), is(NOT_STARTED));
+
+            assertThat(entities.get(2).getTask(), is(RESPONSIBLE_PERSON));
+            assertThat(entities.get(2).getStatus(), is(COMPLETED));
+        }
+    }
+
+    @Nested
+    class CompleteTestAccountSetup {
+        
         @Test
         void shouldCompleteAllTasks_WhenAccountIsAdyenAndTest() {
             adyenAccountSetupService.completeTestAccountSetup(testGatewayAccountEntity);
@@ -215,7 +224,7 @@ class AdyenAccountSetupServiceTest {
             verify(mockAdyenAccountSetupDao, times(AdyenAccountSetupTask.values().length)).persist(captor.capture());
 
             assertEquals(adyenGatewayAccountCredentials.getId(), captor.getValue().getGatewayAccountCredential().getId());
-            
+
             List<AdyenAccountSetupStatus> statuses = captor.getAllValues().stream()
                     .map(AdyenAccountSetupTaskEntity::getStatus)
                     .toList();
