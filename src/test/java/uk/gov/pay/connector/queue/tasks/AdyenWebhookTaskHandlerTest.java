@@ -260,7 +260,7 @@ class AdyenWebhookTaskHandlerTest {
     }
 
     @Test
-    void shouldProcessRefundNotificationWhenGatewayAccountNotFound() {
+    void shouldProcessRefundNotificationForConnectorCharge() {
         when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
                 .thenReturn(mockNotificationRequest);
         when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))

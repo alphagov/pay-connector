@@ -40,6 +40,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.defau
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.model.domain.RefundEntityFixture.aValidRefundEntity;
+import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 
 @ExtendWith(MockitoExtension.class)
 class RefundNotificationProcessorTest {
@@ -100,17 +101,17 @@ class RefundNotificationProcessorTest {
 
     @Test
     void shouldNotInvokeSendEmailNotifications_WhenRefundStatusIsNotRefunded() {
-        invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUND_ERROR);
+        invokeRefundNotificationProcessorWithNewStatus(REFUND_ERROR);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
     @Test
     void shouldNotInvokeSendEmailNotifications_WhenRefundStatusWasSetAsRefundError() {
-        refundEntity.setStatus(RefundStatus.REFUND_ERROR);
+        refundEntity.setStatus(REFUND_ERROR);
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUND_ERROR);
+        invokeRefundNotificationProcessorWithNewStatus(REFUND_ERROR);
         verify(userNotificationService, never()).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
@@ -119,14 +120,14 @@ class RefundNotificationProcessorTest {
         Optional<RefundEntity> optionalRefundEntity = Optional.of(refundEntity);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID)).thenReturn(optionalRefundEntity);
 
-        invokeRefundNotificationProcessorWithNewStatus(RefundStatus.REFUND_ERROR);
+        invokeRefundNotificationProcessorWithNewStatus(REFUND_ERROR);
 
         logs.assertContains("Refund request record set as failed (REFUND_ERROR)");
     }
 
     @Test
     void shouldLogError_whenRefundGatewayTransactionIdIsNotAvailable() {
-        refundNotificationProcessor.invoke(paymentGatewayName, RefundStatus.REFUND_ERROR, gatewayAccountEntity, null, TRANSACTION_ID, charge);
+        refundNotificationProcessor.invoke(paymentGatewayName, REFUND_ERROR, gatewayAccountEntity, null, TRANSACTION_ID, charge);
 
         logs.assertContains("Refund notification could not be used to update charge (missing reference)");
     }
@@ -263,8 +264,8 @@ class RefundNotificationProcessorTest {
     }
 
     @Test
-    void shouldAdyenTransitionRefund_WhenRefundStatusWasSetAsRefundError() {
-        refundEntity.setStatus(RefundStatus.REFUND_ERROR);
+    void shouldTransitionRefund_WhenRefundStatusWasSetAsRefundError_ForAdyen() {
+        refundEntity.setStatus(REFUND_ERROR);
 
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
                 .thenReturn(Optional.of(refundEntity));
@@ -282,35 +283,10 @@ class RefundNotificationProcessorTest {
         verify(userNotificationService).sendRefundIssuedEmail(refundEntity, charge, gatewayAccountEntity);
     }
 
-    @Test
-    void shouldAdyenIgnoreDuplicateRefundErrorWebhookForAdyen() {
-        refundEntity.setStatus(RefundStatus.REFUND_ERROR);
-        when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
-                .thenReturn(Optional.of(refundEntity));
-
-        refundNotificationProcessor.invoke(
-                ADYEN,
-                RefundStatus.REFUND_ERROR,
-                gatewayAccountEntity,
-                REFUND_GATEWAY_TRANSACTION_ID,
-                TRANSACTION_ID,
-                charge);
-
-        then(refundService)
-                .should(never())
-                .transitionRefundState(any(), any(), any(), any());
-        then(refundService)
-                .should(never())
-                .transitionRefundState(any(), any(), any(), any());
-        then(userNotificationService)
-                .should(never())
-                .sendRefundIssuedEmail(any(), any(), any());
-        assertThat(logs.getEvents(), everyItem(hasProperty("level", is(Level.INFO))));
-        logs.assertContains("Notification received for refund [someExternalId] is redundant and therefore ignored because refund is already in state [REFUND ERROR]");
-    }
+    
 
     @Test
-    void shouldAdyenLogIllegalStateTransitionAtErrorLevel_IfRefundFailedWhenRefundStatusWasSetAsRefunded() {
+    void shouldLogIllegalStateTransitionAtErrorLevel_IfRefundFailedWhenRefundStatusWasSetAsRefundedForAdyen() {
         refundEntity.setStatus(RefundStatus.REFUNDED);
         when(refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), REFUND_GATEWAY_TRANSACTION_ID))
                 .thenReturn(Optional.of(refundEntity));
