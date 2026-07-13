@@ -268,6 +268,23 @@ public class AdyenAccountSetupResourceIT {
                     .then()
                     .statusCode(SC_NOT_FOUND);
         }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenCredentialIdDoesNotExist() {
+            app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withServiceId(serviceId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .insert();
+
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential_does_not_exist"))
+                    .then()
+                    .statusCode(SC_NOT_FOUND);
+        }
     }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {
