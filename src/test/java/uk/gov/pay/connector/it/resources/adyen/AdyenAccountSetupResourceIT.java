@@ -353,6 +353,18 @@ public class AdyenAccountSetupResourceIT {
                 .statusCode(SC_BAD_REQUEST)
                 .body("message", is("Task name is not recognised: unknown_task"));
     }
+
+    @Test
+    void shouldReturnBadRequestWithUnrecognisedStatus() {
+        app.givenSetup()
+                .body(toJson(List.of(Map.of("op", "replace",
+                        "path", BANK_ACCOUNT,
+                        "value", "incomplete"))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
+                .then()
+                .statusCode(SC_BAD_REQUEST)
+                .body("message", is("Status is not recognised: incomplete"));
+    }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {
         tasks.forEach(task -> app.getDatabaseTestHelper().addGatewayAccountsAdyenSetupTask(gatewayAccountId, credentialId, task, COMPLETED));
