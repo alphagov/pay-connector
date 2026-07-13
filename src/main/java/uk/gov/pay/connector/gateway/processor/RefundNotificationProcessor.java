@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUND_ERROR;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
@@ -31,7 +32,7 @@ public class RefundNotificationProcessor {
     private final UserNotificationService userNotificationService;
 
     @Inject
-    RefundNotificationProcessor(RefundService refundService,
+    public RefundNotificationProcessor(RefundService refundService,
                                 UserNotificationService userNotificationService) {
         this.refundService = refundService;
         this.userNotificationService = userNotificationService;
@@ -69,17 +70,20 @@ public class RefundNotificationProcessor {
         }
 
         RefundEntity refundEntity = optionalRefundEntity.get();
-        RefundStatus oldStatus = refundEntity.getStatus();
+        RefundStatus currentStatus = refundEntity.getStatus();
 
-        if (isRefundTransitionRedundant(oldStatus, newStatus)) {
+        if (isRefundTransitionRedundant(currentStatus, newStatus)) {
             logger.info("Notification received for refund [{}] is redundant and therefore ignored because refund is already in state [{}]",
-                    refundEntity.getExternalId(), oldStatus);
+                    refundEntity.getExternalId(), currentStatus);
             return;
         }
-
-        if (isRefundTransitionIllegal(oldStatus, newStatus)) {
-            logger.info("Notification received for refund would cause an illegal state transition: refund [{}] cannot be set as [{}] because it is already in state [{}].",
-                    refundEntity.getExternalId(), newStatus, oldStatus);
+        
+        if (isAdyenRefundTransitionIllegal(gatewayName, currentStatus, newStatus)) {
+            logAdyenIllegalRefundTransition(refundEntity, newStatus, currentStatus);
+            return;
+        }
+        else if (gatewayName != ADYEN && isRefundTransitionIllegal(currentStatus, newStatus)){
+            logIllegalRefundTransition(refundEntity, newStatus, currentStatus);
             return;
         }
 
@@ -100,16 +104,30 @@ public class RefundNotificationProcessor {
                 kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
                 kv("payment_gateway_transaction_id", transactionId),
                 kv("gateway_transaction_id", gatewayTransactionId),
-                kv("from_status", oldStatus),
+                kv("from_status", currentStatus),
                 kv("to_status", newStatus)
         );
     }
 
-    private boolean isRefundTransitionRedundant(RefundStatus oldStatus, RefundStatus newStatus) {
-        return newStatus == oldStatus;
+    private boolean isRefundTransitionRedundant(RefundStatus currentStatus, RefundStatus newStatus) {
+        return newStatus == currentStatus;
+    }
+    
+    private boolean isRefundTransitionIllegal(RefundStatus currentStatus, RefundStatus newStatus) {
+        return (currentStatus == REFUNDED && newStatus == REFUND_ERROR) || (currentStatus == REFUND_ERROR && newStatus == REFUNDED);
     }
 
-    private boolean isRefundTransitionIllegal(RefundStatus oldStatus, RefundStatus newStatus) {
-        return (oldStatus == REFUNDED && newStatus == REFUND_ERROR) || (oldStatus == REFUND_ERROR && newStatus == REFUNDED);
+    private boolean isAdyenRefundTransitionIllegal(PaymentGatewayName gatewayName, RefundStatus currentStatus, RefundStatus newStatus) {
+        return gatewayName == ADYEN && currentStatus == REFUNDED && newStatus == REFUND_ERROR;
+    }
+
+    private void logIllegalRefundTransition(RefundEntity refundEntity, RefundStatus newStatus, RefundStatus currentStatus) {
+        logger.info("Notification received for refund would cause an illegal state transition: refund [{}] cannot be set as [{}] because it is already in state [{}].",
+                refundEntity.getExternalId(), newStatus, currentStatus);
+    }
+
+    private void logAdyenIllegalRefundTransition(RefundEntity refundEntity, RefundStatus newStatus, RefundStatus currentStatus) {
+        logger.error("Adyen Notification received for refund would cause an illegal state transition: refund [{}] cannot be set as [{}] because it is already in state [{}].",
+                refundEntity.getExternalId(), newStatus, currentStatus);
     }
 }

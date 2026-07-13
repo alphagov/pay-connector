@@ -139,6 +139,7 @@ public class TestTemplateResourceLoader {
     public static final String ADYEN_CANCELLATION_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/cancellation-successful.json";
     public static final String ADYEN_CANCELLATION_FAILED_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/cancellation-failed.json";
     public static final String ADYEN_REFUND_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/refund-successful.json";
+    public static final String ADYEN_REFUND_FAILURE_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/refund-failed.json";
     public static final String ADYEN_CREATE_LEGAL_ENTITY_REQUEST = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_request.json";
     public static final String ADYEN_CREATE_LEGAL_ENTITY_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_response.json";
     public static final String ADYEN_CREATE_INDIVIDUAL_REQUEST =  TEMPLATE_BASE_NAME + "/adyen/create_individual_request.json";
