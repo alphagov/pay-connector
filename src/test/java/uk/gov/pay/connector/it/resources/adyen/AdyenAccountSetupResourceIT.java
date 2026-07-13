@@ -233,6 +233,14 @@ public class AdyenAccountSetupResourceIT {
                     .body("tasks.bank_account.status", is(COMPLETED.toString()))
                     .body("tasks.vat_number.status", is(COMPLETED.toString()));
         }
+        
+        @Test
+        void shouldReturnNotFoundResponseWhenGatewayAccountDoesNotExist() {
+            app.givenSetup()
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential-123"))
+                    .then()
+                    .statusCode(SC_NOT_FOUND);
+        }
     }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {
