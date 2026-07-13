@@ -285,6 +285,34 @@ public class AdyenAccountSetupResourceIT {
                     .then()
                     .statusCode(SC_NOT_FOUND);
         }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenCredentialsBelongToADifferentAccount() {
+            app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withAccountId(adyenGatewayAccountId)
+                    .withServiceId(serviceId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .withGatewayAccountCredentials(Collections.singletonList(adyenCredentialsParams))
+                    .insert();
+
+            var differentAccount = app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withAccountId(999L)
+                    .withServiceId("my-adyen-service")
+                    .withPaymentProvider(ADYEN.getName())
+                    .insert();
+            
+            var differentAccountCredentials = differentAccount.getCredentials().getFirst().getExternalId();
+
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, differentAccountCredentials))
+                    .then()
+                    .statusCode(SC_NOT_FOUND);
+        }
     }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {
