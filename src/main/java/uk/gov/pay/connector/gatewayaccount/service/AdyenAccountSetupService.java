@@ -68,29 +68,31 @@ public class AdyenAccountSetupService {
     }
 
     public void update(GatewayAccountEntity gatewayAccountEntity,
-                       AdyenAccountSetupUpdateRequest updateRequest,
+                       List<AdyenAccountSetupUpdateRequest> updateRequests,
                        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         
-        AdyenAccountSetupTask task = updateRequest.task();
-        AdyenAccountSetupStatus status = updateRequest.status();
-        Long gatewayAccountId = gatewayAccountEntity.getId();
-        Long gatewayAccountCredentialsId = gatewayAccountCredentialsEntity.getId();
-        
-        AdyenAccountSetupTaskEntity adyenAccountSetupTaskEntity = new AdyenAccountSetupTaskEntity(
-                gatewayAccountEntity,
-                task,
-                gatewayAccountCredentialsEntity,
-                status);
+        updateRequests.forEach(updateRequest -> {
+            AdyenAccountSetupTask task = updateRequest.task();
+            AdyenAccountSetupStatus status = updateRequest.status();
+            Long gatewayAccountId = gatewayAccountEntity.getId();
+            Long gatewayAccountCredentialsId = gatewayAccountCredentialsEntity.getId();
 
-        if (adyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(gatewayAccountId, gatewayAccountCredentialsId, task)) {
-            adyenAccountSetupDao.updateTaskStatus(
-                    gatewayAccountId,
-                    gatewayAccountCredentialsId,
+            AdyenAccountSetupTaskEntity adyenAccountSetupTaskEntity = new AdyenAccountSetupTaskEntity(
+                    gatewayAccountEntity,
                     task,
-                    status
-            );
-        } else {
-            adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
-        }
+                    gatewayAccountCredentialsEntity,
+                    status);
+
+            if (adyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(gatewayAccountId, gatewayAccountCredentialsId, task)) {
+                adyenAccountSetupDao.updateTaskStatus(
+                        gatewayAccountId,
+                        gatewayAccountCredentialsId,
+                        task,
+                        status
+                );
+            } else {
+                adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
+            }
+        });
     }
 }

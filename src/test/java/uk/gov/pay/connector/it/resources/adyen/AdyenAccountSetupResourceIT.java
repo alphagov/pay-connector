@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.is;
@@ -339,6 +340,18 @@ public class AdyenAccountSetupResourceIT {
                     .statusCode(SC_NOT_FOUND)
                     .body("message", is("Credential is not associated with payment provider Adyen"));
         }
+    }
+    
+    @Test
+    void shouldReturnBadRequestWithUnrecognisedTaskName() {
+        app.givenSetup()
+                .body(toJson(List.of(Map.of("op", "replace",
+                        "path", "unknown_task",
+                        "value", COMPLETED))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
+                .then()
+                .statusCode(SC_BAD_REQUEST)
+                .body("message", is("Task name is not recognised: unknown_task"));
     }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {

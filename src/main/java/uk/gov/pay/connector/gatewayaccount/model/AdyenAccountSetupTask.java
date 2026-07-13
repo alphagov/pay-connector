@@ -1,5 +1,7 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
+import jakarta.ws.rs.BadRequestException;
+
 public enum AdyenAccountSetupTask {
     BANK_ACCOUNT("bank_account"),
     RESPONSIBLE_PERSON("responsible_person"),
@@ -17,5 +19,13 @@ public enum AdyenAccountSetupTask {
     
     public String getValue() {
         return value;
+    }
+
+    public static AdyenAccountSetupTask fromPath(String path) {
+        try {
+            return AdyenAccountSetupTask.valueOf(path.toUpperCase());
+        } catch (IllegalArgumentException _) {
+            throw new BadRequestException("Task name is not recognised: " + path);
+        }
     }
 }
