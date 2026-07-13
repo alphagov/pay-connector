@@ -16,6 +16,7 @@ import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -351,7 +352,7 @@ public class AdyenAccountSetupResourceIT {
                 .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
                 .then()
                 .statusCode(SC_BAD_REQUEST)
-                .body("message", is("Task name is not recognised: unknown_task"));
+                .body("message", hasItem("The paths field must be one of: [bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details]"));
     }
 
     @Test
@@ -362,8 +363,28 @@ public class AdyenAccountSetupResourceIT {
                         "value", "incomplete"))))
                 .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
                 .then()
-                .statusCode(SC_BAD_REQUEST)
-                .body("message", is("Status is not recognised: incomplete"));
+                .statusCode(422)
+                .body("message", hasItem("The values field must be one of: [completed, not_started]"));
+    }
+
+    @Test
+    void shouldReturnBadRequestWithUnrecognisedOperation() {
+        var stripeAccount = app.getDatabaseFixtures()
+                .aTestAccount()
+                .withServiceId(serviceId)
+                .withType(LIVE)
+                .withPaymentProvider(ADYEN.getName())
+                .insert();
+
+        var credentialExternalId = stripeAccount.getCredentials().getFirst().getExternalId();
+        app.givenSetup()
+                .body(toJson(List.of(Map.of("op", "add",
+                        "path", BANK_ACCOUNT,
+                        "value", COMPLETED))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                .then()
+                .statusCode(422)
+                .body("message", hasItem("The op field must be 'replace'"));
     }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {

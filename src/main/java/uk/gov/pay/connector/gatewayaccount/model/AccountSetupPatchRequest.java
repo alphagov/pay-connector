@@ -19,6 +19,12 @@ public record AccountSetupPatchRequest(
                 message = "The paths field must be one of: [bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details]"
         )
         String path,
+
+        @Valid
+        @AllowedStrings(
+                allowed = { "completed", "not_started" },
+                message = "The values field must be one of: [completed, not_started]"
+        )
         String value
 ) {
 }
