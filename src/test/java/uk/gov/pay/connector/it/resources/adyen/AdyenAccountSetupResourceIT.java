@@ -244,7 +244,8 @@ public class AdyenAccountSetupResourceIT {
                             "value", COMPLETED))))
                     .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential-123"))
                     .then()
-                    .statusCode(SC_NOT_FOUND);
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message[0]", is((format("Gateway account not found for service external id [%s] and account type [%s]", serviceId, TEST))));
         }
 
         @Test
@@ -267,7 +268,8 @@ public class AdyenAccountSetupResourceIT {
                             "value", COMPLETED))))
                     .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, credentialExternalId))
                     .then()
-                    .statusCode(SC_NOT_FOUND);
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message[0]", is((format("Gateway account not found for service external id [%s] and account type [%s]", serviceId, TEST))));
         }
 
         @Test
@@ -284,7 +286,8 @@ public class AdyenAccountSetupResourceIT {
                             "value", COMPLETED))))
                     .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential_does_not_exist"))
                     .then()
-                    .statusCode(SC_NOT_FOUND);
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message", is(("HTTP 404 Not Found")));
         }
 
         @Test
@@ -312,7 +315,8 @@ public class AdyenAccountSetupResourceIT {
                             "value", COMPLETED))))
                     .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, differentAccountCredentials))
                     .then()
-                    .statusCode(SC_NOT_FOUND);
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message", is(("HTTP 404 Not Found")));
         }
 
         @Test
