@@ -17,6 +17,7 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.COMPLETED;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.NOT_STARTED;
@@ -312,6 +313,27 @@ public class AdyenAccountSetupResourceIT {
                     .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, differentAccountCredentials))
                     .then()
                     .statusCode(SC_NOT_FOUND);
+        }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenCredentialIdExistsButPaymentProviderIsNotAdyen() {
+            var stripeAccount = app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withServiceId(serviceId)
+                    .withType(LIVE)
+                    .withPaymentProvider(STRIPE.getName())
+                    .insert();
+
+            var credentialExternalId = stripeAccount.getCredentials().getFirst().getExternalId();
+
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                    .then()
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message", is("Credential is not associated with payment provider Adyen"));
         }
     }
     
