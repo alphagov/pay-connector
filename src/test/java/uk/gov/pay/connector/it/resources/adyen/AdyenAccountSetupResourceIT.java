@@ -236,8 +236,35 @@ public class AdyenAccountSetupResourceIT {
         
         @Test
         void shouldReturnNotFoundResponseWhenGatewayAccountDoesNotExist() {
+
             app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
                     .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential-123"))
+                    .then()
+                    .statusCode(SC_NOT_FOUND);
+        }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenAccountTypeDoesNotExistForService() {
+            var liveAccount = app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withAccountId(adyenGatewayAccountId)
+                    .withServiceId(serviceId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .withType(LIVE)
+                    .withGatewayAccountCredentials(Collections.singletonList(adyenCredentialsParams))
+                    .insert();
+
+            var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
+            
+            
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, credentialExternalId))
                     .then()
                     .statusCode(SC_NOT_FOUND);
         }
