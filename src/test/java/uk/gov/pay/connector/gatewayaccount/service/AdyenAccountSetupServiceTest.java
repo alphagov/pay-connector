@@ -158,7 +158,7 @@ class AdyenAccountSetupServiceTest {
         void shouldUpdateBankAccountStatusIfTaskNotPresent() {
             given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(false);
 
-            var request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED);
+            AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, COMPLETED);
             adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
 
             ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
@@ -174,7 +174,7 @@ class AdyenAccountSetupServiceTest {
         void shouldUpdateBankAccountStatusIfTaskIsPresent() {
             given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT)).willReturn(true);
 
-            var request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, NOT_STARTED);
+            AdyenAccountSetupUpdateRequest request = new AdyenAccountSetupUpdateRequest(BANK_ACCOUNT, NOT_STARTED);
             adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials);
 
             verify(mockAdyenAccountSetupDao).updateTaskStatus(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, BANK_ACCOUNT, NOT_STARTED);
@@ -193,7 +193,7 @@ class AdyenAccountSetupServiceTest {
             given(mockAdyenAccountSetupDao.isTaskPresentForGatewayAccountAndCredentialId(GATEWAY_ACCOUNT_ID, CREDENTIAL_ID, RESPONSIBLE_PERSON)).willReturn(false);
 
             requests.forEach(request -> adyenAccountSetupService.update(testGatewayAccountEntity, request, adyenGatewayAccountCredentials));
-            
+
             ArgumentCaptor<AdyenAccountSetupTaskEntity> entityArgumentCaptor = ArgumentCaptor.forClass(AdyenAccountSetupTaskEntity.class);
             verify(mockAdyenAccountSetupDao, times(3)).persist(entityArgumentCaptor.capture());
 
