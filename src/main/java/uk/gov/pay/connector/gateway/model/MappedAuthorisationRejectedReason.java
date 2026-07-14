@@ -6,6 +6,7 @@ public enum MappedAuthorisationRejectedReason {
     CARD_BLOCKED_OR_INVALID_OR_NONEXISTENT(true),
     DO_NOT_HONOUR(true),
     EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT(true),
+    EXCEEDS_WITHDRAWAL_COUNT_LIMIT(true),
     GENERIC_DECLINE(true),
     INSUFFICIENT_FUNDS(true),
     INVALID_ACCOUNT_NUMBER(true),
@@ -21,6 +22,7 @@ public enum MappedAuthorisationRejectedReason {
     TRY_AGAIN_LATER(true),
     TRY_ANOTHER_CARD(true),
     UNCATEGORISED(true),
+    CANCELLED(true),
 
     AUTHENTICATION_REQUIRED(false),
     CAPTURE_CARD(false),
