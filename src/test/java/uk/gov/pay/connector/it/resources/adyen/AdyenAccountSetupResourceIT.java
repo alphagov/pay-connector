@@ -17,6 +17,7 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.COMPLETED;
 import static uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupStatus.NOT_STARTED;
@@ -232,6 +233,111 @@ public class AdyenAccountSetupResourceIT {
                     .statusCode(SC_OK)
                     .body("tasks.bank_account.status", is(COMPLETED.toString()))
                     .body("tasks.vat_number.status", is(COMPLETED.toString()));
+        }
+        
+        @Test
+        void shouldReturnNotFoundResponseWhenGatewayAccountDoesNotExist() {
+
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential-123"))
+                    .then()
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message[0]", is((format("Gateway account not found for service external id [%s] and account type [%s]", serviceId, TEST))));
+        }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenAccountTypeDoesNotExistForService() {
+            var liveAccount = app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withAccountId(adyenGatewayAccountId)
+                    .withServiceId(serviceId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .withType(LIVE)
+                    .withGatewayAccountCredentials(Collections.singletonList(adyenCredentialsParams))
+                    .insert();
+
+            var credentialExternalId = liveAccount.getCredentials().getFirst().getExternalId();
+            
+            
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, credentialExternalId))
+                    .then()
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message[0]", is((format("Gateway account not found for service external id [%s] and account type [%s]", serviceId, TEST))));
+        }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenCredentialIdDoesNotExist() {
+            app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withServiceId(serviceId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .insert();
+
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, "credential_does_not_exist"))
+                    .then()
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message", is(("HTTP 404 Not Found")));
+        }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenCredentialsBelongToADifferentAccount() {
+            app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withAccountId(adyenGatewayAccountId)
+                    .withServiceId(serviceId)
+                    .withPaymentProvider(ADYEN.getName())
+                    .withGatewayAccountCredentials(Collections.singletonList(adyenCredentialsParams))
+                    .insert();
+
+            var differentAccount = app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withAccountId(999L)
+                    .withServiceId("my-adyen-service")
+                    .withPaymentProvider(ADYEN.getName())
+                    .insert();
+            
+            var differentAccountCredentials = differentAccount.getCredentials().getFirst().getExternalId();
+
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, TEST, differentAccountCredentials))
+                    .then()
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message", is(("HTTP 404 Not Found")));
+        }
+
+        @Test
+        void shouldReturnNotFoundResponseWhenCredentialIdExistsButPaymentProviderIsNotAdyen() {
+            var stripeAccount = app.getDatabaseFixtures()
+                    .aTestAccount()
+                    .withServiceId(serviceId)
+                    .withType(LIVE)
+                    .withPaymentProvider(STRIPE.getName())
+                    .insert();
+
+            var credentialExternalId = stripeAccount.getCredentials().getFirst().getExternalId();
+
+            app.givenSetup()
+                    .body(toJson(List.of(Map.of("op", "replace",
+                            "path", VAT_NUMBER.getValue(),
+                            "value", COMPLETED))))
+                    .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                    .then()
+                    .statusCode(SC_NOT_FOUND)
+                    .body("message", is("Credential is not associated with payment provider Adyen"));
         }
     }
     

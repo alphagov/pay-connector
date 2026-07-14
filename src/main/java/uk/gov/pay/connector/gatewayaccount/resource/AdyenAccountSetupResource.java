@@ -137,7 +137,8 @@ public class AdyenAccountSetupResource {
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId, // pragma: allowlist secret
             List<AccountSetupPatchRequest> requests) {
 
-        var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType).get();
+        var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
+                .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));
         var gatewayAccountCredentialsEntity = validateGatewayAccountCredentialsEntity(credentialExternalId, gatewayAccountEntity);
 
         requests.forEach(patchRequest ->  {
