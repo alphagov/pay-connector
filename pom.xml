@@ -171,6 +171,10 @@
             <artifactId>sqs</artifactId>
         </dependency>
         <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache5-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.glassfish.jersey.connectors</groupId>
             <artifactId>jersey-apache5-connector</artifactId>
         </dependency>
@@ -330,6 +334,11 @@
             <groupId>com.adyen</groupId>
             <artifactId>adyen-java-api-library</artifactId>
             <version>42.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
         </dependency>
 
         <!-- Test dependencies that are imported from one of the BOMs specified

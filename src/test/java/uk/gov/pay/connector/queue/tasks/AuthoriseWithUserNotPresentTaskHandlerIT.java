@@ -17,7 +17,7 @@ import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;

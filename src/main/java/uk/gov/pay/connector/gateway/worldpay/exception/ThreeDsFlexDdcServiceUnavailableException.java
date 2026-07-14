@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.gateway.worldpay.exception;
 
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;

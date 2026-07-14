@@ -3,7 +3,7 @@ package uk.gov.pay.connector.gateway.adyen.handler;
 import com.jayway.jsonassert.JsonAssert;
 import io.dropwizard.jackson.Jackson;
 import io.github.netmikey.logunit.api.LogCapturer;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

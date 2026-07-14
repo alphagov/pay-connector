@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URLEncodedUtils;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED_TYPE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 
 public abstract class StripePostRequest implements GatewayClientPostRequest {
