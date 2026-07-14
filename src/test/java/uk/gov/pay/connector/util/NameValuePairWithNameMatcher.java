@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.util;
 
-import org.apache.hc.core5.http.NameValuePair;
+import org.apache.http.NameValuePair;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
