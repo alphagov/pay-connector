@@ -344,7 +344,7 @@ public class AdyenAccountSetupResourceIT {
     }
     
     @Test
-    void shouldReturnBadRequestWithUnrecognisedTaskName() {
+    void shouldReturnUprocessableEntityWithUnrecognisedTaskName() {
         app.givenSetup()
                 .body(toJson(List.of(Map.of("op", "replace",
                         "path", "unknown_task",
@@ -356,7 +356,7 @@ public class AdyenAccountSetupResourceIT {
     }
 
     @Test
-    void shouldReturnBadRequestWithUnrecognisedStatus() {
+    void shouldReturnUprocessableEntityWithUnrecognisedStatus() {
         app.givenSetup()
                 .body(toJson(List.of(Map.of("op", "replace",
                         "path", BANK_ACCOUNT.getValue(),
@@ -368,7 +368,7 @@ public class AdyenAccountSetupResourceIT {
     }
 
     @Test
-    void shouldReturnBadRequestWithUnrecognisedOperation() {
+    void shouldReturnUprocessableEntityWithUnrecognisedOperation() {
         var stripeAccount = app.getDatabaseFixtures()
                 .aTestAccount()
                 .withServiceId(serviceId)
