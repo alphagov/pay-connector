@@ -12,7 +12,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import java.util.Optional;
 
-import static org.apache.hc.core5.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_OK;
 
 public class CardidService {
     

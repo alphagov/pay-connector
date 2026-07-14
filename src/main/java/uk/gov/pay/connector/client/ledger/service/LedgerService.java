@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static org.apache.hc.core5.http.HttpStatus.SC_ACCEPTED;
-import static org.apache.hc.core5.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.hc.core5.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_ACCEPTED;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_OK;
 import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_ACCOUNT_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.HTTP_STATUS;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;

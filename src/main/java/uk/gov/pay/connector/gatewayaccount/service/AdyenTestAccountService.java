@@ -51,7 +51,7 @@ import java.util.List;
 
 import static com.adyen.model.legalentitymanagement.UKLocalAccountIdentification.TypeEnum.UKLOCAL;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static org.apache.hc.core5.http.HttpStatus.SC_BAD_GATEWAY;
+import static org.apache.http.HttpStatus.SC_BAD_GATEWAY;
 
 public class AdyenTestAccountService {
 

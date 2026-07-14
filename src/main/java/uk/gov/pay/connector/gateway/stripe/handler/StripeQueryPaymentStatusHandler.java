@@ -19,10 +19,10 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.util.List;
 
+import static java.lang.String.format;
 import static jakarta.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static jakarta.ws.rs.core.Response.Status.Family.SERVER_ERROR;
-import static java.lang.String.format;
-import static org.apache.hc.core5.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
 public class StripeQueryPaymentStatusHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(StripeQueryPaymentStatusHandler.class);

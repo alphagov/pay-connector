@@ -20,8 +20,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.hc.core5.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.hc.core5.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_OK;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 
 public class Worldpay3dsFlexCredentialsValidationService {

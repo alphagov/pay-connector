@@ -171,10 +171,6 @@
             <artifactId>sqs</artifactId>
         </dependency>
         <dependency>
-            <groupId>software.amazon.awssdk</groupId>
-            <artifactId>apache5-client</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.glassfish.jersey.connectors</groupId>
             <artifactId>jersey-apache5-connector</artifactId>
         </dependency>
@@ -232,7 +228,7 @@
         <dependency>
             <groupId>uk.gov.service.notify</groupId>
             <artifactId>notifications-java-client</artifactId>
-            <version>6.0.1-RELEASE</version>
+            <version>6.0.0-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
