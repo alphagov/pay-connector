@@ -2,9 +2,8 @@ package uk.gov.pay.connector.gatewayaccount.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import uk.gov.service.payments.commons.api.validation.AllowedStrings;
-
 import jakarta.validation.Valid;
+import uk.gov.service.payments.commons.api.validation.AllowedStrings;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -22,8 +21,9 @@ public record AccountSetupPatchRequest(
 
         @Valid
         @AllowedStrings(
-                allowed = { "completed", "not_started" },
-                message = "The values field must be one of: [completed, not_started]"
+                allowed = { "COMPLETED", "NOT_STARTED", "true", "false" },
+                message = "The values field must be one of: [COMPLETED, NOT_STARTED] for Adyen accounts " + 
+                        "or one of: [true, false] for Stripe accounts"
         )
         String value
 ) {
