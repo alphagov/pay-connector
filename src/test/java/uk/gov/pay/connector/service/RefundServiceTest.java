@@ -72,6 +72,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_AVAILABLE;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeRefundAvailability.EXTERNAL_UNAVAILABLE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.SANDBOX;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
@@ -420,6 +421,48 @@ public class RefundServiceTest {
         // should set refund status to both REFUND_SUBMITTED and REFUNDED in order - as gateway refund state is COMPLETE
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUND_SUBMITTED);
         verify(spiedRefundEntity).setStatus(RefundStatus.REFUNDED);
+    }
+
+    @Test
+    void shouldNotTransitionRefundFromRefundErrorToRefundedForWorldPayWebhook() {
+        chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transaction-id")
+                .withExternalId(externalChargeId)
+                .withStatus(CAPTURED)
+                .withPaymentProvider(WORLDPAY.getName())
+                .build();
+
+        RefundEntity refundEntity = aValidRefundEntity()
+                .withChargeExternalId(externalChargeId)
+                .withStatus(REFUND_ERROR)
+                .build();
+
+        refundService.transitionRefundState(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
+
+        assertThat(refundEntity.getStatus(), is(REFUND_ERROR));
+        verify(mockStateTransitionService, never()).offerRefundStateTransition(any(), any());
+    }
+
+    @Test
+    void shouldTransitionRefundFromRefundErrorToRefundedForAdyenWebhook() {
+        chargeEntity = aValidChargeEntity()
+                .withGatewayAccountEntity(account)
+                .withTransactionId("transaction-id")
+                .withExternalId(externalChargeId)
+                .withStatus(CAPTURED)
+                .withPaymentProvider(ADYEN.getName())
+                .build();
+
+        RefundEntity refundEntity = aValidRefundEntity()
+                .withChargeExternalId(externalChargeId)
+                .withStatus(REFUND_ERROR)
+                .build();
+
+        refundService.transitionRefundState(refundEntity, account, REFUNDED, Charge.from(chargeEntity));
+
+        assertThat(refundEntity.getStatus(), is(REFUNDED));
+        verify(mockStateTransitionService).offerRefundStateTransition(refundEntity, REFUNDED);
     }
 
     @Test
@@ -883,7 +926,7 @@ public class RefundServiceTest {
     }
 
     @Test
-    void shouldNotTransitionWhenRefundIsInTerminalStateError() {
+    void shouldNotTransitionWhenRefundIsInRefundErrorState() {
         ChargeEntity charge = aValidChargeEntity().build();
         RefundEntity refundEntity = aValidRefundEntity()
                 .withAmount(100L)

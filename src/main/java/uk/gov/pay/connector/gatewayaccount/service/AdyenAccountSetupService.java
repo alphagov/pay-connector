@@ -68,10 +68,9 @@ public class AdyenAccountSetupService {
     }
 
     public void update(GatewayAccountEntity gatewayAccountEntity,
-                       List<AdyenAccountSetupUpdateRequest> updateRequests,
+                       AdyenAccountSetupUpdateRequest updateRequest,
                        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
         
-        updateRequests.forEach(updateRequest -> {
             AdyenAccountSetupTask task = updateRequest.task();
             AdyenAccountSetupStatus status = updateRequest.status();
             Long gatewayAccountId = gatewayAccountEntity.getId();
@@ -93,6 +92,5 @@ public class AdyenAccountSetupService {
             } else {
                 adyenAccountSetupDao.persist(adyenAccountSetupTaskEntity);
             }
-        });
     }
 }
