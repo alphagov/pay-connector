@@ -4,6 +4,8 @@ import io.github.netmikey.logunit.api.LogCapturer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.event.KeyValuePair;
 import org.slf4j.event.Level;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
@@ -25,6 +27,7 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Map;
@@ -39,6 +42,7 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
@@ -46,6 +50,8 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.service.payments.commons.model.AgreementPaymentType.RECURRING;
+import static uk.gov.service.payments.commons.model.AgreementPaymentType.UNSCHEDULED;
 
 class AdyenRequestFactoryTest {
 
@@ -58,7 +64,7 @@ class AdyenRequestFactoryTest {
     final String screenWidth = "1440";
     final String timezoneOffset = "-60";
     final String shopperEmail = "test@example.com";
-   
+
     public static final BillingAddress FULL_BILLING_ADDRESS = new BillingAddress(
             "line1",
             "line2",
@@ -168,6 +174,45 @@ class AdyenRequestFactoryTest {
         assertThat(request.additionalData().get("manualCapture"), is("true"));
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "RECURRING,Subscription",
+            "INSTALMENT,Subscription",
+            "UNSCHEDULED,UnscheduledCardOnFile"
+    })
+    void should_map_agreementPaymentType_to_recurringProcessingModel_for_recurring_payment(AgreementPaymentType agreementPaymentType, String recurringProcessingModel) {
+        var mappedAdyenRecurringProcessingModel = adyenRequestFactory.fromAgreementPaymentType(agreementPaymentType);
+        assertThat(mappedAdyenRecurringProcessingModel, is(recurringProcessingModel));
+    }
+
+    @Test
+    void should_create_PaymentRequest_for_recurring_payment() {
+        var agreementId = "some-agreement-id";
+        var agreement = anAgreementEntity()
+                .withExternalId(agreementId)
+                .build();
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAddress(makeFullBillingAddress())
+                        .withCardNo("4444333322221111")
+                        .withCardHolder("John Doe")
+                        .withCvc("737")
+                        .withEndDate(CardExpiryDate.valueOf("10/99"))
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withAmount("6234")
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreement(agreement)
+                .withAgreementPaymentType(RECURRING)
+                .build();
+
+        var request = adyenRequestFactory.createPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperReference(), is(agreementId));
+        assertThat(request.storePaymentMethod(), is(true));
+        assertThat(request.recurringProcessingModel(), is("Subscription"));
+    }
+
     @Test
     void should_throw_IllegalArgumentException_if_credentials_are_not_Adyen_specific() {
         var authoriseRequest = aCardAuthorisationGatewayRequest()
@@ -179,6 +224,29 @@ class AdyenRequestFactoryTest {
                 () -> adyenRequestFactory.createPaymentRequest(authoriseRequest));
 
         assertThat(exception.getMessage(), is("Expected provided GatewayCredentials to be of type AdyenCredentials"));
+    }
+
+    @Test
+    void should_throw_IllegalArgumentException_if_agreement_does_not_exist() {
+        var authoriseRequest = aCardAuthorisationGatewayRequest()
+                .withAuthCardDetails(anAuthCardDetails()
+                        .withAddress(makeFullBillingAddress())
+                        .withCardNo("4444333322221111")
+                        .withCardHolder("John Doe")
+                        .withCvc("737")
+                        .withEndDate(CardExpiryDate.valueOf("10/99"))
+                        .build())
+                .withCredentials(ADYEN_CREDENTIALS)
+                .withAmount("6234")
+                .withSavePaymentInstrumentToAgreement(true)
+                .withAgreement(null)
+                .withAgreementPaymentType(UNSCHEDULED)
+                .build();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> adyenRequestFactory.createPaymentRequest(authoriseRequest));
+
+        assertThat(exception.getMessage(), is("Expected charge with savePaymentInstrumentToAgreement to have an agreement"));
     }
 
     @Test
@@ -225,7 +293,7 @@ class AdyenRequestFactoryTest {
 
         assertThat(request.shopperInteraction(), is("Moto"));
     }
-    
+
     @Test
     void should_create_a_PaymentDetailsRequest_with_redirect_result() {
         var auth3dsResult = new Auth3dsResult();
@@ -303,7 +371,7 @@ class AdyenRequestFactoryTest {
         assertThat(request.shopperInteraction(), is("Moto"));
         assertThat(request.browserInfo(), is(nullValue()));
         assertThat(request.origin(), is(nullValue()));
-        assertThat(request.shopperEmail(),is(nullValue()));
+        assertThat(request.shopperEmail(), is(nullValue()));
         assertThat(request.shopperIP(), is(nullValue()));
     }
 
@@ -326,7 +394,7 @@ class AdyenRequestFactoryTest {
 
         assertThat(loggingEvents, everyItem(hasProperty("level", is(Level.WARN))));
         assertThat(loggingEvents, everyItem(hasProperty("message", is("Unable to parse browser info integer"))));
-        
+
         var keyValuePairs = loggingEvents.stream()
                 .flatMap(event -> event.getKeyValuePairs().stream())
                 .toList();
@@ -340,6 +408,7 @@ class AdyenRequestFactoryTest {
                 new KeyValuePair("value", "bad-offset")
         ));
     }
+
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
                 .withExternalId(externalChargeId)

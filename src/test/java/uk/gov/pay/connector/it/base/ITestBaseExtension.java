@@ -477,6 +477,10 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     }
 
     public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId) {
+        return addChargeForSetUpAgreement(status, agreementExternalId, paymentInstrumentId, null);
+    }
+
+    public ChargeUtils.ExternalChargeId addChargeForSetUpAgreement(ChargeStatus status, String agreementExternalId, Long paymentInstrumentId, AgreementPaymentType agreementPaymentType) {
         long chargeId = secureRandomInt();
         ChargeUtils.ExternalChargeId externalChargeId = ChargeUtils.ExternalChargeId.fromChargeId(chargeId);
         databaseTestHelper.addCharge(anAddChargeParams()
@@ -491,6 +495,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withAgreementExternalId(agreementExternalId)
                 .withGatewayCredentialId((long) gatewayAccountCredentialsId)
                 .withPaymentInstrumentId(paymentInstrumentId)
+                .withAgreementPaymentType(agreementPaymentType)
                 .build());
         return externalChargeId;
     }

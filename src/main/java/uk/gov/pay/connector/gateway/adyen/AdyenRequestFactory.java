@@ -24,6 +24,7 @@ import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
+import uk.gov.service.payments.commons.model.AgreementPaymentType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +45,7 @@ public class AdyenRequestFactory {
         var authCardDetails = request.getAuthCardDetails();
         boolean isMoto = "Moto".equals(getShopperInteraction(request));
         String frontendUrl = configuration.getLinks().getFrontendUrl();
-        
+
         var mappedAddress = authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
                 .orElse(null);
@@ -57,7 +58,18 @@ public class AdyenRequestFactory {
                 "scheme");
 
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
-        
+
+        String shopperReference = null;
+        Boolean storePaymentMethod = null;
+        String recurringProcessingModel = null;
+        if (request.isSavePaymentInstrumentToAgreement()) {
+            shopperReference = request.getAgreement()
+                    .orElseThrow(() -> new IllegalArgumentException("Expected charge with savePaymentInstrumentToAgreement to have an agreement"))
+                    .getExternalId();
+            storePaymentMethod = true;
+            recurringProcessingModel = fromAgreementPaymentType(request.getAgreementPaymentType());
+        }
+
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
@@ -72,7 +84,10 @@ public class AdyenRequestFactory {
                 isMoto ? null : mapToBrowserInfo(authCardDetails),
                 isMoto ? null : frontendUrl,
                 isMoto ? null : request.getEmail(),
-                isMoto ? null : authCardDetails.getIpAddress().orElse(null)
+                isMoto ? null : authCardDetails.getIpAddress().orElse(null),
+                shopperReference,
+                storePaymentMethod,
+                recurringProcessingModel
         );
     }
 
@@ -130,15 +145,15 @@ public class AdyenRequestFactory {
         }
         return (AdyenCredentials) gatewayCredentials;
     }
-    
+
     private BrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
         return new BrowserInfo(
                 authCardDetails.getAcceptHeader(),
-                authCardDetails.getJsScreenColorDepth().flatMap(value -> parseInteger("js_screen_color_depth",value) ).orElse(null),                false,
+                authCardDetails.getJsScreenColorDepth().flatMap(value -> parseInteger("js_screen_color_depth", value)).orElse(null), false,
                 authCardDetails.getJsEnabled(),
                 authCardDetails.getJsNavigatorLanguage().orElse(null),
                 authCardDetails.getJsScreenHeight().flatMap(value -> parseInteger("js_screen_height", value)).orElse(null),
-                authCardDetails.getJsScreenWidth().flatMap(value-> parseInteger("js_screen_width", value)).orElse(null),
+                authCardDetails.getJsScreenWidth().flatMap(value -> parseInteger("js_screen_width", value)).orElse(null),
                 authCardDetails.getJsTimezoneOffsetMins().flatMap(value -> parseInteger("js_timezone_offset_min", value)).orElse(null),
                 authCardDetails.getUserAgentHeader()
         );
@@ -156,5 +171,13 @@ public class AdyenRequestFactory {
                     .log();
             return Optional.empty();
         }
+    }
+
+    String fromAgreementPaymentType(AgreementPaymentType agreementPaymentType) {
+        return switch (agreementPaymentType) {
+            case null -> "UnscheduledCardOnFile";
+            case RECURRING, INSTALMENT -> "Subscription";
+            default -> "UnscheduledCardOnFile";
+        };
     }
 }
