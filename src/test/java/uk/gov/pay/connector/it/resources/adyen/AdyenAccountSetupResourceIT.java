@@ -15,6 +15,8 @@ import java.util.Map;
 import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
@@ -339,6 +341,50 @@ public class AdyenAccountSetupResourceIT {
                     .statusCode(SC_NOT_FOUND)
                     .body("message", is("Credential is not associated with payment provider Adyen"));
         }
+    }
+    
+    @Test
+    void shouldReturnUprocessableEntityWithUnrecognisedTaskName() {
+        app.givenSetup()
+                .body(toJson(List.of(Map.of("op", "replace",
+                        "path", "unknown_task",
+                        "value", COMPLETED))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
+                .then()
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .body("message", contains("The paths field must be one of: [bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details]"));
+    }
+
+    @Test
+    void shouldReturnUprocessableEntityWithUnrecognisedStatus() {
+        app.givenSetup()
+                .body(toJson(List.of(Map.of("op", "replace",
+                        "path", BANK_ACCOUNT.getValue(),
+                        "value", "incomplete"))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
+                .then()
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .body("message", contains("The values field must be one of: [COMPLETED, NOT_STARTED]"));
+    }
+
+    @Test
+    void shouldReturnUprocessableEntityWithUnrecognisedOperation() {
+        var stripeAccount = app.getDatabaseFixtures()
+                .aTestAccount()
+                .withServiceId(serviceId)
+                .withType(LIVE)
+                .withPaymentProvider(ADYEN.getName())
+                .insert();
+
+        var credentialExternalId = stripeAccount.getCredentials().getFirst().getExternalId();
+        app.givenSetup()
+                .body(toJson(List.of(Map.of("op", "add",
+                        "path", BANK_ACCOUNT.getValue(),
+                        "value", COMPLETED))))
+                .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
+                .then()
+                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .body("message", contains("The op field must be 'replace'"));
     }
     
     private void markTasksAsCompleted(long gatewayAccountId, long credentialId, List<AdyenAccountSetupTask> tasks) {

@@ -4,9 +4,9 @@ public record AdyenAccountSetupUpdateRequest(
         AdyenAccountSetupTask task, 
         AdyenAccountSetupStatus status) {
     
-    public static AdyenAccountSetupUpdateRequest from(AccountSetupPatchRequest request) {
+    public static AdyenAccountSetupUpdateRequest from(AdyenSetupPatchRequest request) {
         AdyenAccountSetupTask setupTask = AdyenAccountSetupTask.valueOf(request.path().toUpperCase());
-        AdyenAccountSetupStatus setupStatus = AdyenAccountSetupStatus.valueOf(request.value().toUpperCase());
+        AdyenAccountSetupStatus setupStatus = AdyenAccountSetupStatus.valueOf(request.value());
         return new AdyenAccountSetupUpdateRequest(setupTask, setupStatus);
     }
 }
