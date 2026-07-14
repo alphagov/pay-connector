@@ -33,16 +33,16 @@ public class AdyenAccountSetupService {
         if (gatewayAccountEntity.isAdyenTestAccount()) {
             var gatewayAccountCredentialsEntity = gatewayAccountEntity.getRecentNonRetiredGatewayAccountCredentialsEntity(ADYEN.getName());
             List.of(AdyenAccountSetupTask.values()).forEach(task ->
-                    adyenAccountSetupDao.persist(new AdyenAccountSetupTaskEntity(gatewayAccountEntity, task, gatewayAccountCredentialsEntity, AdyenAccountSetupStatus.COMPLETED)));
+                adyenAccountSetupDao.persist(new AdyenAccountSetupTaskEntity(gatewayAccountEntity, task, gatewayAccountCredentialsEntity, AdyenAccountSetupStatus.COMPLETED)));
         } else {
             throw new IllegalArgumentException("Gateway account type must be TEST and gateway name must be ADYEN");
         }
     }
 
     public AdyenAccountSetupResponse buildResponse(String serviceId, long gatewayAccountId, GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
-        return new AdyenAccountSetupResponse(serviceId,
-                gatewayAccountCredentialsEntity.getExternalId(),
-                gatewayAccountId,
+        return new AdyenAccountSetupResponse(serviceId, 
+                gatewayAccountCredentialsEntity.getExternalId(), 
+                gatewayAccountId, 
                 getTasksWithStatus(gatewayAccountId, gatewayAccountCredentialsEntity.getId()));
     }
 
@@ -70,12 +70,12 @@ public class AdyenAccountSetupService {
     public void update(GatewayAccountEntity gatewayAccountEntity,
                        AdyenAccountSetupUpdateRequest updateRequest,
                        GatewayAccountCredentialsEntity gatewayAccountCredentialsEntity) {
-
+        
         AdyenAccountSetupTask task = updateRequest.task();
         AdyenAccountSetupStatus status = updateRequest.status();
         Long gatewayAccountId = gatewayAccountEntity.getId();
         Long gatewayAccountCredentialsId = gatewayAccountCredentialsEntity.getId();
-
+        
         AdyenAccountSetupTaskEntity adyenAccountSetupTaskEntity = new AdyenAccountSetupTaskEntity(
                 gatewayAccountEntity,
                 task,
