@@ -18,7 +18,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundException;
-import uk.gov.pay.connector.gatewayaccount.model.AccountSetupPatchRequest;
+import uk.gov.pay.connector.gatewayaccount.model.AdyenSetupPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenAccountSetupUpdateRequest;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
@@ -107,7 +107,7 @@ public class AdyenAccountSetupResource {
                     "bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details",
             requestBody = @RequestBody(
                     content = @Content(
-                            schema = @Schema(implementation = AccountSetupPatchRequest.class),
+                            schema = @Schema(implementation = AdyenSetupPatchRequest.class),
                             examples = @ExampleObject(
                                     value = """
                                             [
@@ -136,7 +136,7 @@ public class AdyenAccountSetupResource {
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId, // pragma: allowlist secret
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Credential External ID") @PathParam("credentialExternalId") String credentialExternalId, // pragma: allowlist secret
-            @Valid List<AccountSetupPatchRequest> requests) {
+            @Valid List<AdyenSetupPatchRequest> requests) {
 
         var gatewayAccountEntity = gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .orElseThrow(() -> new GatewayAccountNotFoundException(serviceId, accountType));

@@ -364,7 +364,7 @@ public class AdyenAccountSetupResourceIT {
                 .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
                 .then()
                 .statusCode(SC_UNPROCESSABLE_ENTITY)
-                .body("message", contains("The values field must be one of: [COMPLETED, NOT_STARTED] for Adyen accounts or one of: [true, false] for Stripe accounts"));
+                .body("message", contains("The values field must be one of: [COMPLETED, NOT_STARTED]"));
     }
 
     @Test

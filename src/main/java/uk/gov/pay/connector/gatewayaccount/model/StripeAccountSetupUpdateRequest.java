@@ -9,7 +9,7 @@ public class StripeAccountSetupUpdateRequest {
         this.completed = completed;
     }
     
-    public static StripeAccountSetupUpdateRequest from(AccountSetupPatchRequest patchRequest) {
+    public static StripeAccountSetupUpdateRequest from(StripeSetupPatchRequest patchRequest) {
         StripeAccountSetupTask task = StripeAccountSetupTask.valueOf(patchRequest.path().toUpperCase());
         return new StripeAccountSetupUpdateRequest(task, Boolean.parseBoolean(patchRequest.value()));
     }

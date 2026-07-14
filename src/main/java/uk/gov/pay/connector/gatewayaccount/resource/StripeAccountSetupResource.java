@@ -13,7 +13,7 @@ import uk.gov.pay.connector.gatewayaccount.exception.GatewayAccountNotFoundExcep
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetup;
 import uk.gov.pay.connector.gatewayaccount.model.StripeAccountSetupUpdateRequest;
-import uk.gov.pay.connector.gatewayaccount.model.AccountSetupPatchRequest;
+import uk.gov.pay.connector.gatewayaccount.model.StripeSetupPatchRequest;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.gatewayaccount.service.StripeAccountSetupService;
 
@@ -111,7 +111,7 @@ public class StripeAccountSetupResource {
     public Response patchStripeAccountSetup(
             @Parameter(example = "1", description = "Gateway account ID")
             @PathParam("accountId") Long accountId,
-            @Valid List<AccountSetupPatchRequest> request) {
+            @Valid List<StripeSetupPatchRequest> request) {
         return gatewayAccountService.getGatewayAccount(accountId)
                 .map(gatewayAccountEntity -> {
                     List<StripeAccountSetupUpdateRequest> updateRequests = request.stream()
@@ -152,7 +152,7 @@ public class StripeAccountSetupResource {
     public Response patchStripeAccountSetupByServiceIdAndAccountType(
             @Parameter(example = "46eb1b601348499196c99de90482ee68", description = "Service ID") @PathParam("serviceId") String serviceId,
             @Parameter(example = "test", description = "Account type") @PathParam("accountType") GatewayAccountType accountType,
-            @Valid List<AccountSetupPatchRequest> request) {
+            @Valid List<StripeSetupPatchRequest> request) {
         return gatewayAccountService.getGatewayAccountByServiceIdAndAccountType(serviceId, accountType)
                 .or(() -> { throw new GatewayAccountNotFoundException(serviceId, accountType); })
                 .map(gatewayAccountEntity -> {
