@@ -2,7 +2,7 @@ package uk.gov.pay.connector.gateway.worldpay;
 
 import com.google.common.collect.ImmutableMap;
 import jakarta.ws.rs.core.Response;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +48,7 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType.TEST;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
+
 
 @ExtendWith(MockitoExtension.class)
 class WorldpayCaptureHandlerTest {

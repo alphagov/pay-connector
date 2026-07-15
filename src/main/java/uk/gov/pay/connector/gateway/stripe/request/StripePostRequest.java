@@ -1,8 +1,8 @@
 package uk.gov.pay.connector.gateway.stripe.request;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URLEncodedUtils;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;

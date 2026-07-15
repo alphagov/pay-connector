@@ -32,7 +32,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -72,6 +72,7 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_SEARCH
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_SEARCH_TRANSFERS_FOR_CAPTURED_PAYMENT_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.STRIPE_TRANSFER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
+
 
 @ExtendWith(MockitoExtension.class)
 class StripeCaptureHandlerTest {

@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.hc.core5.http.HttpStatus.SC_OK;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;

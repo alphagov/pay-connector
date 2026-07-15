@@ -19,11 +19,10 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
-import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.hc.core5.http.HttpStatus.SC_CONFLICT;
+import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
@@ -56,6 +55,7 @@ import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentIns
 import static uk.gov.pay.connector.util.JsonEncoder.toJson;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomInt;
 import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
+import static wiremock.org.apache.hc.core5.http.HttpStatus.SC_OK;
 
 public class ChargesApiResourceCreateAgreementIT {
 

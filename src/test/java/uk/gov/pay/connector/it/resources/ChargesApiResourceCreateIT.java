@@ -49,7 +49,7 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
