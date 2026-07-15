@@ -1158,6 +1158,37 @@ paths:
       summary: Handle Adyen payment notifications
       tags:
       - Notifications
+  /v1/api/notifications/adyen/tokens:
+    post:
+      description: Accepts Adyen recurring token webhooks as JSON and preserves the
+        raw request body for signature verification.
+      operationId: authoriseAdyenRecurringTokenNotifications
+      parameters:
+      - example: 5.6.7.8
+        in: header
+        name: X-Forwarded-For
+        schema:
+          type: string
+      - example: sha256=example-signature
+        in: header
+        name: hmacSignature
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+        "405":
+          description: Method Not Allowed - Unsupported HTTP method
+        "415":
+          description: Unsupported Media Type - Unsupported content type
+      summary: Handle Adyen token notifications
+      tags:
+      - Notifications
   /v1/api/notifications/sandbox:
     post:
       description: This endpoint returns a HTTP status code of 200 for authorized

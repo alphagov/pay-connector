@@ -24,7 +24,7 @@ class NotificationResourceTest {
     private NotificationResource notificationResource;
 
     @Test
-    void shouldReturn200WhenAdyenNotificationSuccessfullyHandled() { 
+    void shouldReturn200WhenAdyenNotificationSuccessfullyHandled() {
         String rawNotification = "{Adyen}";
         String forwardedIpAddress = "10.20.30.40";
         when(adyenNotificationService.handleNotificationFor(anyString(), eq(forwardedIpAddress))).thenReturn(true);
@@ -44,5 +44,16 @@ class NotificationResourceTest {
             assertThat(response.getStatus(), is(403));
         }
     }
-}
 
+    @Test
+    void shouldReturn200WhenAdyenRecurringTokenNotificationSuccessfullyHandled() {
+        String rawNotification = "{\"type\":\"recurring.token.created\"}";
+        String forwardedIpAddress = "10.20.30.40";
+        String hmacSignature = "sha256=test-signature";
+
+        try (Response response = notificationResource.authoriseAdyenRecurringTokenNotifications(rawNotification, forwardedIpAddress, hmacSignature)) {
+            assertThat(response.getStatus(), is(200));
+        }
+
+    }
+}
