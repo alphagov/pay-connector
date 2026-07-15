@@ -2,10 +2,10 @@ package uk.gov.pay.connector.rules;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.hc.core5.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
+import static org.apache.hc.core5.http.HttpStatus.SC_OK;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNAUTHORIZED;
 
 public class AdyenCheckoutMockClient extends AdyenMockClient {
 

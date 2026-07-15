@@ -17,8 +17,8 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_CONTENT;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -97,7 +97,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_URL, accountId))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY);
+                        .statusCode(SC_UNPROCESSABLE_CONTENT);
             }
 
             @Test
@@ -111,7 +111,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_URL, accountId))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY);
+                        .statusCode(SC_UNPROCESSABLE_CONTENT);
             }
 
             @Test
@@ -124,7 +124,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_URL, accountId))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY);
+                        .statusCode(SC_UNPROCESSABLE_CONTENT);
             }
 
             @Test
@@ -141,7 +141,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_URL, accountId))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("message", contains("Recurring payment agreements are not enabled on this account"))
                         .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
             }
@@ -235,7 +235,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("message[0]", is("Field [reference] can have a size between 1 and 255"));
             }
 
@@ -250,7 +250,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("message[0]", is("Field [reference] can have a size between 1 and 255"));
             }
 
@@ -264,7 +264,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("message[0]", is("Field [reference] cannot be null"));
 
             }
@@ -279,7 +279,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("message[0]", is("Field [description] cannot be null"));
             }
 
@@ -294,7 +294,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("message[0]", is("Field [description] can have a size between 1 and 255"));
             }
 
@@ -310,7 +310,7 @@ public class AgreementsApiResourceIT {
                         .body(payload)
                         .post(format(CREATE_AGREEMENT_BY_SERVICE_ID_URL, VALID_SERVICE_ID, GatewayAccountType.TEST))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("message", contains("Recurring payment agreements are not enabled on this account"))
                         .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));
             }

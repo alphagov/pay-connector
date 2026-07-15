@@ -32,7 +32,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.eclipse.jetty.http.HttpStatus.INTERNAL_SERVER_ERROR_500;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -19,11 +19,11 @@ import uk.gov.service.payments.commons.model.ErrorIdentifier;
 import java.util.Map;
 
 import static io.restassured.http.ContentType.JSON;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_CONFLICT;
-import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.hc.core5.http.HttpStatus.SC_CONFLICT;
+import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
+import static org.apache.hc.core5.http.HttpStatus.SC_OK;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_CONTENT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
@@ -251,7 +251,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_payment_type"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -280,7 +280,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_payment_type"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -316,7 +316,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_payment_type"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -536,7 +536,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Missing mandatory attribute: agreement_id"))
                 .body("error_identifier", is(ErrorIdentifier.MISSING_MANDATORY_ATTRIBUTE.toString()));
@@ -562,7 +562,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: return_url"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -590,7 +590,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: moto"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -617,7 +617,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: email"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -653,7 +653,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: prefilled_cardholder_details"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -777,7 +777,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_id"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -807,7 +807,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_payment_type"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -859,7 +859,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_id"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -889,7 +889,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_id"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -915,7 +915,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Unexpected attribute: agreement_id"))
                 .body("error_identifier", is(ErrorIdentifier.UNEXPECTED_ATTRIBUTE.toString()));
@@ -947,7 +947,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON);
     }
 
@@ -976,7 +976,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody, accountId)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON);
     }
 
@@ -999,7 +999,7 @@ public class ChargesApiResourceCreateAgreementIT {
 
         testBaseExtension.getConnectorRestApiClient()
                 .postCreateCharge(postBody)
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .contentType(JSON)
                 .body("message", contains("Recurring payment agreements are not enabled on this account"))
                 .body("error_identifier", is(ErrorIdentifier.RECURRING_CARD_PAYMENTS_NOT_ALLOWED.toString()));

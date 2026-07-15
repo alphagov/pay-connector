@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
@@ -85,7 +85,7 @@ public class CardResourceAuthoriseApplePayIT {
                 .body(payload)
                 .post(ITestBaseExtension.authoriseChargeUrlForApplePay(chargeId))
                 .then()
-                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_CONTENT)
                 .body("message", contains("Card holder name must be a maximum of 255 chars"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }
@@ -101,7 +101,7 @@ public class CardResourceAuthoriseApplePayIT {
                 .body(payload)
                 .post(testBaseExtension.authoriseChargeUrlForApplePay(chargeId))
                 .then()
-                .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
+                .statusCode(HttpStatus.SC_UNPROCESSABLE_CONTENT)
                 .body("message", contains("Email must be a maximum of 254 chars"))
                 .body("error_identifier", is(ErrorIdentifier.GENERIC.toString()));
     }

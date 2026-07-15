@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.contract;
 
 import io.dropwizard.core.setup.Environment;
 import jakarta.ws.rs.client.ClientBuilder;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
