@@ -15,7 +15,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_EXEMPTION_REQUEST_SOFT_DECLINE_RESULT_OUT_OF_SCOPE_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-soft-decline-result-out-of-scope-response.xml";
     public static final String WORLDPAY_EXEMPTION_REQUEST_DECLINE_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-decline-response.xml";
     public static final String WORLDPAY_EXEMPTION_REQUEST_REJECTED_AUTHORISED_RESPONSE = WORLDPAY_BASE_NAME + "/exemption-request-rejected-authorised-response.xml";
-    
+
     public static final String WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITH_TRANSACTION_IDENTIFIER = WORLDPAY_BASE_NAME + "/authorisation-create-token-success-response-with-transaction-identifier.xml";
 
     public static final String WORLDPAY_AUTHORISATION_CREATE_TOKEN_SUCCESS_RESPONSE_WITHOUT_TRANSACTION_IDENTIFIER = WORLDPAY_BASE_NAME + "/authorisation-create-token-success-response-without-transaction-identifier.xml";
@@ -37,7 +37,7 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_3DS_WITH_EMAIL = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-including-3ds-with-email.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-including-state.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-request-min-address.xml";
-    
+
     public static final String WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-recurring-request-with-scheme-identifier.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER_WITH_RECURRING_AGREEMENT_PAYMENT_TYPE = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-recurring-request-with-scheme-identifier-and-agreement-payment-type-recurring.xml";
     public static final String WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER_WITH_INSTALMENT_AGREEMENT_PAYMENT_TYPE = WORLDPAY_BASE_NAME + "/valid-authorise-worldpay-recurring-request-with-scheme-identifier-and-agreement-payment-type-instalment.xml";
@@ -80,19 +80,19 @@ public class TestTemplateResourceLoader {
     public static final String WORLDPAY_REFUND_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/refund-success-response.xml";
     public static final String WORLDPAY_REFUND_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/refund-error-response.xml";
     public static final String WORLDPAY_VALID_REFUND_WORLDPAY_REQUEST = WORLDPAY_BASE_NAME + "/valid-refund-worldpay-request.xml";
-    
+
     public static final String WORLDPAY_VALID_DELETE_TOKEN_REQUEST = WORLDPAY_BASE_NAME + "/valid-delete-token-worldpay-request.xml";
     public static final String WORLDPAY_DELETE_TOKEN_SUCCESS_RESPONSE = WORLDPAY_BASE_NAME + "/delete-token-success-response.xml";
-    
+
     public static final String WORLDPAY_ERROR_RESPONSE = WORLDPAY_BASE_NAME + "/error-response.xml";
     public static final String WORLDPAY_NOTIFICATION = WORLDPAY_BASE_NAME + "/notification.xml";
-    
+
     public static final String WORLDPAY_AUTHORISED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/authorised.xml";
     public static final String WORLDPAY_CAPTURED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/captured.xml";
     public static final String WORLDPAY_CANCELLED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/cancelled.xml";
     public static final String WORLDPAY_REJECTED_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/rejected.xml";
     public static final String WORLDPAY_NULL_LAST_EVENT_INQUIRY_RESPONSE = WORLDPAY_BASE_NAME + "/inquiry/null-last-event.xml";
-    
+
     public static final String WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_VALID_RESPONSE = WORLDPAY_BASE_NAME + "/check-credentials/valid.xml";
     public static final String WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_INVALID_MERCHANT_ID_RESPONSE = WORLDPAY_BASE_NAME + "/check-credentials/invalid-merchant-id.xml";
     public static final String WORLDPAY_INQUIRY_CREDENTIAL_VALIDATION_UNEXPECTED_ERROR_CODE = WORLDPAY_BASE_NAME + "/check-credentials/unexpected-error-code.xml";
@@ -135,6 +135,7 @@ public class TestTemplateResourceLoader {
 
     public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address.json";
     public static final String ADYEN_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/notification.json";
+    public static final String ADYEN_TOKEN_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/token-notification.json";
     public static final String ADYEN_CAPTURE_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/capture-successful.json";
     public static final String ADYEN_CANCELLATION_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/cancellation-successful.json";
     public static final String ADYEN_CANCELLATION_FAILED_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/cancellation-failed.json";
@@ -142,8 +143,8 @@ public class TestTemplateResourceLoader {
     public static final String ADYEN_REFUND_FAILURE_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/refund-failed.json";
     public static final String ADYEN_CREATE_LEGAL_ENTITY_REQUEST = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_request.json";
     public static final String ADYEN_CREATE_LEGAL_ENTITY_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/create_legal_entity_response.json";
-    public static final String ADYEN_CREATE_INDIVIDUAL_REQUEST =  TEMPLATE_BASE_NAME + "/adyen/create_individual_request.json";
-    public static final String ADYEN_CREATE_INDIVIDUAL_RESPONSE =  TEMPLATE_BASE_NAME + "/adyen/create_individual_response.json";
+    public static final String ADYEN_CREATE_INDIVIDUAL_REQUEST = TEMPLATE_BASE_NAME + "/adyen/create_individual_request.json";
+    public static final String ADYEN_CREATE_INDIVIDUAL_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/create_individual_response.json";
     public static final String ADYEN_UPDATE_LEGAL_ENTITY_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/update_legal_entity_response.json";
     public static final String ADYEN_BUSINESS_LINE_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/business_line_response.json";
     public static final String ADYEN_TRANSFER_INSTRUMENT_RESPONSE = TEMPLATE_BASE_NAME + "/adyen/transfer_instrument_response.json";

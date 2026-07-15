@@ -1,0 +1,13 @@
+{
+  "createdAt": "2026-07-14T18:10:49+01:00",
+  "environment": "test",
+  "type": "recurring.token.created",
+  "data": {
+    "merchantAccount": "YOUR_MERCHANT_ACCOUNT",
+    "storedPaymentMethodId": "M5N7TQ4TG5PFWR50",
+    "type": "visa",
+    "operation": "created",
+    "shopperReference": "YOUR_SHOPPER_REFERENCE"
+  },
+  "eventId": "QBQQ9DLNRHHKGK38"
+}

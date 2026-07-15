@@ -45,8 +45,7 @@ public class NotificationResource {
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 SandboxNotificationService sandboxNotificationService,
                                 StripeNotificationService stripeNotificationService,
-                                AdyenNotificationService adyenNotificationService
-    ) {
+                                AdyenNotificationService adyenNotificationService) {
         this.worldpayNotificationService = worldpayNotificationService;
         this.sandboxNotificationService = sandboxNotificationService;
         this.stripeNotificationService = stripeNotificationService;
@@ -108,7 +107,7 @@ public class NotificationResource {
         logResponseMessage(response, WORLDPAY);
         return Response.ok(response).build();
     }
-    
+
     @POST
     @Consumes(APPLICATION_JSON)
     @Path("/v1/api/notifications/stripe")
@@ -157,6 +156,29 @@ public class NotificationResource {
         logResponseMessage("[accepted]", ADYEN);
         return Response.ok().build();
     }
+
+    @POST
+    @Consumes(APPLICATION_JSON)
+    @Path("/v1/api/notifications/adyen/tokens")
+    @Operation(
+            summary = "Handle Adyen token notifications",
+            description = "Accepts Adyen recurring token webhooks as JSON and preserves the raw request body for signature verification.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "405", description = "Method Not Allowed - Unsupported HTTP method"),
+                    @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
+            }
+    )
+    public Response authoriseAdyenRecurringTokenNotifications(String notification,
+                                                              @Parameter(in = HEADER, example = "5.6.7.8")
+                                                              @HeaderParam("X-Forwarded-For") String forwardedIpAddresses,
+                                                              @Parameter(in = HEADER, example = "sha256=example-signature")
+                                                              @HeaderParam("hmacSignature") String hmacSignature) {
+
+        logResponseMessage("[accepted]", ADYEN);
+        return Response.ok().build();
+    }
+
 
     private void logRejectionMessage(String forwardedIpAddresses, PaymentGatewayName gateway) {
         LOGGER.info(String.format("Rejected notification from provider %s for IP '%s'", gateway.getName(), forwardedIpAddresses),
