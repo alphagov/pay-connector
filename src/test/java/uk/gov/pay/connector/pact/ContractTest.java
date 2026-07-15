@@ -57,6 +57,7 @@ import static uk.gov.pay.connector.client.cardid.model.CardInformationFixture.aC
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.EPDQ;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_STRIPE_ACCOUNT_ID;
@@ -975,5 +976,20 @@ public class ContractTest {
                 .build();
         setUpCharge(addChargeParams);
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10), FeeType.TRANSACTION);
+    }
+    
+    @State("an adyen gateway account exists")
+    public void adyenAccountExists() {
+        DatabaseFixtures
+                .withDatabaseTestHelper(dbHelper)
+                .aTestAccount()
+                .withAccountId(500L)
+                .withPaymentProvider(ADYEN.getName())
+                .withGatewayAccountCredentials(List.of(anAddGatewayAccountCredentialsParams()
+                        .withGatewayAccountId(500L)
+                        .withPaymentProvider(ADYEN.getName())
+                                .withExternalId("valid-credential-external-id")
+                        .build()))
+                .insert();
     }
 }
