@@ -228,7 +228,7 @@
         <dependency>
             <groupId>uk.gov.service.notify</groupId>
             <artifactId>notifications-java-client</artifactId>
-            <version>6.0.0-RELEASE</version>
+            <version>6.0.1-RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
@@ -330,6 +330,11 @@
             <groupId>com.adyen</groupId>
             <artifactId>adyen-java-api-library</artifactId>
             <version>42.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
         </dependency>
 
         <!-- Test dependencies that are imported from one of the BOMs specified
