@@ -16,7 +16,7 @@ import static jakarta.ws.rs.core.MediaType.TEXT_XML;
 import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.util.ConnectorModuleWithOverrides.reverseDnsLookup;
 
-public class NotificationResourceIT {
+public class AdyenTokensNotificationResourceIT {
 
     @RegisterExtension
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension(ConnectorAppWithCustomInjector.class);
