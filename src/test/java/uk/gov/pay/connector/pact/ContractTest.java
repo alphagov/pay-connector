@@ -975,15 +975,13 @@ public class ContractTest {
         dbHelper.addFee(randomAlphanumeric(10), chargeId, 5, 5, ZonedDateTime.now(), randomAlphanumeric(10), FeeType.TRANSACTION);
     }
     
-    // Adyen
-    
     @State("an adyen gateway account exists")
     public void adyenAccountExists() {
         DatabaseFixtures
                 .withDatabaseTestHelper(dbHelper)
                 .aTestAccount()
                 .withAccountId(500L)
-                .withPaymentProvider("adyen")
+                .withPaymentProvider(ADYEN.getName())
                 .withGatewayAccountCredentials(List.of(anAddGatewayAccountCredentialsParams()
                         .withGatewayAccountId(500L)
                         .withPaymentProvider(ADYEN.getName())
