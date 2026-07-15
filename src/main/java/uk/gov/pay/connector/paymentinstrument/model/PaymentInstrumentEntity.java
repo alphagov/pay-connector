@@ -1,14 +1,6 @@
 package uk.gov.pay.connector.paymentinstrument.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.charge.model.CardDetailsEntity;
-import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
-import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
-import uk.gov.pay.connector.util.RandomIdGenerator;
-import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
-
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
 import jakarta.persistence.Column;
@@ -22,6 +14,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.charge.model.CardDetailsEntity;
+import uk.gov.pay.connector.common.model.api.ToLowerCaseStringSerializer;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
+import uk.gov.pay.connector.util.RandomIdGenerator;
+import uk.gov.service.payments.commons.jpa.InstantToUtcTimestampWithoutTimeZoneConverter;
+
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;

@@ -34,8 +34,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
     public static AppWithPostgresAndSqsExtension app = new AppWithPostgresAndSqsExtension();
 
     @RegisterExtension
-    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension(
-            "adyen", app.getLocalPort(), app.getDatabaseTestHelper());
+    public static ITestBaseExtension testBaseExtension = new ITestBaseExtension("adyen", app.getLocalPort(), app.getDatabaseTestHelper());
 
     private ChargeDao chargeDao;
 
@@ -56,20 +55,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
 
-        app.givenSetup()
-                .body(authCardDetails)
-                .post("/v1/frontend/charges/{chargeId}/cards", chargeId)
-                .then()
-                .statusCode(200)
-                .body("status", is("AUTHORISATION SUCCESS"));
-
-        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
-                .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
-                .withHeader("Idempotency-Key", equalTo("authorise-" + chargeId))
-                .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(externalAgreementId)))
-                .withRequestBody(matchingJsonPath("$.storePaymentMethod", equalTo("true")))
-                .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription"))));
-
+        verifyResponseForRecurringPayment(chargeId);
 
         Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
@@ -84,30 +70,16 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
         var pspReferenceFromAdyen = "993617895215577D";
         var expectedStoredPaymentMethodId = "M5N7TQ4TG5PFWR50";
 
-        app.getAdyenCheckoutMockClient().mockAuthorisationSuccessForRecurringPayment(pspReferenceFromAdyen,
-                expectedStoredPaymentMethodId);
+        app.getAdyenCheckoutMockClient().mockAuthorisationSuccessForRecurringPayment(pspReferenceFromAdyen, expectedStoredPaymentMethodId);
 
-        app.givenSetup()
-                .body(authCardDetails)
-                .post("/v1/frontend/charges/{chargeId}/cards", chargeId)
-                .then()
-                .statusCode(200)
-                .body("status", is("AUTHORISATION SUCCESS"));
-
-        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
-                .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
-                .withHeader("Idempotency-Key", equalTo("authorise-" + chargeId))
-                .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(externalAgreementId)))
-                .withRequestBody(matchingJsonPath("$.storePaymentMethod", equalTo("true")))
-                .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription"))));
+        verifyResponseForRecurringPayment(chargeId);
 
         Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is("AUTHORISATION SUCCESS"));
         assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
 
-        var storedPaymentMethodId = charge.get().getPaymentInstrument().orElseThrow()
-                .getRecurringAuthToken().orElseThrow().get("storedPaymentMethodId");
+        var storedPaymentMethodId = charge.get().getPaymentInstrument().orElseThrow().getRecurringAuthToken().orElseThrow().get("storedPaymentMethodId");
 
         assertThat(storedPaymentMethodId, is(expectedStoredPaymentMethodId));
     }
@@ -120,19 +92,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(pspReferenceFromAdyen);
 
-        app.givenSetup()
-                .body(authCardDetails)
-                .post("/v1/frontend/charges/{chargeId}/cards", chargeId)
-                .then()
-                .statusCode(200)
-                .body("status", is("AUTHORISATION SUCCESS"));
-
-        app.getAdyenWireMockServer().verify(postRequestedFor(urlEqualTo("/payments"))
-                .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
-                .withHeader("Idempotency-Key", equalTo("authorise-" + chargeId))
-                .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(externalAgreementId)))
-                .withRequestBody(matchingJsonPath("$.storePaymentMethod", equalTo("true")))
-                .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription"))));
+        verifyResponseForRecurringPayment(chargeId);
 
         Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
@@ -141,39 +101,46 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         var paymentInstrument = charge.get().getPaymentInstrument();
 
-        assertThat(paymentInstrument.isEmpty(), is(true));
+        assertThat(paymentInstrument.isEmpty(), is(false));
+        assertThat(paymentInstrument.get().getRecurringAuthToken().isEmpty(), is(true));
     }
 
     private String createChargeWithAgreement() {
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
-
+        
         AddAgreementParams agreementParams = anAddAgreementParams()
                 .withGatewayAccountId(String.valueOf(testBaseExtension.getAccountId()))
                 .withExternalAgreementId(externalAgreementId)
-                .withReference("test reference")
-                .build();
+                .withReference("test reference").build();
+        
         app.getDatabaseTestHelper().addAgreement(agreementParams);
-
-        var chargeId = testBaseExtension.addChargeForSetUpAgreement(ENTERING_CARD_DETAILS,
-                externalAgreementId,
-                null,
-                RECURRING).toString();
-
+        
+        var chargeId = testBaseExtension.addChargeForSetUpAgreement(ENTERING_CARD_DETAILS, externalAgreementId, null, RECURRING).toString();
+        
         authCardDetails = anAuthCardDetails()
                 .withCardNo("4444333322221111")
                 .withCardBrand("Visa")
                 .withCardHolder("John Doe")
                 .withCvc("737")
                 .withEndDate(CardExpiryDate.valueOf("03/30"))
-                .withAddress(new Address(
-                        "line1",
-                        "line2",
-                        "postcode",
-                        "city",
-                        "county",
-                        "country"
-                )).build();
-
+                .withAddress(new Address("line1", "line2", "postcode", "city", "county", "country")).build();
+        
         return chargeId;
+    }
+
+    private void verifyResponseForRecurringPayment(String chargeId) {
+        app.givenSetup()
+                .body(authCardDetails)
+                .post("/v1/frontend/charges/{chargeId}/cards", chargeId)
+                .then().statusCode(200)
+                .body("status", is("AUTHORISATION SUCCESS"));
+        
+        app.getAdyenWireMockServer()
+                .verify(postRequestedFor(urlEqualTo("/payments"))
+                        .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
+                        .withHeader("Idempotency-Key", equalTo("authorise-" + chargeId))
+                        .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(externalAgreementId)))
+                        .withRequestBody(matchingJsonPath("$.storePaymentMethod", equalTo("true")))
+                        .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription"))));
     }
 }

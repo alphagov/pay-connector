@@ -144,6 +144,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CAR
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.PAYMENT_NOTIFICATION_CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.fromString;
 import static uk.gov.pay.connector.charge.model.domain.Exemption3dsType.CORPORATE;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.paymentprocessor.model.Exemption3ds.EXEMPTION_NOT_REQUESTED;
@@ -877,7 +878,14 @@ public class ChargeService {
             charge.setCardDetails(detailsEntity);
 
             if (charge.isSavePaymentInstrumentToAgreement()) {
-                Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
+                Optional.ofNullable(recurringAuthToken).ifPresentOrElse(
+                        token -> setPaymentInstrument(token, charge),
+                        () -> {
+                            if (charge.getPaymentProvider().equals(ADYEN.getName())) {
+                                setPaymentInstrument(Map.of(), charge);
+                            }
+                        }
+                );
             }
             
             if (newStatus == AUTHORISATION_SUCCESS || newStatus == AUTHORISATION_REJECTED) {
