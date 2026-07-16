@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
+import uk.gov.pay.connector.gateway.adyen.webhook.AdyenRecurringTokenNotificationService;
 import uk.gov.pay.connector.gateway.sandbox.SandboxNotificationService;
 import uk.gov.pay.connector.gateway.stripe.StripeNotificationService;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayNotificationService;
@@ -40,16 +41,20 @@ public class NotificationResource {
     private final SandboxNotificationService sandboxNotificationService;
     private final StripeNotificationService stripeNotificationService;
     private final AdyenNotificationService adyenNotificationService;
+    private final AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService;
 
     @Inject
     public NotificationResource(WorldpayNotificationService worldpayNotificationService,
                                 SandboxNotificationService sandboxNotificationService,
                                 StripeNotificationService stripeNotificationService,
-                                AdyenNotificationService adyenNotificationService) {
+                                AdyenNotificationService adyenNotificationService,
+                                AdyenRecurringTokenNotificationService adyenRecurringTokenNotificationService
+    ) {
         this.worldpayNotificationService = worldpayNotificationService;
         this.sandboxNotificationService = sandboxNotificationService;
         this.stripeNotificationService = stripeNotificationService;
         this.adyenNotificationService = adyenNotificationService;
+        this.adyenRecurringTokenNotificationService = adyenRecurringTokenNotificationService;
     }
 
     @POST
@@ -165,6 +170,8 @@ public class NotificationResource {
             description = "Accepts Adyen recurring token webhooks as JSON and preserves the raw request body for signature verification.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "400", description = "Bad Request - invalid JSON payload or missing required headers"),
+                    @ApiResponse(responseCode = "403", description = "Forbidden - notification rejected"),
                     @ApiResponse(responseCode = "405", description = "Method Not Allowed - Unsupported HTTP method"),
                     @ApiResponse(responseCode = "415", description = "Unsupported Media Type - Unsupported content type")
             }
@@ -174,7 +181,10 @@ public class NotificationResource {
                                                               @HeaderParam("X-Forwarded-For") String forwardedIpAddresses,
                                                               @Parameter(in = HEADER, example = "sha256=example-signature")
                                                               @HeaderParam("hmacSignature") String hmacSignature) {
-
+        if (!adyenRecurringTokenNotificationService.handleNotificationFor(notification, hmacSignature, forwardedIpAddresses)) {
+            logRejectionMessage(forwardedIpAddresses, ADYEN);
+            return forbiddenErrorResponse();
+        }
         logResponseMessage("[accepted]", ADYEN);
         return Response.ok().build();
     }
