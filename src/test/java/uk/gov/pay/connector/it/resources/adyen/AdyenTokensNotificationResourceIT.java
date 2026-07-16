@@ -48,6 +48,19 @@ public class AdyenTokensNotificationResourceIT {
     }
 
     @Test
+    void shouldRejectNotificationFromNonApprovedDomainForRecurringTokenNotification() {
+        given()
+                .port(app.getLocalPort())
+                .body("{}")
+                .header("X-Forwarded-For", UNEXPECTED_IP_ADDRESS)
+                .header("hmacSignature", HMAC_SIGNATURE)
+                .contentType(APPLICATION_JSON)
+                .post(NOTIFICATION_PATH)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
     void shouldRejectUnsupportedHttpMethodForRecurringTokenNotification() {
         given()
                 .port(app.getLocalPort())

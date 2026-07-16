@@ -1182,6 +1182,10 @@ paths:
       responses:
         "200":
           description: OK
+        "400":
+          description: Bad Request - invalid JSON payload or missing required headers
+        "403":
+          description: Forbidden - notification rejected
         "405":
           description: Method Not Allowed - Unsupported HTTP method
         "415":
