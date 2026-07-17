@@ -16,7 +16,8 @@ public class WorldpayAuthoriseRequestFactory {
     }
 
     public Optional<WorldpayAuthoriseRequest> create(CardAuthorisationGatewayRequest request) {
-        if (request.getAuthorisationMode() == AuthorisationMode.WEB && request.isMoto()) {
+        if (request.isMoto() && !request.isSavePaymentInstrumentToAgreement()
+                && request.getAuthorisationMode() == AuthorisationMode.WEB) {
             return Optional.of(worldpayMotoAuthoriseRequestFactory.create(request));
         }
 
