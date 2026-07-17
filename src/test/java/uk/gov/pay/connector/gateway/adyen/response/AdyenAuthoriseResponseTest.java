@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.adyen.response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import uk.gov.pay.connector.gateway.adyen.response.json.AdditionalData;
 import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
@@ -32,6 +33,7 @@ class AdyenAuthoriseResponseTest {
                 adyenResultCode,
                 "refusal-reason",
                 "0",
+                null,
                 null);
 
         var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(response);
@@ -46,6 +48,7 @@ class AdyenAuthoriseResponseTest {
                 "UNRECOGNISED_RESULT_CODE",
                 "refusal-reason",
                 "0",
+                null,
                 null);
 
         IllegalStateException exception = assertThrows(IllegalStateException.class,
@@ -132,6 +135,31 @@ class AdyenAuthoriseResponseTest {
     }
 
     @Test
+    void should_set_get_gateway_recurring_auth_token_to_stored_payment_method_id() {
+        var testStoredPaymentMethodId = "testStoredPaymentMethodId";
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .withAdditionalData(new AdditionalData(testStoredPaymentMethodId))
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var gatewayRecurringAuthToken = adyenAuthoriseResponse.getGatewayRecurringAuthToken();
+        assertThat(gatewayRecurringAuthToken.isPresent(), is(true));
+        assertThat(gatewayRecurringAuthToken.get().get("storedPaymentMethodId"), is(testStoredPaymentMethodId));
+    }
+
+    @Test
+    void should_set_get_gateway_recurring_auth_token_to_stored_payment_method_id_null() {
+        var adyenPaymentResponse = anAdyenPaymentResponse()
+                .build();
+
+        var adyenAuthoriseResponse = AdyenAuthoriseResponse.of(adyenPaymentResponse);
+
+        var gatewayRecurringAuthToken = adyenAuthoriseResponse.getGatewayRecurringAuthToken();
+        assertThat(gatewayRecurringAuthToken.isPresent(), is(false));
+    }
+
+    @Test
     void should_not_set_data_to_action_data_if_Adyen_does_not_return_it() {
         var adyenPaymentResponse = anAdyenPaymentResponse()
                 .withAction(anAction().withMethod("GET").build())
@@ -177,6 +205,7 @@ class AdyenAuthoriseResponseTest {
                 "Refused",
                 "Expired Card",
                 "6",
+                null,
                 null
         );
 
