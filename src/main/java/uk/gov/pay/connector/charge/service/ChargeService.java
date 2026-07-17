@@ -877,17 +877,8 @@ public class ChargeService {
             }
             charge.setCardDetails(detailsEntity);
 
-            if (charge.isSavePaymentInstrumentToAgreement()) {
-                Optional.ofNullable(recurringAuthToken).ifPresentOrElse(
-                        token -> setPaymentInstrument(token, charge),
-                        () -> {
-                            if (charge.getPaymentProvider().equals(ADYEN.getName())) {
-                                setPaymentInstrument(Map.of(), charge);
-                            }
-                        }
-                );
-            }
-            
+            checkToSavePaymentInstrument(recurringAuthToken, charge, newStatus);
+
             if (newStatus == AUTHORISATION_SUCCESS || newStatus == AUTHORISATION_REJECTED) {
                 if (!Boolean.TRUE.equals(charge.getRequires3ds())) {
                     charge.setRequires3ds(false);
@@ -915,7 +906,7 @@ public class ChargeService {
     }
 
     @Transactional
-    public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus status,
+    public ChargeEntity updateChargePost3dsAuthorisation(String chargeExternalId, ChargeStatus newStatus,
                                                          OperationType operationType,
                                                          String transactionId,
                                                          Auth3dsRequiredEntity auth3dsRequiredDetails,
@@ -924,12 +915,12 @@ public class ChargeService {
         return chargeDao.findByExternalId(chargeExternalId).map(charge -> {
             try {
                 setTransactionId(charge, transactionId);
-                transitionChargeState(charge, status);
+                transitionChargeState(charge, newStatus);
                 Optional.ofNullable(auth3dsRequiredDetails).ifPresent(charge::set3dsRequiredDetails);
                 Optional.ofNullable(sessionIdentifier).map(ProviderSessionIdentifier::toString).ifPresent(charge::setProviderSessionId);
-                if (charge.isSavePaymentInstrumentToAgreement()) {
-                    Optional.ofNullable(recurringAuthToken).ifPresent(token -> setPaymentInstrument(token, charge));
-                }
+
+                checkToSavePaymentInstrument(recurringAuthToken, charge, newStatus);
+
             } catch (InvalidStateTransitionException e) {
                 if (chargeIsInLockedStatus(operationType, charge)) {
                     throw new OperationAlreadyInProgressRuntimeException(operationType.getValue(), charge.getExternalId());
@@ -1411,6 +1402,19 @@ public class ChargeService {
         return uriInfo.getBaseUriBuilder()
                 .path(path)
                 .build(chargeId);
+    }
+
+
+    private void checkToSavePaymentInstrument(Map<String, String> recurringAuthToken, ChargeEntity charge, ChargeStatus newStatus) {
+        if (charge.isSavePaymentInstrumentToAgreement() && AUTHORISATION_SUCCESS.equals(newStatus)) {
+            Optional.ofNullable(recurringAuthToken)
+                    .ifPresentOrElse(
+                            token -> setPaymentInstrument(token, charge),
+                            () -> Optional.ofNullable(charge.getPaymentProvider())
+                                    .filter(ADYEN.getName()::equals)
+                                    .ifPresent(provider -> setPaymentInstrument(Map.of(), charge))
+                    );
+        }
     }
 
 }

@@ -42,6 +42,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CREATED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
@@ -496,6 +497,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withGatewayCredentialId((long) gatewayAccountCredentialsId)
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .withAgreementPaymentType(agreementPaymentType)
+                .withRequires3ds(status == AUTHORISATION_3DS_REQUIRED)
                 .build());
         return externalChargeId;
     }
