@@ -33,10 +33,11 @@ class WorldpayAuthoriseRequestFactoryTest {
     }
 
     @Test
-    void shouldBuildWorldpayMotoAuthoriseRequestIfWebAndMoto() {
+    void shouldBuildWorldpayMotoAuthoriseRequestIfWebAndMotoAndNotSavePaymentInstrumentToAgreement() {
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = aCardAuthorisationGatewayRequest()
                 .withAuthorisationMode(AuthorisationMode.WEB)
                 .withMoto(true)
+                .withSavePaymentInstrumentToAgreement(false)
                 .build();
 
         WorldpayMotoAuthoriseRequest worldpayMotoAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
@@ -54,6 +55,20 @@ class WorldpayAuthoriseRequestFactoryTest {
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = aCardAuthorisationGatewayRequest()
                 .withAuthorisationMode(AuthorisationMode.WEB)
                 .withMoto(false)
+                .withSavePaymentInstrumentToAgreement(false)
+                .build();
+
+        Optional<WorldpayAuthoriseRequest> result = worldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+
+        assertThat(result.isPresent(), is(false));
+    }
+
+    @Test
+    void shouldBuildNothingIfSavePaymentInstrumentToAgreement() {
+        CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = aCardAuthorisationGatewayRequest()
+                .withAuthorisationMode(AuthorisationMode.WEB)
+                .withMoto(true)
+                .withSavePaymentInstrumentToAgreement(true)
                 .build();
 
         Optional<WorldpayAuthoriseRequest> result = worldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
@@ -67,6 +82,7 @@ class WorldpayAuthoriseRequestFactoryTest {
         CardAuthorisationGatewayRequest cardAuthorisationGatewayRequest = aCardAuthorisationGatewayRequest()
                 .withAuthorisationMode(authorisationMode)
                 .withMoto(true)
+                .withSavePaymentInstrumentToAgreement(false)
                 .build();
 
         Optional<WorldpayAuthoriseRequest> result = worldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
