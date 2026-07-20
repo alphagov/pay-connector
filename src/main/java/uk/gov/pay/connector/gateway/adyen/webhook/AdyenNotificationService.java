@@ -9,7 +9,6 @@ import jakarta.ws.rs.WebApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil;
 import uk.gov.pay.connector.gateway.exception.AdyenNotificationException;
 import uk.gov.pay.connector.queue.tasks.TaskQueueService;
@@ -21,41 +20,28 @@ import java.security.SignatureException;
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class AdyenNotificationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenNotificationService.class);
 
     private final AdyenGatewayConfig adyenGatewayConfig;
-    private final IpDomainMatcher ipDomainMatcher;
     private final HMACValidator hmacValidator;
     private final TaskQueueService taskQueueService;
+    private final AdyenNotificationValidator adyenNotificationValidator;
 
     @Inject
     public AdyenNotificationService(AdyenGatewayConfig adyenGatewayConfig, IpDomainMatcher ipDomainMatcher, TaskQueueService taskQueueService) {
         this.adyenGatewayConfig = adyenGatewayConfig;
-        this.ipDomainMatcher = ipDomainMatcher;
         this.taskQueueService = taskQueueService;
         this.hmacValidator = new HMACValidator();
+        this.adyenNotificationValidator = new AdyenNotificationValidator(ipDomainMatcher);
     }
 
     public boolean handleNotificationFor(String payload, String forwardedIpAddresses) {
-        if (isBlank(forwardedIpAddresses)) {
-            LOGGER.info("Adyen notification missing X-Forwarded-For header",
-                    kv(PROVIDER, PaymentGatewayName.ADYEN.getName()));
-            return false;
-        }
-
         String notificationDomain = adyenGatewayConfig.getNotificationDomain();
 
-        if (!ipDomainMatcher.ipMatchesDomain(forwardedIpAddresses, notificationDomain)) {
-            LOGGER.info("Adyen notification from ip '{}' not matching configured domain '{}'",
-                    forwardedIpAddresses,
-                    notificationDomain,
-                    kv(PROVIDER, PaymentGatewayName.ADYEN.getName()),
-                    kv("notification_source", forwardedIpAddresses));
+        if (!adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses, notificationDomain)) {
             return false;
         }
 
@@ -86,9 +72,7 @@ public class AdyenNotificationService {
             return false;
         }
 
-        LOGGER.info("Processed Adyen notification",
-                kv(PROVIDER, PaymentGatewayName.ADYEN.getName()),
-                kv("notification_source", forwardedIpAddresses));
+        adyenNotificationValidator.logSuccessfulValidation(forwardedIpAddresses);
 
         return true;
     }

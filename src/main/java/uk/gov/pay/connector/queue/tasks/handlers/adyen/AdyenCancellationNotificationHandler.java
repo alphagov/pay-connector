@@ -8,8 +8,6 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +17,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
+import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.GATEWAY_TRANSACTION_ID;
+import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.eventDateInUtc;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class AdyenCancellationNotificationHandler {
@@ -41,7 +41,7 @@ public class AdyenCancellationNotificationHandler {
         if (foundCharge.isHistoric()) {
             LOGGER.atInfo().setMessage("Ignored Adyen cancellation webhook for historic charge")
                     .addKeyValue(PAYMENT_EXTERNAL_ID, foundCharge.getExternalId())
-                    .addKeyValue("gateway_Transaction_id", gatewayTransactionId)
+                    .addKeyValue(GATEWAY_TRANSACTION_ID, gatewayTransactionId)
                     .log();
             return;
         }
@@ -51,14 +51,14 @@ public class AdyenCancellationNotificationHandler {
 
         if (targetStatus.isPresent()) {
             chargeNotificationProcessor.invoke(gatewayTransactionId, foundCharge, targetStatus.get(),
-                    ZonedDateTime.ofInstant(item.getEventDate().toInstant(), ZoneId.of("UTC")));
+                    eventDateInUtc(item));
             return;
         }
 
         LOGGER.atWarn().setMessage("Charge is not in expected state for cancellation: {}")
                 .addArgument(currentStatus.getValue())
                 .addKeyValue(PAYMENT_EXTERNAL_ID, foundCharge.getExternalId())
-                .addKeyValue("gateway_transaction_id", gatewayTransactionId)
+                .addKeyValue(GATEWAY_TRANSACTION_ID, gatewayTransactionId)
                 .addKeyValue("status", currentStatus.getValue())
                 .addKeyValue("success", item.isSuccess()).log();
     }

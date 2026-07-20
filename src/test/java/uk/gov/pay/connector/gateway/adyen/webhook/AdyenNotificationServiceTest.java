@@ -76,7 +76,7 @@ class AdyenNotificationServiceTest {
     @BeforeEach
     void setUp() {
         adyenNotificationService = new AdyenNotificationService(mockAdyenGatewayConfig, ipDomainMatcher, mockTaskQueueService);
-        Logger root = (Logger) LoggerFactory.getLogger(AdyenNotificationService.class);
+        Logger root = (Logger) LoggerFactory.getLogger("uk.gov.pay.connector.gateway.adyen.webhook");
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }

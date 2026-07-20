@@ -10,12 +10,12 @@ import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.GATEWAY_TRANSACTION_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class AdyenRefundNotificationHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenRefundNotificationHandler.class);
-    private static final String GATEWAY_TRANSACTION_ID = "gateway_transaction_id";
 
     private final RefundNotificationProcessor refundNotificationProcessor;
     private final GatewayAccountService gatewayAccountService;

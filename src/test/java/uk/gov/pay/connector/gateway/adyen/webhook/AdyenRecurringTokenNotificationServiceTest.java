@@ -51,10 +51,11 @@ class AdyenRecurringTokenNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        adyenRecurringTokenNotificationService = new AdyenRecurringTokenNotificationService(adyenGatewayConfig, ipDomainMatcher);
-        Logger logger = (Logger) LoggerFactory.getLogger(AdyenRecurringTokenNotificationService.class);
+        Logger logger = (Logger) LoggerFactory.getLogger(AdyenNotificationValidator.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockAppender);
+        
+        adyenRecurringTokenNotificationService = new AdyenRecurringTokenNotificationService(adyenGatewayConfig, ipDomainMatcher);
     }
 
     @Test
@@ -70,7 +71,7 @@ class AdyenRecurringTokenNotificationServiceTest {
         verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
         assertThat(loggingEvents.stream()
-                .anyMatch(event -> event.getFormattedMessage().equals("Processed Adyen token notification")), is(true));
+                .anyMatch(event -> event.getMessage().contains("Processed Adyen notification")), is(true));
     }
 
     @Test

@@ -20,18 +20,12 @@ import uk.gov.pay.connector.charge.model.domain.Charge;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture;
 import uk.gov.pay.connector.charge.service.ChargeService;
 import uk.gov.pay.connector.gateway.adyen.webhook.AdyenNotificationService;
-import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
-import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCancellationNotificationHandler;
+import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCaptureNotificationHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenRefundNotificationHandler;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookTaskHandler;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,8 +38,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_REFUND_FAILURE_NOTIFICATION;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_REFUND_SUCCESS_NOTIFICATION;
@@ -55,13 +47,10 @@ import static uk.gov.pay.connector.util.TestTemplateResourceLoader.load;
 class AdyenWebhookTaskHandlerTest {
 
     @Mock
-    private GatewayAccountService mockGatewayAccountService;
-
-    @Mock
     private ChargeService mockChargeService;
 
     @Mock
-    private ChargeNotificationProcessor mockChargeNotificationProcessor;
+    private AdyenCaptureNotificationHandler mockAdyenCaptureNotificationHandler;
 
     @Mock
     private AdyenRefundNotificationHandler mockAdyenRefundNotificationHandler;
@@ -81,9 +70,6 @@ class AdyenWebhookTaskHandlerTest {
     @Mock
     NotificationRequestItem mockNotificationItem;
 
-    @Mock
-    GatewayAccountEntity gatewayAccount;
-
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
@@ -96,8 +82,6 @@ class AdyenWebhookTaskHandlerTest {
     private final String gatewayTransactionId = "adyen-payment-id-1";
 
     private final String payload = "payload";
-    private final Date eventDate = Date.from(Instant.parse("2026-05-19T10:15:30Z"));
-    private final long gatewayAccountId = 123L;
 
 
     @BeforeEach
@@ -115,108 +99,14 @@ class AdyenWebhookTaskHandlerTest {
                 .thenReturn(List.of(mockNotificationItem));
         when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_CAPTURE);
         when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
-        when(mockNotificationItem.isSuccess()).thenReturn(true);
-        when(mockNotificationItem.getEventDate()).thenReturn(eventDate);
-
-
         when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
                 gatewayTransactionId)).thenReturn(Optional.of(mockCharge));
-
-        when(mockCharge.isHistoric()).thenReturn(false);
 
         adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
 
         verify(mockChargeService).findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
                 gatewayTransactionId);
-
-        verify(mockChargeNotificationProcessor).invoke(gatewayTransactionId, mockCharge,
-                CAPTURED, ZonedDateTime.ofInstant(eventDate.toInstant(), ZoneId.of("UTC")));
-    }
-
-    @Test
-    void shouldProcessCaptureFailedMessageFromTaskQueueForConnectorCharge() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
-                .thenReturn(mockNotificationRequest);
-        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
-                .thenReturn(List.of(mockNotificationItem));
-        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_CAPTURE);
-        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
-        when(mockNotificationItem.isSuccess()).thenReturn(false);
-        when(mockNotificationItem.getEventDate()).thenReturn(eventDate);
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
-                gatewayTransactionId)).thenReturn(Optional.of(mockCharge));
-
-        when(mockCharge.isHistoric()).thenReturn(false);
-
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
-
-        verify(mockChargeNotificationProcessor).invoke(gatewayTransactionId, mockCharge,
-                CAPTURE_ERROR, ZonedDateTime.ofInstant(eventDate.toInstant(), ZoneId.of("UTC")));
-
-        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-
-        assertThat(loggingEvents.stream().anyMatch(event -> event.getFormattedMessage()
-                .equals("Capture failed")), is(true));
-
-    }
-
-    @Test
-    void shouldProcessSuccessfulCaptureMessageFromTaskQueueForLedgerCharge() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
-                .thenReturn(mockNotificationRequest);
-        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
-                .thenReturn(List.of(mockNotificationItem));
-        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_CAPTURE);
-        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
-        when(mockNotificationItem.isSuccess()).thenReturn(true);
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
-                gatewayTransactionId)).thenReturn(Optional.of(mockCharge));
-
-        when(mockCharge.getGatewayAccountId()).thenReturn(gatewayAccountId);
-        when(mockGatewayAccountService.getGatewayAccount(gatewayAccountId))
-                .thenReturn(Optional.of(gatewayAccount));
-        when(mockCharge.isHistoric()).thenReturn(true);
-        when(mockGatewayAccountService.getGatewayAccount(gatewayAccountId))
-                .thenReturn(Optional.of(gatewayAccount));
-
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
-
-        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(
-                gatewayAccount, gatewayTransactionId, mockCharge, CAPTURED);
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-    }
-
-    @Test
-    void shouldProcessFailedCaptureMessageFromTaskQueueForLedgerCharge() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
-                .thenReturn(mockNotificationRequest);
-
-        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
-                .thenReturn(List.of(mockNotificationItem));
-        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_CAPTURE);
-        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
-        when(mockNotificationItem.isSuccess()).thenReturn(false);
-
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(),
-                gatewayTransactionId)).thenReturn(Optional.of(mockCharge));
-
-        when(mockCharge.isHistoric()).thenReturn(true);
-        when(mockCharge.getGatewayAccountId()).thenReturn(gatewayAccountId);
-
-        when(mockGatewayAccountService.getGatewayAccount(gatewayAccountId))
-                .thenReturn(Optional.of(gatewayAccount));
-
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
-
-        verify(mockChargeNotificationProcessor).processCaptureNotificationForExpungedCharge(gatewayAccount,
-                gatewayTransactionId,
-                mockCharge,
-                CAPTURE_ERROR
-        );
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockAdyenCaptureNotificationHandler).process(mockNotificationItem, mockCharge);
     }
 
     @Test
@@ -232,9 +122,7 @@ class AdyenWebhookTaskHandlerTest {
 
         adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
 
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockChargeNotificationProcessor, never()).processCaptureNotificationForExpungedCharge(any(), any(),
-                any(), any());
+        verify(mockAdyenCaptureNotificationHandler, never()).process(any(), any());
         verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
 
         List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
@@ -290,7 +178,7 @@ class AdyenWebhookTaskHandlerTest {
 
         verify(mockAdyenCancellationNotificationHandler).process(mockNotificationItem, mockCharge);
         verify(mockAdyenRefundNotificationHandler, never()).process(any(), any());
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
+        verify(mockAdyenCaptureNotificationHandler, never()).process(any(), any());
     }
 
     @Test
@@ -308,35 +196,10 @@ class AdyenWebhookTaskHandlerTest {
 
         verify(mockAdyenRefundNotificationHandler, never()).process(any(), any());
         verify(mockAdyenCancellationNotificationHandler, never()).process(any(), any());
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockChargeNotificationProcessor, never()).processCaptureNotificationForExpungedCharge(any(), any(), any(), any());
+        verify(mockAdyenCaptureNotificationHandler, never()).process(any(), any());
         verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
         assertThat(loggingEventArgumentCaptor.getAllValues().stream()
                 .anyMatch(event -> event.getFormattedMessage().equals("Ignoring unsupported Adyen webhook item")), is(true));
-    }
-
-    @Test
-    void shouldLogErrorWhenHistoricCaptureChargeHasNoGatewayAccount() {
-        when(mockAdyenNotificationService.deserialisePayloadToNotificationRequest(payload))
-                .thenReturn(mockNotificationRequest);
-        when(mockAdyenNotificationService.extractNotificationItems(mockNotificationRequest))
-                .thenReturn(List.of(mockNotificationItem));
-        when(mockNotificationItem.getEventCode()).thenReturn(NotificationRequestItem.EVENT_CODE_CAPTURE);
-        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
-        when(mockNotificationItem.isSuccess()).thenReturn(true);
-        when(mockChargeService.findByProviderAndTransactionIdFromDbOrLedger(ADYEN.getName(), gatewayTransactionId))
-                .thenReturn(Optional.of(mockCharge));
-        when(mockCharge.isHistoric()).thenReturn(true);
-        when(mockCharge.getGatewayAccountId()).thenReturn(gatewayAccountId);
-        when(mockGatewayAccountService.getGatewayAccount(gatewayAccountId)).thenReturn(Optional.empty());
-
-        adyenWebhookTaskHandler.processAdyenWebhookNotification(payload);
-
-        verify(mockChargeNotificationProcessor, never()).processCaptureNotificationForExpungedCharge(any(), any(), any(), any());
-        verify(mockChargeNotificationProcessor, never()).invoke(any(), any(), any(), any());
-        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
-        assertThat(loggingEventArgumentCaptor.getAllValues().stream()
-                .anyMatch(event -> event.getFormattedMessage().equals("GatewayAccount not found for charge")), is(true));
     }
 
     @Test
