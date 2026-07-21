@@ -14,7 +14,9 @@ public record Authorise3dsResponseBody(
         @JsonProperty("pspReference")
         String pspReference,
         @JsonProperty("resultCode")
-        String resultCode
+        String resultCode,
+        @JsonProperty("additionalData")
+        AdditionalData additionalData
 ) {
     @Override
     public String toString() {
@@ -26,5 +28,9 @@ public record Authorise3dsResponseBody(
             joiner.add("resultCode: " + resultCode);
         }
         return joiner.toString();
+    }
+
+    public String getStoredPaymentMethodId() {
+        return additionalData == null ? null : additionalData.storedPaymentMethodId();
     }
 }

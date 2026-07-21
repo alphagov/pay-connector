@@ -16,6 +16,8 @@ import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.Authori
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import java.util.Map;
+
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.get3dsAuthUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
@@ -67,10 +69,16 @@ public class AdyenAuthorise3dsHandler {
             var responseBody = jsonObjectMapper.getObject(jsonResponse, Authorise3dsResponseBody.class);
             var mappedStatus = mapStatus(responseBody.resultCode());
 
+            var storedPaymentMethodId = responseBody.getStoredPaymentMethodId();
+
+            Map<String, String> recurringAuthToken = storedPaymentMethodId == null ? null
+                    : Map.of("storedPaymentMethodId", storedPaymentMethodId);
+
             return Gateway3DSAuthorisationResponse.of(
                     responseBody.toString(),
                     mappedStatus,
-                    responseBody.pspReference()
+                    responseBody.pspReference(),
+                    recurringAuthToken
             );
         } catch (GatewayErrorException e) {
             return handleGatewayErrorException(request, e);

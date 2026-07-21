@@ -41,6 +41,10 @@ public class Gateway3DSAuthorisationResponse {
         return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, gateway3dsRequiredParams, providerSessionIdentifier, gatewayRecurringAuthToken);
     }
 
+    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId, Map<String, String> gatewayRecurringAuthToken) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, null, null, gatewayRecurringAuthToken);
+    }
+
     public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
         return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, "", null, null, null);
     }

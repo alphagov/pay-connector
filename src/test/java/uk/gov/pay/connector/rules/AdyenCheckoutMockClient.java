@@ -72,6 +72,22 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
         setupPostResponse(responseBody, "/payments/details", SC_OK);
     }
 
+    public void mock3dsAuthorisationResponseForRecurringPayment(
+            String pspReferenceFromAdyen,
+            String resultCode,
+            String storedPaymentMethodId
+    ) {
+        var responseBody = """
+                {
+                  "pspReference": "%s",
+                  "resultCode": "%s",
+                  "additionalData": {
+                    "tokenization.storedPaymentMethodId": "%s"
+                    }
+                }""".formatted(pspReferenceFromAdyen, resultCode, storedPaymentMethodId);
+        setupPostResponse(responseBody, "/payments/details", SC_OK);
+    }
+
     public void mock3dsAuthorisationClientError() {
         var responseBody = """
                 {
