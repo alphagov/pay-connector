@@ -127,7 +127,8 @@ public class Card3dsResponseAuthService {
                 transactionId.orElse(null),
                 operationResponse.getGateway3dsRequiredParams().map(Gateway3dsRequiredParams::toAuth3dsRequiredEntity).orElse(null),
                 operationResponse.getProviderSessionIdentifier().orElse(null),
-                operationResponse.getGatewayRecurringAuthToken().orElse(null)
+                operationResponse.getGatewayRecurringAuthToken().orElse(null),
+                operationResponse.getGatewayRejectionReason().orElse(null)
         );
 
         var worldPay3dsOrFlexLogMessage = integration3dsType(auth3dsResult, updatedCharge);

@@ -105,6 +105,31 @@ class AdyenCardResourceAuthorise3dsIT {
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is("AUTHORISATION ERROR"));
     }
+    
+    @Test
+    void should_store_gateway_rejection_reason_when_adyen_3ds_authorisation_is_refused() {
+        var chargeId = testBaseExtension.createNewCharge(AUTHORISATION_3DS_REQUIRED);
+
+        app.getAdyenCheckoutMockClient()
+                .mock3dsAuthorisationRejected(AUTH_RESULT_REFERENCE);
+
+        app.givenSetup()
+                .body(Map.of("redirect_result", REDIRECT_RESULT))
+                .post(authorise3dsChargeUrlFor(chargeId))
+                .then()
+                .statusCode(400)
+                .body("status", is("AUTHORISATION REJECTED"));
+
+        var charge = chargeDao.findByExternalId(chargeId);
+
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is("AUTHORISATION REJECTED"));
+        assertThat(charge.get().getGatewayTransactionId(), is(AUTH_RESULT_REFERENCE));
+        assertThat(
+                charge.get().getGatewayRejectionReason(),
+                is("6 - Expired Card")
+        );
+    }
 }
 
 

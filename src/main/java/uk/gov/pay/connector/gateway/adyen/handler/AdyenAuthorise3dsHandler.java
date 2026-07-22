@@ -78,7 +78,8 @@ public class AdyenAuthorise3dsHandler {
                     responseBody.toString(),
                     mappedStatus,
                     responseBody.pspReference(),
-                    recurringAuthToken
+                    recurringAuthToken,
+                    getGatewayRejectionReason(responseBody)
             );
         } catch (GatewayErrorException e) {
             return handleGatewayErrorException(request, e);
@@ -128,5 +129,20 @@ public class AdyenAuthorise3dsHandler {
             case "Cancelled" -> AuthoriseStatus.CANCELLED;
             default -> ERROR;
         };
+    }
+    
+    private String getGatewayRejectionReason(Authorise3dsResponseBody responseBody) {
+        if (!"Refused".equals(responseBody.resultCode())) {
+            return null;
+        }
+
+        if (isBlank(responseBody.refusalReasonCode())
+                || isBlank(responseBody.refusalReason())) {
+            return null;
+        }
+
+        return responseBody.refusalReasonCode()
+                + " - "
+                + responseBody.refusalReason();
     }
 }

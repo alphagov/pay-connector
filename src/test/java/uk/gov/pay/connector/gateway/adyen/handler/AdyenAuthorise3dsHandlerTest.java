@@ -22,6 +22,8 @@ import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import java.util.Optional;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -110,6 +112,7 @@ class AdyenAuthorise3dsHandlerTest {
         assertThat(response.getMappedChargeStatus(), is(expectedStatus.getMappedChargeStatus()));
         assertThat(response.getTransactionId().isPresent(), is(true));
         assertThat(response.getTransactionId().get(), is("adyen-3ds-psp-reference"));
+        assertThat(response.getGatewayRejectionReason(), is(Optional.empty()));
     }
 
     @Test
@@ -185,7 +188,47 @@ class AdyenAuthorise3dsHandlerTest {
                 auth3dsResult
         );
     }
+    
+    @Test
+    void should_return_gateway_rejection_reason_when_3ds_authorisation_is_refused() throws Exception {
+        when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
+        when(mockGatewayClientResponse.getEntity()).thenReturn(
+                """
+                        {
+                          "pspReference": "adyen-3ds-psp-reference",
+                          "resultCode": "Refused",
+                          "refusalReason": "Expired Card",
+                          "refusalReasonCode": "6"
+                        }
+                        """
+        );
 
+        var response = adyenAuthorise3dsHandler.authorise3dsResponse(buildRequestWith("redirect-result"));
+
+        assertThat(response.getGatewayRejectionReason(), is(Optional.of("6 - Expired Card")));
+    }
+
+    @Test
+    void should_not_return_gateway_rejection_reason_when_3ds_authorisation_is_authorised() throws Exception {
+        when(mockClient.postRequestFor(any())).thenReturn(mockGatewayClientResponse);
+        when(mockGatewayClientResponse.getEntity()).thenReturn(
+                """
+                        {
+                          "pspReference": "adyen-3ds-psp-reference",
+                          "resultCode": "Authorised",
+                          "refusalReasonCode": "0",
+                           "refusalReason": "Authorised"
+                        }
+                        """
+        );
+
+        var response = adyenAuthorise3dsHandler.authorise3dsResponse(
+                buildRequestWith("redirect-result")
+        );
+
+        assertThat(response.getGatewayRejectionReason(), is(Optional.empty()));
+    }
+    
     private String successResponse(String resultCode) {
         return """
                 {
