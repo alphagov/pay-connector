@@ -51,7 +51,7 @@ class AdyenRecurringTokenNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        Logger logger = (Logger) LoggerFactory.getLogger(AdyenNotificationValidator.class);
+        Logger logger = (Logger) LoggerFactory.getLogger(AdyenRecurringTokenNotificationService.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockAppender);
         

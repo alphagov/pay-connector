@@ -17,8 +17,8 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.SYSTEM_CANCE
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCELLED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.USER_CANCEL_SUBMITTED;
-import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.GATEWAY_TRANSACTION_ID;
-import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.eventDateInUtc;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_TRANSACTION_ID;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class AdyenCancellationNotificationHandler {
@@ -51,7 +51,7 @@ public class AdyenCancellationNotificationHandler {
 
         if (targetStatus.isPresent()) {
             chargeNotificationProcessor.invoke(gatewayTransactionId, foundCharge, targetStatus.get(),
-                    eventDateInUtc(item));
+                    toUTCZonedDateTime(item.getEventDate()));
             return;
         }
 

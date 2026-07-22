@@ -16,7 +16,7 @@ import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_CA
 import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_CAPTURE;
 import static com.adyen.model.notification.NotificationRequestItem.EVENT_CODE_REFUND;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
-import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.GATEWAY_TRANSACTION_ID;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_TRANSACTION_ID;
 
 public class AdyenWebhookTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdyenWebhookTaskHandler.class);

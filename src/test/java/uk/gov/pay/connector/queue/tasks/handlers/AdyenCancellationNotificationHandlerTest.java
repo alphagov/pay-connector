@@ -20,11 +20,11 @@ import uk.gov.pay.connector.gateway.processor.ChargeNotificationProcessor;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCancellationNotificationHandler;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItems;
@@ -92,7 +92,7 @@ class AdyenCancellationNotificationHandlerTest {
         adyenCancellationNotificationHandler.process(item, mockCharge);
 
         verify(mockChargeNotificationProcessor).invoke(gatewayTransactionId, mockCharge,
-                ChargeStatus.fromString(expectedStatus), ZonedDateTime.ofInstant(eventDate.toInstant(), ZoneId.of("UTC")));
+                ChargeStatus.fromString(expectedStatus), ZonedDateTime.ofInstant(eventDate.toInstant(), UTC));
     }
 
     @ParameterizedTest
@@ -118,7 +118,7 @@ class AdyenCancellationNotificationHandlerTest {
         adyenCancellationNotificationHandler.process(item, mockCharge);
 
         verifyNoInteractions(mockChargeNotificationProcessor);
-        
+
         var loggingMessage = String.format("Charge is not in expected state for cancellation: %s", currentStatus);
         var loggingEvents = logs.getEvents();
         assertThat(loggingEvents, everyItem(hasProperty("level", is(Level.WARN))));

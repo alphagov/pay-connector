@@ -11,8 +11,8 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_ERROR;
-import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.GATEWAY_TRANSACTION_ID;
-import static uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenWebhookHandlerSupport.eventDateInUtc;
+import static uk.gov.pay.connector.util.DateTimeUtils.toUTCZonedDateTime;
+import static uk.gov.service.payments.logging.LoggingKeys.GATEWAY_TRANSACTION_ID;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class AdyenCaptureNotificationHandler {
@@ -51,7 +51,7 @@ public class AdyenCaptureNotificationHandler {
                     gatewayTransactionId,
                     charge,
                     targetStatus,
-                    eventDateInUtc(item));
+                    toUTCZonedDateTime(item.getEventDate()));
         }
 
         if (!item.isSuccess()) {

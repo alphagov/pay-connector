@@ -21,11 +21,11 @@ import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.queue.tasks.handlers.adyen.AdyenCaptureNotificationHandler;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Optional;
 
+import static java.time.ZoneOffset.UTC;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItems;
@@ -73,7 +73,7 @@ class AdyenCaptureNotificationHandlerTest {
                 "gateway-transaction-id",
                 mockCharge,
                 expectedStatus,
-                ZonedDateTime.ofInstant(eventDate.toInstant(), ZoneId.of("UTC")));
+                ZonedDateTime.ofInstant(eventDate.toInstant(), UTC));
     }
 
     @ParameterizedTest

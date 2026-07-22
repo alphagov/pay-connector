@@ -6,7 +6,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,140 +49,78 @@ class AdyenNotificationValidatorTest {
         logger.addAppender(mockAppender);
     }
 
-    @Nested
-    class IsValidIpAddress {
+    private static final String NOTIFICATION_DOMAIN = "notification.adyen.com";
+    private static final String FORWARDED_IP = "192.168.1.1";
+    private static final String FORWARDED_IPS = "192.168.1.1, 10.0.0.1, 172.16.0.1";
 
-        private static final String NOTIFICATION_DOMAIN = "notification.adyen.com";
-
-        @Nested
-        class WhenForwardedIpAddressesIsBlankOrNull {
-
-            @ParameterizedTest
-            @NullAndEmptySource
-            @ValueSource(strings = {"  ", "\t", "\n"})
-            void shouldReturnFalse(String forwardedIpAddresses) {
-                assertFalse(adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses, NOTIFICATION_DOMAIN));
-            }
-
-            @ParameterizedTest
-            @NullAndEmptySource
-            @ValueSource(strings = {"  ", "\t", "\n"})
-            void shouldLogMissingXForwardedForHeader(String forwardedIpAddresses) {
-                adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses, NOTIFICATION_DOMAIN);
-
-                verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-                LoggingEvent loggingEvent = loggingEventCaptor.getValue();
-                assertThat(loggingEvent.getLevel(), is(Level.INFO));
-                assertThat(loggingEvent.getMessage(),
-                        is("Adyen notification missing X-Forwarded-For header"));
-            }
-        }
-
-        @Nested
-        class WhenIpMatchesDomain {
-
-            private static final String FORWARDED_IP = "192.168.1.1";
-
-            @BeforeEach
-            void setUp() {
-                when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IP, NOTIFICATION_DOMAIN))
-                        .thenReturn(true);
-            }
-
-            @Test
-            void shouldReturnTrue() {
-                assertTrue(adyenNotificationValidator.isValidIpAddress(FORWARDED_IP, NOTIFICATION_DOMAIN));
-            }
-        }
-
-        @Nested
-        class WhenIpDoesNotMatchDomain {
-
-            private static final String FORWARDED_IP = "192.168.1.1";
-
-            @BeforeEach
-            void setUp() {
-                when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IP, NOTIFICATION_DOMAIN))
-                        .thenReturn(false);
-            }
-
-            @Test
-            void shouldReturnFalse() {
-                assertFalse(adyenNotificationValidator.isValidIpAddress(FORWARDED_IP, NOTIFICATION_DOMAIN));
-            }
-
-            @Test
-            void shouldLogMismatchError() {
-                adyenNotificationValidator.isValidIpAddress(FORWARDED_IP, NOTIFICATION_DOMAIN);
-
-                verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-                LoggingEvent loggingEvent = loggingEventCaptor.getValue();
-                assertThat(loggingEvent.getLevel(), is(Level.INFO));
-                assertThat(loggingEvent.getMessage(),
-                        is("Adyen notification from ip '{}' not matching configured domain '{}'"));
-                assertThat(loggingEvent.getArgumentArray()[0], is(FORWARDED_IP));
-                assertThat(loggingEvent.getArgumentArray()[1], is(NOTIFICATION_DOMAIN));
-            }
-        }
-
-        @Nested
-        class WhenMultipleIpAddressesProvided {
-
-            private static final String FORWARDED_IPS = "192.168.1.1, 10.0.0.1, 172.16.0.1";
-
-            @BeforeEach
-            void setUp() {
-                when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IPS, NOTIFICATION_DOMAIN))
-                        .thenReturn(true);
-            }
-
-            @Test
-            void shouldValidateSuccessfully() {
-                assertTrue(adyenNotificationValidator.isValidIpAddress(FORWARDED_IPS, NOTIFICATION_DOMAIN));
-            }
-
-            @Test
-            void shouldCallIpDomainMatcherWithAllForwardedIps() {
-                adyenNotificationValidator.isValidIpAddress(FORWARDED_IPS, NOTIFICATION_DOMAIN);
-
-                verify(ipDomainMatcher).ipMatchesDomain(FORWARDED_IPS, NOTIFICATION_DOMAIN);
-            }
-        }
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    void shouldReturnFalseWhenForwardedIpAddressesIsBlankOrNull(String forwardedIpAddresses) {
+        assertFalse(adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses, NOTIFICATION_DOMAIN));
     }
 
-    @Nested
-    class LogSuccessfulValidation {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    void shouldLogMissingXForwardedForHeaderWhenForwardedIpAddressesIsBlankOrNull(String forwardedIpAddresses) {
+        adyenNotificationValidator.isValidIpAddress(forwardedIpAddresses, NOTIFICATION_DOMAIN);
 
-        private static final String FORWARDED_IP = "192.168.1.1";
+        verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventCaptor.getValue();
+        assertThat(loggingEvent.getLevel(), is(Level.INFO));
+        assertThat(loggingEvent.getMessage(),
+                is("Adyen notification missing X-Forwarded-For header"));
+    }
 
-        @Test
-        void shouldLogSuccessfulValidationMessage() {
-            adyenNotificationValidator.logSuccessfulValidation(FORWARDED_IP);
+    @Test
+    void shouldReturnTrueWhenIpMatchesDomain() {
+        when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IP, NOTIFICATION_DOMAIN))
+                .thenReturn(true);
 
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-            LoggingEvent loggingEvent = loggingEventCaptor.getValue();
-            assertThat(loggingEvent.getLevel(), is(Level.INFO));
-            assertThat(loggingEvent.getMessage(), is("Processed Adyen notification"));
-        }
+        assertTrue(adyenNotificationValidator.isValidIpAddress(FORWARDED_IP, NOTIFICATION_DOMAIN));
+    }
 
-        @Test
-        void shouldLogWithForwardedIpAddressProvided() {
-            adyenNotificationValidator.logSuccessfulValidation(FORWARDED_IP);
+    @Test
+    void shouldReturnFalseWhenIpDoesNotMatchDomain() {
+        when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IP, NOTIFICATION_DOMAIN))
+                .thenReturn(false);
 
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-            LoggingEvent loggingEvent = loggingEventCaptor.getValue();
-            assertThat(loggingEvent.getLevel(), is(Level.INFO));
-        }
+        assertFalse(adyenNotificationValidator.isValidIpAddress(FORWARDED_IP, NOTIFICATION_DOMAIN));
+    }
 
-        @Test
-        void shouldLogMultipleIpAddresses() {
-            String multipleIps = "192.168.1.1, 10.0.0.1";
-            adyenNotificationValidator.logSuccessfulValidation(multipleIps);
+    @Test
+    void shouldLogMismatchErrorWhenIpDoesNotMatchDomain() {
+        when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IP, NOTIFICATION_DOMAIN))
+                .thenReturn(false);
 
-            verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
-            LoggingEvent loggingEvent = loggingEventCaptor.getValue();
-            assertThat(loggingEvent.getLevel(), is(Level.INFO));
-            assertThat(loggingEvent.getMessage(), is("Processed Adyen notification"));
-        }
+        adyenNotificationValidator.isValidIpAddress(FORWARDED_IP, NOTIFICATION_DOMAIN);
+
+        verify(mockAppender, times(1)).doAppend(loggingEventCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventCaptor.getValue();
+        assertThat(loggingEvent.getLevel(), is(Level.INFO));
+        assertThat(loggingEvent.getMessage(),
+                is("Adyen notification from ip '{}' not matching configured domain '{}'"));
+        assertThat(loggingEvent.getArgumentArray()[0], is(FORWARDED_IP));
+        assertThat(loggingEvent.getArgumentArray()[1], is(NOTIFICATION_DOMAIN));
+    }
+
+    @Test
+    void shouldValidateSuccessfullyWhenMultipleIpAddressesProvided() {
+        when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IPS, NOTIFICATION_DOMAIN))
+                .thenReturn(true);
+
+        assertTrue(adyenNotificationValidator.isValidIpAddress(FORWARDED_IPS, NOTIFICATION_DOMAIN));
+    }
+
+    @Test
+    void shouldCallIpDomainMatcherWithAllForwardedIpsWhenMultipleIpAddressesProvided() {
+        when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IPS, NOTIFICATION_DOMAIN))
+                .thenReturn(true);
+
+        adyenNotificationValidator.isValidIpAddress(FORWARDED_IPS, NOTIFICATION_DOMAIN);
+
+        verify(ipDomainMatcher).ipMatchesDomain(FORWARDED_IPS, NOTIFICATION_DOMAIN);
     }
 }
+

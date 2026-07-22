@@ -20,6 +20,8 @@ import java.security.SignatureException;
 import java.util.List;
 
 import static net.logstash.logback.argument.StructuredArguments.kv;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.service.payments.logging.LoggingKeys.PROVIDER;
 
 public class AdyenNotificationService {
 
@@ -57,12 +59,12 @@ public class AdyenNotificationService {
                 if (!isValidHmac(item, hmacKey)) {
                     return false;
                 }
-                
+
                 if (AdyenPaymentEvent.contains(item.getEventCode())) {
                     addNotificationToTaskQueue(payload, item);
                     continue;
                 }
-                
+
                 LOGGER.info("Ignored Adyen notification",
                         kv("originalReference", item.getOriginalReference()),
                         kv("eventCode", item.getEventCode()));
@@ -72,7 +74,11 @@ public class AdyenNotificationService {
             return false;
         }
 
-        adyenNotificationValidator.logSuccessfulValidation(forwardedIpAddresses);
+        LOGGER.atInfo()
+                .setMessage("Processed Adyen notification")
+                .addKeyValue(PROVIDER, ADYEN.getName())
+                .addKeyValue("notification_source", forwardedIpAddresses)
+                .log();
 
         return true;
     }

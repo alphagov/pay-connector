@@ -6,6 +6,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 import java.util.Optional;
 
 import static java.time.Instant.ofEpochSecond;
@@ -62,6 +63,19 @@ public class DateTimeUtils {
             Instant instant = ofEpochSecond(epochSecond);
             return ofInstant(instant, UTC);
         }
+    }
+
+    /**
+     * Converts a Date to a UTC ZonedDateTime
+     *
+     * @param date
+     * @return @ZonedDateTime instance represented by date in UTC ("Z") or null if `date` is null
+     */
+    public static ZonedDateTime toUTCZonedDateTime(Date date) {
+        if (isNull(date)) {
+            return null;
+        }
+        return ZonedDateTime.ofInstant(date.toInstant(), UTC);
     }
 
     /**

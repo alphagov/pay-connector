@@ -64,19 +64,17 @@ class AdyenNotificationServiceTest {
 
     @Mock
     private AdyenGatewayConfig mockAdyenGatewayConfig;
-    
+
     @Mock
     private TaskQueueService mockTaskQueueService;
-    
+
     @Mock
     private IpDomainMatcher ipDomainMatcher;
-
-    private String validHmacSigniture = "coqCmt/IZ4E3CzPvMY8zTjQVL5hYJUiBRg8UU+iCWo0="; // pragma: allowlist secret
 
     @BeforeEach
     void setUp() {
         adyenNotificationService = new AdyenNotificationService(mockAdyenGatewayConfig, ipDomainMatcher, mockTaskQueueService);
-        Logger root = (Logger) LoggerFactory.getLogger("uk.gov.pay.connector.gateway.adyen.webhook");
+        Logger root = (Logger) LoggerFactory.getLogger(AdyenNotificationService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
     }
@@ -86,7 +84,7 @@ class AdyenNotificationServiceTest {
         when(mockAdyenGatewayConfig.getNotificationDomain()).thenReturn("out.adyen.com.");
         when(ipDomainMatcher.ipMatchesDomain("5.6.7.8", "out.adyen.com.")).thenReturn(true);
         when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-        
+
         String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
 
         boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
@@ -123,7 +121,7 @@ class AdyenNotificationServiceTest {
         @Test
         void shouldReturnTrueForValidHmacKey() {
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
-            
+
             String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
 
             boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
@@ -154,6 +152,8 @@ class AdyenNotificationServiceTest {
 
         @Test
         void shouldReturnFalseWhenHmacKeyIsInvalid() {
+            String validHmacSigniture = "coqCmt/IZ4E3CzPvMY8zTjQVL5hYJUiBRg8UU+iCWo0="; // pragma: allowlist secret
+
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys("invalid-hmac-key"));
 
             String payload = TestTemplateResourceLoader
@@ -252,7 +252,7 @@ class AdyenNotificationServiceTest {
             assertThat(task.getTaskType(), is(TaskType.HANDLE_ADYEN_PAYMENTS_WEBHOOK_NOTIFICATION));
             assertThat(task.getData(), is(payload));
         }
-        
+
         @ParameterizedTest
         @NullAndEmptySource
         @ValueSource(strings = {"SOME_INVALID_VALUE"})
@@ -271,7 +271,7 @@ class AdyenNotificationServiceTest {
                     .getFormattedMessage(), is("Ignored Adyen notification"));
             assertThat(loggingEvents.get(1).getFormattedMessage(), is("Processed Adyen notification"));
         }
-        
+
         @Test
         void ShouldNotAddToTaskQueWhenHmacSignatureIsInvalid() {
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
@@ -282,9 +282,9 @@ class AdyenNotificationServiceTest {
             boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
 
             assertFalse(result);
-            verify(mockTaskQueueService,never()).add(any(Task.class));
+            verify(mockTaskQueueService, never()).add(any(Task.class));
         }
-        
+
         @Test
         void shouldThrowWebApplicationExceptionWhenSendingCaptureNotificationToTaskQueueFails() {
             when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
@@ -303,7 +303,7 @@ class AdyenNotificationServiceTest {
             assertThat(loggingEvents.getFirst()
                     .getFormattedMessage(), is("Error sending Adyen webhook notification to task SQS queue"));
         }
-        
+
     }
 
     private HmacKeys getHmacKeys(String... testKey) {
