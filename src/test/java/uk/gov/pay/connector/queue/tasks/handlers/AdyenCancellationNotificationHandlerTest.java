@@ -3,6 +3,7 @@ package uk.gov.pay.connector.queue.tasks.handlers;
 import com.adyen.model.notification.NotificationRequest;
 import com.adyen.model.notification.NotificationRequestItem;
 import io.github.netmikey.logunit.api.LogCapturer;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -133,6 +134,25 @@ class AdyenCancellationNotificationHandlerTest {
                 new KeyValuePair("status", currentStatus),
                 new KeyValuePair("success", item.isSuccess())));
     }
+
+    @Test
+    void shouldIgnoreHistoricChargeAndLogInfo() {
+        when(mockNotificationItem.getOriginalReference()).thenReturn(gatewayTransactionId);
+        when(mockCharge.isHistoric()).thenReturn(true);
+        when(mockCharge.getExternalId()).thenReturn("someId");
+
+        adyenCancellationNotificationHandler.process(mockNotificationItem, mockCharge);
+
+        verifyNoInteractions(mockChargeNotificationProcessor);
+        var loggingEvents = logs.getEvents();
+        assertThat(loggingEvents, everyItem(hasProperty("level", is(Level.INFO))));
+        assertThat(loggingEvents, everyItem(hasProperty("message", is("Ignored Adyen cancellation webhook for historic charge"))));
+
+        var keyValuePairs = loggingEvents.stream()
+                .flatMap(event -> event.getKeyValuePairs().stream())
+                .toList();
+        assertThat(keyValuePairs, hasItems(
+                new KeyValuePair(PAYMENT_EXTERNAL_ID, mockCharge.getExternalId()),
+                new KeyValuePair("gateway_transaction_id", gatewayTransactionId)));
+    }
 }
-
-
