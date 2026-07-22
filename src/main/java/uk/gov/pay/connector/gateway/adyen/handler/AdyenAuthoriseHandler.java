@@ -11,6 +11,7 @@ import uk.gov.pay.connector.gateway.adyen.request.AdyenAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenAuthoriseResponse;
 import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -65,6 +66,36 @@ public class AdyenAuthoriseHandler {
                     .build();
         } catch (GatewayException e) {
             logger.error("GatewayException occurred when authorising payment", e);
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
+        }
+    }
+    
+    public GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request){
+
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
+                .GatewayResponseBuilder
+                .responseBuilder();
+
+        logger.info("Calling Adyen for user-not-present authorisation of charge");
+        var adyenrequest = adyenRequestFactory.createRecurringPaymentRequest(request);
+        var authorisationRequest = new AdyenAuthorisationRequest(
+                getAuthUrl(adyenGatewayConfig, request),
+                getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), AUTHORISE, request.getGovUkPayPaymentId()),
+                request.getGatewayAccount().getType(),
+                adyenRequestFactory.createRecurringPaymentRequest(request),
+                jsonObjectMapper);
+
+        try {
+            var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
+            var paymentResponse = jsonObjectMapper.getObject(
+                    jsonResponse,
+                    AuthoriseResponseBody.class);
+
+            return responseBuilder
+                    .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
+                    .build();
+        } catch (GatewayException e) {
+            logger.error("GatewayException occurred when authorising user not present payment", e);
             return responseBuilder.withGatewayError(e.toGatewayError()).build();
         }
     }

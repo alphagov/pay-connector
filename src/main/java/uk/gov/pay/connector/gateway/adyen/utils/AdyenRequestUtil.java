@@ -21,7 +21,7 @@ public class AdyenRequestUtil {
     private AdyenRequestUtil() {
     }
 
-    public static URI getAuthUrl(AdyenGatewayConfig config, CardAuthorisationGatewayRequest request) {
+    public static URI getAuthUrl(AdyenGatewayConfig config, GatewayRequest request) {
         return getUrl(config, request, "/payments");
     }
 

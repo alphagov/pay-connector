@@ -1,6 +1,9 @@
 package uk.gov.pay.connector.it.resources.adyen;
 
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import io.github.netmikey.logunit.api.LogCapturer;
+import org.apache.http.auth.AUTH;
+import org.hamcrest.core.Is;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +16,11 @@ import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
+import uk.gov.pay.connector.queue.capture.CaptureQueue;
+import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 import uk.gov.pay.connector.util.AddAgreementParams;
+import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
 
 import java.util.Map;
@@ -23,13 +30,31 @@ import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static io.restassured.http.ContentType.JSON;
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_3DS_REQUIRED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_SUCCESS;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
+import static uk.gov.pay.connector.gateway.adyen.AdyenRecurringAuthTokenKeys.STORED_PAYMENT_METHOD_ID;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_VALUE;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_KEY;
+import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VALUE;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.authorise3dsChargeUrlFor;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
+import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
+import static uk.gov.pay.connector.util.JsonEncoder.toJson;
+import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
 import static uk.gov.service.payments.commons.model.AgreementPaymentType.RECURRING;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -48,10 +73,15 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
     private AuthCardDetails authCardDetails;
 
     private static final String REDIRECT_RESULT = "eyJ0cmFuc1N0YXR1cyI6IlkifQ==";
-    
-    private static final String AUTH_SUCCESS = "AUTHORISATION SUCCESS";
-    
+
     private static final String PSP_REFERENCE_FROM_ADYEN = "993617895215577D";
+
+    @RegisterExtension
+    LogCapturer logs = LogCapturer.create().captureForType(CaptureQueue.class);
+
+    private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
+    private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
+    private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
 
 
     @BeforeEach
@@ -87,6 +117,26 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
     }
 
     @Test
+    void shouldProcess_ACorrectlyConfiguredAuthorisationModeAgreementCharge_AndMarkForCapture() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+        String storedPaymentMethodId = "4242";
+        var chargeId = createChargeWithAgreement(ENTERING_CARD_DETAILS);
+
+        String chargeWithValidAgreementAndPaymentInstrument = setupChargeWithAgreementAndPaymentInstrument(storedPaymentMethodId);
+
+        app.getAdyenCheckoutMockClient().mockAuthorisationSuccessForRecurringPayment(PSP_REFERENCE_FROM_ADYEN, storedPaymentMethodId);
+
+        verifyResponseForRecurringPayment(chargeId);
+
+        taskHandler.process(chargeWithValidAgreementAndPaymentInstrument);
+
+        testBaseExtension.assertFrontendChargeStatusIs(chargeWithValidAgreementAndPaymentInstrument, CAPTURE_QUEUED.getValue());
+        testBaseExtension.assertApiStateIs(chargeWithValidAgreementAndPaymentInstrument, EXTERNAL_SUCCESS.getStatus());
+
+        logs.assertContains("Charge [" + chargeWithValidAgreementAndPaymentInstrument + "] added to capture queue.");
+    }
+
+    @Test
     void successful_creation_of_payment_instrument_without_recurring_auth_token() {
         var chargeId = createChargeWithAgreement(ENTERING_CARD_DETAILS);
         app.getAdyenCheckoutMockClient().mockAuthorisationSuccess(PSP_REFERENCE_FROM_ADYEN);
@@ -108,7 +158,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponseForRecurringPayment(PSP_REFERENCE_FROM_ADYEN, "Authorised", expectedStoredPaymentMethodId);
 
-        verifyResponseForRecurringPaymentWith3ds(chargeId, 200, AUTH_SUCCESS);
+        verifyResponseForRecurringPaymentWith3ds(chargeId, 200, AUTHORISATION_SUCCESS.getValue());
 
         Optional<ChargeEntity> charge = getAndVerifyChargeEntity(chargeId, PSP_REFERENCE_FROM_ADYEN);
 
@@ -123,7 +173,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         app.getAdyenCheckoutMockClient().mock3dsAuthorisationResponse(PSP_REFERENCE_FROM_ADYEN, "Authorised");
 
-        verifyResponseForRecurringPaymentWith3ds(chargeId, 200, AUTH_SUCCESS);
+        verifyResponseForRecurringPaymentWith3ds(chargeId, 200, AUTHORISATION_SUCCESS.getValue());
 
         Optional<ChargeEntity> charge = getAndVerifyChargeEntity(chargeId, PSP_REFERENCE_FROM_ADYEN);
 
@@ -165,7 +215,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
 
         getAndVerifyChargeEntityForFailedAuthorisation(chargeId, "AUTHORISATION ERROR", null);
     }
-    
+
     private String createChargeWithAgreement(ChargeStatus chargeStatus) {
         app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
 
@@ -194,7 +244,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
                 .body(authCardDetails)
                 .post("/v1/frontend/charges/{chargeId}/cards", chargeId)
                 .then().statusCode(200)
-                .body("status", is(AUTH_SUCCESS));
+                .body("status", is(AUTHORISATION_SUCCESS.getValue()));
 
         verifyRequestToAdyenPaymentsEndpoint(chargeId);
     }
@@ -209,7 +259,7 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
         if (expectedStatus != null) {
             response.body("status", is(expectedStatus));
         }
-        
+
         app.getAdyenWireMockServer()
                 .verify(postRequestedFor(urlEqualTo("/payments/details"))
                         .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
@@ -237,11 +287,11 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
                         .withRequestBody(matchingJsonPath("$.storePaymentMethod", equalTo("true")))
                         .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription"))));
     }
-    
+
     private Optional<ChargeEntity> getAndVerifyChargeEntity(String chargeId, String pspReferenceFromAdyen) {
         Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is(AUTH_SUCCESS));
+        assertThat(charge.get().getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
         assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
         return charge;
     }
@@ -251,10 +301,50 @@ class AdyenCardResourceAuthoriseRecurringPaymentsIT {
         assertThat(charge.isPresent(), is(true));
         assertThat(charge.get().getStatus(), is(status));
         assertThat(charge.get().getPaymentInstrument().isEmpty(), is(true));
-        
+
         if (pspReferenceFromAdyen != null) {
             assertThat(charge.get().getGatewayTransactionId(), is(pspReferenceFromAdyen));
         }
+    }
+
+    private String setupChargeWithAgreementAndPaymentInstrument(String storedPaymentMethodId) {
+        Long paymentInstrumentId = secureRandomLong();
+
+        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
+                .withPaymentInstrumentId(paymentInstrumentId)
+                //.withFirstDigitsCardNumber(FirstDigitsCardNumber.of(first6Digits))
+                //.withLastDigitsCardNumber(LastDigitsCardNumber.of(last4Digits))
+                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
+                .withRecurringAuthToken(Map.of(
+                        STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .build();
+        app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
+
+        AddAgreementParams agreementParams = anAddAgreementParams()
+                .withGatewayAccountId(testBaseExtension.getAccountId())
+                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
+                .withPaymentInstrumentId(paymentInstrumentId)
+                .build();
+        app.getDatabaseTestHelper().addAgreement(agreementParams);
+
+        String postBody = toJson(Map.of(
+                JSON_AMOUNT_KEY, AMOUNT,
+                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
+                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
+                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
+                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
+        ));
+
+        String chargeId = testBaseExtension.getConnectorRestApiClient()
+                .postCreateCharge(postBody)
+                .statusCode(SC_CREATED)
+                .body(JSON_AGREEMENT_ID_KEY, Is.is(JSON_VALID_AGREEMENT_ID_VALUE))
+                .contentType(JSON)
+                .extract().path("charge_id");
+
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
+        return chargeId;
     }
 
     private static String getStoredPaymentMethodId(Optional<ChargeEntity> charge) {

@@ -17,6 +17,7 @@ public class GatewayAccount {
     public static final String CREDENTIALS_SHA_OUT_PASSPHRASE = "sha_out_passphrase";
     public static final String CREDENTIALS_STRIPE_ACCOUNT_ID = "stripe_account_id";
     public static final String CREDENTIALS_ADYEN_LEGAL_ENTITY_ID = "legal_entity_id";
+    public static final String CREDENTIALS_ADYEN_STORE_ID = "store_id";
     public static final String FIELD_NOTIFY_API_TOKEN = "api_token";
     public static final String FIELD_NOTIFY_PAYMENT_CONFIRMED_TEMPLATE_ID = "template_id";
     public static final String FIELD_NOTIFY_REFUND_ISSUED_TEMPLATE_ID = "refund_issued_template_id";

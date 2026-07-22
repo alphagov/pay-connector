@@ -93,7 +93,8 @@ class AdyenAuthorisationRequestTest {
                 "2030",
                 "John Doe",
                 "4444333322221111",
-                "scheme");
+                "scheme",
+                null);
         
         var browserInfo = new BrowserInfo("text/html", 
                 24,

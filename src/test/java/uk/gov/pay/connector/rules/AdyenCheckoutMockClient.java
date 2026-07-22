@@ -59,7 +59,7 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
                 }""".formatted(pspReferenceFromAdyen);
         setupPostResponse(responseBody, "/payments", SC_OK);
     }
-
+    
     public void mock3dsAuthorisationResponse(String pspReferenceFromAdyen, String resultCode) {
         var responseBody = """
                 {

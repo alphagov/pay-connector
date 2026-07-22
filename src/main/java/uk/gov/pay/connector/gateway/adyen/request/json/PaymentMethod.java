@@ -16,5 +16,20 @@ public record PaymentMethod(
         @JsonProperty("number")
         String number,
         @JsonProperty("type")
-        String type) {
+        String type,
+        @JsonProperty("storedPaymentMethodId")
+        String storedPaymentMethodId
+        ) {
+
+    public static PaymentMethod card(String cvc,
+                                     String expiryMonth,
+                                     String expiryYear,
+                                     String holderName,
+                                     String number) {
+        return new PaymentMethod(cvc, expiryMonth, expiryYear, holderName, number, "scheme", null);
+    }
+
+    public static PaymentMethod stored(String storedPaymentMethodId) {
+        return new PaymentMethod(null, null, null, null, null, "scheme", storedPaymentMethodId);
+    }
 }

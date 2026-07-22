@@ -50,6 +50,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_ADYEN_LEGAL_ENTITY_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_ADYEN_STORE_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -166,7 +167,8 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
         } else if (paymentProvider.equals(ADYEN.getName())) {
-            credentials = Map.of(CREDENTIALS_ADYEN_LEGAL_ENTITY_ID, "legal_entity_id");
+            credentials = Map.of(CREDENTIALS_ADYEN_LEGAL_ENTITY_ID, "legal_entity_id",
+                    CREDENTIALS_ADYEN_STORE_ID, "test-store-id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
             credentials = Map.of(
                     ONE_OFF_CUSTOMER_INITIATED, Map.of(

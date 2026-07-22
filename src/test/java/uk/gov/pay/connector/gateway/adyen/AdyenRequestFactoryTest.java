@@ -8,24 +8,28 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.event.KeyValuePair;
 import org.slf4j.event.Level;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.charge.model.domain.Charge;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
 import uk.gov.pay.connector.gateway.adyen.request.json.RefundRequestPayload;
 import uk.gov.pay.connector.gateway.model.Auth3dsResult;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.RefundEntityFixture;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.refund.model.domain.RefundEntity;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;
 import uk.gov.service.payments.commons.model.CardExpiryDate;
@@ -45,11 +49,13 @@ import static org.mockito.Mockito.when;
 import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gateway.adyen.AdyenRecurringAuthTokenKeys.STORED_PAYMENT_METHOD_ID;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture.aGatewayAccountEntity;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState.ACTIVE;
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
 import static uk.gov.service.payments.commons.model.AgreementPaymentType.RECURRING;
 import static uk.gov.service.payments.commons.model.AgreementPaymentType.UNSCHEDULED;
 
@@ -186,7 +192,7 @@ class AdyenRequestFactoryTest {
     }
 
     @Test
-    void should_create_PaymentRequest_for_recurring_payment() {
+    void should_create_initial_PaymentRequest_for_recurring_payment() {
         var agreementId = "some-agreement-id";
         var agreement = anAgreementEntity()
                 .withExternalId(agreementId)
@@ -408,6 +414,71 @@ class AdyenRequestFactoryTest {
                 new KeyValuePair("value", "bad-offset")
         ));
     }
+    
+    @Test
+    void should_create_recurring_PaymentRequest_for_recurring_payment() {
+        var agreementId = "some-agreement-id";
+        var agreement = anAgreementEntity()
+                .withExternalId(agreementId)
+                .build();
+        var storedPaymentMethodId = "42";
+        var paymentInstrument = aPaymentInstrumentEntity()
+                .withRecurringAuthToken(Map.of(
+                        STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .build();
+        
+        var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
+
+        var authoriseRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        
+        var request = adyenRequestFactory.createRecurringPaymentRequest(authoriseRequest);
+
+        assertThat(request.shopperReference(), is(agreementId));
+        assertThat(request.storePaymentMethod(), is(nullValue()));
+        assertThat(request.recurringProcessingModel(), is("Subscription"));
+        assertThat(request.paymentMethod().storedPaymentMethodId(), is(storedPaymentMethodId));
+        assertThat(request.paymentMethod().number(), is(nullValue()));
+    }
+
+    @Test
+    void should_throw_illegalArgumentException_if_shopperReference_is_null_for_recurring_payment() {
+        var agreement = anAgreementEntity()
+                .withExternalId(null)
+                .build();
+        var storedPaymentMethodId = "42";
+        var paymentInstrument = aPaymentInstrumentEntity()
+                .withRecurringAuthToken(Map.of(
+                        STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .build();
+        var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
+
+        var authoriseRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> adyenRequestFactory.createRecurringPaymentRequest(authoriseRequest));
+
+        assertThat(exception.getMessage(), is("Adyen recurring auth token is missing shopperReference or storedPaymentMethodId"));
+    }
+
+    @Test
+    void should_throw_illegalArgumentException_if_storedPaymentMethodId_is_blank_for_recurring_payment() {
+        var agreementId = "some-agreement-id";
+        var agreement = anAgreementEntity()
+                .withExternalId(agreementId)
+                .build();
+        var paymentInstrument = aPaymentInstrumentEntity()
+                .withRecurringAuthToken(Map.of(
+                        STORED_PAYMENT_METHOD_ID, " "))
+                .build();
+        var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
+
+        var authoriseRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> adyenRequestFactory.createRecurringPaymentRequest(authoriseRequest));
+
+        assertThat(exception.getMessage(), is("Adyen recurring auth token is missing shopperReference or storedPaymentMethodId"));
+    }
 
     private static CancelGatewayRequest makeCancelGatewayRequestWithExternalChargeId(String externalChargeId) {
         var chargeEntity = aValidChargeEntity()
@@ -418,6 +489,24 @@ class AdyenRequestFactoryTest {
                                 .build())
                 .build();
         return CancelGatewayRequest.valueOf(chargeEntity);
+    }
+
+    private static ChargeEntity setupChargeEntityForRecurringPayment(AgreementEntity agreement, PaymentInstrumentEntity paymentInstrument) {
+        var gatewayAccountCredential = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        "legal_entity_id", "legal_entity_id",
+                        "store_id", "store_id",
+                        "account_holder_id", "account_holder_id",
+                        "balance_account_id", "balance_account_id"))
+                .withPaymentProvider(ADYEN.getName())
+                .build();
+
+        return aValidChargeEntity()
+                .withAgreementPaymentType(RECURRING)
+                .withAgreementEntity(agreement)
+                .withPaymentInstrument(paymentInstrument)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
+                .build();
     }
 
     private void givenMerchantAccountIds(String test, String live) {
