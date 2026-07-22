@@ -5,11 +5,11 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.charge.model.domain.Charge;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.processor.RefundNotificationProcessor;
 import uk.gov.pay.connector.gatewayaccount.service.GatewayAccountService;
 import uk.gov.pay.connector.refund.model.domain.RefundStatus;
 
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.service.payments.logging.LoggingKeys.PAYMENT_EXTERNAL_ID;
 
 public class AdyenRefundNotificationHandler {
@@ -39,12 +39,11 @@ public class AdyenRefundNotificationHandler {
                                     .addKeyValue("success", item.isSuccess())
                                     .log();
 
-                            refundNotificationProcessor.invoke(
-                                    PaymentGatewayName.ADYEN,
+                            refundNotificationProcessor.processRefundByExternalId(
+                                    ADYEN,
                                     targetStatus,
                                     gatewayAccount,
-                                    item.getPspReference(),
-                                    item.getOriginalReference(),
+                                    item.getMerchantReference(),
                                     charge);
                         },
                         () -> LOGGER.atWarn()

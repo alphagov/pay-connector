@@ -58,19 +58,18 @@ class AdyenRefundNotificationHandlerTest {
         GatewayAccountEntity gatewayAccount = GatewayAccountEntityFixture.aGatewayAccountEntity().build();
 
         when(mockNotificationItem.isSuccess()).thenReturn(success);
-        when(mockNotificationItem.getPspReference()).thenReturn("adyen-refund-id-1");
-        when(mockNotificationItem.getOriginalReference()).thenReturn("refund-123");
+        when(mockNotificationItem.getMerchantReference()).thenReturn("refund-123");
+        when(mockNotificationItem.getOriginalReference()).thenReturn("payment-123");
         when(mockCharge.getGatewayAccountId()).thenReturn(1L);
         when(mockCharge.getExternalId()).thenReturn("charge-123");
         when(mockGatewayAccountService.getGatewayAccount(anyLong())).thenReturn(Optional.of(gatewayAccount));
 
         adyenRefundNotificationHandler.process(mockNotificationItem, mockCharge);
 
-        verify(mockRefundNotificationProcessor).invoke(
+        verify(mockRefundNotificationProcessor).processRefundByExternalId(
                 PaymentGatewayName.ADYEN,
                 expectedStatus,
                 gatewayAccount,
-                "adyen-refund-id-1",
                 "refund-123",
                 mockCharge);
     }
