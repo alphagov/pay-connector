@@ -518,6 +518,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
                 .withPaymentInstrumentId(paymentInstrumentId)
                 .withAgreementExternalId(agreementExternalId)
                 .withPaymentInstrumentStatus(status)
+                .withRecurringAuthToken(Map.of("authToken", "authToken"))
                 .build();
         databaseTestHelper.addPaymentInstrument(paymentInstrumentParams);
         return paymentInstrumentId;
