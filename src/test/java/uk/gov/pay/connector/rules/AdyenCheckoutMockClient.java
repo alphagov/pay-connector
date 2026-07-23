@@ -170,4 +170,16 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
 
         setupPostResponse(responseBody, "/payments", SC_OK);
     }
+    
+    public void mock3dsAuthorisationRejected(String pspReferenceFromAdyen) {
+        var responseBody = """
+            {
+              "pspReference": "%s",
+              "refusalReason": "Expired Card",
+              "resultCode": "Refused",
+              "refusalReasonCode": "6"
+            }""".formatted(pspReferenceFromAdyen);
+
+        setupPostResponse(responseBody, "/payments/details", SC_OK);
+    }
 }
