@@ -16,7 +16,12 @@ public record Authorise3dsResponseBody(
         @JsonProperty("resultCode")
         String resultCode,
         @JsonProperty("additionalData")
-        AdditionalData additionalData
+        AdditionalData additionalData,
+        @JsonProperty("refusalReason")
+        String refusalReason,
+
+        @JsonProperty("refusalReasonCode")
+        String refusalReasonCode
 ) {
     @Override
     public String toString() {

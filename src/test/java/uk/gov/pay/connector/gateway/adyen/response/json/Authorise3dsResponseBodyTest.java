@@ -11,56 +11,63 @@ class Authorise3dsResponseBodyTest {
     
     @Test
     void should_format_toString_with_both_fields_present() {
-        var response = new Authorise3dsResponseBody("psp-ref-123", "Authorised", null);
-
+        var response = new Authorise3dsResponseBody("psp-ref-123", "Authorised",
+                null, null, null);
         assertThat(response.toString(), is("Adyen Authorise 3DS Response (pspReference: psp-ref-123, resultCode: Authorised)"));
     }
 
     @Test
     void should_exclude_null_pspReference_from_toString() {
-        var response = new Authorise3dsResponseBody(null, "Authorised", null);
+        var response = new Authorise3dsResponseBody(null, "Authorised", 
+                null, null, null);
 
         assertThat(response.toString(), is("Adyen Authorise 3DS Response (resultCode: Authorised)"));
     }
 
     @Test
     void should_exclude_null_resultCode_from_toString() {
-        var response = new Authorise3dsResponseBody("psp-ref-123", null, null);
+        var response = new Authorise3dsResponseBody("psp-ref-123", null, 
+                null, null, null);
 
         assertThat(response.toString(), is("Adyen Authorise 3DS Response (pspReference: psp-ref-123)"));
     }
 
     @Test
     void should_exclude_blank_pspReference_from_toString() {
-        var response = new Authorise3dsResponseBody("", "Authorised", null);
+        var response = new Authorise3dsResponseBody("", "Authorised", 
+                null, null, null);
 
         assertThat(response.toString(), is("Adyen Authorise 3DS Response (resultCode: Authorised)"));
     }
 
     @Test
     void should_exclude_blank_resultCode_from_toString() {
-        var response = new Authorise3dsResponseBody("psp-ref-123", "", null);
+        var response = new Authorise3dsResponseBody("psp-ref-123", "", 
+                null, null, null);
 
         assertThat(response.toString(), is("Adyen Authorise 3DS Response (pspReference: psp-ref-123)"));
     }
 
     @Test
     void should_return_empty_response_when_both_fields_null() {
-        var response = new Authorise3dsResponseBody(null, null, null);
+        var response = new Authorise3dsResponseBody(null, null, 
+                null, null, null);
 
         assertThat(response.toString(), is("Adyen Authorise 3DS Response ()"));
     }
 
     @Test
     void should_return_empty_response_when_both_fields_blank() {
-        var response = new Authorise3dsResponseBody("", "", null);
+        var response = new Authorise3dsResponseBody("", "", 
+                null, null, null);
 
         assertThat(response.toString(), is("Adyen Authorise 3DS Response ()"));
     }
 
     @Test
     void should_exclude_whitespace_only_fields_from_toString() {
-        var response = new Authorise3dsResponseBody("   ", "Authorised", null);
+        var response = new Authorise3dsResponseBody("   ", "Authorised", 
+                null, null, null);
 
         assertThat(response.toString(), is("Adyen Authorise 3DS Response (resultCode: Authorised)"));
     }
@@ -70,7 +77,7 @@ class Authorise3dsResponseBodyTest {
         Authorise3dsResponseBody response = new Authorise3dsResponseBody(
                 "psp-ref-123",
                 "Authorised",
-                null
+                null, null, null
         );
 
         String result = response.getStoredPaymentMethodId();
@@ -87,7 +94,7 @@ class Authorise3dsResponseBodyTest {
         Authorise3dsResponseBody response = new Authorise3dsResponseBody(
                 "psp-ref-123",
                 "Authorised",
-                additionalData
+                additionalData, null, null
         );
 
         String result = response.getStoredPaymentMethodId();

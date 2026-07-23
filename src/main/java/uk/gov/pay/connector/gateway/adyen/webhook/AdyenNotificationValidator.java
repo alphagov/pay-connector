@@ -2,6 +2,7 @@ package uk.gov.pay.connector.gateway.adyen.webhook;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.util.IpDomainMatcher;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -14,12 +15,14 @@ public class AdyenNotificationValidator {
     private static final String NOTIFICATION_SOURCE = "notification_source";
 
     private final IpDomainMatcher ipDomainMatcher;
+    private final String notificationDomain;
 
-    public AdyenNotificationValidator(IpDomainMatcher ipDomainMatcher) {
+    public AdyenNotificationValidator(AdyenGatewayConfig gatewayConfig, IpDomainMatcher ipDomainMatcher) {
+        this.notificationDomain = gatewayConfig.getNotificationDomain();
         this.ipDomainMatcher = ipDomainMatcher;
     }
 
-    public boolean isValidIpAddress(String forwardedIpAddresses, String notificationDomain) {
+    public boolean isValidIpAddress(String forwardedIpAddresses) {
         if (isBlank(forwardedIpAddresses)) {
             LOGGER.atInfo()
                     .setMessage("Adyen notification missing X-Forwarded-For header")

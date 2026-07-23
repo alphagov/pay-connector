@@ -17,55 +17,57 @@ public class Gateway3DSAuthorisationResponse {
     private final Gateway3dsRequiredParams gateway3dsRequiredParams;
     private final ProviderSessionIdentifier providerSessionIdentifier;
     private Map<String, String> gatewayRecurringAuthToken;
+    private final String gatewayRejectionReason;
 
     private Gateway3DSAuthorisationResponse(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus,
                                             String transactionId,
                                             String stringifiedResponse,
                                             Gateway3dsRequiredParams gateway3dsRequiredParams,
                                             ProviderSessionIdentifier providerSessionIdentifier,
-                                            Map<String, String> gatewayRecurringAuthToken) {
+                                            Map<String, String> gatewayRecurringAuthToken,
+                                            String gatewayRejectionReason) {
         this.transactionId = transactionId;
         this.authorisationStatus = authorisationStatus;
         this.stringifiedResponse = stringifiedResponse;
         this.gateway3dsRequiredParams = gateway3dsRequiredParams;
         this.providerSessionIdentifier = providerSessionIdentifier;
         this.gatewayRecurringAuthToken = gatewayRecurringAuthToken;
+        this.gatewayRejectionReason = gatewayRejectionReason;
     }
 
     public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, null, null, null);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, null, null, null, null);
     }
 
     public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId,
                                                      Gateway3dsRequiredParams gateway3dsRequiredParams, ProviderSessionIdentifier providerSessionIdentifier, Map<String, String> gatewayRecurringAuthToken) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, gateway3dsRequiredParams, providerSessionIdentifier, gatewayRecurringAuthToken);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, gateway3dsRequiredParams, providerSessionIdentifier, gatewayRecurringAuthToken, null);
     }
 
-    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId, Map<String, String> gatewayRecurringAuthToken) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, null, null, gatewayRecurringAuthToken);
-    }
-
-    public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, "", null, null, null);
+    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId, Map<String, String> gatewayRecurringAuthToken, String gatewayRejectionReason) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, null, null, gatewayRecurringAuthToken, gatewayRejectionReason);
     }
 
     public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId,
                                                      Gateway3dsRequiredParams gateway3dsRequiredParams, ProviderSessionIdentifier providerSessionIdentifier) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, "", gateway3dsRequiredParams, providerSessionIdentifier, null);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, "", gateway3dsRequiredParams, providerSessionIdentifier, null, null);
     }
 
     public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringifiedResponse, null, null, null);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringifiedResponse, null, null, null, null);
     }
 
     public static Gateway3DSAuthorisationResponse of(BaseAuthoriseResponse.AuthoriseStatus authorisationStatus) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "", null, null, null);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, "", null, null, null, null);
     }
 
     public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, Gateway3dsRequiredParams gateway3dsRequiredParams) {
-        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringifiedResponse, gateway3dsRequiredParams, null, null);
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, null, stringifiedResponse, gateway3dsRequiredParams, null, null, null);
     }
 
+    public static Gateway3DSAuthorisationResponse of(String stringifiedResponse, BaseAuthoriseResponse.AuthoriseStatus authorisationStatus, String transactionId, String gatewayRejectionReason) {
+        return new Gateway3DSAuthorisationResponse(authorisationStatus, transactionId, stringifiedResponse, null, null, null, gatewayRejectionReason);
+    }
     public boolean isSuccessful() {
         return authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTHORISED
                 || authorisationStatus == BaseAuthoriseResponse.AuthoriseStatus.AUTH_3DS_READY;
@@ -93,6 +95,10 @@ public class Gateway3DSAuthorisationResponse {
 
     public Optional<Map<String, String>> getGatewayRecurringAuthToken() {
         return Optional.ofNullable(gatewayRecurringAuthToken);
+    }
+
+    public Optional<String> getGatewayRejectionReason() {
+        return Optional.ofNullable(gatewayRejectionReason);
     }
 
     public String toString() {
