@@ -74,7 +74,7 @@ class AdyenAuthorisationRequestTest {
         return new AdyenAuthorisationRequest(
                 URI.create(TEST_URL),
                 Map.of("X-API-Key", "test-api-key"),
-                "test", 
+                "test",
                 paymentRequest,
                 jsonObjectMapper);
     }
@@ -93,15 +93,16 @@ class AdyenAuthorisationRequestTest {
                 "2030",
                 "John Doe",
                 "4444333322221111",
-                "scheme");
-        
-        var browserInfo = new BrowserInfo("text/html", 
+                "scheme",
+                null);
+
+        var browserInfo = new BrowserInfo("text/html",
                 24,
                 false,
                 false,
                 "en-GB",
-                900, 
-                1440, 
+                900,
+                1440,
                 -60,
                 "Mozilla/5.0");
 
