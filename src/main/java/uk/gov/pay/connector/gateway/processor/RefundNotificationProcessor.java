@@ -14,7 +14,6 @@ import uk.gov.pay.connector.usernotification.service.UserNotificationService;
 
 import java.util.Optional;
 
-import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.refund.model.domain.RefundStatus.REFUNDED;
@@ -33,18 +32,16 @@ public class RefundNotificationProcessor {
 
     @Inject
     public RefundNotificationProcessor(RefundService refundService,
-                                UserNotificationService userNotificationService) {
+                                       UserNotificationService userNotificationService) {
         this.refundService = refundService;
         this.userNotificationService = userNotificationService;
     }
 
-    public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus, GatewayAccountEntity gatewayAccountEntity,
-                       String gatewayTransactionId, String transactionId, Charge charge) {
+    public void invoke(PaymentGatewayName gatewayName, RefundStatus newStatus,
+                       GatewayAccountEntity gatewayAccountEntity, String gatewayTransactionId,
+                       String transactionId, Charge charge) {
         if (isBlank(gatewayTransactionId)) {
-            logger.warn("Refund notification could not be used to update charge (missing reference)",
-                    kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
-                    kv(PROVIDER, gatewayName),
-                    kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()));
+            logMissingRefundReference(gatewayName, gatewayAccountEntity, charge);
             return;
         }
 
@@ -52,24 +49,32 @@ public class RefundNotificationProcessor {
                 refundService.findByChargeExternalIdAndGatewayTransactionId(charge.getExternalId(), gatewayTransactionId);
 
         if (optionalRefundEntity.isEmpty()) {
-            Optional<Refund> mayBeHistoricRefund
-                    = refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, gatewayTransactionId);
-
-            mayBeHistoricRefund.ifPresentOrElse(
-                    refund -> logger.warn("{} notification could not be processed as refund [{}] has been expunged from connector",
-                            gatewayName, refund.getExternalId(),
-                            kv(REFUND_EXTERNAL_ID, refund.getExternalId()), kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()),
-                            kv(PROVIDER, gatewayName)),
-                    () -> logger.warn("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
-                            gatewayName, gatewayTransactionId, charge.getExternalId(),
-                            kv(PAYMENT_EXTERNAL_ID, charge.getExternalId()), kv(PROVIDER, gatewayName),
-                            kv("payment_gateway_transaction_id", transactionId),
-                            kv("gateway_transaction_id", gatewayTransactionId))
-            );
+            handleMissingRefundByGatewayTransactionId(gatewayName, gatewayTransactionId, transactionId, charge);
             return;
         }
 
-        RefundEntity refundEntity = optionalRefundEntity.get();
+        processRefundNotification(gatewayName, newStatus, gatewayAccountEntity, gatewayTransactionId, transactionId, charge, optionalRefundEntity.get());
+    }
+
+    public void processRefundByExternalId(PaymentGatewayName gatewayName, RefundStatus newStatus,
+                                          GatewayAccountEntity gatewayAccountEntity, String refundExternalId, Charge charge) {
+        if (isBlank(refundExternalId)) {
+            logMissingRefundReference(gatewayName, gatewayAccountEntity, charge);
+            return;
+        }
+
+        Optional<RefundEntity> optionalRefundEntity = refundService.findRefundByExternalId(refundExternalId);
+        if (optionalRefundEntity.isEmpty()) {
+            logMissingRefund(gatewayName, refundExternalId, null, null, charge);
+            return;
+        }
+
+        processRefundNotification(gatewayName, newStatus, gatewayAccountEntity, refundExternalId, null, charge, optionalRefundEntity.get());
+    }
+
+    private void processRefundNotification(PaymentGatewayName gatewayName, RefundStatus newStatus,
+                                           GatewayAccountEntity gatewayAccountEntity, String refundReference,
+                                           String transactionId, Charge charge, RefundEntity refundEntity) {
         RefundStatus currentStatus = refundEntity.getStatus();
 
         if (isRefundTransitionRedundant(currentStatus, newStatus)) {
@@ -77,12 +82,11 @@ public class RefundNotificationProcessor {
                     refundEntity.getExternalId(), currentStatus);
             return;
         }
-        
+
         if (isAdyenRefundTransitionIllegal(gatewayName, currentStatus, newStatus)) {
             logAdyenIllegalRefundTransition(refundEntity, newStatus, currentStatus);
             return;
-        }
-        else if (gatewayName != ADYEN && isRefundTransitionIllegal(currentStatus, newStatus)){
+        } else if (gatewayName != ADYEN && isRefundTransitionIllegal(currentStatus, newStatus)) {
             logIllegalRefundTransition(refundEntity, newStatus, currentStatus);
             return;
         }
@@ -95,24 +99,59 @@ public class RefundNotificationProcessor {
 
         String stateTransitionMessage = newStatus == REFUND_ERROR ? "Refund request record set as failed (REFUND_ERROR)" : "Refund request record set as successful (REFUNDED)";
 
-        logger.info("Notification received for refund. Updating refund: {}",
-                stateTransitionMessage,
-                kv(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId()),
-                kv(REFUND_EXTERNAL_ID, refundEntity.getExternalId()),
-                kv(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId()),
-                kv(PROVIDER, charge.getPaymentGatewayName()),
-                kv(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType()),
-                kv("payment_gateway_transaction_id", transactionId),
-                kv("gateway_transaction_id", gatewayTransactionId),
-                kv("from_status", currentStatus),
-                kv("to_status", newStatus)
+        logger.atInfo()
+                .addKeyValue(PAYMENT_EXTERNAL_ID, refundEntity.getChargeExternalId())
+                .addKeyValue(REFUND_EXTERNAL_ID, refundEntity.getExternalId())
+                .addKeyValue(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId())
+                .addKeyValue(PROVIDER, charge.getPaymentGatewayName())
+                .addKeyValue(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType())
+                .addKeyValue("payment_gateway_transaction_id", transactionId)
+                .addKeyValue("gateway_transaction_id", refundReference)
+                .addKeyValue("from_status", currentStatus)
+                .addKeyValue("to_status", newStatus)
+                .log("Notification received for refund. Updating refund: {}", stateTransitionMessage);
+
+    }
+
+    private void handleMissingRefundByGatewayTransactionId(PaymentGatewayName gatewayName, String gatewayTransactionId, String transactionId, Charge charge) {
+        Optional<Refund> mayBeHistoricRefund =
+                refundService.findHistoricRefundByChargeExternalIdAndGatewayTransactionId(charge, gatewayTransactionId);
+
+        mayBeHistoricRefund.ifPresentOrElse(
+                refund -> logger.atWarn()
+                        .addKeyValue(REFUND_EXTERNAL_ID, refund.getExternalId())
+                        .addKeyValue(PAYMENT_EXTERNAL_ID, charge.getExternalId())
+                        .addKeyValue(PROVIDER, gatewayName)
+                        .log("{} notification could not be processed as refund [{}] has been expunged from connector", gatewayName, refund.getExternalId()),
+                () -> logMissingRefund(gatewayName, gatewayTransactionId, transactionId, gatewayTransactionId, charge)
         );
     }
+
+    private void logMissingRefund(PaymentGatewayName gatewayName, String refundExternalId, String transactionId, String gatewayTransactionId, Charge charge) {
+        logger.atWarn()
+                .addKeyValue(PAYMENT_EXTERNAL_ID, charge.getExternalId())
+                .addKeyValue(PROVIDER, gatewayName)
+                .addKeyValue("payment_gateway_transaction_id", transactionId)
+                .addKeyValue(REFUND_EXTERNAL_ID, refundExternalId)
+                .addKeyValue("gateway_transaction_id", gatewayTransactionId)
+                .log("{} notification '{}' could not be used to update refund (associated refund entity not found) for charge [{}]",
+                        gatewayName, refundExternalId, charge.getExternalId());
+    }
+
+    private void logMissingRefundReference(PaymentGatewayName gatewayName, GatewayAccountEntity gatewayAccountEntity, Charge charge) {
+        logger.atWarn()
+                .setMessage("Refund notification could not be used to update charge (missing reference)")
+                .addKeyValue(PAYMENT_EXTERNAL_ID, charge.getExternalId())
+                .addKeyValue(PROVIDER, gatewayName)
+                .addKeyValue(GATEWAY_ACCOUNT_ID, gatewayAccountEntity.getId())
+                .log();
+    }
+
 
     private boolean isRefundTransitionRedundant(RefundStatus currentStatus, RefundStatus newStatus) {
         return newStatus == currentStatus;
     }
-    
+
     private boolean isRefundTransitionIllegal(RefundStatus currentStatus, RefundStatus newStatus) {
         return (currentStatus == REFUNDED && newStatus == REFUND_ERROR) || (currentStatus == REFUND_ERROR && newStatus == REFUNDED);
     }
