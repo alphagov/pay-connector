@@ -12,35 +12,48 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.event.Level;
+import uk.gov.pay.connector.agreement.model.AgreementEntity;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.LinksConfig;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
+import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
+import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
+import java.util.Map;
+
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.hasEntry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.pay.connector.agreement.model.AgreementEntityFixture.anAgreementEntity;
+import static uk.gov.pay.connector.charge.model.domain.ChargeEntityFixture.aValidChargeEntity;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
+import static uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory.STORED_PAYMENT_METHOD_ID;
 import static uk.gov.pay.connector.gateway.model.ErrorType.GATEWAY_ERROR;
 import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequestFixture.aCardAuthorisationGatewayRequest;
+import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
+import static uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntityFixture.aPaymentInstrumentEntity;
+import static uk.gov.service.payments.commons.model.AgreementPaymentType.RECURRING;
 
 @ExtendWith(MockitoExtension.class)
 class AdyenAuthoriseHandlerTest {
@@ -53,7 +66,7 @@ class AdyenAuthoriseHandlerTest {
     public static final String LIVE_ADYEN_CHECKOUT_BASE_URL = "https://example.com/live/someVersion";
     public static final String TEST_ADYEN_CHECKOUT_BASE_URL = "https://example.com/test/someVersion";
     private static final String TEST_API_KEY = "test-api-key"; // pragma: allowlist secret
-    
+
     @Mock
     private GatewayClient mockClient;
     @Mock
@@ -66,7 +79,7 @@ class AdyenAuthoriseHandlerTest {
     @Captor
     private ArgumentCaptor<GatewayClientPostRequest> captor;
     @RegisterExtension
-    private final LogCapturer infoLogs = LogCapturer.create().captureForType(AdyenAuthoriseHandler.class, Level.INFO);
+    private final LogCapturer logger = LogCapturer.create().captureForType(AdyenAuthoriseHandler.class);
 
     @BeforeEach
     void setUp() {
@@ -77,7 +90,7 @@ class AdyenAuthoriseHandlerTest {
         AdyenGatewayConfig mockAdyenGatewayConfig = mock(AdyenGatewayConfig.class);
         when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(new AdyenIds("test", "live"));
         when(mockAdyenGatewayConfig.getBaseUrls()).thenReturn(mockBaseUrls);
-        
+
         ApiKeys mockApiKeys = mock(ApiKeys.class);
         ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
         when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
@@ -175,7 +188,7 @@ class AdyenAuthoriseHandlerTest {
 
         authoriseHandler.authorise(request);
 
-        infoLogs.assertContains("Calling Adyen for authorisation of charge");
+        logger.assertContains("Calling Adyen for authorisation of charge");
     }
 
     @Test
@@ -211,6 +224,81 @@ class AdyenAuthoriseHandlerTest {
         assertThat(response.getGatewayError().get().getMessage(),
                 containsString("server error"));
         assertThat(response.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
+    }
+
+    @Test
+    void should_send_request_to_Adyen_for_user_not_present_recurring_payment() throws GatewayException.GatewayErrorException, GatewayException.GenericGatewayException, GatewayException.GatewayConnectionTimeoutException {
+        givenAdyenReturnsASuccessResponse();
+
+        var agreementId = "some-agreement-id";
+        var agreement = anAgreementEntity()
+                .withExternalId(agreementId)
+                .build();
+        var storedPaymentMethodId = "42";
+        var paymentInstrument = aPaymentInstrumentEntity()
+                .withRecurringAuthToken(Map.of(
+                        STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .build();
+
+        var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
+
+        var authoriseRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        authoriseHandler.authoriseUserNotPresent(authoriseRequest);
+
+        then(mockClient).should().postRequestFor(captor.capture());
+        var headers = captor.getValue().getHeaders();
+        assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
+        assertThat(headers, hasEntry("Idempotency-Key", "authorise-" + authoriseRequest.getGovUkPayPaymentId()));
+
+        String payload = captor.getValue().getGatewayOrder().getPayload();
+        assertThat(payload, hasNoJsonPath("$.billingAddress.houseNumberOrName"));
+        JsonAssert.with(payload).assertThat("$.paymentMethod.storedPaymentMethodId", is(storedPaymentMethodId));
+        JsonAssert.with(payload).assertThat("$.paymentMethod.type", is("scheme"));
+
+    }
+
+    @Test
+    void should_return_gateway_error_for_recurring_payment_when_adyen_returns_unexpected_status_code() throws Exception {
+        givenAdyenReturnsAnUnexpectedResponse();
+        var agreementId = "some-agreement-id";
+        var agreement = anAgreementEntity()
+                .withExternalId(agreementId)
+                .build();
+        var storedPaymentMethodId = "42";
+        var paymentInstrument = aPaymentInstrumentEntity()
+                .withRecurringAuthToken(Map.of(
+                        STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
+                .build();
+
+        var charge = setupChargeEntityForRecurringPayment(agreement, paymentInstrument);
+
+        var authoriseRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
+        GatewayResponse<BaseAuthoriseResponse> response = authoriseHandler.authoriseUserNotPresent(authoriseRequest);
+
+        assertThat(response.getGatewayError().isPresent(), Is.is(true));
+        assertThat(response.getGatewayError().get().getMessage(),
+                containsString("server error"));
+        assertThat(response.getGatewayError().get().getErrorType(), Is.is(GATEWAY_ERROR));
+
+        logger.assertContains("GatewayException occurred when authorising user not present payment");
+    }
+
+    private static ChargeEntity setupChargeEntityForRecurringPayment(AgreementEntity agreement, PaymentInstrumentEntity paymentInstrument) {
+        var gatewayAccountCredential = aGatewayAccountCredentialsEntity()
+                .withCredentials(Map.of(
+                        "legal_entity_id", "legal_entity_id",
+                        "store_id", "store_id",
+                        "account_holder_id", "account_holder_id",
+                        "balance_account_id", "balance_account_id"))
+                .withPaymentProvider(ADYEN.getName())
+                .build();
+
+        return aValidChargeEntity()
+                .withAgreementPaymentType(RECURRING)
+                .withAgreementEntity(agreement)
+                .withPaymentInstrument(paymentInstrument)
+                .withGatewayAccountCredentialsEntity(gatewayAccountCredential)
+                .build();
     }
 
     private void givenAdyenReturnsASuccessResponse() throws GatewayException.GenericGatewayException, GatewayException.GatewayErrorException, GatewayException.GatewayConnectionTimeoutException {
