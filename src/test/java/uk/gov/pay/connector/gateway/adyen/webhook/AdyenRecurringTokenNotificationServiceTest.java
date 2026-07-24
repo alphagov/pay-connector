@@ -44,6 +44,9 @@ class AdyenRecurringTokenNotificationServiceTest {
     @Mock
     private Appender<ILoggingEvent> mockAppender;
 
+    @Mock
+    private AdyenNotificationValidator mockAdyenNotificationValidator;
+
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
@@ -51,7 +54,9 @@ class AdyenRecurringTokenNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        adyenRecurringTokenNotificationService = new AdyenRecurringTokenNotificationService(adyenGatewayConfig, ipDomainMatcher);
+        adyenRecurringTokenNotificationService = new AdyenRecurringTokenNotificationService(
+                adyenGatewayConfig,
+                mockAdyenNotificationValidator);
         Logger logger = (Logger) LoggerFactory.getLogger(AdyenRecurringTokenNotificationService.class);
         logger.setLevel(Level.INFO);
         logger.addAppender(mockAppender);
@@ -59,8 +64,7 @@ class AdyenRecurringTokenNotificationServiceTest {
 
     @Test
     void shouldAcceptValidTokenNotification() {
-        when(adyenGatewayConfig.getNotificationDomain()).thenReturn("out.adyen.com.");
-        when(ipDomainMatcher.ipMatchesDomain(FORWARDED_IP, "out.adyen.com.")).thenReturn(true);
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
 
         String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
 
@@ -83,8 +87,7 @@ class AdyenRecurringTokenNotificationServiceTest {
 
     @Test
     void shouldRejectNotificationWhenForwardedIpDoesNotMatchConfiguredDomain() {
-        when(adyenGatewayConfig.getNotificationDomain()).thenReturn("out.adyen.com.");
-        when(ipDomainMatcher.ipMatchesDomain(NON_ADYEN_IP, "out.adyen.com.")).thenReturn(false);
+        when(mockAdyenNotificationValidator.isValidIpAddress(NON_ADYEN_IP)).thenReturn(false);
 
         boolean result = adyenRecurringTokenNotificationService.handleNotificationFor("{}", HMAC_SIGNATURE, NON_ADYEN_IP);
 

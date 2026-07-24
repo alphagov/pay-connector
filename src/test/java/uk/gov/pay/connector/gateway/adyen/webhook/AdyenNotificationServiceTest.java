@@ -70,12 +70,17 @@ class AdyenNotificationServiceTest {
     
     @Mock
     private IpDomainMatcher ipDomainMatcher;
+    
+    @Mock
+    private AdyenNotificationValidator mockAdyenNotificationValidator;
 
     private String validHmacSigniture = "coqCmt/IZ4E3CzPvMY8zTjQVL5hYJUiBRg8UU+iCWo0="; // pragma: allowlist secret
 
     @BeforeEach
     void setUp() {
-        adyenNotificationService = new AdyenNotificationService(mockAdyenGatewayConfig, ipDomainMatcher, mockTaskQueueService);
+        adyenNotificationService = new AdyenNotificationService(mockAdyenGatewayConfig,
+                mockTaskQueueService,
+                mockAdyenNotificationValidator);
         Logger root = (Logger) LoggerFactory.getLogger(AdyenNotificationService.class);
         root.setLevel(Level.INFO);
         root.addAppender(mockAppender);
@@ -83,8 +88,7 @@ class AdyenNotificationServiceTest {
 
     @Test
     void shouldAcceptNotificationWhenForwardedIpMatchesConfiguredDomain() {
-        when(mockAdyenGatewayConfig.getNotificationDomain()).thenReturn("out.adyen.com.");
-        when(ipDomainMatcher.ipMatchesDomain("5.6.7.8", "out.adyen.com.")).thenReturn(true);
+        when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
         when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(getHmacKeys());
         
         String payload = getNotificationWithValidHmacSignature("AUTHORISATION");
@@ -104,8 +108,7 @@ class AdyenNotificationServiceTest {
 
     @Test
     void shouldRejectNotificationWhenForwardedIpDoesNotMatchConfiguredDomain() {
-        when(mockAdyenGatewayConfig.getNotificationDomain()).thenReturn("out.adyen.com.");
-        when(ipDomainMatcher.ipMatchesDomain("8.8.8.8", "out.adyen.com.")).thenReturn(false);
+        when(mockAdyenNotificationValidator.isValidIpAddress("8.8.8.8")).thenReturn(false);
 
         boolean result = adyenNotificationService.handleNotificationFor("{\"notificationItems\":[]}", "8.8.8.8");
 
@@ -116,8 +119,7 @@ class AdyenNotificationServiceTest {
     class TestValidateNotification {
         @BeforeEach
         void setUp() {
-            when(mockAdyenGatewayConfig.getNotificationDomain()).thenReturn("out.adyen.com.");
-            when(ipDomainMatcher.ipMatchesDomain("5.6.7.8", "out.adyen.com.")).thenReturn(true);
+            when(mockAdyenNotificationValidator.isValidIpAddress("5.6.7.8")).thenReturn(true);
         }
 
         @Test
@@ -282,7 +284,7 @@ class AdyenNotificationServiceTest {
             boolean result = adyenNotificationService.handleNotificationFor(payload, "5.6.7.8");
 
             assertFalse(result);
-            verify(mockTaskQueueService,never()).add(any(Task.class));
+            verify(mockTaskQueueService, never()).add(any(Task.class));
         }
         
         @Test
