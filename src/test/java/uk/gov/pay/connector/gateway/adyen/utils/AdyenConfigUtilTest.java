@@ -93,35 +93,6 @@ class AdyenConfigUtilTest {
     }
 
     @Nested
-    class TestGetMerchantAccountId {
-        @Test
-        void shouldReturnLiveMerchantAccountIdWhenLiveIsTrue() {
-            when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(mockMerchantAccountIds);
-            when(mockMerchantAccountIds.live()).thenReturn("live-merchant-123");
-
-            String result = AdyenConfigUtil.getMerchantAccountId(mockAdyenGatewayConfig, true);
-
-            assertThat(result, is("live-merchant-123"));
-
-            verify(mockMerchantAccountIds).live();
-            verify(mockMerchantAccountIds, never()).test();
-        }
-
-        @Test
-        void shouldReturnTestMerchantAccountIdWhenLiveIsFalse() {
-            when(mockAdyenGatewayConfig.getMerchantAccountIds()).thenReturn(mockMerchantAccountIds);
-            when(mockMerchantAccountIds.test()).thenReturn("test-merchant-123");
-
-            String result = AdyenConfigUtil.getMerchantAccountId(mockAdyenGatewayConfig, false);
-
-            assertThat(result, is("test-merchant-123"));
-
-            verify(mockMerchantAccountIds).test();
-            verify(mockMerchantAccountIds, never()).live();
-        }
-    }
-
-    @Nested
     class TestGetsHmacKeys {
 
         @Mock

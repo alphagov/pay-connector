@@ -27,16 +27,6 @@ public class AdyenConfigUtil {
         return baseCheckoutUrl;
     }
 
-    public static String getMerchantAccountId(AdyenGatewayConfig adyenGatewayConfig, boolean live) {
-        String merchantAccountId;
-        if (live) {
-            merchantAccountId = adyenGatewayConfig.getMerchantAccountIds().live();
-        } else {
-            merchantAccountId = adyenGatewayConfig.getMerchantAccountIds().test();
-        }
-        return merchantAccountId;
-    }
-
     public static String getHmacKey(AdyenGatewayConfig adyenGatewayConfig, boolean live) {
         WebhookHmacKeys webhookHmacKeys;
 
