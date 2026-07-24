@@ -135,6 +135,7 @@ public class TestTemplateResourceLoader {
 
     public static final String ADYEN_AUTHORISATION_REQUEST_WITH_FULL_BILLING_ADDRESS = TEMPLATE_BASE_NAME + "/adyen/authorisation_request_with_full_billing_address.json";
     public static final String ADYEN_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/notification.json";
+    public static final String ADYEN_PAYMENT_NOTIFICATION_ITEM = TEMPLATE_BASE_NAME + "/adyen/paymentNotificationItem.json";
     public static final String ADYEN_TOKEN_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/token-notification.json";
     public static final String ADYEN_CAPTURE_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/capture-successful.json";
     public static final String ADYEN_CANCELLATION_SUCCESS_NOTIFICATION = TEMPLATE_BASE_NAME + "/adyen/cancellation-successful.json";
