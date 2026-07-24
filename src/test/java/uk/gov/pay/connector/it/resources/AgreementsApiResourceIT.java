@@ -17,8 +17,8 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.apache.http.HttpStatus.SC_CREATED;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.eclipse.jetty.http.HttpStatus.NO_CONTENT_204;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;

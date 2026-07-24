@@ -2,7 +2,7 @@ package uk.gov.pay.connector.it.resources;
 
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;

@@ -3,7 +3,7 @@ package uk.gov.pay.connector.rules;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
-import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.hc.core5.http.HttpStatus.SC_OK;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_ACCOUNT_HOLDER_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_BALANCE_ACCOUNT_RESPONSE;
 

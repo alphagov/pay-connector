@@ -18,7 +18,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.GatewayResponseUnmarshaller.unmarshallResponse;
 import static uk.gov.pay.connector.gateway.util.AuthUtil.getWorldpayCredentialsCheckAuthHeader;
 import static uk.gov.pay.connector.gateway.worldpay.WorldpayOrderRequestBuilder.aWorldpayInquiryRequestBuilder;
