@@ -50,6 +50,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.STRIPE;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.WORLDPAY;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_ADYEN_LEGAL_ENTITY_ID;
+import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_ADYEN_STORE_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_CODE;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_MERCHANT_ID;
 import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccount.CREDENTIALS_PASSWORD;
@@ -88,8 +89,6 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
 
     public static final String SERVICE_ID = "external-service-id";
     public static final String JSON_PROVIDER_KEY = "payment_provider";
-    public static final String JSON_CREDENTIAL_ID_KEY = "credential_id";
-    public static final String PROVIDER_NAME = "sandbox";
     public static final String JSON_CHARGE_KEY = "charge_id";
     public static final String JSON_MESSAGE_KEY = "message";
     public static final String JSON_AMOUNT_KEY = "amount";
@@ -101,14 +100,13 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public static final String JSON_MOTO_KEY = "moto";
     public static final String JSON_METADATA_KEY = "metadata";
     public static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
-    public static final String JSON_AUTH_MODE_MOTO_API = "moto_api";
     public static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
     public static final String JSON_SOURCE_KEY = "source";
 
-    private String paymentProvider;
+    private final String paymentProvider;
 
     protected static String accountId = String.valueOf(secureRandomInt());
-    private int gatewayAccountCredentialsId = secureRandomInt();
+    private final int gatewayAccountCredentialsId = secureRandomInt();
     private Map<String, Object> credentials;
     private DatabaseFixtures.TestAccount testAccount;
     private static AddGatewayAccountCredentialsParams credentialParams;
@@ -166,7 +164,8 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
         if (paymentProvider.equals(STRIPE.getName())) {
             credentials = Map.of(CREDENTIALS_STRIPE_ACCOUNT_ID, "stripe-account-id");
         } else if (paymentProvider.equals(ADYEN.getName())) {
-            credentials = Map.of(CREDENTIALS_ADYEN_LEGAL_ENTITY_ID, "legal_entity_id");
+            credentials = Map.of(CREDENTIALS_ADYEN_LEGAL_ENTITY_ID, "legal_entity_id",
+                    CREDENTIALS_ADYEN_STORE_ID, "test-store-id");
         } else if (paymentProvider.equals(WORLDPAY.getName())) {
             credentials = Map.of(
                     ONE_OFF_CUSTOMER_INITIATED, Map.of(
