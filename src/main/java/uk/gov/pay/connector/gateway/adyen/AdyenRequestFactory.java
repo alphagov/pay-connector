@@ -3,6 +3,7 @@ package uk.gov.pay.connector.gateway.adyen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
+import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload;
@@ -21,6 +22,7 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenMerchantAccountHelper;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
@@ -31,17 +33,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static uk.gov.pay.connector.gateway.adyen.utils.AdyenConfigUtil.getMerchantAccountId;
-
 public class AdyenRequestFactory {
 
     public static final String STORED_PAYMENT_METHOD_ID = "storedPaymentMethodId";
     
     private final ConnectorConfiguration configuration;
+    private final AdyenMerchantAccountHelper adyenMerchantAccountHelper;
     private final Logger LOGGER = LoggerFactory.getLogger(AdyenRequestFactory.class);
 
     public AdyenRequestFactory(ConnectorConfiguration configuration) {
         this.configuration = configuration;
+        this.adyenMerchantAccountHelper = new AdyenMerchantAccountHelper(configuration);
     }
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
@@ -75,7 +77,7 @@ public class AdyenRequestFactory {
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 mappedAddress,
-                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
+                adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount()),
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
                 String.format("%s/card_details/%s/3ds_required_in/adyen", frontendUrl, request.getGovUkPayPaymentId()),
@@ -111,7 +113,7 @@ public class AdyenRequestFactory {
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 null,
-                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
+                adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount()),
                 PaymentMethod.stored(storedPaymentMethodId),
                 request.getGovUkPayPaymentId(),
                 configuration.getLinks().getFrontendUrl(),
@@ -136,21 +138,21 @@ public class AdyenRequestFactory {
     public CancelRequestPayload createPaymentCancelRequest(CancelGatewayRequest request) {
         return new CancelRequestPayload(
                 request.getExternalChargeId(),
-                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive())
+                adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount())
         );
     }
 
     public CaptureRequestPayload createCapturePayload(CaptureGatewayRequest request) {
         return new CaptureRequestPayload(
                 new Amount("GBP", request.getAmount()),
-                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive())
+                adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount())
         );
     }
 
     public RefundRequestPayload createRefundRequestPayload(RefundGatewayRequest request) {
         var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
         return new RefundRequestPayload(
-                getMerchantAccountId(configuration.getAdyenGatewayConfig(), request.getGatewayAccount().isLive()),
+                adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount()),
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 request.getRefundExternalId(),
                 adyenCredentials.storeId()
