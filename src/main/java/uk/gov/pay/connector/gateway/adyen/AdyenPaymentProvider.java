@@ -26,6 +26,7 @@ import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -44,9 +45,6 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 
 public class AdyenPaymentProvider implements PaymentProvider {
 
-    private final GatewayClient client;
-    private final AdyenGatewayConfig adyenGatewayConfig;
-    private final ConnectorConfiguration connectorConfiguration;
     private final AdyenAuthoriseHandler adyenAuthoriseHandler;
     private final AdyenAuthorise3dsHandler adyenAuthorise3dsHandler;
     private final AdyenCaptureHandler adyenCaptureHandler;
@@ -62,9 +60,8 @@ public class AdyenPaymentProvider implements PaymentProvider {
             GatewayClientFactory gatewayClientFactory,
             @Named("DefaultRefundEntityFactory") RefundEntityFactory refundEntityFactory,
             JsonObjectMapper jsonObjectMapper) {
-        this.adyenGatewayConfig = connectorConfiguration.getAdyenGatewayConfig();
-        this.connectorConfiguration = connectorConfiguration;
-        this.client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
+        AdyenGatewayConfig adyenGatewayConfig = connectorConfiguration.getAdyenGatewayConfig();
+        GatewayClient client = gatewayClientFactory.createGatewayClient(ADYEN, environment.metrics());
         adyenAuthoriseHandler = new AdyenAuthoriseHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenAuthorise3dsHandler = new AdyenAuthorise3dsHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
@@ -92,6 +89,11 @@ public class AdyenPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse authoriseMotoApi(CardAuthorisationGatewayRequest request) throws GatewayException {
         return adyenAuthoriseHandler.authorise(request);
+    }
+
+    @Override
+    public GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
+        return adyenAuthoriseHandler.authoriseUserNotPresent(request);
     }
 
     @Override
