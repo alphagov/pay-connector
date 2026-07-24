@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -88,6 +89,24 @@ class DateTimeUtilsTest {
     void shouldReturnNullIfUnixEpochTimeIsNull() {
         Long epochTime = null;
         ZonedDateTime zonedDateTime = DateTimeUtils.toUTCZonedDateTime(epochTime);
+
+        assertThat(zonedDateTime, is(nullValue()));
+    }
+
+    @Test
+    void shouldConvertDateToUTCZonedDateTime() {
+        Date eventDate = Date.from(Instant.parse("2020-05-13T18:45:33Z"));
+
+        ZonedDateTime zonedDateTime = DateTimeUtils.toUTCZonedDateTime(eventDate);
+
+        assertThat(zonedDateTime.toString(), is("2020-05-13T18:45:33Z"));
+    }
+
+    @Test
+    void shouldReturnNullIfDateIsNull() {
+        Date eventDate = null;
+
+        ZonedDateTime zonedDateTime = DateTimeUtils.toUTCZonedDateTime(eventDate);
 
         assertThat(zonedDateTime, is(nullValue()));
     }
