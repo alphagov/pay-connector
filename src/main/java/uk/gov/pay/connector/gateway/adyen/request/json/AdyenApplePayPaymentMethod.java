@@ -6,11 +6,17 @@ import org.jspecify.annotations.NullMarked;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NullMarked
-public record Amount(
-        @JsonProperty("currency") 
-        String currency,
+public record AdyenApplePayPaymentMethod(
+        @JsonProperty("type")
+        String type,
 
-        @JsonProperty("value") 
-        Long value
+        @JsonProperty("applePayToken")
+        String applePayToken
 ) {
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
+
 }
