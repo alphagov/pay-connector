@@ -3,7 +3,6 @@ package uk.gov.pay.connector.gateway.adyen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.common.model.domain.Address;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.request.json.Authorise3dsRequestPayload;
@@ -22,6 +21,7 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenCredentialsHelper;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenMerchantAccountHelper;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
@@ -39,11 +39,13 @@ public class AdyenRequestFactory {
     
     private final ConnectorConfiguration configuration;
     private final AdyenMerchantAccountHelper adyenMerchantAccountHelper;
+    private final AdyenCredentialsHelper adyenCredentialsHelper;
     private final Logger LOGGER = LoggerFactory.getLogger(AdyenRequestFactory.class);
 
     public AdyenRequestFactory(ConnectorConfiguration configuration) {
         this.configuration = configuration;
         this.adyenMerchantAccountHelper = new AdyenMerchantAccountHelper(configuration);
+        this.adyenCredentialsHelper = new AdyenCredentialsHelper();
     }
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
@@ -60,8 +62,6 @@ public class AdyenRequestFactory {
                 authCardDetails.getEndDate().getFourDigitYear(),
                 authCardDetails.getCardHolder(),
                 authCardDetails.getCardNo());
-
-        var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
 
         String shopperReference = null;
         Boolean storePaymentMethod = null;
@@ -82,7 +82,7 @@ public class AdyenRequestFactory {
                 request.getGovUkPayPaymentId(),
                 String.format("%s/card_details/%s/3ds_required_in/adyen", frontendUrl, request.getGovUkPayPaymentId()),
                 getShopperInteraction(request),
-                adyenCredentials.storeId(),
+                adyenCredentialsHelper.getStore(request),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true")),
                 isMoto ? null : mapToBrowserInfo(authCardDetails),
@@ -108,8 +108,6 @@ public class AdyenRequestFactory {
             throw new IllegalArgumentException("Adyen recurring auth token is missing shopperReference or storedPaymentMethodId");
         }
 
-        var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
-
         return new AuthoriseRequestPayload(
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 null,
@@ -118,7 +116,7 @@ public class AdyenRequestFactory {
                 request.getGovUkPayPaymentId(),
                 configuration.getLinks().getFrontendUrl(),
                 "ContAuth",
-                adyenCredentials.storeId(),
+                adyenCredentialsHelper.getStore(request),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true")),
                 null,
@@ -150,12 +148,11 @@ public class AdyenRequestFactory {
     }
 
     public RefundRequestPayload createRefundRequestPayload(RefundGatewayRequest request) {
-        var adyenCredentials = mapToAdyenCredentials(request.getGatewayCredentials());
         return new RefundRequestPayload(
                 adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount()),
                 new Amount("GBP", Long.valueOf(request.getAmount())),
                 request.getRefundExternalId(),
-                adyenCredentials.storeId()
+                adyenCredentialsHelper.getStore(request)
         );
     }
 
@@ -177,13 +174,6 @@ public class AdyenRequestFactory {
                 address.getCountry(),
                 address.getPostcode(),
                 stateOrProvince);
-    }
-
-    private static AdyenCredentials mapToAdyenCredentials(GatewayCredentials gatewayCredentials) {
-        if (!(gatewayCredentials instanceof AdyenCredentials)) {
-            throw new IllegalArgumentException("Expected provided GatewayCredentials to be of type AdyenCredentials");
-        }
-        return (AdyenCredentials) gatewayCredentials;
     }
 
     private BrowserInfo mapToBrowserInfo(AuthCardDetails authCardDetails) {
