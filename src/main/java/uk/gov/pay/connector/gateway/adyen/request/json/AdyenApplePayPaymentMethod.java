@@ -7,12 +7,14 @@ import org.jspecify.annotations.NullMarked;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NullMarked
 public record AdyenApplePayPaymentMethod(
-        @JsonProperty("type")
-        String type,
-
         @JsonProperty("applePayToken")
         String applePayToken
 ) {
+
+    @JsonProperty("type")
+    public String type() {
+        return "applepay";
+    }
 
     @Override
     public String toString() {

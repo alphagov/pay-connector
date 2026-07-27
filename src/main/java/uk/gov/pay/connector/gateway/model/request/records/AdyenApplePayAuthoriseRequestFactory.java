@@ -1,0 +1,36 @@
+package uk.gov.pay.connector.gateway.model.request.records;
+
+import jakarta.inject.Inject;
+import uk.gov.pay.connector.gateway.adyen.request.json.AdyenApplePayPaymentMethod;
+import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
+import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
+
+public class AdyenApplePayAuthoriseRequestFactory {
+
+    private final ChargeFrontendUrlHelper chargeFrontendUrlHelper;
+    private final AdyenMerchantAccountHelper adyenMerchantAccountHelper;
+    private final AdyenCredentialsHelper adyenCredentialsHelper;
+    
+    @Inject
+    public AdyenApplePayAuthoriseRequestFactory(
+            AdyenMerchantAccountHelper adyenMerchantAccountHelper, 
+            AdyenCredentialsHelper adyenCredentialsHelper,
+            ChargeFrontendUrlHelper chargeFrontendUrlHelper
+    ) {
+        this.chargeFrontendUrlHelper =  chargeFrontendUrlHelper;
+        this.adyenMerchantAccountHelper = adyenMerchantAccountHelper;
+        this.adyenCredentialsHelper = adyenCredentialsHelper;
+    }
+
+    public AdyenApplePayAuthoriseRequest create(ApplePayAuthorisationGatewayRequest request) {
+        return new AdyenApplePayAuthoriseRequest(
+                adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount()),
+                adyenCredentialsHelper.getStore(request),
+                request.getGovUkPayPaymentId(),
+                new Amount("GBP", Long.valueOf(request.getAmount())),
+                new AdyenApplePayPaymentMethod(request.getApplePayAuthRequest().getPaymentData()),
+                chargeFrontendUrlHelper.getFrontendUrlForCharge(request.getGovUkPayPaymentId())
+        );
+    }
+
+}
