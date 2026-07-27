@@ -23,6 +23,7 @@ import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationG
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenCredentialsHelper;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenMerchantAccountHelper;
+import uk.gov.pay.connector.gateway.model.request.records.ChargeFrontendUrlHelper;
 import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
@@ -40,18 +41,19 @@ public class AdyenRequestFactory {
     private final ConnectorConfiguration configuration;
     private final AdyenMerchantAccountHelper adyenMerchantAccountHelper;
     private final AdyenCredentialsHelper adyenCredentialsHelper;
+    private final ChargeFrontendUrlHelper chargeFrontendUrlHelper;
     private final Logger LOGGER = LoggerFactory.getLogger(AdyenRequestFactory.class);
 
     public AdyenRequestFactory(ConnectorConfiguration configuration) {
         this.configuration = configuration;
         this.adyenMerchantAccountHelper = new AdyenMerchantAccountHelper(configuration);
         this.adyenCredentialsHelper = new AdyenCredentialsHelper();
+        this.chargeFrontendUrlHelper = new ChargeFrontendUrlHelper(configuration);
     }
 
     public AuthoriseRequestPayload createPaymentRequest(CardAuthorisationGatewayRequest request) {
         var authCardDetails = request.getAuthCardDetails();
         boolean isMoto = "Moto".equals(getShopperInteraction(request));
-        String frontendUrl = configuration.getLinks().getFrontendUrl();
 
         var mappedAddress = authCardDetails.getAddress()
                 .map(AdyenRequestFactory::mapToBillingAddress)
@@ -80,13 +82,13 @@ public class AdyenRequestFactory {
                 adyenMerchantAccountHelper.getMerchantAccount(request.getGatewayAccount()),
                 paymentMethod,
                 request.getGovUkPayPaymentId(),
-                String.format("%s/card_details/%s/3ds_required_in/adyen", frontendUrl, request.getGovUkPayPaymentId()),
+                chargeFrontendUrlHelper.getFrontendUrlForCharge(request.getGovUkPayPaymentId()) + "/3ds_required_in/adyen", 
                 getShopperInteraction(request),
                 adyenCredentialsHelper.getStore(request),
                 "Web",
                 new HashMap<>(Map.of("manualCapture", "true")),
                 isMoto ? null : mapToBrowserInfo(authCardDetails),
-                isMoto ? null : frontendUrl,
+                isMoto ? null : configuration.getLinks().getFrontendUrl(),
                 isMoto ? null : request.getEmail(),
                 isMoto ? null : authCardDetails.getIpAddress().orElse(null),
                 shopperReference,
