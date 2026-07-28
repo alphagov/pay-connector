@@ -131,6 +131,15 @@ class AdyenRequestUtilTest {
 
         assertThat(cancelUrl, is(String.format("https://example.com/test/someVersion/payments/%s/cancels", GATEWAY_TRANSACTION_ID)));
     }
+    
+    @Test
+    void should_create_Adyen_checkout_delete_stored_payment_method_URL() {
+        stubCheckoutBaseUrls();
+        
+        var deleteStoredPaymentMethodUrl = AdyenRequestUtil.getDeleteStoredPaymentMethodUrl(mockAdyenGatewayConfig, false, "storedPaymentMethodId-123").toString();
+        
+        assertThat(deleteStoredPaymentMethodUrl, is("https://example.com/test/someVersion/storedPaymentMethods/storedPaymentMethodId-123"));
+    }
 
     @Test
     void should_create_API_key_and_idempotency_key_headers_for_checkout_URL() {
@@ -144,6 +153,20 @@ class AdyenRequestUtilTest {
 
         assertThat(headers, hasEntry("X-API-Key", "test"));
         assertThat(headers, hasEntry("Idempotency-Key", "authorise-some-unique-key"));
+    }
+    
+    @Test
+    void should_create_API_key_header_for_delete_stored_payment_details_request() {
+        ApiKeys mockApiKeys = mock(ApiKeys.class);
+        ApiKeys.CompanyAccountApiKeys mockCompanyApiKeys = mock(ApiKeys.CompanyAccountApiKeys.class);
+        when(mockApiKeys.companyAccount()).thenReturn(mockCompanyApiKeys);
+        when(mockCompanyApiKeys.test()).thenReturn("test");
+        when(mockAdyenGatewayConfig.getApiKeys()).thenReturn(mockApiKeys);
+        
+        var headers = AdyenRequestUtil.getApiKeyHeader(mockAdyenGatewayConfig, false);
+        
+        assertThat(headers, hasEntry("X-API-Key", "test"));
+        assertThat(headers.size(), is(1));
     }
 
     private void stubCheckoutBaseUrls() {
