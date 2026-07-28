@@ -102,6 +102,7 @@ public class ITestBaseExtension implements BeforeEachCallback, BeforeAllCallback
     public static final String JSON_AUTH_MODE_KEY = "authorisation_mode";
     public static final String JSON_DELAYED_CAPTURE_KEY = "delayed_capture";
     public static final String JSON_SOURCE_KEY = "source";
+    public static final String JSON_AGREEMENT_PAYMENT_TYPE_KEY = "agreement_payment_type";
 
     private final String paymentProvider;
 

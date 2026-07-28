@@ -24,11 +24,13 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
+import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
+import static uk.gov.pay.connector.it.util.RecurringPaymentSetupUtil.setupChargeWithAgreementAndPaymentInstrument;
 import static uk.gov.pay.connector.model.domain.AuthCardDetailsFixture.anAuthCardDetails;
 
 
@@ -54,6 +56,7 @@ public class AdyenPaymentAuthorisationTimeoutIT {
 
     @BeforeEach
     void setUp() {
+        app.getDatabaseTestHelper().enableRecurring(Long.parseLong(testBaseExtension.getAccountId()));
         chargeDao = app.getInstanceFromGuiceContainer(ChargeDao.class);
     }
 
@@ -69,6 +72,19 @@ public class AdyenPaymentAuthorisationTimeoutIT {
                 .body("error_identifier", is("GENERIC"))
                 .body("message[0]", is("Gateway connection timeout error"));
 
+
+        var charge = chargeDao.findByExternalId(chargeId);
+        assertThat(charge.isPresent(), is(true));
+        assertThat(charge.get().getStatus(), is("AUTHORISATION TIMEOUT"));
+    }
+
+    @Test
+    void timed_out_authorisation_for_recurring_payment() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+        String storedPaymentMethodId = "4242";
+        var chargeId = setupChargeWithAgreementAndPaymentInstrument(testBaseExtension, app, storedPaymentMethodId);
+
+        taskHandler.process(chargeId);
 
         var charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));

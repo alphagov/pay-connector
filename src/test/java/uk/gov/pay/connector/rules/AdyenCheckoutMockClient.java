@@ -38,6 +38,50 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
         setupPostResponse(responseBody, "/payments", SC_OK);
     }
 
+    public void mockAuthorisationRejectedForRecurringPayment(String pspReferenceFromAdyen, String storedPaymentMethodId, String expectedReason, String expectedReasonCode) {
+        var responseBody = """
+                {
+                  "pspReference": "%s",
+                  "resultCode": "Refused",
+                  "merchantReference": "string",
+                  "additionalData": {
+                    "tokenization.storedPaymentMethodId": "%s"
+                    },
+                  "refusalReason": "%s",
+                  "refusalReasonCode": "%s"
+                }""".formatted(pspReferenceFromAdyen, storedPaymentMethodId, expectedReason, expectedReasonCode);
+
+        setupPostResponse(responseBody, "/payments", SC_OK);
+    }
+
+    public void mockAuthorisationErrorForRecurringPayment(String pspReferenceFromAdyen, String storedPaymentMethodId) {
+        var responseBody = """
+                {
+                  "pspReference": "%s",
+                  "resultCode": "Error",
+                  "merchantReference": "string",
+                  "additionalData": {
+                    "tokenization.storedPaymentMethodId": "%s"
+                    }
+                }""".formatted(pspReferenceFromAdyen, storedPaymentMethodId);
+
+        setupPostResponse(responseBody, "/payments", SC_OK);
+    }
+
+    public void mockAuthorisationClientError() {
+        var responseBody = """
+                {
+                  "pspReference": "123",
+                  "resultCode": "Refused",
+                  "merchantReference": "string",
+                  "additionalData": {
+                    "tokenization.storedPaymentMethodId": "%s"
+                    },
+                  "refusalReason": "Error"
+                }""";
+        setupPostResponse(responseBody, "/payments", SC_BAD_REQUEST);
+    }
+
     public void mockAuthorisationRejected(String pspReferenceFromAdyen) {
         var responseBody = """
                 {
@@ -170,15 +214,15 @@ public class AdyenCheckoutMockClient extends AdyenMockClient {
 
         setupPostResponse(responseBody, "/payments", SC_OK);
     }
-    
+
     public void mock3dsAuthorisationRejected(String pspReferenceFromAdyen) {
         var responseBody = """
-            {
-              "pspReference": "%s",
-              "refusalReason": "Expired Card",
-              "resultCode": "Refused",
-              "refusalReasonCode": "6"
-            }""".formatted(pspReferenceFromAdyen);
+                {
+                  "pspReference": "%s",
+                  "refusalReason": "Expired Card",
+                  "resultCode": "Refused",
+                  "refusalReasonCode": "6"
+                }""".formatted(pspReferenceFromAdyen);
 
         setupPostResponse(responseBody, "/payments/details", SC_OK);
     }

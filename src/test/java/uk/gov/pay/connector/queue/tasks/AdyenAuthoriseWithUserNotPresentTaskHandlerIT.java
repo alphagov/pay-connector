@@ -1,6 +1,7 @@
 package uk.gov.pay.connector.queue.tasks;
 
 import io.github.netmikey.logunit.api.LogCapturer;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -8,39 +9,27 @@ import uk.gov.pay.connector.charge.dao.ChargeDao;
 import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.extension.AppWithPostgresAndSqsExtension;
 import uk.gov.pay.connector.it.base.ITestBaseExtension;
-import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentStatus;
 import uk.gov.pay.connector.queue.capture.CaptureQueue;
 import uk.gov.pay.connector.queue.tasks.handlers.AuthoriseWithUserNotPresentHandler;
-import uk.gov.pay.connector.util.AddAgreementParams;
-import uk.gov.pay.connector.util.AddPaymentInstrumentParams;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static io.restassured.http.ContentType.JSON;
-import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_USER_NOT_PRESENT_QUEUED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_ERROR;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_REJECTED;
+import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.CAPTURE_QUEUED;
-import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_STARTED;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_ERROR_GATEWAY;
+import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_FAILED_REJECTED;
 import static uk.gov.pay.connector.common.model.api.ExternalChargeState.EXTERNAL_SUCCESS;
-import static uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory.STORED_PAYMENT_METHOD_ID;
 import static uk.gov.pay.connector.it.base.ITestBaseExtension.AMOUNT;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AMOUNT_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_AUTH_MODE_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_DESCRIPTION_VALUE;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_KEY;
-import static uk.gov.pay.connector.it.base.ITestBaseExtension.JSON_REFERENCE_VALUE;
-import static uk.gov.pay.connector.util.AddAgreementParams.AddAgreementParamsBuilder.anAddAgreementParams;
-import static uk.gov.pay.connector.util.AddPaymentInstrumentParams.AddPaymentInstrumentParamsBuilder.anAddPaymentInstrumentParams;
-import static uk.gov.pay.connector.util.JsonEncoder.toJson;
-import static uk.gov.pay.connector.util.RandomTestDataGeneratorUtils.secureRandomLong;
+import static uk.gov.pay.connector.it.util.RecurringPaymentSetupUtil.JSON_VALID_AGREEMENT_ID_VALUE;
+import static uk.gov.pay.connector.it.util.RecurringPaymentSetupUtil.setupChargeWithAgreementAndPaymentInstrument;
 
 public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
 
@@ -53,9 +42,6 @@ public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
 
     private ChargeDao chargeDao;
 
-    private static final String JSON_AGREEMENT_ID_KEY = "agreement_id";
-    private static final String JSON_VALID_AGREEMENT_ID_VALUE = "12345678901234567890123456";
-    private static final String JSON_AUTH_MODE_AGREEMENT = "agreement";
     private static final String PSP_REFERENCE_FROM_ADYEN = "993617895215577D";
 
     @BeforeEach
@@ -68,58 +54,84 @@ public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
     void shouldProcess_ACorrectlyConfiguredAuthorisationModeAgreementCharge_AndMarkForCapture() {
         AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
         String storedPaymentMethodId = "4242";
-        var chargeId = setupChargeWithAgreementAndPaymentInstrument(storedPaymentMethodId);
+        var chargeId = setupChargeWithAgreementAndPaymentInstrument(testBaseExtension, app, storedPaymentMethodId);
+        var expectedStatus = CAPTURE_QUEUED.getValue();
 
         app.getAdyenCheckoutMockClient().mockAuthorisationSuccessForRecurringPayment(PSP_REFERENCE_FROM_ADYEN, storedPaymentMethodId);
 
         taskHandler.process(chargeId);
 
-        testBaseExtension.assertFrontendChargeStatusIs(chargeId, CAPTURE_QUEUED.getValue());
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus);
         testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_SUCCESS.getStatus());
 
-        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId);
-
-        getAndVerifyChargeEntity(chargeId, storedPaymentMethodId);
-
+        var charge = getChargeEntity(chargeId);
+        verifyChargeEntity(charge, storedPaymentMethodId, expectedStatus);
         logs.assertContains("Charge [" + chargeId + "] added to capture queue.");
     }
 
-    private String setupChargeWithAgreementAndPaymentInstrument(String storedPaymentMethodId) {
-        Long paymentInstrumentId = secureRandomLong();
+    @Test
+    void shouldProcess_AnAuthorisationDeclineResponse_AndMarkAsRejectedWithReason() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+        String storedPaymentMethodId = "4242";
+        var chargeId = setupChargeWithAgreementAndPaymentInstrument(testBaseExtension, app, storedPaymentMethodId);
+        var expectedStatus = AUTHORISATION_REJECTED.getValue();
+        var expectedReason = "Expired Card";
+        var expectedReasonCode = "6";
 
-        AddPaymentInstrumentParams paymentInstrumentParams = anAddPaymentInstrumentParams()
-                .withPaymentInstrumentId(paymentInstrumentId)
-                .withPaymentInstrumentStatus(PaymentInstrumentStatus.ACTIVE)
-                .withRecurringAuthToken(Map.of(
-                        STORED_PAYMENT_METHOD_ID, storedPaymentMethodId))
-                .build();
-        app.getDatabaseTestHelper().addPaymentInstrument(paymentInstrumentParams);
+        app.getAdyenCheckoutMockClient().mockAuthorisationRejectedForRecurringPayment(PSP_REFERENCE_FROM_ADYEN,
+                storedPaymentMethodId, expectedReason, expectedReasonCode);
 
-        AddAgreementParams agreementParams = anAddAgreementParams()
-                .withGatewayAccountId(testBaseExtension.getAccountId())
-                .withExternalAgreementId(JSON_VALID_AGREEMENT_ID_VALUE)
-                .withPaymentInstrumentId(paymentInstrumentId)
-                .build();
-        app.getDatabaseTestHelper().addAgreement(agreementParams);
+        taskHandler.process(chargeId);
 
-        String postBody = toJson(Map.of(
-                JSON_AMOUNT_KEY, AMOUNT,
-                JSON_REFERENCE_KEY, JSON_REFERENCE_VALUE,
-                JSON_DESCRIPTION_KEY, JSON_DESCRIPTION_VALUE,
-                JSON_AGREEMENT_ID_KEY, JSON_VALID_AGREEMENT_ID_VALUE,
-                JSON_AUTH_MODE_KEY, JSON_AUTH_MODE_AGREEMENT
-        ));
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus);
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_FAILED_REJECTED.getStatus());
 
-        String chargeId = testBaseExtension.getConnectorRestApiClient()
-                .postCreateCharge(postBody)
-                .statusCode(SC_CREATED)
-                .body(JSON_AGREEMENT_ID_KEY, is(JSON_VALID_AGREEMENT_ID_VALUE))
-                .contentType(JSON)
-                .extract().path("charge_id");
+        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId);
 
-        testBaseExtension.assertFrontendChargeStatusIs(chargeId, AUTHORISATION_USER_NOT_PRESENT_QUEUED.getValue());
-        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_STARTED.getStatus());
-        return chargeId;
+        var charge = getChargeEntity(chargeId);
+        verifyChargeEntity(charge, storedPaymentMethodId, expectedStatus);
+        assertThat(charge.getGatewayRejectionReason(), Matchers.is(expectedReasonCode + " - " + expectedReason));
+    }
+
+    @Test
+    void shouldProcess_AnAuthorisationErrorResponse_AndMarkAsError() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+        String storedPaymentMethodId = "4242";
+        var chargeId = setupChargeWithAgreementAndPaymentInstrument(testBaseExtension, app, storedPaymentMethodId);
+        var expectedStatus = AUTHORISATION_ERROR.getValue();
+
+        app.getAdyenCheckoutMockClient().mockAuthorisationErrorForRecurringPayment(PSP_REFERENCE_FROM_ADYEN,
+                storedPaymentMethodId);
+
+        taskHandler.process(chargeId);
+
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus);
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
+
+        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId);
+
+        var charge = getChargeEntity(chargeId);
+        verifyChargeEntity(charge, storedPaymentMethodId, expectedStatus);
+    }
+
+    @Test
+    void shouldProcess_AGatewayError_AndMarkAsAuthorisationError() {
+        AuthoriseWithUserNotPresentHandler taskHandler = app.getInstanceFromGuiceContainer(AuthoriseWithUserNotPresentHandler.class);
+        String storedPaymentMethodId = "4242";
+        var chargeId = setupChargeWithAgreementAndPaymentInstrument(testBaseExtension, app, storedPaymentMethodId);
+        var expectedStatus = AUTHORISATION_UNEXPECTED_ERROR.getValue();
+
+        app.getAdyenCheckoutMockClient().mockAuthorisationClientError();
+
+        taskHandler.process(chargeId);
+
+        testBaseExtension.assertFrontendChargeStatusIs(chargeId, expectedStatus);
+        testBaseExtension.assertApiStateIs(chargeId, EXTERNAL_ERROR_GATEWAY.getStatus());
+
+        verifyRequestToAdyenPaymentsEndpoint(chargeId, storedPaymentMethodId);
+
+        var charge = getChargeEntity(chargeId);
+        assertThat(charge.getStatus(), is(expectedStatus));
     }
 
     private void verifyRequestToAdyenPaymentsEndpoint(String chargeId, String storedPaymentMethodId) {
@@ -128,8 +140,9 @@ public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
                         .withHeader("X-API-Key", equalTo("adyen-test-company-api-key"))
                         .withHeader("Idempotency-Key", equalTo("authorise-" + chargeId))
                         .withRequestBody(matchingJsonPath("$.shopperReference", equalTo(JSON_VALID_AGREEMENT_ID_VALUE)))
-                        .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("Subscription")))
+                        .withRequestBody(matchingJsonPath("$.recurringProcessingModel", equalTo("UnscheduledCardOnFile")))
                         .withRequestBody(matchingJsonPath("$.paymentMethod.storedPaymentMethodId", equalTo(storedPaymentMethodId)))
+                        .withRequestBody(matchingJsonPath("$.paymentMethod.type", equalTo("scheme")))
                         .withRequestBody(matchingJsonPath("$.amount.value", equalTo(String.valueOf(AMOUNT))))
                         .withRequestBody(matchingJsonPath("$.shopperInteraction", equalTo("ContAuth")))
                         .withRequestBody(matchingJsonPath("$.reference", equalTo(chargeId)))
@@ -138,14 +151,18 @@ public class AdyenAuthoriseWithUserNotPresentTaskHandlerIT {
                         .withRequestBody(matchingJsonPath("$.additionalData.manualCapture", equalTo("true"))));
     }
 
-    private void getAndVerifyChargeEntity(String chargeId, String storedPaymentMethodId) {
+    private ChargeEntity getChargeEntity(String chargeId) {
         Optional<ChargeEntity> charge = chargeDao.findByExternalId(chargeId);
         assertThat(charge.isPresent(), is(true));
-        assertThat(charge.get().getStatus(), is(CAPTURE_QUEUED.getValue()));
-        assertThat(charge.get().getGatewayTransactionId(), is(PSP_REFERENCE_FROM_ADYEN));
+        return charge.get();
+    }
 
-        assertThat(charge.get().getPaymentInstrument().isPresent(), is(true));
-        assertThat(charge.get().getPaymentInstrument().get().getRecurringAuthToken().isPresent(), is(true));
-        assertThat(charge.get().getPaymentInstrument().get().getRecurringAuthToken().get().get("storedPaymentMethodId"), is(storedPaymentMethodId));
+    private void verifyChargeEntity(ChargeEntity charge, String storedPaymentMethodId, String expectedStatus) {
+        assertThat(charge.getStatus(), is(expectedStatus));
+        assertThat(charge.getGatewayTransactionId(), is(PSP_REFERENCE_FROM_ADYEN));
+
+        assertThat(charge.getPaymentInstrument().isPresent(), is(true));
+        assertThat(charge.getPaymentInstrument().get().getRecurringAuthToken().isPresent(), is(true));
+        assertThat(charge.getPaymentInstrument().get().getRecurringAuthToken().get().get("storedPaymentMethodId"), is(storedPaymentMethodId));
     }
 }
