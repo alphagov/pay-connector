@@ -42,6 +42,10 @@ public class AdyenRequestUtil {
         var path = "/payments/%s/captures".formatted(request.getGatewayTransactionId());
         return getUrl(config, request, path);
     }
+    
+    public static URI getDeleteStoredPaymentMethodUrl(AdyenGatewayConfig config, boolean isLive, String storedPaymentMethodId) {
+        return URI.create(getBaseCheckoutUrl(config, isLive) + "/storedPaymentMethods/" + storedPaymentMethodId);
+    }
 
     private static URI getUrl(AdyenGatewayConfig config, GatewayRequest request, String path) {
         return URI.create(getBaseCheckoutUrl(config, request.getGatewayAccount().isLive()) + path);
@@ -50,5 +54,9 @@ public class AdyenRequestUtil {
     public static Map<String, String> getHeaders(AdyenGatewayConfig config, boolean isLive, OrderRequestType requestType, String idempotencyKey) {
         return Map.of("X-API-Key", getCompanyApiKey(config, isLive),
                 "Idempotency-Key", format("%s-%s", requestType.toString(), idempotencyKey));
+    }
+    
+    public static Map<String, String> getApiKeyHeader(AdyenGatewayConfig config, boolean isLive) {
+        return Map.of("X-API-Key", getCompanyApiKey(config, isLive));
     }
 }
