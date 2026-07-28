@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
+import uk.gov.pay.connector.app.adyen.HmacKeys;
+import uk.gov.pay.connector.app.adyen.WebhookHmacKeys;
 import uk.gov.pay.connector.util.IpDomainMatcher;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
@@ -24,6 +26,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -62,20 +65,6 @@ class AdyenRecurringTokenNotificationServiceTest {
         logger.addAppender(mockAppender);
     }
 
-    @Test
-    void shouldAcceptValidTokenNotification() {
-        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
-
-        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
-
-        boolean result = adyenRecurringTokenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP);
-
-        assertTrue(result);
-        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
-        assertThat(loggingEvents.stream()
-                .anyMatch(event -> event.getFormattedMessage().equals("Processed Adyen token notification")), is(true));
-    }
 
     @Test
     void shouldRejectNotificationWhenForwardedIpHeaderIsMissing() {
@@ -92,5 +81,43 @@ class AdyenRecurringTokenNotificationServiceTest {
         boolean result = adyenRecurringTokenNotificationService.handleNotificationFor("{}", HMAC_SIGNATURE, NON_ADYEN_IP);
 
         assertFalse(result);
+    }
+
+    @Test
+    void shouldAcceptValidTokenNotification() {
+        var primaryTestKey = "primaryTest";
+        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+        var tokenKeys = new HmacKeys.WebhookHmacKeyPair(new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                new WebhookHmacKeys("primaryLive", "secondaryLive"));
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+        when(adyenGatewayConfig.getHmacKeys()).thenReturn(new HmacKeys(null, tokenKeys));
+        when(mockAdyenNotificationValidator.isValidHmac(HMAC_SIGNATURE, primaryTestKey,
+                payload)).thenReturn(true);
+
+        boolean result = adyenRecurringTokenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP);
+
+        assertTrue(result);
+        verify(mockAppender, atLeastOnce()).doAppend(loggingEventArgumentCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventArgumentCaptor.getAllValues();
+        assertThat(loggingEvents.stream()
+                        .anyMatch(event -> event.getFormattedMessage().equals("Processed Adyen token notification")),
+                is(true));
+    }
+
+    @Test
+    void shouldRejectInvalidTokenNotification() {
+        var primaryTestKey = "primaryTest";
+        String payload = TestTemplateResourceLoader.load(TestTemplateResourceLoader.ADYEN_TOKEN_NOTIFICATION);
+        var tokenKeys = new HmacKeys.WebhookHmacKeyPair(new WebhookHmacKeys(primaryTestKey, "secondaryTest"),
+                new WebhookHmacKeys("primaryLive", "secondaryLive"));
+        when(mockAdyenNotificationValidator.isValidIpAddress(FORWARDED_IP)).thenReturn(true);
+        when(adyenGatewayConfig.getHmacKeys()).thenReturn(new HmacKeys(null, tokenKeys));
+        when(mockAdyenNotificationValidator.isValidHmac(HMAC_SIGNATURE, primaryTestKey,
+                payload)).thenReturn(false);
+
+        boolean result = adyenRecurringTokenNotificationService.handleNotificationFor(payload, HMAC_SIGNATURE, FORWARDED_IP);
+
+        assertFalse(result);
+        verify(mockAppender, never()).doAppend(loggingEventArgumentCaptor.capture());
     }
 }

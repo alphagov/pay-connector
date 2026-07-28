@@ -73,4 +73,12 @@ public class AdyenNotificationValidator {
             throw new AdyenNotificationException("Failed to validate HMAC signature", e);
         }
     }
+
+    public boolean isValidHmac(String hmacSignature, String hmacKey, String payload) {
+        try {
+            return hmacValidator.validateHMAC(hmacSignature, hmacKey, payload);
+        } catch (IllegalArgumentException | SignatureException e) {
+            throw new AdyenNotificationException("Failed to validate HMAC signature", e);
+        }
+    }
 }

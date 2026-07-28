@@ -77,6 +77,13 @@ adyen:
       live:
         primary: adyen-live-payments-hmac-primary
         secondary: ""
+    tokens:
+      test:
+        primary: adyen-test-tokens-hmac-primary
+        secondary: ""
+      live:
+        primary: adyen-live-tokens-hmac-primary
+        secondary: ""
 
 sandbox:
   allowedCidrs: ${SANDBOX_ALLOWED_CIDRS:-[]}

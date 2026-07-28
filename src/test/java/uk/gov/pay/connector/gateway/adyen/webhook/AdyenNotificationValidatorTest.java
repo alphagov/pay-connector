@@ -188,5 +188,30 @@ class AdyenNotificationValidatorTest {
                     .getNotificationItems()
                     .getFirst();
         }
+
     }
+
+    @Nested
+    class TestHmacValidationWithSignatureForTokens {
+        private final String validHmacSignature = "44782DEF547AAA06C910C43932B1EB0C71FC68D9D0C057550C48EC2ACF6BA056"; // pragma: allowlist secret
+        private final String hmacKey = "ValidHmacKey";
+        private final String payload = "Validpayload";
+
+        @Test
+        void shouldReturnTrueForTokenSignature() throws SignatureException {
+            when(hmacValidator.validateHMAC(validHmacSignature, hmacKey, payload)).thenReturn(true);
+
+            var result = adyenNotificationValidator.isValidHmac(validHmacSignature, hmacKey, payload);
+            assertTrue(result);
+        }
+
+        @Test
+        void shouldReturnFalseForTokenSignature() throws SignatureException {
+            when(hmacValidator.validateHMAC(validHmacSignature, hmacKey, payload)).thenReturn(false);
+
+            var result = adyenNotificationValidator.isValidHmac(validHmacSignature, hmacKey, payload);
+            assertFalse(result);
+        }
+    }
+
 }

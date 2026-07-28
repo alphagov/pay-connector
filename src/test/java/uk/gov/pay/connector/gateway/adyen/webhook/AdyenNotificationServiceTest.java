@@ -260,8 +260,8 @@ class AdyenNotificationServiceTest {
                 null) : new WebhookHmacKeys(testKey[0], null);
 
         WebhookHmacKeyPair pair = new WebhookHmacKeyPair(testKeys, liveKeys);
-
-        return new HmacKeys(pair);
+        
+        return new HmacKeys(pair, null);
     }
 
     private String getNotificationWithValidHmacSignature(String eventCode) {

@@ -9,7 +9,7 @@ server:
       port: 0
   registerDefaultExceptionMappers: false
   requestLog:
-    appenders: []
+    appenders: [ ]
 
 logging:
   level: INFO
@@ -68,13 +68,20 @@ adyen:
       live:
         primary: adyen-live-payments-hmac-primary
         secondary: ""
+    tokens:
+      test:
+        primary: 6D5BADA576A73109D879220DCB793FFD67DEF7AA18C74CCC0AB66FD87AC8AEEA # pragma: allowlist secret
+        secondary: ""
+      live:
+        primary: adyen-live-tokens-hmac-primary
+        secondary: ""
 
 sandbox:
-  allowedCidrs: ["3.3.3.0/22", "6.6.6.6/32"]
+  allowedCidrs: [ "3.3.3.0/22", "6.6.6.6/32" ]
   sandboxAuthToken: "let-me-in"
 
 stripe:
-  allowedCidrs: ["1.2.3.0/24", "9.9.9.9/32"]
+  allowedCidrs: [ "1.2.3.0/24", "9.9.9.9/32" ]
   url: ${GDS_CONNECTOR_STRIPE_URL:-https://api.stripe.com}
   authTokens:
     test: ${GDS_CONNECTOR_STRIPE_AUTH_TOKEN:-sk_test}
