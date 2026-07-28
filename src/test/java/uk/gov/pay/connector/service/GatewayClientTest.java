@@ -5,6 +5,13 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import io.prometheus.client.CollectorRegistry;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,16 +24,10 @@ import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
 
-import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation.Builder;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.net.HttpCookie;
 import java.net.SocketException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -209,6 +210,65 @@ public class GatewayClientTest {
         verify(mockWebTarget, times(1)).queryParam("foo1", "bar1");
     }
 
+    @Test
+    void deleteRequestShouldIncludeQueryParamsIfAvailable() throws Exception {
+        setupDeleteRequestMocks();
+        when(mockWebTarget.queryParam(anyString(), anyString())).thenReturn(mockWebTarget);
+        when(mockResponse.getStatus()).thenReturn(200);
+
+        Map<String, String> queryParams = Map.of(
+                "foo", "bar",
+                "foo1", "bar1"
+        );
+
+        gatewayClient.deleteRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY,
+                List.of(new HttpCookie("machine", "value")), emptyMap(), queryParams);
+
+        InOrder inOrder = Mockito.inOrder(mockBuilder);
+        inOrder.verify(mockBuilder).header("Cookie", "machine=value");
+        inOrder.verify(mockBuilder).delete();
+        verify(mockWebTarget, times(1)).queryParam("foo", "bar");
+        verify(mockWebTarget, times(1)).queryParam("foo1", "bar1");
+        verify(mockResponseTimeHistogram).update(anyLong());
+    }
+
+    @Test
+    void deleteRequestShouldReturnGatewayErrorWhenProviderFails() {
+        setupDeleteRequestMocks();
+        when(mockResponse.getStatus()).thenReturn(500);
+        when(mockMetricRegistry.counter("gateway-operations.delete.worldpay.test.query.failures")).thenReturn(mockFailureCounter);
+        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
+
+        assertThrows(GatewayException.GatewayErrorException.class,
+                () -> gatewayClient.deleteRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap(), emptyMap()));
+
+        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
+        assertEquals(failureCounterBefore + 1, failureCounterAfter);
+        assertEquals(histogramCountBefore + 1, histogramCountAfter);
+        verify(mockResponse).close();
+        verify(mockFailureCounter).inc();
+    }
+
+    @Test
+    void deleteRequestShouldReturnGatewayErrorWhenProviderFailsWithAProcessingException() {
+        setupDeleteRequestMocks();
+        when(mockMetricRegistry.counter("gateway-operations.delete.worldpay.test.query.failures")).thenReturn(mockFailureCounter);
+        when(mockBuilder.delete()).thenThrow(new ProcessingException(new SocketException("socket failed")));
+        double failureCounterBefore = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountBefore = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
+
+        assertThrows(GatewayException.GenericGatewayException.class,
+                () -> gatewayClient.deleteRequestFor(WORLDPAY_API_ENDPOINT, WORLDPAY, "test", OrderRequestType.QUERY, emptyList(), emptyMap(), emptyMap()));
+        verify(mockFailureCounter).inc();
+
+        double failureCounterAfter = getMetricSample("gateway_operations_failures_total", new String[]{"worldpay", "test", "query"});
+        double histogramCountAfter = getMetricSample("gateway_operations_response_time_seconds_count", new String[]{"worldpay", "test", "query"});
+        assertEquals(failureCounterBefore + 1, failureCounterAfter);
+        assertEquals(histogramCountBefore + 1, histogramCountAfter);
+    }
+
     private void setupPostRequestMocks() {
         when(mockMetricRegistry.histogram("gateway-operations.worldpay.test.authorise.response_time")).thenReturn(mockResponseTimeHistogram);
 
@@ -225,6 +285,13 @@ public class GatewayClientTest {
 
         when(mockWebTarget.request()).thenReturn(mockBuilder).thenReturn(mockBuilder);
         when(mockBuilder.get()).thenReturn(mockResponse);
+    }
+
+    private void setupDeleteRequestMocks() {
+        when(mockMetricRegistry.histogram("gateway-operations.delete.worldpay.test.query.response_time")).thenReturn(mockResponseTimeHistogram);
+
+        when(mockWebTarget.request()).thenReturn(mockBuilder).thenReturn(mockBuilder);
+        when(mockBuilder.delete()).thenReturn(mockResponse);
     }
 
     private double getMetricSample(String name, String[] labelValues) {
