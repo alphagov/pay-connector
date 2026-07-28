@@ -24,5 +24,5 @@ public record AdyenApplePayAuthoriseRequest(
         
         @JsonProperty("returnUrl")
         String returnUrl
-) {
+) implements ApplePayAuthoriseRequest {
 }
