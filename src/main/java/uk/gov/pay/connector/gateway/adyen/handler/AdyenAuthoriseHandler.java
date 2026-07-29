@@ -1,20 +1,30 @@
 package uk.gov.pay.connector.gateway.adyen.handler;
 
+import jakarta.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenAuthorisationRequest;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenAuthoriseResponse;
 import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
+import uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil;
+import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.util.JsonObjectMapper;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getAuthUrl;
 import static uk.gov.pay.connector.gateway.adyen.utils.AdyenRequestUtil.getHeaders;
@@ -61,6 +71,42 @@ public class AdyenAuthoriseHandler {
                     jsonResponse,
                     AuthoriseResponseBody.class);
 
+            return responseBuilder
+                    .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
+                    .build();
+        } catch (GatewayException e) {
+            logger.error("GatewayException occurred when authorising payment", e);
+            return responseBuilder.withGatewayError(e.toGatewayError()).build();
+        }
+    }
+    
+    public GatewayResponse authorise(AdyenApplePayAuthoriseRequest request, String gatewayAccountType) throws
+            GatewayException.GatewayErrorException,
+            GatewayException.GenericGatewayException,
+            GatewayException.GatewayConnectionTimeoutException  {
+
+        GatewayResponse.GatewayResponseBuilder<BaseResponse> responseBuilder = GatewayResponse
+                .GatewayResponseBuilder
+                .responseBuilder();
+
+        String body = jsonObjectMapper.objectToString(request);
+
+        GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, body, MediaType.APPLICATION_JSON_TYPE);
+        
+        logger.info("Calling Adyen for authorisation of Apple Pay charge");
+        try {
+            var jsonResponse = gatewayClient.postRequestFor(
+                    AdyenRequestUtil.getUrl(adyenGatewayConfig, request, "/payments"),
+                    PaymentGatewayName.ADYEN,
+                    gatewayAccountType,
+                    gatewayOrder,
+                    Collections.<String>emptyList(),
+                    AdyenRequestUtil.getHeaders(adyenGatewayConfig, true, AUTHORISE, request.reference())
+            );
+                    
+            var paymentResponse = jsonObjectMapper.getObject(jsonResponse, AuthoriseResponseBody.class);
+
+            
             return responseBuilder
                     .withResponse(AdyenAuthoriseResponse.of(paymentResponse))
                     .build();
