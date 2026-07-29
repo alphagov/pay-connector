@@ -15,6 +15,7 @@ import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutExc
 import uk.gov.pay.connector.gateway.GatewayException.GatewayErrorException;
 import uk.gov.pay.connector.gateway.GatewayException.GenericGatewayException;
 import uk.gov.pay.connector.gateway.model.OrderRequestType;
+import uk.gov.pay.connector.gateway.model.request.GatewayClientDeleteRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientGetRequest;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
 
@@ -94,7 +95,7 @@ public class GatewayClient {
                 request.getOrderRequestType(), emptyList(), request.getHeaders(), request.getQueryParams());
     }
 
-    public Response deleteRequestFor(GatewayClientGetRequest request)
+    public Response deleteRequestFor(GatewayClientDeleteRequest request)
             throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
         return deleteRequestFor(request.getUrl(), request.getPaymentProvider(), request.getGatewayAccountType(),
                 request.getOrderRequestType(), emptyList(), request.getHeaders(), request.getQueryParams());
