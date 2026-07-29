@@ -69,11 +69,11 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        processRefundNotification(gatewayName, newStatus, gatewayAccountEntity, refundExternalId, null, charge, optionalRefundEntity.get());
+        processRefundNotification(gatewayName, newStatus, gatewayAccountEntity, null, null, charge, optionalRefundEntity.get());
     }
 
     private void processRefundNotification(PaymentGatewayName gatewayName, RefundStatus newStatus,
-                                           GatewayAccountEntity gatewayAccountEntity, String refundReference,
+                                           GatewayAccountEntity gatewayAccountEntity, String gatewayTransactionId, 
                                            String transactionId, Charge charge, RefundEntity refundEntity) {
         RefundStatus currentStatus = refundEntity.getStatus();
 
@@ -106,7 +106,7 @@ public class RefundNotificationProcessor {
                 .addKeyValue(PROVIDER, charge.getPaymentGatewayName())
                 .addKeyValue(GATEWAY_ACCOUNT_TYPE, gatewayAccountEntity.getType())
                 .addKeyValue("payment_gateway_transaction_id", transactionId)
-                .addKeyValue("gateway_transaction_id", refundReference)
+                .addKeyValue("gateway_transaction_id", gatewayTransactionId)
                 .addKeyValue("from_status", currentStatus)
                 .addKeyValue("to_status", newStatus)
                 .log("Notification received for refund. Updating refund: {}", stateTransitionMessage);
