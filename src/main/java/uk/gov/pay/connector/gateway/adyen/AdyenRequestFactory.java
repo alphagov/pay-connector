@@ -24,8 +24,6 @@ import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenCredentialsHelper;
 import uk.gov.pay.connector.gateway.model.request.records.AdyenMerchantAccountHelper;
 import uk.gov.pay.connector.gateway.model.request.records.ChargeFrontendUrlHelper;
-import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
-import uk.gov.pay.connector.gatewayaccount.model.GatewayCredentials;
 import uk.gov.pay.connector.northamericaregion.NorthAmericaRegion;
 import uk.gov.pay.connector.northamericaregion.NorthAmericanRegionMapper;
 import uk.gov.service.payments.commons.model.AgreementPaymentType;

@@ -25,16 +25,16 @@ import static uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixt
 import static uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntityFixture.aGatewayAccountCredentialsEntity;
 
 @ExtendWith(MockitoExtension.class)
-class AuthoriseRequestFactoryTest {
+class CardAuthoriseRequestFactoryTest {
 
     @Mock
-    private WorldpayAuthoriseRequestFactory mockWorldpayAuthoriseRequestFactory;
+    private WorldpayCardAuthoriseRequestFactory mockWorldpayCardAuthoriseRequestFactory;
 
-    private AuthoriseRequestFactory authoriseRequestFactory;
+    private CardAuthoriseRequestFactory cardAuthoriseRequestFactory;
 
     @BeforeEach
     void setUp() {
-        authoriseRequestFactory = new AuthoriseRequestFactory(mockWorldpayAuthoriseRequestFactory);
+        cardAuthoriseRequestFactory = new CardAuthoriseRequestFactory(mockWorldpayCardAuthoriseRequestFactory);
     }
 
     @Test
@@ -51,12 +51,12 @@ class AuthoriseRequestFactoryTest {
                 .withGatewayAccount(gatewayAccountEntity)
                 .build();
 
-        WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+        WorldpayCardAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
 
-        given(mockWorldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest))
+        given(mockWorldpayCardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest))
                 .willReturn(Optional.of(worldpayAuthoriseRequest));
 
-        Optional<? extends AuthoriseRequest> authoriseRequest = authoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        Optional<? extends CardAuthoriseRequest> authoriseRequest = cardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
 
         assertThat(authoriseRequest.isPresent(), is(true));
         assertThat(authoriseRequest.get(), is(worldpayAuthoriseRequest));
@@ -77,7 +77,7 @@ class AuthoriseRequestFactoryTest {
                 .withGatewayAccount(gatewayAccountEntity)
                 .build();
 
-        Optional<? extends AuthoriseRequest> authoriseRequest = authoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        Optional<? extends CardAuthoriseRequest> authoriseRequest = cardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
 
         assertThat(authoriseRequest.isEmpty(), is(true));
     }

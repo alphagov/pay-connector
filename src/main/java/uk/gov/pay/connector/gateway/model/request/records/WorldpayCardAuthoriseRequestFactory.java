@@ -6,16 +6,16 @@ import uk.gov.service.payments.commons.model.AuthorisationMode;
 
 import java.util.Optional;
 
-public class WorldpayAuthoriseRequestFactory {
+public class WorldpayCardAuthoriseRequestFactory {
 
     private final WorldpayMotoAuthoriseRequestFactory worldpayMotoAuthoriseRequestFactory;
 
     @Inject
-    public WorldpayAuthoriseRequestFactory(WorldpayMotoAuthoriseRequestFactory worldpayMotoAuthoriseRequestFactory) {
+    public WorldpayCardAuthoriseRequestFactory(WorldpayMotoAuthoriseRequestFactory worldpayMotoAuthoriseRequestFactory) {
         this.worldpayMotoAuthoriseRequestFactory = worldpayMotoAuthoriseRequestFactory;
     }
 
-    public Optional<WorldpayAuthoriseRequest> create(CardAuthorisationGatewayRequest request) {
+    public Optional<WorldpayCardAuthoriseRequest> create(CardAuthorisationGatewayRequest request) {
         if (request.isMoto() && !request.isSavePaymentInstrumentToAgreement()
                 && request.getAuthorisationMode() == AuthorisationMode.WEB) {
             return Optional.of(worldpayMotoAuthoriseRequestFactory.create(request));
@@ -23,5 +23,5 @@ public class WorldpayAuthoriseRequestFactory {
 
         return Optional.empty();
     }
-    
+
 }

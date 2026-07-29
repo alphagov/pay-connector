@@ -53,9 +53,9 @@ import uk.gov.pay.connector.gateway.model.PayersCardPrepaidStatus;
 import uk.gov.pay.connector.gateway.model.PayersCardType;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequestFactory;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -182,7 +182,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     private EventService mockEventService;
 
     @Mock
-    private AuthoriseRequestFactory mockAuthoriseRequestFactory;
+    private CardAuthoriseRequestFactory mockCardAuthoriseRequestFactory;
 
     @Mock
     private PaymentInstrumentService mockPaymentInstrumentService;
@@ -270,7 +270,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
                 mockedProviders,
                 authorisationService,
                 chargeService,
-                mockAuthoriseRequestFactory,
+                mockCardAuthoriseRequestFactory,
                 new AuthorisationLogger(mockAuthorisationRequestSummaryStringifier, mockAuthorisationRequestSummaryStructuredLogging, mockWorldpayAuthoriseRequestLogGenerator),
                 chargeEligibleForCaptureService,
                 mockPaymentInstrumentEntityToAuthCardDetailsConverter,
@@ -1358,10 +1358,10 @@ class CardAuthoriseServiceTest extends CardServiceTest {
 
         WorldpayPaymentProvider mockWorldpayPaymentProvider = mock(WorldpayPaymentProvider.class);
 
-        WorldpayAuthoriseRequest authoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+        WorldpayCardAuthoriseRequest authoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
 
         doReturn(Optional.of(authoriseRequest))
-                .when(mockAuthoriseRequestFactory)
+                .when(mockCardAuthoriseRequestFactory)
                 .create(any(CardAuthorisationGatewayRequest.class));
 
         providerWillAuthoriseWithAuthoriseRequest(authoriseRequest, WORLDPAY, mockWorldpayPaymentProvider);
@@ -1421,10 +1421,10 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 
-    private void providerWillRespondToAuthoriseRequestWith(AuthoriseRequest authoriseRequest,
+    private void providerWillRespondToAuthoriseRequestWith(CardAuthoriseRequest cardAuthoriseRequest,
                                                            GatewayResponse value, PaymentGatewayName paymentGatewayName,
                                                            PaymentProvider mockPaymentProvider) throws Exception {
-        when(mockPaymentProvider.authorise(eq(authoriseRequest), any(String.class))).thenReturn(value);
+        when(mockPaymentProvider.authorise(eq(cardAuthoriseRequest), any(String.class))).thenReturn(value);
 
         when(mockedProviders.byName(paymentGatewayName)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
@@ -1493,12 +1493,12 @@ class CardAuthoriseServiceTest extends CardServiceTest {
         when(mockedPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());
     }
 
-    private void providerWillAuthoriseWithAuthoriseRequest(AuthoriseRequest authoriseRequest,
+    private void providerWillAuthoriseWithAuthoriseRequest(CardAuthoriseRequest cardAuthoriseRequest,
                                                            PaymentGatewayName paymentGatewayName,
                                                            PaymentProvider mockPaymentProvider) throws Exception {
         mockExecutorServiceWillReturnCompletedResultWithSupplierReturnValue();
         GatewayResponse authResponse = mockProviderRespondedSuccessfullyResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED);
-        providerWillRespondToAuthoriseRequestWith(authoriseRequest, authResponse, paymentGatewayName, mockPaymentProvider);
+        providerWillRespondToAuthoriseRequestWith(cardAuthoriseRequest, authResponse, paymentGatewayName, mockPaymentProvider);
     }
 
     private double getMetricSample(String name, String[] labelValues) {
