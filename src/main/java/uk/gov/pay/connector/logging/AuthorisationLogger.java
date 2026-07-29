@@ -8,8 +8,8 @@ import uk.gov.pay.connector.charge.model.domain.ChargeEntity;
 import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
@@ -55,7 +55,7 @@ public class AuthorisationLogger {
     }
 
     public void logChargeAuthorisation(Logger logger,
-                                       AuthoriseRequest authoriseRequest,
+                                       CardAuthoriseRequest authoriseRequest,
                                        AuthCardDetails authCardDetails,
                                        ChargeEntity charge,
                                        String transactionId,
@@ -64,7 +64,7 @@ public class AuthorisationLogger {
                                        ChargeStatus newStatus) {
 
         switch (authoriseRequest) {
-            case WorldpayAuthoriseRequest worldpayAuthoriseRequest -> {
+            case WorldpayCardAuthoriseRequest worldpayAuthoriseRequest -> {
                 AuthorisationRequestLog authoriseRequestLog = worldpayAuthoriseRequestLogGenerator.generate(
                         worldpayAuthoriseRequest, authCardDetails);
 

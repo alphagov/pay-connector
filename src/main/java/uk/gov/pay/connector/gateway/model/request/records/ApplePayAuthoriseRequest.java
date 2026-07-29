@@ -1,4 +1,4 @@
 package uk.gov.pay.connector.gateway.model.request.records;
 
-public interface ApplePayAuthoriseRequest {
+public sealed interface ApplePayAuthoriseRequest extends AuthoriseRequest permits AdyenApplePayAuthoriseRequest {
 }

@@ -30,7 +30,7 @@ import uk.gov.pay.connector.gateway.PaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
@@ -102,7 +102,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
     private PaymentProvider mockedWorldpayPaymentProvider;
 
     @Mock
-    private AuthoriseRequestFactory mockAuthoriseRequestFactory;
+    private CardAuthoriseRequestFactory mockCardAuthoriseRequestFactory;
 
     @Mock
     private TaskQueueService mockTaskQueueService;
@@ -156,7 +156,7 @@ class WorldpayCardAuthoriseServiceTest extends CardServiceTest {
                 mockedProviders,
                 new AuthorisationService(mockExecutorService, environment, mockConfiguration),
                 chargeService,
-                mockAuthoriseRequestFactory,
+                mockCardAuthoriseRequestFactory,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new WorldpayAuthoriseRequestLogGenerator()),
                 mockChargeEligibleForCaptureService,
                 mock(PaymentInstrumentEntityToAuthCardDetailsConverter.class),

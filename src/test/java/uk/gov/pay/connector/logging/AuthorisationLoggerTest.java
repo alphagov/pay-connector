@@ -18,7 +18,7 @@ import uk.gov.pay.connector.charge.model.domain.ChargeStatus;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.AuthorisationRequestSummary;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestLog;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
@@ -66,7 +66,7 @@ class AuthorisationLoggerTest {
     @Captor
     private ArgumentCaptor<LoggingEvent> loggingEventArgumentCaptor;
 
-    private final WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+    private final WorldpayCardAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
 
     private final GatewayAccountEntity gatewayAccountEntity = GatewayAccountEntityFixture.aGatewayAccountEntity()
             .withId(123L)

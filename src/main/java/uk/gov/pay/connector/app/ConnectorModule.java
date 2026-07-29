@@ -24,8 +24,8 @@ import uk.gov.pay.connector.common.validator.RequestValidator;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayClientFactory;
 import uk.gov.pay.connector.gateway.PaymentProviders;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequestFactory;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkClientFactory;
 import uk.gov.pay.connector.gateway.stripe.StripeSdkWrapper;
@@ -86,8 +86,8 @@ public class ConnectorModule extends AbstractModule {
         bind(InetAddressValidator.class).in(Singleton.class);
         bind(WorldpayRequestTemplateBuilder.class).in(Singleton.class);
         bind(WorldpayMotoAuthoriseRequestFactory.class).in(Singleton.class);
-        bind(WorldpayAuthoriseRequestFactory.class).in(Singleton.class);
-        bind(AuthoriseRequestFactory.class).in(Singleton.class);
+        bind(WorldpayCardAuthoriseRequestFactory.class).in(Singleton.class);
+        bind(CardAuthoriseRequestFactory.class).in(Singleton.class);
 
         install(jpaModule(configuration));
         install(new FactoryModuleBuilder().build(GatewayAccountServicesFactory.class));

@@ -20,16 +20,16 @@ import static uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewa
 import static uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequestFixture.aWorldpayMotoAuthoriseRequestFixture;
 
 @ExtendWith(MockitoExtension.class)
-class WorldpayAuthoriseRequestFactoryTest {
+class WorldpayCardAuthoriseRequestFactoryTest {
 
     @Mock
     private WorldpayMotoAuthoriseRequestFactory mockWorldpayMotoAuthoriseRequestFactory;
     
-    private WorldpayAuthoriseRequestFactory worldpayAuthoriseRequestFactory;
+    private WorldpayCardAuthoriseRequestFactory worldpayCardAuthoriseRequestFactory;
 
     @BeforeEach
     void setUp() {
-        worldpayAuthoriseRequestFactory = new WorldpayAuthoriseRequestFactory(mockWorldpayMotoAuthoriseRequestFactory);
+        worldpayCardAuthoriseRequestFactory = new WorldpayCardAuthoriseRequestFactory(mockWorldpayMotoAuthoriseRequestFactory);
     }
 
     @Test
@@ -44,7 +44,7 @@ class WorldpayAuthoriseRequestFactoryTest {
 
         given(mockWorldpayMotoAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest)).willReturn(worldpayMotoAuthoriseRequest);
 
-        Optional<WorldpayAuthoriseRequest> result = worldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        Optional<WorldpayCardAuthoriseRequest> result = worldpayCardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
 
         assertThat(result.isPresent(), is(true));
         assertThat(result.get(), is(worldpayMotoAuthoriseRequest));
@@ -58,7 +58,7 @@ class WorldpayAuthoriseRequestFactoryTest {
                 .withSavePaymentInstrumentToAgreement(false)
                 .build();
 
-        Optional<WorldpayAuthoriseRequest> result = worldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        Optional<WorldpayCardAuthoriseRequest> result = worldpayCardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
 
         assertThat(result.isPresent(), is(false));
     }
@@ -71,7 +71,7 @@ class WorldpayAuthoriseRequestFactoryTest {
                 .withSavePaymentInstrumentToAgreement(true)
                 .build();
 
-        Optional<WorldpayAuthoriseRequest> result = worldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        Optional<WorldpayCardAuthoriseRequest> result = worldpayCardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
 
         assertThat(result.isPresent(), is(false));
     }
@@ -85,7 +85,7 @@ class WorldpayAuthoriseRequestFactoryTest {
                 .withSavePaymentInstrumentToAgreement(false)
                 .build();
 
-        Optional<WorldpayAuthoriseRequest> result = worldpayAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
+        Optional<WorldpayCardAuthoriseRequest> result = worldpayCardAuthoriseRequestFactory.create(cardAuthorisationGatewayRequest);
 
         assertThat(result.isPresent(), is(false));
     }

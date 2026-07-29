@@ -30,9 +30,9 @@ import uk.gov.pay.connector.gateway.model.MappedAuthorisationRejectedReason;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequestFactory;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequestFactory;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.request.records.WorldpayMotoAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -77,7 +77,7 @@ public class CardAuthoriseService {
     private final AuthorisationService authorisationService;
     private final ChargeService chargeService;
     private final PaymentProviders providers;
-    private final AuthoriseRequestFactory authoriseRequestFactory;
+    private final CardAuthoriseRequestFactory cardAuthoriseRequestFactory;
     private final AuthorisationLogger authorisationLogger;
     private final ChargeEligibleForCaptureService chargeEligibleForCaptureService;
     private final PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter;
@@ -88,7 +88,7 @@ public class CardAuthoriseService {
                                 PaymentProviders providers,
                                 AuthorisationService authorisationService,
                                 ChargeService chargeService,
-                                AuthoriseRequestFactory authoriseRequestFactory,
+                                CardAuthoriseRequestFactory cardAuthoriseRequestFactory,
                                 AuthorisationLogger authorisationLogger,
                                 ChargeEligibleForCaptureService chargeEligibleForCaptureService,
                                 PaymentInstrumentEntityToAuthCardDetailsConverter paymentInstrumentEntityToAuthCardDetailsConverter,
@@ -97,7 +97,7 @@ public class CardAuthoriseService {
         this.providers = providers;
         this.authorisationService = authorisationService;
         this.chargeService = chargeService;
-        this.authoriseRequestFactory = authoriseRequestFactory;
+        this.cardAuthoriseRequestFactory = cardAuthoriseRequestFactory;
         this.authorisationLogger = authorisationLogger;
         this.chargeEligibleForCaptureService = chargeEligibleForCaptureService;
         this.paymentInstrumentEntityToAuthCardDetailsConverter = paymentInstrumentEntityToAuthCardDetailsConverter;
@@ -121,7 +121,7 @@ public class CardAuthoriseService {
 
         GatewayResponse<BaseAuthoriseResponse> operationResponse;
         ChargeStatus newStatus;
-        AuthoriseRequest authoriseRequest = null;
+        CardAuthoriseRequest cardAuthoriseRequest = null;
 
         try {
             PaymentProvider paymentProvider = getPaymentProviderFor(charge);
@@ -129,9 +129,9 @@ public class CardAuthoriseService {
             operationResponse = switch (charge.getAuthorisationMode()) {
                 case WEB -> {
                     CardAuthorisationGatewayRequest request = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
-                    authoriseRequest = authoriseRequestFactory.create(request).orElse(null);
-                    yield switch (authoriseRequest) {
-                        case WorldpayAuthoriseRequest worldpayAuthoriseRequest
+                    cardAuthoriseRequest = cardAuthoriseRequestFactory.create(request).orElse(null);
+                    yield switch (cardAuthoriseRequest) {
+                        case WorldpayCardAuthoriseRequest worldpayAuthoriseRequest
                                 when paymentProvider instanceof WorldpayPaymentProvider -> paymentProvider
                                     .authorise(worldpayAuthoriseRequest, charge.getGatewayAccount().getType());
                         case null, default -> paymentProvider.authorise(request, charge);
@@ -158,7 +158,7 @@ public class CardAuthoriseService {
                     .build();
         }
 
-        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus, authoriseRequest);
+        return updateChargePostAuthorisation(authCardDetails, charge, operationResponse, newStatus, cardAuthoriseRequest);
     }
 
     public AuthorisationResponse doAuthoriseMotoApi(ChargeEntity chargeEntity, CardInformation cardInformation, MotoApiAuthoriseRequest motoApiAuthoriseRequest) {
@@ -230,7 +230,7 @@ public class CardAuthoriseService {
                                                                 ChargeEntity charge,
                                                                 GatewayResponse<BaseAuthoriseResponse> operationResponse,
                                                                 ChargeStatus newStatus,
-                                                                @Nullable AuthoriseRequest authoriseRequest) {
+                                                                @Nullable CardAuthoriseRequest cardAuthoriseRequest) {
         Optional<String> transactionId = authorisationService.extractTransactionId(charge.getExternalId(), operationResponse, charge.getGatewayTransactionId());
         Optional<ProviderSessionIdentifier> sessionIdentifier = operationResponse.getSessionIdentifier();
         Optional<Auth3dsRequiredEntity> auth3dsDetailsEntity =
@@ -263,10 +263,10 @@ public class CardAuthoriseService {
                 mayBeRejectedReason.orElse(null),
                 gatewayRejectionReason.orElse(null));
         
-        if (authoriseRequest != null) {
+        if (cardAuthoriseRequest != null) {
             authorisationLogger.logChargeAuthorisation(
                     LOGGER,
-                    authoriseRequest,
+                    cardAuthoriseRequest,
                     authCardDetails,
                     updatedCharge,
                     transactionId.orElse("missing transaction ID"),
@@ -275,7 +275,7 @@ public class CardAuthoriseService {
                     newStatus
             );
 
-            incrementMetricsPostAuthorisation(newStatus, updatedCharge, authoriseRequest, authCardDetails);
+            incrementMetricsPostAuthorisation(newStatus, updatedCharge, cardAuthoriseRequest, authCardDetails);
         } else {
             var authorisationRequestSummary = generateAuthorisationRequestSummary(updatedCharge, authCardDetails);
 
@@ -319,8 +319,9 @@ public class CardAuthoriseService {
     }
 
     private void incrementMetricsPostAuthorisation(ChargeStatus newStatus, ChargeEntity updatedCharge,
-                                                   AuthoriseRequest authoriseRequest, AuthCardDetails authCardDetails) {
-        switch (authoriseRequest) {
+                                                   CardAuthoriseRequest cardAuthoriseRequest,
+                                                   AuthCardDetails authCardDetails) {
+        switch (cardAuthoriseRequest) {
             case WorldpayMotoAuthoriseRequest _ -> {
                 AUTHORISATION_RESULT_COUNTER.labels(
                         updatedCharge.getPaymentProvider().toLowerCase(),
