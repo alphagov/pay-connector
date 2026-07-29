@@ -1,6 +1,6 @@
 package uk.gov.pay.connector.usernotification.model;
 
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;

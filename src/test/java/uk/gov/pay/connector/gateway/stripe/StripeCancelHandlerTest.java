@@ -22,8 +22,8 @@ import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
+import static org.apache.hc.core5.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.hc.core5.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.any;

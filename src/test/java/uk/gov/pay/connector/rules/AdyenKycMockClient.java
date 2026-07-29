@@ -4,7 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import uk.gov.pay.connector.util.TestTemplateResourceLoader;
 
 import static java.lang.String.format;
-import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.hc.core5.http.HttpStatus.SC_OK;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_ACCEPT_TERMS_OF_SERVICE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_BUSINESS_LINE_RESPONSE;
 import static uk.gov.pay.connector.util.TestTemplateResourceLoader.ADYEN_CREATE_INDIVIDUAL_RESPONSE;

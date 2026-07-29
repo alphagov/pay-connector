@@ -36,7 +36,7 @@ import java.util.List;
 import static jakarta.ws.rs.core.Response.Status.Family.CLIENT_ERROR;
 import static jakarta.ws.rs.core.Response.Status.Family.SERVER_ERROR;
 import static net.logstash.logback.argument.StructuredArguments.kv;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNAUTHORIZED;
 import static uk.gov.pay.connector.gateway.model.GatewayError.gatewayConnectionError;
 import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_CUSTOMER_ID_KEY;
 import static uk.gov.pay.connector.gateway.stripe.StripeAuthorisationResponse.STRIPE_RECURRING_AUTH_TOKEN_PAYMENT_METHOD_ID_KEY;

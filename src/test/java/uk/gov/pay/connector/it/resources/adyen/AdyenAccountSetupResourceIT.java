@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.hc.core5.http.HttpStatus.SC_OK;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_CONTENT;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
@@ -351,7 +351,7 @@ public class AdyenAccountSetupResourceIT {
                         "value", COMPLETED))))
                 .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
                 .then()
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .body("message", contains("The paths field must be one of: [bank_account, responsible_person, vat_number, company_number, director, government_entity_document, organisation_details]"));
     }
 
@@ -363,7 +363,7 @@ public class AdyenAccountSetupResourceIT {
                         "value", "incomplete"))))
                 .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, "credential-id"))
                 .then()
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .body("message", contains("The values field must be one of: [COMPLETED, NOT_STARTED]"));
     }
 
@@ -383,7 +383,7 @@ public class AdyenAccountSetupResourceIT {
                         "value", COMPLETED))))
                 .patch(format("/v1/api/service/%s/account/%s/adyen-setup/%s", serviceId, LIVE, credentialExternalId))
                 .then()
-                .statusCode(SC_UNPROCESSABLE_ENTITY)
+                .statusCode(SC_UNPROCESSABLE_CONTENT)
                 .body("message", contains("The op field must be 'replace'"));
     }
     

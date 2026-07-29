@@ -49,7 +49,7 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_CONTENT;
 import static org.exparity.hamcrest.date.ZonedDateTimeMatchers.within;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -420,7 +420,7 @@ public class ChargesApiResourceCreateIT {
                         ))
                         .post(format("/v1/api/accounts/%s/charges", liveGatewayAccountId))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("error_identifier", is(NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT.toString()))
                         .body("message[0]", is(format("Gateway account %s is LIVE, but is configured to use a " +
                                 "non-https return_url", liveGatewayAccountId)));
@@ -944,7 +944,7 @@ public class ChargesApiResourceCreateIT {
                         ))
                         .post(format("/v1/api/service/%s/account/%s/charges", "a-service-id", GatewayAccountType.LIVE))
                         .then()
-                        .statusCode(SC_UNPROCESSABLE_ENTITY)
+                        .statusCode(SC_UNPROCESSABLE_CONTENT)
                         .body("error_identifier", is(NON_HTTPS_RETURN_URL_NOT_ALLOWED_FOR_A_LIVE_ACCOUNT.toString()))
                         .body("message[0]", is(format("Gateway account %s is LIVE, but is configured to use a " +
                                 "non-https return_url", liveGatewayAccountId)));

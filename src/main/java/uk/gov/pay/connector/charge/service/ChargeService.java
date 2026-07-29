@@ -7,7 +7,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.RollbackException;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gov.pay.connector.agreement.dao.AgreementDao;
@@ -127,7 +127,7 @@ import static java.lang.String.format;
 import static net.logstash.logback.argument.StructuredArguments.kv;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LUHN_CHECK_DIGIT;
-import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.apache.hc.core5.http.HttpStatus.SC_UNPROCESSABLE_CONTENT;
 import static uk.gov.pay.connector.charge.model.ChargeResponse.aChargeResponseBuilder;
 import static uk.gov.pay.connector.charge.model.FrontendChargeResponse.aFrontendChargeResponse;
 import static uk.gov.pay.connector.charge.model.domain.ChargeEntity.TelephoneChargeEntityBuilder.aTelephoneChargeEntity;
@@ -1214,7 +1214,7 @@ public class ChargeService {
 
     private void checkIfAmountBelowMinimum(Source source, Long amount, GatewayAccountEntity gatewayAccount, String paymentProvider) {
         if (source != CARD_EXTERNAL_TELEPHONE && amount < MINIMUM_STRIPE_PAYMENT_AMOUNT && PaymentGatewayName.valueFrom(paymentProvider) == STRIPE) {
-            throw new ChargeException("Payments under 30 pence are not allowed for Stripe accounts", AMOUNT_BELOW_MINIMUM, SC_UNPROCESSABLE_ENTITY);
+            throw new ChargeException("Payments under 30 pence are not allowed for Stripe accounts", AMOUNT_BELOW_MINIMUM, SC_UNPROCESSABLE_CONTENT);
         }
         checkIfZeroAmountAllowed(amount, gatewayAccount);
     }
@@ -1227,7 +1227,7 @@ public class ChargeService {
 
     private void checkIfMotoPaymentsAllowed(boolean moto, GatewayAccountEntity gatewayAccount) {
         if (moto && !gatewayAccount.isAllowMoto()) {
-            throw new ChargeException("MOTO payments are not enabled for this gateway account", MOTO_NOT_ALLOWED, SC_UNPROCESSABLE_ENTITY);
+            throw new ChargeException("MOTO payments are not enabled for this gateway account", MOTO_NOT_ALLOWED, SC_UNPROCESSABLE_CONTENT);
         }
     }
 
