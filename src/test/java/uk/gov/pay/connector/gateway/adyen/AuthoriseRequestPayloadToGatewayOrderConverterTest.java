@@ -1,9 +1,11 @@
-package uk.gov.pay.connector.gateway.adyen.request;
+package uk.gov.pay.connector.gateway.adyen;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonassert.JsonAssert;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.adyen.request.json.Amount;
 import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.request.json.BillingAddress;
@@ -11,7 +13,6 @@ import uk.gov.pay.connector.gateway.adyen.request.json.PaymentMethod;
 import uk.gov.pay.connector.gateway.adyen.response.json.BrowserInfo;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,23 +21,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static uk.gov.pay.connector.gateway.model.OrderRequestType.AUTHORISE;
 
-class AdyenAuthorisationRequestTest {
-    public static final String TEST_URL = "/adyen_authorisation";
-    private JsonObjectMapper jsonObjectMapper;
+@ExtendWith(MockitoExtension.class)
+class AuthoriseRequestPayloadToGatewayOrderConverterTest {
 
-    @BeforeEach
-    void setUp() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        jsonObjectMapper = new JsonObjectMapper(objectMapper);
-    }
+    private AuthoriseRequestPayloadToGatewayOrderConverter factory = new AuthoriseRequestPayloadToGatewayOrderConverter(new JsonObjectMapper(new ObjectMapper()));
 
     @Test
     void shouldCreateGatewayOrder_withSerialisedPayload() {
-        var request = buildValidRequestWithBillingAddress();
+        GatewayOrder gatewayOrder = factory.convert(makePaymentRequestWithFullBillingAddress());
 
-        assertThat(request.getGatewayOrder().getOrderRequestType(), is(AUTHORISE));
-        assertThat(request.getGatewayOrder().getMediaType(), is(APPLICATION_JSON_TYPE));
-        JsonAssert.with(request.getGatewayOrder().getPayload())
+        assertThat(gatewayOrder.getOrderRequestType(), is(AUTHORISE));
+        assertThat(gatewayOrder.getMediaType(), is(APPLICATION_JSON_TYPE));
+        JsonAssert.with(gatewayOrder.getPayload())
                 .assertThat("$.amount.value", is(1000))
                 .assertThat("$.amount.currency", is("GBP"))
                 .assertThat("$.billingAddress.houseNumberOrName", is("houseNumberOrName"))
@@ -67,16 +63,6 @@ class AdyenAuthorisationRequestTest {
                 .assertThat("$.origin", is("https://frontend.pay.service.gov.uk"))
                 .assertThat("$.shopperEmail", is("test@example.com"))
                 .assertThat("$.shopperIP", is("127.0.0.1"));
-    }
-
-    private AdyenAuthorisationRequest buildValidRequestWithBillingAddress() {
-        var paymentRequest = makePaymentRequestWithFullBillingAddress();
-        return new AdyenAuthorisationRequest(
-                URI.create(TEST_URL),
-                Map.of("X-API-Key", "test-api-key"),
-                "test",
-                paymentRequest,
-                jsonObjectMapper);
     }
 
     private AuthoriseRequestPayload makePaymentRequestWithFullBillingAddress() {
@@ -126,4 +112,5 @@ class AdyenAuthorisationRequestTest {
                 null
         );
     }
+
 }

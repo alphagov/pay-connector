@@ -1,12 +1,8 @@
 package uk.gov.pay.connector.gateway.adyen.request;
 
-import jakarta.ws.rs.core.MediaType;
 import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
-import uk.gov.pay.connector.gateway.model.OrderRequestType;
 import uk.gov.pay.connector.gateway.model.request.GatewayClientPostRequest;
-import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import java.net.URI;
 import java.util.Map;
@@ -16,8 +12,7 @@ import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 public record AdyenAuthorisationRequest(URI url,
                                         Map<String, String> headers,
                                         String gatewayAccountType,
-                                        AuthoriseRequestPayload requestPayload,
-                                        JsonObjectMapper jsonObjectMapper) implements GatewayClientPostRequest {
+                                        GatewayOrder gatewayOrder) implements GatewayClientPostRequest {
     @Override
     public URI getUrl() {
         return url;
@@ -25,8 +20,7 @@ public record AdyenAuthorisationRequest(URI url,
 
     @Override
     public GatewayOrder getGatewayOrder() {
-        var payload = jsonObjectMapper.objectToString(requestPayload);
-        return new GatewayOrder(OrderRequestType.AUTHORISE, payload, MediaType.APPLICATION_JSON_TYPE);
+        return gatewayOrder;
     }
 
     @Override

@@ -6,8 +6,11 @@ import uk.gov.pay.connector.app.ConnectorConfiguration;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
+import uk.gov.pay.connector.gateway.GatewayOrder;
 import uk.gov.pay.connector.gateway.adyen.AdyenRequestFactory;
+import uk.gov.pay.connector.gateway.adyen.AuthoriseRequestPayloadToGatewayOrderConverter;
 import uk.gov.pay.connector.gateway.adyen.request.AdyenAuthorisationRequest;
+import uk.gov.pay.connector.gateway.adyen.request.json.AuthoriseRequestPayload;
 import uk.gov.pay.connector.gateway.adyen.response.AdyenAuthoriseResponse;
 import uk.gov.pay.connector.gateway.adyen.response.json.AuthoriseResponseBody;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
@@ -27,6 +30,7 @@ public class AdyenAuthoriseHandler {
     private final GatewayClient gatewayClient;
     private final AdyenGatewayConfig adyenGatewayConfig;
     private final AdyenRequestFactory adyenRequestFactory;
+    private final AuthoriseRequestPayloadToGatewayOrderConverter authoriseRequestPayloadToGatewayOrderConverter;
     private final JsonObjectMapper jsonObjectMapper;
 
     public AdyenAuthoriseHandler(GatewayClient gatewayClient,
@@ -36,6 +40,7 @@ public class AdyenAuthoriseHandler {
         this.adyenGatewayConfig = connectorConfig.getAdyenGatewayConfig();
         this.jsonObjectMapper = jsonObjectMapper;
         this.adyenRequestFactory = new AdyenRequestFactory(connectorConfig);
+        this.authoriseRequestPayloadToGatewayOrderConverter = new AuthoriseRequestPayloadToGatewayOrderConverter(jsonObjectMapper);
     }
     
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request) throws
@@ -47,14 +52,16 @@ public class AdyenAuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
 
-        logger.info("Calling Adyen for authorisation of charge");
+        AuthoriseRequestPayload authoriseRequestPayload = adyenRequestFactory.createPaymentRequest(request);
+        GatewayOrder gatewayOrder = authoriseRequestPayloadToGatewayOrderConverter.convert(authoriseRequestPayload);
+
         var authorisationRequest = new AdyenAuthorisationRequest(
                 getAuthUrl(adyenGatewayConfig, request),
                 getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), AUTHORISE, request.getGovUkPayPaymentId()),
                 request.getGatewayAccount().getType(),
-                adyenRequestFactory.createPaymentRequest(request),
-                jsonObjectMapper);
+                gatewayOrder);
 
+        logger.info("Calling Adyen for authorisation of charge");
         try {
             var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
             var paymentResponse = jsonObjectMapper.getObject(
@@ -75,14 +82,16 @@ public class AdyenAuthoriseHandler {
                 .GatewayResponseBuilder
                 .responseBuilder();
 
-        logger.info("Calling Adyen for user-not-present authorisation of charge");
+        AuthoriseRequestPayload authoriseRequestPayload = adyenRequestFactory.createRecurringPaymentRequest(request);
+        GatewayOrder gatewayOrder = authoriseRequestPayloadToGatewayOrderConverter.convert(authoriseRequestPayload);
+
         var authorisationRequest = new AdyenAuthorisationRequest(
                 getAuthUrl(adyenGatewayConfig, request),
                 getHeaders(adyenGatewayConfig, request.getGatewayAccount().isLive(), AUTHORISE, request.getGovUkPayPaymentId()),
                 request.getGatewayAccount().getType(),
-                adyenRequestFactory.createRecurringPaymentRequest(request),
-                jsonObjectMapper);
+                gatewayOrder);
 
+        logger.info("Calling Adyen for user-not-present authorisation of charge");
         try {
             var jsonResponse = gatewayClient.postRequestFor(authorisationRequest).getEntity();
             var paymentResponse = jsonObjectMapper.getObject(
