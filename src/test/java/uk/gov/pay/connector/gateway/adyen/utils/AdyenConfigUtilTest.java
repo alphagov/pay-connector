@@ -7,7 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.adyen.AdyenGatewayConfig;
-import uk.gov.pay.connector.app.adyen.AdyenIds;
 import uk.gov.pay.connector.app.adyen.ApiKeys;
 import uk.gov.pay.connector.app.adyen.BaseUrls;
 import uk.gov.pay.connector.app.adyen.HmacKeys;
@@ -35,8 +34,6 @@ class AdyenConfigUtilTest {
     private BaseUrls mockBaseUrls;
     @Mock
     private BaseUrls.CheckoutUrls mockCheckoutUrl;
-    @Mock
-    private AdyenIds mockMerchantAccountIds;
 
     @Nested
     class TestGetCompanyApiKey {
@@ -146,5 +143,51 @@ class AdyenConfigUtilTest {
 
             assertThat(exception.getMessage(), is("Missing primary Adyen HMAC key"));
         }
+    }
+    
+    @Nested
+    class TestGetsTokenHmacKeys {
+
+        @Mock
+        private HmacKeys mockHmacKeys;
+        @Mock
+        private HmacKeys.WebhookHmacKeyPair mockKeyPair;
+        @Mock
+        private WebhookHmacKeys mockLiveKeys;
+        @Mock
+        private WebhookHmacKeys mockTestKeys;
+
+        @Test
+        void shouldReturnLiveHmacKeyWhenLiveIsTrue() {
+            var expectedValue = "live-hmac-key";
+            when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(mockHmacKeys);
+            when(mockHmacKeys.tokens()).thenReturn(mockKeyPair);
+            when(mockKeyPair.live()).thenReturn(mockLiveKeys);
+            when(mockLiveKeys.getPrimary()).thenReturn(Optional.of(expectedValue));
+
+            String result = AdyenConfigUtil.getTokenHmacKey(mockAdyenGatewayConfig, true);
+
+            assertThat(result, is(expectedValue));
+
+            verify(mockKeyPair).live();
+            verify(mockKeyPair, never()).test();
+        }
+
+        @Test
+        void shouldReturnTestHmacKeyWhenLiveIsFalse() {
+            var expectedValue = "test-hmac-key";
+            when(mockAdyenGatewayConfig.getHmacKeys()).thenReturn(mockHmacKeys);
+            when(mockHmacKeys.tokens()).thenReturn(mockKeyPair);
+            when(mockKeyPair.test()).thenReturn(mockTestKeys);
+            when(mockTestKeys.getPrimary()).thenReturn(Optional.of(expectedValue));
+
+            String result = AdyenConfigUtil.getTokenHmacKey(mockAdyenGatewayConfig, false);
+
+            assertThat(result, is(expectedValue));
+
+            verify(mockKeyPair).test();
+            verify(mockKeyPair, never()).live();
+        }
+        
     }
 }

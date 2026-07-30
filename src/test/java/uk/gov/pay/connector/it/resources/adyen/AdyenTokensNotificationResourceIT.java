@@ -24,7 +24,7 @@ public class AdyenTokensNotificationResourceIT {
     private static final String NOTIFICATION_PATH = "/v1/api/notifications/adyen/tokens";
     private static final String ADYEN_IP_ADDRESS = "192.168.0.1";
     private static final String UNEXPECTED_IP_ADDRESS = "8.8.8.8";
-    private static final String HMAC_SIGNATURE = "sha256=test-signature";
+    private static final String HMAC_SIGNATURE = "hLz2zuhuylC8q36sCWWH7PpvbVpyaWDpoBqoEeTjj7w="; // pragma: allowlist secret
 
     @BeforeAll
     static void before() {

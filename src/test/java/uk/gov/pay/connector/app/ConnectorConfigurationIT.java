@@ -56,9 +56,23 @@ public class ConnectorConfigurationIT {
         assertThat(adyenGatewayConfig.getApiKeys().legalEntityManagement().test(), is("adyen-test-legal-entity-management-api-key"));
 
         assertThat(adyenGatewayConfig.getNotificationDomain(), is(".adyen.com"));
-        
-        assertThat(adyenGatewayConfig.getHmacKeys().payments().test().getPrimary().get(), is("adyen-test-payments-hmac-primary"));
-        assertThat(adyenGatewayConfig.getHmacKeys().payments().live().getPrimary().get(), is("adyen-live-payments-hmac-primary"));
+
+        var paymentTestPrimary = adyenGatewayConfig.getHmacKeys().payments().test().getPrimary();
+        assertThat(paymentTestPrimary.isPresent(), is(true));
+        assertThat(paymentTestPrimary.get(), is("adyen-test-payments-hmac-primary"));
+
+        var paymentLivePrimary = adyenGatewayConfig.getHmacKeys().payments().live().getPrimary();
+        assertThat(paymentLivePrimary.isPresent(), is(true));
+        assertThat(paymentLivePrimary.get(), is("adyen-live-payments-hmac-primary"));
+
+        var tokenTestPrimary = adyenGatewayConfig.getHmacKeys().tokens().test().getPrimary();
+        assertThat(tokenTestPrimary.isPresent(), is(true));
+        assertThat(tokenTestPrimary.get(), is("adyen-test-tokens-hmac-primary"));
+
+        var tokenLivePrimary = adyenGatewayConfig.getHmacKeys().tokens().live().getPrimary();
+        assertThat(tokenLivePrimary.isPresent(), is(true));
+        assertThat(tokenLivePrimary.get(), is("adyen-live-tokens-hmac-primary"));
+
     }
 
 }
