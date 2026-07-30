@@ -63,5 +63,27 @@ class AdyenMerchantAccountHelperTest {
         verify(mockAdyenIds).test();
         verify(mockAdyenIds, never()).live();
     }
+    
+    @Test
+    void shouldReturnLiveMerchantAccountIdWhenLiveFlagIsTrue() {
+        when(mockAdyenIds.live()).thenReturn("live-merchant-123");
+
+        String result = adyenMerchantAccountHelper.getMerchantAccount(true);
+
+        assertThat(result, is("live-merchant-123"));
+        verify(mockAdyenIds).live();
+        verify(mockAdyenIds, never()).test();
+    }
+
+    @Test
+    void shouldReturnTestMerchantAccountIdWhenLiveFlagIsFalse() {
+        when(mockAdyenIds.test()).thenReturn("test-merchant-123");
+
+        String result = adyenMerchantAccountHelper.getMerchantAccount(false);
+
+        assertThat(result, is("test-merchant-123"));
+        verify(mockAdyenIds).test();
+        verify(mockAdyenIds, never()).live();
+    }
 
 }
