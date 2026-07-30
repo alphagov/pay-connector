@@ -21,34 +21,38 @@ public class AdyenRequestUtil {
     }
 
     public static URI getAuthUrl(AdyenGatewayConfig config, GatewayRequest request) {
-        return getUrl(config, request, "/payments");
+        return getUrl(config, request.getGatewayAccount().isLive(), "/payments");
+    }
+
+    public static URI getAuthUrl(AdyenGatewayConfig config, boolean isLive) {
+        return getUrl(config, isLive, "/payments");
     }
 
     public static URI get3dsAuthUrl(AdyenGatewayConfig config, Auth3dsResponseGatewayRequest request) {
-        return getUrl(config, request, "/payments/details");
+        return getUrl(config, request.getGatewayAccount().isLive(), "/payments/details");
     }
 
     public static URI getRefundUrl(AdyenGatewayConfig config, RefundGatewayRequest request) {
         var path = "/payments/%s/refunds".formatted(request.getTransactionId());
-        return getUrl(config, request, path);
+        return getUrl(config, request.getGatewayAccount().isLive(), path);
     }
 
     public static URI getCancelUrl(AdyenGatewayConfig config, CancelGatewayRequest request) {
         var path = "/payments/%s/cancels".formatted(request.getTransactionId());
-        return getUrl(config, request, path);
+        return getUrl(config, request.getGatewayAccount().isLive(), path);
     }
 
     public static URI getCaptureUrl(AdyenGatewayConfig config, CaptureGatewayRequest request) {
         var path = "/payments/%s/captures".formatted(request.getGatewayTransactionId());
-        return getUrl(config, request, path);
+        return getUrl(config, request.getGatewayAccount().isLive(), path);
     }
     
     public static URI getDeleteStoredPaymentMethodUrl(AdyenGatewayConfig config, boolean isLive, String storedPaymentMethodId) {
         return URI.create(getBaseCheckoutUrl(config, isLive) + "/storedPaymentMethods/" + storedPaymentMethodId);
     }
 
-    private static URI getUrl(AdyenGatewayConfig config, GatewayRequest request, String path) {
-        return URI.create(getBaseCheckoutUrl(config, request.getGatewayAccount().isLive()) + path);
+    private static URI getUrl(AdyenGatewayConfig config, boolean isLive, String path) {
+        return URI.create(getBaseCheckoutUrl(config, isLive) + path);
     }
 
     public static Map<String, String> getHeaders(AdyenGatewayConfig config, boolean isLive, OrderRequestType requestType, String idempotencyKey) {
