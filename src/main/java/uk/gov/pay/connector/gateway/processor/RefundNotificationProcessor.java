@@ -69,7 +69,7 @@ public class RefundNotificationProcessor {
             return;
         }
 
-        processRefundNotification(gatewayName, newStatus, gatewayAccountEntity, null, null, charge, optionalRefundEntity.get());
+        processRefundNotification(gatewayName, newStatus, gatewayAccountEntity, null, charge.getGatewayTransactionId(), charge, optionalRefundEntity.get());
     }
 
     private void processRefundNotification(PaymentGatewayName gatewayName, RefundStatus newStatus,
