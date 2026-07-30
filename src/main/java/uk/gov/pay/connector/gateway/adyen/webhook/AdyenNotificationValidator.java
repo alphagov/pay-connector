@@ -52,7 +52,7 @@ public class AdyenNotificationValidator {
         return true;
     }
 
-    public boolean isValidHmac(NotificationRequestItem item, String hmacKey) {
+    public boolean isValidHmac(NotificationRequestItem item, String hmacKey) throws AdyenNotificationException {
         try {
             boolean validSignature = hmacValidator.validateHMAC(item, hmacKey);
 
@@ -74,11 +74,14 @@ public class AdyenNotificationValidator {
         }
     }
 
-    public boolean isValidHmac(String hmacSignature, String hmacKey, String payload) {
+    public boolean isValidHmac(String hmacSignature, String hmacKey, String payload) throws AdyenNotificationException {
         try {
             return hmacValidator.validateHMAC(hmacSignature, hmacKey, payload);
         } catch (IllegalArgumentException | SignatureException e) {
-            throw new AdyenNotificationException("Failed to validate HMAC signature", e);
+            LOGGER.atInfo()
+                    .setMessage("Failed to validate HMAC signature for token notification")
+                    .log();
+            throw new AdyenNotificationException("Failed to validate HMAC signature for token notification", e);
         }
     }
 }
