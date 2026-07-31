@@ -33,8 +33,14 @@ import uk.gov.pay.connector.events.model.Event;
 import uk.gov.pay.connector.events.model.charge.GatewayDoesNotRequire3dsAuthorisation;
 import uk.gov.pay.connector.gateway.GatewayException;
 import uk.gov.pay.connector.gateway.GatewayException.GatewayConnectionTimeoutException;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gateway.PaymentProvider;
+import uk.gov.pay.connector.gateway.adyen.AdyenPaymentProvider;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequestFixture;
+import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequestFactory;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse.AuthoriseStatus;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
@@ -42,6 +48,7 @@ import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStringifier;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gateway.util.WorldpayAuthoriseRequestLogGenerator;
 import uk.gov.pay.connector.gateway.worldpay.WorldpayOrderStatusResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.service.GatewayAccountCredentialsService;
 import uk.gov.pay.connector.idempotency.dao.IdempotencyDao;
 import uk.gov.pay.connector.logging.AuthorisationLogger;
@@ -78,6 +85,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -95,6 +103,7 @@ import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATIO
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.AUTHORISATION_UNEXPECTED_ERROR;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.ENTERING_CARD_DETAILS;
 import static uk.gov.pay.connector.charge.model.domain.ChargeStatus.UNDEFINED;
+import static uk.gov.pay.connector.gateway.PaymentGatewayName.ADYEN;
 import static uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder.responseBuilder;
 import static uk.gov.pay.connector.model.domain.applepay.ApplePayAuthRequestFixture.anApplePayAuthRequest;
 import static uk.gov.pay.connector.paymentprocessor.service.CardExecutorService.ExecutionStatus.COMPLETED;
@@ -162,6 +171,9 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
 
     @Mock
     private ExternalTransactionStateFactory mockExternalTransactionStateFactory;
+    
+    @Mock
+    private ApplePayAuthoriseRequestFactory mockApplePayAuthoriseRequestFactory;
 
     private WalletAuthoriseService walletAuthoriseService;
 
@@ -202,6 +214,7 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
                 mockedProviders,
                 chargeService,
                 authorisationService,
+                mockApplePayAuthoriseRequestFactory,
                 mockWalletPaymentInfoToAuthCardDetailsConverter,
                 new AuthorisationLogger(new AuthorisationRequestSummaryStringifier(), new AuthorisationRequestSummaryStructuredLogging(), new WorldpayAuthoriseRequestLogGenerator()),
                 mockEnvironment);
@@ -230,6 +243,49 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     void doAuthoriseCard_ApplePay_shouldRespondAuthorisationSuccess() throws Exception {
         providerWillAuthoriseApplePay();
         ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
+
+        GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
+
+        assertThat(response.getBaseResponse().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().isPresent(), is(true));
+        assertThat(response.getSessionIdentifier().get(), is(SESSION_IDENTIFIER));
+
+        assertThat(charge.getProviderSessionId(), is(SESSION_IDENTIFIER.toString()));
+        assertThat(charge.getStatus(), is(AUTHORISATION_SUCCESS.getValue()));
+        assertThat(charge.getGatewayTransactionId(), is(TRANSACTION_ID));
+        verify(mockedChargeEventDao).persistChargeEventOf(eq(charge), isNull());
+        assertThat(charge.get3dsRequiredDetails(), is(nullValue()));
+        assertThat(charge.getCardDetails(), is(mockCardDetailsEntity));
+        assertThat(charge.getWalletType(), is(WalletType.APPLE_PAY));
+        assertThat(charge.getCorporateSurcharge().isPresent(), is(false));
+        assertThat(charge.getEmail(), is(validApplePayDetails.getPaymentInfo().getEmail()));
+        assertThat(charge.getRequires3ds(), is(false));
+
+        verify(mockStateTransitionService).offerPaymentStateTransition(charge.getExternalId(), AUTHORISATION_READY, AUTHORISATION_SUCCESS, chargeEventEntity);
+
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(mockEventService, times(2)).emitAndRecordEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues().getFirst().getResourceExternalId(), is(charge.getExternalId()));
+        assertThat(eventCaptor.getAllValues().getFirst().getEventType(), is("PAYMENT_DETAILS_ENTERED"));
+
+        verifyGatewayDoesNotRequire3dsEventWasEmitted(charge);
+    }
+    
+    @Test
+    void doAuthoriseCard_applePay_with_AdyenApplePayAuthoriseRequest_shouldRespondAuthorisationSuccess() throws Exception {
+        
+        ChargeEventEntity chargeEventEntity = mock(ChargeEventEntity.class);
+        ApplePayAuthoriseRequest applePayAuthoriseRequest = AdyenApplePayAuthoriseRequestFixture.anAdyenApplePayAuthoriseRequestFixture().build();
+
+        charge.setPaymentProvider(ADYEN.getName());
+
+        AdyenPaymentProvider mockAdyenPaymentProvider = mock(AdyenPaymentProvider.class);
+        providerWillAuthoriseApplePayWithApplePayAuthoriseRequest(mockAdyenPaymentProvider);
+
+        doReturn(Optional.of(applePayAuthoriseRequest))
+                .when(mockApplePayAuthoriseRequestFactory)
+                .create(any(ApplePayAuthorisationGatewayRequest.class));
         when(mockedChargeEventDao.persistChargeEventOf(any(), any())).thenReturn(chargeEventEntity);
 
         GatewayResponse response = walletAuthoriseService.authorise(charge.getExternalId(), validApplePayDetails);
@@ -569,6 +625,13 @@ class WalletAuthoriseServiceTest extends CardServiceTest {
     private GatewayResponse providerWillAuthoriseApplePay() throws Exception {
         GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null, EXPIRY_DATE);
         when(mockedPaymentProvider.authoriseApplePay(any(ApplePayAuthorisationGatewayRequest.class))).thenReturn(authResponse);
+        return authResponse;
+    }
+
+    private GatewayResponse providerWillAuthoriseApplePayWithApplePayAuthoriseRequest(PaymentProvider mockPaymentProvider) throws Exception {
+        when(mockedProviders.byName(any(PaymentGatewayName.class))).thenReturn(mockPaymentProvider);
+        GatewayResponse authResponse = mockAuthResponse(TRANSACTION_ID, AuthoriseStatus.AUTHORISED, null, EXPIRY_DATE);
+        when(mockPaymentProvider.authoriseApplePay(any(ApplePayAuthoriseRequest.class), any(GatewayAccountType.class))).thenReturn(authResponse);
         return authResponse;
     }
 

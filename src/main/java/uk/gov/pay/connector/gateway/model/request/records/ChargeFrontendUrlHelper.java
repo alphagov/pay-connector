@@ -1,13 +1,13 @@
 package uk.gov.pay.connector.gateway.model.request.records;
 
+import jakarta.inject.Inject;
 import uk.gov.pay.connector.app.ConnectorConfiguration;
-import uk.gov.pay.connector.gateway.model.request.GatewayRequest;
-import uk.gov.pay.connector.gatewayaccount.model.AdyenCredentials;
 
 public class ChargeFrontendUrlHelper {
 
     private final ConnectorConfiguration configuration;
     
+    @Inject
     public ChargeFrontendUrlHelper(ConnectorConfiguration configuration) {
         this.configuration = configuration;
     }
