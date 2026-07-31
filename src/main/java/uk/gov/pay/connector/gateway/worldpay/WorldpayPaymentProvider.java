@@ -31,8 +31,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -265,12 +265,12 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
     }
 
     @Override
-    public GatewayResponse<WorldpayOrderStatusResponse> authorise(AuthoriseRequest authoriseRequest,
+    public GatewayResponse<WorldpayOrderStatusResponse> authorise(CardAuthoriseRequest authoriseRequest,
                                                                   GatewayAccountType gatewayAccountType) {
-        if (authoriseRequest instanceof WorldpayAuthoriseRequest worldpayAuthoriseRequest) {
-            return worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, gatewayAccountType);
+        if (authoriseRequest instanceof WorldpayCardAuthoriseRequest worldpayCardAuthoriseRequest) {
+            return worldpayAuthoriseHandler.authorise(worldpayCardAuthoriseRequest, gatewayAccountType);
         } else {
-            throw new IllegalArgumentException("AuthoriseRequest is not of type WorldpayAuthoriseRequest");
+            throw new IllegalArgumentException("CardAuthoriseRequest is not of type WorldpayCardAuthoriseRequest");
         }
     }
 
