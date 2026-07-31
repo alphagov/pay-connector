@@ -1,16 +1,5 @@
 package uk.gov.pay.connector.gatewayaccount.model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
-import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
-import uk.gov.pay.connector.gateway.PaymentGatewayName;
-import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
-import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
-import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -30,6 +19,17 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.ws.rs.WebApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.gov.pay.connector.cardtype.model.domain.CardTypeEntity;
+import uk.gov.pay.connector.common.model.domain.AbstractVersionedEntity;
+import uk.gov.pay.connector.gateway.PaymentGatewayName;
+import uk.gov.pay.connector.gatewayaccount.util.JsonToStringStringMapConverter;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialState;
+import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationEntity;
+import uk.gov.pay.connector.usernotification.model.domain.EmailNotificationType;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -265,6 +265,10 @@ public class GatewayAccountEntity extends AbstractVersionedEntity {
     
     public String getType() {
         return type.toString();
+    }
+    
+    public GatewayAccountType getGatewayAccountType() {
+        return type;
     }
     
     public String getServiceName() {

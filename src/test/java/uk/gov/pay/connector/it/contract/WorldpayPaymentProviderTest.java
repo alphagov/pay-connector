@@ -513,7 +513,7 @@ class WorldpayPaymentProviderTest {
                 .withCardNumber(cardNumber)
                 .build();
 
-        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(worldpayMotoAuthoriseRequest, TEST.toString());
+        GatewayResponse<WorldpayOrderStatusResponse> response = paymentProvider.authorise(worldpayMotoAuthoriseRequest, TEST);
         assertTrue(response.getBaseResponse().isPresent());
     }
 

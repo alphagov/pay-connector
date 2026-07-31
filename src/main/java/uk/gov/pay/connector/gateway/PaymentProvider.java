@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.wallets.applepay.ApplePayAuthorisationGatewayRequest;
@@ -35,7 +36,7 @@ public interface PaymentProvider {
 
     GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException;
 
-    default GatewayResponse authorise(AuthoriseRequest authoriseRequest, String gatewayAccountType) throws GatewayException {
+    default GatewayResponse authorise(AuthoriseRequest authoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
         throw new NotImplementedException("Payment provider does not support AuthoriseRequest records yet");
     }
 

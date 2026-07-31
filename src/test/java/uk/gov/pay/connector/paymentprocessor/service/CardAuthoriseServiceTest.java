@@ -1424,7 +1424,7 @@ class CardAuthoriseServiceTest extends CardServiceTest {
     private void providerWillRespondToAuthoriseRequestWith(CardAuthoriseRequest cardAuthoriseRequest,
                                                            GatewayResponse value, PaymentGatewayName paymentGatewayName,
                                                            PaymentProvider mockPaymentProvider) throws Exception {
-        when(mockPaymentProvider.authorise(eq(cardAuthoriseRequest), any(String.class))).thenReturn(value);
+        when(mockPaymentProvider.authorise(eq(cardAuthoriseRequest), any(GatewayAccountType.class))).thenReturn(value);
 
         when(mockedProviders.byName(paymentGatewayName)).thenReturn(mockPaymentProvider);
         when(mockPaymentProvider.generateTransactionId()).thenReturn(Optional.empty());

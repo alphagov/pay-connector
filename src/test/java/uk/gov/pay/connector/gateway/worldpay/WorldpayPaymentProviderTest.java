@@ -230,11 +230,11 @@ class WorldpayPaymentProviderTest {
         GatewayResponse<WorldpayOrderStatusResponse> expectedResponse =
                 (GatewayResponse<WorldpayOrderStatusResponse>) mock(GatewayResponse.class);
 
-        when(worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, GatewayAccountType.LIVE.toString()))
+        when(worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, GatewayAccountType.LIVE))
                 .thenReturn(expectedResponse);
 
         GatewayResponse<WorldpayOrderStatusResponse> actualResponse = worldpayPaymentProvider.authorise(worldpayAuthoriseRequest,
-                GatewayAccountType.LIVE.toString());
+                GatewayAccountType.LIVE);
 
         assertThat(actualResponse, is(expectedResponse));
     }
