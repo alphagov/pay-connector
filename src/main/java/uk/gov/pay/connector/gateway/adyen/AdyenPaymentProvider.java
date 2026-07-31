@@ -28,12 +28,15 @@ import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.records.AdyenApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayRefundResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.refund.model.domain.Refund;
 import uk.gov.pay.connector.refund.service.RefundEntityFactory;
 import uk.gov.pay.connector.util.JsonObjectMapper;
@@ -85,6 +88,15 @@ public class AdyenPaymentProvider implements PaymentProvider {
     @Override
     public GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException {
         return adyenAuthoriseHandler.authorise(request);
+    }
+    
+    @Override
+    public GatewayResponse authoriseApplePay(ApplePayAuthoriseRequest applePayAuthoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
+        if (applePayAuthoriseRequest instanceof AdyenApplePayAuthoriseRequest adyenApplePayAuthoriseRequest) {
+            return adyenAuthoriseHandler.authorise(adyenApplePayAuthoriseRequest, gatewayAccountType);
+        } else {
+            throw new IllegalArgumentException("ApplePayAuthoriseRequest is not of type AdyenApplePayAuthoriseRequest");
+        }
     }
 
     @Override

@@ -13,7 +13,8 @@ import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayReques
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.AuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.ApplePayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.CardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseAuthoriseResponse;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
@@ -36,8 +37,8 @@ public interface PaymentProvider {
 
     GatewayResponse authorise(CardAuthorisationGatewayRequest request, ChargeEntity charge) throws GatewayException;
 
-    default GatewayResponse authorise(AuthoriseRequest authoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
-        throw new NotImplementedException("Payment provider does not support AuthoriseRequest records yet");
+    default GatewayResponse authorise(CardAuthoriseRequest cardAuthoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
+        throw new NotImplementedException("Payment provider does not support CardAuthoriseRequest records yet");
     }
 
     default GatewayResponse authoriseUserNotPresent(RecurringPaymentAuthorisationGatewayRequest request) {
@@ -51,7 +52,11 @@ public interface PaymentProvider {
     Gateway3DSAuthorisationResponse authorise3dsResponse(Auth3dsResponseGatewayRequest request);
 
     default GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {
-        throw new UnsupportedOperationException("Apple Pay is not supported for " + getPaymentGatewayName());
+        throw new UnsupportedOperationException("Apple Pay with ApplePayAuthorisationGatewayRequest is not supported for " + getPaymentGatewayName());
+    }
+
+    default GatewayResponse<BaseAuthoriseResponse> authoriseApplePay(ApplePayAuthoriseRequest applePayAuthoriseRequest, GatewayAccountType gatewayAccountType) throws GatewayException {
+        throw new UnsupportedOperationException("Apple Pay with ApplePayAuthoriseRequest is not supported for " + getPaymentGatewayName());
     }
 
     default GatewayResponse<BaseAuthoriseResponse> authoriseGooglePay(GooglePayAuthorisationGatewayRequest authorisationGatewayRequest) throws GatewayException {

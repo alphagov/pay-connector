@@ -35,7 +35,7 @@ import uk.gov.pay.connector.gateway.model.ProviderSessionIdentifier;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
-import uk.gov.pay.connector.gateway.model.request.records.WorldpayAuthoriseRequest;
+import uk.gov.pay.connector.gateway.model.request.records.WorldpayCardAuthoriseRequest;
 import uk.gov.pay.connector.gateway.model.response.Gateway3DSAuthorisationResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayResponseBuilder;
@@ -223,17 +223,17 @@ class WorldpayPaymentProviderTest {
     }
 
     @Test
-    void shouldPassWorldpayAuthoriseRequestToWorldpayAuthoriseHandler() throws GatewayException {
-        WorldpayAuthoriseRequest worldpayAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
+    void shouldPassWorldpayCardAuthoriseRequestToWorldpayAuthoriseHandler() throws GatewayException {
+        WorldpayCardAuthoriseRequest worldpayCardAuthoriseRequest = aWorldpayMotoAuthoriseRequestFixture().build();
 
         @SuppressWarnings("unchecked")
         GatewayResponse<WorldpayOrderStatusResponse> expectedResponse =
                 (GatewayResponse<WorldpayOrderStatusResponse>) mock(GatewayResponse.class);
 
-        when(worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, GatewayAccountType.LIVE))
+        when(worldpayAuthoriseHandler.authorise(worldpayCardAuthoriseRequest, GatewayAccountType.LIVE))
                 .thenReturn(expectedResponse);
 
-        GatewayResponse<WorldpayOrderStatusResponse> actualResponse = worldpayPaymentProvider.authorise(worldpayAuthoriseRequest,
+        GatewayResponse<WorldpayOrderStatusResponse> actualResponse = worldpayPaymentProvider.authorise(worldpayCardAuthoriseRequest,
                 GatewayAccountType.LIVE);
 
         assertThat(actualResponse, is(expectedResponse));
