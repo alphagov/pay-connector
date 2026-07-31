@@ -133,7 +133,7 @@ public class CardAuthoriseService {
                     yield switch (cardAuthoriseRequest) {
                         case WorldpayCardAuthoriseRequest worldpayAuthoriseRequest
                                 when paymentProvider instanceof WorldpayPaymentProvider -> paymentProvider
-                                    .authorise(worldpayAuthoriseRequest, charge.getGatewayAccount().getType());
+                                    .authorise(worldpayAuthoriseRequest, charge.getGatewayAccount().getGatewayAccountType());
                         case null, default -> paymentProvider.authorise(request, charge);
                     };
                 }

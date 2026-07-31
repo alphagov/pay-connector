@@ -43,6 +43,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse;
 import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntityFixture;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccountcredentials.model.GatewayAccountCredentialsEntity;
 import uk.gov.pay.connector.model.domain.AuthCardDetailsFixture;
 import uk.gov.pay.connector.paymentinstrument.model.PaymentInstrumentEntity;
@@ -167,7 +168,7 @@ class WorldpayAuthoriseHandlerTest {
 
     @Test
     void shouldSendCorrectWorldpayAuthorisationRequestWhenCalledWithWorldpayAuthoriseRequest() throws Exception {
-        String gatewayAccountType = "live";
+        GatewayAccountType gatewayAccountType = LIVE;
         String username = "username";
         String password = "password"; // pragma: allowlist secret
         String worldpayRequestBody = "<xml><authorise this=\"payment\"></xml>";
@@ -184,7 +185,7 @@ class WorldpayAuthoriseHandlerTest {
         Map<String, String> headers = Map.of("Authorization",
                 "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(UTF_8)));
 
-        when(authoriseClient.postRequestFor(eq(LIVE_WORLDPAY_URL), eq(WORLDPAY), eq(gatewayAccountType),
+        when(authoriseClient.postRequestFor(eq(LIVE_WORLDPAY_URL), eq(WORLDPAY), eq(gatewayAccountType.toString()),
                 eq(gatewayOrder), eq(headers)))
                 .thenReturn(authorisationSuccessResponse);
 

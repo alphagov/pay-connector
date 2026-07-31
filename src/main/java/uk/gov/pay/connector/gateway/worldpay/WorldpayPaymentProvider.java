@@ -43,6 +43,7 @@ import uk.gov.pay.connector.gateway.util.DefaultExternalRefundAvailabilityCalcul
 import uk.gov.pay.connector.gateway.util.ExternalRefundAvailabilityCalculator;
 import uk.gov.pay.connector.gateway.worldpay.wallets.WorldpayWalletAuthorisationHandler;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.gatewayaccount.model.Worldpay3dsFlexCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayCredentials;
 import uk.gov.pay.connector.gatewayaccount.model.WorldpayMerchantCodeCredentials;
@@ -263,8 +264,9 @@ public class WorldpayPaymentProvider implements PaymentProvider, WorldpayGateway
         return response;
     }
 
+    @Override
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(AuthoriseRequest authoriseRequest,
-                                                                  String gatewayAccountType) {
+                                                                  GatewayAccountType gatewayAccountType) {
         if (authoriseRequest instanceof WorldpayAuthoriseRequest worldpayAuthoriseRequest) {
             return worldpayAuthoriseHandler.authorise(worldpayAuthoriseRequest, gatewayAccountType);
         } else {

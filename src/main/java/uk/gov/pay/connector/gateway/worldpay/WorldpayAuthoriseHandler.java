@@ -19,6 +19,7 @@ import uk.gov.pay.connector.gateway.model.response.GatewayResponse.GatewayRespon
 import uk.gov.pay.connector.gateway.templates.WorldpayRequestTemplateBuilder;
 import uk.gov.pay.connector.gateway.util.AuthorisationRequestSummaryStructuredLogging;
 import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountEntity;
+import uk.gov.pay.connector.gatewayaccount.model.GatewayAccountType;
 import uk.gov.pay.connector.util.AcceptLanguageHeaderParser;
 
 import java.net.URI;
@@ -102,11 +103,11 @@ public class WorldpayAuthoriseHandler implements WorldpayGatewayResponseGenerato
     }
 
     public GatewayResponse<WorldpayOrderStatusResponse> authorise(WorldpayAuthoriseRequest worldpayAuthoriseRequest,
-                                                                  String gatewayAccountType) {
+                                                                  GatewayAccountType gatewayAccountType) {
         Map<String, String> headers = getAuthHeader(worldpayAuthoriseRequest.username(), worldpayAuthoriseRequest.password());
         String body = worldpayRequestTemplateBuilder.buildWith(MOTO_TEMPLATE_PATH, worldpayAuthoriseRequest);
         GatewayOrder gatewayOrder = new GatewayOrder(OrderRequestType.AUTHORISE, body, MediaType.APPLICATION_XML_TYPE);
-        return getGatewayResponse(gatewayAccountType, gatewayOrder, headers);
+        return getGatewayResponse(gatewayAccountType.toString(), gatewayOrder, headers);
     }
 
     private GatewayResponse<WorldpayOrderStatusResponse> getGatewayResponse(String gatewayAccountType, GatewayOrder gatewayOrder, Map<String, String> headers) {
