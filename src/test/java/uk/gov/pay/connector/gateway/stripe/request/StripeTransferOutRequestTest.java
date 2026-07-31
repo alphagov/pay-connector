@@ -74,7 +74,7 @@ class StripeTransferOutRequestTest {
 
     @Test
     void shouldCreateCorrectPayload() {
-        String payload = stripeTransferOutRequest.getGatewayOrder().getPayload();
+        String payload = stripeTransferOutRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("destination=" + stripeConnectAccountId));
         assertThat(payload, containsString("source_transaction=" + stripeChargeId));

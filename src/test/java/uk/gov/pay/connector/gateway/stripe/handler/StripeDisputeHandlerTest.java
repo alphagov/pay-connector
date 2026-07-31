@@ -11,8 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.pay.connector.app.StripeGatewayConfig;
 import uk.gov.pay.connector.gateway.GatewayClient;
 import uk.gov.pay.connector.gateway.GatewayException;
-import uk.gov.pay.connector.gateway.stripe.request.StripeSubmitTestDisputeEvidenceRequest;
 import uk.gov.pay.connector.gateway.stripe.json.StripeDisputeData;
+import uk.gov.pay.connector.gateway.stripe.request.StripeSubmitTestDisputeEvidenceRequest;
 import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -67,6 +67,6 @@ class StripeDisputeHandlerTest {
         verify(client).postRequestFor(captor.capture());
 
         assertThat(captor.getValue().getUrl().toString(), Matchers.is("https://example.org/v1/disputes/dispute-id"));
-        assertThat(captor.getValue().getGatewayOrder().getPayload(), containsString("winning_evidence"));
+        assertThat(captor.getValue().getGatewayOrder().payload(), containsString("winning_evidence"));
     }
 }

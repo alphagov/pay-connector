@@ -220,7 +220,7 @@ class StripePaymentProviderTest {
 
             verify(gatewayClient).postRequestFor(stripeTransferInRequestCaptor.capture());
 
-            String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().getPayload();
+            String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().payload();
 
             assertThat(payload, containsString("destination=" + stripePlatformAccountId));
             assertThat(payload, containsString("amount=8000"));

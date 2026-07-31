@@ -40,9 +40,9 @@ class AdyenAuthoriseRequestToGatewayOrderConverterTest {
 
         GatewayOrder gatewayOrder = adyenAuthoriseRequestToGatewayOrderConverter.convert(request);
 
-        assertThat(gatewayOrder.getOrderRequestType(), is(OrderRequestType.AUTHORISE_APPLE_PAY));
-        assertThat(gatewayOrder.getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
-        JsonAssert.with(gatewayOrder.getPayload())
+        assertThat(gatewayOrder.orderRequestType(), is(OrderRequestType.AUTHORISE_APPLE_PAY));
+        assertThat(gatewayOrder.mediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+        JsonAssert.with(gatewayOrder.payload())
                 .assertThat("$.merchantAccount", Matchers.is(MERCHANT_ACCOUNT))
                 .assertThat("$.store", Matchers.is(STORE))
                 .assertThat("$.reference", Matchers.is(REFERENCE))

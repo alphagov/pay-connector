@@ -86,7 +86,7 @@ class StripeAuthoriseRequestTest {
 
     @Test
     void shouldCreateCorrectPayload() {
-        String payload = stripeAuthoriseRequest.getGatewayOrder().getPayload();
+        String payload = stripeAuthoriseRequest.getGatewayOrder().payload();
 
         assertThat(payload, CoreMatchers.containsString("amount=" + amount));
         assertThat(payload, CoreMatchers.containsString("transfer_group=" + chargeExternalId));
@@ -99,7 +99,7 @@ class StripeAuthoriseRequestTest {
 
     @Test
     void shouldSetCorrectOrderRequestTypeForAuthorisationWithout3DS() {
-        assertThat(stripeAuthoriseRequest.getGatewayOrder().getOrderRequestType(), is(OrderRequestType.AUTHORISE));
+        assertThat(stripeAuthoriseRequest.getGatewayOrder().orderRequestType(), is(OrderRequestType.AUTHORISE));
 
     }
 
@@ -109,7 +109,7 @@ class StripeAuthoriseRequestTest {
 
         assertThat(StripeAuthoriseRequest
                         .of(stripeSourceId, authorisationGatewayRequest, stripeGatewayConfig)
-                        .getGatewayOrder().getOrderRequestType(),
+                        .getGatewayOrder().orderRequestType(),
                 is(OrderRequestType.AUTHORISE_3DS));
     }
 

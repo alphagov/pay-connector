@@ -30,9 +30,9 @@ class AuthoriseRequestPayloadToGatewayOrderConverterTest {
     void shouldCreateGatewayOrder_withSerialisedPayload() {
         GatewayOrder gatewayOrder = factory.convert(makePaymentRequestWithFullBillingAddress());
 
-        assertThat(gatewayOrder.getOrderRequestType(), is(AUTHORISE));
-        assertThat(gatewayOrder.getMediaType(), is(APPLICATION_JSON_TYPE));
-        JsonAssert.with(gatewayOrder.getPayload())
+        assertThat(gatewayOrder.orderRequestType(), is(AUTHORISE));
+        assertThat(gatewayOrder.mediaType(), is(APPLICATION_JSON_TYPE));
+        JsonAssert.with(gatewayOrder.payload())
                 .assertThat("$.amount.value", is(1000))
                 .assertThat("$.amount.currency", is("GBP"))
                 .assertThat("$.billingAddress.houseNumberOrName", is("houseNumberOrName"))

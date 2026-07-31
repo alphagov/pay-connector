@@ -127,7 +127,7 @@ class StripeCaptureHandlerTest {
         verify(gatewayClient).postRequestFor(transferRequestCaptor.capture());
         ArgumentCaptor<StripePaymentIntentCaptureRequest> captureRequestCaptor = ArgumentCaptor.forClass(StripePaymentIntentCaptureRequest.class);
         verify(gatewayClient).postRequestFor(captureRequestCaptor.capture());
-        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9937"));
+        assertThat(transferRequestCaptor.getValue().getGatewayOrder().payload(), containsString("amount=9937"));
 
         assertTrue(captureResponse.isSuccessful());
         assertThat(captureResponse.state(), is(CaptureResponse.ChargeState.COMPLETE));
@@ -364,7 +364,7 @@ class StripeCaptureHandlerTest {
         ArgumentCaptor<StripePaymentIntentCaptureRequest> captureRequestCaptor = ArgumentCaptor.forClass(StripePaymentIntentCaptureRequest.class);
         verify(gatewayClient).postRequestFor(captureRequestCaptor.capture());
 
-        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9885"));
+        assertThat(transferRequestCaptor.getValue().getGatewayOrder().payload(), containsString("amount=9885"));
 
         assertTrue(captureResponse.isSuccessful());
 
@@ -408,7 +408,7 @@ class StripeCaptureHandlerTest {
         ArgumentCaptor<StripePaymentIntentCaptureRequest> captureRequestCaptor = ArgumentCaptor.forClass(StripePaymentIntentCaptureRequest.class);
         verify(gatewayClient).postRequestFor(captureRequestCaptor.capture());
 
-        assertThat(transferRequestCaptor.getValue().getGatewayOrder().getPayload(), containsString("amount=9895"));
+        assertThat(transferRequestCaptor.getValue().getGatewayOrder().payload(), containsString("amount=9895"));
 
         assertTrue(captureResponse.isSuccessful());
 
@@ -504,7 +504,7 @@ class StripeCaptureHandlerTest {
         
         verify(gatewayClient).postRequestFor(stripeTransferOutRequestArgumentCaptor.capture());
         StripeTransferOutRequest transferOutRequest = stripeTransferOutRequestArgumentCaptor.getValue();
-        assertThat(transferOutRequest.getGatewayOrder().getPayload(), containsString("amount=9937"));
+        assertThat(transferOutRequest.getGatewayOrder().payload(), containsString("amount=9937"));
 
         verify(gatewayClient, never()).postRequestFor(any(StripeCaptureRequest.class));
     }

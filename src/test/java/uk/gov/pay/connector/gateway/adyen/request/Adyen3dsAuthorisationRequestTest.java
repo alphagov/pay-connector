@@ -39,10 +39,10 @@ class Adyen3dsAuthorisationRequestTest {
         assertEquals(ADYEN, request.getPaymentProvider());
 
         GatewayOrder gatewayOrder = request.getGatewayOrder();
-        assertEquals(AUTHORISE_3DS, gatewayOrder.getOrderRequestType());
-        assertEquals(APPLICATION_JSON_TYPE, gatewayOrder.getMediaType());
+        assertEquals(AUTHORISE_3DS, gatewayOrder.orderRequestType());
+        assertEquals(APPLICATION_JSON_TYPE, gatewayOrder.mediaType());
 
         String expectedPayload = jsonObjectMapper.objectToString(payload);
-        assertEquals(expectedPayload, gatewayOrder.getPayload());
+        assertEquals(expectedPayload, gatewayOrder.payload());
     }
 }

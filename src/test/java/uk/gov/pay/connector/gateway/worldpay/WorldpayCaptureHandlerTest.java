@@ -114,7 +114,7 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().payload())
                 .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
                 .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }
@@ -149,7 +149,7 @@ class WorldpayCaptureHandlerTest {
                 gatewayOrderArgumentCaptor.capture(),
                 anyMap());
 
-        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().payload())
                 .valueByXPath("/paymentService/modify/orderModification/capture/amount/@value")
                 .isEqualTo(chargeEntity.getAmount() + chargeEntity.getCorporateSurcharge().orElse(0L));
     }

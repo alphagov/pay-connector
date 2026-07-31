@@ -76,7 +76,7 @@ public class GatewayClient {
                                    Map<String, String> headers)
             throws GenericGatewayException, GatewayConnectionTimeoutException, GatewayErrorException {
 
-        String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName.getName(), gatewayAccountType, request.getOrderRequestType());
+        String metricsPrefix = format("gateway-operations.%s.%s.%s", gatewayName.getName(), gatewayAccountType, request.orderRequestType());
 
         Supplier<jakarta.ws.rs.core.Response> requestCallable = () -> {
             LOGGER.info("POSTing request for account '{}' with type '{}'", gatewayName.getName(), gatewayAccountType);
@@ -84,9 +84,9 @@ public class GatewayClient {
             Builder requestBuilder = client.target(url).request();
             headers.keySet().forEach(headerKey -> requestBuilder.header(headerKey, headers.get(headerKey)));
             cookies.forEach(cookie -> requestBuilder.header("Cookie", cookie.getName() + "=" + cookie.getValue()));
-            return requestBuilder.post(Entity.entity(request.getPayload(), request.getMediaType()));
+            return requestBuilder.post(Entity.entity(request.payload(), request.mediaType()));
         };
-        return executeRequest(url, gatewayName, gatewayAccountType, request.getOrderRequestType(), metricsPrefix, requestCallable);
+        return executeRequest(url, gatewayName, gatewayAccountType, request.orderRequestType(), metricsPrefix, requestCallable);
     }
 
     public Response getRequestFor(GatewayClientGetRequest request)

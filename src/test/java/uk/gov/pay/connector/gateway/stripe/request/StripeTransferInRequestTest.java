@@ -91,7 +91,7 @@ class StripeTransferInRequestTest {
     @Test
     void shouldCreateCorrectPayload_forRefundTransfer() {
         when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
-        String payload = refundTransferInRequest.getGatewayOrder().getPayload();
+        String payload = refundTransferInRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
         assertThat(payload, containsString("amount=" + refundAmount));
@@ -107,7 +107,7 @@ class StripeTransferInRequestTest {
     @Test
     void shouldCreateCorrectPayload_forFeeTransfer() {
         when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
-        String payload = feeTransferInRequest.getGatewayOrder().getPayload();
+        String payload = feeTransferInRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
         assertThat(payload, containsString("amount=" + feeAmount));
@@ -123,7 +123,7 @@ class StripeTransferInRequestTest {
     @Test
     void shouldCreateCorrectPayload_forDisputeTransfer() {
         when(stripeGatewayConfig.getPlatformAccountId()).thenReturn(stripePlatformAccountId);
-        String payload = disputeTransferInRequest.getGatewayOrder().getPayload();
+        String payload = disputeTransferInRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("destination=" + stripePlatformAccountId));
         assertThat(payload, containsString("amount=" + disputeAmount));

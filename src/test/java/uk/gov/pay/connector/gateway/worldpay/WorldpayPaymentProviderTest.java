@@ -879,7 +879,7 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().payload())
                 .and(load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST))
                 .areIdentical();
     }
@@ -906,7 +906,7 @@ class WorldpayPaymentProviderTest {
                 anyList(),
                 anyMap());
 
-        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().payload())
                 .and(load(WORLDPAY_VALID_3DS_FLEX_RESPONSE_AUTH_WORLDPAY_REQUEST))
                 .areIdentical();
     }
@@ -934,7 +934,7 @@ class WorldpayPaymentProviderTest {
                 .replace("{{agreementId}}", agreement.getExternalId())
                 .replace("{{paymentTokenId}}", token);
 
-        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().getPayload())
+        XmlAssertions.assertThat(gatewayOrderArgumentCaptor.getValue().payload())
                 .and(expectedRequestBody)
                 .areIdentical();
     }

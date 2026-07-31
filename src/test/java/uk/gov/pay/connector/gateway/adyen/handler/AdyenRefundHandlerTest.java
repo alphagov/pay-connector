@@ -124,7 +124,7 @@ class AdyenRefundHandlerTest {
         refundHandler.refund(buildRefundGatewayRequest(1000L));
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload)
                 .assertThat("$.merchantAccount", is(TEST_MERCHANT_ACCOUNT))
                 .assertThat("$.amount.value", is(1000))
@@ -155,7 +155,7 @@ class AdyenRefundHandlerTest {
         refundHandler.refund(buildRefundGatewayRequest(100L));
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload)
                 .assertThat("$.merchantAccount", is(TEST_MERCHANT_ACCOUNT))
                 .assertThat("$.amount.value", is(100))

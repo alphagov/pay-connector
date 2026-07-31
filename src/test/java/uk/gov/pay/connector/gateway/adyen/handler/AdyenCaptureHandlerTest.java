@@ -24,8 +24,8 @@ import uk.gov.pay.connector.util.JsonObjectMapper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
@@ -75,7 +75,7 @@ class AdyenCaptureHandlerTest {
         captureHandler.capture(captureRequest);
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload).assertThat("$.merchantAccount", is("test"));
         JsonAssert.with(payload).assertThat("$.amount.value", is(500));
         JsonAssert.with(payload).assertThat("$.amount.currency", is("GBP"));
@@ -90,7 +90,7 @@ class AdyenCaptureHandlerTest {
         captureHandler.capture(captureRequest);
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload).assertThat("$.merchantAccount", is("test"));
         JsonAssert.with(payload).assertThat("$.amount.value", is(500));
         JsonAssert.with(payload).assertThat("$.amount.currency", is("GBP"));

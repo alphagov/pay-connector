@@ -145,7 +145,7 @@ class AdyenAuthoriseHandlerTest {
         authoriseHandler.authorise(authoriseRequest);
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload).assertThat("$.billingAddress.houseNumberOrName", is("line1"));
         JsonAssert.with(payload).assertThat("$.billingAddress.street", is("line2"));
         JsonAssert.with(payload).assertThat("$.billingAddress.city", is("city"));
@@ -168,7 +168,7 @@ class AdyenAuthoriseHandlerTest {
         authoriseHandler.authorise(authoriseRequest);
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload).assertNotDefined("$.billingAddress");
     }
 
@@ -189,7 +189,7 @@ class AdyenAuthoriseHandlerTest {
         authoriseHandler.authorise(authoriseRequest);
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload).assertEquals("$.billingAddress.houseNumberOrName", partialBillingAddress.getLine1());
         JsonAssert.with(payload).assertNotDefined("$.billingAddress.city");
         JsonAssert.with(payload).assertNotDefined("$.billingAddress.country");
@@ -275,7 +275,7 @@ class AdyenAuthoriseHandlerTest {
         assertThat(headers, hasEntry("X-API-Key", TEST_API_KEY));
         assertThat(headers, hasEntry("Idempotency-Key", "authorise-" + authoriseRequest.getGovUkPayPaymentId()));
 
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         assertThat(payload, hasNoJsonPath("$.billingAddress.houseNumberOrName"));
         JsonAssert.with(payload).assertThat("$.paymentMethod.storedPaymentMethodId", is(storedPaymentMethodId));
         JsonAssert.with(payload).assertThat("$.paymentMethod.type", is("scheme"));
@@ -319,7 +319,7 @@ class AdyenAuthoriseHandlerTest {
         GatewayResponse<BaseAuthoriseResponse> response = authoriseHandler.authorise(adyenAuthoriseRequest, GatewayAccountType.TEST);
 
         then(mockClient).should().postRequestFor(captor.capture());
-        String payload = captor.getValue().getGatewayOrder().getPayload();
+        String payload = captor.getValue().getGatewayOrder().payload();
         JsonAssert.with(payload).assertThat("$.reference", notNullValue());
         assertThat(response.getBaseResponse().isPresent(), is(true));
         assertThat(response.getBaseResponse().get(), hasProperty("transactionId", equalTo("adyen-PSP-reference")));

@@ -123,8 +123,8 @@ class WorldpayRefundHandlerTest {
                 anyMap());
 
         GatewayOrder gatewayOrder = gatewayOrderCaptor.getValue();
-        assertThat(gatewayOrder.getPayload(), is(expectedRefundRequest));
-        assertThat(gatewayOrder.getOrderRequestType(), is(OrderRequestType.REFUND));
+        assertThat(gatewayOrder.payload(), is(expectedRefundRequest));
+        assertThat(gatewayOrder.orderRequestType(), is(OrderRequestType.REFUND));
     }
 
     @Test
@@ -182,8 +182,8 @@ class WorldpayRefundHandlerTest {
                 anyMap());
 
         GatewayOrder gatewayOrder = gatewayOrderCaptor.getValue();
-        assertThat(gatewayOrder.getPayload(), is(expectedRefundRequest));
-        assertThat(gatewayOrder.getOrderRequestType(), is(OrderRequestType.REFUND));
+        assertThat(gatewayOrder.payload(), is(expectedRefundRequest));
+        assertThat(gatewayOrder.orderRequestType(), is(OrderRequestType.REFUND));
     }
 
     @Test

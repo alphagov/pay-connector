@@ -75,8 +75,8 @@ class WorldpayOrderBuilderTest {
 
         var gatewayOrder = WorldpayOrderBuilder.buildAuthoriseOrder(request, DO_NOT_SEND_EXEMPTION_REQUEST, new AcceptLanguageHeaderParser()).build();
         
-        assertThat(gatewayOrder.getOrderRequestType(), is(OrderRequestType.AUTHORISE));
-        assertThat(gatewayOrder.getPayload().contains("shopperEmailAddress"), is(includeEmail));
-        assertThat(gatewayOrder.getPayload().contains("shopperIPAddress"), is(includeIP));
+        assertThat(gatewayOrder.orderRequestType(), is(OrderRequestType.AUTHORISE));
+        assertThat(gatewayOrder.payload().contains("shopperEmailAddress"), is(includeEmail));
+        assertThat(gatewayOrder.payload().contains("shopperIPAddress"), is(includeIP));
     }
 }

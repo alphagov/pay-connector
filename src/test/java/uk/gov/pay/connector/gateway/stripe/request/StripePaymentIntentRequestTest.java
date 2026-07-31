@@ -79,7 +79,7 @@ class StripePaymentIntentRequestTest {
     void shouldHaveCorrectParametersWithAddress() {
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
-        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentIntentRequest.getGatewayOrder().payload();
         assertThat(payload, containsString("payment_method=" + paymentMethodId));
         assertThat(payload, containsString("amount=" + amount));
         assertThat(payload, containsString("confirmation_method=automatic"));
@@ -123,7 +123,7 @@ class StripePaymentIntentRequestTest {
 
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
-        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentIntentRequest.getGatewayOrder().payload();
         assertThat(payload, containsString(URLEncoder.encode("payment_method_options[card[moto]]", UTF_8) + "=true"));
     }
     
@@ -133,7 +133,7 @@ class StripePaymentIntentRequestTest {
 
         StripePaymentIntentRequest stripePaymentIntentRequest = createOneOffStripePaymentIntentRequest();
 
-        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentIntentRequest.getGatewayOrder().payload();
         assertThat(payload, not(containsString(URLEncoder.encode("payment_method_options[card[moto]]", UTF_8))));
     }
 
@@ -142,7 +142,7 @@ class StripePaymentIntentRequestTest {
         var authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, new AuthCardDetails());
         var stripePaymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithSetupFutureUsage(
                 authorisationGatewayRequest, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
-        String payload = stripePaymentIntentRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentIntentRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("customer=" + customerId));
         assertThat(payload, containsString("setup_future_usage=off_session"));
@@ -154,7 +154,7 @@ class StripePaymentIntentRequestTest {
         RecurringPaymentAuthorisationGatewayRequest authRequest = RecurringPaymentAuthorisationGatewayRequest.valueOf(charge);
         StripePaymentIntentRequest paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestUseSavedPaymentDetails(
                 authRequest, paymentMethodId, customerId, stripeGatewayConfig, frontendUrl);
-        String payload = paymentIntentRequest.getGatewayOrder().getPayload();
+        String payload = paymentIntentRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("customer=" + customerId));
         assertThat(payload, containsString("off_session=true"));
@@ -169,7 +169,7 @@ class StripePaymentIntentRequestTest {
         var authRequest = ApplePayAuthorisationGatewayRequest.valueOf(charge, applePayAuthRequest);
         StripePaymentIntentRequest paymentIntentRequest = StripePaymentIntentRequest.createPaymentIntentRequestWithToken(
                 authRequest, tokenId, stripeGatewayConfig, frontendUrl);
-        String payload = paymentIntentRequest.getGatewayOrder().getPayload();
+        String payload = paymentIntentRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString(URLEncoder.encode("payment_method_data[type]", UTF_8) + "=" + "card"));
         assertThat(payload, containsString(URLEncoder.encode("payment_method_data[card][token]", UTF_8) + "=" + tokenId));
