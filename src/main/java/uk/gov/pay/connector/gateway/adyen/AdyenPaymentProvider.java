@@ -20,12 +20,14 @@ import uk.gov.pay.connector.gateway.adyen.handler.AdyenAuthorise3dsHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenAuthoriseHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenCancelHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenCaptureHandler;
+import uk.gov.pay.connector.gateway.adyen.handler.AdyenDeleteStoredPaymentHandler;
 import uk.gov.pay.connector.gateway.adyen.handler.AdyenRefundHandler;
 import uk.gov.pay.connector.gateway.model.AuthCardDetails;
 import uk.gov.pay.connector.gateway.model.request.Auth3dsResponseGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CancelGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CaptureGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.CardAuthorisationGatewayRequest;
+import uk.gov.pay.connector.gateway.model.request.DeleteStoredPaymentDetailsGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RecurringPaymentAuthorisationGatewayRequest;
 import uk.gov.pay.connector.gateway.model.request.RefundGatewayRequest;
 import uk.gov.pay.connector.gateway.model.response.BaseCancelResponse;
@@ -52,6 +54,7 @@ public class AdyenPaymentProvider implements PaymentProvider {
     private final AdyenRefundHandler adyenRefundHandler;
     private final ExternalRefundAvailabilityCalculator externalRefundAvailabilityCalculator;
     private final RefundEntityFactory refundEntityFactory;
+    private final AdyenDeleteStoredPaymentHandler adyenDeleteStoredPaymentHandler;
 
     @Inject
     public AdyenPaymentProvider(
@@ -68,8 +71,9 @@ public class AdyenPaymentProvider implements PaymentProvider {
         adyenCaptureHandler = new AdyenCaptureHandler(client, connectorConfiguration, jsonObjectMapper);
         adyenCancelHandler = new AdyenCancelHandler(client, adyenGatewayConfig, new AdyenRequestFactory(connectorConfiguration), jsonObjectMapper);
         adyenRefundHandler = new AdyenRefundHandler(client, connectorConfiguration, jsonObjectMapper);
-        this.externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
+        externalRefundAvailabilityCalculator = new DefaultExternalRefundAvailabilityCalculator();
         this.refundEntityFactory = refundEntityFactory;
+        adyenDeleteStoredPaymentHandler = new AdyenDeleteStoredPaymentHandler(client, connectorConfiguration);
     }
 
     @Override
@@ -142,5 +146,10 @@ public class AdyenPaymentProvider implements PaymentProvider {
     @Override
     public RefundEntityFactory getRefundEntityFactory() {
         return refundEntityFactory;
+    }
+
+    @Override
+    public void deleteStoredPaymentDetails(DeleteStoredPaymentDetailsGatewayRequest request) throws GatewayException {
+        adyenDeleteStoredPaymentHandler.deleteStoredPaymentDetails(request);
     }
 }
