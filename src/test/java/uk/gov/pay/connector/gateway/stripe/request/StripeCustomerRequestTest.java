@@ -30,7 +30,7 @@ class StripeCustomerRequestTest {
     void shouldHaveCorrectParameters() {
         StripeCustomerRequest stripeCustomerRequest = createStripeCustomerRequest();
 
-        String payload = stripeCustomerRequest.getGatewayOrder().getPayload();
+        String payload = stripeCustomerRequest.getGatewayOrder().payload();
         assertThat(payload, containsString("name=" + CARD_HOLDER));
         assertThat(payload, containsString("description=" + AGREEMENT_DESCRIPTION));
         assertThat(payload, containsString("metadata%5Bgovuk_pay_agreement_external_id%5D=" + AGREEMENT_EXTERNAL_ID));

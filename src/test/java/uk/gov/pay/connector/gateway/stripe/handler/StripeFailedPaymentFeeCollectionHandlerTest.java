@@ -189,7 +189,7 @@ class StripeFailedPaymentFeeCollectionHandlerTest {
 
     private void verifyTransferRequestPayload(int amount) throws Exception {
         verify(gatewayClient).postRequestFor(stripeTransferInRequestCaptor.capture());
-        String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().getPayload();
+        String payload = stripeTransferInRequestCaptor.getValue().getGatewayOrder().payload();
 
         assertThat(payload, CoreMatchers.containsString("destination=" + stripePlatformAccountId));
         assertThat(payload, CoreMatchers.containsString("amount=" + amount));

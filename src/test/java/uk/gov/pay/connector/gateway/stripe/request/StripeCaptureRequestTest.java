@@ -85,7 +85,7 @@ class StripeCaptureRequestTest {
     @Test
     void shouldCreateCorrectCapturePayload() {
         assertThat(
-                stripeCaptureRequest.getGatewayOrder().getPayload(),
+                stripeCaptureRequest.getGatewayOrder().payload(),
                 containsString("expand%5B%5D=charges.data.balance_transaction")
         );
     }
@@ -93,7 +93,7 @@ class StripeCaptureRequestTest {
     @Test
     void shouldSetGatewayOrderToBeOfTypeCapture() {
         assertThat(
-                stripeCaptureRequest.getGatewayOrder().getOrderRequestType(),
+                stripeCaptureRequest.getGatewayOrder().orderRequestType(),
                 is(OrderRequestType.CAPTURE)
         );
     }

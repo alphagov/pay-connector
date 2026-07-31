@@ -73,7 +73,7 @@ class StripeRefundRequestTest {
 
     @Test
     void createsCorrectRefundPayload() {
-        String payload = stripeRefundRequest.getGatewayOrder().getPayload();
+        String payload = stripeRefundRequest.getGatewayOrder().payload();
         
         assertThat(payload, containsString("charge=" + stripeChargeId));
         assertThat(payload, containsString("amount=" + refundAmount));

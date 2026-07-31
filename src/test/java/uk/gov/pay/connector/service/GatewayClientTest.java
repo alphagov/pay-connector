@@ -275,9 +275,9 @@ public class GatewayClientTest {
         when(mockWebTarget.request()).thenReturn(mockBuilder).thenReturn(mockBuilder);
         when(mockBuilder.post(Entity.entity(orderPayload, mediaType))).thenReturn(mockResponse);
 
-        when(mockGatewayOrder.getOrderRequestType()).thenReturn(OrderRequestType.AUTHORISE);
-        when(mockGatewayOrder.getPayload()).thenReturn(orderPayload);
-        when(mockGatewayOrder.getMediaType()).thenReturn(mediaType);
+        when(mockGatewayOrder.orderRequestType()).thenReturn(OrderRequestType.AUTHORISE);
+        when(mockGatewayOrder.payload()).thenReturn(orderPayload);
+        when(mockGatewayOrder.mediaType()).thenReturn(mediaType);
     }
 
     private void setupGetRequestMocks() {

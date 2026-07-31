@@ -46,9 +46,9 @@ class AdyenRefundRequestTest {
     void should_return_gateway_order_with_serialised_payload() {
         var request = buildValidRefundRequest();
 
-        assertThat(request.getGatewayOrder().getOrderRequestType(), is(REFUND));
-        assertThat(request.getGatewayOrder().getMediaType(), is(APPLICATION_JSON_TYPE));
-        JsonAssert.with(request.getGatewayOrder().getPayload())
+        assertThat(request.getGatewayOrder().orderRequestType(), is(REFUND));
+        assertThat(request.getGatewayOrder().mediaType(), is(APPLICATION_JSON_TYPE));
+        JsonAssert.with(request.getGatewayOrder().payload())
                 .assertThat("$.merchantAccount", is(MERCHANT_ID))
                 .assertThat("$.reference", is(REFUND_EXTERNAL_ID))
                 .assertThat("$.amount.value", is(500))

@@ -94,7 +94,7 @@ class StripeTokenRequestTest {
         ApplePayAuthorisationGatewayRequest gatewayRequest = buildWalletGatewayAuthorisationRequest();
         StripeTokenRequest stripeTokenRequest = StripeTokenRequest.of(gatewayRequest, stripeGatewayConfig);
         
-        String payload = stripeTokenRequest.getGatewayOrder().getPayload();
+        String payload = stripeTokenRequest.getGatewayOrder().payload();
         assertThat(payload, containsString("pk_token=" + paymentData));
         assertThat(payload, containsString("pk_token_instrument_name=" + displayName));
         assertThat(payload, containsString("pk_token_payment_network=" + network));

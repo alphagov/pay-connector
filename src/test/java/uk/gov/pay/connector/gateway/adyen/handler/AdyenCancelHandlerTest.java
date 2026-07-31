@@ -159,7 +159,7 @@ class AdyenCancelHandlerTest {
                 .postRequestFor(captor.capture());
         var gatewayOrderPayload = captor.getValue()
                 .getGatewayOrder()
-                .getPayload();
+                .payload();
         JsonAssert.with(gatewayOrderPayload)
                 .assertEquals("reference", AN_EXTERNAL_ID)
                 .assertEquals("merchantAccount", A_MERCHANT_ACCOUNT_ID);

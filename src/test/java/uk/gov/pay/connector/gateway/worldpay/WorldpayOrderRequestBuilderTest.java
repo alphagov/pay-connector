@@ -100,10 +100,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_MIN_ADDRESS))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -119,10 +119,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITH_SCHEME_IDENTIFIER))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -137,10 +137,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_RECURRING_WORLDPAY_REQUEST_WITHOUT_SCHEME_IDENTIFIER))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -162,10 +162,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_MIN_ADDRESS))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -185,10 +185,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_INCLUDING_STATE))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -210,10 +210,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_3DS_REQUEST_INCLUDING_STATE))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -233,10 +233,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_FULL_ADDRESS))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -256,10 +256,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_AUTHORISE_WORLDPAY_REQUEST_ADDRESS))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -277,10 +277,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_REQUEST_WITHOUT_ADDRESS))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -292,10 +292,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withMerchantCode("MERCHANTCODE")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_3DS_RESPONSE_AUTH_WORLDPAY_REQUEST))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE_3DS, actualRequest.orderRequestType());
     }
 
     @Test
@@ -311,10 +311,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.orderRequestType());
     }
 
     @Test
@@ -338,10 +338,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_APPLE_PAY_REQUEST_MIN_DATA))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE_APPLE_PAY, actualRequest.orderRequestType());
     }
 
     @Test
@@ -357,10 +357,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.orderRequestType());
     }
 
     @Test
@@ -379,10 +379,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITHOUT_IP_ADDRESS))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.orderRequestType());
     }
 
     @Test
@@ -402,10 +402,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_3DS_REQUEST_WITH_IP_ADDRESS))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.orderRequestType());
     }
 
     @Test
@@ -422,10 +422,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAmount("500")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_AUTHORISE_WORLDPAY_GOOGLE_PAY_REQUEST))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE_GOOGLE_PAY, actualRequest.orderRequestType());
     }
 
     @Test
@@ -439,10 +439,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId!")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_VALID_CAPTURE_WORLDPAY_REQUEST))
                 .areIdentical();
-        assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.CAPTURE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -456,10 +456,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withTransactionId("MyUniqueTransactionId <!-- & > ")
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(WORLDPAY_SPECIAL_CHAR_VALID_CAPTURE_WORLDPAY_REQUEST))
                 .areIdentical();
-        assertEquals(OrderRequestType.CAPTURE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.CAPTURE, actualRequest.orderRequestType());
     }
 
     @Test
@@ -473,10 +473,10 @@ class WorldpayOrderRequestBuilderTest {
                 .replace("{{merchantCode}}", "MERCHANTCODE")
                 .replace("{{transactionId}}", "MyUniqueTransactionId!");
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(expectedRequestBody)
                 .areIdentical();
-        assertEquals(OrderRequestType.CANCEL, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.CANCEL, actualRequest.orderRequestType());
     }
 
     @Test
@@ -494,10 +494,10 @@ class WorldpayOrderRequestBuilderTest {
                 .replace("{{refundReference}}", "reference")
                 .replace("{{amount}}", "200");
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(expectedRequestBody)
                 .areIdentical();
-        assertEquals(OrderRequestType.REFUND, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.REFUND, actualRequest.orderRequestType());
     }
 
     @Test
@@ -513,10 +513,10 @@ class WorldpayOrderRequestBuilderTest {
                 .replace("{{agreementId}}", "test-agreement-123")
                 .replace("{{paymentTokenId}}", "test-paymentToken-789");
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(expectedRequestBody)
                 .areIdentical();
-        assertEquals(OrderRequestType.DELETE_STORED_PAYMENT_DETAILS, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.DELETE_STORED_PAYMENT_DETAILS, actualRequest.orderRequestType());
     }
 
     @ParameterizedTest
@@ -547,10 +547,10 @@ class WorldpayOrderRequestBuilderTest {
                 .withAuthorisationDetails(authCorporateCardDetails)
                 .build();
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(testTemplatePath))
                 .areIdentical();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
     }
 
     @ParameterizedTest
@@ -590,9 +590,9 @@ class WorldpayOrderRequestBuilderTest {
         }
 
         GatewayOrder actualRequest = builder.build();
-        assertEquals(OrderRequestType.AUTHORISE, actualRequest.getOrderRequestType());
+        assertEquals(OrderRequestType.AUTHORISE, actualRequest.orderRequestType());
 
-        assertThat(actualRequest.getPayload())
+        assertThat(actualRequest.payload())
                 .and(TestTemplateResourceLoader.load(testTemplatePath))
                 .areIdentical();
     }

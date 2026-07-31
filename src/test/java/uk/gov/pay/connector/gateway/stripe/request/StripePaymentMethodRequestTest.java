@@ -99,7 +99,7 @@ class StripePaymentMethodRequestTest {
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 
-        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentMethodRequest.getGatewayOrder().payload();
         assertThat(payload, containsString("card%5Bcvc%5D=" + cvc));
         assertThat(payload, containsString("card%5Bnumber%5D=" + cardNo));
         assertThat(payload, containsString("billing_details%5Bname%5D=" + cardHolder));
@@ -125,7 +125,7 @@ class StripePaymentMethodRequestTest {
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 
-        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentMethodRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("billing_details%5Baddress%5Bstate%5D%5D=Nunavut"));
         assertThat(payload, containsString("billing_details%5Baddress%5Bcountry%5D%5D=CA"));
@@ -145,7 +145,7 @@ class StripePaymentMethodRequestTest {
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 
-        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentMethodRequest.getGatewayOrder().payload();
 
         assertThat(payload, containsString("billing_details%5Baddress%5Bstate%5D%5D=California"));
         assertThat(payload, containsString("billing_details%5Baddress%5Bcountry%5D%5D=US"));
@@ -157,7 +157,7 @@ class StripePaymentMethodRequestTest {
         CardAuthorisationGatewayRequest authorisationGatewayRequest = CardAuthorisationGatewayRequest.valueOf(charge, authCardDetails);
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
         
-        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentMethodRequest.getGatewayOrder().payload();
         assertThat(payload, containsString("card%5Bcvc%5D=" + cvc));
         assertThat(payload, containsString("card%5Bnumber%5D=" + cardNo));
         assertThat(payload, containsString("billing_details%5Bname%5D=" + cardHolder));
@@ -178,7 +178,7 @@ class StripePaymentMethodRequestTest {
 
         stripePaymentMethodRequest = StripePaymentMethodRequest.of(authorisationGatewayRequest, stripeGatewayConfig);
 
-        String payload = stripePaymentMethodRequest.getGatewayOrder().getPayload();
+        String payload = stripePaymentMethodRequest.getGatewayOrder().payload();
         assertThat(payload, containsString("card%5Bcvc%5D=" + cvc));
         assertThat(payload, not(containsString("city")));
         assertThat(payload, not(containsString("country")));

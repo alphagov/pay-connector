@@ -91,7 +91,7 @@ class AdyenAuthorise3dsHandlerTest {
 
         then(mockClient).should().postRequestFor(captor.capture());
         assertThat(captor.getValue().getUrl().toString(), is("https://example.com/test/someVersion/payments/details"));
-        JsonAssert.with(captor.getValue().getGatewayOrder().getPayload())
+        JsonAssert.with(captor.getValue().getGatewayOrder().payload())
                 .assertThat("$.details.redirectResult", equalTo("eyJ0cmFuc1N0YXR1cyI6IlkifQ=="));
     }
 

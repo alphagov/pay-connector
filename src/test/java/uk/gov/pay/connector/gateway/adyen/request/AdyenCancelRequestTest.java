@@ -50,18 +50,18 @@ class AdyenCancelRequestTest {
 
     @Test
     void should_return_CANCEL_type_gateway_order() {
-        assertThat(request.getGatewayOrder().getOrderRequestType(), is(CANCEL));
+        assertThat(request.getGatewayOrder().orderRequestType(), is(CANCEL));
     }
 
     @Test
     void should_return_gateway_order_with_serialised_PaymentCancelRequest_payload() {
-        JsonAssert.with(request.getGatewayOrder().getPayload())
+        JsonAssert.with(request.getGatewayOrder().payload())
                 .assertEquals("reference", REFERENCE)
                 .assertEquals("merchantAccount", MERCHANT_ACCOUNT);
     }
 
     @Test
     void should_return_gateway_order_with_JSON_media_type() {
-        assertThat(request.getGatewayOrder().getMediaType(), is(MediaType.APPLICATION_JSON_TYPE));
+        assertThat(request.getGatewayOrder().mediaType(), is(MediaType.APPLICATION_JSON_TYPE));
     }
 }

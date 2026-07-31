@@ -31,9 +31,9 @@ class AdyenCaptureRequestTest {
     void should_create_GatewayOrder_with_serialised_payload() {
         var request = buildValidCaptureRequest();
 
-        assertThat(request.getGatewayOrder().getOrderRequestType(), is(CAPTURE));
-        assertThat(request.getGatewayOrder().getMediaType(), is(APPLICATION_JSON_TYPE));
-        JsonAssert.with(request.getGatewayOrder().getPayload())
+        assertThat(request.getGatewayOrder().orderRequestType(), is(CAPTURE));
+        assertThat(request.getGatewayOrder().mediaType(), is(APPLICATION_JSON_TYPE));
+        JsonAssert.with(request.getGatewayOrder().payload())
                 .assertThat("$.amount.value", is(500))
                 .assertThat("$.amount.currency", is("GBP"))
                 .assertThat("$.merchantAccount", is(MERCHANT_ID));
